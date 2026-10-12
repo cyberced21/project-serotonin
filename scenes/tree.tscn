@@ -1,10 +1,31 @@
 [gd_scene format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/resource_node.tscn" id="1_base"]
-[ext_resource type="Texture2D" path="res://art/tree.png" id="2_tex"]
 [ext_resource type="Texture2D" path="res://art/item_wood.png" id="3_icon"]
 [ext_resource type="AudioStream" path="res://audio/wood_hit.tres" id="4_hit"]
 [ext_resource type="AudioStream" path="res://audio/wood_break.tres" id="5_break"]
+[ext_resource type="Material" path="res://materials/node_surface.tres" id="6_surface"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_trunk"]
+size = Vector3(0.6, 3.2, 0.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_trunk"]
+size = Vector3(0.4, 3.2, 0.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_canopy"]
+size = Vector3(2.2, 1.6, 2.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_canopy_top"]
+size = Vector3(1.4, 1, 1.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_bark_x"]
+size = Vector3(0.46, 0.3, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_bark_z"]
+size = Vector3(0.08, 0.3, 0.46)
+
+[sub_resource type="BoxMesh" id="BoxMesh_stump"]
+size = Vector3(0.42, 0.4, 0.42)
 
 [node name="Tree" instance=ExtResource("1_base")]
 item = &"wood"
@@ -14,9 +35,66 @@ max_hits = 5
 drops_min = 2
 drops_max = 4
 skill = &"woodcutting"
-texture = ExtResource("2_tex")
-frames = 5
 chip_color = Color(0.871, 0.698, 0.463, 1)
 burst_color = Color(0.22, 0.502, 0.298, 1)
+popup_height = 2.0
 hit_sfx = ExtResource("4_hit")
 break_sfx = ExtResource("5_break")
+
+[node name="CollisionShape3D" parent="." index="0"]
+position = Vector3(0, 1.6, 0)
+shape = SubResource("BoxShape3D_trunk")
+
+[node name="Trunk" type="MeshInstance3D" parent="Visual/Body" index="0"]
+position = Vector3(0, 1.6, 0)
+mesh = SubResource("BoxMesh_trunk")
+material_override = ExtResource("6_surface")
+instance_shader_parameters/albedo = Color(0.45, 0.31, 0.2, 1)
+
+[node name="Canopy" type="MeshInstance3D" parent="Visual/Body" index="1"]
+position = Vector3(0, 3.5, 0)
+rotation = Vector3(0, 0.3, 0)
+mesh = SubResource("BoxMesh_canopy")
+material_override = ExtResource("6_surface")
+instance_shader_parameters/albedo = Color(0.24, 0.5, 0.27, 1)
+
+[node name="CanopyTop" type="MeshInstance3D" parent="Visual/Body" index="2"]
+position = Vector3(0, 4.6, 0)
+rotation = Vector3(0, 0.9, 0)
+mesh = SubResource("BoxMesh_canopy_top")
+material_override = ExtResource("6_surface")
+instance_shader_parameters/albedo = Color(0.3, 0.58, 0.31, 1)
+
+[node name="BarkFront" type="MeshInstance3D" parent="Visual/Chunks" index="0"]
+position = Vector3(0, 1.3, 0.22)
+mesh = SubResource("BoxMesh_bark_x")
+material_override = ExtResource("6_surface")
+instance_shader_parameters/albedo = Color(0.36, 0.24, 0.15, 1)
+
+[node name="BarkBack" type="MeshInstance3D" parent="Visual/Chunks" index="1"]
+position = Vector3(0, 1.3, -0.22)
+mesh = SubResource("BoxMesh_bark_x")
+material_override = ExtResource("6_surface")
+instance_shader_parameters/albedo = Color(0.36, 0.24, 0.15, 1)
+
+[node name="BarkLeft" type="MeshInstance3D" parent="Visual/Chunks" index="2"]
+position = Vector3(-0.22, 1.3, 0)
+mesh = SubResource("BoxMesh_bark_z")
+material_override = ExtResource("6_surface")
+instance_shader_parameters/albedo = Color(0.36, 0.24, 0.15, 1)
+
+[node name="BarkRight" type="MeshInstance3D" parent="Visual/Chunks" index="3"]
+position = Vector3(0.22, 1.3, 0)
+mesh = SubResource("BoxMesh_bark_z")
+material_override = ExtResource("6_surface")
+instance_shader_parameters/albedo = Color(0.36, 0.24, 0.15, 1)
+
+[node name="Stump" type="MeshInstance3D" parent="Rubble" index="0"]
+position = Vector3(0, 0.2, 0)
+mesh = SubResource("BoxMesh_stump")
+material_override = ExtResource("6_surface")
+instance_shader_parameters/albedo = Color(0.45, 0.31, 0.2, 1)
+
+[node name="Burst" parent="." index="4"]
+position = Vector3(0, 3.4, 0)
+emission_sphere_radius = 1.0

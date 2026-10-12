@@ -109,8 +109,10 @@ Tick items off as you go. Decisions already made are listed at the bottom for re
 | 9 | World | Terrain3D heightmap terrain. |
 | 10 | Movement | Expressive movement is the second pillar — it carries you between gathering spots. |
 | 11 | Moves | Sprint, jump, slide, mantle first; grapple later. Light gating: rare nodes in hard-to-reach spots, no unlocks needed. No gathering while airborne/sliding; keep the swing slow-down. |
+| 12 | Migration | Convert in place (game may be broken mid-way). 2D version committed and tagged `2d-prototype` in git. |
+| 13 | Order | One system at a time, runnable after each step: (1) project settings + 3D main scene, (2) FP player + rotation shake, (3) gathering a rock end-to-end, (4) pickups + HUD rescale, (5) tree topple, (6) slide + mantle, (7) Terrain3D. |
+| 14 | Saving nodes | Not saved for now; add depletion/respawn saving together with Terrain3D. |
 
 ## Still open
 
-- Migration plan (convert in place vs. new 3D scenes alongside the 2D ones).
-- Saving node depletion state (default: not saved).
+- Nothing — design tree covered. Revisit Terrain3D (4.7 support + low-poly look) before step 7.

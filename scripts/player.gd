@@ -1,10 +1,38 @@
-extends CharacterBody2D
-## Top-down player: walk with WASD / arrows, hold Space / E / left-click to gather.
+extends CharacterBody3D
+## First-person player: WASD to move, mouse to look, Shift to sprint, Space to jump,
+## hold E / left-click to gather whatever the crosshair is on.
+## Esc frees the mouse; clicking the game captures it again.
+## Mouse-look runs in _unhandled_input (raw events), so it stays smooth during hit-stop.
 ## The node is hit on the *impact frame* of the swing, not when the button is pressed —
 ## lining sound + hit-stop up with the animation is what makes it feel solid.
 
-@export var speed := 70.0
-@export var reach := 24.0
+@export_group("Look")
+@export var mouse_sensitivity := 0.0025
+@export_range(1.0, 89.0) var max_pitch_deg := 88.0
+## Extra FOV while sprinting, for a sense of speed.
+@export var sprint_fov_kick := 6.0
+
+@export_group("Ground")
+@export var walk_speed := 4.5
+@export var sprint_speed := 7.0
+@export var ground_accel := 45.0
+@export var ground_friction := 55.0
+
+@export_group("Air")
+@export var air_accel := 12.0
+@export var jump_velocity := 5.2
+## Gravity is multiplied by this while falling, for a snappier arc.
+@export var fall_gravity_mult := 1.6
+## Releasing jump early multiplies upward speed by this (short hop vs. full jump).
+@export_range(0.0, 1.0) var jump_cut := 0.5
+## Jump still works this long after walking off a ledge.
+@export var coyote_time := 0.1
+## A jump pressed this long before landing still fires on landing.
+@export var jump_buffer := 0.12
+
+@export_group("Gathering")
+## How far the crosshair reaches (m).
+@export var reach := 2.4
 @export var swing_sfx: AudioStream
 
 @export_group("Swing timing")
@@ -14,90 +42,156 @@ extends CharacterBody2D
 @export var swing_cooldown := 0.12
 @export var move_slow_while_swinging := 0.3
 
-const TOOLS := {
-	&"axe": preload("res://art/axe.png"),
-	&"pickaxe": preload("res://art/pickaxe.png"),
-}
-const REST_ANGLE := 0.35
-const WINDUP_ANGLE := -1.5
-const STRIKE_ANGLE := 1.35
+## Tool pivot rotation around X (radians): positive tilts the head back toward the camera.
+const REST_ANGLE := -0.3
+const WINDUP_ANGLE := 0.7
+const STRIKE_ANGLE := -1.3
+const WORLD_MASK := 1
+const DEFLECT_COLOR := Color("ff8a7a")
 
-@onready var body: Sprite2D = $Body
-@onready var tool_pivot: Node2D = $ToolPivot
-@onready var arm: Node2D = $ToolPivot/Arm
-@onready var tool_sprite: Sprite2D = $ToolPivot/Arm/Tool
-@onready var audio: AudioStreamPlayer2D = $Audio
+@onready var head: Node3D = $Head
+@onready var camera: Camera3D = $Head/Camera3D
+@onready var tool_pivot: Node3D = %ToolPivot
+@onready var tools: Dictionary[StringName, Node3D] = {&"axe": %Axe, &"pickaxe": %Pickaxe}
+@onready var dot: Control = $Reticle/Dot
+@onready var hover_label: Label = $Reticle/Hover
+@onready var audio: AudioStreamPlayer = $Audio
 
-var facing := 1.0
+var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
+var _base_fov := 75.0
+var _coyote := 0.0
+var _jump_buffer := 0.0
+
+var _target: ResourceNode
 var _swinging := false
 var _cooldown := 0.0
-var _walk_t := 0.0
+var _tool_rest := Vector3.ZERO
 
 
 func _ready() -> void:
 	add_to_group("player")
-	arm.rotation = REST_ANGLE
+	_base_fov = camera.fov
+	_tool_rest = tool_pivot.position
+	tool_pivot.rotation.x = REST_ANGLE
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	SaveGame.register(&"player", self)
 
 
 func to_dict() -> Dictionary:
-	return {"x": global_position.x, "y": global_position.y}
+	return {
+		"x": global_position.x, "y": global_position.y, "z": global_position.z,
+		"yaw": rotation.y, "pitch": head.rotation.x,
+	}
 
 
 func from_dict(d: Dictionary) -> void:
-	if d.has("x") and d.has("y"):
-		global_position = Vector2(float(d["x"]), float(d["y"]))
+	if not d.has("z"):
+		return  # save from the 2D version — spawn at the default position instead
+	global_position = Vector3(float(d["x"]), float(d["y"]), float(d["z"]))
+	rotation.y = float(d.get("yaw", 0.0))
+	head.rotation.x = float(d.get("pitch", 0.0))
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		var motion := event as InputEventMouseMotion
+		rotate_y(-motion.relative.x * mouse_sensitivity)
+		var limit := deg_to_rad(max_pitch_deg)
+		head.rotation.x = clampf(head.rotation.x - motion.relative.y * mouse_sensitivity, -limit, limit)
+	elif event.is_action_pressed("ui_cancel"):
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	elif event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		get_viewport().set_input_as_handled()
 
 
 func _physics_process(delta: float) -> void:
-	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	velocity = dir * speed * (move_slow_while_swinging if _swinging else 1.0)
-	move_and_slide()
-
-	if dir.x != 0.0 and not _swinging:
-		facing = signf(dir.x)
-	body.flip_h = facing < 0.0
-	tool_pivot.scale.x = facing
-
-	# tiny walk bob (whole pixels only)
-	if dir != Vector2.ZERO:
-		_walk_t += delta * 12.0
-		body.position.y = -8.0 - roundf(absf(sin(_walk_t)))
-	else:
-		_walk_t = 0.0
-		body.position.y = -8.0
+	_move(delta)
 
 	_cooldown -= delta
-	if Input.is_action_pressed("gather") and not _swinging and _cooldown <= 0.0:
-		var target := _find_target()
-		if target:
-			_swing(target)
+	_update_target()
+	if Input.is_action_pressed("gather") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED \
+			and _target and is_on_floor() and not _swinging and _cooldown <= 0.0:
+		_swing(_target.tool_type)
 
 
-func _find_target() -> ResourceNode:
-	var best: ResourceNode = null
-	var best_d := reach
-	for n in get_tree().get_nodes_in_group("gatherable"):
-		var node := n as ResourceNode
-		if node == null or not node.is_available():
-			continue
-		var d := node.global_position.distance_to(global_position)
-		if d < best_d:
-			best_d = d
-			best = node
-	return best
+func _move(delta: float) -> void:
+	# gravity + coyote time
+	if is_on_floor():
+		_coyote = coyote_time
+	else:
+		_coyote -= delta
+		velocity.y -= _gravity * (fall_gravity_mult if velocity.y < 0.0 else 1.0) * delta
+
+	# buffered jump
+	_jump_buffer -= delta
+	if Input.is_action_just_pressed("jump"):
+		_jump_buffer = jump_buffer
+	if _jump_buffer > 0.0 and _coyote > 0.0 and not _swinging:
+		velocity.y = jump_velocity
+		_jump_buffer = 0.0
+		_coyote = 0.0
+	if Input.is_action_just_released("jump") and velocity.y > 0.0:
+		velocity.y *= jump_cut
+
+	# horizontal movement, relative to where the body faces (yaw only — the head pitches)
+	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var sprinting := Input.is_action_pressed("sprint") and input.y < 0.0 and not _swinging
+	var speed := (sprint_speed if sprinting else walk_speed) * (move_slow_while_swinging if _swinging else 1.0)
+	var wish := transform.basis * Vector3(input.x, 0.0, input.y) * speed
+	var horizontal := Vector2(velocity.x, velocity.z)
+	var target := Vector2(wish.x, wish.z)
+	var rate := air_accel
+	if is_on_floor():
+		rate = ground_friction if target == Vector2.ZERO else ground_accel
+	horizontal = horizontal.move_toward(target, rate * delta)
+	velocity.x = horizontal.x
+	velocity.z = horizontal.y
+	move_and_slide()
+
+	var fast := sprinting and horizontal.length() > walk_speed + 0.5
+	camera.fov = lerpf(camera.fov, _base_fov + (sprint_fov_kick if fast else 0.0), 1.0 - exp(-10.0 * delta))
 
 
-func _swing(target: ResourceNode) -> void:
+# --- gathering ------------------------------------------------------------------------------
+
+## Ray from the centre of the screen. Only the world layer, so debris and drops don't block it.
+func _aim() -> Dictionary:
+	var from := camera.global_position
+	var to := from - camera.global_basis.z * reach
+	var query := PhysicsRayQueryParameters3D.create(from, to, WORLD_MASK, [get_rid()])
+	return get_world_3d().direct_space_state.intersect_ray(query)
+
+
+func _node_under_crosshair(hit: Dictionary) -> ResourceNode:
+	var node := hit.get("collider") as ResourceNode
+	return node if node and node.is_available() else null
+
+
+func _update_target() -> void:
+	var node := _node_under_crosshair(_aim())
+	if node != _target:
+		if is_instance_valid(_target):
+			_target.set_highlighted(false)
+		_target = node
+		if _target:
+			_target.set_highlighted(true)
+	dot.scale = Vector2.ONE * (1.75 if _target else 1.0)
+	if _target and not _target.can_gather():
+		hover_label.text = "%s %d" % [Skills.display_name(_target.skill), _target.required_level]
+		hover_label.modulate = DEFLECT_COLOR
+	else:
+		hover_label.text = ""
+
+
+func _swing(tool: StringName) -> void:
 	_swinging = true
-	var dx := target.global_position.x - global_position.x
-	if absf(dx) > 1.0:
-		facing = signf(dx)
-	tool_sprite.texture = TOOLS.get(target.tool_type, TOOLS[&"axe"])
+	for id in tools:
+		tools[id].visible = id == tool
 
 	# 1. wind-up (anticipation)
 	var t := create_tween()
-	t.tween_property(arm, "rotation", WINDUP_ANGLE, windup_time).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	t.tween_property(tool_pivot, "rotation:x", WINDUP_ANGLE, windup_time).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	await t.finished
 
 	# 2. strike — whoosh starts with the fast part of the motion
@@ -105,19 +199,26 @@ func _swing(target: ResourceNode) -> void:
 		audio.stream = swing_sfx
 		audio.play()
 	t = create_tween()
-	t.tween_property(arm, "rotation", STRIKE_ANGLE, strike_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.tween_property(tool_pivot, "rotation:x", STRIKE_ANGLE, strike_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	await t.finished
 
-	# 3. impact frame
-	if is_instance_valid(target) and target.is_available() \
-			and target.global_position.distance_to(global_position) <= reach + 4.0:
-		target.hit(global_position)
-		body.scale = Vector2(1.1, 0.9)
-		create_tween().tween_property(body, "scale", Vector2.ONE, 0.12)
+	# 3. impact frame — hits whatever the crosshair is on *now*; looked away = whiff
+	var hit := _aim()
+	var node := _node_under_crosshair(hit)
+	if node:
+		node.hit(HitInfo.new(hit["position"], hit["normal"], node, camera.global_position))
+		_kick()
 
 	# 4. recover
 	t = create_tween()
-	t.tween_property(arm, "rotation", REST_ANGLE, recover_time).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_property(tool_pivot, "rotation:x", REST_ANGLE, recover_time).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	await t.finished
 	_cooldown = swing_cooldown
 	_swinging = false
+
+
+## The tool jolts back toward the camera on impact (replaces the 2D body squash).
+func _kick() -> void:
+	tool_pivot.position = _tool_rest + Vector3(0, 0.02, 0.08)
+	create_tween().tween_property(tool_pivot, "position", _tool_rest, 0.15) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)

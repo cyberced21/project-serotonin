@@ -48,7 +48,7 @@ func _ready() -> void:
 		y += 11
 
 	var hint := Label.new()
-	hint.text = "WASD move  ·  hold SPACE / click to gather"
+	hint.text = "WASD move  ·  SHIFT sprint  ·  SPACE jump  ·  hold E / click gather  ·  ESC free mouse"
 	hint.add_theme_font_size_override("font_size", 8)
 	hint.modulate = Color(1, 1, 1, 0.7)
 	hint.position = Vector2(4, 166)

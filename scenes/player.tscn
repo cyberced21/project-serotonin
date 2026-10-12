@@ -1,44 +1,154 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://art/player.png" id="2_body"]
-[ext_resource type="Texture2D" path="res://art/axe.png" id="3_axe"]
-[ext_resource type="AudioStream" path="res://audio/swing.tres" id="4_swing"]
-[ext_resource type="Script" path="res://scripts/shake_camera.gd" id="5_cam"]
+[ext_resource type="Script" path="res://scripts/shake_camera.gd" id="2_cam"]
+[ext_resource type="AudioStream" path="res://audio/swing.tres" id="3_swing"]
+[ext_resource type="Script" path="res://scripts/viewmodel.gd" id="4_viewmodel"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_feet"]
-radius = 4.0
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+radius = 0.35
+height = 1.8
 
-[node name="Player" type="CharacterBody2D"]
-motion_mode = 1
+[sub_resource type="Environment" id="Environment_viewmodel"]
+background_mode = 1
+background_color = Color(0, 0, 0, 0)
+ambient_light_source = 2
+ambient_light_color = Color(0.66, 0.74, 0.78, 1)
+ambient_light_energy = 0.6
+tonemap_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wood"]
+albedo_color = Color(0.55, 0.38, 0.24, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_metal"]
+albedo_color = Color(0.62, 0.65, 0.7, 1)
+metallic = 0.6
+roughness = 0.45
+
+[sub_resource type="BoxMesh" id="BoxMesh_handle"]
+material = SubResource("StandardMaterial3D_wood")
+size = Vector3(0.035, 0.48, 0.035)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pick_head"]
+material = SubResource("StandardMaterial3D_metal")
+size = Vector3(0.045, 0.05, 0.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_axe_blade"]
+material = SubResource("StandardMaterial3D_metal")
+size = Vector3(0.025, 0.14, 0.16)
+
+[node name="Player" type="CharacterBody3D"]
+collision_layer = 2
 script = ExtResource("1_script")
-swing_sfx = ExtResource("4_swing")
+swing_sfx = ExtResource("3_swing")
 
-[node name="Body" type="Sprite2D" parent="."]
-position = Vector2(0, -8)
-texture = ExtResource("2_body")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_body")
 
-[node name="ToolPivot" type="Node2D" parent="."]
-position = Vector2(0, -7)
+[node name="Head" type="Node3D" parent="."]
+position = Vector3(0, 1.6, 0)
 
-[node name="Arm" type="Node2D" parent="ToolPivot"]
-position = Vector2(4, 0)
-rotation = 0.35
+[node name="Camera3D" type="Camera3D" parent="Head"]
+cull_mask = 1048573
+fov = 75.0
+script = ExtResource("2_cam")
 
-[node name="Tool" type="Sprite2D" parent="ToolPivot/Arm"]
-texture = ExtResource("3_axe")
-centered = false
-offset = Vector2(-2, -11)
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, -2)
-shape = SubResource("CircleShape2D_feet")
-
-[node name="Audio" type="AudioStreamPlayer2D" parent="."]
+[node name="Audio" type="AudioStreamPlayer" parent="."]
 volume_db = -6.0
 
-[node name="Camera2D" type="Camera2D" parent="."]
-position = Vector2(0, -8)
-position_smoothing_enabled = true
-position_smoothing_speed = 8.0
-script = ExtResource("5_cam")
+[node name="Viewmodel" type="CanvasLayer" parent="." node_paths=PackedStringArray("main_camera")]
+layer = -1
+script = ExtResource("4_viewmodel")
+main_camera = NodePath("../Head/Camera3D")
+
+[node name="View" type="TextureRect" parent="Viewmodel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="SubViewport" type="SubViewport" parent="Viewmodel"]
+transparent_bg = true
+size = Vector2i(1280, 720)
+
+[node name="Camera3D" type="Camera3D" parent="Viewmodel/SubViewport"]
+cull_mask = 2
+environment = SubResource("Environment_viewmodel")
+fov = 55.0
+near = 0.02
+
+[node name="Grip" type="Node3D" parent="Viewmodel/SubViewport/Camera3D"]
+position = Vector3(0.3, -0.42, -0.55)
+rotation = Vector3(0, -0.15, 0.2)
+
+[node name="ToolPivot" type="Node3D" parent="Viewmodel/SubViewport/Camera3D/Grip"]
+unique_name_in_owner = true
+
+[node name="Pickaxe" type="Node3D" parent="Viewmodel/SubViewport/Camera3D/Grip/ToolPivot"]
+unique_name_in_owner = true
+
+[node name="Handle" type="MeshInstance3D" parent="Viewmodel/SubViewport/Camera3D/Grip/ToolPivot/Pickaxe"]
+layers = 2
+cast_shadow = 0
+position = Vector3(0, 0.2, 0)
+mesh = SubResource("BoxMesh_handle")
+
+[node name="Head" type="MeshInstance3D" parent="Viewmodel/SubViewport/Camera3D/Grip/ToolPivot/Pickaxe"]
+layers = 2
+cast_shadow = 0
+position = Vector3(0, 0.42, -0.02)
+mesh = SubResource("BoxMesh_pick_head")
+
+[node name="Axe" type="Node3D" parent="Viewmodel/SubViewport/Camera3D/Grip/ToolPivot"]
+unique_name_in_owner = true
+visible = false
+
+[node name="Handle" type="MeshInstance3D" parent="Viewmodel/SubViewport/Camera3D/Grip/ToolPivot/Axe"]
+layers = 2
+cast_shadow = 0
+position = Vector3(0, 0.2, 0)
+mesh = SubResource("BoxMesh_handle")
+
+[node name="Blade" type="MeshInstance3D" parent="Viewmodel/SubViewport/Camera3D/Grip/ToolPivot/Axe"]
+layers = 2
+cast_shadow = 0
+position = Vector3(0, 0.38, -0.09)
+mesh = SubResource("BoxMesh_axe_blade")
+
+[node name="Reticle" type="CanvasLayer" parent="."]
+layer = 2
+
+[node name="Dot" type="ColorRect" parent="Reticle"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 2.0
+offset_bottom = 2.0
+pivot_offset = Vector2(2, 2)
+mouse_filter = 2
+color = Color(1, 1, 1, 0.85)
+
+[node name="Hover" type="Label" parent="Reticle"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = 14.0
+offset_right = 150.0
+offset_bottom = 44.0
+mouse_filter = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1

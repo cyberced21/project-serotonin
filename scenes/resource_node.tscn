@@ -1,66 +1,81 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/resource_node.gd" id="1_script"]
-[ext_resource type="Shader" path="res://shaders/hit_flash.gdshader" id="2_flash"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_flash"]
-shader = ExtResource("2_flash")
-shader_parameter/flash = 0.0
-shader_parameter/flash_color = Color(1, 1, 1, 1)
+[sub_resource type="BoxShape3D" id="BoxShape3D_base"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_base"]
-radius = 5.0
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_particle"]
+vertex_color_use_as_albedo = true
+roughness = 1.0
 
-[sub_resource type="Gradient" id="Gradient_fade"]
-offsets = PackedFloat32Array(0, 0.7, 1)
-colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0)
+[sub_resource type="BoxMesh" id="BoxMesh_chip"]
+material = SubResource("StandardMaterial3D_particle")
+size = Vector3(0.06, 0.06, 0.06)
 
-[node name="ResourceNode" type="StaticBody2D"]
+[sub_resource type="BoxMesh" id="BoxMesh_burst"]
+material = SubResource("StandardMaterial3D_particle")
+size = Vector3(0.1, 0.1, 0.1)
+
+[sub_resource type="Curve" id="Curve_shrink"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[node name="ResourceNode" type="StaticBody3D"]
 script = ExtResource("1_script")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
-material = SubResource("ShaderMaterial_flash")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.5, 0)
+shape = SubResource("BoxShape3D_base")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, -2)
-shape = SubResource("CircleShape2D_base")
+[node name="Visual" type="Node3D" parent="."]
 
-[node name="Chips" type="CPUParticles2D" parent="."]
+[node name="Body" type="Node3D" parent="Visual"]
+
+[node name="Chunks" type="Node3D" parent="Visual"]
+
+[node name="Rubble" type="Node3D" parent="."]
+visible = false
+
+[node name="Chips" type="CPUParticles3D" parent="."]
 emitting = false
-amount = 8
-lifetime = 0.45
+amount = 10
+lifetime = 0.6
 one_shot = true
 explosiveness = 1.0
-direction = Vector2(-1, -0.8)
+mesh = SubResource("BoxMesh_chip")
+direction = Vector3(0, 0, 1)
 spread = 35.0
-gravity = Vector2(0, 320)
-initial_velocity_min = 45.0
-initial_velocity_max = 95.0
-scale_amount_min = 1.0
-scale_amount_max = 2.0
-color_ramp = SubResource("Gradient_fade")
+initial_velocity_min = 2.0
+initial_velocity_max = 4.0
+scale_amount_min = 0.6
+scale_amount_max = 1.4
+scale_amount_curve = SubResource("Curve_shrink")
 
-[node name="Burst" type="CPUParticles2D" parent="."]
-position = Vector2(0, -16)
+[node name="Burst" type="CPUParticles3D" parent="."]
+position = Vector3(0, 0.6, 0)
 emitting = false
 amount = 24
-lifetime = 0.8
+lifetime = 0.9
 one_shot = true
 explosiveness = 0.95
+mesh = SubResource("BoxMesh_burst")
 emission_shape = 1
-emission_sphere_radius = 8.0
-direction = Vector2(0, -1)
-spread = 120.0
-gravity = Vector2(0, 260)
-initial_velocity_min = 40.0
-initial_velocity_max = 110.0
-scale_amount_min = 1.0
-scale_amount_max = 3.0
-color_ramp = SubResource("Gradient_fade")
+emission_sphere_radius = 0.4
+direction = Vector3(0, 1, 0)
+spread = 70.0
+initial_velocity_min = 2.0
+initial_velocity_max = 5.0
+scale_amount_min = 0.6
+scale_amount_max = 1.6
+scale_amount_curve = SubResource("Curve_shrink")
 
-[node name="Audio" type="AudioStreamPlayer2D" parent="."]
+[node name="Audio" type="AudioStreamPlayer3D" parent="."]
+position = Vector3(0, 0.6, 0)
+unit_size = 4.0
+max_distance = 50.0
 max_polyphony = 4
-bus = &"Master"
 
-[node name="BreakAudio" type="AudioStreamPlayer2D" parent="."]
-bus = &"Master"
+[node name="BreakAudio" type="AudioStreamPlayer3D" parent="."]
+position = Vector3(0, 0.6, 0)
+unit_size = 6.0
+max_distance = 60.0
