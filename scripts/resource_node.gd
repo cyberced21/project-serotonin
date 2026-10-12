@@ -15,6 +15,8 @@ signal respawned(node: ResourceNode)
 const PICKUP_SCENE := preload("res://scenes/pickup.tscn")
 const NODE_SURFACE := preload("res://materials/node_surface.tres")
 const NOTCH_COLOR := Color(0.08, 0.06, 0.05, 0.85)
+const GHOST_OUTLINE := preload("res://shaders/ghost_outline.gdshader")
+const GHOST_MASK := preload("res://shaders/ghost_mask.gdshader")
 const DEFLECT_SFX := preload("res://audio/stone_hit.tres")
 const DEFLECT_COLOR := Color("ff8a7a")
 const WORLD_LAYER := 1
@@ -68,6 +70,15 @@ const FELLED_SHAPE_SCALE := 0.6
 ## Tipping speed at the start of the fall (rad/s).
 @export var topple_push := 0.8
 
+@export_group("Respawn display")
+## Countdown above the spot while the node is depleted.
+@export var show_respawn_timer := true
+## Outline (in the skill's colour) of where the node will grow back. Fades in as it nears.
+@export var show_respawn_ghost := true
+@export_range(0.0, 1.0) var ghost_alpha := 0.6
+## The timer is hidden beyond this distance from the camera, to avoid clutter.
+@export var respawn_display_range := 30.0
+
 @export_group("Feel")
 @export var hitstop_hit := 0.045
 @export var hitstop_break := 0.11
@@ -90,6 +101,10 @@ var _flash_tween: Tween
 var _nudge_tween: Tween
 var _burst_home := Vector3.ZERO
 var _break_audio_home := Vector3.ZERO
+var _respawn_timer: SceneTreeTimer
+var _timer_label: Label3D
+var _ghost: Node3D
+var _ghost_outline: ShaderMaterial
 
 
 func _ready() -> void:
@@ -101,6 +116,8 @@ func _ready() -> void:
 	burst.color = burst_color
 	hits_left = max_hits
 	_reset_visuals()
+	_build_respawn_display()
+	set_process(false)
 
 
 func _make_notches() -> Node3D:
@@ -203,7 +220,11 @@ func _break(info: HitInfo) -> void:
 		_spawn_drops(info)
 	depleted.emit(self)
 
-	await get_tree().create_timer(respawn_time).timeout
+	_respawn_timer = get_tree().create_timer(respawn_time)
+	_set_respawn_display(true)
+	await _respawn_timer.timeout
+	_respawn_timer = null
+	_set_respawn_display(false)
 	hits_left = max_hits
 	_reset_visuals()
 	visual.scale = Vector3.ONE * 0.4
@@ -409,6 +430,64 @@ func _throw(piece: MeshInstance3D, xform: Transform3D, push: Vector3, speed: flo
 	t.tween_interval(DEBRIS_LIFETIME)
 	t.tween_property(piece, "scale", Vector3.ONE * 0.01, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 	t.tween_callback(body.queue_free)
+
+
+# --- respawn display ------------------------------------------------------------------------
+
+func _process(_delta: float) -> void:
+	if _respawn_timer == null:
+		return
+	var left := _respawn_timer.time_left
+	var secs := ceili(left)
+	_timer_label.text = "%d:%02d" % [secs / 60, secs % 60]
+	var progress := 1.0 - left / respawn_time
+	var c := Skills.color(skill)
+	_ghost_outline.set_shader_parameter("color", Color(c, lerpf(0.2, ghost_alpha, progress)))
+
+
+## Built once, while the node is intact: a countdown label and an outline-only copy of every
+## mesh in Visual (see shaders/ghost_*.gdshader), both hidden until the node is depleted.
+func _build_respawn_display() -> void:
+	_timer_label = Label3D.new()
+	_timer_label.name = "RespawnTimer"
+	_timer_label.position = Vector3(0, popup_height + 0.35, 0)
+	_timer_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_timer_label.no_depth_test = true
+	_timer_label.pixel_size = 0.004
+	_timer_label.font_size = 64
+	_timer_label.outline_size = 16
+	_timer_label.outline_modulate = Color(0, 0, 0, 0.85)
+	_timer_label.visibility_range_end = respawn_display_range
+	_timer_label.visible = false
+	add_child(_timer_label)
+
+	_ghost_outline = ShaderMaterial.new()
+	_ghost_outline.shader = GHOST_OUTLINE
+	var mask := ShaderMaterial.new()
+	mask.shader = GHOST_MASK
+	mask.render_priority = -1  # every ghost's mask before any outline, so insides stay hidden
+	mask.next_pass = _ghost_outline
+	_ghost = Node3D.new()
+	_ghost.name = "RespawnGhost"
+	_ghost.visible = false
+	add_child(_ghost)
+	for s in _surfaces:
+		if not s is MeshInstance3D:
+			continue
+		var g := MeshInstance3D.new()
+		g.mesh = (s as MeshInstance3D).mesh
+		g.material_override = mask
+		g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_ghost.add_child(g)
+		g.transform = global_transform.affine_inverse() * s.global_transform
+
+
+func _set_respawn_display(on: bool) -> void:
+	_timer_label.visible = on and show_respawn_timer
+	_ghost.visible = on and show_respawn_ghost
+	set_process(on)
+	if on:
+		_process(0.0)
 
 
 # --- feedback -------------------------------------------------------------------------------

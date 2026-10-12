@@ -1,0 +1,85 @@
+extends AudioStreamPlayer3D
+## Positional footsteps from the player's feet. Steps are spaced by distance travelled (longer
+## strides when sprinting, short quiet ones crouched), and the sound matches the surface:
+## on the terrain it's picked the same way the low-poly shader picks colours (slope + height),
+## anything else (rocks, greybox blocks) sounds like stone.
+## The player calls tick() every physics frame and land() when touching down.
+
+const SOUNDS := {
+	&"grass": preload("res://audio/footsteps/grass.tres"),
+	&"dirt": preload("res://audio/footsteps/dirt.tres"),
+	&"rock": preload("res://audio/footsteps/rock.tres"),
+	&"sand": preload("res://audio/footsteps/sand.tres"),
+	&"snow": preload("res://audio/footsteps/snow.tres"),
+}
+## Fallbacks matching the defaults in shaders/terrain_lowpoly.gdshader, used when the terrain
+## material doesn't override them.
+const SHADER_DEFAULTS := {
+	&"dirt_slope": 0.86, &"rock_slope": 0.68, &"sand_height": -2.0, &"snow_height": 40.0,
+}
+
+@export var walk_stride := 1.8
+@export var sprint_stride := 2.6
+@export var crouch_stride := 1.1
+@export var walk_db := -4.0
+@export var sprint_db := 0.0
+@export var crouch_db := -12.0
+@export var land_db := 3.0
+## Falls slower than this (m/s) make no landing sound.
+@export var land_min_speed := 3.0
+
+var _dist := 0.0
+
+
+## speed: horizontal speed (m/s). Call every physics frame.
+func tick(delta: float, speed: float, on_floor: bool, crouched: bool, walk_speed: float, sprint_speed: float) -> void:
+	if not on_floor or speed < 0.5:
+		_dist = 0.0  # the first step after starting to move comes quickly
+		return
+	var t := clampf(inverse_lerp(walk_speed, sprint_speed, speed), 0.0, 1.0)
+	var stride := crouch_stride if crouched else lerpf(walk_stride, sprint_stride, t)
+	_dist += speed * delta
+	if _dist >= stride * 0.5:  # half stride: first footfall lands half a stride in
+		_dist -= stride
+		_play(crouch_db if crouched else lerpf(walk_db, sprint_db, t), 1.0)
+
+
+## fall_speed: downward speed just before touching down (positive, m/s).
+func land(fall_speed: float) -> void:
+	if fall_speed < land_min_speed:
+		return
+	var hard := clampf(inverse_lerp(land_min_speed, 12.0, fall_speed), 0.0, 1.0)
+	_play(land_db + hard * 3.0, lerpf(0.95, 0.8, hard))
+	_dist = 0.0
+
+
+func _play(db: float, pitch: float) -> void:
+	stream = SOUNDS[surface()]
+	volume_db = db
+	pitch_scale = pitch
+	play()
+
+
+## Which surface the feet are on: grass, dirt, rock, sand or snow.
+func surface() -> StringName:
+	var terrain := get_tree().get_first_node_in_group("terrain") as Terrain3D
+	var feet := global_position
+	if terrain and terrain.data:
+		var h: float = terrain.data.get_height(feet)
+		if not is_nan(h) and absf(h - feet.y) < 0.3:
+			var slope: float = terrain.data.get_normal(feet).y
+			if slope < _param(terrain, &"rock_slope"):
+				return &"rock"
+			if h > _param(terrain, &"snow_height"):
+				return &"snow"
+			if slope < _param(terrain, &"dirt_slope"):
+				return &"dirt"
+			if h < _param(terrain, &"sand_height"):
+				return &"sand"
+			return &"grass"
+	return &"rock"
+
+
+func _param(terrain: Terrain3D, name: StringName) -> float:
+	var v = terrain.material.get_shader_param(name) if terrain.material else null
+	return float(v) if v != null else SHADER_DEFAULTS[name]

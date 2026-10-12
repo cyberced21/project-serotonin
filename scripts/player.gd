@@ -99,6 +99,7 @@ const DEFLECT_COLOR := Color("ff8a7a")
 @onready var dot: Control = $Reticle/Dot
 @onready var hover_label: Label = $Reticle/Hover
 @onready var audio: AudioStreamPlayer = $Audio
+@onready var footsteps: Node = $Footsteps
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _base_fov := 75.0
@@ -221,7 +222,14 @@ func _move(delta: float) -> void:
 		horizontal = horizontal.move_toward(target, rate * delta)
 	velocity.x = horizontal.x
 	velocity.z = horizontal.y
+	var was_on_floor := is_on_floor()
+	var fall_speed := -velocity.y
 	move_and_slide()
+
+	if is_on_floor() and not was_on_floor:
+		footsteps.land(fall_speed)
+	var stepping_speed := horizontal.length() if _state == State.NORMAL else 0.0  # no steps mid-slide
+	footsteps.tick(delta, stepping_speed, is_on_floor(), _crouch > 0.5, walk_speed, sprint_speed)
 
 	var fast := horizontal.length() > walk_speed + 0.5
 	var kick := slide_fov_kick if _state == State.SLIDE else (sprint_fov_kick if fast else 0.0)
@@ -331,6 +339,7 @@ func _mantle(land: Vector3) -> void:
 	nod.tween_property(camera, "position:y", 0.0, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await t.finished
 	velocity = -global_basis.z * walk_speed * 0.5  # carry on moving instead of stopping dead
+	footsteps.land(footsteps.land_min_speed + 1.0)  # feet planting on the ledge
 	_state = State.NORMAL
 
 

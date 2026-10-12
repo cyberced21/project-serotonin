@@ -43,7 +43,7 @@ rotation = Vector3(-0.9, 0.6, 0)
 shadow_enabled = true
 directional_shadow_max_distance = 60.0
 
-[node name="Terrain3D" type="Terrain3D" parent="."]
+[node name="Terrain3D" type="Terrain3D" parent="." groups=["terrain"]]
 data_directory = "res://terrain_data"
 material = SubResource("Terrain3DMaterial_lowpoly")
 assets = ExtResource("6_terrain_assets")
