@@ -21,6 +21,4 @@ script = ExtResource("1_script")
 shape = SubResource("SphereShape3D_drop")
 
 [node name="Sprite3D" type="Sprite3D" parent="."]
-pixel_size = 0.04
 billboard = 1
-texture_filter = 0

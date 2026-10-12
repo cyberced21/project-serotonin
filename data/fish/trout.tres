@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="FishSpecies" format=3]
+
+[ext_resource type="Script" path="res://scripts/fish_species.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://models/fish/trout.glb" id="2_model"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"trout"
+model = ExtResource("2_model")
+required_level = 10
+xp = 25
+school_min = 3
+school_max = 5
+spacing = 0.5
+lurker = false
+cruise_speed = 0.55
+flee_speed = 4.2
+turn_rate = 4.0
+scare_radius = 3.0
+calm_down = 3.5
+nerve = 0.4

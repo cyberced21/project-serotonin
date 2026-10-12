@@ -219,6 +219,106 @@ def axe():
     export("axe")
 
 
-os.makedirs(OUT_DIR, exist_ok=True)
-for build in (rock, tree, pickaxe, axe):
+# --- fish -------------------------------------------------------------------------------------
+# One mesh per fish ("Fish"), head toward +Y (Godot -Z, forward), origin at the body centre, so
+# the swim shader can wiggle it by distance along the body. Length in metres.
+
+def fish_mesh(length, width, height, tail_taper=0.85, snout=1.0):
+    bm = bmesh.new()
+    bmesh.ops.create_uvsphere(bm, u_segments=8, v_segments=6, radius=0.5)
+    half = length / 2.0
+    for v in bm.verts:
+        y = v.co.y  # -0.5 (tail) .. 0.5 (head)
+        taper = 1.0 - tail_taper * max(-y * 2.0, 0.0) ** 1.5  # thin toward the tail
+        if y > 0:
+            taper *= 1.0 - (1.0 - snout) * (y * 2.0) ** 2      # pointy / flat snout
+        v.co.x *= width * taper
+        v.co.z *= height * taper
+        v.co.y *= length
+    # tail fin: a thin vertical fan behind the body; dorsal fin on top
+    tail = [(0.0, -half * 0.92, 0.0), (0.0, -half - length * 0.22, height * 0.42),
+            (0.0, -half - length * 0.16, 0.0), (0.0, -half - length * 0.22, -height * 0.42)]
+    fin_tri(bm, tail[0], tail[1], tail[2])
+    fin_tri(bm, tail[0], tail[2], tail[3])
+    fin_tri(bm, (0.0, length * 0.12, height * 0.42), (0.0, -length * 0.12, height * 0.68),
+            (0.0, -length * 0.2, height * 0.38))
+    return bm
+
+
+def fin_tri(bm, a, b, c):
+    """A flat triangle visible from both sides (two faces, each with its own vertices)."""
+    bm.faces.new([bm.verts.new(p) for p in (a, b, c)])
+    bm.faces.new([bm.verts.new(p) for p in (c, b, a)])
+
+
+def fish_painter(back, side, belly, fin, rng, bars=None, stripe=None, spots=None, length=1.0):
+    def choose(f):
+        c = f.calc_center_median()
+        if abs(f.normal.x) > 0.95 and abs(c.x) < 0.002:  # the flat fins (they lie in the x = 0 plane)
+            return fin
+        if f.normal.z > 0.45:
+            return back
+        if f.normal.z < -0.45:
+            return belly
+        if bars and int((c.y / length + 0.5) * 6) % 2 == 1 and c.y > -length * 0.3:
+            return bars  # perch: dark vertical bars
+        if stripe and abs(c.z) < length * 0.03:
+            return stripe  # trout: pink side stripe
+        if spots and rng.random() < 0.3:
+            return spots  # pike: pale spots
+        return side
+    return choose
+
+
+def fish(name, length, width, height, painter, tail_taper=0.85, snout=1.0):
+    reset()
+    bm = fish_mesh(length, width, height, tail_taper, snout)
+    paint(bm, painter)
+    make_object("Fish", bm)
+    export(os.path.join("fish", name))
+
+
+def perch():
+    rng = random.Random(21)
+    fish("perch", 0.24, 0.07, 0.1, fish_painter("leaves.4", "leaves.6", "accent.3", "accent.2", rng,
+                                                bars="leaves.1", length=0.24))
+
+
+def trout():
+    rng = random.Random(22)
+    fish("trout", 0.34, 0.08, 0.1, fish_painter("leaves.1", "metal.6", "neutral.7", "leaves.2", rng,
+                                                stripe="accent.7", length=0.34))
+
+
+def pike():
+    rng = random.Random(23)
+    fish("pike", 0.7, 0.1, 0.11, fish_painter("leaves.2", "leaves.4", "wood.7", "leaves.3", rng,
+                                              spots="accent.3", length=0.7), tail_taper=0.7, snout=0.55)
+
+
+# --- item models (for icons, later maybe for pickups) -----------------------------------------
+
+def log_item():
+    reset()
+    rng = random.Random(31)
+    bm = prism(6, 0.09, 0.085, 0.42)
+    jitter(bm, 0.05, rng)
+    paint(bm, lambda f: "wood.7" if abs(f.normal.z) > 0.9 else ("wood.3" if rng.random() < 0.6 else "wood.2"))
+    make_object("Item", bm, rotation=(math.pi / 2, 0, 0.3))  # lying down
+    export(os.path.join("items", "wood"))
+
+
+def ore_item():
+    reset()
+    rng = random.Random(32)
+    bm = blob(0.13, rng, jitter_amount=0.3, squash=(1.0, 0.9, 0.8))
+    paint(bm, lambda f: ("ore.copper" if f.normal.z > 0.0 else "ore.copper_dark") if rng.random() < 0.55
+          else ("stone.4" if f.normal.z > 0.3 else "stone.2"))
+    make_object("Item", bm)
+    export(os.path.join("items", "ore"))
+
+
+os.makedirs(os.path.join(OUT_DIR, "fish"), exist_ok=True)
+os.makedirs(os.path.join(OUT_DIR, "items"), exist_ok=True)
+for build in (rock, tree, pickaxe, axe, perch, trout, pike, log_item, ore_item):
     build()

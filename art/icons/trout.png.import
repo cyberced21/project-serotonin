@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bf8bml6h3f0j6"
-path="res://.godot/imported/item_wood.png-d51187a38535150b45f0be6502b1430b.ctex"
+uid="uid://bxafcykbn2bjf"
+path="res://.godot/imported/trout.png-02a8435647d50b40564931b1513d2051.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/item_wood.png"
-dest_files=["res://.godot/imported/item_wood.png-d51187a38535150b45f0be6502b1430b.ctex"]
+source_file="res://art/icons/trout.png"
+dest_files=["res://.godot/imported/trout.png-02a8435647d50b40564931b1513d2051.ctex"]
 
 [params]
 

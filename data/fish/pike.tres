@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="FishSpecies" format=3]
+
+[ext_resource type="Script" path="res://scripts/fish_species.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://models/fish/pike.glb" id="2_model"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"pike"
+model = ExtResource("2_model")
+required_level = 20
+xp = 60
+school_min = 1
+school_max = 1
+spacing = 1.0
+lurker = true
+cruise_speed = 0.25
+flee_speed = 5.5
+turn_rate = 2.0
+scare_radius = 4.0
+calm_down = 6.0
+nerve = 0.15

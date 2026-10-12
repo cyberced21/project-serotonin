@@ -4,6 +4,8 @@ extends RigidBody3D
 ## behind a rock isn't lost (and the world doesn't fill up with drops).
 
 @export var settle_time := 0.35
+## Width of the floating icon in the world (m).
+@export var icon_size := 0.32
 @export var magnet_radius := 3.0
 ## After this many seconds, drops are pulled from auto_pull_radius instead.
 @export var auto_pull_time := 4.0
@@ -28,6 +30,8 @@ var _vel := Vector3.ZERO
 
 func _ready() -> void:
 	sprite.texture = icon
+	if icon:
+		sprite.pixel_size = icon_size / icon.get_width()  # same size in the world whatever the icon resolution
 
 
 ## Call after adding to the tree.

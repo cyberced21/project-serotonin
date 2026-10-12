@@ -1,15 +1,12 @@
 extends CanvasLayer
-## Inventory counters (top-left) that pop when they change, a controls hint, a context XP bar
-## (bottom-centre) for the skill you just trained, and a level-up banner.
+## Inventory counters (top-left, one row per item you hold, in Items order) that pop when they
+## change, a controls hint, a context XP bar (bottom-centre) for the skill you just trained, and
+## a level-up banner.
 
-const ITEMS := [
-	[&"wood", preload("res://art/item_wood.png")],
-	[&"ore", preload("res://art/item_ore.png")],
-]
 const LEVEL_UP_SFX := preload("res://audio/level_up.wav")
 
-## Item icons are 8 px pixel art, drawn at this scale with nearest filtering.
-const ICON_SCALE := 4.0
+const ICON_SIZE := 40.0
+const ROW_GAP := 6.0
 const BAR_WIDTH := 320.0
 ## Distance from the bottom of the screen to the XP bar.
 const BAR_BOTTOM := 90.0
@@ -31,29 +28,9 @@ var _banner_tween: Tween
 
 
 func _ready() -> void:
-	var icon_size := 8.0 * ICON_SCALE
-	var y := 16.0
-	for entry in ITEMS:
-		var id: StringName = entry[0]
-		var row := Control.new()
-		row.position = Vector2(16, y)
-		row.size = Vector2(160, icon_size)
-		row.pivot_offset = Vector2(icon_size / 2.0, icon_size / 2.0)
-		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(row)
-		var icon := TextureRect.new()
-		icon.texture = entry[1]
-		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.size = Vector2(icon_size, icon_size)
-		row.add_child(icon)
-		var label := _make_label(28)
-		label.position = Vector2(icon_size + 10, -4)
-		label.text = str(Inventory.count(id))  # may be non-zero after loading a save
-		row.add_child(label)
-		_labels[id] = label
-		_rows[id] = row
-		y += icon_size + 10
+	for id in Inventory.items:  # rows for anything already held after loading a save
+		if Inventory.count(id) > 0:
+			_add_row(id)
 
 	var hint := _make_label(16)
 	hint.text = "WASD move  ·  SHIFT sprint  ·  SPACE jump / mantle  ·  CTRL crouch / slide  ·  hold E / click gather  ·  ESC free mouse"
@@ -128,9 +105,41 @@ func _build_banner() -> void:
 	add_child(_banner)
 
 
+func _add_row(id: StringName) -> void:
+	var row := Control.new()
+	row.size = Vector2(200, ICON_SIZE)
+	row.pivot_offset = Vector2(ICON_SIZE / 2.0, ICON_SIZE / 2.0)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(row)
+	var icon := TextureRect.new()
+	icon.texture = Items.icon(id)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.size = Vector2(ICON_SIZE, ICON_SIZE)
+	icon.tooltip_text = Items.display_name(id)
+	row.add_child(icon)
+	var label := _make_label(28)
+	label.position = Vector2(ICON_SIZE + 10, 0)
+	label.text = str(Inventory.count(id))
+	row.add_child(label)
+	_labels[id] = label
+	_rows[id] = row
+	_layout_rows()
+
+
+## Stack the rows top-left in Items order.
+func _layout_rows() -> void:
+	var ids := _rows.keys()
+	ids.sort_custom(func(a: StringName, b: StringName) -> bool: return Items.order(a) < Items.order(b))
+	var y := 16.0
+	for id in ids:
+		_rows[id].position = Vector2(16, y)
+		y += ICON_SIZE + ROW_GAP
+
+
 func _on_changed(item: StringName, count: int) -> void:
 	if not _labels.has(item):
-		return
+		_add_row(item)
 	_labels[item].text = str(count)
 	var row := _rows[item]
 	row.scale = Vector2(1.4, 1.4)

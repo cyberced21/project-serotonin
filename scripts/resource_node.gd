@@ -36,6 +36,7 @@ const FELLED_SHAPE_SCALE := 0.6
 
 @export_group("Gathering")
 @export var item: StringName = &"wood"
+## Leave empty to use the item's icon from art/icons/ (see Items).
 @export var item_icon: Texture2D
 @export var tool_type: StringName = &"axe"
 @export_range(1, 20) var max_hits := 5
@@ -336,7 +337,7 @@ func _spawn_drops(info: HitInfo) -> void:
 func _launch_drop(from: Vector3, velocity: Vector3, delay: float) -> void:
 	var p := PICKUP_SCENE.instantiate()
 	p.item = item
-	p.icon = item_icon
+	p.icon = item_icon if item_icon else Items.icon(item)
 	get_parent().add_child(p)
 	p.launch(from, velocity, delay)
 

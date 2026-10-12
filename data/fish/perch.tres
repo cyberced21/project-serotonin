@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="FishSpecies" format=3]
+
+[ext_resource type="Script" path="res://scripts/fish_species.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://models/fish/perch.glb" id="2_model"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"perch"
+model = ExtResource("2_model")
+required_level = 1
+xp = 10
+school_min = 6
+school_max = 8
+spacing = 0.3
+lurker = false
+cruise_speed = 0.35
+flee_speed = 2.6
+turn_rate = 3.0
+scare_radius = 2.2
+calm_down = 2.5
+nerve = 0.6
