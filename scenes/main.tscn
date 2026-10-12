@@ -6,6 +6,21 @@
 [ext_resource type="PackedScene" path="res://scenes/rock.tscn" id="4_rock"]
 [ext_resource type="Shader" path="res://shaders/terrain_lowpoly.gdshader" id="5_terrain_shader"]
 [ext_resource type="Terrain3DAssets" path="res://materials/terrain_assets.tres" id="6_terrain_assets"]
+[ext_resource type="Script" path="res://scripts/water_body.gd" id="7_water"]
+[ext_resource type="Shader" path="res://shaders/water_lowpoly.gdshader" id="8_water_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
+render_priority = 0
+shader = ExtResource("8_water_shader")
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_water"]
+material = SubResource("ShaderMaterial_water")
+size = Vector2(26, 26)
+subdivide_width = 25
+subdivide_depth = 25
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pond"]
+size = Vector3(26, 3, 26)
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_horizon_color = Color(0.66, 0.74, 0.78, 1)
@@ -32,6 +47,9 @@ roughness = 1.0
 shader_override_enabled = true
 shader_override = ExtResource("5_terrain_shader")
 show_checkered = false
+_shader_parameters = {
+&"sand_height": -0.05
+}
 
 [node name="Main" type="Node3D"]
 
@@ -47,6 +65,21 @@ directional_shadow_max_distance = 60.0
 data_directory = "res://terrain_data"
 material = SubResource("Terrain3DMaterial_lowpoly")
 assets = ExtResource("6_terrain_assets")
+
+[node name="Pond" type="Area3D" parent="."]
+position = Vector3(20, 0, 16)
+collision_layer = 0
+collision_mask = 0
+script = ExtResource("7_water")
+
+[node name="Volume" type="CollisionShape3D" parent="Pond"]
+position = Vector3(0, -1, 0)
+shape = SubResource("BoxShape3D_pond")
+
+[node name="Surface" type="MeshInstance3D" parent="Pond"]
+position = Vector3(0, -0.15, 0)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_water")
 
 [node name="Greybox" type="Node3D" parent="."]
 

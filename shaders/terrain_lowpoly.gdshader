@@ -52,6 +52,8 @@ uniform vec3 dirt_color : source_color = vec3(0.52, 0.42, 0.30);
 uniform vec3 rock_color : source_color = vec3(0.47, 0.46, 0.45);
 uniform vec3 sand_color : source_color = vec3(0.80, 0.74, 0.55);
 uniform vec3 snow_color : source_color = vec3(0.92, 0.94, 0.96);
+// Pond / lake bed below `bed_height` — dark and muddy so fish stand out against it.
+uniform vec3 bed_color : source_color = vec3(0.36, 0.34, 0.24);
 group_uniforms;
 group_uniforms bands;
 // Slope is the facet normal's Y: 1 = flat, 0 = vertical wall.
@@ -59,6 +61,7 @@ uniform float dirt_slope : hint_range(0.0, 1.0) = 0.86;
 uniform float rock_slope : hint_range(0.0, 1.0) = 0.68;
 // World heights (m).
 uniform float sand_height = -2.0;
+uniform float bed_height = -0.4;
 uniform float snow_height = 40.0;
 // Size (m) of the patches the two grass colours alternate in.
 uniform float patch_size = 7.0;
@@ -179,6 +182,7 @@ void fragment() {
 	vec2 patch = floor((cell + vec2(hash(floor(cell / patch_size)) * patch_size)) / patch_size);
 	vec3 albedo = mix(grass_color, grass_color_2, step(0.55, hash(patch)));
 	albedo = h < sand_height ? sand_color : albedo;
+	albedo = h < bed_height ? bed_color : albedo;
 	albedo = slope < dirt_slope ? dirt_color : albedo;
 	albedo = slope < rock_slope ? rock_color : albedo;
 	albedo = h > snow_height && slope >= rock_slope ? snow_color : albedo;

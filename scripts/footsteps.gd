@@ -2,7 +2,8 @@ extends AudioStreamPlayer3D
 ## Positional footsteps from the player's feet. Steps are spaced by distance travelled (longer
 ## strides when sprinting, short quiet ones crouched), and the sound matches the surface:
 ## on the terrain it's picked the same way the low-poly shader picks colours (slope + height),
-## anything else (rocks, greybox blocks) sounds like stone.
+## anything else (rocks, greybox blocks) sounds like stone. In water (see WaterBody) every step
+## sloshes and leaves a ripple ring, and landing in it splashes.
 ## The player calls tick() every physics frame and land() when touching down.
 
 const SOUNDS := {
@@ -11,7 +12,11 @@ const SOUNDS := {
 	&"rock": preload("res://audio/footsteps/rock.tres"),
 	&"sand": preload("res://audio/footsteps/sand.tres"),
 	&"snow": preload("res://audio/footsteps/snow.tres"),
+	&"water": preload("res://audio/footsteps/water.tres"),
 }
+const SPLASH := preload("res://audio/movement/splash.tres")
+## Water shallower than this (m) still sounds like the ground under it.
+const WET_DEPTH := 0.06
 ## Fallbacks matching the defaults in shaders/terrain_lowpoly.gdshader, used when the terrain
 ## material doesn't override them.
 const SHADER_DEFAULTS := {
@@ -49,21 +54,40 @@ func land(fall_speed: float) -> void:
 	if fall_speed < land_min_speed:
 		return
 	var hard := clampf(inverse_lerp(land_min_speed, 12.0, fall_speed), 0.0, 1.0)
-	_play(land_db + hard * 3.0, lerpf(0.95, 0.8, hard))
+	if surface() == &"water":
+		stream = SPLASH
+		volume_db = land_db + hard * 3.0
+		pitch_scale = lerpf(1.05, 0.85, hard)
+		play()
+		_ripple(2.4)
+	else:
+		_play(land_db + hard * 3.0, lerpf(0.95, 0.8, hard))
 	_dist = 0.0
 
 
 func _play(db: float, pitch: float) -> void:
-	stream = SOUNDS[surface()]
+	var s := surface()
+	stream = SOUNDS[s]
 	volume_db = db
 	pitch_scale = pitch
 	play()
+	if s == &"water":
+		_ripple(1.4)
 
 
-## Which surface the feet are on: grass, dirt, rock, sand or snow.
+func _ripple(size: float) -> void:
+	var water := WaterBody.surface_at(get_tree(), global_position)
+	if water:
+		var p := global_position
+		WaterRipple.spawn(water, Vector3(p.x, water.surface_height, p.z), size)
+
+
+## Which surface the feet are on: water, grass, dirt, rock, sand or snow.
 func surface() -> StringName:
-	var terrain := get_tree().get_first_node_in_group("terrain") as Terrain3D
 	var feet := global_position
+	if WaterBody.depth_at(get_tree(), feet) > WET_DEPTH:
+		return &"water"
+	var terrain := get_tree().get_first_node_in_group("terrain") as Terrain3D
 	if terrain and terrain.data:
 		var h: float = terrain.data.get_height(feet)
 		if not is_nan(h) and absf(h - feet.y) < 0.3:

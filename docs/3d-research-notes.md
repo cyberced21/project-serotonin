@@ -119,3 +119,22 @@ Tick items off as you go. Decisions already made are listed at the bottom for re
 ## Still open
 
 - Nothing — design tree covered. Revisit Terrain3D (4.7 support + low-poly look) before step 7.
+
+---
+
+## Fishing (spearfishing) — design decisions
+
+| # | Topic | Decision |
+|---|-------|----------|
+| F1 | Style | Spearfishing: wade into shallows and stab at visible fish. |
+| F2 | Water access | Wading only (0–0.9 m deep): slowed, splashy footsteps. Swimming later. Pond reshaped shallow with a sloping sandy shore. |
+| F3 | Strike | Same as the swing: wind-up → thrust → hit checked on the impact frame, ~2.5 m reach, sphere-swept (~12 cm). Spear is a 3rd tool type. Fish shown where they really are (no refraction shift), light surface ripple only. |
+| F4 | Fish | Wary schools: calm / alert / flee. Strikes, fast splashy steps and misses scatter the school into sub-groups that regroup. Crouch-walking is stealthy. |
+| F5 | Multi-spear | Physical: the thrust sweeps a capsule (~0.5 m × 12 cm); every fish inside is skewered. Capsule grows slightly with Fishing level. Each extra fish escalates hit-stop / shake / pitch, "Double!"/"Triple!" popup, fish stay on the spear through the yank. |
+| F6 | Species | Perch (lvl 1, schools 6–8, slow), Trout (lvl 10, 3–5, fast darts), Pike (lvl 20, solitary lurker by the reeds, very skittish). Mixed in one pond. Under-level: "Fishing N" hint, fish dodges at the last instant. One item per species; HUD shows any held item. |
+| F7 | Water | Custom low-poly water shader (faceted swell, depth-based colour, shore foam, ripple rings) + a WaterBody Area3D driving wading, water footsteps, fish bounds and spear targeting. Pond dressing: scripted reeds, lily pads, shore stones. |
+| F8 | Targeting | Strike allowed when aiming at water within reach (aim point ≥ 0.8 m away horizontally); spear auto-equips; fish under the crosshair get the rim highlight. |
+| F9 | Catch | Fish flip off the spear and arc into the inventory with the pickup combo. XP per species, +50% per extra fish on one thrust. Fish wriggle on the spear. Schools regrow 1 fish / 15–25 s, a wiped school is replaced after ~60 s. Not saved. |
+| F10 | Icons | Item icons rendered from the 3D models in Blender (wood and ore too). |
+
+**Later:** pike as a predator that scatters perch schools; swimming; real-model pickups.

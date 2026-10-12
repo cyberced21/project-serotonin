@@ -5,8 +5,8 @@
 - audio/footsteps/: per surface, VARIANTS steps (heel + toe hits made of filtered noise, plus a
   thump or ring where it fits) and an AudioStreamRandomizer .tres picking one with a little
   random pitch/volume.
-- audio/movement/: a seamless slide-scrape loop, and mantle sounds (both hands slapping onto
-  the ledge, then a clothing rustle as you pull up) with their own randomizer.
+- audio/movement/: a seamless slide-scrape loop, mantle sounds (both hands slapping onto the
+  ledge, then a clothing rustle as you pull up) and water splashes, with their randomizers.
 
 Replace any .wav with a real recording whenever you like — the game only references the
 .tres randomizers and slide_loop.wav.
@@ -111,7 +111,26 @@ def snow(rng):
     return out
 
 
-SURFACES = {"grass": grass, "dirt": dirt, "rock": rock, "sand": sand, "snow": snow}
+def bubbles(rng, out, count, start, end, gain):
+    """Little rising 'plip's: short sines sweeping upward, like air bubbles popping."""
+    for _ in range(count):
+        n = secs(rng.uniform(0.02, 0.05))
+        t = np.arange(n) / RATE
+        f0 = rng.uniform(500, 1400)
+        phase = 2 * np.pi * np.cumsum(f0 * (1.0 + 0.8 * t / t[-1])) / RATE
+        place(out, np.sin(phase) * env(n, 0.001, 0.012) * gain * rng.uniform(0.4, 1.0), rng.uniform(start, end))
+
+
+def water(rng):
+    """Wading step: a slosh of water around the leg, then a few bubbles."""
+    out = np.zeros(secs(0.38))
+    n = secs(0.3)
+    place(out, band(rng.standard_normal(n), 300, 2500) * env(n, 0.012, 0.11) * 1.4, 0.0)
+    bubbles(rng, out, rng.integers(4, 8), 0.02, 0.28, 0.35)
+    return out
+
+
+SURFACES = {"grass": grass, "dirt": dirt, "rock": rock, "sand": sand, "snow": snow, "water": water}
 
 
 # --- movement -------------------------------------------------------------------------------
@@ -127,6 +146,17 @@ def slide_loop(rng):
     fade = np.linspace(0.0, 1.0, xf)
     x[:xf] = x[:xf] * fade + x[n:] * (1.0 - fade)
     return x[:n]
+
+
+def splash(rng):
+    """Big splash: landing in water, a spear plunging in, fish breaking the surface."""
+    out = np.zeros(secs(0.85))
+    n = secs(0.6)
+    t = np.arange(n) / RATE
+    place(out, band(rng.standard_normal(n), 200, 6000) * env(n, 0.004, 0.16) * 1.6, 0.0)
+    place(out, np.sin(2 * np.pi * rng.uniform(60, 80) * t) * env(n, 0.002, 0.07) * 0.8, 0.0)
+    bubbles(rng, out, rng.integers(10, 16), 0.05, 0.7, 0.3)
+    return out
 
 
 def mantle(rng):
@@ -184,7 +214,10 @@ def main():
     for i in range(VARIANTS):
         write_wav(os.path.join(OUT_MOVE, f"mantle_{i + 1:02d}.wav"), mantle(rng))
     write_randomizer(os.path.join(OUT_MOVE, "mantle.tres"), "mantle", "movement")
-    print("wrote slide_loop, mantle")
+    for i in range(VARIANTS):
+        write_wav(os.path.join(OUT_MOVE, f"splash_{i + 1:02d}.wav"), splash(rng))
+    write_randomizer(os.path.join(OUT_MOVE, "splash.tres"), "splash", "movement")
+    print("wrote slide_loop, mantle, splash")
 
 
 if __name__ == "__main__":

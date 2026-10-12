@@ -31,6 +31,14 @@ extends CharacterBody3D
 ## A jump pressed this long before landing still fires on landing.
 @export var jump_buffer := 0.12
 
+@export_group("Water")
+## Speed multiplier when wading at full depth (scales in with depth).
+@export var wade_slow := 0.5
+## Depth (m) at which wading is at its slowest.
+@export var wade_full_depth := 0.9
+## Slides stop in water deeper than this.
+@export var slide_max_water := 0.3
+
 @export_group("Crouch / slide")
 @export var crouch_speed := 2.5
 ## Seconds to go fully down / up.
@@ -186,6 +194,10 @@ func _physics_process(delta: float) -> void:
 func _move(delta: float) -> void:
 	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var wish_dir := transform.basis * Vector3(input.x, 0.0, input.y)
+	var water_depth := WaterBody.depth_at(get_tree(), global_position)
+	var wading := lerpf(1.0, wade_slow, clampf(water_depth / wade_full_depth, 0.0, 1.0))
+	if _state == State.SLIDE and water_depth > slide_max_water:
+		_state = State.NORMAL  # the water stops you
 
 	# gravity + coyote time
 	if is_on_floor():
@@ -231,6 +243,7 @@ func _move(delta: float) -> void:
 		var sprinting := Input.is_action_pressed("sprint") and input.y < 0.0 and not _swinging and not crouched
 		var speed := crouch_speed if crouched else (sprint_speed if sprinting else walk_speed)
 		speed *= move_slow_while_swinging if _swinging else 1.0
+		speed *= wading
 		var target := Vector2(wish_dir.x, wish_dir.z) * speed
 		var rate := air_accel
 		if is_on_floor():
