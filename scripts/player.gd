@@ -61,6 +61,9 @@ extends CharacterBody3D
 ## How far the crosshair reaches (m).
 @export var reach := 2.4
 @export var swing_sfx: AudioStream
+## Tool models (.glb, handle from the origin up +Y). Replace the greybox tools when set.
+@export var pickaxe_model: PackedScene
+@export var axe_model: PackedScene
 
 @export_group("Swing timing")
 @export var windup_time := 0.13
@@ -92,6 +95,7 @@ enum State { NORMAL, SLIDE, MANTLE }
 ## Slide scrape pitch per surface (see footsteps.gd): sand is dull, rock is sharp.
 const SLIDE_PITCH := {&"grass": 1.1, &"dirt": 0.9, &"rock": 1.3, &"sand": 0.75, &"snow": 1.0}
 const DEFLECT_COLOR := Color("ff8a7a")
+const TOOL_MATERIAL := preload("res://materials/node_palette.tres")
 
 @onready var head: Node3D = $Head
 @onready var body_collision: CollisionShape3D = $CollisionShape3D
@@ -133,6 +137,8 @@ func _ready() -> void:
 		scrape.loop_begin = 0
 		scrape.loop_end = int(scrape.get_length() * scrape.mix_rate)  # in frames; works for any import compression
 	tool_pivot.rotation.x = REST_ANGLE
+	_use_tool_model(tools[&"pickaxe"], pickaxe_model)
+	_use_tool_model(tools[&"axe"], axe_model)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	SaveGame.register(&"player", self)
 
@@ -372,6 +378,21 @@ func _mantle(land: Vector3) -> void:
 
 
 # --- gathering ------------------------------------------------------------------------------
+
+## Swaps a tool's greybox meshes for a model. Viewmodel meshes must be on render layer 2 (only
+## the viewmodel camera sees it) and cast no shadows into the world.
+func _use_tool_model(slot: Node3D, model: PackedScene) -> void:
+	if model == null:
+		return
+	for old in slot.get_children():
+		old.queue_free()
+	var inst := model.instantiate()
+	slot.add_child(inst)
+	for m in inst.find_children("*", "MeshInstance3D", true, false):
+		m.layers = 2
+		m.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		m.material_override = TOOL_MATERIAL
+
 
 ## Ray from the centre of the screen. Only the world layer, so debris and drops don't block it.
 func _aim() -> Dictionary:

@@ -5,6 +5,7 @@
 [ext_resource type="AudioStream" path="res://audio/wood_hit.tres" id="4_hit"]
 [ext_resource type="AudioStream" path="res://audio/wood_break.tres" id="5_break"]
 [ext_resource type="Material" path="res://materials/node_surface.tres" id="6_surface"]
+[ext_resource type="PackedScene" path="res://models/tree.glb" id="7_model"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_trunk"]
 size = Vector3(0.6, 3.2, 0.6)
@@ -37,6 +38,7 @@ drops_max = 4
 skill = &"woodcutting"
 chip_color = Color(0.871, 0.698, 0.463, 1)
 burst_color = Color(0.22, 0.502, 0.298, 1)
+model = ExtResource("7_model")
 popup_height = 2.0
 hit_sfx = ExtResource("4_hit")
 break_sfx = ExtResource("5_break")

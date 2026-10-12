@@ -7,6 +7,8 @@
 [ext_resource type="Script" path="res://scripts/footsteps.gd" id="5_footsteps"]
 [ext_resource type="AudioStream" path="res://audio/movement/slide_loop.wav" id="6_slide"]
 [ext_resource type="AudioStream" path="res://audio/movement/mantle.tres" id="7_mantle"]
+[ext_resource type="PackedScene" path="res://models/pickaxe.glb" id="8_pickaxe"]
+[ext_resource type="PackedScene" path="res://models/axe.glb" id="9_axe"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.35
@@ -49,6 +51,8 @@ size = Vector3(0.025, 0.14, 0.16)
 collision_layer = 2
 script = ExtResource("1_script")
 swing_sfx = ExtResource("3_swing")
+pickaxe_model = ExtResource("8_pickaxe")
+axe_model = ExtResource("9_axe")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 position = Vector3(0, 0.9, 0)
@@ -110,7 +114,7 @@ fov = 55.0
 near = 0.02
 
 [node name="Grip" type="Node3D" parent="Viewmodel/SubViewport/Camera3D"]
-position = Vector3(0.34, -0.44, -0.62)
+position = Vector3(0.4, -0.5, -0.78)
 rotation = Vector3(0, 1.0, 0.22)
 
 [node name="ToolPivot" type="Node3D" parent="Viewmodel/SubViewport/Camera3D/Grip"]

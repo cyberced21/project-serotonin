@@ -5,6 +5,7 @@
 [ext_resource type="AudioStream" path="res://audio/stone_hit.tres" id="4_hit"]
 [ext_resource type="AudioStream" path="res://audio/stone_break.tres" id="5_break"]
 [ext_resource type="Material" path="res://materials/node_surface.tres" id="6_surface"]
+[ext_resource type="PackedScene" path="res://models/rock.glb" id="7_model"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_rock"]
 size = Vector3(1.3, 1, 1.2)
@@ -31,6 +32,7 @@ drops_max = 3
 skill = &"mining"
 chip_color = Color(0.627, 0.651, 0.698, 1)
 burst_color = Color(0.439, 0.455, 0.518, 1)
+model = ExtResource("7_model")
 popup_height = 1.3
 hit_sfx = ExtResource("4_hit")
 break_sfx = ExtResource("5_break")

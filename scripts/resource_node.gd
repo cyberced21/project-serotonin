@@ -464,30 +464,30 @@ func _pop_chunk(chunk: MeshInstance3D, push: Vector3, speed: float) -> void:
 
 
 ## A small piece of whatever was struck, torn out at the hit point on every hit.
+## A miniature copy of the chunk nearest the hit, so it has that surface's real colours (palette
+## or greybox alike). Falls back to a chip-coloured box when no chunks are left.
 func _spawn_fragment(info: HitInfo, push: Vector3) -> void:
-	var piece := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = Vector3(0.14, 0.1, 0.12)
-	piece.mesh = box
-	piece.material_override = NODE_SURFACE
-	piece.set_instance_shader_parameter("albedo", _surface_color_near(info.position))
-	var rot := Basis.from_euler(Vector3(randf(), randf(), randf()) * TAU)
-	_throw(piece, Transform3D(rot, info.position + info.normal * 0.06), push, debris_speed * 0.8)
-
-
-func _surface_color_near(point: Vector3) -> Color:
 	var intact := _intact_chunks()
+	var piece: MeshInstance3D
+	var size := 0.3
 	if intact.is_empty():
-		return chip_color
-	return _nearest(intact, point).get_instance_shader_parameter("albedo")
+		piece = MeshInstance3D.new()
+		piece.mesh = BoxMesh.new()
+		piece.material_override = NODE_SURFACE
+		piece.set_instance_shader_parameter("albedo", chip_color)
+		size = 0.12
+	else:
+		piece = _nearest(intact, info.position).duplicate() as MeshInstance3D
+	var rot := Basis.from_euler(Vector3(randf(), randf(), randf()) * TAU)
+	_throw(piece, Transform3D(rot, info.position + info.normal * 0.06), push, debris_speed * 0.8, size)
 
 
-## Puts `piece` in a debris rigid body at `xform` and flings it.
-func _throw(piece: MeshInstance3D, xform: Transform3D, push: Vector3, speed: float) -> void:
+## Puts `piece` (scaled by `piece_scale`) in a debris rigid body at `xform` and flings it.
+func _throw(piece: MeshInstance3D, xform: Transform3D, push: Vector3, speed: float, piece_scale := 1.0) -> void:
 	var body := RigidBody3D.new()
 	body.collision_layer = DEBRIS_LAYER
 	body.collision_mask = WORLD_LAYER
-	piece.transform = Transform3D.IDENTITY
+	piece.transform = Transform3D(Basis.from_scale(Vector3.ONE * piece_scale), Vector3.ZERO)
 	piece.visible = true
 	piece.set_instance_shader_parameter("flash", 0.0)
 	piece.set_instance_shader_parameter("highlight", 0.0)
@@ -495,8 +495,8 @@ func _throw(piece: MeshInstance3D, xform: Transform3D, push: Vector3, speed: flo
 	var aabb := piece.get_aabb()
 	var shape := CollisionShape3D.new()
 	shape.shape = BoxShape3D.new()
-	(shape.shape as BoxShape3D).size = aabb.size
-	shape.position = aabb.get_center()
+	(shape.shape as BoxShape3D).size = aabb.size * piece_scale
+	shape.position = aabb.get_center() * piece_scale
 	body.add_child(shape)
 	get_parent().add_child(body)
 	body.global_transform = xform
