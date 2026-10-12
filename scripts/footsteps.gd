@@ -46,7 +46,8 @@ func tick(delta: float, speed: float, on_floor: bool, crouched: bool, walk_speed
 	_dist += speed * delta
 	if _dist >= stride * 0.5:  # half stride: first footfall lands half a stride in
 		_dist -= stride
-		_play(crouch_db if crouched else lerpf(walk_db, sprint_db, t), 1.0)
+		# how loud the step is to fish: crouch-walking barely registers, sprinting carries
+		_play(crouch_db if crouched else lerpf(walk_db, sprint_db, t), 1.0, 0.15 if crouched else lerpf(0.6, 1.0, t))
 
 
 ## fall_speed: downward speed just before touching down (positive, m/s).
@@ -60,12 +61,13 @@ func land(fall_speed: float) -> void:
 		pitch_scale = lerpf(1.05, 0.85, hard)
 		play()
 		_ripple(2.4)
+		FishPond.disturb(get_tree(), global_position, 1.5)
 	else:
 		_play(land_db + hard * 3.0, lerpf(0.95, 0.8, hard))
 	_dist = 0.0
 
 
-func _play(db: float, pitch: float) -> void:
+func _play(db: float, pitch: float, loudness := 0.6) -> void:
 	var s := surface()
 	stream = SOUNDS[s]
 	volume_db = db
@@ -73,6 +75,7 @@ func _play(db: float, pitch: float) -> void:
 	play()
 	if s == &"water":
 		_ripple(1.4)
+		FishPond.disturb(get_tree(), global_position, loudness)
 
 
 func _ripple(size: float) -> void:

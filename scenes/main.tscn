@@ -8,6 +8,10 @@
 [ext_resource type="Terrain3DAssets" path="res://materials/terrain_assets.tres" id="6_terrain_assets"]
 [ext_resource type="Script" path="res://scripts/water_body.gd" id="7_water"]
 [ext_resource type="Shader" path="res://shaders/water_lowpoly.gdshader" id="8_water_shader"]
+[ext_resource type="Script" path="res://scripts/fish_pond.gd" id="9_fish_pond"]
+[ext_resource type="Resource" path="res://data/fish/perch.tres" id="10_perch"]
+[ext_resource type="Resource" path="res://data/fish/trout.tres" id="11_trout"]
+[ext_resource type="Resource" path="res://data/fish/pike.tres" id="12_pike"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
@@ -75,6 +79,10 @@ script = ExtResource("7_water")
 [node name="Volume" type="CollisionShape3D" parent="Pond"]
 position = Vector3(0, -1, 0)
 shape = SubResource("BoxShape3D_pond")
+
+[node name="Fish" type="Node3D" parent="Pond"]
+script = ExtResource("9_fish_pond")
+schools = Array[Resource]([ExtResource("10_perch"), ExtResource("10_perch"), ExtResource("11_trout"), ExtResource("12_pike")])
 
 [node name="Surface" type="MeshInstance3D" parent="Pond"]
 position = Vector3(0, -0.15, 0)
