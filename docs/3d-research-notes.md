@@ -1,6 +1,7 @@
 # 3D conversion — research & check-later notes
 
 Things to learn, verify or decide before/while moving Project Serotonin to first-person 3D.
+**Parked features and follow-ups live in [TODO.md](TODO.md).**
 Tick items off as you go. Decisions already made are listed at the bottom for reference.
 
 ---
@@ -137,4 +138,4 @@ Tick items off as you go. Decisions already made are listed at the bottom for re
 | F9 | Catch | Fish flip off the spear and arc into the inventory with the pickup combo. XP per species, +50% per extra fish on one thrust. Fish wriggle on the spear. Schools regrow 1 fish / 15–25 s, a wiped school is replaced after ~60 s. Not saved. |
 | F10 | Icons | Item icons rendered from the 3D models in Blender (wood and ore too). |
 
-**Later:** pike as a predator that scatters perch schools; swimming; real-model pickups.
+**Later:** pike as a predator that scatters perch schools; swimming; real-model pickups — tracked in [TODO.md](TODO.md).
