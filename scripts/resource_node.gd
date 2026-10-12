@@ -8,12 +8,18 @@ extends StaticBody3D
 ##   Rubble        — what's left while it respawns (stump, rubble)
 ## Give meshes materials/node_surface.tres as Material Override and set their colour under
 ## Geometry > Instance Shader Parameters > albedo. Then set the item, sounds and colors here.
+##
+## Or set `model` to a .glb from Blender instead: its meshes are sorted into those three places
+## by object name — Body_*, Chunk_*, Rubble_* — and given the palette material automatically.
 
 signal depleted(node: ResourceNode)
 signal respawned(node: ResourceNode)
 
 const PICKUP_SCENE := preload("res://scenes/pickup.tscn")
 const NODE_SURFACE := preload("res://materials/node_surface.tres")
+const NODE_PALETTE := preload("res://materials/node_palette.tres")
+## Object-name prefixes in a model (.glb) and where those meshes go.
+const MODEL_PARTS := {"body_": "Visual/Body", "chunk_": "Visual/Chunks", "rubble_": "Rubble"}
 const NOTCH_COLOR := Color(0.08, 0.06, 0.05, 0.85)
 const GHOST_OUTLINE := preload("res://shaders/ghost_outline.gdshader")
 const GHOST_MASK := preload("res://shaders/ghost_mask.gdshader")
@@ -45,6 +51,8 @@ const FELLED_SHAPE_SCALE := 0.6
 @export_range(0, 500) var xp_on_break := 15
 
 @export_group("Visuals")
+## Optional model (.glb) replacing the greybox meshes — see the top of this script.
+@export var model: PackedScene
 @export var chip_color := Color("dea876")
 @export var burst_color := Color("38804c")
 ## Height above the node's origin where XP / level popups appear.
@@ -109,6 +117,7 @@ var _ghost_outline: ShaderMaterial
 
 func _ready() -> void:
 	add_to_group("gatherable")
+	_apply_model()
 	_burst_home = burst.position
 	_break_audio_home = break_audio.position
 	_collect_surfaces(visual)
@@ -119,6 +128,36 @@ func _ready() -> void:
 	_build_respawn_display()
 	set_process(false)
 	SaveGame.register(StringName("node:%s" % get_path()), self)  # applies any saved state now
+
+
+## Moves the model's meshes into Visual/Body, Visual/Chunks and Rubble by name prefix, replacing
+## whatever greybox meshes were there. Meshes with other names are ignored.
+func _apply_model() -> void:
+	if model == null:
+		return
+	var inst := model.instantiate()
+	for path in MODEL_PARTS.values():
+		for old in get_node(path).get_children():
+			old.get_parent().remove_child(old)
+			old.queue_free()
+	for m in inst.find_children("*", "MeshInstance3D", true, false):
+		var dest := ""
+		for prefix in MODEL_PARTS:
+			if m.name.to_lower().begins_with(prefix):
+				dest = MODEL_PARTS[prefix]
+		if dest.is_empty():
+			continue
+		var xform := Transform3D.IDENTITY  # relative to the model root (it isn't in the tree)
+		var n: Node = m
+		while n != inst:
+			xform = (n as Node3D).transform * xform if n is Node3D else xform
+			n = n.get_parent()
+		m.get_parent().remove_child(m)
+		m.owner = null
+		get_node(dest).add_child(m)
+		m.transform = xform
+		m.material_override = NODE_PALETTE
+	inst.free()
 
 
 func _make_notches() -> Node3D:
