@@ -10,6 +10,7 @@ const BINDINGS := {
 	"gather": [KEY_E],
 	"jump": [KEY_SPACE],
 	"sprint": [KEY_SHIFT],
+	"crouch": [KEY_CTRL, KEY_C],
 	# debug builds only
 	"debug_give_xp": [KEY_F9],
 	"debug_reset_save": [KEY_F10],

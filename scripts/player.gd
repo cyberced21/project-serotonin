@@ -1,5 +1,6 @@
 extends CharacterBody3D
 ## First-person player: WASD to move, mouse to look, Shift to sprint, Space to jump,
+## Ctrl / C to crouch (slide while sprinting), jump at a ledge while moving forward to mantle,
 ## hold E / left-click to gather whatever the crosshair is on.
 ## Esc frees the mouse; clicking the game captures it again.
 ## Mouse-look runs in _unhandled_input (raw events), so it stays smooth during hit-stop.
@@ -30,6 +31,32 @@ extends CharacterBody3D
 ## A jump pressed this long before landing still fires on landing.
 @export var jump_buffer := 0.12
 
+@export_group("Crouch / slide")
+@export var crouch_speed := 2.5
+## Seconds to go fully down / up.
+@export var crouch_transition := 0.12
+## Extra speed when a slide starts (only once per slide_boost_cooldown, so it can't be spammed).
+@export var slide_boost := 2.5
+@export var slide_boost_cooldown := 0.8
+## Speed lost per second on flat ground.
+@export var slide_friction := 4.0
+## How strongly slopes speed you up (downhill) or slow you down (uphill).
+@export var slide_gravity := 1.0
+@export var slide_steer := 4.0
+## The slide ends below this speed.
+@export var slide_min_speed := 3.0
+@export var slide_fov_kick := 10.0
+@export var slide_roll_deg := 3.0
+
+@export_group("Mantle")
+## How far ahead a wall is detected.
+@export var mantle_reach := 0.8
+## Ledges lower than this (above the feet) are just stepped/jumped onto.
+@export var mantle_min_height := 0.45
+@export var mantle_max_height := 2.2
+## Pull-up time per metre of height.
+@export var mantle_time_per_m := 0.18
+
 @export_group("Gathering")
 ## How far the crosshair reaches (m).
 @export var reach := 2.4
@@ -55,9 +82,17 @@ const REST_ANGLE := -0.3
 const WINDUP_ANGLE := 0.7
 const STRIKE_ANGLE := -1.3
 const WORLD_MASK := 1
+const STAND_HEIGHT := 1.8
+const CROUCH_HEIGHT := 1.0
+const STAND_EYE := 1.6
+const CROUCH_EYE := 0.9
+
+enum State { NORMAL, SLIDE, MANTLE }
 const DEFLECT_COLOR := Color("ff8a7a")
 
 @onready var head: Node3D = $Head
+@onready var body_collision: CollisionShape3D = $CollisionShape3D
+@onready var body_shape: CapsuleShape3D = body_collision.shape
 @onready var camera: Camera3D = $Head/Camera3D
 @onready var tool_pivot: Node3D = %ToolPivot
 @onready var tools: Dictionary[StringName, Node3D] = {&"axe": %Axe, &"pickaxe": %Pickaxe}
@@ -69,6 +104,10 @@ var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _base_fov := 75.0
 var _coyote := 0.0
 var _jump_buffer := 0.0
+var _state := State.NORMAL
+var _crouch := 0.0  # 0 = standing, 1 = fully crouched
+var _slide_boost_cooldown := 0.0
+var _stand_probe := CapsuleShape3D.new()
 
 var _target: ResourceNode
 var _swinging := false
@@ -80,6 +119,8 @@ func _ready() -> void:
 	add_to_group("player")
 	_base_fov = camera.fov
 	_tool_rest = tool_pivot.position
+	_stand_probe.radius = body_shape.radius - 0.01
+	_stand_probe.height = STAND_HEIGHT
 	tool_pivot.rotation.x = REST_ANGLE
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	SaveGame.register(&"player", self)
@@ -114,16 +155,21 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	_move(delta)
+	if _state != State.MANTLE:
+		_move(delta)
+	_update_crouch(delta)
 
 	_cooldown -= delta
 	_update_target()
 	if Input.is_action_pressed("gather") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED \
-			and _target and is_on_floor() and not _swinging and _cooldown <= 0.0:
+			and _target and is_on_floor() and _state == State.NORMAL and not _swinging and _cooldown <= 0.0:
 		_swing(_target.tool_type)
 
 
 func _move(delta: float) -> void:
+	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var wish_dir := transform.basis * Vector3(input.x, 0.0, input.y)
+
 	# gravity + coyote time
 	if is_on_floor():
 		_coyote = coyote_time
@@ -131,34 +177,161 @@ func _move(delta: float) -> void:
 		_coyote -= delta
 		velocity.y -= _gravity * (fall_gravity_mult if velocity.y < 0.0 else 1.0) * delta
 
-	# buffered jump
+	# mantle: jump at a ledge while pushing forward (on the ground or in the air)
 	_jump_buffer -= delta
 	if Input.is_action_just_pressed("jump"):
 		_jump_buffer = jump_buffer
-	if _jump_buffer > 0.0 and _coyote > 0.0 and not _swinging:
+	var wants_mantle := input.y < -0.3 and not _swinging \
+		and (_jump_buffer > 0.0 or (not is_on_floor() and Input.is_action_pressed("jump")))
+	if wants_mantle and _try_mantle():
+		return
+
+	# jump (also out of a slide, keeping its speed)
+	if _jump_buffer > 0.0 and _coyote > 0.0 and not _swinging and _can_stand():
 		velocity.y = jump_velocity
 		_jump_buffer = 0.0
 		_coyote = 0.0
+		_state = State.NORMAL
 	if Input.is_action_just_released("jump") and velocity.y > 0.0:
 		velocity.y *= jump_cut
 
-	# horizontal movement, relative to where the body faces (yaw only — the head pitches)
-	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	var sprinting := Input.is_action_pressed("sprint") and input.y < 0.0 and not _swinging
-	var speed := (sprint_speed if sprinting else walk_speed) * (move_slow_while_swinging if _swinging else 1.0)
-	var wish := transform.basis * Vector3(input.x, 0.0, input.y) * speed
+	# start a slide: crouch while sprinting fast on the ground
+	var crouch_pressed := Input.is_action_just_pressed("crouch")
 	var horizontal := Vector2(velocity.x, velocity.z)
-	var target := Vector2(wish.x, wish.z)
-	var rate := air_accel
-	if is_on_floor():
-		rate = ground_friction if target == Vector2.ZERO else ground_accel
-	horizontal = horizontal.move_toward(target, rate * delta)
+	if _state == State.NORMAL and crouch_pressed and is_on_floor() and not _swinging \
+			and horizontal.length() > walk_speed + 0.5:
+		_state = State.SLIDE
+		if _slide_boost_cooldown <= 0.0:
+			horizontal += horizontal.normalized() * slide_boost
+			_slide_boost_cooldown = slide_boost_cooldown
+	_slide_boost_cooldown -= delta
+
+	if _state == State.SLIDE:
+		horizontal = _slide(delta, horizontal, Vector2(wish_dir.x, wish_dir.z))
+	else:
+		# walk / sprint / crouch-walk, relative to where the body faces (yaw only — the head pitches)
+		var crouched := Input.is_action_pressed("crouch") or not _can_stand()
+		var sprinting := Input.is_action_pressed("sprint") and input.y < 0.0 and not _swinging and not crouched
+		var speed := crouch_speed if crouched else (sprint_speed if sprinting else walk_speed)
+		speed *= move_slow_while_swinging if _swinging else 1.0
+		var target := Vector2(wish_dir.x, wish_dir.z) * speed
+		var rate := air_accel
+		if is_on_floor():
+			rate = ground_friction if target == Vector2.ZERO else ground_accel
+		horizontal = horizontal.move_toward(target, rate * delta)
 	velocity.x = horizontal.x
 	velocity.z = horizontal.y
 	move_and_slide()
 
-	var fast := sprinting and horizontal.length() > walk_speed + 0.5
-	camera.fov = lerpf(camera.fov, _base_fov + (sprint_fov_kick if fast else 0.0), 1.0 - exp(-10.0 * delta))
+	var fast := horizontal.length() > walk_speed + 0.5
+	var kick := slide_fov_kick if _state == State.SLIDE else (sprint_fov_kick if fast else 0.0)
+	camera.fov = lerpf(camera.fov, _base_fov + kick, 1.0 - exp(-10.0 * delta))
+
+
+# --- slide ----------------------------------------------------------------------------------
+
+## Low friction, speeds up going downhill, a little steering. Ends when it's too slow, when
+## crouch is released, or on a jump (which keeps the momentum).
+func _slide(delta: float, horizontal: Vector2, wish: Vector2) -> Vector2:
+	if is_on_floor():
+		var n := get_floor_normal()
+		# the downhill part of gravity: (n.x, n.z) points down the slope, longer on steeper ground
+		horizontal += Vector2(n.x, n.z) * _gravity * slide_gravity * delta
+		horizontal = horizontal.move_toward(Vector2.ZERO, slide_friction * delta)
+	# steering only bends the slide sideways — holding forward can't keep it going forever
+	if horizontal.length() > 0.01:
+		var along := horizontal.normalized()
+		horizontal += (wish - along * wish.dot(along)) * slide_steer * delta
+	if horizontal.length() < slide_min_speed or not Input.is_action_pressed("crouch"):
+		_state = State.NORMAL
+	return horizontal
+
+
+## Smoothly lowers the eye and shrinks the capsule while sliding / crouching.
+func _update_crouch(delta: float) -> void:
+	var want := 1.0 if (_state == State.SLIDE or Input.is_action_pressed("crouch") or not _can_stand()) \
+		and _state != State.MANTLE else 0.0
+	_crouch = move_toward(_crouch, want, delta / crouch_transition)
+	var height := lerpf(STAND_HEIGHT, CROUCH_HEIGHT, _crouch)
+	body_shape.height = height
+	body_collision.position.y = height / 2.0
+	head.position.y = lerpf(STAND_EYE, CROUCH_EYE, _crouch)
+	# slight camera roll while sliding
+	var roll := slide_roll_deg if _state == State.SLIDE else 0.0
+	head.rotation.z = lerp_angle(head.rotation.z, deg_to_rad(roll), 1.0 - exp(-8.0 * delta))
+
+
+## True if there's nothing overhead stopping the player standing up.
+func _can_stand() -> bool:
+	return _fits(global_position)
+
+
+## True if a standing capsule fits with its feet at `at`.
+func _fits(at: Vector3) -> bool:
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = _stand_probe
+	query.transform = Transform3D(Basis.IDENTITY, at + Vector3.UP * (STAND_HEIGHT / 2.0 + 0.02))
+	query.collision_mask = WORLD_MASK
+	query.exclude = [get_rid()]
+	return get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
+
+
+# --- mantle ---------------------------------------------------------------------------------
+
+## Looks for a ledge in front: a steep face within reach, a walkable top no higher than
+## mantle_max_height above the feet, and room to stand up there. Starts the climb if found.
+func _try_mantle() -> bool:
+	var space := get_world_3d().direct_space_state
+	var fwd := -global_basis.z
+	var feet := global_position
+	# 1. a wall in front, probing knee → chest → head height
+	var wall := {}
+	for h in [0.4, 1.0, 1.6]:
+		var from: Vector3 = feet + Vector3.UP * h
+		var q := PhysicsRayQueryParameters3D.create(from, from + fwd * mantle_reach, WORLD_MASK, [get_rid()])
+		wall = space.intersect_ray(q)
+		if not wall.is_empty():
+			break
+	if wall.is_empty() or wall["normal"].y > 0.3:
+		return false
+	# 2. its top: cast down from above the max height, a little way past the face
+	var probe: Vector3 = wall["position"] - wall["normal"] * 0.3
+	var q2 := PhysicsRayQueryParameters3D.create(
+		Vector3(probe.x, feet.y + mantle_max_height + 0.1, probe.z),
+		Vector3(probe.x, feet.y + mantle_min_height, probe.z), WORLD_MASK, [get_rid()])
+	var top := space.intersect_ray(q2)
+	if top.is_empty() or top["normal"].y < 0.7:
+		return false
+	# 3. room to stand on it
+	var land: Vector3 = top["position"] + fwd * 0.15
+	if not _fits(land + Vector3.UP * 0.02):
+		return false
+	_mantle(land)
+	return true
+
+
+## Pull up (fast, then slower as you crest), then step forward onto the ledge.
+func _mantle(land: Vector3) -> void:
+	_state = State.MANTLE
+	_jump_buffer = 0.0
+	velocity = Vector3.ZERO
+	var start := global_position
+	var rise := land.y - start.y
+	var up_time := clampf(rise * mantle_time_per_m, 0.12, 0.4)
+	var crest := Vector3(start.x, land.y + 0.05, start.z)
+	var t := create_tween()
+	t.tween_property(self, "global_position", crest, up_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	t.tween_property(self, "global_position", land + Vector3.UP * 0.05, 0.12).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	# hands busy: tool dips out of view and comes back; head nods with the effort
+	var tool_t := create_tween()
+	tool_t.tween_property(tool_pivot, "position", _tool_rest + Vector3(0, -0.25, 0.05), up_time * 0.5)
+	tool_t.tween_property(tool_pivot, "position", _tool_rest, 0.2).set_delay(up_time * 0.5)
+	var nod := create_tween()
+	nod.tween_property(camera, "position:y", -0.06, up_time).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	nod.tween_property(camera, "position:y", 0.0, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	await t.finished
+	velocity = -global_basis.z * walk_speed * 0.5  # carry on moving instead of stopping dead
+	_state = State.NORMAL
 
 
 # --- gathering ------------------------------------------------------------------------------
