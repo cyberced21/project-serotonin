@@ -5,6 +5,8 @@
 [ext_resource type="AudioStream" path="res://audio/swing.tres" id="3_swing"]
 [ext_resource type="Script" path="res://scripts/viewmodel.gd" id="4_viewmodel"]
 [ext_resource type="Script" path="res://scripts/footsteps.gd" id="5_footsteps"]
+[ext_resource type="AudioStream" path="res://audio/movement/slide_loop.wav" id="6_slide"]
+[ext_resource type="AudioStream" path="res://audio/movement/mantle.tres" id="7_mantle"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.35
@@ -31,9 +33,13 @@ roughness = 0.45
 material = SubResource("StandardMaterial3D_wood")
 size = Vector3(0.035, 0.48, 0.035)
 
-[sub_resource type="BoxMesh" id="BoxMesh_pick_head"]
+[sub_resource type="BoxMesh" id="BoxMesh_pick_spike"]
 material = SubResource("StandardMaterial3D_metal")
-size = Vector3(0.045, 0.05, 0.4)
+size = Vector3(0.04, 0.045, 0.22)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pick_collar"]
+material = SubResource("StandardMaterial3D_metal")
+size = Vector3(0.055, 0.07, 0.07)
 
 [sub_resource type="BoxMesh" id="BoxMesh_axe_blade"]
 material = SubResource("StandardMaterial3D_metal")
@@ -66,6 +72,19 @@ max_distance = 30.0
 max_polyphony = 3
 script = ExtResource("5_footsteps")
 
+[node name="SlideAudio" type="AudioStreamPlayer3D" parent="."]
+position = Vector3(0, 0.1, 0)
+stream = ExtResource("6_slide")
+unit_size = 3.0
+max_distance = 30.0
+
+[node name="MantleAudio" type="AudioStreamPlayer3D" parent="."]
+position = Vector3(0, 1.3, -0.3)
+stream = ExtResource("7_mantle")
+volume_db = -3.0
+unit_size = 3.0
+max_distance = 30.0
+
 [node name="Viewmodel" type="CanvasLayer" parent="." node_paths=PackedStringArray("main_camera")]
 layer = -1
 script = ExtResource("4_viewmodel")
@@ -91,8 +110,8 @@ fov = 55.0
 near = 0.02
 
 [node name="Grip" type="Node3D" parent="Viewmodel/SubViewport/Camera3D"]
-position = Vector3(0.3, -0.42, -0.55)
-rotation = Vector3(0, -0.15, 0.2)
+position = Vector3(0.34, -0.44, -0.62)
+rotation = Vector3(0, 1.0, 0.22)
 
 [node name="ToolPivot" type="Node3D" parent="Viewmodel/SubViewport/Camera3D/Grip"]
 unique_name_in_owner = true
@@ -106,11 +125,23 @@ cast_shadow = 0
 position = Vector3(0, 0.2, 0)
 mesh = SubResource("BoxMesh_handle")
 
-[node name="Head" type="MeshInstance3D" parent="Viewmodel/SubViewport/Camera3D/Grip/ToolPivot/Pickaxe"]
+[node name="Collar" type="MeshInstance3D" parent="Viewmodel/SubViewport/Camera3D/Grip/ToolPivot/Pickaxe"]
 layers = 2
 cast_shadow = 0
-position = Vector3(0, 0.42, -0.02)
-mesh = SubResource("BoxMesh_pick_head")
+position = Vector3(0, 0.42, 0)
+mesh = SubResource("BoxMesh_pick_collar")
+
+[node name="SpikeFront" type="MeshInstance3D" parent="Viewmodel/SubViewport/Camera3D/Grip/ToolPivot/Pickaxe"]
+layers = 2
+cast_shadow = 0
+transform = Transform3D(1, 0, 0, 0, 0.985, 0.174, 0, -0.174, 0.985, 0, 0.405, -0.12)
+mesh = SubResource("BoxMesh_pick_spike")
+
+[node name="SpikeBack" type="MeshInstance3D" parent="Viewmodel/SubViewport/Camera3D/Grip/ToolPivot/Pickaxe"]
+layers = 2
+cast_shadow = 0
+transform = Transform3D(1, 0, 0, 0, 0.985, -0.174, 0, 0.174, 0.985, 0, 0.405, 0.12)
+mesh = SubResource("BoxMesh_pick_spike")
 
 [node name="Axe" type="Node3D" parent="Viewmodel/SubViewport/Camera3D/Grip/ToolPivot"]
 unique_name_in_owner = true

@@ -1,11 +1,15 @@
-"""Synthesizes placeholder footstep sounds into audio/footsteps/ (needs numpy).
+"""Synthesizes placeholder movement sounds (needs numpy):
 
-    python tools/synth_footsteps.py
+    python tools/synth_movement_sounds.py
 
-Each surface gets VARIANTS slightly different steps (heel + toe hits made of filtered noise,
-plus a thump or ring where it fits), and an AudioStreamRandomizer .tres that picks one with a
-little random pitch/volume. Replace the .wav files with real recordings whenever you like —
-the game only references the .tres files.
+- audio/footsteps/: per surface, VARIANTS steps (heel + toe hits made of filtered noise, plus a
+  thump or ring where it fits) and an AudioStreamRandomizer .tres picking one with a little
+  random pitch/volume.
+- audio/movement/: a seamless slide-scrape loop, and mantle sounds (both hands slapping onto
+  the ledge, then a clothing rustle as you pull up) with their own randomizer.
+
+Replace any .wav with a real recording whenever you like — the game only references the
+.tres randomizers and slide_loop.wav.
 """
 import os
 import wave
@@ -15,6 +19,7 @@ import numpy as np
 RATE = 44100
 VARIANTS = 4
 OUT = os.path.join(os.path.dirname(__file__), "..", "audio", "footsteps")
+OUT_MOVE = os.path.join(os.path.dirname(__file__), "..", "audio", "movement")
 
 
 def lowpass(x, cutoff):
@@ -109,12 +114,43 @@ def snow(rng):
 SURFACES = {"grass": grass, "dirt": dirt, "rock": rock, "sand": sand, "snow": snow}
 
 
+# --- movement -------------------------------------------------------------------------------
+
+def slide_loop(rng):
+    """1.2 s of gritty scrape that loops seamlessly (the end is crossfaded into the start)."""
+    n, xf = secs(1.2), secs(0.15)
+    total = n + xf
+    body = lowpass(rng.standard_normal(total), 900) * 1.4
+    grit = band(rng.standard_normal(total), 2000, 6000)
+    grains = np.repeat(rng.random(total // 200 + 1) ** 2, 200)[:total]  # little stones catching
+    x = body + grit * (0.25 + grains)
+    fade = np.linspace(0.0, 1.0, xf)
+    x[:xf] = x[:xf] * fade + x[n:] * (1.0 - fade)
+    return x[:n]
+
+
+def mantle(rng):
+    out = np.zeros(secs(0.45))
+    for at in (0.0, rng.uniform(0.03, 0.06)):  # left hand, right hand
+        n = secs(0.06)
+        t = np.arange(n) / RATE
+        slap = highpass(rng.standard_normal(n), 800) * env(n, 0.0, 0.008)
+        thump = np.sin(2 * np.pi * rng.uniform(110, 140) * t) * env(n, 0.001, 0.02) * 0.6
+        place(out, slap + thump, at)
+    n = secs(0.34)  # clothes rustling as you haul yourself up
+    rustle = band(rng.standard_normal(n), 400, 3000)
+    wobble = lowpass(rng.random(n), 12) * 4.0  # slow random swells
+    place(out, rustle * wobble * env(n, 0.08, 0.15) * 0.35, 0.07)
+    return out
+
+
 # --- output -----------------------------------------------------------------------------------
 
-def write_wav(path, x):
+def write_wav(path, x, fade_out=True):
     x = x / (np.max(np.abs(x)) + 1e-9) * 0.7  # about -3 dBFS
-    fade = min(len(x), secs(0.01))
-    x[-fade:] *= np.linspace(1.0, 0.0, fade)
+    if fade_out:  # (not for loops — it would click at the seam)
+        fade = min(len(x), secs(0.01))
+        x[-fade:] *= np.linspace(1.0, 0.0, fade)
     with wave.open(path, "wb") as w:
         w.setnchannels(1)
         w.setsampwidth(2)
@@ -122,10 +158,10 @@ def write_wav(path, x):
         w.writeframes((x * 32767).astype("<i2").tobytes())
 
 
-def write_randomizer(path, name):
+def write_randomizer(path, name, folder="footsteps"):
     lines = ['[gd_resource type="AudioStreamRandomizer" format=3]', ""]
     for i in range(VARIANTS):
-        lines.append(f'[ext_resource type="AudioStream" path="res://audio/footsteps/{name}_{i + 1:02d}.wav" id="{i + 1}"]')
+        lines.append(f'[ext_resource type="AudioStream" path="res://audio/{folder}/{name}_{i + 1:02d}.wav" id="{i + 1}"]')
     lines += ["", "[resource]", "playback_mode = 0", "random_pitch = 1.1",
               "random_volume_offset_db = 2.0", f"streams_count = {VARIANTS}"]
     for i in range(VARIANTS):
@@ -142,6 +178,13 @@ def main():
             write_wav(os.path.join(OUT, f"{name}_{i + 1:02d}.wav"), make(rng))
         write_randomizer(os.path.join(OUT, f"{name}.tres"), name)
         print("wrote", name)
+
+    os.makedirs(OUT_MOVE, exist_ok=True)
+    write_wav(os.path.join(OUT_MOVE, "slide_loop.wav"), slide_loop(rng), fade_out=False)
+    for i in range(VARIANTS):
+        write_wav(os.path.join(OUT_MOVE, f"mantle_{i + 1:02d}.wav"), mantle(rng))
+    write_randomizer(os.path.join(OUT_MOVE, "mantle.tres"), "mantle", "movement")
+    print("wrote slide_loop, mantle")
 
 
 if __name__ == "__main__":

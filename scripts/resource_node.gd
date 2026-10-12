@@ -118,6 +118,7 @@ func _ready() -> void:
 	_reset_visuals()
 	_build_respawn_display()
 	set_process(false)
+	SaveGame.register(StringName("node:%s" % get_path()), self)  # applies any saved state now
 
 
 func _make_notches() -> Node3D:
@@ -151,6 +152,7 @@ func hit(info: HitInfo) -> bool:
 		_deflect(info)
 		return false
 	hits_left -= 1
+	SaveGame.mark_dirty()
 	var stress := 1.0 - float(hits_left) / max_hits  # 0 -> 1 as it depletes
 
 	_play(audio, hit_sfx, 1.0 + stress * stress_pitch)
@@ -207,10 +209,7 @@ func _break(info: HitInfo) -> void:
 	_play(break_audio, break_sfx)
 	for c in _intact_chunks():
 		_pop_chunk(c, info.away(), debris_speed * 0.7)
-	set_highlighted(false)
-	visual.visible = false
-	rubble.visible = true
-	collision.set_deferred("disabled", true)
+	_show_depleted()
 	Juice.shake(shake_break)
 	Juice.hitstop(hitstop_break)
 	if topple:
@@ -219,8 +218,20 @@ func _break(info: HitInfo) -> void:
 		burst.restart()
 		_spawn_drops(info)
 	depleted.emit(self)
+	SaveGame.mark_dirty()
+	_respawn_after(respawn_time)
 
-	_respawn_timer = get_tree().create_timer(respawn_time)
+
+## The depleted look (rubble / stump, no collision) without any of the break effects.
+func _show_depleted() -> void:
+	set_highlighted(false)
+	visual.visible = false
+	rubble.visible = true
+	collision.set_deferred("disabled", true)
+
+
+func _respawn_after(seconds: float) -> void:
+	_respawn_timer = get_tree().create_timer(seconds)
 	_set_respawn_display(true)
 	await _respawn_timer.timeout
 	_respawn_timer = null
@@ -230,7 +241,33 @@ func _break(info: HitInfo) -> void:
 	visual.scale = Vector3.ONE * 0.4
 	create_tween().tween_property(visual, "scale", Vector3.ONE, 0.35) \
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	SaveGame.mark_dirty()
 	respawned.emit(self)
+
+
+# --- saving ---------------------------------------------------------------------------------
+# Each node saves under its path in the scene, so renaming / moving a node in the editor just
+# makes it start fresh. Respawn timers count game time: they pause while the game is closed.
+
+func to_dict() -> Dictionary:
+	if _respawn_timer:
+		return {"respawn_left": _respawn_timer.time_left}
+	return {"hits_left": hits_left}
+
+
+func from_dict(d: Dictionary) -> void:
+	if d.has("respawn_left"):
+		hits_left = 0
+		_show_depleted()
+		_respawn_after(maxf(float(d["respawn_left"]), 0.1))
+	elif d.has("hits_left"):
+		hits_left = clampi(int(d["hits_left"]), 1, max_hits)
+		# hide the chunks that would already have broken off
+		var total := chunks.get_child_count()
+		var stress := 1.0 - float(hits_left) / max_hits
+		var gone := mini(floori(stress * total), total - 1)
+		for k in gone:
+			chunks.get_child(k).visible = false
 
 
 func _reset_visuals() -> void:
@@ -311,7 +348,8 @@ func _topple(info: HitInfo) -> void:
 
 	# wait for it to lean over far enough (or give up after a few seconds)
 	var start := Time.get_ticks_msec()
-	while is_instance_valid(felled) and felled.global_basis.y.dot(Vector3.UP) > LANDED_TILT 			and Time.get_ticks_msec() - start < 4000:
+	while is_instance_valid(felled) and felled.global_basis.y.dot(Vector3.UP) > LANDED_TILT \
+			and Time.get_ticks_msec() - start < 4000:
 		await get_tree().physics_frame
 	if not is_instance_valid(felled):
 		return
@@ -341,7 +379,8 @@ func _topple(info: HitInfo) -> void:
 		return
 	felled.freeze = true
 	var t := felled.create_tween()
-	t.tween_property(felled, "global_position", felled.global_position + Vector3.DOWN * 1.2, 1.0) 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.tween_property(felled, "global_position", felled.global_position + Vector3.DOWN * 1.2, 1.0) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	t.tween_callback(felled.queue_free)
 
 

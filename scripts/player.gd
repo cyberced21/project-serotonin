@@ -88,6 +88,9 @@ const STAND_EYE := 1.6
 const CROUCH_EYE := 0.9
 
 enum State { NORMAL, SLIDE, MANTLE }
+
+## Slide scrape pitch per surface (see footsteps.gd): sand is dull, rock is sharp.
+const SLIDE_PITCH := {&"grass": 1.1, &"dirt": 0.9, &"rock": 1.3, &"sand": 0.75, &"snow": 1.0}
 const DEFLECT_COLOR := Color("ff8a7a")
 
 @onready var head: Node3D = $Head
@@ -100,6 +103,8 @@ const DEFLECT_COLOR := Color("ff8a7a")
 @onready var hover_label: Label = $Reticle/Hover
 @onready var audio: AudioStreamPlayer = $Audio
 @onready var footsteps: Node = $Footsteps
+@onready var slide_audio: AudioStreamPlayer3D = $SlideAudio
+@onready var mantle_audio: AudioStreamPlayer3D = $MantleAudio
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _base_fov := 75.0
@@ -122,6 +127,11 @@ func _ready() -> void:
 	_tool_rest = tool_pivot.position
 	_stand_probe.radius = body_shape.radius - 0.01
 	_stand_probe.height = STAND_HEIGHT
+	var scrape := slide_audio.stream as AudioStreamWAV
+	if scrape:  # the scrape is a seamless loop; make it loop without needing import settings
+		scrape.loop_mode = AudioStreamWAV.LOOP_FORWARD
+		scrape.loop_begin = 0
+		scrape.loop_end = int(scrape.get_length() * scrape.mix_rate)  # in frames; works for any import compression
 	tool_pivot.rotation.x = REST_ANGLE
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	SaveGame.register(&"player", self)
@@ -230,6 +240,7 @@ func _move(delta: float) -> void:
 		footsteps.land(fall_speed)
 	var stepping_speed := horizontal.length() if _state == State.NORMAL else 0.0  # no steps mid-slide
 	footsteps.tick(delta, stepping_speed, is_on_floor(), _crouch > 0.5, walk_speed, sprint_speed)
+	_update_slide_audio(delta, horizontal.length())
 
 	var fast := horizontal.length() > walk_speed + 0.5
 	var kick := slide_fov_kick if _state == State.SLIDE else (sprint_fov_kick if fast else 0.0)
@@ -253,6 +264,22 @@ func _slide(delta: float, horizontal: Vector2, wish: Vector2) -> Vector2:
 	if horizontal.length() < slide_min_speed or not Input.is_action_pressed("crouch"):
 		_state = State.NORMAL
 	return horizontal
+
+
+## Scrape loop while sliding on the ground: louder and higher the faster you go, pitched by
+## surface; fades out (rather than cutting) when the slide ends or you leave the ground.
+func _update_slide_audio(delta: float, speed: float) -> void:
+	if _state == State.SLIDE and is_on_floor():
+		if not slide_audio.playing:
+			slide_audio.volume_db = -20.0
+			slide_audio.play(randf() * 1.0)  # random start so repeated slides don't sound identical
+		var t := clampf(speed / (sprint_speed + slide_boost), 0.0, 1.0)
+		slide_audio.pitch_scale = SLIDE_PITCH.get(footsteps.surface(), 1.0) * lerpf(0.85, 1.15, t)
+		slide_audio.volume_db = move_toward(slide_audio.volume_db, lerpf(-14.0, -2.0, t), 120.0 * delta)
+	elif slide_audio.playing:
+		slide_audio.volume_db = move_toward(slide_audio.volume_db, -40.0, 120.0 * delta)
+		if slide_audio.volume_db <= -39.0:
+			slide_audio.stop()
 
 
 ## Smoothly lowers the eye and shrinks the capsule while sliding / crouching.
@@ -322,6 +349,7 @@ func _try_mantle() -> bool:
 func _mantle(land: Vector3) -> void:
 	_state = State.MANTLE
 	_jump_buffer = 0.0
+	mantle_audio.play()  # hands slap onto the ledge, clothes rustle on the way up
 	velocity = Vector3.ZERO
 	var start := global_position
 	var rise := land.y - start.y
