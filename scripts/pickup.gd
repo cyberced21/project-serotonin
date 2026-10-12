@@ -8,7 +8,8 @@ extends RigidBody3D
 ## After this many seconds, drops are pulled from auto_pull_radius instead.
 @export var auto_pull_time := 4.0
 @export var auto_pull_radius := 15.0
-@export var magnet_accel := 40.0
+## How quickly a magnetised drop turns toward the player (higher = snappier).
+@export var magnet_steer := 8.0
 @export var magnet_max_speed := 14.0
 ## Drops fly to this height on the player (chest), not into the camera.
 @export var collect_height := 1.0
@@ -68,8 +69,10 @@ func _physics_process(delta: float) -> void:
 	if to_target.length() < 0.35:
 		_collect()
 		return
-	_vel += to_target.normalized() * magnet_accel * delta
-	_vel = _vel.limit_length(magnet_max_speed)
+	# steer (blend toward the desired velocity) rather than accelerate, so fast drops home in
+	# instead of orbiting the player
+	var desired := to_target.normalized() * magnet_max_speed
+	_vel = _vel.lerp(desired, 1.0 - exp(-magnet_steer * delta))
 	global_position += _vel * delta
 
 

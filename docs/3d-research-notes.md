@@ -112,6 +112,7 @@ Tick items off as you go. Decisions already made are listed at the bottom for re
 | 12 | Migration | Convert in place (game may be broken mid-way). 2D version committed and tagged `2d-prototype` in git. |
 | 13 | Order | One system at a time, runnable after each step: (1) project settings + 3D main scene, (2) FP player + rotation shake, (3) gathering a rock end-to-end, (4) pickups + HUD rescale, (5) tree topple, (6) slide + mantle, (7) Terrain3D. |
 | 14 | Saving nodes | Not saved for now; add depletion/respawn saving together with Terrain3D. |
+| 15 | Bite | The tool sinks into the node on impact, sticks through hit-stop, then yanks out; the chunk tears out toward the player on the yank. Every hit leaves a notch decal + a torn fragment. Deflects bounce off instead. |
 
 ## Still open
 

@@ -13,12 +13,18 @@ signal depleted(node: ResourceNode)
 signal respawned(node: ResourceNode)
 
 const PICKUP_SCENE := preload("res://scenes/pickup.tscn")
+const NODE_SURFACE := preload("res://materials/node_surface.tres")
+const NOTCH_COLOR := Color(0.08, 0.06, 0.05, 0.85)
 const DEFLECT_SFX := preload("res://audio/stone_hit.tres")
 const DEFLECT_COLOR := Color("ff8a7a")
 const WORLD_LAYER := 1
 ## Physics layer 4: debris collides with the world but not the player (layer 2) or pickups.
 const DEBRIS_LAYER := 1 << 3
 const DEBRIS_LIFETIME := 1.6
+## The felled piece counts as landed once it leans past this (dot of its up axis with world up).
+const LANDED_TILT := 0.35
+const FELLED_LINGER := 2.5
+const FELLED_SHAPE_SCALE := 0.6
 
 @export_group("Gathering")
 @export var item: StringName = &"wood"
@@ -50,6 +56,18 @@ const DEBRIS_LIFETIME := 1.6
 ## How much higher-pitched each hit gets as the node weakens (escalation).
 @export_range(0.0, 0.5) var stress_pitch := 0.15
 
+@export_group("Topple")
+## Trees: on break, Visual/Body falls over as one physics piece instead of vanishing.
+## Drops spill along the trunk when it lands.
+@export var topple := false
+## Heavy thud when the felled piece hits the ground (positional).
+@export var land_sfx: AudioStream
+@export_range(0.3, 1.5) var land_pitch := 0.55
+## Shake when it lands, faded out over 20 m from the player.
+@export var shake_land := 3.5
+## Tipping speed at the start of the fall (rad/s).
+@export var topple_push := 0.8
+
 @export_group("Feel")
 @export var hitstop_hit := 0.045
 @export var hitstop_break := 0.11
@@ -58,6 +76,7 @@ const DEBRIS_LIFETIME := 1.6
 
 @onready var visual: Node3D = $Visual
 @onready var chunks: Node3D = $Visual/Chunks
+@onready var notches: Node3D = _make_notches()
 @onready var rubble: Node3D = $Rubble
 @onready var collision: CollisionShape3D = $CollisionShape3D
 @onready var chips: CPUParticles3D = $Chips
@@ -69,15 +88,26 @@ var hits_left := 0
 var _surfaces: Array[GeometryInstance3D] = []
 var _flash_tween: Tween
 var _nudge_tween: Tween
+var _burst_home := Vector3.ZERO
+var _break_audio_home := Vector3.ZERO
 
 
 func _ready() -> void:
 	add_to_group("gatherable")
+	_burst_home = burst.position
+	_break_audio_home = break_audio.position
 	_collect_surfaces(visual)
 	chips.color = chip_color
 	burst.color = burst_color
 	hits_left = max_hits
 	_reset_visuals()
+
+
+func _make_notches() -> Node3D:
+	var n := Node3D.new()
+	n.name = "Notches"
+	$Visual.add_child(n)
+	return n
 
 
 func is_available() -> bool:
@@ -95,13 +125,14 @@ func set_highlighted(on: bool) -> void:
 		s.set_instance_shader_parameter("highlight", 1.0 if on else 0.0)
 
 
-## Called by the player on the impact frame of a swing.
-func hit(info: HitInfo) -> void:
+## Called by the player on the impact frame of a swing. Returns true if the tool bit in
+## (the player then holds it there and calls pull()), false if it bounced off.
+func hit(info: HitInfo) -> bool:
 	if hits_left <= 0:
-		return
+		return false
 	if not can_gather():
 		_deflect(info)
-		return
+		return false
 	hits_left -= 1
 	var stress := 1.0 - float(hits_left) / max_hits  # 0 -> 1 as it depletes
 
@@ -116,7 +147,21 @@ func hit(info: HitInfo) -> void:
 	if hits_left == 0:
 		_break(info)
 	else:
-		_shed_chunks(stress, info)
+		_notch_at(info)
+	return true
+
+
+## Called by the player when the tool is yanked back out after biting in: the node tugs
+## toward the player and the piece the tool bit into tears out, flying toward the camera.
+func pull(info: HitInfo) -> void:
+	if hits_left <= 0:
+		return  # broke on this hit — the break already threw everything
+	var stress := 1.0 - float(hits_left) / max_hits
+	var toward := -info.away()
+	_nudge(toward * 0.6)
+	var tear := (info.normal * 0.6 + toward * 0.6).normalized()
+	_spawn_fragment(info, tear)
+	_shed_chunks(stress, info, tear)
 
 
 ## Under-levelled: the tool bounces off — clank, small nudge, no damage, no XP.
@@ -149,10 +194,13 @@ func _break(info: HitInfo) -> void:
 	visual.visible = false
 	rubble.visible = true
 	collision.set_deferred("disabled", true)
-	burst.restart()
 	Juice.shake(shake_break)
 	Juice.hitstop(hitstop_break)
-	_spawn_drops(info)
+	if topple:
+		_topple(info)  # not awaited: the fall plays out while the respawn timer runs
+	else:
+		burst.restart()
+		_spawn_drops(info)
 	depleted.emit(self)
 
 	await get_tree().create_timer(respawn_time).timeout
@@ -167,36 +215,127 @@ func _break(info: HitInfo) -> void:
 func _reset_visuals() -> void:
 	for c in chunks.get_children():
 		c.visible = true
+	for n in notches.get_children():
+		n.queue_free()
 	visual.visible = true
 	rubble.visible = false
 	collision.set_deferred("disabled", false)
+	burst.position = _burst_home
+	break_audio.position = _break_audio_home
+
+
+func _drop_count() -> int:
+	return randi_range(drops_min, maxi(drops_min, drops_max))
 
 
 func _spawn_drops(info: HitInfo) -> void:
-	var count := randi_range(drops_min, maxi(drops_min, drops_max))
 	var toward_player := -info.away()
-	for i in count:
-		var p := PICKUP_SCENE.instantiate()
-		p.item = item
-		p.icon = item_icon
-		get_parent().add_child(p)
+	for i in _drop_count():
 		var spread := Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)) * 1.2
 		var vel := toward_player * randf_range(1.0, 2.0) + spread + Vector3.UP * randf_range(3.0, 4.5)
-		p.launch(global_position + Vector3(0, popup_height * 0.5, 0) + toward_player * 0.4, vel, i * 0.04)
+		_launch_drop(global_position + Vector3(0, popup_height * 0.5, 0) + toward_player * 0.4, vel, i * 0.04)
+
+
+func _launch_drop(from: Vector3, velocity: Vector3, delay: float) -> void:
+	var p := PICKUP_SCENE.instantiate()
+	p.item = item
+	p.icon = item_icon
+	get_parent().add_child(p)
+	p.launch(from, velocity, delay)
+
+
+# --- topple ---------------------------------------------------------------------------------
+
+## Copies Visual/Body into one rigid body standing where the tree was and tips it away from
+## the player. Gravity does the rest; when it has fallen over: thud, leaf burst, logs along the trunk.
+func _topple(info: HitInfo) -> void:
+	var away := info.away()
+	var felled := RigidBody3D.new()
+	felled.collision_layer = DEBRIS_LAYER
+	felled.collision_mask = WORLD_LAYER
+	felled.mass = 200.0
+	felled.physics_material_override = PhysicsMaterial.new()
+	felled.physics_material_override.friction = 1.0
+	var height := 0.0
+	for mesh in visual.get_node("Body").get_children():
+		if not mesh is MeshInstance3D:
+			continue
+		var piece := mesh.duplicate() as MeshInstance3D
+		piece.set_instance_shader_parameter("flash", 0.0)
+		piece.set_instance_shader_parameter("highlight", 0.0)
+		felled.add_child(piece)
+		var aabb: AABB = mesh.get_aabb()
+		var shape := CollisionShape3D.new()
+		shape.shape = BoxShape3D.new()
+		# shrunk, so a wide canopy lands softly instead of see-sawing the base up into the air
+		(shape.shape as BoxShape3D).size = aabb.size * FELLED_SHAPE_SCALE
+		shape.transform = mesh.transform * Transform3D(Basis.IDENTITY, aabb.get_center())
+		felled.add_child(shape)
+		height = maxf(height, mesh.position.y + aabb.end.y)
+	# the node's own collision shape (the trunk) at full size
+	var trunk := CollisionShape3D.new()
+	trunk.shape = collision.shape
+	trunk.transform = collision.transform
+	felled.add_child(trunk)
+	# top-heavy on purpose (canopy), so once it starts leaning it keeps going
+	felled.center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
+	felled.center_of_mass = Vector3(0, height * 0.65, 0)
+	get_parent().add_child(felled)
+	felled.global_transform = global_transform.orthonormalized()
+	# start it rotating around its *base* (the hinge on the stump), not its centre of mass —
+	# otherwise the base skids along the ground and the fall loses all its energy
+	var spin := Vector3.UP.cross(away).normalized() * topple_push
+	felled.angular_velocity = spin
+	felled.linear_velocity = spin.cross(Vector3.UP * felled.center_of_mass.y)
+
+	# wait for it to lean over far enough (or give up after a few seconds)
+	var start := Time.get_ticks_msec()
+	while is_instance_valid(felled) and felled.global_basis.y.dot(Vector3.UP) > LANDED_TILT 			and Time.get_ticks_msec() - start < 4000:
+		await get_tree().physics_frame
+	if not is_instance_valid(felled):
+		return
+
+	felled.angular_damp = 6.0  # settle where it lands rather than rolling around
+	felled.linear_damp = 1.5
+	var top := felled.global_transform * Vector3(0, height * 0.75, 0)
+	break_audio.global_position = top
+	_play(break_audio, land_sfx, land_pitch)
+	burst.global_position = top
+	burst.restart()
+	var player := get_tree().get_first_node_in_group("player") as Node3D
+	var falloff := 1.0
+	if player:
+		falloff = clampf(1.0 - player.global_position.distance_to(top) / 20.0, 0.0, 1.0)
+	Juice.shake(shake_land * falloff)
+
+	# logs spill out along the trunk
+	for i in _drop_count():
+		var along := felled.global_transform * Vector3(0, randf_range(0.25, 0.85) * height, 0)
+		var vel := Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)) * 1.5 + Vector3.UP * randf_range(2.5, 4.0)
+		_launch_drop(along + Vector3.UP * 0.3, vel, i * 0.05)
+
+	# settle, then sink into the ground and disappear
+	await get_tree().create_timer(FELLED_LINGER).timeout
+	if not is_instance_valid(felled):
+		return
+	felled.freeze = true
+	var t := felled.create_tween()
+	t.tween_property(felled, "global_position", felled.global_position + Vector3.DOWN * 1.2, 1.0) 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.tween_callback(felled.queue_free)
 
 
 # --- chunks ---------------------------------------------------------------------------------
 
 ## Pops chunks off until the visible amount matches how worn down the node is.
 ## The last chunk always stays on until the node actually breaks.
-func _shed_chunks(stress: float, info: HitInfo) -> void:
+func _shed_chunks(stress: float, info: HitInfo, push: Vector3) -> void:
 	var total := chunks.get_child_count()
 	var should_be_gone := mini(floori(stress * total), total - 1)
 	var intact := _intact_chunks()
 	while total - intact.size() < should_be_gone and not intact.is_empty():
 		var nearest := _nearest(intact, info.position)
 		intact.erase(nearest)
-		_pop_chunk(nearest, (info.normal + info.away() * 0.5).normalized(), debris_speed)
+		_pop_chunk(nearest, push, debris_speed)
 
 
 func _intact_chunks() -> Array[MeshInstance3D]:
@@ -221,23 +360,47 @@ func _nearest(list: Array[MeshInstance3D], point: Vector3) -> MeshInstance3D:
 ## Hides the chunk and throws a physics copy of it, which shrinks away after a moment.
 func _pop_chunk(chunk: MeshInstance3D, push: Vector3, speed: float) -> void:
 	chunk.visible = false
+	var piece := chunk.duplicate() as MeshInstance3D
+	_throw(piece, chunk.global_transform.orthonormalized(), push, speed)
+
+
+## A small piece of whatever was struck, torn out at the hit point on every hit.
+func _spawn_fragment(info: HitInfo, push: Vector3) -> void:
+	var piece := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = Vector3(0.14, 0.1, 0.12)
+	piece.mesh = box
+	piece.material_override = NODE_SURFACE
+	piece.set_instance_shader_parameter("albedo", _surface_color_near(info.position))
+	var rot := Basis.from_euler(Vector3(randf(), randf(), randf()) * TAU)
+	_throw(piece, Transform3D(rot, info.position + info.normal * 0.06), push, debris_speed * 0.8)
+
+
+func _surface_color_near(point: Vector3) -> Color:
+	var intact := _intact_chunks()
+	if intact.is_empty():
+		return chip_color
+	return _nearest(intact, point).get_instance_shader_parameter("albedo")
+
+
+## Puts `piece` in a debris rigid body at `xform` and flings it.
+func _throw(piece: MeshInstance3D, xform: Transform3D, push: Vector3, speed: float) -> void:
 	var body := RigidBody3D.new()
 	body.collision_layer = DEBRIS_LAYER
 	body.collision_mask = WORLD_LAYER
-	var piece := chunk.duplicate() as MeshInstance3D
 	piece.transform = Transform3D.IDENTITY
 	piece.visible = true
 	piece.set_instance_shader_parameter("flash", 0.0)
 	piece.set_instance_shader_parameter("highlight", 0.0)
 	body.add_child(piece)
-	var aabb := chunk.get_aabb()
+	var aabb := piece.get_aabb()
 	var shape := CollisionShape3D.new()
 	shape.shape = BoxShape3D.new()
 	(shape.shape as BoxShape3D).size = aabb.size
 	shape.position = aabb.get_center()
 	body.add_child(shape)
 	get_parent().add_child(body)
-	body.global_transform = chunk.global_transform.orthonormalized()
+	body.global_transform = xform
 	var jitter := Vector3(randf_range(-1, 1), randf_range(0, 1), randf_range(-1, 1)) * 0.4
 	body.linear_velocity = (push + Vector3.UP * 0.8 + jitter).normalized() * speed
 	body.angular_velocity = Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * 6.0
@@ -249,6 +412,40 @@ func _pop_chunk(chunk: MeshInstance3D, push: Vector3, speed: float) -> void:
 
 
 # --- feedback -------------------------------------------------------------------------------
+
+## A dark bite mark projected onto the surface where the tool went in. Cleared on respawn.
+func _notch_at(info: HitInfo) -> void:
+	var decal := Decal.new()
+	decal.texture_albedo = _notch_texture()
+	decal.modulate = NOTCH_COLOR
+	decal.size = Vector3(0.24, 0.3, 0.24)
+	decal.normal_fade = 0.4
+	decal.cull_mask = WORLD_LAYER  # not the held tool (render layer 2)
+	notches.add_child(decal)
+	var up := info.normal
+	var side := up.cross(Vector3.FORWARD if absf(up.dot(Vector3.FORWARD)) < 0.9 else Vector3.RIGHT).normalized()
+	var rot := Basis(side, up, side.cross(up)).rotated(up, randf() * TAU)
+	decal.global_transform = Transform3D(rot, info.position)
+
+
+static var _notch_tex: Texture2D
+
+static func _notch_texture() -> Texture2D:
+	if _notch_tex == null:
+		var g := Gradient.new()
+		g.set_color(0, Color(1, 1, 1, 1))
+		g.set_color(1, Color(1, 1, 1, 0))
+		g.add_point(0.55, Color(1, 1, 1, 0.9))
+		var tex := GradientTexture2D.new()
+		tex.gradient = g
+		tex.fill = GradientTexture2D.FILL_RADIAL
+		tex.fill_from = Vector2(0.5, 0.5)
+		tex.fill_to = Vector2(1.0, 0.5)
+		tex.width = 64
+		tex.height = 64
+		_notch_tex = tex
+	return _notch_tex
+
 
 func _chips_at(info: HitInfo) -> void:
 	chips.global_position = info.position + info.normal * 0.05

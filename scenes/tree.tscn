@@ -40,6 +40,8 @@ burst_color = Color(0.22, 0.502, 0.298, 1)
 popup_height = 2.0
 hit_sfx = ExtResource("4_hit")
 break_sfx = ExtResource("5_break")
+topple = true
+land_sfx = ExtResource("5_break")
 
 [node name="CollisionShape3D" parent="." index="0"]
 position = Vector3(0, 1.6, 0)

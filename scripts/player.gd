@@ -42,6 +42,14 @@ extends CharacterBody3D
 @export var swing_cooldown := 0.12
 @export var move_slow_while_swinging := 0.3
 
+@export_group("Bite")
+## How far the tool sinks into the node on impact (m, viewmodel space).
+@export var bite_depth := 0.07
+## How long the tool stays stuck in the node after the hit-stop.
+@export var bite_hold := 0.06
+## How long the yank back out takes. The chunk tears out at the end of it.
+@export var yank_time := 0.07
+
 ## Tool pivot rotation around X (radians): positive tilts the head back toward the camera.
 const REST_ANGLE := -0.3
 const WINDUP_ANGLE := 0.7
@@ -206,19 +214,38 @@ func _swing(tool: StringName) -> void:
 	var hit := _aim()
 	var node := _node_under_crosshair(hit)
 	if node:
-		node.hit(HitInfo.new(hit["position"], hit["normal"], node, camera.global_position))
-		_kick()
+		var info := HitInfo.new(hit["position"], hit["normal"], node, camera.global_position)
+		if node.hit(info):
+			await _bite()
+			if is_instance_valid(node):
+				node.pull(info)  # the chunk tears out as the tool comes free
+		else:
+			_bounce()
 
 	# 4. recover
-	t = create_tween()
+	t = create_tween().set_parallel()
 	t.tween_property(tool_pivot, "rotation:x", REST_ANGLE, recover_time).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_property(tool_pivot, "position", _tool_rest, recover_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	await t.finished
 	_cooldown = swing_cooldown
 	_swinging = false
 
 
-## The tool jolts back toward the camera on impact (replaces the 2D body squash).
-func _kick() -> void:
+## The tool sinks into the node and sticks (the hit-stop freezes it there), then gets yanked
+## back out with a jerk — the moment the chunk comes free.
+func _bite() -> void:
+	tool_pivot.position = _tool_rest + Vector3(0, -bite_depth * 0.4, -bite_depth)
+	var t := create_tween()
+	t.tween_interval(bite_hold)
+	# yank: back toward the camera, head tipping up as it comes free
+	t.tween_property(tool_pivot, "position", _tool_rest + Vector3(0, 0.03, 0.09), yank_time) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	t.parallel().tween_property(tool_pivot, "rotation:x", STRIKE_ANGLE + 0.45, yank_time) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	await t.finished
+
+
+## Deflected (level too low): the tool rebounds off the surface instead of biting in.
+func _bounce() -> void:
 	tool_pivot.position = _tool_rest + Vector3(0, 0.02, 0.08)
-	create_tween().tween_property(tool_pivot, "position", _tool_rest, 0.15) \
-		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tool_pivot.rotation.x = STRIKE_ANGLE + 0.7

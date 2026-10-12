@@ -167,5 +167,4 @@ rotation = Vector3(0, 4.01, 0)
 position = Vector3(0, 0.1, 2)
 
 [node name="HUD" type="CanvasLayer" parent="."]
-scale = Vector2(4, 4)
 script = ExtResource("2_hud")
