@@ -340,7 +340,81 @@ def ore_item():
     export(os.path.join("items", "ore"))
 
 
+# --- pond scenery -----------------------------------------------------------------------------
+
+def reeds():
+    """A clump of tapered reed blades with a few cattail heads. Origin at the base (on the bed)."""
+    reset()
+    rng = random.Random(41)
+    for i in range(9):
+        h = rng.uniform(0.9, 1.6)
+        bm = prism(3, 0.018, 0.002, h)
+        paint(bm, lambda f: "leaves.5" if rng.random() < 0.5 else "leaves.3")
+        a, r = rng.uniform(0, math.tau), rng.uniform(0.0, 0.18)
+        tilt = (rng.uniform(-0.15, 0.15), rng.uniform(-0.15, 0.15), rng.uniform(0, math.tau))
+        make_object(f"Blade{i}", bm, (math.cos(a) * r, math.sin(a) * r, h / 2), tilt)
+        if i % 3 == 0:  # cattail head near the top
+            bm = prism(6, 0.025, 0.025, 0.16)
+            paint(bm, lambda f: "wood.2")
+            make_object(f"Cattail{i}", bm, (math.cos(a) * r, math.sin(a) * r, h * 0.82), tilt)
+    export(os.path.join("scenery", "reeds"))
+
+
+def lily_pad():
+    """A flat floating pad with a notch cut out; origin at its centre on the water line."""
+    reset()
+    rng = random.Random(42)
+    bm = bmesh.new()
+    centre = bm.verts.new((0, 0, 0.0))
+    ring = []
+    for i in range(10):
+        a = (i / 10) * math.tau
+        if i == 0:
+            ring.append(bm.verts.new((0.04, 0.0, 0.0)))  # the notch, pulled in toward the centre
+            continue
+        r = 0.22 * rng.uniform(0.92, 1.05)
+        ring.append(bm.verts.new((math.cos(a) * r, math.sin(a) * r, 0.0)))
+    for i in range(len(ring)):
+        if i == 0 or i == len(ring) - 1:
+            continue  # leave the notch open
+        bm.faces.new((centre, ring[i], ring[i + 1]))
+    bm.faces.new((centre, ring[1], ring[0]))
+    paint(bm, lambda f: "leaves.4" if rng.random() < 0.6 else "leaves.3")
+    make_object("Pad", bm)
+    export(os.path.join("scenery", "lily_pad"))
+
+
+def lily_flower():
+    """A lily pad with a small pink-white flower on it."""
+    reset()
+    rng = random.Random(43)
+    bm = prism(8, 0.2, 0.2, 0.01)
+    paint(bm, lambda f: "leaves.4")
+    make_object("Pad", bm, (0, 0, 0.005))
+    for i in range(6):
+        a = i * math.tau / 6
+        bm = prism(3, 0.03, 0.002, 0.09)
+        paint(bm, lambda f: "neutral.7" if rng.random() < 0.6 else "accent.7")
+        make_object(f"Petal{i}", bm, (math.cos(a) * 0.03, math.sin(a) * 0.03, 0.04),
+                    (math.cos(a + math.pi / 2) * 0.7, math.sin(a + math.pi / 2) * 0.7, 0))
+    bm = blob(0.025, rng, jitter_amount=0.1)
+    paint(bm, lambda f: "accent.3")
+    make_object("Heart", bm, (0, 0, 0.04))
+    export(os.path.join("scenery", "lily_flower"))
+
+
+def shore_stone():
+    reset()
+    rng = random.Random(44)
+    bm = blob(0.28, rng, jitter_amount=0.28, squash=(1.2, 1.0, 0.55))
+    paint(bm, shade_by_normal("stone.5", "stone.3", "stone.2", rng, side_alt="terrain.moss"))  # a little moss
+    make_object("Stone", bm, (0, 0, 0.06))
+    export(os.path.join("scenery", "shore_stone"))
+
+
+os.makedirs(os.path.join(OUT_DIR, "scenery"), exist_ok=True)
 os.makedirs(os.path.join(OUT_DIR, "fish"), exist_ok=True)
 os.makedirs(os.path.join(OUT_DIR, "items"), exist_ok=True)
-for build in (rock, tree, pickaxe, axe, spear, perch, trout, pike, log_item, ore_item):
+for build in (rock, tree, pickaxe, axe, spear, perch, trout, pike, log_item, ore_item,
+              reeds, lily_pad, lily_flower, shore_stone):
     build()

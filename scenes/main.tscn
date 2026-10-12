@@ -12,6 +12,7 @@
 [ext_resource type="Resource" path="res://data/fish/perch.tres" id="10_perch"]
 [ext_resource type="Resource" path="res://data/fish/trout.tres" id="11_trout"]
 [ext_resource type="Resource" path="res://data/fish/pike.tres" id="12_pike"]
+[ext_resource type="Script" path="res://scripts/pond_dressing.gd" id="13_dressing"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
@@ -79,6 +80,9 @@ script = ExtResource("7_water")
 [node name="Volume" type="CollisionShape3D" parent="Pond"]
 position = Vector3(0, -1, 0)
 shape = SubResource("BoxShape3D_pond")
+
+[node name="Dressing" type="Node3D" parent="Pond"]
+script = ExtResource("13_dressing")
 
 [node name="Fish" type="Node3D" parent="Pond"]
 script = ExtResource("9_fish_pond")
