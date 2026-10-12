@@ -1,0 +1,11 @@
+[gd_resource type="AudioStreamRandomizer" format=3]
+
+[ext_resource type="AudioStream" path="res://audio/stone_break.wav" id="1"]
+
+[resource]
+playback_mode = 0
+random_pitch = 1.05
+random_volume_offset_db = 1.0
+streams_count = 1
+stream_0/stream = ExtResource("1")
+stream_0/weight = 1.0

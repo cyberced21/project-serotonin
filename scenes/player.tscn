@@ -1,0 +1,44 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://art/player.png" id="2_body"]
+[ext_resource type="Texture2D" path="res://art/axe.png" id="3_axe"]
+[ext_resource type="AudioStream" path="res://audio/swing.tres" id="4_swing"]
+[ext_resource type="Script" path="res://scripts/shake_camera.gd" id="5_cam"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_feet"]
+radius = 4.0
+
+[node name="Player" type="CharacterBody2D"]
+motion_mode = 1
+script = ExtResource("1_script")
+swing_sfx = ExtResource("4_swing")
+
+[node name="Body" type="Sprite2D" parent="."]
+position = Vector2(0, -8)
+texture = ExtResource("2_body")
+
+[node name="ToolPivot" type="Node2D" parent="."]
+position = Vector2(0, -7)
+
+[node name="Arm" type="Node2D" parent="ToolPivot"]
+position = Vector2(4, 0)
+rotation = 0.35
+
+[node name="Tool" type="Sprite2D" parent="ToolPivot/Arm"]
+texture = ExtResource("3_axe")
+centered = false
+offset = Vector2(-2, -11)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -2)
+shape = SubResource("CircleShape2D_feet")
+
+[node name="Audio" type="AudioStreamPlayer2D" parent="."]
+volume_db = -6.0
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(0, -8)
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
+script = ExtResource("5_cam")

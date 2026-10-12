@@ -1,0 +1,22 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/resource_node.tscn" id="1_base"]
+[ext_resource type="Texture2D" path="res://art/tree.png" id="2_tex"]
+[ext_resource type="Texture2D" path="res://art/item_wood.png" id="3_icon"]
+[ext_resource type="AudioStream" path="res://audio/wood_hit.tres" id="4_hit"]
+[ext_resource type="AudioStream" path="res://audio/wood_break.tres" id="5_break"]
+
+[node name="Tree" instance=ExtResource("1_base")]
+item = &"wood"
+item_icon = ExtResource("3_icon")
+tool_type = &"axe"
+max_hits = 5
+drops_min = 2
+drops_max = 4
+skill = &"woodcutting"
+texture = ExtResource("2_tex")
+frames = 5
+chip_color = Color(0.871, 0.698, 0.463, 1)
+burst_color = Color(0.22, 0.502, 0.298, 1)
+hit_sfx = ExtResource("4_hit")
+break_sfx = ExtResource("5_break")

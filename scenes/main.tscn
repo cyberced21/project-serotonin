@@ -1,0 +1,68 @@
+[gd_scene format=3 uid="uid://bh2t56uvjyfkn"]
+
+[ext_resource type="Texture2D" uid="uid://bnatfkegj3dmf" path="res://art/grass.png" id="1_grass"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/tree.tscn" id="3_tree"]
+[ext_resource type="PackedScene" path="res://scenes/rock.tscn" id="4_rock"]
+[ext_resource type="Script" uid="uid://cayt1hrplt7q2" path="res://scripts/hud.gd" id="5_hud"]
+
+[node name="Main" type="Node2D" unique_id=845749951]
+
+[node name="Ground" type="Sprite2D" parent="." unique_id=270682338]
+texture_repeat = 2
+texture = ExtResource("1_grass")
+region_enabled = true
+region_rect = Rect2(0, 0, 640, 384)
+
+[node name="World" type="Node2D" parent="." unique_id=760537058]
+y_sort_enabled = true
+
+[node name="Player" parent="World" unique_id=98708230 instance=ExtResource("2_player")]
+
+[node name="Tree1" parent="World" unique_id=195098071 instance=ExtResource("3_tree")]
+position = Vector2(-90, -40)
+
+[node name="Tree2" parent="World" unique_id=2077124673 instance=ExtResource("3_tree")]
+position = Vector2(-60, -55)
+
+[node name="Tree3" parent="World" unique_id=907688449 instance=ExtResource("3_tree")]
+position = Vector2(-110, 10)
+
+[node name="Tree4" parent="World" unique_id=756715934 instance=ExtResource("3_tree")]
+position = Vector2(-70, 30)
+
+[node name="Tree5" parent="World" unique_id=538916081 instance=ExtResource("3_tree")]
+position = Vector2(60, -50)
+
+[node name="Tree6" parent="World" unique_id=64388584 instance=ExtResource("3_tree")]
+position = Vector2(95, -30)
+
+[node name="Tree7" parent="World" unique_id=1037387546 instance=ExtResource("3_tree")]
+position = Vector2(120, 25)
+
+[node name="Tree8" parent="World" unique_id=380468249 instance=ExtResource("3_tree")]
+position = Vector2(-140, -20)
+
+[node name="Tree9" parent="World" unique_id=820243528 instance=ExtResource("3_tree")]
+position = Vector2(30, 60)
+
+[node name="Tree10" parent="World" unique_id=1092069770 instance=ExtResource("3_tree")]
+position = Vector2(-30, 70)
+
+[node name="Rock1" parent="World" unique_id=558172057 instance=ExtResource("4_rock")]
+position = Vector2(40, -10)
+
+[node name="Rock2" parent="World" unique_id=1943316521 instance=ExtResource("4_rock")]
+position = Vector2(70, 10)
+
+[node name="Rock3" parent="World" unique_id=356429956 instance=ExtResource("4_rock")]
+position = Vector2(-20, -45)
+
+[node name="Rock4" parent="World" unique_id=957141923 instance=ExtResource("4_rock")]
+position = Vector2(100, 55)
+
+[node name="Rock5" parent="World" unique_id=2135224893 instance=ExtResource("4_rock")]
+position = Vector2(-100, 55)
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=1795357718]
+script = ExtResource("5_hud")
