@@ -9,6 +9,8 @@
 [ext_resource type="AudioStream" path="res://audio/movement/mantle.tres" id="7_mantle"]
 [ext_resource type="PackedScene" path="res://models/pickaxe.glb" id="8_pickaxe"]
 [ext_resource type="PackedScene" path="res://models/axe.glb" id="9_axe"]
+[ext_resource type="PackedScene" path="res://models/spear.glb" id="10_spear"]
+[ext_resource type="Script" path="res://scripts/spear_fishing.gd" id="11_spearfishing"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.35
@@ -53,6 +55,7 @@ script = ExtResource("1_script")
 swing_sfx = ExtResource("3_swing")
 pickaxe_model = ExtResource("8_pickaxe")
 axe_model = ExtResource("9_axe")
+spear_model = ExtResource("10_spear")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 position = Vector3(0, 0.9, 0)
@@ -162,6 +165,17 @@ layers = 2
 cast_shadow = 0
 position = Vector3(0, 0.38, -0.09)
 mesh = SubResource("BoxMesh_axe_blade")
+
+[node name="SpearGrip" type="Node3D" parent="Viewmodel/SubViewport/Camera3D"]
+position = Vector3(0.24, -0.3, -0.2)
+rotation = Vector3(0.2, 0.17, 0)
+
+[node name="Spear" type="Node3D" parent="Viewmodel/SubViewport/Camera3D/SpearGrip"]
+unique_name_in_owner = true
+visible = false
+
+[node name="SpearFishing" type="Node" parent="."]
+script = ExtResource("11_spearfishing")
 
 [node name="Reticle" type="CanvasLayer" parent="."]
 layer = 2

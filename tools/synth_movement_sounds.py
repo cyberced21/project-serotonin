@@ -159,6 +159,18 @@ def splash(rng):
     return out
 
 
+def spear_hit(rng):
+    """Spear skewering a fish: a sharp wet thwack with a little fleshy thump."""
+    n = secs(0.25)
+    t = np.arange(n) / RATE
+    crack = highpass(rng.standard_normal(n), 2500) * env(n, 0.0, 0.01)
+    wet = band(rng.standard_normal(n), 500, 3500) * env(n, 0.002, 0.05) * 1.2
+    thump = np.sin(2 * np.pi * rng.uniform(140, 180) * t) * env(n, 0.001, 0.04) * 0.7
+    out = crack + wet + thump
+    bubbles(rng, out, 3, 0.03, 0.18, 0.2)
+    return out
+
+
 def mantle(rng):
     out = np.zeros(secs(0.45))
     for at in (0.0, rng.uniform(0.03, 0.06)):  # left hand, right hand
@@ -218,6 +230,13 @@ def main():
         write_wav(os.path.join(OUT_MOVE, f"splash_{i + 1:02d}.wav"), splash(rng))
     write_randomizer(os.path.join(OUT_MOVE, "splash.tres"), "splash", "movement")
     print("wrote slide_loop, mantle, splash")
+
+    out_fish = os.path.join(os.path.dirname(__file__), "..", "audio", "fishing")
+    os.makedirs(out_fish, exist_ok=True)
+    for i in range(VARIANTS):
+        write_wav(os.path.join(out_fish, f"spear_hit_{i + 1:02d}.wav"), spear_hit(rng))
+    write_randomizer(os.path.join(out_fish, "spear_hit.tres"), "spear_hit", "fishing")
+    print("wrote spear_hit")
 
 
 if __name__ == "__main__":

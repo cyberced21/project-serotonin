@@ -65,6 +65,6 @@ void fragment() {
 		EMISSION = vec3(t);  // unlit, so it reads true (note: screenshots are sRGB-encoded)
 		ALPHA = 1.0;
 	}
-	ROUGHNESS = 0.2;
-	SPECULAR = 0.4;
+	ROUGHNESS = 0.38;  // soft sun glints, not a blinding hot spot
+	SPECULAR = 0.25;
 }

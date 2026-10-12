@@ -72,6 +72,7 @@ extends CharacterBody3D
 ## Tool models (.glb, handle from the origin up +Y). Replace the greybox tools when set.
 @export var pickaxe_model: PackedScene
 @export var axe_model: PackedScene
+@export var spear_model: PackedScene
 
 @export_group("Swing timing")
 @export var windup_time := 0.13
@@ -110,7 +111,8 @@ const TOOL_MATERIAL := preload("res://materials/node_palette.tres")
 @onready var body_shape: CapsuleShape3D = body_collision.shape
 @onready var camera: Camera3D = $Head/Camera3D
 @onready var tool_pivot: Node3D = %ToolPivot
-@onready var tools: Dictionary[StringName, Node3D] = {&"axe": %Axe, &"pickaxe": %Pickaxe}
+@onready var tools: Dictionary[StringName, Node3D] = {&"axe": %Axe, &"pickaxe": %Pickaxe, &"spear": %Spear}
+@onready var spearfishing: SpearFishing = $SpearFishing
 @onready var dot: Control = $Reticle/Dot
 @onready var hover_label: Label = $Reticle/Hover
 @onready var audio: AudioStreamPlayer = $Audio
@@ -147,6 +149,7 @@ func _ready() -> void:
 	tool_pivot.rotation.x = REST_ANGLE
 	_use_tool_model(tools[&"pickaxe"], pickaxe_model)
 	_use_tool_model(tools[&"axe"], axe_model)
+	_use_tool_model(tools[&"spear"], spear_model)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	SaveGame.register(&"player", self)
 
@@ -187,8 +190,11 @@ func _physics_process(delta: float) -> void:
 	_cooldown -= delta
 	_update_target()
 	if Input.is_action_pressed("gather") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED \
-			and _target and is_on_floor() and _state == State.NORMAL and not _swinging and _cooldown <= 0.0:
-		_swing(_target.tool_type)
+			and is_on_floor() and _state == State.NORMAL and not _swinging and _cooldown <= 0.0:
+		if _target:
+			_swing(_target.tool_type)
+		elif spearfishing.can_thrust():
+			spearfishing.thrust()
 
 
 func _move(delta: float) -> void:
@@ -428,12 +434,33 @@ func _update_target() -> void:
 		_target = node
 		if _target:
 			_target.set_highlighted(true)
-	dot.scale = Vector2.ONE * (1.75 if _target else 1.0)
+	if _target:
+		spearfishing.clear_target()
+	elif not _swinging:  # mid-thrust, SpearFishing re-aims on its own impact frame
+		spearfishing.update_target()
+
+	# bring out the right tool for whatever you're looking at
+	if not _swinging:
+		if _target:
+			_equip(_target.tool_type)
+		elif spearfishing.can_thrust():
+			_equip(&"spear")
+
+	var fish := spearfishing.fish_target
+	dot.scale = Vector2.ONE * (1.75 if _target or fish else (1.3 if spearfishing.can_thrust() else 1.0))
 	if _target and not _target.can_gather():
 		hover_label.text = "%s %d" % [Skills.display_name(_target.skill), _target.required_level]
 		hover_label.modulate = DEFLECT_COLOR
+	elif fish and not fish.can_catch():
+		hover_label.text = "%s %d" % [Skills.display_name(&"fishing"), fish.species.required_level]
+		hover_label.modulate = DEFLECT_COLOR
 	else:
 		hover_label.text = ""
+
+
+func _equip(tool: StringName) -> void:
+	for id in tools:
+		tools[id].visible = id == tool
 
 
 func _swing(tool: StringName) -> void:

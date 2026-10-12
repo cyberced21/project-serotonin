@@ -219,6 +219,28 @@ def axe():
     export("axe")
 
 
+def spear():
+    """Fishing spear pointing forward (+Y, Godot -Z) from the grip at the origin: wooden shaft,
+    a dark binding wrap, and a barbed metal tip at about 1.2 m."""
+    reset()
+    rng = random.Random(5)
+    bm = prism(6, 0.022, 0.02, 1.45)
+    paint(bm, shade_by_normal("wood.6", "wood.4", "wood.3", rng, side_alt="wood.5"))
+    make_object("Shaft", bm, (0, 0.45, 0), (-math.pi / 2, 0, 0))  # from -0.27 to 1.18 along Y
+    bm = prism(6, 0.027, 0.027, 0.08)
+    paint(bm, lambda f: "wood.1")
+    make_object("Wrap", bm, (0, 1.12, 0), (-math.pi / 2, 0, 0))
+    bm = prism(4, 0.03, 0.002, 0.2)
+    paint(bm, shade_by_normal("metal.7", "metal.5", "metal.4", rng, side_alt="metal.6"))
+    make_object("Tip", bm, (0, 1.28, 0), (-math.pi / 2, 0, math.pi / 4))
+    for side in (1, -1):  # two barbs angled back from the tip
+        bm = prism(3, 0.012, 0.001, 0.08)
+        paint(bm, lambda f: "metal.5")
+        make_object(f"Barb{'L' if side > 0 else 'R'}", bm, (side * 0.03, 1.27, 0),
+                    (-math.pi / 2 - math.radians(150), 0, side * math.radians(25)))
+    export("spear")
+
+
 # --- fish -------------------------------------------------------------------------------------
 # One mesh per fish ("Fish"), head toward +Y (Godot -Z, forward), origin at the body centre, so
 # the swim shader can wiggle it by distance along the body. Length in metres.
@@ -320,5 +342,5 @@ def ore_item():
 
 os.makedirs(os.path.join(OUT_DIR, "fish"), exist_ok=True)
 os.makedirs(os.path.join(OUT_DIR, "items"), exist_ok=True)
-for build in (rock, tree, pickaxe, axe, perch, trout, pike, log_item, ore_item):
+for build in (rock, tree, pickaxe, axe, spear, perch, trout, pike, log_item, ore_item):
     build()
