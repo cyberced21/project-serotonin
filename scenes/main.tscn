@@ -4,6 +4,8 @@
 [ext_resource type="Script" uid="uid://cayt1hrplt7q2" path="res://scripts/hud.gd" id="2_hud"]
 [ext_resource type="PackedScene" path="res://scenes/tree.tscn" id="3_tree"]
 [ext_resource type="PackedScene" path="res://scenes/rock.tscn" id="4_rock"]
+[ext_resource type="Shader" path="res://shaders/terrain_lowpoly.gdshader" id="5_terrain_shader"]
+[ext_resource type="Terrain3DAssets" path="res://materials/terrain_assets.tres" id="6_terrain_assets"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_horizon_color = Color(0.66, 0.74, 0.78, 1)
@@ -22,20 +24,14 @@ fog_light_color = Color(0.66, 0.74, 0.78, 1)
 fog_density = 0.008
 fog_sky_affect = 0.3
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_grass"]
-albedo_color = Color(0.36, 0.55, 0.3, 1)
-roughness = 1.0
-
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_block"]
 albedo_color = Color(0.62, 0.6, 0.56, 1)
 roughness = 1.0
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
-material = SubResource("StandardMaterial3D_grass")
-size = Vector2(80, 80)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
-size = Vector3(80, 1, 80)
+[sub_resource type="Terrain3DMaterial" id="Terrain3DMaterial_lowpoly"]
+shader_override_enabled = true
+shader_override = ExtResource("5_terrain_shader")
+show_checkered = false
 
 [node name="Main" type="Node3D"]
 
@@ -47,14 +43,10 @@ rotation = Vector3(-0.9, 0.6, 0)
 shadow_enabled = true
 directional_shadow_max_distance = 60.0
 
-[node name="Ground" type="StaticBody3D" parent="."]
-
-[node name="Mesh" type="MeshInstance3D" parent="Ground"]
-mesh = SubResource("PlaneMesh_ground")
-
-[node name="Collision" type="CollisionShape3D" parent="Ground"]
-position = Vector3(0, -0.5, 0)
-shape = SubResource("BoxShape3D_ground")
+[node name="Terrain3D" type="Terrain3D" parent="."]
+data_directory = "res://terrain_data"
+material = SubResource("Terrain3DMaterial_lowpoly")
+assets = ExtResource("6_terrain_assets")
 
 [node name="Greybox" type="Node3D" parent="."]
 
