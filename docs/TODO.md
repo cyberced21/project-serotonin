@@ -38,6 +38,7 @@ Design notes are in [village-design.md](village-design.md).
 
 - [ ] **Grapple / rope** — for chasms and cliff-face nodes.
 - [ ] **Agility skill or craftable grapple** — optional movement gating for rare nodes.
+- [ ] **Movement tuning:** play-test the momentum numbers (Player inspector: *Momentum*, *Air dash*, *Wall run*, *Speed feel*): bhop gain, the hop window, air control, wall-run length.
 - [ ] **Slide / mantle tuning** — play-test speeds and heights (Player inspector: *Crouch / slide*, *Mantle*).
 
 ## Art & models

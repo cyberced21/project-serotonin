@@ -5,7 +5,7 @@
 - audio/footsteps/: per surface, VARIANTS steps (heel + toe hits made of filtered noise, plus a
   thump or ring where it fits) and an AudioStreamRandomizer .tres picking one with a little
   random pitch/volume.
-- audio/movement/: a seamless slide-scrape loop, mantle sounds (both hands slapping onto the
+- audio/movement/: a seamless slide-scrape loop, a seamless wind loop (rushing air at speed), mantle sounds (both hands slapping onto the
   ledge, then a clothing rustle as you pull up) and water splashes, with their randomizers.
 
 Replace any .wav with a real recording whenever you like — the game only references the
@@ -186,6 +186,21 @@ def mantle(rng):
     return out
 
 
+def wind_loop(rng):
+    """3 s of rushing air that loops seamlessly: soft low roar plus a breathy hiss whose loudness
+    swells slowly (gusts), crossfaded at the seam like the slide loop."""
+    n, xf = secs(3.0), secs(0.4)
+    total = n + xf
+    roar = lowpass(rng.standard_normal(total), 350) * 2.2
+    hiss = band(rng.standard_normal(total), 900, 4500) * 0.5
+    t = np.arange(total) / RATE
+    gust = 0.75 + 0.25 * np.sin(2 * np.pi * t / 1.5) * np.sin(2 * np.pi * t / 3.7 + 1.0)
+    x = (roar + hiss) * gust
+    fade = np.linspace(0.0, 1.0, xf)
+    x[:xf] = x[:xf] * fade + x[n:] * (1.0 - fade)
+    return x[:n]
+
+
 # --- output -----------------------------------------------------------------------------------
 
 def write_wav(path, x, fade_out=True):
@@ -237,6 +252,10 @@ def main():
         write_wav(os.path.join(out_fish, f"spear_hit_{i + 1:02d}.wav"), spear_hit(rng))
     write_randomizer(os.path.join(out_fish, "spear_hit.tres"), "spear_hit", "fishing")
     print("wrote spear_hit")
+
+    # its own seed, so adding it didn't change any of the sounds above
+    write_wav(os.path.join(OUT_MOVE, "wind_loop.wav"), wind_loop(np.random.default_rng(77)), fade_out=False)
+    print("wrote wind_loop")
 
 
 if __name__ == "__main__":
