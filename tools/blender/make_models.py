@@ -157,6 +157,18 @@ def iron_rock():
          ore=("metal.7", "ore.iron"), size=1.15, ore_chance=0.4, ore_everywhere=True)
 
 
+
+def coal_rock():
+    """Dark boulder seamed with coal (Mining 20)."""
+    rock("coal_rock", seed=13, stone_shades=("stone.3", "stone.2", "stone.0", "stone.1"),
+         ore=("ore.coal", "neutral.1"), size=1.05, ore_chance=0.5, ore_everywhere=True)
+
+
+def gold_rock():
+    """Pale boulder with a few bright gold flecks (Mining 30)."""
+    rock("gold_rock", seed=14, stone_shades=("stone.6", "stone.4", "stone.2", "stone.5"),
+         ore=("ore.gold", "accent.2"), size=0.95, ore_chance=0.35, ore_everywhere=True)
+
 # The starter tree's canopy: (radius, jitter, squash, location, rotation) per blob.
 TREE_CANOPY = [
     (1.25, 0.2, (1.0, 1.0, 0.72), (0, 0, 3.5), (0, 0, 0.4)),
@@ -235,6 +247,44 @@ def block_hand(along="z", grip=0.16):
 def _painted(bm, color):
     paint(bm, lambda f: color)
     return bm
+
+
+def birch():
+    """A slim white birch with a light, airy canopy (Woodcutting 8)."""
+    tree("birch", seed=9, trunk=(0.17, 0.11, 3.4), bark=("neutral.7", "neutral.6", "neutral.5", "neutral.1"),
+         leaf_shades=("leaves.7", "leaves.6", "leaves.4", "leaves.5"),
+         canopy=[
+             (0.95, 0.22, (0.9, 0.9, 1.0), (0, 0, 3.6), (0, 0, 0.5)),
+             (0.7, 0.24, (1.0, 1.0, 0.9), (0.3, -0.2, 4.4), (0, 0, 1.2)),
+         ],
+         slab=("neutral.6", "neutral.5", "neutral.5", "neutral.1"), slab_size=(0.26, 0.15), stump=(0.2, 0.17))
+
+
+def pine():
+    """A tall pine (Woodcutting 25): straight dark trunk, three stacked cones of needles."""
+    reset()
+    rng = random.Random(10)
+    bm = prism(6, 0.3, 0.12, 5.0)
+    jitter(bm, 0.05, rng)
+    paint(bm, shade_by_normal("wood.3", "wood.1", "wood.0", rng, side_alt="wood.2"))
+    make_object("Body_Trunk", bm, (0, 0, 2.5))
+    needles = shade_by_normal("leaves.2", "leaves.1", "leaves.0", rng, side_alt="leaves.2")
+    for i, (r, h, z) in enumerate(((1.7, 1.8, 2.6), (1.3, 1.6, 3.7), (0.85, 1.6, 4.8))):
+        bm = prism(7, r, 0.05, h)
+        jitter(bm, 0.08, rng)
+        paint(bm, needles)
+        make_object("Body_Canopy" if i == 0 else f"Body_Canopy{i}", bm, (0, 0, z), (0, 0, rng.uniform(0, math.tau)))
+    for i in range(4):
+        a = i * math.tau / 4 + 0.3
+        bm = box((0.42, 0.07, 0.3))
+        jitter(bm, 0.12, rng)
+        paint(bm, shade_by_normal("wood.2", "wood.0", "wood.0", rng, side_alt="wood.1"))
+        make_object(f"Chunk_Bark{i}", bm, (math.cos(a) * 0.25, math.sin(a) * 0.25, 1.3), (0, 0, a + math.pi / 2))
+    bm = prism(6, 0.34, 0.3, 0.4)
+    jitter(bm, 0.06, rng)
+    paint(bm, lambda f: "wood.6" if f.normal.z > 0.9 else ("wood.1" if rng.random() < 0.6 else "wood.0"))
+    make_object("Rubble_Stump", bm, (0, 0, 0.2))
+    export("pine")
 
 
 def pickaxe():
@@ -411,6 +461,33 @@ def iron_item():
           if rng.random() < 0.75 else ("stone.2" if f.normal.z > 0.3 else "stone.0"))
     make_object("Item", bm)
     export(os.path.join("items", "iron"))
+
+
+def log_item_variant(name, seed, bark, end_grain, radius=0.09):
+    reset()
+    rng = random.Random(seed)
+    bm = prism(6, radius, radius * 0.95, 0.42)
+    jitter(bm, 0.05, rng)
+    paint(bm, lambda f: end_grain if abs(f.normal.z) > 0.9 else (bark[0] if rng.random() < 0.6 else bark[1]))
+    make_object("Item", bm, rotation=(math.pi / 2, 0, 0.3))  # lying down
+    export(os.path.join("items", name))
+
+
+def ore_item_variant(name, seed, ore, stone, ore_share):
+    reset()
+    rng = random.Random(seed)
+    bm = blob(0.13, rng, jitter_amount=0.3, squash=(1.0, 0.9, 0.8))
+    paint(bm, lambda f: (ore[0] if f.normal.z > 0.0 else ore[1]) if rng.random() < ore_share
+          else (stone[0] if f.normal.z > 0.3 else stone[1]))
+    make_object("Item", bm)
+    export(os.path.join("items", name))
+
+
+def more_items():
+    log_item_variant("birch", 35, ("neutral.7", "neutral.5"), "wood.7", 0.08)
+    log_item_variant("pine", 36, ("wood.1", "wood.2"), "wood.6", 0.1)
+    ore_item_variant("coal", 37, ("ore.coal", "neutral.1"), ("stone.2", "stone.1"), 0.8)
+    ore_item_variant("gold", 38, ("ore.gold", "accent.2"), ("stone.5", "stone.3"), 0.6)
 
 
 def ore_item():
@@ -662,5 +739,6 @@ if __name__ == "__main__":  # make_village.py imports the helpers above without 
     os.makedirs(os.path.join(OUT_DIR, "fish"), exist_ok=True)
     os.makedirs(os.path.join(OUT_DIR, "items"), exist_ok=True)
     for build in (rock, iron_rock, tree, oak, pickaxe, axe, spear, perch, trout, pike, log_item, ore_item,
-                  oak_item, iron_item, reeds, lily_pad, lily_flower, shore_stone, scenery, ruins):
+                  oak_item, iron_item, reeds, lily_pad, lily_flower, shore_stone, scenery, ruins,
+                  coal_rock, gold_rock, birch, pine, more_items):
         build()

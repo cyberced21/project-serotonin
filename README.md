@@ -21,7 +21,10 @@ whatever you hit.
   - Every hit leaves a notch. Rocks shed physics debris, and trees topple, crash down and spill logs.
   - Pitch rises as a node weakens.
 - **Skills:** Woodcutting, Mining and Fishing, each with XP and levels. Nodes and fish above your level bounce off or dodge.
-  - Stout oaks (Woodcutting 15) grow around the village, and iron rocks (Mining 15) sit east of the smithy. The village's top tiers ask for them.
+  - Higher-level nodes:
+    - Birch (Woodcutting 8) grows west of the clearing.
+    - Oak (15) grows around the village, and iron rocks (Mining 15) sit east of the smithy. The village's top tiers ask for them.
+    - Pine (25) is on the northern hills, coal (Mining 20) by the pass, and gold (30) in the foothills of the peak.
 - **Spearfishing.**
   - Wade into the pond and stalk wary schools of perch, trout and pike. Crouch to stay quiet: splashing and misses scatter them.
   - Every fish along the thrust gets skewered, and multi-catches escalate the feedback and XP ("Double!", "Triple!").

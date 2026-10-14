@@ -1,0 +1,23 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/tree.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://models/birch.glb" id="2_model"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_birch"]
+size = Vector3(0.45, 3.4, 0.45)
+
+[node name="BirchTree" instance=ExtResource("1_base")]
+item = &"birch"
+max_hits = 5
+respawn_time = 20.0
+required_level = 8
+xp_per_hit = 6
+xp_on_break = 20
+chip_color = Color(0.92, 0.9, 0.85, 1)
+burst_color = Color(0.5, 0.75, 0.4, 1)
+model = ExtResource("2_model")
+popup_height = 2.2
+
+[node name="CollisionShape3D" parent="." index="0"]
+position = Vector3(0, 1.7, 0)
+shape = SubResource("BoxShape3D_birch")

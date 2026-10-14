@@ -18,7 +18,8 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 - [x] **True tool sinking:** during the bite, a world copy of the tool sticks with its edge buried in the node. The held fist stays on screen holding the handle (`player.gd` `_stick_in_world`).
 - [x] **Clean respawn ghost:** one silhouette outline via the stencil buffer (`ResourceNode.ghost_silhouette`, on by default).
 - [x] **Iron and oak:** `iron_rock.tscn` (Mining 15) and `oak_tree.tscn` (Woodcutting 15), used in the village's tier-3 costs.
-- [ ] **More node types** — gold / coal veins, more tree species (`rock()` / `tree()` in the Blender script take parameters; inherit `rock.tscn` / `tree.tscn`).
+- [x] **More node types:** birch (Woodcutting 8), pine (25), coal (Mining 20) and gold (30), placed around the map.
+- [ ] **Uses for coal, gold, birch, pine:** nothing spends them yet. Candidates: smithy perks that need coal, gold for the town hall, birch and pine in new buildings.
 
 ## Village
 
