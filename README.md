@@ -127,6 +127,7 @@ Models colour their faces by pointing UVs at palette swatches. To hand-edit a mo
 ## Docs
 
 - [docs/TODO.md](docs/TODO.md): everything planned or parked for later.
+- [docs/blender-guide.md](docs/blender-guide.md): remodel the rock by hand in Blender (a first modelling project).
 - [docs/village-design.md](docs/village-design.md): the village design decisions.
 - [docs/3d-research-notes.md](docs/3d-research-notes.md): design decisions and research notes from the 3D conversion and the fishing design.
 
