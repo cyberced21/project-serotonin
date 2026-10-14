@@ -8,6 +8,14 @@ extends Node3D
 ## school breaks up; while alert they keep their distance from each other, then they settle and
 ## drift back together. Lurkers (pike) hold still at a lurk spot instead of cruising.
 ## Caught fish are replaced one at a time (regrow); a wiped-out school is respawned by FishPond.
+## Hunters (a lurker whose species `hunts` another): every so often the pike leaves its cover,
+## stalks the nearest school of its prey, lunges when it's close — the school scatters, and
+## sometimes one is eaten — then glides back to cover. Spooking the pike calls the hunt off.
+
+enum Hunt { LURK, STALK, LUNGE, RETURN }
+const SPLASH := preload("res://audio/movement/splash.tres")
+const STALK_GIVE_UP := 20.0
+const LUNGE_TIME := 0.35
 
 const MIN_DEPTH := 0.3  # fish never swim into water shallower than this
 ## Fraction off the scare radius right at dawn and dusk (DayNight.twilight), when fish are dozy.
@@ -22,6 +30,11 @@ var _goal := Vector3.ZERO
 var _goal_timer := 0.0
 var _alert := 0.0  # seconds of alertness left
 var _regrow_timer := 0.0
+var _hunt := Hunt.LURK
+var _hunt_timer := 0.0
+var _prey: Fish
+var _lurk_spot := Vector3.ZERO
+var _will_catch := false  # decided as the lunge starts
 
 
 func setup(p_species: FishSpecies, p_water: WaterBody, at: Vector3) -> void:
@@ -82,6 +95,8 @@ func _physics_process(delta: float) -> void:
 	_alert = maxf(_alert - delta, 0.0)
 	_update_goal(delta)
 	_regrow(delta)
+	if species.lurker and species.hunts != &"":
+		_update_hunt(delta)
 
 	var center := Vector3.ZERO
 	var heading := Vector3.ZERO
@@ -104,11 +119,19 @@ func _steer(f: Fish, center: Vector3, heading: Vector3, delta: float) -> void:
 	else:
 		f.state = Fish.State.ALERT if _alert > 0.0 else Fish.State.CALM
 		var desired := Vector3.ZERO
-		if species.lurker and _alert <= 0.0:
-			# hold near the lurk spot, barely moving
+		if species.lurker and _alert <= 0.0 and _hunt == Hunt.LUNGE:
+			f.velocity.y = 0.0  # the lunge sets the velocity outright (see _start_lunge)
+			desired = f.velocity
+		elif species.lurker and _alert <= 0.0 and _hunt == Hunt.STALK and is_instance_valid(_prey):
+			var to_prey := _prey.global_position - pos
+			to_prey.y = 0.0
+			desired = to_prey.normalized() * species.stalk_speed
+		elif species.lurker and _alert <= 0.0:
+			# hold near the lurk spot, barely moving (or glide back to it after a hunt)
 			var to_spot := _goal - pos
 			to_spot.y = 0.0
-			desired = to_spot.limit_length(1.0) * species.cruise_speed
+			var speed := species.cruise_speed * (2.0 if _hunt == Hunt.RETURN else 1.0)
+			desired = to_spot.limit_length(1.0) * speed
 		else:
 			var to_goal := _goal - pos
 			to_goal.y = 0.0
@@ -127,6 +150,8 @@ func _steer(f: Fish, center: Vector3, heading: Vector3, delta: float) -> void:
 			desired = desired.normalized() * species.cruise_speed * (1.3 if _alert > 0.0 else 1.0)
 		# turn gradually toward the desired direction
 		var cur := f.velocity
+		if _hunt == Hunt.LUNGE:
+			cur = desired  # no gradual turn mid-lunge
 		var angle := cur.signed_angle_to(desired, Vector3.UP) if cur.length_squared() > 0.0001 and desired.length_squared() > 0.0001 else 0.0
 		var turned := cur.rotated(Vector3.UP, clampf(angle, -species.turn_rate * delta, species.turn_rate * delta))
 		f.velocity = turned.normalized() * move_toward(cur.length(), desired.length(), 2.0 * delta) if turned.length_squared() > 0.0001 else desired
@@ -143,7 +168,8 @@ func _steer(f: Fish, center: Vector3, heading: Vector3, delta: float) -> void:
 	f.global_position = _clamp_to_water(pos + f.velocity * delta, f)
 	if f.velocity.length_squared() > 0.0004:
 		f.global_basis = f.global_basis.slerp(Basis.looking_at(f.velocity.normalized(), Vector3.UP), clampf(10.0 * delta, 0.0, 1.0))
-	var swim := 0.05 if species.lurker and _alert <= 0.0 else clampf(f.velocity.length() / species.flee_speed, 0.15, 1.0)
+	var still := species.lurker and _alert <= 0.0 and _hunt == Hunt.LURK
+	var swim := 0.05 if still else clampf(f.velocity.length() / species.flee_speed, 0.15, 1.0)
 	f.set_swim(swim)
 
 
@@ -180,6 +206,101 @@ func _pick_goal() -> void:
 
 func set_lurk_spot(p: Vector3) -> void:
 	_goal = p
+	_lurk_spot = p
+	_hunt_timer = randf_range(species.hunt_interval.x, species.hunt_interval.y)
+
+
+# --- hunting --------------------------------------------------------------------------------
+
+func _update_hunt(delta: float) -> void:
+	var hunter := fish[0]
+	if _alert > 0.0 and _hunt != Hunt.LURK and _hunt != Hunt.RETURN:
+		_back_to_cover()  # spooked: the hunt's off
+	match _hunt:
+		Hunt.LURK:
+			_hunt_timer -= delta
+			if _hunt_timer <= 0.0 and _alert <= 0.0:
+				_prey = _nearest_prey(hunter.global_position)
+				if _prey:
+					_hunt = Hunt.STALK
+					_hunt_timer = STALK_GIVE_UP
+				else:
+					_hunt_timer = randf_range(species.hunt_interval.x, species.hunt_interval.y) * 0.5
+		Hunt.STALK:
+			_hunt_timer -= delta
+			if not is_instance_valid(_prey) or _prey.school._alert > 0.0 or _hunt_timer <= 0.0:
+				_back_to_cover()
+			elif hunter.global_position.distance_to(_prey.global_position) < species.lunge_range:
+				_start_lunge(hunter)
+		Hunt.LUNGE:
+			_hunt_timer -= delta
+			if _hunt_timer <= 0.0:
+				_finish_lunge(hunter)
+		Hunt.RETURN:
+			var off := _lurk_spot - hunter.global_position
+			off.y = 0.0
+			if off.length() < 0.4:
+				_hunt = Hunt.LURK
+				_hunt_timer = randf_range(species.hunt_interval.x, species.hunt_interval.y)
+
+
+func _nearest_prey(from: Vector3) -> Fish:
+	var best: Fish = null
+	var best_d := INF
+	for s in get_tree().get_nodes_in_group("fish_school"):
+		var school := s as FishSchool
+		if school == self or school.water != water or school.species.id != species.hunts:
+			continue
+		for f in school.fish:
+			var d := f.global_position.distance_squared_to(from)
+			if d < best_d:
+				best_d = d
+				best = f
+	return best
+
+
+func _start_lunge(hunter: Fish) -> void:
+	_hunt = Hunt.LUNGE
+	_hunt_timer = LUNGE_TIME
+	var dir := _prey.global_position - hunter.global_position
+	dir.y = 0.0
+	hunter.velocity = dir.normalized() * species.lunge_speed
+	var at := Vector3(hunter.global_position.x, water.surface_height, hunter.global_position.z)
+	WaterRipple.spawn(water, at, 1.6)
+	_will_catch = randf() < species.catch_chance
+	var target := _prey
+	_prey.school.disturb(hunter.global_position, 2.0)  # the school scatters...
+	if _will_catch:  # ...but this one's caught: it freezes rather than bolting
+		target.velocity = Vector3.ZERO
+		target.state = Fish.State.ALERT
+
+
+func _finish_lunge(hunter: Fish) -> void:
+	if is_instance_valid(_prey) and _will_catch:
+		var at := Vector3(_prey.global_position.x, water.surface_height, _prey.global_position.z)
+		WaterRipple.spawn(water, at, 2.2)
+		_play_splash(at)
+		_prey.school.remove_fish(_prey)
+		_prey.queue_free()
+	_back_to_cover()
+
+
+func _back_to_cover() -> void:
+	_hunt = Hunt.RETURN
+	_prey = null
+	_goal = _lurk_spot
+
+
+func _play_splash(at: Vector3) -> void:
+	var p := AudioStreamPlayer3D.new()
+	p.stream = SPLASH
+	p.pitch_scale = randf_range(1.2, 1.4)
+	p.volume_db = -6.0
+	p.unit_size = 4.0
+	add_child(p)
+	p.global_position = at
+	p.play()
+	p.finished.connect(p.queue_free)
 
 
 func _regrow(delta: float) -> void:

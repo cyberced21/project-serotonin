@@ -5,7 +5,7 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 
 ## Fishing
 
-- [ ] **Pike as a predator** — a pike that hunts: it stalks a perch school and its lunge scatters them (decided in fishing design, F6).
+- [x] **Pike as a predator:** every 25–45 s it stalks the nearest perch, lunges (ripple, the school scatters) and catches one half the time, then glides back to cover. Spooking it calls the hunt off (`FishSpecies` *Hunting* group).
 - [ ] **Swimming** — surface swimming in deep water (float, paddle, can't strike well while swimming); maybe diving with a breath meter after that (F2).
 - [ ] **Faster regrouping** — scattered schools drift back together slowly (~1 m spread after 8 s); tune cohesion in `scripts/fish_school.gd`.
 - [ ] **Skittishness tuning** — play-test `scare_radius`, `nerve`, `calm_down` per species in `data/fish/*.tres`.

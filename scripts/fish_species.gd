@@ -16,6 +16,18 @@ extends Resource
 ## Solitary lurkers (pike) sit still near cover instead of cruising.
 @export var lurker := false
 
+@export_group("Hunting")
+## A lurker that hunts: the species id it stalks (e.g. perch). Empty = doesn't hunt.
+@export var hunts: StringName = &""
+## Seconds it lurks between hunts (min, max).
+@export var hunt_interval := Vector2(25.0, 45.0)
+@export var stalk_speed := 0.45
+@export var lunge_speed := 5.0
+## Lunges once a prey fish is this close (m).
+@export var lunge_range := 1.4
+## Chance a lunge catches (and eats) the fish.
+@export_range(0.0, 1.0) var catch_chance := 0.5
+
 @export_group("Movement")
 @export var cruise_speed := 0.35
 @export var flee_speed := 3.0

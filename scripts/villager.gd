@@ -15,9 +15,9 @@ enum Work { CHOP, HAMMER, FISH, ORATE }
 const PALETTE := preload("res://materials/node_palette.tres")
 const CHOP_SFX := preload("res://audio/wood_hit.tres")
 const CLANK_SFX := preload("res://audio/stone_hit.tres")
-## Physics layer 6: the player bumps into villagers and aims at them, but they're not "world"
-## (no mantling onto heads, debris and pickups pass through).
-const NPC_LAYER := 1 << 5
+## Physics layer 7: the player bumps into villagers and aims at them, but they're not "world"
+## (no mantling onto heads, debris and pickups pass through). (Layer 6 is the fish hit volumes.)
+const NPC_LAYER := 1 << 6
 
 @export var model: PackedScene
 @export var work := Work.CHOP

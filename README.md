@@ -26,7 +26,7 @@ whatever you hit.
     - Oak (15) grows around the village, and iron rocks (Mining 15) sit east of the smithy. The village's top tiers ask for them.
     - Pine (25) is on the northern hills, coal (Mining 20) by the pass, and gold (30) in the foothills of the peak.
 - **Spearfishing.**
-  - Wade into the pond and stalk wary schools of perch, trout and pike. Crouch to stay quiet: splashing and misses scatter them.
+  - Wade into the pond and stalk wary schools of perch, trout and pike. The pike hunts too: watch it stalk the perch and lunge. Crouch to stay quiet: splashing and misses scatter them.
   - Every fish along the thrust gets skewered, and multi-catches escalate the feedback and XP ("Double!", "Triple!").
 - **A village to build up.** Over the hills, a dirt path leads to a valley with four villagers: a woodcutter, a smith, a fisher and the mayor.
   - Talk to a villager (E) to see what their building's next tier costs, then pay with the logs, ore and fish you've gathered.

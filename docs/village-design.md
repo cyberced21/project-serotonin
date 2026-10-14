@@ -93,7 +93,7 @@ Each building is one `.glb` with objects named `T1_*`, `T2_*`, `T3_*`.
 - **Saving:** tiers are saved under the `village` key in `user://save.json`.
 - **Debug keys:** F7 gives 50 of every item. F8 upgrades every building one tier for free, then wraps back to tier 1.
 - **Upgrade watching:** during an upgrade, the villager hurries to its door spot and watches, then cheers when the building finishes.
-- **Collision:** villagers are on physics layer 6. The player bumps into them and the crosshair stops on them, but you can't mantle onto them.
+- **Collision:** villagers are on physics layer 7. The player bumps into them and the crosshair stops on them, but you can't mantle onto them.
 - **The path:** the path, square and lanes are painted as terrain texture id 1 in the control map. The terrain shader colours them, and footsteps on them sound like dirt.
 
 ## Parked

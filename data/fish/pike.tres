@@ -13,6 +13,7 @@ school_min = 1
 school_max = 1
 spacing = 1.0
 lurker = true
+hunts = &"perch"
 cruise_speed = 0.25
 flee_speed = 5.5
 turn_rate = 2.0

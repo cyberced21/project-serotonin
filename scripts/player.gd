@@ -100,7 +100,7 @@ const WINDUP_ANGLE := 0.7
 const STRIKE_ANGLE := -1.3
 const WORLD_MASK := 1
 ## Villagers (see Villager.NPC_LAYER): the crosshair ray stops on them, mantling ignores them.
-const NPC_MASK := 1 << 5
+const NPC_MASK := 1 << 6
 const STAND_HEIGHT := 1.8
 const CROUCH_HEIGHT := 1.0
 const STAND_EYE := 1.6
