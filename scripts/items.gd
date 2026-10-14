@@ -5,7 +5,9 @@ class_name Items
 
 const DEFS := {
 	&"wood": {"name": "Logs"},
+	&"oak": {"name": "Oak logs"},
 	&"ore": {"name": "Copper ore"},
+	&"iron": {"name": "Iron ore"},
 	&"perch": {"name": "Perch"},
 	&"trout": {"name": "Trout"},
 	&"pike": {"name": "Pike"},

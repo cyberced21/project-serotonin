@@ -23,8 +23,10 @@ lines = PackedStringArray("A red roof! The whole valley can see we mean business
 script = ExtResource("2_tier")
 name = "Grand Hall"
 cost = Dictionary[StringName, int]({
-&"wood": 50,
-&"ore": 30,
+&"wood": 40,
+&"oak": 10,
+&"ore": 20,
+&"iron": 10,
 &"trout": 10
 })
 lines = PackedStringArray("A bell tower and a clock! Nobody will ever be late again. Probably.", "Every house may now build as grand as it likes. Within reason. Mine is still the grandest.", "Look at this village. You did this, you know.")

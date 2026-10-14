@@ -16,14 +16,15 @@ cost = Dictionary[StringName, int]({
 &"wood": 10,
 &"ore": 20
 })
-lines = PackedStringArray("A real forge! Hot enough to work properly now.", "Keep the ore coming. A forge this good shouldn't sit cold.", "Walls next. Bellows. A sign, so folk know where to find me.")
+lines = PackedStringArray("A real forge! Hot enough to work properly now.", "Iron next. There's a dark seam in the rocks east of here, if your pick's up to it.", "Walls next. Bellows. A sign, so folk know where to find me.")
 
 [sub_resource type="Resource" id="Tier_3"]
 script = ExtResource("2_tier")
 name = "Smithy"
 cost = Dictionary[StringName, int]({
 &"wood": 20,
-&"ore": 50
+&"ore": 30,
+&"iron": 20
 })
 lines = PackedStringArray("Look at that chimney smoke. That's the smell of honest work.", "Bellows, grindstone, quench trough. Couldn't ask for more.", "One day I'll forge you something special. When I know what.")
 

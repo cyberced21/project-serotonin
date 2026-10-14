@@ -24,6 +24,8 @@
 [ext_resource type="PackedScene" path="res://models/village/props/crates.glb" id="22_crates"]
 [ext_resource type="PackedScene" path="res://models/village/props/signpost.glb" id="23_signpost"]
 [ext_resource type="Script" path="res://scripts/upgrade_panel.gd" id="24_panel"]
+[ext_resource type="PackedScene" path="res://scenes/oak_tree.tscn" id="25_oak"]
+[ext_resource type="PackedScene" path="res://scenes/iron_rock.tscn" id="26_iron"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
@@ -260,6 +262,30 @@ rotation = Vector3(0, 5.2, 0)
 position = Vector3(127.5, 0, 61.5)
 rotation = Vector3(0, 0.4, 0)
 required_level = 10
+
+[node name="Oak1" parent="Nodes" instance=ExtResource("25_oak")]
+position = Vector3(80, 0, 24)
+rotation = Vector3(0, 0.9, 0)
+
+[node name="Oak2" parent="Nodes" instance=ExtResource("25_oak")]
+position = Vector3(116.5, 0, 20)
+rotation = Vector3(0, 2.6, 0)
+
+[node name="Oak3" parent="Nodes" instance=ExtResource("25_oak")]
+position = Vector3(90, 0, 7.5)
+rotation = Vector3(0, 4.8, 0)
+
+[node name="IronRock1" parent="Nodes" instance=ExtResource("26_iron")]
+position = Vector3(129, 0, 47.5)
+rotation = Vector3(0, 0.5, 0)
+
+[node name="IronRock2" parent="Nodes" instance=ExtResource("26_iron")]
+position = Vector3(131, 0, 56)
+rotation = Vector3(0, 2.2, 0)
+
+[node name="IronRock3" parent="Nodes" instance=ExtResource("26_iron")]
+position = Vector3(124.5, 0, 65.5)
+rotation = Vector3(0, 4.1, 0)
 
 [node name="VillagePond" type="Area3D" parent="."]
 position = Vector3(88, 0, 64)

@@ -113,15 +113,18 @@ def export(name):
 
 # --- models -----------------------------------------------------------------------------------
 
-def rock():
-    """Grey boulder with copper flecks: a core, five chunks that break off, and rubble."""
+def rock(name="rock", seed=11, stone_shades=("stone.5", "stone.3", "stone.1", "stone.4"),
+         ore=("ore.copper", "ore.copper_dark"), size=1.0, ore_chance=0.45, ore_everywhere=False):
+    """Boulder with ore flecks: a core, five chunks that break off, and rubble.
+    The default is the grey copper rock; iron_rock() is a bigger, darker one with iron."""
     reset()
-    rng = random.Random(11)
-    stone = shade_by_normal("stone.5", "stone.3", "stone.1", rng, side_alt="stone.4")
+    rng = random.Random(seed)
+    top, side, bottom, alt = stone_shades
+    stone = shade_by_normal(top, side, bottom, rng, side_alt=alt)
 
-    bm = blob(0.46, rng, squash=(1.1, 1.0, 0.62))
+    bm = blob(0.46 * size, rng, squash=(1.1, 1.0, 0.62))
     paint(bm, stone)
-    make_object("Body_Core", bm, (0, 0, 0.28))
+    make_object("Body_Core", bm, (0, 0, 0.28 * size))
 
     chunks = [  # (location, radius, has copper)
         ((0.36, -0.2, 0.36), 0.27, False),
@@ -131,55 +134,85 @@ def rock():
         ((-0.27, 0.34, 0.3), 0.26, False),
     ]
     for i, (loc, r, copper) in enumerate(chunks):
-        bm = blob(r, rng, jitter_amount=0.25, squash=(1.0, 0.95, 0.85), subdiv=1)
+        bm = blob(r * size, rng, jitter_amount=0.25, squash=(1.0, 0.95, 0.85), subdiv=1)
 
         def choose(f, copper=copper):
-            if copper and rng.random() < 0.45:
-                return "ore.copper" if f.normal.z > 0.2 else "ore.copper_dark"
+            if (copper or ore_everywhere) and rng.random() < ore_chance:
+                return ore[0] if f.normal.z > 0.2 else ore[1]
             return stone(f)
         paint(bm, choose)
         rot = (rng.uniform(-0.4, 0.4), rng.uniform(-0.4, 0.4), rng.uniform(0, math.tau))
-        make_object(f"Chunk_{'ABCDE'[i]}", bm, loc, rot)
+        make_object(f"Chunk_{'ABCDE'[i]}", bm, tuple(c * size for c in loc), rot)
 
     for i, (loc, r) in enumerate([((0.15, 0.05, 0.07), 0.22), ((-0.2, -0.1, 0.06), 0.17), ((0.0, 0.25, 0.05), 0.14)]):
-        bm = blob(r, rng, jitter_amount=0.3, squash=(1.2, 1.0, 0.4), subdiv=1)
+        bm = blob(r * size, rng, jitter_amount=0.3, squash=(1.2, 1.0, 0.4), subdiv=1)
         paint(bm, shade_by_normal("stone.4", "stone.2", "stone.1", rng))
-        make_object(f"Rubble_{i}", bm, loc, (0, 0, rng.uniform(0, math.tau)))
-    export("rock")
+        make_object(f"Rubble_{i}", bm, tuple(c * size for c in loc), (0, 0, rng.uniform(0, math.tau)))
+    export(name)
 
 
-def tree():
-    """Six-sided tapered trunk, two lumpy canopy blobs, bark slabs that chip off, a stump."""
+def iron_rock():
+    """Bigger, darker boulder streaked with iron (Mining 15)."""
+    rock("iron_rock", seed=12, stone_shades=("stone.3", "stone.2", "stone.0", "stone.1"),
+         ore=("metal.7", "ore.iron"), size=1.15, ore_chance=0.4, ore_everywhere=True)
+
+
+# The starter tree's canopy: (radius, jitter, squash, location, rotation) per blob.
+TREE_CANOPY = [
+    (1.25, 0.2, (1.0, 1.0, 0.72), (0, 0, 3.5), (0, 0, 0.4)),
+    (0.85, 0.22, (1.0, 1.0, 0.8), (0.15, -0.1, 4.45), (0, 0, 1.1)),
+]
+
+
+def tree(name="tree", seed=7, trunk=(0.24, 0.15, 3.2), bark=("wood.5", "wood.3", "wood.2", "wood.2"),
+         leaf_shades=("leaves.5", "leaves.3", "leaves.1", "leaves.4"), canopy=TREE_CANOPY,
+         slab=("wood.3", "wood.1", "wood.1", "wood.0"), slab_size=(0.34, 0.2), stump=(0.28, 0.23)):
+    """Six-sided tapered trunk, lumpy canopy blobs, bark slabs that chip off, a stump.
+    The default is the starter tree; oak() is a stouter, darker, wider one.
+    slab_size: (width, distance from the trunk's centre) of the bark slabs."""
     reset()
-    rng = random.Random(7)
+    rng = random.Random(seed)
+    r_bottom, r_top, height = trunk
 
-    bm = prism(6, 0.24, 0.15, 3.2)
+    bm = prism(6, r_bottom, r_top, height)
     jitter(bm, 0.06, rng)
-    paint(bm, shade_by_normal("wood.5", "wood.3", "wood.2", rng, side_alt="wood.2"))
-    make_object("Body_Trunk", bm, (0, 0, 1.6))
+    paint(bm, shade_by_normal(bark[0], bark[1], bark[2], rng, side_alt=bark[3]))
+    make_object("Body_Trunk", bm, (0, 0, height / 2))
 
-    leaves = shade_by_normal("leaves.5", "leaves.3", "leaves.1", rng, side_alt="leaves.4")
-    bm = blob(1.25, rng, jitter_amount=0.2, squash=(1.0, 1.0, 0.72))
-    paint(bm, leaves)
-    make_object("Body_Canopy", bm, (0, 0, 3.5), (0, 0, 0.4))
-    bm = blob(0.85, rng, jitter_amount=0.22, squash=(1.0, 1.0, 0.8))
-    paint(bm, leaves)
-    make_object("Body_CanopyTop", bm, (0.15, -0.1, 4.45), (0, 0, 1.1))
+    leaves = shade_by_normal(leaf_shades[0], leaf_shades[1], leaf_shades[2], rng, side_alt=leaf_shades[3])
+    names = ["Body_Canopy", "Body_CanopyTop"] + [f"Body_Canopy{i}" for i in range(2, len(canopy))]
+    for (radius, jit, squash, loc, rot), obj_name in zip(canopy, names):
+        bm = blob(radius, rng, jitter_amount=jit, squash=squash)
+        paint(bm, leaves)
+        make_object(obj_name, bm, loc, rot)
 
     # bark slabs hugging the trunk at chopping height, one per side the axe can come from
+    width, dist = slab_size
     for i in range(4):
         a = i * math.tau / 4 + 0.3
-        bm = box((0.34, 0.07, 0.3))
+        bm = box((width, 0.07, 0.3))
         jitter(bm, 0.12, rng)
-        paint(bm, shade_by_normal("wood.3", "wood.1", "wood.1", rng, side_alt="wood.0"))
-        loc = (math.cos(a) * 0.2, math.sin(a) * 0.2, 1.3)
+        paint(bm, shade_by_normal(slab[0], slab[1], slab[2], rng, side_alt=slab[3]))
+        loc = (math.cos(a) * dist, math.sin(a) * dist, 1.3)
         make_object(f"Chunk_Bark{i}", bm, loc, (0, 0, a + math.pi / 2))
 
-    bm = prism(6, 0.28, 0.23, 0.4)
+    bm = prism(6, stump[0], stump[1], 0.4)
     jitter(bm, 0.06, rng)
-    paint(bm, lambda f: "wood.7" if f.normal.z > 0.9 else ("wood.3" if rng.random() < 0.6 else "wood.2"))
+    paint(bm, lambda f: "wood.7" if f.normal.z > 0.9 else (bark[1] if rng.random() < 0.6 else bark[2]))
     make_object("Rubble_Stump", bm, (0, 0, 0.2))
-    export("tree")
+    export(name)
+
+
+def oak():
+    """A stout oak (Woodcutting 15): thick dark trunk, one broad canopy of three dark blobs."""
+    tree("oak", seed=8, trunk=(0.36, 0.24, 2.8), bark=("wood.3", "wood.1", "wood.0", "wood.2"),
+         leaf_shades=("leaves.3", "leaves.2", "leaves.0", "leaves.1"),
+         canopy=[
+             (1.55, 0.2, (1.15, 1.1, 0.62), (0, 0, 3.2), (0, 0, 0.3)),
+             (1.05, 0.22, (1.0, 1.0, 0.7), (0.95, 0.35, 3.55), (0, 0, 1.0)),
+             (1.0, 0.22, (1.0, 1.0, 0.7), (-0.85, -0.45, 3.65), (0, 0, 2.2)),
+         ],
+         slab=("wood.2", "wood.0", "wood.0", "wood.1"), slab_size=(0.48, 0.3), stump=(0.4, 0.34))
 
 
 def pickaxe():
@@ -330,6 +363,31 @@ def log_item():
     export(os.path.join("items", "wood"))
 
 
+def oak_item():
+    reset()
+    rng = random.Random(33)
+    bm = prism(6, 0.12, 0.115, 0.38)
+    jitter(bm, 0.05, rng)
+    paint(bm, lambda f: "wood.7" if abs(f.normal.z) > 0.9 else ("wood.2" if rng.random() < 0.6 else "wood.1"))
+    make_object("Item", bm, rotation=(math.pi / 2, 0, 0.3))  # lying down
+    # a sprig of oak leaves on top, so it reads apart from an ordinary log
+    for i, (x, y) in enumerate(((0.02, 0.02), (0.09, -0.04), (-0.05, -0.06))):
+        bm = blob(0.05, rng, jitter_amount=0.15, squash=(1.4, 0.8, 0.3))
+        paint(bm, lambda f: "leaves.5" if f.normal.z > 0 else "leaves.3")
+        make_object(f"Leaf{i}", bm, (x, y, 0.13), (0, 0, i * 1.1))
+    export(os.path.join("items", "oak"))
+
+
+def iron_item():
+    reset()
+    rng = random.Random(34)
+    bm = blob(0.14, rng, jitter_amount=0.3, squash=(1.0, 0.9, 0.8))
+    paint(bm, lambda f: ("metal.7" if f.normal.z > 0.5 else ("ore.iron" if f.normal.z > -0.2 else "ore.iron_dark"))
+          if rng.random() < 0.75 else ("stone.2" if f.normal.z > 0.3 else "stone.0"))
+    make_object("Item", bm)
+    export(os.path.join("items", "iron"))
+
+
 def ore_item():
     reset()
     rng = random.Random(32)
@@ -416,6 +474,6 @@ if __name__ == "__main__":  # make_village.py imports the helpers above without 
     os.makedirs(os.path.join(OUT_DIR, "scenery"), exist_ok=True)
     os.makedirs(os.path.join(OUT_DIR, "fish"), exist_ok=True)
     os.makedirs(os.path.join(OUT_DIR, "items"), exist_ok=True)
-    for build in (rock, tree, pickaxe, axe, spear, perch, trout, pike, log_item, ore_item,
-                  reeds, lily_pad, lily_flower, shore_stone):
+    for build in (rock, iron_rock, tree, oak, pickaxe, axe, spear, perch, trout, pike, log_item, ore_item,
+                  oak_item, iron_item, reeds, lily_pad, lily_flower, shore_stone):
         build()

@@ -24,6 +24,8 @@ SIZE = 128
 ICONS = {
     "wood": ("items/wood.glb", (1.0, -1.0, 0.9)),
     "ore": ("items/ore.glb", (1.0, -1.0, 0.8)),
+    "oak": ("items/oak.glb", (1.0, -1.0, 0.9)),
+    "iron": ("items/iron.glb", (1.0, -1.0, 0.8)),
     "perch": ("fish/perch.glb", (1.0, 0.25, 0.45)),
     "trout": ("fish/trout.glb", (1.0, 0.25, 0.45)),
     "pike": ("fish/pike.glb", (1.0, 0.25, 0.45)),

@@ -15,14 +15,14 @@ name = "Log Cabin"
 cost = Dictionary[StringName, int]({
 &"wood": 25
 })
-lines = PackedStringArray("Four walls and a door. I keep walking in and out just to use it.", "Every log in these walls came off your axe. I counted.", "A porch, that's what this place needs. Somewhere to sit and watch trees grow.")
+lines = PackedStringArray("Four walls and a door. I keep walking in and out just to use it.", "See the big oaks round the valley edge? Tough wood. A lodge deserves oak.", "A porch, that's what this place needs. Somewhere to sit and watch trees grow.")
 
 [sub_resource type="Resource" id="Tier_3"]
 script = ExtResource("2_tier")
 name = "Lodge"
 cost = Dictionary[StringName, int]({
-&"wood": 60,
-&"ore": 10
+&"wood": 40,
+&"oak": 20
 })
 lines = PackedStringArray("A chimney! Warm feet all winter. You've made an old woodcutter very happy.", "Sit on the porch a while. The best sound in the world is someone else chopping.", "That woodpile? That's art, that is.")
 
