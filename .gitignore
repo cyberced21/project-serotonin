@@ -1,3 +1,9 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
+# Godot editor temp copies of GDExtension libraries (made while the editor holds the DLL)
+~*.TMP
+
+# Python bytecode from the Blender tool scripts
+__pycache__/
