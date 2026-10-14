@@ -491,6 +491,7 @@ func _move(delta: float) -> void:
 	var speed := crouch_speed if crouched else (sprint_speed if sprinting else walk_speed)
 	speed *= move_slow_while_swinging if _swinging else 1.0
 	speed *= wading
+	speed *= 1.0 + Village.stat(&"run_speed")  # Rosa's bread
 
 	match _state:
 		State.SLIDE:

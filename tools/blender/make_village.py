@@ -1,4 +1,4 @@
-"""Generates the village models as .glb files: four buildings (three tiers each), their villagers
+"""Generates the village models as .glb files: six buildings (three tiers each), their villagers
 and a few props. Uses the helpers in make_models.py. Run headless from the project folder:
 
     blender -b -P tools/blender/make_village.py -- models art/palette.json
@@ -614,13 +614,10 @@ def town_hall():
     export(os.path.join("village", "town_hall"))
 
 
-# --- cottages (unlocked by the town hall; one tier) -------------------------------------------
+# --- cottages (unlocked by the town hall, then upgraded like the houses) ----------------------
 
-def cottage(name, seed, walls, roof, extra):
-    """A small cottage, 4 x 3.5 m: stone footing, walls, gable roof, chimney, door and windows.
-    `extra(k)` adds the yard (garden bed, ore pile...)."""
-    reset()
-    k = Kit("T1", seed)
+def cottage_house(k, walls, roof):
+    """A small cottage, 4 x 3.5 m: stone footing, walls, gable roof, chimney, door and windows."""
     for x in (-1.35, 0.0, 1.35):
         k.stone("Footing", (1.35, 0.4, 0.3), (x, -1.75, 0.15))
         k.stone("Footing", (1.35, 0.4, 0.3), (x, 1.75, 0.15))
@@ -640,12 +637,82 @@ def cottage(name, seed, walls, roof, extra):
         k.stone("Chimney", (0.5, 0.5, 0.45), (1.3, 0.8, 2.6 + i * 0.4), ("stone.4", "stone.3", "stone.2", "stone.5"))
     k.empty("Smoke", (1.3, 0.8, 5.1))
     k.box("Step", (1.1, 0.35, 0.18), (0, -2.05, 0.09), ("stone.5", "stone.4", "stone.3"))
-    extra(k)
-    export(os.path.join("village", name))
+
+
+def side_annex(k, sx, walls, roof, front_wall=True, window=False):
+    """A lean-to room against the cottage's gable end on side `sx` (-1 left, +1 right): x from the
+    wall out to 4.2 m, y -1.4..1.5, roof sloping down away from the house."""
+    x0, x1 = 2.08 * sx, 4.2 * sx
+    xm = (x0 + x1) / 2
+    w = abs(x1 - x0)
+    for y in (-1.4, 1.5):
+        k.stone("Footing", (w, 0.3, 0.2), (xm, y, 0.1))
+    k.stone("Footing", (0.3, 2.9, 0.2), (x1, 0.05, 0.1))
+    k.box("Wall", (w, 0.12, 1.6), (xm, 1.5, 1.0), walls)  # back
+    k.box("Wall", (0.12, 3.0, 1.6), (x1, 0.05, 1.0), walls)  # outer end
+    if window:
+        k.window((x1 + sx * 0.08, 0.3, 1.2), (0.55, 0.5), facing="x")
+    if front_wall:
+        k.box("Wall", (w * 0.45, 0.12, 1.6), (x1 - sx * w * 0.225, -1.4, 1.0), walls)
+    else:
+        k.post("Post", 0.07, 0, 1.85, x1, -1.4)
+    # the triangles between the walls' tops (1.8 m) and the roof rising toward the house
+    for y in (1.5, -1.4) if front_wall else (1.5,):
+        bm = bmesh.new()
+        pts = [(x0, 1.8), (x1, 1.8), (x0, 2.3)]
+        a_ = [bm.verts.new((x, y - 0.06, z)) for x, z in pts]
+        b_ = [bm.verts.new((x, y + 0.06, z)) for x, z in pts]
+        bm.faces.new(a_)
+        bm.faces.new(b_[::-1])
+        for i in range(len(pts)):
+            j = (i + 1) % len(pts)
+            bm.faces.new((a_[i], b_[i], b_[j], a_[j]))
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        k.add("Gable", bm, walls, (0, 0, 0))
+    a = math.atan2(0.5, w)  # 2.35 m at the wall down to 1.85 m at the end
+    k.box("Roof", (w + 0.5, 3.4, 0.1), (xm + sx * 0.1, 0.05, 2.15), roof, rot=(0, sx * a, 0))
+
+
+def birch_pile(k, x, y, rows=((3, 0.12), (2, 0.34))):
+    """A little stack of white birch logs along Y."""
+    for row, (n, z) in enumerate(rows):
+        for i in range(n):
+            k.log("Birch", 1.0, 0.12, (x + (i + row * 0.5 - (n - 1) / 2) * 0.25, y, z), "y",
+                  sides=("neutral.6", "neutral.7", "neutral.6", "neutral.5"), ends="wood.7")
+
+
+def loaves(k, x, y, z, n, spread=0.3):
+    for i in range(n):
+        k.add("Loaf", blob(0.13, k.rng, jitter_amount=0.12, squash=(1.5, 1.0, 0.7)), ("wood.6", "wood.5", "wood.4"),
+              (x + (i - (n - 1) / 2) * spread, y + k.rng.uniform(-0.05, 0.05), z + 0.06))
+
+
+def bread_oven(k, x, y, big=False):
+    """A domed clay oven on a stone plinth, mouth facing -Y, with a flue (smoke) at the back."""
+    s = 1.1 if big else 1.0
+    for i, (ox, oy) in enumerate(((-0.4, -0.35), (0.4, -0.35), (-0.4, 0.35), (0.4, 0.35))):
+        k.stone("Plinth", (0.8 * s, 0.7 * s, 0.6), (x + ox * s, y + oy * s, 0.3))
+    k.add("Oven", blob(0.72 * s, k.rng, jitter_amount=0.06, squash=(1.0, 1.0, 0.72)),
+          ("ore.copper", "ore.copper_dark", "stone.2"), (x, y, 0.62))
+    k.box("OvenMouth", (0.5 * s, 0.2, 0.36 * s), (x, y - 0.66 * s, 0.82), "neutral.1")
+    k.box("OvenEmbers", (0.36 * s, 0.1, 0.1), (x, y - 0.62 * s, 0.7), "accent.2")
+    n = 5 if big else 2  # in the bakehouse the flue goes up through the roof
+    for i in range(n):
+        k.stone("Flue", (0.28, 0.28, 0.3), (x, y + 0.35 * s, 1.18 * s + i * 0.28 + 0.1), ("stone.3", "stone.2", "stone.1"))
+    k.empty("Smoke", (x, y + 0.35 * s, 1.2 * s + n * 0.28 + 0.15))
+
+
+def hanging_sign(k, x, y, z, emblem):
+    """A board on a bracket sticking out from a front wall (y), with an `emblem(k, x, y, z)` on it."""
+    k.box("SignBracket", (0.05, 0.6, 0.05), (x, y - 0.3, z + 0.35), "metal.1")
+    k.box("Sign", (0.6, 0.05, 0.42), (x, y - 0.5, z), ("wood.6", "wood.5", "wood.4"))
+    emblem(k, x, y - 0.54, z)
 
 
 def baker_cottage():
-    def garden(k):  # a flower bed with a little fence, front left
+    walls = ("neutral.6", "neutral.6", "neutral.5", "wood.7")
+
+    def garden(k, barrel=True):  # a flower bed with a little fence, front left
         k.box("Bed", (1.6, 0.9, 0.18), (-2.6, -3.0, 0.09), ("terrain.dirt", "wood.2", "wood.1"))
         colors = ["accent.7", "accent.3", "neutral.7", "accent.6", "accent.1"]
         for i in range(8):
@@ -653,22 +720,137 @@ def baker_cottage():
         for x in (-3.5, -2.6, -1.7):
             k.post("FencePost", 0.04, 0, 0.6, x, -3.55, ("wood.5", "wood.4", "wood.3"))
         k.box("FenceRail", (1.9, 0.05, 0.06), (-2.6, -3.55, 0.45), "wood.5")
-        k.barrel((2.6, -1.0, 0), 0.26, 0.6)
-    cottage("baker_cottage", 801, ("neutral.6", "neutral.6", "neutral.5", "wood.7"),
-            ("wood.2", "wood.2", "wood.1", "wood.3"), garden)
+        if barrel:
+            k.barrel((2.6, -1.0, 0), 0.26, 0.6)
+
+    def loaf_sign(k, x, y, z):
+        k.add("SignLoaf", blob(0.14, k.rng, jitter_amount=0.1, squash=(1.6, 0.5, 0.8)), ("wood.4", "wood.3", "wood.3"),
+              (x, y, z))
+
+    reset()
+    k = Kit("T1", 801)
+    cottage_house(k, walls, ("wood.2", "wood.2", "wood.1", "wood.3"))
+    garden(k)
+
+    # tier 2, Bakery: a clay bread oven out on the right under a little roof, birch for the fire
+    k = Kit("T2", 811)
+    cottage_house(k, walls, ("wood.2", "wood.2", "wood.1", "wood.3"))
+    garden(k, barrel=False)
+    bread_oven(k, 3.3, 0.5)
+    for x in (2.45, 4.15):
+        for y in (-0.5, 1.4):
+            k.post("OvenPost", 0.06, 0, 2.0, x, y)
+    k.box("OvenRoof", (2.2, 2.4, 0.08), (3.3, 0.45, 2.05), ("wood.2", "wood.2", "wood.1"), rot=(0, 0.12, 0))
+    birch_pile(k, 3.3, 2.3)
+    k.box("Bench", (1.0, 0.4, 0.06), (2.3, -2.4, 0.5), ("wood.6", "wood.5", "wood.4"))
+    for x in (1.9, 2.7):
+        k.box("BenchLeg", (0.06, 0.34, 0.47), (x, -2.4, 0.235), "wood.3")
+    loaves(k, 2.3, -2.4, 0.53, 3)
+    hanging_sign(k, -0.85, -1.83, 2.0, loaf_sign)
+
+    # tier 3, Bakehouse: a red roof, the oven moved into a lean-to bakehouse, a shop counter under
+    # a striped awning, a bigger woodpile, a lantern by the door
+    k = Kit("T3", 821)
+    cottage_house(k, walls, ("accent.0", "accent.0", "wood.1", "accent.1"))
+    garden(k, barrel=False)
+    side_annex(k, 1, walls, ("accent.0", "accent.0", "wood.1"), front_wall=False)
+    bread_oven(k, 3.15, 0.55, big=True)
+    k.box("Counter", (1.7, 0.55, 0.9), (3.15, -1.85, 0.45), ("wood.6", "wood.4", "wood.3", "wood.5"))
+    loaves(k, 3.15, -1.85, 0.9, 4, spread=0.36)
+    k.add("Basket", prism(8, 0.22, 0.26, 0.18), ("wood.6", "wood.5", "wood.4"), (2.25, -2.4, 0.09))
+    loaves(k, 2.25, -2.4, 0.12, 2, spread=0.18)
+    for i in range(6):  # the awning, red and white stripes
+        k.box("Awning", (0.32, 1.2, 0.05), (2.35 + i * 0.32, -2.1, 2.05), "accent.1" if i % 2 else "neutral.7",
+              rot=(0.35, 0, 0))
+    for x in (2.25, 4.1):
+        k.post("AwningPost", 0.05, 0, 1.85, x, -2.6, ("wood.5", "wood.4", "wood.3"))
+    birch_pile(k, -1.0, 2.25, rows=((4, 0.12), (3, 0.34), (2, 0.56)))
+    k.box("Lantern", (0.16, 0.16, 0.22), (0.85, -1.95, 2.0), ("accent.3", "accent.3", "neutral.1"))
+    hanging_sign(k, -0.85, -1.83, 2.0, loaf_sign)
+    export(os.path.join("village", "baker_cottage"))
 
 
 def prospector_cottage():
+    walls = ("stone.4", "stone.4", "stone.3", "stone.5")
+    planks = ("wood.4", "wood.3", "wood.2", "wood.5")
+
     def ore_pile(k):  # sorted rocks out front right: coal, gold, copper
         for i, c in enumerate(("ore.coal", "ore.gold", "ore.copper", "ore.coal", "stone.3", "ore.gold")):
             a = i * math.tau / 6
             k.add("Ore", blob(0.18, k.rng, jitter_amount=0.3, squash=(1.1, 1.0, 0.75)), (c, c, "stone.2"),
                   (2.6 + math.cos(a) * 0.35, -2.9 + math.sin(a) * 0.35, 0.12))
         k.add("Ore", blob(0.22, k.rng, jitter_amount=0.3), ("stone.4", "stone.3", "stone.2"), (2.6, -2.9, 0.3))
+
+    def sieve_crate(k):
         k.crate((-2.6, -2.4, 0), 0.55)
         k.box("Sieve", (0.6, 0.6, 0.08), (-2.6, -2.4, 0.55), ("metal.3", "wood.4", "wood.3"))
-    cottage("prospector_cottage", 802, ("stone.4", "stone.4", "stone.3", "stone.5"),
-            ("stone.1", "stone.1", "stone.0", "stone.2"), ore_pile)
+
+    def coal_bin(k, x, y):
+        k.box("Bin", (0.9, 0.7, 0.5), (x, y, 0.25), ("wood.3", "wood.4", "wood.2", "wood.3"))
+        for i in range(5):
+            k.add("Coal", blob(0.15, k.rng, jitter_amount=0.3, squash=(1.0, 1.0, 0.7)), "ore.coal",
+                  (x - 0.28 + i * 0.14, y + k.rng.uniform(-0.15, 0.15), 0.52))
+
+    def pine_beams(k, x, y):
+        for i, z in enumerate((0.09, 0.09, 0.27)):
+            k.box("Beam", (1.8, 0.18, 0.18), (x, y + (i - 0.5) * 0.22 if i < 2 else y, z),
+                  ("wood.6", "wood.5", "wood.5", "wood.7"))
+
+    def sorting_table(k, x, y):
+        k.box("Table", (1.4, 0.7, 0.07), (x, y, 0.85), ("wood.6", "wood.5", "wood.4"))
+        for ox in (-0.6, 0.6):
+            for oy in (-0.28, 0.28):
+                k.box("TableLeg", (0.06, 0.06, 0.82), (x + ox, y + oy, 0.41), "wood.3")
+        for i, c in enumerate(("ore.coal", "ore.gold", "ore.copper", "ore.iron")):
+            k.add("Sample", blob(0.08, k.rng, jitter_amount=0.3), c, (x - 0.45 + i * 0.3, y, 0.94))
+
+    def pick_sign(k, x, y, z):
+        k.box("SignPick", (0.05, 0.02, 0.32), (x, y, z), "wood.3", rot=(0, 0.6, 0))
+        k.box("SignPick", (0.36, 0.02, 0.06), (x - 0.04, y, z + 0.1), "metal.2", rot=(0, 0.6, 0))
+
+    reset()
+    k = Kit("T1", 802)
+    cottage_house(k, walls, ("stone.1", "stone.1", "stone.0", "stone.2"))
+    ore_pile(k)
+    sieve_crate(k)
+
+    # tier 2, Assay Shed: an open-fronted plank shed on the left with a sorting table, a coal bin
+    k = Kit("T2", 812)
+    cottage_house(k, walls, ("stone.1", "stone.1", "stone.0", "stone.2"))
+    ore_pile(k)
+    sieve_crate(k)
+    side_annex(k, -1, planks, ("wood.2", "wood.2", "wood.1"), front_wall=False)
+    sorting_table(k, -3.15, 0.6)
+    coal_bin(k, -1.0, 2.25)
+    pine_beams(k, 1.0, 2.35)
+
+    # tier 3, Assay Office: the shed closed in with a window, a little crucible furnace at the
+    # back right, scales on a table out front, gold bars, a sign and a lantern
+    k = Kit("T3", 822)
+    cottage_house(k, walls, ("accent.4", "accent.4", "stone.0", "metal.2"))
+    ore_pile(k)
+    side_annex(k, -1, planks, ("accent.4", "accent.4", "stone.0"), window=True)
+    k.door((-2.67, -1.46, 0.0), (1.0, 1.75), "wood.2")
+    sorting_table(k, -3.15, 0.6)
+    coal_bin(k, -1.0, 2.25)
+    for i in range(4):  # the crucible furnace
+        k.stone("Furnace", (0.9, 0.9, 0.35), (2.9, 2.6, 0.18 + i * 0.35), ("stone.3", "stone.2", "stone.1", "stone.4"))
+    k.box("FurnaceMouth", (0.4, 0.08, 0.3), (2.9, 2.14, 0.55), "accent.2")
+    k.add("Crucible", prism(8, 0.2, 0.26, 0.3), ("ore.gold", "metal.1", "metal.0"), (2.9, 2.6, 1.55))
+    k.empty("Smoke", (2.9, 2.6, 1.9))
+    tx, ty = -3.3, -2.7  # the scales table, out front of the office
+    k.box("Table", (1.1, 0.6, 0.07), (tx, ty, 0.8), ("wood.6", "wood.5", "wood.4"))
+    for ox in (-0.45, 0.45):
+        k.box("TableLeg", (0.06, 0.5, 0.77), (tx + ox, ty, 0.385), "wood.3")
+    k.post("ScalePost", 0.03, 0.83, 1.35, tx - 0.15, ty, "ore.gold")
+    k.box("ScaleBeam", (0.62, 0.03, 0.03), (tx - 0.15, ty, 1.35), "ore.gold")
+    for ox in (-0.28, 0.28):
+        k.add("ScalePan", prism(8, 0.1, 0.12, 0.03), "ore.gold", (tx - 0.15 + ox, ty, 1.12))
+    for ox, z in ((-0.1, 0.87), (0.12, 0.87), (0.01, 0.95)):
+        k.box("GoldBar", (0.2, 0.1, 0.07), (tx + 0.38 + ox, ty, z), ("ore.gold", "ore.gold", "accent.2"))
+    hanging_sign(k, 0.85, -1.83, 2.0, pick_sign)
+    k.box("Lantern", (0.16, 0.16, 0.22), (-0.85, -1.95, 2.0), ("accent.3", "accent.3", "neutral.1"))
+    export(os.path.join("village", "prospector_cottage"))
 
 
 def baker_villager():

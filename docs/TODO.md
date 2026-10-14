@@ -20,7 +20,7 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 - [x] **Clean respawn ghost:** one silhouette outline via the stencil buffer (`ResourceNode.ghost_silhouette`, on by default).
 - [x] **Iron and oak:** `iron_rock.tscn` (Mining 15) and `oak_tree.tscn` (Woodcutting 15), used in the village's tier-3 costs.
 - [x] **More node types:** birch (Woodcutting 8), pine (25), coal (Mining 20) and gold (30), placed around the map.
-- [ ] **Uses for coal, gold, birch, pine:** nothing spends them yet. Candidates: smithy perks that need coal, gold for the town hall, birch and pine in new buildings.
+- [x] **Uses for coal, gold, birch, pine:** they pay for Rosa's and Edda's cottage tiers. The smithy's tier 3 also needs coal, and the town hall's tier 3 needs gold.
 
 ## Village
 
@@ -29,7 +29,7 @@ Design notes are in [village-design.md](village-design.md).
 - [x] **Upgrade effects:** tiers give perks (`TierEffect`, summed by `Village.stat`). Smithy: chance of a double hit. Lodge: extra logs. Fisher: calmer fish, then bonus fish. Town hall: an XP bonus.
 - [ ] **Villager rig and schedules:** real skeletal animation, a day plan, and wandering the whole valley instead of only 2–3 spots.
 - [x] **A growing village:** town hall tier 2 brings Rosa the baker's cottage, tier 3 Edda the prospector's. They build themselves when unlocked (`Building.unlock_hall_tier`).
-- [ ] **Give the newcomers a job:** Rosa and Edda only chat. They could trade, or give perks that use birch, pine, coal and gold.
+- [x] **Give the newcomers a job:** both cottages upgrade like the houses. Rosa: Bakery → Bakehouse, walk and sprint 8% / 15% faster (`run_speed`). Edda: Assay Shed → Assay Office, +1 ore per rock, then rocks grow back 30% faster (`extra_ore`, `rock_regrow`).
 - [x] **Sitting:** villagers idling on a `Bench` spot sit on the seat (`Villager._animate_sit`).
 - [x] **Talk ray occlusion:** a villager behind a pole still counts if their head, chest or hips is in plain sight (`player.gd` `_villager_behind_clutter`).
 - [ ] **Interiors:** buildings are solid shells. Could have doors you walk through.

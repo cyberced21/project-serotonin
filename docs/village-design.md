@@ -96,6 +96,18 @@ Each building is one `.glb` with objects named `T1_*`, `T2_*`, `T3_*`.
 - **Collision:** villagers are on physics layer 7. The player bumps into them and the crosshair stops on them, but you can't mantle onto them.
 - **The path:** the path, square and lanes are painted as terrain texture id 1 in the control map. The terrain shader colours them, and footsteps on them sound like dirt.
 
+## Newcomers' jobs (added 2026-10-13)
+
+Rosa's and Edda's cottages upgrade like the houses and spend the four resources that had no use yet.
+The smithy's tier 3 also costs 10 coal, and the town hall's tier 3 costs 5 gold.
+
+| | T1 → T2 | T2 → T3 | Perk |
+|---|---|---|---|
+| Rosa (Cottage → Bakery → Bakehouse) | 20 birch, 10 logs, 5 ore | 30 birch, 15 pine, 10 coal, 5 iron | walk and sprint 8%, then 15% faster |
+| Edda (Cottage → Assay Shed → Assay Office) | 10 pine, 15 coal, 15 ore | 20 pine, 20 coal, 10 iron, 10 gold | +1 ore per rock, then rocks grow back 30% faster |
+
+Each new tier adds a lean-to or oven to the cottage (`cottage_house()` and `side_annex()` in `make_village.py`), and the villagers get `Work2`/`Work3` spots there.
+
 ## Parked
 
 - Upgrade effects (mechanics)

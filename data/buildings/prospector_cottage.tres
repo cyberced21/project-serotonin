@@ -3,18 +3,60 @@
 [ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
 [ext_resource type="PackedScene" path="res://models/village/prospector_cottage.glb" id="3_model"]
+[ext_resource type="Script" path="res://scripts/tier_effect.gd" id="4_effect"]
+
+[sub_resource type="Resource" id="Effect_2_0"]
+script = ExtResource("4_effect")
+stat = &"extra_ore"
+value = 1.0
+text = "+1 ore from every rock and vein"
+
+[sub_resource type="Resource" id="Effect_3_0"]
+script = ExtResource("4_effect")
+stat = &"extra_ore"
+value = 1.0
+text = "+1 ore from every rock and vein"
+
+[sub_resource type="Resource" id="Effect_3_1"]
+script = ExtResource("4_effect")
+stat = &"rock_regrow"
+value = 0.3
+text = "Rocks and veins grow back 30% faster"
 
 [sub_resource type="Resource" id="Tier_1"]
 script = ExtResource("2_tier")
 name = "Cottage"
-lines = PackedStringArray("Coal by the pass, gold up in the foothills of the peak. You'll need a good arm for both.", "Sorting rock is half the job. The other half is carrying it home.", "Pine burns long and hot. When the smithy wants a hotter forge, that's what they'll ask for.")
+lines = PackedStringArray("Coal by the pass, gold up in the foothills of the peak. You'll need a good arm for both.", "Sorting rock is half the job. The other half is carrying it home.", "Pine burns long and hot, and it makes good straight beams besides.", "A shed for sorting, that's my first wish. Coal and pine to build it, and some copper to sort.")
+
+[sub_resource type="Resource" id="Tier_2"]
+script = ExtResource("2_tier")
+name = "Assay Shed"
+cost = Dictionary[StringName, int]({
+&"pine": 10,
+&"ore": 15,
+&"coal": 15
+})
+lines = PackedStringArray("With a proper sorting table I can show you where the good stuff sits. You'll get more out of every rock.", "Gold, now. Gold for the scales and the crucible. Bring me some and I'll open an assay office.", "Coal for the crucible and iron for the frame, too. Assaying isn't cheap.")
+effects = Array[ExtResource("4_effect")]([SubResource("Effect_2_0")])
+
+[sub_resource type="Resource" id="Tier_3"]
+script = ExtResource("2_tier")
+name = "Assay Office"
+cost = Dictionary[StringName, int]({
+&"pine": 20,
+&"iron": 10,
+&"coal": 20,
+&"gold": 10
+})
+lines = PackedStringArray("Scales, crucible, the lot! I can read a hillside like a book now.", "I've marked the best seams on my map. Knock one out and there's always another coming through.", "Gold in the village! The mayor keeps coming by to 'inspect' it.")
+effects = Array[ExtResource("4_effect")]([SubResource("Effect_3_0"), SubResource("Effect_3_1")])
 
 [resource]
 script = ExtResource("1_def")
 id = &"prospector_cottage"
 display_name = "Edda's Cottage"
 model = ExtResource("3_model")
-tiers = Array[ExtResource("2_tier")]([SubResource("Tier_1")])
+tiers = Array[ExtResource("2_tier")]([SubResource("Tier_1"), SubResource("Tier_2"), SubResource("Tier_3")])
 villager_name = "Edda"
 villager_role = "Prospector"
 capped_line = ""

@@ -24,7 +24,7 @@ whatever you hit.
   - Higher-level nodes:
     - Birch (Woodcutting 8) grows west of the clearing.
     - Oak (15) grows around the village, and iron rocks (Mining 15) sit east of the smithy. The village's top tiers ask for them.
-    - Pine (25) is on the northern hills, coal (Mining 20) by the pass, and gold (30) in the foothills of the peak.
+    - Pine (25) is on the northern hills, coal (Mining 20) by the pass, and gold (30) in the foothills of the peak. The newcomers' cottages are built from them, and the smithy and town hall want coal and gold for their top tiers.
 - **Spearfishing.**
   - Ponds in the clearing and the village, and a deeper lake to the south where Arctic char (Fishing 30) keep to the middle.
   - Wade into the pond and stalk wary schools of perch, trout and pike. The pike hunts too: watch it stalk the perch and lunge. Crouch to stay quiet: splashing and misses scatter them.
@@ -32,12 +32,14 @@ whatever you hit.
 - **A village to build up.** Over the hills, a dirt path leads to a valley with four villagers: a woodcutter, a smith, a fisher and the mayor.
   - Talk to a villager (E) to see what their building's next tier costs, then pay with the logs, ore and fish you've gathered.
   - Every building has three tiers. The town hall's tier caps the houses, so raising it opens the next round.
-  - The village grows: raising the town hall brings new neighbours, whose cottages build themselves (Rosa the baker at tier 2, Edda the prospector at tier 3).
+  - The village grows: raising the town hall brings new neighbours, whose cottages build themselves (Rosa the baker at tier 2, Edda the prospector at tier 3). Their cottages upgrade too: Rosa's into a bakery and bakehouse, Edda's into an assay shed and office.
   - Every tier above the first gives a perk, shown in the panel:
     - Smithy: sharper tools, so a hit can count twice.
     - Woodcutter: extra logs from every tree.
     - Fisher: calmer fish, then a chance of a bonus fish.
     - Town hall: bonus XP in every skill.
+    - Rosa: fresh bread, so you walk and sprint faster.
+    - Edda: extra ore from every rock, then rocks grow back faster.
   - Upgrades are staged: the old building collapses into dust, then the new one pops up piece by piece. The villager steps back to watch, then cheers.
   - Villagers are toy figures animated in code. They work (chopping, hammering, fishing, holding forth), wander between their spots, and turn to look at you.
 - **Fast, expressive movement (Ghostrunner-ish).** Sprint, jump (with coyote time and jump buffering), crouch, slide down slopes, and mantle up ledges.

@@ -293,7 +293,7 @@ func _break(info: HitInfo) -> void:
 		_spawn_drops(info)
 	depleted.emit(self)
 	SaveGame.mark_dirty()
-	_respawn_after(respawn_time)
+	_respawn_after(_regrow_time())
 
 
 ## The depleted look (rubble / stump, no collision) without any of the break effects.
@@ -302,6 +302,12 @@ func _show_depleted() -> void:
 	visual.visible = false
 	rubble.visible = true
 	collision.set_deferred("disabled", true)
+
+
+## respawn_time, shortened for rocks by Edda's assay office.
+func _regrow_time() -> float:
+	var regrow := Village.stat(&"rock_regrow") if skill == &"mining" else 0.0
+	return respawn_time * maxf(1.0 - regrow, 0.1)
 
 
 func _respawn_after(seconds: float) -> void:
@@ -358,7 +364,11 @@ func _reset_visuals() -> void:
 
 
 func _drop_count() -> int:
-	var extra := int(Village.stat(&"extra_logs")) if skill == &"woodcutting" else 0  # the woodcutter's lodge
+	var extra := 0
+	if skill == &"woodcutting":
+		extra = int(Village.stat(&"extra_logs"))  # the woodcutter's lodge
+	elif skill == &"mining":
+		extra = int(Village.stat(&"extra_ore"))  # Edda's assay shed
 	return randi_range(drops_min, maxi(drops_min, drops_max)) + extra
 
 
@@ -641,7 +651,7 @@ func _process(_delta: float) -> void:
 	var left := _respawn_timer.time_left
 	var secs := ceili(left)
 	_timer_label.text = "%d:%02d" % [secs / 60, secs % 60]
-	var progress := 1.0 - left / respawn_time
+	var progress := clampf(1.0 - left / _regrow_time(), 0.0, 1.0)
 	var c := Skills.color(skill)
 	_ghost_outline.set_shader_parameter("color", Color(c, lerpf(0.2, ghost_alpha, progress)))
 

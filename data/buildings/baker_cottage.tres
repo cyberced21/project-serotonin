@@ -3,19 +3,55 @@
 [ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
 [ext_resource type="PackedScene" path="res://models/village/baker_cottage.glb" id="3_model"]
+[ext_resource type="Script" path="res://scripts/tier_effect.gd" id="4_effect"]
+
+[sub_resource type="Resource" id="Effect_2_0"]
+script = ExtResource("4_effect")
+stat = &"run_speed"
+value = 0.08
+text = "Fresh bread: walk and sprint 8% faster"
+
+[sub_resource type="Resource" id="Effect_3_0"]
+script = ExtResource("4_effect")
+stat = &"run_speed"
+value = 0.15
+text = "Fresh bread: walk and sprint 15% faster"
 
 [sub_resource type="Resource" id="Tier_1"]
 script = ExtResource("2_tier")
 name = "Cottage"
-lines = PackedStringArray("New in the village! The mayor said the town was growing, so here I am. Bread on Thursdays.", "These flowers won't water themselves. Well, they would if it rained more.", "Birch makes the best oven fire. Bright, quick, sweet-smelling. Just so you know.")
+lines = PackedStringArray("New in the village! The mayor said the town was growing, so here I am. Bread on Thursdays.", "These flowers won't water themselves. Well, they would if it rained more.", "Birch makes the best oven fire. Bright, quick, sweet-smelling. Just so you know.", "A proper oven, that's what I need. Birch for the fire, logs for a roof over it, a little copper for the door.")
+
+[sub_resource type="Resource" id="Tier_2"]
+script = ExtResource("2_tier")
+name = "Bakery"
+cost = Dictionary[StringName, int]({
+&"wood": 10,
+&"birch": 20,
+&"ore": 5
+})
+lines = PackedStringArray("Smell that? First loaves out of the new oven. Take one, you've earned it.", "Bread in your belly, spring in your step. You'll be up those hills in no time.", "A bakehouse with a shop front, now that'd be something. Pine for the beams, coal for a hotter oven, iron for the door.")
+effects = Array[ExtResource("4_effect")]([SubResource("Effect_2_0")])
+
+[sub_resource type="Resource" id="Tier_3"]
+script = ExtResource("2_tier")
+name = "Bakehouse"
+cost = Dictionary[StringName, int]({
+&"birch": 30,
+&"pine": 15,
+&"coal": 10,
+&"iron": 5
+})
+lines = PackedStringArray("A shop front! Folk come from the whole valley now. Well, all six of them.", "Coal in the oven, pine in the beams, iron on the door. Best bread this side of the peak.", "Take a roll for the road. Nobody ever ran slower for a bit of bread.")
+effects = Array[ExtResource("4_effect")]([SubResource("Effect_3_0")])
 
 [resource]
 script = ExtResource("1_def")
 id = &"baker_cottage"
 display_name = "Rosa's Cottage"
 model = ExtResource("3_model")
-tiers = Array[ExtResource("2_tier")]([SubResource("Tier_1")])
+tiers = Array[ExtResource("2_tier")]([SubResource("Tier_1"), SubResource("Tier_2"), SubResource("Tier_3")])
 villager_name = "Rosa"
 villager_role = "Baker"
-capped_line = ""
+capped_line = "No bakehouse until the town hall's finished, the mayor says. Can't have it smelling grander than his hall."
 night_lines = PackedStringArray("Shh, the dough's rising. Come back at dawn and you'll smell it.", "Oh! A visitor at this hour. Mind the flower bed.")

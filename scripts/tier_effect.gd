@@ -7,6 +7,9 @@ extends Resource
 ##   extra_logs          extra drops from trees (ResourceNode)
 ##   fish_calm           fraction off every fish's scare radius (FishSchool.disturb)
 ##   bonus_fish_chance   chance a speared fish counts twice (SpearFishing)
+##   run_speed           fraction faster walking and sprinting (Player)
+##   extra_ore           extra drops from rocks and veins (ResourceNode)
+##   rock_regrow         fraction off the respawn time of rocks and veins (ResourceNode)
 
 @export var stat: StringName = &"xp_bonus"
 @export var value := 0.0
