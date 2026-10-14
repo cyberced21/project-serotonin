@@ -19,6 +19,17 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 - [ ] **Clean respawn ghost** — option for a single silhouette outline instead of one outline per piece.
 - [ ] **More node types** — iron / gold / coal veins, other tree species (same Blender script + `ResourceNode.model`).
 
+## Village
+
+Design notes are in [village-design.md](village-design.md).
+
+- [ ] **Upgrade effects:** give tiers a mechanical payoff, such as better tools from the smithy or selling fish to the fisher. Fill `BuildingTier.effects` (`data/buildings/*.tres`), or listen to `Village.tier_changed`.
+- [ ] **Villager rig and schedules:** real skeletal animation, a day plan, and wandering the whole valley instead of only 2–3 spots.
+- [ ] **More villagers / a growing village:** new houses and villagers unlocked by the town hall.
+- [ ] **Sitting:** villagers stand at the benches; give them a sit pose.
+- [ ] **Talk ray occlusion:** thin pieces (the tier-1 smithy's tarp poles) can block the crosshair from reaching a villager behind them. Consider no collision on thin props, or a wider talk shape.
+- [ ] **Interiors:** buildings are solid shells. Could have doors you walk through.
+
 ## Movement
 
 - [ ] **Grapple / rope** — for chasms and cliff-face nodes.

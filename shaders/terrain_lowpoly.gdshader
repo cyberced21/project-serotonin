@@ -4,7 +4,8 @@
 //
 // The look: every triangle is flat-shaded (faceted normals) and gets ONE flat colour picked
 // from a small palette by its slope and height — grass on flats, dirt on slopes, rock on
-// cliffs, sand low down, snow up high. A little per-cell tint variation breaks up big areas.
+// cliffs, sand low down, snow up high, and dirt paths where the control map marks them.
+// A little per-cell tint variation breaks up big areas.
 // Terrain3D's Color tool still works: painted colour multiplies the palette colour.
 // Vertex spacing (on the Terrain3D node) sets how big the facets are.
 
@@ -54,6 +55,10 @@ uniform vec3 sand_color : source_color = vec3(0.80, 0.74, 0.55);
 uniform vec3 snow_color : source_color = vec3(0.92, 0.94, 0.96);
 // Pond / lake bed below `bed_height` — dark and muddy so fish stand out against it.
 uniform vec3 bed_color : source_color = vec3(0.36, 0.34, 0.24);
+// Dirt paths: cells painted with this texture id (control map base texture; see
+// tools/generate_test_terrain.gd, or Terrain3D's texture paint tool) on walkable slopes.
+uniform vec3 path_color : source_color = vec3(0.63, 0.52, 0.40);
+uniform int path_texture = 1;
 group_uniforms;
 group_uniforms bands;
 // Slope is the facet normal's Y: 1 = flat, 0 = vertical wall.
@@ -186,10 +191,18 @@ void fragment() {
 	albedo = slope < dirt_slope ? dirt_color : albedo;
 	albedo = slope < rock_slope ? rock_color : albedo;
 	albedo = h > snow_height && slope >= rock_slope ? snow_color : albedo;
+
+	ivec3 c = get_index_coord(cell, FRAGMENT_PASS);
+	if (c.z >= 0) {
+		// Path: cells painted with texture id path_texture (base id = bits 27-31 of the control map).
+		uint control = floatBitsToUint(texelFetch(_control_maps, c, 0)).r;
+		if ((control >> 27u & 0x1Fu) == uint(path_texture) && slope >= rock_slope) {
+			albedo = path_color;
+		}
+	}
 	albedo *= 1.0 + (hash(cell) - 0.5) * 2.0 * variation;
 
 	// Painted colour from Terrain3D's Color tool (white = unpainted).
-	ivec3 c = get_index_coord(cell, FRAGMENT_PASS);
 	if (c.z >= 0) {
 		albedo *= texelFetch(_color_maps, c, 0).rgb;
 	}

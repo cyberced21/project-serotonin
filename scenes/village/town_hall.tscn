@@ -1,0 +1,32 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/building.gd" id="1_building"]
+[ext_resource type="Resource" path="res://data/buildings/town_hall.tres" id="2_def"]
+[ext_resource type="Script" path="res://scripts/villager.gd" id="3_villager"]
+[ext_resource type="PackedScene" path="res://models/village/villager_mayor.glb" id="4_model"]
+
+[node name="TownHall" type="Node3D"]
+script = ExtResource("1_building")
+def = ExtResource("2_def")
+
+[node name="Spots" type="Node3D" parent="."]
+
+[node name="Door" type="Marker3D" parent="Spots"]
+transform = Transform3D(1.0000, 0, -0.0000, 0, 1, 0, 0.0000, 0, 1.0000, 0.8, 0, 6.2)
+
+[node name="Work1" type="Marker3D" parent="Spots"]
+transform = Transform3D(1.0000, 0, -0.0000, 0, 1, 0, 0.0000, 0, 1.0000, -2.2, 0, 3.4)
+
+[node name="Work2" type="Marker3D" parent="Spots"]
+transform = Transform3D(1.0000, 0, -0.0000, 0, 1, 0, 0.0000, 0, 1.0000, -2.6, 0, 4.7)
+
+[node name="Work3" type="Marker3D" parent="Spots"]
+transform = Transform3D(1.0000, 0, -0.0000, 0, 1, 0, 0.0000, 0, 1.0000, -1.2, 0, 5.0)
+
+[node name="Bench" type="Marker3D" parent="Spots"]
+transform = Transform3D(1.0000, 0, -0.0000, 0, 1, 0, 0.0000, 0, 1.0000, 1.0, 0, 12.5)
+
+[node name="Villager" type="AnimatableBody3D" parent="."]
+script = ExtResource("3_villager")
+model = ExtResource("4_model")
+work = 3

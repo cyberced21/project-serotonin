@@ -13,6 +13,17 @@
 [ext_resource type="Resource" path="res://data/fish/trout.tres" id="11_trout"]
 [ext_resource type="Resource" path="res://data/fish/pike.tres" id="12_pike"]
 [ext_resource type="Script" path="res://scripts/pond_dressing.gd" id="13_dressing"]
+[ext_resource type="PackedScene" path="res://scenes/village/town_hall.tscn" id="14_town_hall"]
+[ext_resource type="PackedScene" path="res://scenes/village/woodcutter.tscn" id="15_woodcutter"]
+[ext_resource type="PackedScene" path="res://scenes/village/smithy.tscn" id="16_smithy"]
+[ext_resource type="PackedScene" path="res://scenes/village/fisher.tscn" id="17_fisher"]
+[ext_resource type="Script" path="res://scripts/prop.gd" id="18_prop"]
+[ext_resource type="PackedScene" path="res://models/village/props/bench.glb" id="19_bench"]
+[ext_resource type="PackedScene" path="res://models/village/props/lamp_post.glb" id="20_lamp"]
+[ext_resource type="PackedScene" path="res://models/village/props/barrel.glb" id="21_barrel"]
+[ext_resource type="PackedScene" path="res://models/village/props/crates.glb" id="22_crates"]
+[ext_resource type="PackedScene" path="res://models/village/props/signpost.glb" id="23_signpost"]
+[ext_resource type="Script" path="res://scripts/upgrade_panel.gd" id="24_panel"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
@@ -26,6 +37,15 @@ subdivide_depth = 25
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_pond"]
 size = Vector3(26, 3, 26)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_village_water"]
+material = SubResource("ShaderMaterial_water")
+size = Vector2(22, 22)
+subdivide_width = 21
+subdivide_depth = 21
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_village_pond"]
+size = Vector3(22, 3, 22)
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_horizon_color = Color(0.66, 0.74, 0.78, 1)
@@ -200,8 +220,153 @@ rotation = Vector3(0, 2.99, 0)
 position = Vector3(-10, 0, 5.5)
 rotation = Vector3(0, 4.01, 0)
 
+[node name="VillageTree1" parent="Nodes" instance=ExtResource("3_tree")]
+position = Vector3(88, 0, 14)
+rotation = Vector3(0, 0.7, 0)
+
+[node name="VillageTree2" parent="Nodes" instance=ExtResource("3_tree")]
+position = Vector3(93, 0, 11)
+rotation = Vector3(0, 2.1, 0)
+
+[node name="VillageTree3" parent="Nodes" instance=ExtResource("3_tree")]
+position = Vector3(100, 0, 12)
+rotation = Vector3(0, 4.4, 0)
+
+[node name="VillageTree4" parent="Nodes" instance=ExtResource("3_tree")]
+position = Vector3(106, 0, 13)
+rotation = Vector3(0, 1.2, 0)
+
+[node name="VillageTree5" parent="Nodes" instance=ExtResource("3_tree")]
+position = Vector3(111, 0, 16)
+rotation = Vector3(0, 5.5, 0)
+
+[node name="VillageTree6" parent="Nodes" instance=ExtResource("3_tree")]
+position = Vector3(84, 0, 19)
+rotation = Vector3(0, 3.0, 0)
+
+[node name="VillageRock1" parent="Nodes" instance=ExtResource("4_rock")]
+position = Vector3(123, 0, 49)
+rotation = Vector3(0, 1.1, 0)
+
+[node name="VillageRock2" parent="Nodes" instance=ExtResource("4_rock")]
+position = Vector3(126, 0, 55)
+rotation = Vector3(0, 3.8, 0)
+
+[node name="VillageRock3" parent="Nodes" instance=ExtResource("4_rock")]
+position = Vector3(122, 0, 61)
+rotation = Vector3(0, 5.2, 0)
+
+[node name="VillageRock4" parent="Nodes" instance=ExtResource("4_rock")]
+position = Vector3(127.5, 0, 61.5)
+rotation = Vector3(0, 0.4, 0)
+required_level = 10
+
+[node name="VillagePond" type="Area3D" parent="."]
+position = Vector3(88, 0, 64)
+collision_layer = 0
+collision_mask = 0
+script = ExtResource("7_water")
+
+[node name="Volume" type="CollisionShape3D" parent="VillagePond"]
+position = Vector3(0, -1, 0)
+shape = SubResource("BoxShape3D_village_pond")
+
+[node name="Dressing" type="Node3D" parent="VillagePond"]
+script = ExtResource("13_dressing")
+seed = 23
+reed_clumps = 6
+lily_pads = 9
+stones = 9
+
+[node name="Fish" type="Node3D" parent="VillagePond"]
+script = ExtResource("9_fish_pond")
+schools = Array[Resource]([ExtResource("10_perch"), ExtResource("10_perch"), ExtResource("11_trout")])
+
+[node name="Surface" type="MeshInstance3D" parent="VillagePond"]
+position = Vector3(0, -0.15, 0)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_village_water")
+
+[node name="Village" type="Node3D" parent="."]
+
+[node name="TownHall" parent="Village" instance=ExtResource("14_town_hall")]
+position = Vector3(114, 0, 40)
+rotation = Vector3(0, -1.5708, 0)
+
+[node name="Woodcutter" parent="Village" instance=ExtResource("15_woodcutter")]
+position = Vector3(98, 0, 25)
+
+[node name="Smithy" parent="Village" instance=ExtResource("16_smithy")]
+position = Vector3(113, 0, 55)
+rotation = Vector3(0, -2.4, 0)
+
+[node name="Fisher" parent="Village" instance=ExtResource("17_fisher")]
+position = Vector3(88, 0, 54)
+
+[node name="Props" type="Node3D" parent="Village"]
+
+[node name="BenchA" type="StaticBody3D" parent="Village/Props"]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 93.5, 0, 37)
+script = ExtResource("18_prop")
+model = ExtResource("19_bench")
+
+[node name="BenchB" type="StaticBody3D" parent="Village/Props"]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 93.5, 0, 43.5)
+script = ExtResource("18_prop")
+model = ExtResource("19_bench")
+
+[node name="Lamp1" type="StaticBody3D" parent="Village/Props"]
+position = Vector3(94.5, 0, 33.5)
+rotation = Vector3(0, 2.4, 0)
+script = ExtResource("18_prop")
+model = ExtResource("20_lamp")
+
+[node name="Lamp2" type="StaticBody3D" parent="Village/Props"]
+position = Vector3(106.5, 0, 34.5)
+rotation = Vector3(0, 0.8, 0)
+script = ExtResource("18_prop")
+model = ExtResource("20_lamp")
+
+[node name="Lamp3" type="StaticBody3D" parent="Village/Props"]
+position = Vector3(102, 0, 47.5)
+rotation = Vector3(0, -1.6, 0)
+script = ExtResource("18_prop")
+model = ExtResource("20_lamp")
+
+[node name="Signpost" type="StaticBody3D" parent="Village/Props"]
+position = Vector3(78.5, 0, 31)
+rotation = Vector3(0, 0.3, 0)
+script = ExtResource("18_prop")
+model = ExtResource("23_signpost")
+
+[node name="Barrel1" type="StaticBody3D" parent="Village/Props"]
+position = Vector3(117.5, 0, 59.5)
+script = ExtResource("18_prop")
+model = ExtResource("21_barrel")
+
+[node name="Barrel2" type="StaticBody3D" parent="Village/Props"]
+position = Vector3(118.2, 0, 58.6)
+rotation = Vector3(0, 1.0, 0)
+script = ExtResource("18_prop")
+model = ExtResource("21_barrel")
+
+[node name="Crates1" type="StaticBody3D" parent="Village/Props"]
+position = Vector3(84.5, 0, 51.5)
+rotation = Vector3(0, 0.5, 0)
+script = ExtResource("18_prop")
+model = ExtResource("22_crates")
+
+[node name="Crates2" type="StaticBody3D" parent="Village/Props"]
+position = Vector3(108.5, 0, 31.5)
+rotation = Vector3(0, -0.4, 0)
+script = ExtResource("18_prop")
+model = ExtResource("22_crates")
+
 [node name="Player" parent="." instance=ExtResource("1_player")]
 position = Vector3(0, 0.1, 2)
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("2_hud")
+
+[node name="UpgradePanel" type="CanvasLayer" parent="."]
+script = ExtResource("24_panel")

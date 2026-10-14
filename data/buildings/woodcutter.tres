@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="BuildingDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
+[ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
+[ext_resource type="PackedScene" path="res://models/village/woodcutter.glb" id="3_model"]
+
+[sub_resource type="Resource" id="Tier_1"]
+script = ExtResource("2_tier")
+name = "Lean-to"
+lines = PackedStringArray("Roof leaks, but the trees don't mind. Neither do I. Mostly.", "Bring me logs and I'll build us something with walls. Real walls!", "Swing from the hips, not the shoulders. The trees can tell.")
+
+[sub_resource type="Resource" id="Tier_2"]
+script = ExtResource("2_tier")
+name = "Log Cabin"
+cost = Dictionary[StringName, int]({
+&"wood": 25
+})
+lines = PackedStringArray("Four walls and a door. I keep walking in and out just to use it.", "Every log in these walls came off your axe. I counted.", "A porch, that's what this place needs. Somewhere to sit and watch trees grow.")
+
+[sub_resource type="Resource" id="Tier_3"]
+script = ExtResource("2_tier")
+name = "Lodge"
+cost = Dictionary[StringName, int]({
+&"wood": 60,
+&"ore": 10
+})
+lines = PackedStringArray("A chimney! Warm feet all winter. You've made an old woodcutter very happy.", "Sit on the porch a while. The best sound in the world is someone else chopping.", "That woodpile? That's art, that is.")
+
+[resource]
+script = ExtResource("1_def")
+id = &"woodcutter"
+display_name = "Woodcutter's Lodge"
+model = ExtResource("3_model")
+tiers = Array[ExtResource("2_tier")]([SubResource("Tier_1"), SubResource("Tier_2"), SubResource("Tier_3")])
+villager_name = "Bram"
+villager_role = "Woodcutter"
+capped_line = "I've the logs for it, but the mayor wants the town hall done first. Rules are rules."

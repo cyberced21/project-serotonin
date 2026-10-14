@@ -412,9 +412,10 @@ def shore_stone():
     export(os.path.join("scenery", "shore_stone"))
 
 
-os.makedirs(os.path.join(OUT_DIR, "scenery"), exist_ok=True)
-os.makedirs(os.path.join(OUT_DIR, "fish"), exist_ok=True)
-os.makedirs(os.path.join(OUT_DIR, "items"), exist_ok=True)
-for build in (rock, tree, pickaxe, axe, spear, perch, trout, pike, log_item, ore_item,
-              reeds, lily_pad, lily_flower, shore_stone):
-    build()
+if __name__ == "__main__":  # make_village.py imports the helpers above without building these
+    os.makedirs(os.path.join(OUT_DIR, "scenery"), exist_ok=True)
+    os.makedirs(os.path.join(OUT_DIR, "fish"), exist_ok=True)
+    os.makedirs(os.path.join(OUT_DIR, "items"), exist_ok=True)
+    for build in (rock, tree, pickaxe, axe, spear, perch, trout, pike, log_item, ore_item,
+                  reeds, lily_pad, lily_flower, shore_stone):
+        build()

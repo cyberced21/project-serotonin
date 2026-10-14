@@ -19,6 +19,8 @@ const SPLASH := preload("res://audio/movement/splash.tres")
 const WET_DEPTH := 0.06
 ## Fallbacks matching the defaults in shaders/terrain_lowpoly.gdshader, used when the terrain
 ## material doesn't override them.
+## Terrain cells painted with this texture id are dirt paths (see the terrain shader's path_texture).
+const PATH_TEXTURE := 1
 const SHADER_DEFAULTS := {
 	&"dirt_slope": 0.86, &"rock_slope": 0.68, &"sand_height": -2.0, &"snow_height": 40.0,
 }
@@ -99,7 +101,7 @@ func surface() -> StringName:
 				return &"rock"
 			if h > _param(terrain, &"snow_height"):
 				return &"snow"
-			if slope < _param(terrain, &"dirt_slope"):
+			if slope < _param(terrain, &"dirt_slope") or terrain.data.get_control_base_id(feet) == PATH_TEXTURE:
 				return &"dirt"
 			if h < _param(terrain, &"sand_height"):
 				return &"sand"

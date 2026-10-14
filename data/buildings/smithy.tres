@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="BuildingDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
+[ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
+[ext_resource type="PackedScene" path="res://models/village/smithy.glb" id="3_model"]
+
+[sub_resource type="Resource" id="Tier_1"]
+script = ExtResource("2_tier")
+name = "Fire Pit"
+lines = PackedStringArray("An anvil on a stump and a fire in a hole. It's a start.", "Copper. Bring me copper, and some logs for a roof. I'm tired of rust.", "Every hammer stroke out here, the birds complain.")
+
+[sub_resource type="Resource" id="Tier_2"]
+script = ExtResource("2_tier")
+name = "Stone Forge"
+cost = Dictionary[StringName, int]({
+&"wood": 10,
+&"ore": 20
+})
+lines = PackedStringArray("A real forge! Hot enough to work properly now.", "Keep the ore coming. A forge this good shouldn't sit cold.", "Walls next. Bellows. A sign, so folk know where to find me.")
+
+[sub_resource type="Resource" id="Tier_3"]
+script = ExtResource("2_tier")
+name = "Smithy"
+cost = Dictionary[StringName, int]({
+&"wood": 20,
+&"ore": 50
+})
+lines = PackedStringArray("Look at that chimney smoke. That's the smell of honest work.", "Bellows, grindstone, quench trough. Couldn't ask for more.", "One day I'll forge you something special. When I know what.")
+
+[resource]
+script = ExtResource("1_def")
+id = &"smithy"
+display_name = "Smithy"
+model = ExtResource("3_model")
+tiers = Array[ExtResource("2_tier")]([SubResource("Tier_1"), SubResource("Tier_2"), SubResource("Tier_3")])
+villager_name = "Greta"
+villager_role = "Smith"
+capped_line = "Town hall's not grand enough yet, says the mayor. Can't have the smithy outshining it."

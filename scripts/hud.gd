@@ -33,7 +33,7 @@ func _ready() -> void:
 			_add_row(id)
 
 	var hint := _make_label(16)
-	hint.text = "WASD move  ·  SHIFT sprint  ·  SPACE jump / mantle  ·  CTRL crouch / slide  ·  hold E / click gather or spear  ·  ESC free mouse"
+	hint.text = "WASD move  ·  SHIFT sprint  ·  SPACE jump / mantle  ·  CTRL crouch / slide  ·  hold E / click gather or spear  ·  E talk  ·  ESC free mouse"
 	hint.modulate = Color(1, 1, 1, 0.7)
 	add_child(hint)
 	hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_KEEP_SIZE, 16)

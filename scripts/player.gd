@@ -1,7 +1,8 @@
 extends CharacterBody3D
 ## First-person player: WASD to move, mouse to look, Shift to sprint, Space to jump,
 ## Ctrl / C to crouch (slide while sprinting), jump at a ledge while moving forward to mantle,
-## hold E / left-click to gather whatever the crosshair is on.
+## hold E / left-click to gather whatever the crosshair is on. E on a villager talks to them
+## instead (left-click never swings at villagers).
 ## Esc frees the mouse; clicking the game captures it again.
 ## Mouse-look runs in _unhandled_input (raw events), so it stays smooth during hit-stop.
 ## The node is hit on the *impact frame* of the swing, not when the button is pressed —
@@ -68,6 +69,8 @@ extends CharacterBody3D
 @export_group("Gathering")
 ## How far the crosshair reaches (m).
 @export var reach := 2.4
+## How far away you can talk to a villager (m).
+@export var interact_reach := 3.2
 @export var swing_sfx: AudioStream
 ## Tool models (.glb, handle from the origin up +Y). Replace the greybox tools when set.
 @export var pickaxe_model: PackedScene
@@ -94,6 +97,8 @@ const REST_ANGLE := -0.3
 const WINDUP_ANGLE := 0.7
 const STRIKE_ANGLE := -1.3
 const WORLD_MASK := 1
+## Villagers (see Villager.NPC_LAYER): the crosshair ray stops on them, mantling ignores them.
+const NPC_MASK := 1 << 5
 const STAND_HEIGHT := 1.8
 const CROUCH_HEIGHT := 1.0
 const STAND_EYE := 1.6
@@ -130,6 +135,7 @@ var _slide_boost_cooldown := 0.0
 var _stand_probe := CapsuleShape3D.new()
 
 var _target: ResourceNode
+var _talk_target: Villager
 var _swinging := false
 var _cooldown := 0.0
 var _tool_rest := Vector3.ZERO
@@ -189,7 +195,11 @@ func _physics_process(delta: float) -> void:
 
 	_cooldown -= delta
 	_update_target()
-	if Input.is_action_pressed("gather") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED \
+	if _talk_target:
+		if Input.is_action_just_pressed("interact") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED \
+				and not _swinging and not _panel_just_closed():
+			_talk_target.interact()
+	elif Input.is_action_pressed("gather") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED \
 			and is_on_floor() and _state == State.NORMAL and not _swinging and _cooldown <= 0.0:
 		if _target:
 			_swing(_target.tool_type)
@@ -413,11 +423,12 @@ func _use_tool_model(slot: Node3D, model: PackedScene) -> void:
 		m.material_override = TOOL_MATERIAL
 
 
-## Ray from the centre of the screen. Only the world layer, so debris and drops don't block it.
-func _aim() -> Dictionary:
+## Ray from the centre of the screen. Only the world and villagers, so debris and drops don't
+## block it.
+func _aim(length := reach) -> Dictionary:
 	var from := camera.global_position
-	var to := from - camera.global_basis.z * reach
-	var query := PhysicsRayQueryParameters3D.create(from, to, WORLD_MASK, [get_rid()])
+	var to := from - camera.global_basis.z * length
+	var query := PhysicsRayQueryParameters3D.create(from, to, WORLD_MASK | NPC_MASK, [get_rid()])
 	return get_world_3d().direct_space_state.intersect_ray(query)
 
 
@@ -427,14 +438,25 @@ func _node_under_crosshair(hit: Dictionary) -> ResourceNode:
 
 
 func _update_target() -> void:
-	var node := _node_under_crosshair(_aim())
+	# one ray out to the further reach: villagers can be talked to a bit further than you can swing
+	var hit := _aim(maxf(reach, interact_reach))
+	var talk := hit.get("collider") as Villager
+	var node: ResourceNode = null
+	if talk == null and not hit.is_empty() and camera.global_position.distance_to(hit["position"]) <= reach:
+		node = _node_under_crosshair(hit)
+	if talk != _talk_target:
+		if is_instance_valid(_talk_target):
+			_talk_target.set_highlighted(false)
+		_talk_target = talk
+		if _talk_target:
+			_talk_target.set_highlighted(true)
 	if node != _target:
 		if is_instance_valid(_target):
 			_target.set_highlighted(false)
 		_target = node
 		if _target:
 			_target.set_highlighted(true)
-	if _target:
+	if _target or _talk_target:
 		spearfishing.clear_target()
 	elif not _swinging:  # mid-thrust, SpearFishing re-aims on its own impact frame
 		spearfishing.update_target()
@@ -447,8 +469,11 @@ func _update_target() -> void:
 			_equip(&"spear")
 
 	var fish := spearfishing.fish_target
-	dot.scale = Vector2.ONE * (1.75 if _target or fish else (1.3 if spearfishing.can_thrust() else 1.0))
-	if _target and not _target.can_gather():
+	dot.scale = Vector2.ONE * (1.75 if _target or fish or _talk_target else (1.3 if spearfishing.can_thrust() else 1.0))
+	if _talk_target:
+		hover_label.text = _talk_target.prompt() if not _panel_open() else ""
+		hover_label.modulate = Color.WHITE
+	elif _target and not _target.can_gather():
 		hover_label.text = "%s %d" % [Skills.display_name(_target.skill), _target.required_level]
 		hover_label.modulate = DEFLECT_COLOR
 	elif fish and not fish.can_catch():
@@ -456,6 +481,17 @@ func _update_target() -> void:
 		hover_label.modulate = DEFLECT_COLOR
 	else:
 		hover_label.text = ""
+
+
+func _panel_open() -> bool:
+	var panel := get_tree().get_first_node_in_group("upgrade_panel") as UpgradePanel
+	return panel != null and panel.is_open()
+
+
+## The E that closed the upgrade panel mustn't open it again straight away.
+func _panel_just_closed() -> bool:
+	var panel := get_tree().get_first_node_in_group("upgrade_panel") as UpgradePanel
+	return panel != null and panel.just_closed()
 
 
 func _equip(tool: StringName) -> void:

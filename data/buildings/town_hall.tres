@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="BuildingDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
+[ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
+[ext_resource type="PackedScene" path="res://models/village/town_hall.glb" id="3_model"]
+
+[sub_resource type="Resource" id="Tier_1"]
+script = ExtResource("2_tier")
+name = "Meeting Hut"
+lines = PackedStringArray("Welcome, welcome! It isn't much of a village yet. But it has a mayor, and that's the important part.", "Raise the town hall and the whole village may build higher. That's the rule. I made it.", "Logs, ore and fish, traveller. A bit of everything makes a proper town.")
+
+[sub_resource type="Resource" id="Tier_2"]
+script = ExtResource("2_tier")
+name = "Town Hall"
+cost = Dictionary[StringName, int]({
+&"wood": 20,
+&"ore": 10,
+&"perch": 5
+})
+lines = PackedStringArray("A red roof! The whole valley can see we mean business now.", "The others may build their second tier. Go on, they've been asking.", "One more push and we'll have a hall with a bell tower. Imagine it!")
+
+[sub_resource type="Resource" id="Tier_3"]
+script = ExtResource("2_tier")
+name = "Grand Hall"
+cost = Dictionary[StringName, int]({
+&"wood": 50,
+&"ore": 30,
+&"trout": 10
+})
+lines = PackedStringArray("A bell tower and a clock! Nobody will ever be late again. Probably.", "Every house may now build as grand as it likes. Within reason. Mine is still the grandest.", "Look at this village. You did this, you know.")
+
+[resource]
+script = ExtResource("1_def")
+id = &"town_hall"
+display_name = "Town Hall"
+model = ExtResource("3_model")
+tiers = Array[ExtResource("2_tier")]([SubResource("Tier_1"), SubResource("Tier_2"), SubResource("Tier_3")])
+villager_name = "Mayor Hartwell"
+villager_role = "Mayor"
+capped_line = ""

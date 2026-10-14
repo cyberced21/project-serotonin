@@ -8,10 +8,14 @@ const BINDINGS := {
 	"move_up": [KEY_W, KEY_UP],
 	"move_down": [KEY_S, KEY_DOWN],
 	"gather": [KEY_E],
+	# also E: on a villager it talks instead of gathering (see player.gd)
+	"interact": [KEY_E],
 	"jump": [KEY_SPACE],
 	"sprint": [KEY_SHIFT],
 	"crouch": [KEY_CTRL, KEY_C],
 	# debug builds only
+	"debug_give_items": [KEY_F7],
+	"debug_village_tier": [KEY_F8],
 	"debug_give_xp": [KEY_F9],
 	"debug_reset_save": [KEY_F10],
 }

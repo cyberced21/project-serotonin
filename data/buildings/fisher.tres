@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="BuildingDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
+[ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
+[ext_resource type="PackedScene" path="res://models/village/fisher.glb" id="3_model"]
+
+[sub_resource type="Resource" id="Tier_1"]
+script = ExtResource("2_tier")
+name = "Tent & Rack"
+lines = PackedStringArray("Fish dry on the rack, I sleep in the tent. Some nights I mix them up.", "Perch, that's the trick. Plenty of perch, and some logs for a proper shack.", "Shh. You're stepping too loud. They can hear you, you know.")
+
+[sub_resource type="Resource" id="Tier_2"]
+script = ExtResource("2_tier")
+name = "Stilt Shack"
+cost = Dictionary[StringName, int]({
+&"wood": 10,
+&"perch": 10
+})
+lines = PackedStringArray("Up on stilts, dry as a bone. Well. Drier.", "Trout are clever. Pike are cleverer, and they only live in the pond over the hill.", "A dock, that's my dream. Fish right off the end of it.")
+
+[sub_resource type="Resource" id="Tier_3"]
+script = ExtResource("2_tier")
+name = "Shack & Dock"
+cost = Dictionary[StringName, int]({
+&"wood": 25,
+&"trout": 8,
+&"pike": 3
+})
+lines = PackedStringArray("Pike from the other pond, in my hut! You're a legend.", "Come sit on the dock. Fish don't bite any better, but the view's nice.", "Got a boat now, too. Haven't worked out where to row it.")
+
+[resource]
+script = ExtResource("1_def")
+id = &"fisher"
+display_name = "Fisher's Hut"
+model = ExtResource("3_model")
+tiers = Array[ExtResource("2_tier")]([SubResource("Tier_1"), SubResource("Tier_2"), SubResource("Tier_3")])
+villager_name = "Ollie"
+villager_role = "Fisher"
+capped_line = "Can't build bigger than the town hall, the mayor says. Something about appearances."
