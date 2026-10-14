@@ -40,6 +40,7 @@ func setup(p_species: FishSpecies, p_water: WaterBody, at: Vector3) -> void:
 	species = p_species
 	water = p_water
 	add_to_group("fish_school")
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON  # fish move on physics ticks
 	target_size = randi_range(species.school_min, species.school_max)
 	_goal = at
 	for i in target_size:
@@ -53,6 +54,7 @@ func _spawn_fish(at: Vector3) -> Fish:
 	f.setup(species, self)
 	f.global_position = _clamp_to_water(at, f)
 	f.velocity = Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)).normalized() * species.cruise_speed
+	f.reset_physics_interpolation()
 	fish.append(f)
 	return f
 

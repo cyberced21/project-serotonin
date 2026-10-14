@@ -8,6 +8,10 @@ extends AnimatableBody3D
 ## A spot's +Z is the way the villager faces while standing (or sitting) there.
 ## When the player comes close it stops and turns to face them; E (see player.gd) opens the
 ## upgrade panel. When its building is upgraded, it cheers.
+## Animations set target poses (_pose); the parts ease toward them every tick — quickly while
+## working (so blows stay snappy), slowly for a moment after the state changes (so switching
+## between working, walking and idling blends instead of snapping). Walking speeds up from a
+## standstill and slows into each stop.
 
 enum State { IDLE, WALK, WORK, TALK, CHEER }
 enum Work { CHOP, HAMMER, FISH, ORATE, TEND }
@@ -47,6 +51,10 @@ var _yaw := 0.0
 var _hurry := 1.0  # walk speed multiplier
 var _inside := false  # gone home for the night
 var _away := false  # the building isn't there yet
+var _targets: Dictionary[StringName, Transform3D] = {}  # target pose per part (see _pose)
+var _blend := 0.0  # seconds of slow blending left after a state change
+var _last_state := State.IDLE
+var _speed := 0.0  # current walking speed
 var _visiting := false  # stepped out at night because the player came to the door
 var _model: Node3D
 var _shape: CollisionShape3D
@@ -61,6 +69,7 @@ func _ready() -> void:
 	assert(building, "A Villager must be a child of a Building")
 	collision_layer = NPC_LAYER
 	collision_mask = 0
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON  # moved and posed on physics ticks
 	sync_to_physics = false
 	_build_model()
 	_shape = CollisionShape3D.new()
@@ -143,13 +152,26 @@ func _build_model() -> void:
 			_rest[part] = n.transform
 
 
-## Rotates a part from its rest pose: x = swing forward/back (negative = forward / up in front),
-## z = out to the side. Position offset is in the part's parent space.
+## Sets a part's target pose, relative to its rest pose: x = swing forward/back (negative =
+## forward / up in front), z = out to the side. Position offset is in the part's parent space.
+## The part eases toward it in _apply_poses.
 func _pose(part: StringName, x: float, z := 0.0, y := 0.0, offset := Vector3.ZERO) -> void:
 	if not _parts.has(part):
 		return
 	var rest := _rest[part]
-	_parts[part].transform = Transform3D(rest.basis * Basis.from_euler(Vector3(x, y, z)), rest.origin + offset)
+	_targets[part] = Transform3D(rest.basis * Basis.from_euler(Vector3(x, y, z)), rest.origin + offset)
+
+
+func _apply_poses(delta: float) -> void:
+	if state != _last_state:
+		_last_state = state
+		_blend = 0.3
+	_blend = maxf(_blend - delta, 0.0)
+	var rate := 7.0 if _blend > 0.0 else 30.0
+	var k := 1.0 - exp(-rate * delta)
+	for part in _targets:
+		var n := _parts[part]
+		n.transform = n.transform.interpolate_with(_targets[part], k)
 
 
 # --- behaviour ------------------------------------------------------------------------------
@@ -161,6 +183,7 @@ func _start() -> void:
 		global_position = _ground(m.global_position)
 		_face_marker(m)
 		_target = m
+	reset_physics_interpolation()
 	_enter(State.WORK if m and m.name.begins_with("Work") else State.IDLE)
 
 
@@ -175,6 +198,12 @@ func _enter(s: State) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_tick(delta)
+	if not _away and not _inside:
+		_apply_poses(delta)
+
+
+func _tick(delta: float) -> void:
 	_phase += delta
 	if _player == null:
 		_player = get_tree().get_first_node_in_group("player") as Node3D
@@ -275,7 +304,7 @@ func _go_inside() -> void:
 	_inside = true
 	_shape.set_deferred("disabled", true)
 	set_highlighted(false)
-	var t := create_tween()
+	var t := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)  # interpolated body
 	t.tween_property(_model, "scale", Vector3(0.6, 0.05, 0.6), 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 	t.tween_callback(func() -> void: _model.visible = false)
 
@@ -285,10 +314,11 @@ func _come_out(door: Marker3D) -> void:
 	global_position = _ground(door.global_position)
 	_face_marker(door)
 	_target = door
+	reset_physics_interpolation()
 	_shape.set_deferred("disabled", false)
 	_model.visible = true
 	_model.scale = Vector3(0.6, 0.05, 0.6)
-	create_tween().tween_property(_model, "scale", Vector3.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).tween_property(_model, "scale", Vector3.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 ## Next place to go: mostly back to work, sometimes the door or the bench. Never where it is.
@@ -307,6 +337,7 @@ func _walk_to(m: Marker3D) -> void:
 		return
 	_target = m
 	_walk_from = global_position
+	_speed = 0.0
 	state = State.WALK
 
 
@@ -318,7 +349,10 @@ func _walk(delta: float) -> void:
 		global_position = _ground(goal)
 		_enter(State.WORK if _target.name.begins_with("Work") else State.IDLE)
 		return
-	var step := minf(walk_speed * _hurry * delta, dist)
+	# speed up from a standstill, slow into the stop
+	var cruise := walk_speed * _hurry * clampf(dist / 0.7, 0.3, 1.0)
+	_speed = move_toward(_speed, cruise, 3.0 * _hurry * delta)
+	var step := minf(_speed * delta, dist)
 	var next := global_position + flat / dist * step
 	# height: the ground, but never below the straight line between spots (docks, porches)
 	var total := Vector2(goal.x - _walk_from.x, goal.z - _walk_from.z).length()
@@ -327,7 +361,7 @@ func _walk(delta: float) -> void:
 	next.y = maxf(_ground_height(next), line_y)
 	global_position = next
 	_turn_toward(goal, delta, 8.0)
-	_walk_cycle += delta * walk_speed * _hurry * 4.2
+	_walk_cycle += delta * _speed * 4.2
 	_animate_walk()
 
 
@@ -412,11 +446,12 @@ func _animate_sit() -> void:
 
 func _animate_walk() -> void:
 	var s := sin(_walk_cycle)
-	_pose(&"LegL", s * 0.6)
-	_pose(&"LegR", -s * 0.6)
-	_pose(&"ArmL", -s * 0.5, -0.08)
-	_pose(&"ArmR", s * 0.5, 0.08)
-	_pose(&"Body", 0.0, s * 0.04, 0.0, Vector3(0, absf(cos(_walk_cycle)) * 0.05, 0))
+	var a := clampf(_speed / walk_speed, 0.25, 1.3)  # small steps when slow, big when hurrying
+	_pose(&"LegL", s * 0.6 * a)
+	_pose(&"LegR", -s * 0.6 * a)
+	_pose(&"ArmL", -s * 0.5 * a, -0.08)
+	_pose(&"ArmR", s * 0.5 * a, 0.08)
+	_pose(&"Body", 0.04 * a, s * 0.04 * a, 0.0, Vector3(0, absf(cos(_walk_cycle)) * 0.05 * a, 0))
 
 
 func _animate_cheer() -> void:

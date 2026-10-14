@@ -5,6 +5,10 @@ extends CharacterBody3D
 ## instead (left-click never swings at villagers).
 ## Esc frees the mouse; clicking the game captures it again.
 ## Mouse-look runs in _unhandled_input (raw events), so it stays smooth during hit-stop.
+## Physics interpolation is on for the body; the eye (Head) is placed every rendered frame from the
+## body's interpolated position plus the current look angles, so the view is smooth at any frame
+## rate and mouse look never lags a tick. Head bob, landing dip and strafe lean are added there, and
+## the held tool sways with mouse movement and bobs with your steps (see _process).
 ## The node is hit on the *impact frame* of the swing, not when the button is pressed —
 ## lining sound + hit-stop up with the animation is what makes it feel solid.
 
@@ -31,6 +35,16 @@ extends CharacterBody3D
 @export var coyote_time := 0.1
 ## A jump pressed this long before landing still fires on landing.
 @export var jump_buffer := 0.12
+
+@export_group("View feel")
+## Gentle up-and-down of the eye with your steps (m at full sprint; 0 = off).
+@export var head_bob := 0.035
+## How much the view dips when you land (per m/s of fall speed).
+@export var landing_dip := 0.012
+## Roll toward the side you strafe (degrees).
+@export var strafe_lean_deg := 1.2
+## How far the held tool lags behind mouse movement.
+@export var tool_sway := 1.0
 
 @export_group("Water")
 ## Speed multiplier when wading at full depth (scales in with depth).
@@ -90,14 +104,25 @@ extends CharacterBody3D
 ## How long the tool stays stuck in the node after the hit-stop.
 @export var bite_hold := 0.06
 ## How long the yank back out takes. The chunk tears out at the end of it.
-@export var yank_time := 0.07
+@export var yank_time := 0.09
 ## How far the tool's edge is buried in the node while it's stuck (m, world space).
 @export var stick_depth := 0.1
 
 ## Tool pivot rotation around X (radians): positive tilts the head back toward the camera.
 const REST_ANGLE := -0.3
 const WINDUP_ANGLE := 0.7
-const STRIKE_ANGLE := -1.3
+const STRIKE_ANGLE := -0.7
+## At impact the arm reaches up (viewmodel space) so the tool's head lands right on the crosshair,
+## where the world copy of it sticks into the node (measured: within ~5% of screen of the centre).
+const STRIKE_REACH := Vector3(0, 0.33, 0)
+## A little lift during the wind-up.
+const WINDUP_LIFT := Vector3(0, 0.06, 0.04)
+## How long the stuck tool takes to drive in, and to come back out (real seconds).
+const STICK_TIME := 0.035
+## The yank out of the node: back toward the eye, head tipping up. Kept small so it reads as a jerk
+## over a few frames rather than a jump.
+const YANK_OFFSET := Vector3(0, 0.02, 0.07)
+const YANK_TIP := 0.22
 const WORLD_MASK := 1
 ## Villagers (see Villager.NPC_LAYER): the crosshair ray stops on them, mantling ignores them.
 const NPC_MASK := 1 << 6
@@ -115,15 +140,12 @@ const TOOL_MATERIAL := preload("res://materials/node_palette.tres")
 ## Where each tool's cutting edge is, in its model's space (tools/blender/make_models.py): the
 ## point that gets buried in the node during the bite.
 const TOOL_HEADS := {&"axe": Vector3(0, 0.38, -0.185), &"pickaxe": Vector3(0, 0.385, -0.26)}
-## Where the hand holds the tools, up the handle (see block_hand() in make_models.py).
-const GRIP_HEIGHT := 0.16
-## Size of the stuck world copy relative to the model (a touch bigger reads better at a distance).
-const STUCK_SCALE := 1.3
 
 @onready var head: Node3D = $Head
 @onready var body_collision: CollisionShape3D = $CollisionShape3D
 @onready var body_shape: CapsuleShape3D = body_collision.shape
 @onready var camera: Camera3D = $Head/Camera3D
+@onready var grip: Node3D = $Viewmodel/SubViewport/Camera3D/Grip
 @onready var tool_pivot: Node3D = %ToolPivot
 @onready var tools: Dictionary[StringName, Node3D] = {&"axe": %Axe, &"pickaxe": %Pickaxe, &"spear": %Spear}
 @onready var spearfishing: SpearFishing = $SpearFishing
@@ -148,6 +170,23 @@ var _talk_target: Villager
 var _swinging := false
 var _cooldown := 0.0
 var _tool_rest := Vector3.ZERO
+var _equipped: StringName = &""
+
+# the eye (see _process)
+var _pitch := 0.0
+var _roll := 0.0  # slide roll
+var _lean := 0.0  # strafe lean
+var _eye := STAND_EYE
+var _move_input := Vector2.ZERO
+var _bob_phase := 0.0
+var _bob_amp := 0.0
+var _dip := 0.0  # landing dip spring (m, + = down)
+var _dip_vel := 0.0
+# the held tool
+var _grip_rest := Transform3D.IDENTITY
+var _look_delta := Vector2.ZERO  # mouse motion since the last frame
+var _sway := Vector2.ZERO
+var _equip_dip := 0.0
 
 
 func _ready() -> void:
@@ -162,6 +201,11 @@ func _ready() -> void:
 		scrape.loop_begin = 0
 		scrape.loop_end = int(scrape.get_length() * scrape.mix_rate)  # in frames; works for any import compression
 	tool_pivot.rotation.x = REST_ANGLE
+	_grip_rest = grip.transform
+	# the eye is placed by hand each frame (see _process); the viewmodel is animated per frame too
+	head.top_level = true
+	head.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	$Viewmodel.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	_use_tool_model(tools[&"pickaxe"], pickaxe_model)
 	_use_tool_model(tools[&"axe"], axe_model)
 	_use_tool_model(tools[&"spear"], spear_model)
@@ -172,7 +216,7 @@ func _ready() -> void:
 func to_dict() -> Dictionary:
 	return {
 		"x": global_position.x, "y": global_position.y, "z": global_position.z,
-		"yaw": rotation.y, "pitch": head.rotation.x,
+		"yaw": rotation.y, "pitch": _pitch,
 	}
 
 
@@ -181,7 +225,8 @@ func from_dict(d: Dictionary) -> void:
 		return  # save from the 2D version — spawn at the default position instead
 	global_position = Vector3(float(d["x"]), float(d["y"]), float(d["z"]))
 	rotation.y = float(d.get("yaw", 0.0))
-	head.rotation.x = float(d.get("pitch", 0.0))
+	_pitch = float(d.get("pitch", 0.0))
+	reset_physics_interpolation()  # a teleport, not a move
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -189,12 +234,58 @@ func _unhandled_input(event: InputEvent) -> void:
 		var motion := event as InputEventMouseMotion
 		rotate_y(-motion.relative.x * mouse_sensitivity)
 		var limit := deg_to_rad(max_pitch_deg)
-		head.rotation.x = clampf(head.rotation.x - motion.relative.y * mouse_sensitivity, -limit, limit)
+		_pitch = clampf(_pitch - motion.relative.y * mouse_sensitivity, -limit, limit)
+		_look_delta += motion.relative
 	elif event.is_action_pressed("ui_cancel"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	elif event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		get_viewport().set_input_as_handled()
+
+
+## The eye and the held tool, every rendered frame.
+func _process(delta: float) -> void:
+	var speed := Vector2(velocity.x, velocity.z).length()
+	var grounded := is_on_floor() and _state == State.NORMAL
+	# head bob: one soft dip per footstep, scaled by speed, gone when standing still or airborne
+	var bob_target := 0.0
+	if grounded and speed > 0.5:
+		bob_target = head_bob * clampf(speed / sprint_speed, 0.0, 1.0) * (0.5 if _crouch > 0.5 else 1.0)
+	_bob_amp = lerpf(_bob_amp, bob_target, 1.0 - exp(-8.0 * delta))
+	var run := clampf(inverse_lerp(walk_speed, sprint_speed, speed), 0.0, 1.0)
+	_bob_phase = fmod(_bob_phase + speed / lerpf(footsteps.walk_stride, footsteps.sprint_stride, run) * PI * delta, TAU)
+	var bob := (0.5 - absf(sin(_bob_phase))) * _bob_amp
+	# landing dip: a critically damped spring back up
+	var stiffness := 90.0
+	_dip_vel += (-stiffness * _dip - 2.0 * sqrt(stiffness) * _dip_vel) * delta
+	_dip += _dip_vel * delta
+	# lean into strafes
+	var lean_target := -_move_input.x * deg_to_rad(strafe_lean_deg) if grounded else 0.0
+	_lean = lerp_angle(_lean, lean_target, 1.0 - exp(-6.0 * delta))
+
+	var feet := get_global_transform_interpolated().origin
+	head.global_transform = Transform3D(
+		Basis.from_euler(Vector3(_pitch - _dip * 0.6, rotation.y, _roll + _lean)),
+		feet + Vector3.UP * (_eye + bob - _dip))
+	_update_tool_feel(delta, bob, run)
+
+
+## The held tool lags a little behind mouse movement, bobs with your steps, dips when you land,
+## and drops out of view and back up when you switch tools.
+func _update_tool_feel(delta: float, bob: float, run: float) -> void:
+	var look_speed := _look_delta / maxf(delta, 0.001)
+	_look_delta = Vector2.ZERO
+	var target := (-look_speed * 0.00006 * tool_sway).limit_length(0.12)
+	_sway = _sway.lerp(target, 1.0 - exp(-12.0 * delta))
+	var stride := cos(_bob_phase) * _bob_amp * 0.5
+	var offset := Vector3(_sway.x * 0.35 + stride, -_sway.y * 0.35 + bob * 0.6 - _dip * 0.5 - _equip_dip, 0.0)
+	var tilt := Basis.from_euler(Vector3(_sway.y, _sway.x, _sway.x * 0.5 + run * 0.03))
+	grip.transform = Transform3D(tilt * _grip_rest.basis, _grip_rest.origin + offset)
+
+
+## A soft knock to the view on touching down, harder the faster you fell.
+func _land_dip(fall_speed: float) -> void:
+	_dip_vel += clampf(fall_speed, 0.0, 16.0) * landing_dip * 12.0
 
 
 func _physics_process(delta: float) -> void:
@@ -218,6 +309,7 @@ func _physics_process(delta: float) -> void:
 
 func _move(delta: float) -> void:
 	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	_move_input = input
 	var wish_dir := transform.basis * Vector3(input.x, 0.0, input.y)
 	var water_depth := WaterBody.depth_at(get_tree(), global_position)
 	var wading := lerpf(1.0, wade_slow, clampf(water_depth / wade_full_depth, 0.0, 1.0))
@@ -282,6 +374,8 @@ func _move(delta: float) -> void:
 
 	if is_on_floor() and not was_on_floor:
 		footsteps.land(fall_speed)
+		if fall_speed > 2.0:
+			_land_dip(fall_speed)
 	var stepping_speed := horizontal.length() if _state == State.NORMAL else 0.0  # no steps mid-slide
 	footsteps.tick(delta, stepping_speed, is_on_floor(), _crouch > 0.5, walk_speed, sprint_speed)
 	_update_slide_audio(delta, horizontal.length())
@@ -334,10 +428,10 @@ func _update_crouch(delta: float) -> void:
 	var height := lerpf(STAND_HEIGHT, CROUCH_HEIGHT, _crouch)
 	body_shape.height = height
 	body_collision.position.y = height / 2.0
-	head.position.y = lerpf(STAND_EYE, CROUCH_EYE, _crouch)
+	_eye = lerpf(STAND_EYE, CROUCH_EYE, _crouch)
 	# slight camera roll while sliding
 	var roll := slide_roll_deg if _state == State.SLIDE else 0.0
-	head.rotation.z = lerp_angle(head.rotation.z, deg_to_rad(roll), 1.0 - exp(-8.0 * delta))
+	_roll = lerp_angle(_roll, deg_to_rad(roll), 1.0 - exp(-8.0 * delta))
 
 
 ## True if there's nothing overhead stopping the player standing up.
@@ -399,7 +493,7 @@ func _mantle(land: Vector3) -> void:
 	var rise := land.y - start.y
 	var up_time := clampf(rise * mantle_time_per_m, 0.12, 0.4)
 	var crest := Vector3(start.x, land.y + 0.05, start.z)
-	var t := create_tween()
+	var t := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)  # body moves on physics ticks (interpolated)
 	t.tween_property(self, "global_position", crest, up_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	t.tween_property(self, "global_position", land + Vector3.UP * 0.05, 0.12).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	# hands busy: tool dips out of view and comes back; head nods with the effort
@@ -412,6 +506,7 @@ func _mantle(land: Vector3) -> void:
 	await t.finished
 	velocity = -global_basis.z * walk_speed * 0.5  # carry on moving instead of stopping dead
 	footsteps.land(footsteps.land_min_speed + 1.0)  # feet planting on the ledge
+	_land_dip(3.0)
 	_state = State.NORMAL
 
 
@@ -523,26 +618,37 @@ func _panel_just_closed() -> bool:
 
 
 func _equip(tool: StringName) -> void:
+	if tool == _equipped:
+		return
+	var first := _equipped == &""
+	_equipped = tool
 	for id in tools:
 		tools[id].visible = id == tool
+	if not first:  # the new tool comes up from below the view
+		_equip_dip = 0.35
+		create_tween().tween_property(self, "_equip_dip", 0.0, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _swing(tool: StringName) -> void:
 	_swinging = true
 	for id in tools:
 		tools[id].visible = id == tool
+	_equipped = tool
 
-	# 1. wind-up (anticipation)
-	var t := create_tween()
+	# 1. wind-up (anticipation): tip back, lift a little
+	var t := create_tween().set_parallel()
 	t.tween_property(tool_pivot, "rotation:x", WINDUP_ANGLE, windup_time).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	t.tween_property(tool_pivot, "position", _tool_rest + WINDUP_LIFT, windup_time).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	await t.finished
 
-	# 2. strike — whoosh starts with the fast part of the motion
+	# 2. strike — whoosh starts with the fast part of the motion; the arm reaches up and forward so
+	# the head lands right on the crosshair
 	if swing_sfx:
 		audio.stream = swing_sfx
 		audio.play()
-	t = create_tween()
+	t = create_tween().set_parallel()
 	t.tween_property(tool_pivot, "rotation:x", STRIKE_ANGLE, strike_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.tween_property(tool_pivot, "position", _tool_rest + STRIKE_REACH, strike_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	await t.finished
 
 	# 3. impact frame — hits whatever the crosshair is on *now*; looked away = whiff
@@ -555,7 +661,7 @@ func _swing(tool: StringName) -> void:
 			if is_instance_valid(node):
 				node.pull(info)  # the chunk tears out as the tool comes free
 		else:
-			_bounce()
+			await _bounce()
 
 	# 4. recover
 	t = create_tween().set_parallel()
@@ -566,86 +672,86 @@ func _swing(tool: StringName) -> void:
 	_swinging = false
 
 
-## The tool sinks into the node and sticks (the hit-stop freezes it there), then gets yanked
-## back out with a jerk — the moment the chunk comes free.
+## The tool bites in and sticks (the hit-stop freezes it there), then gets yanked back out with a
+## jerk — the moment the chunk comes free. Sticking: see _stick_in_world.
 func _bite(tool: StringName, info: HitInfo) -> void:
-	tool_pivot.position = _tool_rest + Vector3(0, -bite_depth * 0.4, -bite_depth)
+	var strike := _tool_rest + STRIKE_REACH
 	var stuck := _stick_in_world(tool, info)
+	if stuck == null:  # no world copy for this tool: just shove the held one forward
+		tool_pivot.position = strike + Vector3(0, -bite_depth * 0.4, -bite_depth)
 	var t := create_tween()
-	t.tween_interval(bite_hold)
-	# the world copy comes out and the held tool takes over for the yank
-	t.tween_callback(func() -> void:
-		if is_instance_valid(stuck):
-			stuck.queue_free()
-		_show_only_hand(tools[tool], false))
+	t.tween_interval(bite_hold)  # (stretched by the hit-stop)
+	await t.finished
+	if stuck:
+		await _unstick(stuck, tool)
 	# yank: back toward the camera, head tipping up as it comes free
-	t.tween_property(tool_pivot, "position", _tool_rest + Vector3(0, 0.03, 0.09), yank_time) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	t.parallel().tween_property(tool_pivot, "rotation:x", STRIKE_ANGLE + 0.45, yank_time) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	t = create_tween().set_parallel()
+	t.tween_property(tool_pivot, "position", strike + YANK_OFFSET, yank_time) 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	t.tween_property(tool_pivot, "rotation:x", STRIKE_ANGLE + YANK_TIP, yank_time) 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	await t.finished
 
 
-## For the bite, the tool really sticks in the node: a world copy of it (without the hand) is
-## placed with its edge buried in the surface (which hides the part inside), its grip on the line
-## of sight to the held hand, at about real size. The held tool hides all but the fist, which stays
-## on screen holding the end of the handle.
+## For the bite, the held tool is swapped for a copy in the world, so its edge can really bury
+## itself in the node (the node's surface hides the part that's inside). The copy starts exactly
+## where the held tool is on screen — its pose in viewmodel-camera space, widened for the main
+## camera's wider FOV and scaled out from the eye until the edge is at the hit's depth — so the
+## swap can't be seen; then it drives the last few centimetres in (in real time, so it happens
+## even during the hit-stop). _unstick reverses it.
 func _stick_in_world(tool: StringName, info: HitInfo) -> Node3D:
 	var slot := tools[tool]
-	var vm_cam := slot.get_viewport().get_camera_3d()
-	if vm_cam == null or not TOOL_HEADS.has(tool):
+	if not TOOL_HEADS.has(tool):
 		return null
+	var buried := info.position - info.normal * stick_depth
+	var start: Variant = _screen_matched(slot, tool, buried)
+	if start == null:
+		return null
+	var from: Transform3D = start
 	var edge: Vector3 = TOOL_HEADS[tool]
-	var grip_local := Vector3(0, GRIP_HEIGHT, 0)
-	var length := (edge - grip_local).length() * STUCK_SCALE  # grip -> edge, in the world
-	var hit := info.position - info.normal * stick_depth
-	# the grip: on the ray through the hand's screen position, `length` away from the hit
-	var hand_screen := vm_cam.unproject_position(slot.global_transform * grip_local)
-	var origin := camera.project_ray_origin(hand_screen)
-	var ray := camera.project_ray_normal(hand_screen)
-	var along := (hit - origin).dot(ray)
-	var off := (hit - origin - ray * along).length()
-	var t := along - sqrt(maxf(length * length - off * off, 0.0))  # the nearer point at that distance
-	var grip := origin + ray * maxf(t, 0.2)
-	# turn the model's grip->edge line onto grip->hit, with the blade (model -Z) into the surface
-	var model_frame := _frame(edge - grip_local, Vector3.FORWARD)
-	var world_frame := _frame(hit - grip, -info.normal)
-	var size := grip.distance_to(hit) / (edge - grip_local).length()
-	var basis := (world_frame * model_frame.transposed()).scaled(Vector3.ONE * size)
 	var copy := slot.duplicate() as Node3D
 	for m in copy.find_children("*", "MeshInstance3D", true, false):
-		(m as MeshInstance3D).layers = 1
-		m.visible = not _is_hand(m)
+		var mesh := m as MeshInstance3D
+		mesh.layers = 1
+		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF  # it's huge in the world; no shadow
 	get_parent().add_child(copy)
-	copy.global_transform = Transform3D(basis, hit - basis * edge)  # the edge exactly at the hit
-	copy.visible = true
-	_show_only_hand(slot, true)
+	copy.global_transform = from
+	copy.set_meta("buried", buried)
+	slot.visible = false
+	var t := copy.create_tween().set_ignore_time_scale(true)
+	t.tween_property(copy, "global_position", from.origin + (buried - from * edge), STICK_TIME) 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	return copy
 
 
-## Hides (or shows again) everything of a held tool except its fist and cuff.
-func _show_only_hand(slot: Node3D, on: bool) -> void:
-	for m in slot.find_children("*", "MeshInstance3D", true, false):
-		m.visible = not on or _is_hand(m)
+## Pulls the world copy back to where the held tool is on screen, then swaps back to it.
+func _unstick(stuck: Node3D, tool: StringName) -> void:
+	var slot := tools[tool]
+	var back: Variant = _screen_matched(slot, tool, stuck.get_meta("buried"))
+	if back != null:
+		var t := stuck.create_tween().set_ignore_time_scale(true)
+		t.tween_property(stuck, "global_position", (back as Transform3D).origin, STICK_TIME) 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		await t.finished
+	stuck.queue_free()
+	slot.visible = true
 
 
-## The fist, thumb and cuff of a tool model (HandFist, HandThumb, HandCuff — not the Handle).
-static func _is_hand(m: Node) -> bool:
-	var n := String(m.name)
-	return n.begins_with("Hand") and not n.begins_with("Handle")
-
-
-## An orthonormal frame: first axis along `along`, second toward `toward` (made perpendicular).
-static func _frame(along: Vector3, toward: Vector3) -> Basis:
-	var e1 := along.normalized()
-	var e2 := toward - e1 * toward.dot(e1)
-	if e2.length_squared() < 0.0001:
-		e2 = e1.cross(Vector3.UP if absf(e1.y) < 0.9 else Vector3.RIGHT)
-	e2 = e2.normalized()
-	return Basis(e1, e2, e1.cross(e2))
+## Where a held tool would have to be in the world to look exactly as it does on screen, pushed
+## out from the eye so its edge is as deep as `depth_point`. Null if that can't be worked out.
+func _screen_matched(slot: Node3D, tool: StringName, depth_point: Vector3) -> Variant:
+	var vm_cam := slot.get_viewport().get_camera_3d()
+	if vm_cam == null:
+		return null
+	var in_cam := vm_cam.global_transform.affine_inverse() * slot.global_transform
+	var edge_cam := in_cam * (TOOL_HEADS[tool] as Vector3)
+	var target_cam := camera.global_transform.affine_inverse() * depth_point
+	if edge_cam.z >= -0.01 or target_cam.z >= -0.01:
+		return null
+	var widen := tan(deg_to_rad(camera.fov) * 0.5) / tan(deg_to_rad(vm_cam.fov) * 0.5)
+	var k := target_cam.z / edge_cam.z
+	return camera.global_transform * Transform3D(Basis.from_scale(Vector3(k * widen, k * widen, k)), Vector3.ZERO) * in_cam
 
 
 ## Deflected (level too low): the tool rebounds off the surface instead of biting in.
 func _bounce() -> void:
-	tool_pivot.position = _tool_rest + Vector3(0, 0.02, 0.08)
-	tool_pivot.rotation.x = STRIKE_ANGLE + 0.7
+	var t := create_tween().set_parallel().set_ignore_time_scale(true)
+	t.tween_property(tool_pivot, "position", _tool_rest + STRIKE_REACH + Vector3(0, 0.03, 0.1), 0.06) 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_property(tool_pivot, "rotation:x", STRIKE_ANGLE + 0.7, 0.06).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	await t.finished

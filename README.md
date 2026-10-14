@@ -41,6 +41,8 @@ whatever you hit.
   - Upgrades are staged: the old building collapses into dust, then the new one pops up piece by piece. The villager steps back to watch, then cheers.
   - Villagers are toy figures animated in code. They work (chopping, hammering, fishing, holding forth), wander between their spots, and turn to look at you.
 - **Expressive movement.** Sprint, jump (with coyote time and jump buffering), crouch, slide down slopes, and mantle up ledges.
+  - Smooth at any frame rate: physics interpolation, with the eye placed every frame.
+  - Subtle feel on top: head bob, a dip when you land, a lean into strafes, and a held tool that sways with the mouse, bobs with your steps and drops out of view when you switch tools.
 - **Low-poly world.**
   - Terrain3D terrain with a faceted shader that colours each face by slope and height: grass, dirt, rock, sand, snow, and a muddy bed under water.
   - Low-poly water, swaying reeds and lily pads.

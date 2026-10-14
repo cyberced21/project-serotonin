@@ -36,6 +36,7 @@ var _vel := Vector3.ZERO
 
 
 func _ready() -> void:
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON  # flies on physics ticks
 	var scene := Items.model(item)
 	if scene:
 		# the item itself, tumbling as the body bounces (rigid body rotation does the rest)
@@ -66,6 +67,7 @@ func _ready() -> void:
 ## Call after adding to the tree.
 func launch(from: Vector3, velocity: Vector3, delay := 0.0) -> void:
 	global_position = from
+	reset_physics_interpolation()
 	_launch_velocity = velocity
 	_delay = delay
 	if delay > 0.0:

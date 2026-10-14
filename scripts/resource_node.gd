@@ -414,8 +414,10 @@ func _topple(info: HitInfo) -> void:
 	# top-heavy on purpose (canopy), so once it starts leaning it keeps going
 	felled.center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
 	felled.center_of_mass = Vector3(0, height * 0.65, 0)
+	felled.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
 	get_parent().add_child(felled)
 	felled.global_transform = global_transform.orthonormalized()
+	felled.reset_physics_interpolation()
 	# start it rotating around its *base* (the hinge on the stump), not its centre of mass —
 	# otherwise the base skids along the ground and the fall loses all its energy
 	var spin := Vector3.UP.cross(away).normalized() * topple_push
@@ -454,7 +456,7 @@ func _topple(info: HitInfo) -> void:
 	if not is_instance_valid(felled):
 		return
 	felled.freeze = true
-	var t := felled.create_tween()
+	var t := felled.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)  # interpolated body
 	t.tween_property(felled, "global_position", felled.global_position + Vector3.DOWN * 1.2, 1.0) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	t.tween_callback(felled.queue_free)
@@ -535,13 +537,15 @@ func _throw(piece: MeshInstance3D, xform: Transform3D, push: Vector3, speed: flo
 	(shape.shape as BoxShape3D).size = aabb.size * piece_scale
 	shape.position = aabb.get_center() * piece_scale
 	body.add_child(shape)
+	body.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
 	get_parent().add_child(body)
 	body.global_transform = xform
+	body.reset_physics_interpolation()
 	var jitter := Vector3(randf_range(-1, 1), randf_range(0, 1), randf_range(-1, 1)) * 0.4
 	body.linear_velocity = (push + Vector3.UP * 0.8 + jitter).normalized() * speed
 	body.angular_velocity = Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * 6.0
 
-	var t := body.create_tween()
+	var t := body.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)  # interpolated body
 	t.tween_interval(DEBRIS_LIFETIME)
 	t.tween_property(piece, "scale", Vector3.ONE * 0.01, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 	t.tween_callback(body.queue_free)

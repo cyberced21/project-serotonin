@@ -50,6 +50,7 @@ material = SubResource("StandardMaterial3D_metal")
 size = Vector3(0.025, 0.14, 0.16)
 
 [node name="Player" type="CharacterBody3D"]
+physics_interpolation_mode = 1
 collision_layer = 2
 collision_mask = 65
 script = ExtResource("1_script")
