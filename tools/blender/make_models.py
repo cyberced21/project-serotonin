@@ -569,6 +569,81 @@ def boulder(name, seed, size, squash):
     export(os.path.join("scenery", name))
 
 
+# --- ruins: the parkour blocks in the clearing ------------------------------------------------
+# Each fills exactly the box its collision uses (Godot size x, y, z = width, height, depth), centred
+# on the origin, so step / ledge / mantle heights stay what they were with the greybox boxes.
+
+def stone_block(name, size, seed, cap=False):
+    """Courses of chunky stone bricks filling a box; staggered joints, a little moss on top."""
+    reset()
+    rng = random.Random(seed)
+    w, h, d = size  # Godot x, y, z  ->  Blender x, z, y
+    courses = max(1, round(h / 0.28))
+    ch = h / courses
+    for c in range(courses):
+        z = -h / 2 + (c + 0.5) * ch
+        along_x = w >= d
+        length, across = (w, d) if along_x else (d, w)
+        rows = max(1, round(across / 1.1))
+        for r in range(rows):
+            a0 = -across / 2 + r * across / rows
+            pos = -length / 2
+            first = True
+            while pos < length / 2 - 0.05:
+                bl = rng.uniform(0.45, 0.9) * (0.5 if first and c % 2 else 1.0)
+                first = False
+                bl = min(bl, length / 2 - pos)
+                if length / 2 - (pos + bl) < 0.25:
+                    bl = length / 2 - pos  # no sliver at the end
+                inset = rng.uniform(0.0, 0.03)
+                bw, bd, bh = bl - 0.03 - inset, across / rows - 0.03 - inset, ch - 0.025
+                centre_l, centre_a = pos + bl / 2, a0 + across / rows / 2
+                bm = box((bw, bd, bh) if along_x else (bd, bw, bh))
+                for v in bm.verts:  # rough, but only ever inward, so it stays inside the collision box
+                    v.co *= 1.0 - rng.uniform(0.0, 0.06)
+                top_course = c == courses - 1
+                stone = shade_by_normal("terrain.moss" if top_course and rng.random() < 0.35 else "stone.5",
+                                        rng.choice(["stone.3", "stone.4"]), "stone.2", rng, side_alt="stone.3")
+                paint(bm, stone)
+                loc = (centre_l, centre_a, z) if along_x else (centre_a, centre_l, z)
+                make_object(f"Brick{c}_{r}_{round(pos * 100)}", bm, loc)
+                pos += bl
+    if cap:  # a slab on top of a pillar
+        bm = box((w + 0.12, d + 0.12, 0.14))
+        paint(bm, shade_by_normal("stone.5", "stone.4", "stone.2", rng))
+        make_object("Cap", bm, (0, 0, h / 2 - 0.07))
+    export(os.path.join("ruins", name))
+
+
+def plank_ramp(name, size, seed):
+    """Planks across two long beams, filling the ramp's box."""
+    reset()
+    rng = random.Random(seed)
+    w, h, d = size
+    for x in (-w / 2 + 0.3, w / 2 - 0.3):
+        bm = box((0.26, d - 0.04, h * 0.55))
+        paint(bm, shade_by_normal("wood.3", "wood.2", "wood.1", rng))
+        make_object(f"Beam{x:+.0f}", bm, (x, 0, -h / 2 + h * 0.275))
+    n = int(d / 0.32)
+    for i in range(n):
+        bm = box((w - rng.uniform(0.0, 0.15), d / n - 0.03, h * 0.42))
+        jitter(bm, 0.01, rng)
+        paint(bm, shade_by_normal(rng.choice(["wood.5", "wood.6"]), "wood.4", "wood.3", rng))
+        make_object(f"Plank{i:02d}", bm, (rng.uniform(-0.04, 0.04), -d / 2 + (i + 0.5) * d / n, h / 2 - h * 0.21))
+    export(os.path.join("ruins", name))
+
+
+def ruins():
+    os.makedirs(os.path.join(OUT_DIR, "ruins"), exist_ok=True)
+    stone_block("step_050", (1.5, 0.5, 1.5), 61)
+    stone_block("step_100", (1.5, 1.0, 1.5), 62)
+    stone_block("step_150", (1.5, 1.5, 1.5), 63)
+    stone_block("ledge_120", (3.0, 1.2, 2.0), 64)
+    stone_block("wall_250", (8.0, 2.5, 1.0), 65)
+    stone_block("pillar", (1.0, 3.0, 1.0), 66, cap=True)
+    plank_ramp("ramp", (3.0, 0.3, 7.0), 67)
+
+
 def scenery():
     grass_tuft()
     flowers("flowers_warm", 52, ["accent.3", "accent.2", "neutral.7"])
@@ -587,5 +662,5 @@ if __name__ == "__main__":  # make_village.py imports the helpers above without 
     os.makedirs(os.path.join(OUT_DIR, "fish"), exist_ok=True)
     os.makedirs(os.path.join(OUT_DIR, "items"), exist_ok=True)
     for build in (rock, iron_rock, tree, oak, pickaxe, axe, spear, perch, trout, pike, log_item, ore_item,
-                  oak_item, iron_item, reeds, lily_pad, lily_flower, shore_stone, scenery):
+                  oak_item, iron_item, reeds, lily_pad, lily_flower, shore_stone, scenery, ruins):
         build()

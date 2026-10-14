@@ -37,6 +37,13 @@
 [ext_resource type="PackedScene" path="res://models/scenery/boulder_flat.glb" id="35_boulder_flat"]
 [ext_resource type="Script" path="res://scripts/day_night_sky.gd" id="36_sky"]
 [ext_resource type="Shader" path="res://shaders/sky.gdshader" id="37_sky_shader"]
+[ext_resource type="PackedScene" path="res://models/ruins/step_050.glb" id="40_ruin"]
+[ext_resource type="PackedScene" path="res://models/ruins/step_100.glb" id="41_ruin"]
+[ext_resource type="PackedScene" path="res://models/ruins/step_150.glb" id="42_ruin"]
+[ext_resource type="PackedScene" path="res://models/ruins/ledge_120.glb" id="43_ruin"]
+[ext_resource type="PackedScene" path="res://models/ruins/wall_250.glb" id="44_ruin"]
+[ext_resource type="PackedScene" path="res://models/ruins/ramp.glb" id="45_ruin"]
+[ext_resource type="PackedScene" path="res://models/ruins/pillar.glb" id="46_ruin"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
@@ -75,10 +82,6 @@ fog_enabled = true
 fog_light_color = Color(0.66, 0.74, 0.78, 1)
 fog_density = 0.008
 fog_sky_affect = 0.3
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_block"]
-albedo_color = Color(0.62, 0.6, 0.56, 1)
-roughness = 1.0
 
 [sub_resource type="Terrain3DMaterial" id="Terrain3DMaterial_lowpoly"]
 shader_override_enabled = true
@@ -225,49 +228,49 @@ position = Vector3(0, -0.15, 0)
 cast_shadow = 0
 mesh = SubResource("PlaneMesh_water")
 
-[node name="Greybox" type="Node3D" parent="."]
+[node name="Ruins" type="Node3D" parent="."]
 
-[node name="Step050" type="CSGBox3D" parent="Greybox"]
+[node name="Step050" type="StaticBody3D" parent="Ruins"]
 position = Vector3(-3, 0.25, -10)
-use_collision = true
-size = Vector3(1.5, 0.5, 1.5)
-material = SubResource("StandardMaterial3D_block")
+script = ExtResource("18_prop")
+model = ExtResource("40_ruin")
+collision_size = Vector3(1.5, 0.5, 1.5)
 
-[node name="Step100" type="CSGBox3D" parent="Greybox"]
+[node name="Step100" type="StaticBody3D" parent="Ruins"]
 position = Vector3(-3, 0.5, -12)
-use_collision = true
-size = Vector3(1.5, 1, 1.5)
-material = SubResource("StandardMaterial3D_block")
+script = ExtResource("18_prop")
+model = ExtResource("41_ruin")
+collision_size = Vector3(1.5, 1, 1.5)
 
-[node name="Step150" type="CSGBox3D" parent="Greybox"]
+[node name="Step150" type="StaticBody3D" parent="Ruins"]
 position = Vector3(-3, 0.75, -14)
-use_collision = true
-size = Vector3(1.5, 1.5, 1.5)
-material = SubResource("StandardMaterial3D_block")
+script = ExtResource("18_prop")
+model = ExtResource("42_ruin")
+collision_size = Vector3(1.5, 1.5, 1.5)
 
-[node name="Ledge120" type="CSGBox3D" parent="Greybox"]
+[node name="Ledge120" type="StaticBody3D" parent="Ruins"]
 position = Vector3(3, 0.6, -12)
-use_collision = true
-size = Vector3(3, 1.2, 2)
-material = SubResource("StandardMaterial3D_block")
+script = ExtResource("18_prop")
+model = ExtResource("43_ruin")
+collision_size = Vector3(3, 1.2, 2)
 
-[node name="Wall250" type="CSGBox3D" parent="Greybox"]
+[node name="Wall250" type="StaticBody3D" parent="Ruins"]
 position = Vector3(0, 1.25, -18)
-use_collision = true
-size = Vector3(8, 2.5, 1)
-material = SubResource("StandardMaterial3D_block")
+script = ExtResource("18_prop")
+model = ExtResource("44_ruin")
+collision_size = Vector3(8, 2.5, 1)
 
-[node name="Ramp" type="CSGBox3D" parent="Greybox"]
+[node name="Ramp" type="StaticBody3D" parent="Ruins"]
 transform = Transform3D(1, 0, 0, 0, 0.94, 0.342, 0, -0.342, 0.94, 16, 1, -8)
-use_collision = true
-size = Vector3(3, 0.3, 7)
-material = SubResource("StandardMaterial3D_block")
+script = ExtResource("18_prop")
+model = ExtResource("45_ruin")
+collision_size = Vector3(3, 0.3, 7)
 
-[node name="Pillar" type="CSGBox3D" parent="Greybox"]
+[node name="Pillar" type="StaticBody3D" parent="Ruins"]
 position = Vector3(-16, 1.5, -8)
-use_collision = true
-size = Vector3(1, 3, 1)
-material = SubResource("StandardMaterial3D_block")
+script = ExtResource("18_prop")
+model = ExtResource("46_ruin")
+collision_size = Vector3(1, 3, 1)
 
 [node name="Nodes" type="Node3D" parent="."]
 

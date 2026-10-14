@@ -41,7 +41,7 @@ Design notes are in [village-design.md](village-design.md).
 
 - [x] **Real-model pickups:** drops show the item's model (`Items.model`), tumbling on a fitted box, spinning in as they're collected.
 - [x] **Block hands:** a blocky fist and sleeve cuff are part of each tool model (`block_hand()` in `make_models.py`).
-- [ ] **Replace greybox leftovers** — the parkour blocks and the box-shaped chip / burst particles. (The hidden greybox meshes in `rock.tscn` / `tree.tscn` are gone.)
+- [x] **Replace greybox leftovers:** the parkour blocks are low-poly ruins (`ruins()` in `make_models.py`) with exactly the old collision boxes. Chips are wedge shards and bursts are spinning diamond flecks.
 - [x] **Scenery:** grass, flowers, bushes and boulders are scattered by `SceneryScatter` (layers in `main.tscn`, models in `make_models.py` `scenery()`).
 - [x] **Blender guide:** [blender-guide.md](blender-guide.md), remodelling the rock by hand.
 - [ ] **Sculpt / paint the terrain** in the Terrain3D editor (note: re-running `tools/generate_test_terrain.gd` overwrites it).

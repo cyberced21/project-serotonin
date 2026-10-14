@@ -4,8 +4,8 @@ extends Node3D
 ## `area`, seeded so it's the same every run. Each layer is drawn with MultiMeshes, one per
 ## CELL-metre square, so far-away cells can be culled by the layer's visible_distance.
 ## Keeps off: dirt paths (terrain texture PATH_TEXTURE), water and sand, ground too steep for the
-## layer, snow (plants), and the space around gatherable nodes, buildings, props, the greybox
-## blocks and the player's spawn.
+## layer, snow (plants), and the space around gatherable nodes, buildings, props (the parkour
+## ruins included) and the player's spawn.
 
 const PATH_TEXTURE := 1
 const PALETTE := preload("res://materials/node_palette.tres")
@@ -103,15 +103,9 @@ func _collect_keep_out() -> void:
 	for n in get_tree().get_nodes_in_group("gatherable"):
 		_keep((n as Node3D).global_position, node_radius)
 	for p in get_tree().get_nodes_in_group("prop"):
-		_keep((p as Node3D).global_position, prop_radius)
+		_keep((p as Node3D).global_position, maxf((p as Prop).footprint_radius() + 0.5, prop_radius))
 	for b in get_tree().get_nodes_in_group("building"):
 		_keep((b as Node3D).global_position, (b as Building).footprint_radius() + building_margin)
-	var greybox := get_tree().current_scene.get_node_or_null("Greybox") if get_tree().current_scene else null
-	if greybox:
-		for c in greybox.get_children():
-			if c is CSGBox3D:
-				var size := (c as CSGBox3D).size
-				_keep((c as Node3D).global_position, maxf(size.x, size.z) * 0.5 + 1.0)
 	var player := get_tree().get_first_node_in_group("player") as Node3D
 	if player:
 		_keep(player.global_position, spawn_radius)
