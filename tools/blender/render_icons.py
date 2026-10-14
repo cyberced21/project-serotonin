@@ -33,6 +33,7 @@ ICONS = {
     "perch": ("fish/perch.glb", (1.0, 0.25, 0.45)),
     "trout": ("fish/trout.glb", (1.0, 0.25, 0.45)),
     "pike": ("fish/pike.glb", (1.0, 0.25, 0.45)),
+    "char": ("fish/char.glb", (1.0, 0.25, 0.45)),
 }
 
 

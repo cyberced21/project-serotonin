@@ -17,7 +17,6 @@ const SPLASH := preload("res://audio/movement/splash.tres")
 const STALK_GIVE_UP := 20.0
 const LUNGE_TIME := 0.35
 
-const MIN_DEPTH := 0.3  # fish never swim into water shallower than this
 ## Fraction off the scare radius right at dawn and dusk (DayNight.twilight), when fish are dozy.
 const DUSK_CALM := 0.35
 
@@ -158,7 +157,7 @@ func _steer(f: Fish, center: Vector3, heading: Vector3, delta: float) -> void:
 
 	# stay in water deep enough: if heading into the shallows, bend back toward the pond centre
 	var ahead := pos + f.velocity.normalized() * 0.5
-	if water.depth_here(ahead) < MIN_DEPTH:
+	if water.depth_here(ahead) < species.min_depth:
 		var to_center := water.global_position - pos
 		to_center.y = 0.0
 		f.velocity = f.velocity.lerp(to_center.normalized() * f.velocity.length(), clampf(8.0 * delta, 0.0, 1.0))
@@ -176,7 +175,7 @@ func _steer(f: Fish, center: Vector3, heading: Vector3, delta: float) -> void:
 ## Keeps a position in the water column: between bed and surface at the fish's preferred depth.
 func _clamp_to_water(p: Vector3, f: Fish) -> Vector3:
 	var depth := water.depth_here(p)
-	if depth < MIN_DEPTH * 0.7:
+	if depth < species.min_depth * 0.7:
 		p = p.lerp(Vector3(water.global_position.x, p.y, water.global_position.z), 0.02)
 		depth = water.depth_here(p)
 	var bed := water.surface_height - depth
@@ -199,7 +198,7 @@ func _update_goal(delta: float) -> void:
 
 func _pick_goal() -> void:
 	_goal_timer = randf_range(5.0, 9.0)
-	var p := FishPond.random_point(water, MIN_DEPTH + 0.15)
+	var p := FishPond.random_point(water, species.min_depth + 0.15)
 	if p != Vector3.INF:
 		_goal = p
 
@@ -310,7 +309,7 @@ func _regrow(delta: float) -> void:
 	if _regrow_timer > 0.0:
 		return
 	if fish.size() < target_size:
-		var from := FishPond.random_point(water, 0.6)  # swims in from deeper water
+		var from := FishPond.random_point(water, maxf(0.6, species.min_depth))  # swims in from deeper water
 		_spawn_fish(from if from != Vector3.INF else _goal)
 	if fish.size() < target_size:
 		_regrow_timer = randf_range(15.0, 25.0)

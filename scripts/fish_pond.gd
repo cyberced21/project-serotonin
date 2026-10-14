@@ -29,7 +29,7 @@ func _add_school(species: FishSpecies) -> void:
 	school.name = "%sSchool" % String(species.id).capitalize()
 	add_child(school)
 	# lurkers hide by a reed clump at the edge of the shallows; schools start in open water
-	var at := _lurk_spot() if species.lurker else random_point(water, 0.5)
+	var at := _lurk_spot() if species.lurker else random_point(water, maxf(0.5, species.min_depth + 0.1))
 	if at == Vector3.INF:
 		at = water.global_position
 	school.setup(species, water, at)

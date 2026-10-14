@@ -15,6 +15,8 @@ extends Resource
 @export var spacing := 0.35
 ## Solitary lurkers (pike) sit still near cover instead of cruising.
 @export var lurker := false
+## The shallowest water it swims in (m). Deep-water species (char) keep to the middle of a lake.
+@export var min_depth := 0.3
 
 @export_group("Hunting")
 ## A lurker that hunts: the species id it stalks (e.g. perch). Empty = doesn't hunt.

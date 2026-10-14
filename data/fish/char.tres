@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="FishSpecies" format=3]
+
+[ext_resource type="Script" path="res://scripts/fish_species.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://models/fish/char.glb" id="2_model"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"char"
+model = ExtResource("2_model")
+required_level = 30
+xp = 80
+school_min = 2
+school_max = 3
+spacing = 0.6
+lurker = false
+min_depth = 0.95
+cruise_speed = 0.5
+flee_speed = 4.6
+turn_rate = 3.5
+scare_radius = 3.5
+calm_down = 4.5
+nerve = 0.35

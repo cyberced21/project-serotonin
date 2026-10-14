@@ -11,6 +11,8 @@ extends SceneTree
 ## to the clearing by a dirt path that cuts a pass through the hills. The path (and the village
 ## square and the lanes to each house) is painted as texture id PATH_TEXTURE in the control map;
 ## the terrain shader colours it and the footsteps sound like dirt on it.
+## South of the clearing a second path climbs over the hills to a lake in its own basin: wider and
+## deeper than the ponds (still wadeable), where the deep-water fish live.
 
 const SIZE := 512                       # heightmap pixels = metres (vertex spacing 1); 2x2 regions
 const ORIGIN := Vector3(-256, 0, -256)  # world position of pixel (0, 0) — must sit on the region grid
@@ -24,7 +26,12 @@ const WATER_LEVEL := -0.15     # keep in sync with the ponds' WaterBody nodes in
 const PONDS := [
 	{"center": Vector2(20, 16), "radius": 9.0, "depth": 0.95},   # the clearing's pond
 	{"center": Vector2(88, 64), "radius": 7.0, "depth": 0.75},   # the village pond
+	{"center": Vector2(-16, 76), "radius": 14.0, "depth": 1.35},  # the lake
 ]
+## The lake's flat basin (hills ease up beyond radius over the ramp).
+const LAKE_BASIN := {"center": Vector2(-16, 74), "radius": 26.0, "ramp": 30.0}
+## The path from the clearing south over the hills to the lake shore.
+const LAKE_PATH := [Vector2(-3, 16), Vector2(-6, 32), Vector2(-11, 48), Vector2(-15, 59)]
 
 const VILLAGE_CENTER := Vector2(100, 40)  # the middle of the village square
 const VILLAGE_RADIUS := 36.0
@@ -98,14 +105,16 @@ func _run() -> void:
 
 func _height(w: Vector2, noise: FastNoiseLite, bumps: FastNoiseLite, shore: FastNoiseLite) -> float:
 	# 0 inside the clearing and the village, easing up to 1 over the ramps
-	var outside := minf(
+	var outside := minf(minf(
 		smoothstep(CLEARING_RADIUS, CLEARING_RADIUS + HILL_RAMP, w.distance_to(CLEARING_CENTER)),
-		smoothstep(VILLAGE_RADIUS, VILLAGE_RADIUS + VILLAGE_RAMP, w.distance_to(VILLAGE_CENTER)))
+		smoothstep(VILLAGE_RADIUS, VILLAGE_RADIUS + VILLAGE_RAMP, w.distance_to(VILLAGE_CENTER))),
+		smoothstep(LAKE_BASIN["radius"], LAKE_BASIN["radius"] + LAKE_BASIN["ramp"], w.distance_to(LAKE_BASIN["center"])))
 	var hills := outside * ((noise.get_noise_2dv(w) * 0.5 + 0.5) * 18.0 + 4.0)
 	var h := hills + outside * bumps.get_noise_2dv(w) * 1.5  # small lumps, not on the flats
 	# the pass: the path cuts the hills down to PASS_HEIGHT (and smooths the lumps away)
-	var cut := 1.0 - smoothstep(PATH_HALF_WIDTH, PATH_HALF_WIDTH + PASS_SHOULDER, _polyline_distance(w, PATH))
-	h = lerpf(h, minf(hills, PASS_HEIGHT), cut)
+	for path in [PATH, LAKE_PATH]:
+		var cut := 1.0 - smoothstep(PATH_HALF_WIDTH, PATH_HALF_WIDTH + PASS_SHOULDER, _polyline_distance(w, path))
+		h = lerpf(h, minf(hills, PASS_HEIGHT), cut)
 	for pond in PONDS:
 		h = _pond(w, h, pond, shore)
 	h += _bump(w, Vector2(-92, -92), 30.0) * 38.0        # the snowy peak
@@ -126,7 +135,7 @@ func _pond(w: Vector2, h: float, pond: Dictionary, shore: FastNoiseLite) -> floa
 func _on_path(w: Vector2) -> bool:
 	if w.distance_to(VILLAGE_CENTER) < SQUARE_RADIUS:
 		return true
-	if _polyline_distance(w, PATH) < PATH_HALF_WIDTH:
+	if _polyline_distance(w, PATH) < PATH_HALF_WIDTH or _polyline_distance(w, LAKE_PATH) < PATH_HALF_WIDTH:
 		return true
 	for lane in LANES:
 		if _polyline_distance(w, lane) < LANE_HALF_WIDTH:

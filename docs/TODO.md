@@ -10,7 +10,8 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 - [ ] **Faster regrouping** — scattered schools drift back together slowly (~1 m spread after 8 s); tune cohesion in `scripts/fish_school.gd`.
 - [ ] **Skittishness tuning** — play-test `scare_radius`, `nerve`, `calm_down` per species in `data/fish/*.tres`.
 - [ ] **Save fish?** — ponds currently start full on every load (deliberate); revisit if it feels exploitable.
-- [ ] **More water** — a stream feeding the pond, more ponds / a lake with deeper-water species.
+- [x] **A lake:** south of the clearing, up a second path. It's 1.35 m deep in the middle, with trout, perch and Arctic char (Fishing 30, keeps to deep water via `FishSpecies.min_depth`).
+- [ ] **A stream** feeding the pond. Needs flowing water that isn't a flat `WaterBody` surface.
 
 ## Gathering
 

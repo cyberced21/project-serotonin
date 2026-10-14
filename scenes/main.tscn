@@ -12,6 +12,7 @@
 [ext_resource type="Resource" path="res://data/fish/perch.tres" id="10_perch"]
 [ext_resource type="Resource" path="res://data/fish/trout.tres" id="11_trout"]
 [ext_resource type="Resource" path="res://data/fish/pike.tres" id="12_pike"]
+[ext_resource type="Resource" path="res://data/fish/char.tres" id="54_char"]
 [ext_resource type="Script" path="res://scripts/pond_dressing.gd" id="13_dressing"]
 [ext_resource type="PackedScene" path="res://scenes/village/town_hall.tscn" id="14_town_hall"]
 [ext_resource type="PackedScene" path="res://scenes/village/woodcutter.tscn" id="15_woodcutter"]
@@ -70,6 +71,15 @@ subdivide_depth = 21
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_village_pond"]
 size = Vector3(22, 3, 22)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_lake"]
+material = SubResource("ShaderMaterial_water")
+size = Vector2(36, 36)
+subdivide_width = 35
+subdivide_depth = 35
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_lake"]
+size = Vector3(36, 3, 36)
 
 [sub_resource type="ShaderMaterial" id="ProceduralSkyMaterial_sky"]
 shader = ExtResource("37_sky_shader")
@@ -541,6 +551,32 @@ position = Vector3(0, -0.15, 0)
 cast_shadow = 0
 mesh = SubResource("PlaneMesh_village_water")
 
+[node name="Lake" type="Area3D" parent="."]
+position = Vector3(-16, 0, 76)
+collision_layer = 0
+collision_mask = 0
+script = ExtResource("7_water")
+
+[node name="Volume" type="CollisionShape3D" parent="Lake"]
+position = Vector3(0, -1, 0)
+shape = SubResource("BoxShape3D_lake")
+
+[node name="Dressing" type="Node3D" parent="Lake"]
+script = ExtResource("13_dressing")
+seed = 31
+reed_clumps = 14
+lily_pads = 20
+stones = 18
+
+[node name="Fish" type="Node3D" parent="Lake"]
+script = ExtResource("9_fish_pond")
+schools = Array[Resource]([ExtResource("11_trout"), ExtResource("11_trout"), ExtResource("10_perch"), ExtResource("54_char"), ExtResource("54_char")])
+
+[node name="Surface" type="MeshInstance3D" parent="Lake"]
+position = Vector3(0, -0.15, 0)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_lake")
+
 [node name="Village" type="Node3D" parent="."]
 
 [node name="TownHall" parent="Village" instance=ExtResource("14_town_hall")]
@@ -586,6 +622,12 @@ position = Vector3(102, 0, 47.5)
 rotation = Vector3(0, -1.6, 0)
 script = ExtResource("18_prop")
 model = ExtResource("20_lamp")
+
+[node name="LakeSignpost" type="StaticBody3D" parent="Village/Props"]
+position = Vector3(-0.5, 0, 17.5)
+rotation = Vector3(0, 2.0, 0)
+script = ExtResource("18_prop")
+model = ExtResource("23_signpost")
 
 [node name="Signpost" type="StaticBody3D" parent="Village/Props"]
 position = Vector3(78.5, 0, 31)

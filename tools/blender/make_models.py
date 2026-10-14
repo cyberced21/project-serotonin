@@ -426,6 +426,13 @@ def pike():
                                               spots="accent.3", length=0.7), tail_taper=0.7, snout=0.55)
 
 
+def arctic_char():
+    """Deep-water fish of the lake: dark back, pale spots, a bright orange belly."""
+    rng = random.Random(24)
+    fish("char", 0.44, 0.09, 0.11, fish_painter("metal.1", "metal.3", "accent.2", "accent.1", rng,
+                                               spots="neutral.6", length=0.44), tail_taper=0.8, snout=0.85)
+
+
 # --- item models (for icons, later maybe for pickups) -----------------------------------------
 
 def log_item():
@@ -740,5 +747,5 @@ if __name__ == "__main__":  # make_village.py imports the helpers above without 
     os.makedirs(os.path.join(OUT_DIR, "items"), exist_ok=True)
     for build in (rock, iron_rock, tree, oak, pickaxe, axe, spear, perch, trout, pike, log_item, ore_item,
                   oak_item, iron_item, reeds, lily_pad, lily_flower, shore_stone, scenery, ruins,
-                  coal_rock, gold_rock, birch, pine, more_items):
+                  coal_rock, gold_rock, birch, pine, more_items, arctic_char):
         build()
