@@ -23,6 +23,8 @@ const MODEL_PARTS := {"body_": "Visual/Body", "chunk_": "Visual/Chunks", "rubble
 const NOTCH_COLOR := Color(0.08, 0.06, 0.05, 0.85)
 const GHOST_OUTLINE := preload("res://shaders/ghost_outline.gdshader")
 const GHOST_MASK := preload("res://shaders/ghost_mask.gdshader")
+const GHOST_OUTLINE_STENCIL := preload("res://shaders/ghost_outline_stencil.gdshader")
+const GHOST_MASK_STENCIL := preload("res://shaders/ghost_mask_stencil.gdshader")
 const DEFLECT_SFX := preload("res://audio/stone_hit.tres")
 const DEFLECT_COLOR := Color("ff8a7a")
 const SHARP_COLOR := Color("ffd27a")
@@ -89,6 +91,8 @@ const FELLED_SHAPE_SCALE := 0.6
 ## Outline (in the skill's colour) of where the node will grow back. Fades in as it nears.
 @export var show_respawn_ghost := true
 @export_range(0.0, 1.0) var ghost_alpha := 0.6
+## One outline around the whole node's silhouette (stencil), instead of one around every piece.
+@export var ghost_silhouette := true
 ## The timer is hidden beyond this distance from the camera, to avoid clutter.
 @export var respawn_display_range := 30.0
 
@@ -555,9 +559,9 @@ func _build_respawn_display() -> void:
 	add_child(_timer_label)
 
 	_ghost_outline = ShaderMaterial.new()
-	_ghost_outline.shader = GHOST_OUTLINE
+	_ghost_outline.shader = GHOST_OUTLINE_STENCIL if ghost_silhouette else GHOST_OUTLINE
 	var mask := ShaderMaterial.new()
-	mask.shader = GHOST_MASK
+	mask.shader = GHOST_MASK_STENCIL if ghost_silhouette else GHOST_MASK
 	mask.render_priority = -1  # every ghost's mask before any outline, so insides stay hidden
 	mask.next_pass = _ghost_outline
 	_ghost = Node3D.new()

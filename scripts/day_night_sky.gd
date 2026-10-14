@@ -1,8 +1,9 @@
 class_name DayNightSky
 extends Node
 ## Lights the world for the time of day (see the DayNight autoload): swings the sun across the
-## sky (and a pale blue moon at night), blends the sky, fog and ambient light between day, dusk
-## and night palettes, and makes lamps, lanterns and windows glow after dark.
+## sky (and a pale blue moon at night), blends the sky (shaders/sky.gdshader: gradient, sun or
+## moon disc, stars), fog and ambient light between day, dusk and night palettes, and makes
+## lamps, lanterns and windows glow after dark.
 ## Glowing things: meshes in the "night_glow" group get the palette shader's `glow` instance
 ## uniform; lights in the "night_light" group fade in (their energy at full night is stored as
 ## the "night_energy" meta).
@@ -24,13 +25,13 @@ const SUN_NOON := Color(1.0, 0.97, 0.9)
 const SUN_LOW := Color(1.0, 0.68, 0.42)
 const MOON := Color(0.58, 0.68, 1.0)
 
-var _sky: ProceduralSkyMaterial
+var _sky: ShaderMaterial
 var _glow := -1.0
 
 
 func _ready() -> void:
 	if environment and environment.environment.sky:
-		_sky = environment.environment.sky.sky_material as ProceduralSkyMaterial
+		_sky = environment.environment.sky.sky_material as ShaderMaterial
 	_update()
 
 
@@ -61,10 +62,10 @@ func _update() -> void:
 	top = top.lerp(DUSK_TOP, dusk * 0.7)
 	horizon = horizon.lerp(DUSK_HORIZON, dusk * 0.8)
 	if _sky:
-		_sky.sky_top_color = top
-		_sky.sky_horizon_color = horizon
-		_sky.ground_horizon_color = horizon
-		_sky.ground_bottom_color = horizon.darkened(0.5)
+		_sky.set_shader_parameter("top_color", top)
+		_sky.set_shader_parameter("horizon_color", horizon)
+		_sky.set_shader_parameter("ground_color", horizon.darkened(0.5))
+		_sky.set_shader_parameter("night", night)
 	if environment:
 		var env := environment.environment
 		env.fog_light_color = horizon

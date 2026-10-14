@@ -16,7 +16,7 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 
 - [ ] **Weak points / interactive gathering** — aim at or hover over specific spots on a node for bonus damage / XP / effects. `HitInfo` already carries the hit point, normal and collider; weak points can be chunk colliders or small `Area3D`s.
 - [ ] **True tool sinking** — during the bite, swap the viewmodel tool for a world-space copy stuck in the node so it really sinks into the geometry (currently faked with motion + notch decal).
-- [ ] **Clean respawn ghost** — option for a single silhouette outline instead of one outline per piece.
+- [x] **Clean respawn ghost:** one silhouette outline via the stencil buffer (`ResourceNode.ghost_silhouette`, on by default).
 - [x] **Iron and oak:** `iron_rock.tscn` (Mining 15) and `oak_tree.tscn` (Woodcutting 15), used in the village's tier-3 costs.
 - [ ] **More node types** — gold / coal veins, more tree species (`rock()` / `tree()` in the Blender script take parameters; inherit `rock.tscn` / `tree.tscn`).
 
@@ -53,6 +53,6 @@ Design notes are in [village-design.md](village-design.md).
 ## World & tech
 
 - [x] **Day / night:** a 20-minute day (`DayNight` autoload) lit by the `Sky` node. Lamps and windows glow after dark, villagers go home at night, and fish are calmer at dawn and dusk.
-- [ ] **Stars and moon:** a starry night sky and a visible moon. Right now the procedural sky draws the light's disc.
+- [x] **Stars and moon:** `shaders/sky.gdshader` draws the gradient, a sun disc by day, a moon disc and twinkling stars at night.
 - [ ] **Terrain collision range** — Terrain3D only builds collision within 64 m of the camera; anything left further away (debris, drops) can fall through. Fine for now; revisit with bigger worlds.
 - [x] **Saved node keys:** every placed node has a `save_id`. Saves keyed by the old scene path carry over automatically.

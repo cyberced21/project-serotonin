@@ -36,6 +36,7 @@
 [ext_resource type="PackedScene" path="res://models/scenery/boulder_big.glb" id="34_boulder_big"]
 [ext_resource type="PackedScene" path="res://models/scenery/boulder_flat.glb" id="35_boulder_flat"]
 [ext_resource type="Script" path="res://scripts/day_night_sky.gd" id="36_sky"]
+[ext_resource type="Shader" path="res://shaders/sky.gdshader" id="37_sky_shader"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
@@ -59,9 +60,8 @@ subdivide_depth = 21
 [sub_resource type="BoxShape3D" id="BoxShape3D_village_pond"]
 size = Vector3(22, 3, 22)
 
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
-sky_horizon_color = Color(0.66, 0.74, 0.78, 1)
-ground_horizon_color = Color(0.66, 0.74, 0.78, 1)
+[sub_resource type="ShaderMaterial" id="ProceduralSkyMaterial_sky"]
+shader = ExtResource("37_sky_shader")
 
 [sub_resource type="Sky" id="Sky_main"]
 sky_material = SubResource("ProceduralSkyMaterial_sky")
