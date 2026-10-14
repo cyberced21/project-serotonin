@@ -199,6 +199,7 @@ directional_shadow_max_distance = 60.0
 
 [node name="Terrain3D" type="Terrain3D" parent="." groups=["terrain"]]
 data_directory = "res://terrain_data"
+collision_mode = 3
 material = SubResource("Terrain3DMaterial_lowpoly")
 assets = ExtResource("6_terrain_assets")
 

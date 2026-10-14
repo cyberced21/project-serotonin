@@ -54,5 +54,5 @@ Design notes are in [village-design.md](village-design.md).
 
 - [x] **Day / night:** a 20-minute day (`DayNight` autoload) lit by the `Sky` node. Lamps and windows glow after dark, villagers go home at night, and fish are calmer at dawn and dusk.
 - [x] **Stars and moon:** `shaders/sky.gdshader` draws the gradient, a sun disc by day, a moon disc and twinkling stars at night.
-- [ ] **Terrain collision range** — Terrain3D only builds collision within 64 m of the camera; anything left further away (debris, drops) can fall through. Fine for now; revisit with bigger worlds.
+- [x] **Terrain collision range:** Terrain3D now builds collision for the whole map up front (`collision_mode` Full/Game, ~0.1 s at 512 m). Revisit if the world gets much bigger.
 - [x] **Saved node keys:** every placed node has a `save_id`. Saves keyed by the old scene path carry over automatically.
