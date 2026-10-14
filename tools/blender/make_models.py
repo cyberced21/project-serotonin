@@ -470,10 +470,97 @@ def shore_stone():
     export(os.path.join("scenery", "shore_stone"))
 
 
+# --- terrain scenery (scattered by scripts/scenery_scatter.gd with MultiMesh) -----------------
+# Each is ONE merged mesh with its origin at the base (MultiMesh draws a single mesh), so the
+# sway shader can lean it by height above the origin.
+
+def merge_all(name):
+    """Joins every mesh object in the scene into one called `name`, origin at the world origin."""
+    objs = [o for o in bpy.context.scene.objects if o.type == "MESH"]
+    for o in objs:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = objs[0]
+    bpy.ops.object.join()
+    obj = bpy.context.view_layer.objects.active
+    obj.name = name
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+
+
+def grass_tuft():
+    reset()
+    rng = random.Random(51)
+    for i in range(7):
+        h = rng.uniform(0.25, 0.5)
+        bm = prism(3, 0.03, 0.002, h)
+        shade = rng.choice(["leaves.4", "leaves.5", "leaves.6"])
+        paint(bm, lambda f, shade=shade: shade)
+        a, r = rng.uniform(0, math.tau), rng.uniform(0.0, 0.12)
+        tilt = (rng.uniform(-0.35, 0.35), rng.uniform(-0.35, 0.35), rng.uniform(0, math.tau))
+        make_object(f"Blade{i}", bm, (math.cos(a) * r, math.sin(a) * r, h / 2), tilt)
+    merge_all("Tuft")
+    export(os.path.join("scenery", "grass_tuft"))
+
+
+def flowers(name, seed, petals):
+    reset()
+    rng = random.Random(seed)
+    for i in range(4):
+        h = rng.uniform(0.22, 0.38)
+        a, r = rng.uniform(0, math.tau), rng.uniform(0.03, 0.14)
+        x, y = math.cos(a) * r, math.sin(a) * r
+        bm = prism(3, 0.012, 0.006, h)
+        paint(bm, lambda f: "leaves.3")
+        make_object(f"Stem{i}", bm, (x, y, h / 2))
+        bm = blob(0.04, rng, jitter_amount=0.2, squash=(1.0, 1.0, 0.6), subdiv=1)
+        c = petals[i % len(petals)]
+        paint(bm, lambda f, c=c: "accent.3" if f.normal.z > 0.85 else c)
+        make_object(f"Head{i}", bm, (x, y, h))
+    for i in range(3):  # a few leaves at the base
+        bm = prism(3, 0.03, 0.002, 0.18)
+        paint(bm, lambda f: "leaves.4")
+        make_object(f"Leaf{i}", bm, (0, 0, 0.08), (rng.uniform(-0.6, 0.6), rng.uniform(-0.6, 0.6), rng.uniform(0, math.tau)))
+    merge_all("Flowers")
+    export(os.path.join("scenery", name))
+
+
+def bush(name, seed, blobs, shades):
+    reset()
+    rng = random.Random(seed)
+    for i, (loc, r) in enumerate(blobs):
+        bm = blob(r, rng, jitter_amount=0.22, squash=(1.0, 1.0, 0.8))
+        paint(bm, shade_by_normal(shades[0], shades[1], shades[2], rng, side_alt=shades[3]))
+        make_object(f"Blob{i}", bm, loc)
+    merge_all("Bush")
+    export(os.path.join("scenery", name))
+
+
+def boulder(name, seed, size, squash):
+    reset()
+    rng = random.Random(seed)
+    bm = blob(size, rng, jitter_amount=0.25, squash=squash, subdiv=1)
+    paint(bm, shade_by_normal("stone.4", "stone.3", "stone.1", rng, side_alt="terrain.moss"))
+    make_object("Boulder", bm, (0, 0, size * squash[2] * 0.6))  # sunk a little into the ground
+    merge_all("Boulder")
+    export(os.path.join("scenery", name))
+
+
+def scenery():
+    grass_tuft()
+    flowers("flowers_warm", 52, ["accent.3", "accent.2", "neutral.7"])
+    flowers("flowers_cool", 53, ["accent.7", "accent.6", "accent.5"])
+    bush("bush_round", 54, [((0, 0, 0.35), 0.5), ((0.35, 0.15, 0.3), 0.38), ((-0.3, -0.2, 0.28), 0.36)],
+         ("leaves.4", "leaves.3", "leaves.1", "leaves.2"))
+    bush("bush_low", 55, [((0, 0, 0.22), 0.4), ((0.45, -0.1, 0.18), 0.32), ((-0.4, 0.2, 0.2), 0.34),
+                          ((0.1, 0.4, 0.16), 0.28)],
+         ("leaves.5", "leaves.4", "leaves.2", "leaves.3"))
+    boulder("boulder_big", 56, 0.9, (1.2, 1.0, 0.75))
+    boulder("boulder_flat", 57, 0.7, (1.4, 1.1, 0.5))
+
+
 if __name__ == "__main__":  # make_village.py imports the helpers above without building these
     os.makedirs(os.path.join(OUT_DIR, "scenery"), exist_ok=True)
     os.makedirs(os.path.join(OUT_DIR, "fish"), exist_ok=True)
     os.makedirs(os.path.join(OUT_DIR, "items"), exist_ok=True)
     for build in (rock, iron_rock, tree, oak, pickaxe, axe, spear, perch, trout, pike, log_item, ore_item,
-                  oak_item, iron_item, reeds, lily_pad, lily_flower, shore_stone):
+                  oak_item, iron_item, reeds, lily_pad, lily_flower, shore_stone, scenery):
         build()

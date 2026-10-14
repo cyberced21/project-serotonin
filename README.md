@@ -32,6 +32,7 @@ whatever you hit.
 - **Low-poly world.**
   - Terrain3D terrain with a faceted shader that colours each face by slope and height: grass, dirt, rock, sand, snow, and a muddy bed under water.
   - Low-poly water, swaying reeds and lily pads.
+  - Grass clumps, flower patches, bushes and boulders scattered over the land. They stay off paths and water and away from buildings, and the plants sway in the wind.
   - Every model shares one palette texture.
 - **Positional audio:** footsteps change with the surface (grass, dirt, stone, sand, snow, water), and the slide scrape, splashes and spear hits are placed in 3D.
 - **Saving:** skills, inventory, player position, and which nodes are depleted (with their respawn timers).
@@ -81,7 +82,7 @@ Key scripts:
 - **Gathering:** `resource_node.gd` (every tree and rock), `pickup.gd`, `items.gd`
 - **Fishing:** `spear_fishing.gd`, `fish_pond.gd`, `fish_school.gd`, `fish.gd`, `water_body.gd`
 - **Village:** `building.gd` (shows a tier, plays the upgrade), `villager.gd`, `upgrade_panel.gd`, `building_def.gd` / `building_tier.gd`, `prop.gd`
-- **World:** `footsteps.gd`, `pond_dressing.gd`
+- **World:** `footsteps.gd`, `pond_dressing.gd`, `scenery_scatter.gd` + `scatter_layer.gd`
 - **Autoloads:** `Skills`, `Inventory`, `SaveGame`, `Village` (building tiers and the town-hall cap), `Juice` (hit-stop and shake), `Sfx`, `GameInput`
 
 ## Asset pipeline

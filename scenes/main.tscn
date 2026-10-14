@@ -26,6 +26,15 @@
 [ext_resource type="Script" path="res://scripts/upgrade_panel.gd" id="24_panel"]
 [ext_resource type="PackedScene" path="res://scenes/oak_tree.tscn" id="25_oak"]
 [ext_resource type="PackedScene" path="res://scenes/iron_rock.tscn" id="26_iron"]
+[ext_resource type="Script" path="res://scripts/scenery_scatter.gd" id="27_scatter"]
+[ext_resource type="Script" path="res://scripts/scatter_layer.gd" id="28_layer"]
+[ext_resource type="PackedScene" path="res://models/scenery/grass_tuft.glb" id="29_grass"]
+[ext_resource type="PackedScene" path="res://models/scenery/flowers_warm.glb" id="30_flowers_warm"]
+[ext_resource type="PackedScene" path="res://models/scenery/flowers_cool.glb" id="31_flowers_cool"]
+[ext_resource type="PackedScene" path="res://models/scenery/bush_round.glb" id="32_bush_round"]
+[ext_resource type="PackedScene" path="res://models/scenery/bush_low.glb" id="33_bush_low"]
+[ext_resource type="PackedScene" path="res://models/scenery/boulder_big.glb" id="34_boulder_big"]
+[ext_resource type="PackedScene" path="res://models/scenery/boulder_flat.glb" id="35_boulder_flat"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
@@ -77,6 +86,105 @@ show_checkered = false
 _shader_parameters = {
 &"sand_height": -0.05
 }
+
+[sub_resource type="Resource" id="Layer_grass"]
+script = ExtResource("28_layer")
+model = ExtResource("29_grass")
+density = 4.0
+scale_range = Vector2(0.8, 1.4)
+min_normal_y = 0.8
+sway = 0.6
+align_to_slope = false
+collide = false
+cast_shadow = false
+visible_distance = 70.0
+clearance = 0.0
+cluster = Vector2i(3, 7)
+cluster_radius = 0.9
+
+[sub_resource type="Resource" id="Layer_flowers_warm"]
+script = ExtResource("28_layer")
+model = ExtResource("30_flowers_warm")
+density = 0.5
+scale_range = Vector2(1.3, 1.8)
+min_normal_y = 0.86
+sway = 0.8
+align_to_slope = false
+collide = false
+cast_shadow = false
+visible_distance = 60.0
+clearance = 0.0
+cluster = Vector2i(3, 6)
+cluster_radius = 0.7
+
+[sub_resource type="Resource" id="Layer_flowers_cool"]
+script = ExtResource("28_layer")
+model = ExtResource("31_flowers_cool")
+density = 0.4
+scale_range = Vector2(1.3, 1.8)
+min_normal_y = 0.86
+sway = 0.8
+align_to_slope = false
+collide = false
+cast_shadow = false
+visible_distance = 60.0
+clearance = 0.0
+cluster = Vector2i(3, 6)
+cluster_radius = 0.7
+
+[sub_resource type="Resource" id="Layer_bush_round"]
+script = ExtResource("28_layer")
+model = ExtResource("32_bush_round")
+density = 0.3
+scale_range = Vector2(0.8, 1.4)
+min_normal_y = 0.8
+sway = 0.04
+align_to_slope = false
+collide = false
+cast_shadow = true
+visible_distance = 160.0
+clearance = 1.0
+cluster = Vector2i(1, 3)
+cluster_radius = 1.2
+
+[sub_resource type="Resource" id="Layer_bush_low"]
+script = ExtResource("28_layer")
+model = ExtResource("33_bush_low")
+density = 0.3
+scale_range = Vector2(0.8, 1.3)
+min_normal_y = 0.8
+sway = 0.04
+align_to_slope = false
+collide = false
+cast_shadow = true
+visible_distance = 160.0
+clearance = 1.0
+
+[sub_resource type="Resource" id="Layer_boulder_big"]
+script = ExtResource("28_layer")
+model = ExtResource("34_boulder_big")
+density = 0.1
+scale_range = Vector2(0.7, 1.6)
+min_normal_y = 0.5
+sway = 0.0
+align_to_slope = true
+collide = true
+cast_shadow = true
+visible_distance = 0.0
+clearance = 1.5
+
+[sub_resource type="Resource" id="Layer_boulder_flat"]
+script = ExtResource("28_layer")
+model = ExtResource("35_boulder_flat")
+density = 0.1
+scale_range = Vector2(0.7, 1.5)
+min_normal_y = 0.5
+sway = 0.0
+align_to_slope = true
+collide = true
+cast_shadow = true
+visible_distance = 0.0
+clearance = 1.5
 
 [node name="Main" type="Node3D"]
 
@@ -418,6 +526,10 @@ position = Vector3(108.5, 0, 31.5)
 rotation = Vector3(0, -0.4, 0)
 script = ExtResource("18_prop")
 model = ExtResource("22_crates")
+
+[node name="Scenery" type="Node3D" parent="."]
+script = ExtResource("27_scatter")
+layers = Array[ExtResource("28_layer")]([SubResource("Layer_grass"), SubResource("Layer_flowers_warm"), SubResource("Layer_flowers_cool"), SubResource("Layer_bush_round"), SubResource("Layer_bush_low"), SubResource("Layer_boulder_big"), SubResource("Layer_boulder_flat")])
 
 [node name="Player" parent="." instance=ExtResource("1_player")]
 position = Vector3(0, 0.1, 2)

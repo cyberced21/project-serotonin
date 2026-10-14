@@ -42,7 +42,7 @@ Design notes are in [village-design.md](village-design.md).
 - [ ] **Real-model pickups** — drops as tiny models instead of icon billboards.
 - [ ] **Block hands** on the viewmodel tools (part of the tool mesh, no rig).
 - [ ] **Replace greybox leftovers** — the parkour blocks and the box-shaped chip / burst particles. (The hidden greybox meshes in `rock.tscn` / `tree.tscn` are gone.)
-- [ ] **Scenery** — bushes, grass tufts, boulders scattered over the terrain.
+- [x] **Scenery:** grass, flowers, bushes and boulders are scattered by `SceneryScatter` (layers in `main.tscn`, models in `make_models.py` `scenery()`).
 - [ ] **Blender guide** — a step-by-step for remodelling the rock by hand, to learn modelling.
 - [ ] **Sculpt / paint the terrain** in the Terrain3D editor (note: re-running `tools/generate_test_terrain.gd` overwrites it).
 

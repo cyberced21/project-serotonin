@@ -46,6 +46,7 @@ var _run := 0  # bumped on every upgrade, so an interrupted animation stops
 
 func _ready() -> void:
 	assert(def, "Building needs a BuildingDef")
+	add_to_group("building")
 	Village.register_building(def)
 	_build_tiers()
 	_build_effects()
@@ -105,7 +106,7 @@ func _build_tiers() -> void:
 			var aabb := m.get_aabb()
 			if aabb.size.x * aabb.size.y * aabb.size.z >= MIN_COLLIDER_VOLUME:
 				var shape := CollisionShape3D.new()
-				shape.shape = m.mesh.create_convex_shape(true, true)
+				shape.shape = m.mesh.create_convex_shape(true, false)  # simplify=true takes seconds per building
 				shape.transform = xform
 				_bodies[t].add_child(shape)
 		elif n.name.to_lower().contains("smoke"):
@@ -309,6 +310,11 @@ func _build_effects() -> void:
 	_confetti.initial_velocity_max = 8.0
 	_confetti.angular_velocity_min = -360.0
 	_confetti.angular_velocity_max = 360.0
+
+
+## Half the diagonal of the largest tier's footprint: everything it ever builds is within this.
+func footprint_radius() -> float:
+	return _footprint().length() * 0.5
 
 
 ## Width (x) and depth (z) of the largest tier, for the dust cloud.

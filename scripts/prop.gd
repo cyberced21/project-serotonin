@@ -10,6 +10,7 @@ const PALETTE := preload("res://materials/node_palette.tres")
 
 
 func _ready() -> void:
+	add_to_group("prop")
 	var inst := model.instantiate() as Node3D
 	add_child(inst)
 	var bounds := AABB()
