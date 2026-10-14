@@ -26,6 +26,11 @@ whatever you hit.
 - **A village to build up.** Over the hills, a dirt path leads to a valley with four villagers: a woodcutter, a smith, a fisher and the mayor.
   - Talk to a villager (E) to see what their building's next tier costs, then pay with the logs, ore and fish you've gathered.
   - Every building has three tiers. The town hall's tier caps the houses, so raising it opens the next round.
+  - Every tier above the first gives a perk, shown in the panel:
+    - Smithy: sharper tools, so a hit can count twice.
+    - Woodcutter: extra logs from every tree.
+    - Fisher: calmer fish, then a chance of a bonus fish.
+    - Town hall: bonus XP in every skill.
   - Upgrades are staged: the old building collapses into dust, then the new one pops up piece by piece. The villager steps back to watch, then cheers.
   - Villagers are toy figures animated in code. They work (chopping, hammering, fishing, holding forth), wander between their spots, and turn to look at you.
 - **Expressive movement.** Sprint, jump (with coyote time and jump buffering), crouch, slide down slopes, and mantle up ledges.

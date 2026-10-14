@@ -8,6 +8,6 @@ extends Resource
 @export var cost: Dictionary[StringName, int] = {}
 ## The villager picks one of these when you talk to them at this tier.
 @export_multiline var lines: PackedStringArray = []
-## What this tier does for the player. Empty for now: upgrades are only visual. Later systems
-## read these (or listen to Village.tier_changed) to unlock things.
-@export var effects: Array[Resource] = []
+## What this tier does for the player while the building is at it (not on top of lower tiers:
+## list the full perk). Summed across buildings by Village.stat().
+@export var effects: Array[TierEffect] = []

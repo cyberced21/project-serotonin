@@ -44,6 +44,18 @@ func is_capped(id: StringName) -> bool:
 	return id != TOWN_HALL and next_tier(id) != null and tier(id) + 1 > tier(TOWN_HALL)
 
 
+## The total of a perk (see TierEffect) over every building's current tier.
+func stat(name: StringName) -> float:
+	var total := 0.0
+	for id in _defs:
+		var t := _defs[id].get_tier(tier(id))
+		if t:
+			for e in t.effects:
+				if e.stat == name:
+					total += e.value
+	return total
+
+
 func can_upgrade(id: StringName) -> bool:
 	var next := next_tier(id)
 	return next != null and not is_capped(id) and Inventory.has_all(next.cost)

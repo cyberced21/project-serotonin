@@ -3,6 +3,19 @@
 [ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
 [ext_resource type="PackedScene" path="res://models/village/woodcutter.glb" id="3_model"]
+[ext_resource type="Script" path="res://scripts/tier_effect.gd" id="4_effect"]
+
+[sub_resource type="Resource" id="Effect_2_0"]
+script = ExtResource("4_effect")
+stat = &"extra_logs"
+value = 1.0
+text = "+1 log from every tree"
+
+[sub_resource type="Resource" id="Effect_3_0"]
+script = ExtResource("4_effect")
+stat = &"extra_logs"
+value = 2.0
+text = "+2 logs from every tree"
 
 [sub_resource type="Resource" id="Tier_1"]
 script = ExtResource("2_tier")
@@ -16,6 +29,7 @@ cost = Dictionary[StringName, int]({
 &"wood": 25
 })
 lines = PackedStringArray("Four walls and a door. I keep walking in and out just to use it.", "See the big oaks round the valley edge? Tough wood. A lodge deserves oak.", "A porch, that's what this place needs. Somewhere to sit and watch trees grow.")
+effects = Array[ExtResource("4_effect")]([SubResource("Effect_2_0")])
 
 [sub_resource type="Resource" id="Tier_3"]
 script = ExtResource("2_tier")
@@ -25,6 +39,7 @@ cost = Dictionary[StringName, int]({
 &"oak": 20
 })
 lines = PackedStringArray("A chimney! Warm feet all winter. You've made an old woodcutter very happy.", "Sit on the porch a while. The best sound in the world is someone else chopping.", "That woodpile? That's art, that is.")
+effects = Array[ExtResource("4_effect")]([SubResource("Effect_3_0")])
 
 [resource]
 script = ExtResource("1_def")

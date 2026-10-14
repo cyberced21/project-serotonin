@@ -210,6 +210,11 @@ func _put_on_spear(caught: Array[Fish]) -> void:
 		var f := caught[i]
 		var copy := f.species.model.instantiate() as Node3D
 		copy.set_meta("item", f.species.id)
+		# the fisher's dock: sometimes a fish counts twice
+		var bonus := randf() < Village.stat(&"bonus_fish_chance")
+		copy.set_meta("count", 2 if bonus else 1)
+		if bonus:
+			PopupText.spawn(player.get_parent(), f.global_position + Vector3.UP * 0.6, "Bonus!", Skills.color(&"fishing"), 5, 0.1)
 		var mat := ShaderMaterial.new()
 		mat.shader = FISH_SHADER
 		mat.set_shader_parameter("palette", PALETTE)
@@ -264,7 +269,7 @@ func _fling_to_inventory() -> void:
 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 		t.tween_property(fish, "scale", Vector3.ONE * 0.1, 0.2).set_delay(i * 0.08)
 		t.chain().tween_callback(func() -> void:
-			Inventory.add(fish.get_meta("item"))
+			Inventory.add(fish.get_meta("item"), fish.get_meta("count", 1))
 			Sfx.play_pickup()
 			fish.queue_free())
 	_on_spear.clear()

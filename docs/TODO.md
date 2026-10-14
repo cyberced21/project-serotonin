@@ -24,7 +24,7 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 
 Design notes are in [village-design.md](village-design.md).
 
-- [ ] **Upgrade effects:** give tiers a mechanical payoff, such as better tools from the smithy or selling fish to the fisher. Fill `BuildingTier.effects` (`data/buildings/*.tres`), or listen to `Village.tier_changed`.
+- [x] **Upgrade effects:** tiers give perks (`TierEffect`, summed by `Village.stat`). Smithy: chance of a double hit. Lodge: extra logs. Fisher: calmer fish, then bonus fish. Town hall: an XP bonus.
 - [ ] **Villager rig and schedules:** real skeletal animation, a day plan, and wandering the whole valley instead of only 2–3 spots.
 - [ ] **More villagers / a growing village:** new houses and villagers unlocked by the town hall.
 - [ ] **Sitting:** villagers stand at the benches; give them a sit pose.

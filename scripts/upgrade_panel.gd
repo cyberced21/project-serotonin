@@ -15,6 +15,7 @@ const HAVE_COLOR := Color("9be27a")
 const NEED_COLOR := Color("ff8a7a")
 const DIM := Color(1, 1, 1, 0.6)
 const ACCENT := Color("ffd27a")
+const PERK_COLOR := Color("a9d8ff")
 
 var villager: Villager
 var _closed_msec := -100000
@@ -24,6 +25,8 @@ var _name: Label
 var _role: Label
 var _line: Label
 var _next: Label
+var _perks_now: Label
+var _perks_next: Label
 var _costs: GridContainer
 var _button: Button
 var _status: Label
@@ -110,18 +113,23 @@ func _refresh() -> void:
 	var tier_now := Village.tier(def.id)
 	var current := def.get_tier(tier_now)
 	_role.text = "%s  ·  %s  ·  %s" % [def.villager_role, def.display_name, current.name if current else "?"]
+	_perks_now.text = _perk_lines(current, "Now: ")
+	_perks_now.visible = not _perks_now.text.is_empty()
 	for c in _costs.get_children():
 		c.queue_free()
 	var next := Village.next_tier(def.id)
 	if next == null:
 		_next.text = "Fully upgraded!"
 		_next.add_theme_color_override("font_color", HAVE_COLOR)
+		_perks_next.visible = false
 		_costs.visible = false
 		_button.visible = false
 		_status.text = ""
 		return
 	_next.text = "Next: %s  (tier %d of %d)" % [next.name, tier_now + 1, def.max_tier()]
 	_next.add_theme_color_override("font_color", ACCENT)
+	_perks_next.text = _perk_lines(next, "+ ", current)
+	_perks_next.visible = not _perks_next.text.is_empty()
 	_costs.visible = true
 	_button.visible = true
 	var ids := next.cost.keys()
@@ -151,6 +159,21 @@ func _refresh() -> void:
 		_status.text = "Not enough resources yet."
 	else:
 		_status.text = ""
+
+
+## The tier's perks, one per line; with `except`, only the ones that tier doesn't already give.
+func _perk_lines(tier: BuildingTier, prefix: String, except: BuildingTier = null) -> String:
+	if tier == null:
+		return ""
+	var have := PackedStringArray()
+	if except:
+		for e in except.effects:
+			have.append(e.text)
+	var lines := PackedStringArray()
+	for e in tier.effects:
+		if not e.text.is_empty() and not e.text in have:
+			lines.append("%s%s" % [prefix, e.text])
+	return "\n".join(lines)
 
 
 func _on_upgrade_pressed() -> void:
@@ -198,9 +221,16 @@ func _build() -> void:
 	_line.custom_minimum_size = Vector2(WIDTH - 40, 0)
 	box.add_child(_line)
 
+	_perks_now = _label(16)
+	_perks_now.add_theme_color_override("font_color", HAVE_COLOR)
+	box.add_child(_perks_now)
+
 	box.add_child(HSeparator.new())
 	_next = _label(21)
 	box.add_child(_next)
+	_perks_next = _label(17)
+	_perks_next.add_theme_color_override("font_color", PERK_COLOR)
+	box.add_child(_perks_next)
 	_costs = GridContainer.new()
 	_costs.columns = 2
 	_costs.add_theme_constant_override("h_separation", 12)

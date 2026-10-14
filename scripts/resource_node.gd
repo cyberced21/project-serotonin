@@ -25,6 +25,7 @@ const GHOST_OUTLINE := preload("res://shaders/ghost_outline.gdshader")
 const GHOST_MASK := preload("res://shaders/ghost_mask.gdshader")
 const DEFLECT_SFX := preload("res://audio/stone_hit.tres")
 const DEFLECT_COLOR := Color("ff8a7a")
+const SHARP_COLOR := Color("ffd27a")
 const WORLD_LAYER := 1
 ## Physics layer 4: debris collides with the world but not the player (layer 2) or pickups.
 const DEBRIS_LAYER := 1 << 3
@@ -199,17 +200,21 @@ func hit(info: HitInfo) -> bool:
 	if not can_gather():
 		_deflect(info)
 		return false
-	hits_left -= 1
+	# the smithy's sharper tools: sometimes a hit counts twice
+	var double := randf() < Village.stat(&"double_hit_chance")
+	hits_left = maxi(hits_left - (2 if double else 1), 0)
 	SaveGame.mark_dirty()
 	var stress := 1.0 - float(hits_left) / max_hits  # 0 -> 1 as it depletes
 
-	_play(audio, hit_sfx, 1.0 + stress * stress_pitch)
+	_play(audio, hit_sfx, 1.0 + stress * stress_pitch - (0.12 if double else 0.0))
 	_flash()
-	_nudge(info.away())
+	_nudge(info.away() * (1.6 if double else 1.0))
 	_chips_at(info)
-	Juice.shake(shake_hit + stress * 1.5)
-	Juice.hitstop(hitstop_hit)
-	_award_xp(xp_per_hit)
+	Juice.shake(shake_hit + stress * 1.5 + (1.5 if double else 0.0))
+	Juice.hitstop(hitstop_hit + (0.035 if double else 0.0))
+	if double:
+		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.35, 0), "Sharp!", SHARP_COLOR, 9)
+	_award_xp(xp_per_hit * (2 if double else 1))
 
 	if hits_left == 0:
 		_break(info)
@@ -331,7 +336,8 @@ func _reset_visuals() -> void:
 
 
 func _drop_count() -> int:
-	return randi_range(drops_min, maxi(drops_min, drops_max))
+	var extra := int(Village.stat(&"extra_logs")) if skill == &"woodcutting" else 0  # the woodcutter's lodge
+	return randi_range(drops_min, maxi(drops_min, drops_max)) + extra
 
 
 func _spawn_drops(info: HitInfo) -> void:

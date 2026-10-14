@@ -25,11 +25,12 @@ func _ready() -> void:
 	SaveGame.register(&"skills", self)
 
 
-## Adds XP (clamped at the max level). Returns how much was actually gained.
+## Adds XP (clamped at the max level), plus the town hall's bonus. Returns how much was actually gained.
 func add_xp(skill: StringName, amount: int) -> int:
 	if not SKILLS.has(skill):
 		push_warning("Skills: unknown skill '%s'" % skill)
 		return 0
+	amount = roundi(amount * (1.0 + Village.stat(&"xp_bonus")))
 	var old: int = xp.get(skill, 0)
 	var total := mini(old + amount, xp_for_level(MAX_LEVEL))
 	if total == old:

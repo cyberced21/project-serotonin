@@ -46,9 +46,10 @@ func _spawn_fish(at: Vector3) -> Fish:
 ## Something made noise at `pos`. loudness ~0.15 (crouch step) .. 1 (sprint) .. 2 (a strike).
 func disturb(pos: Vector3, loudness: float) -> void:
 	var spooked := false
+	var radius := species.scare_radius * maxf(1.0 - Village.stat(&"fish_calm"), 0.1)  # the fisher's hut
 	for f in fish:
 		var d := f.global_position.distance_to(pos)
-		if d < species.scare_radius and loudness * (1.0 - d / species.scare_radius) > species.nerve * 0.5:
+		if d < radius and loudness * (1.0 - d / radius) > species.nerve * 0.5:
 			spooked = true
 	if not spooked:
 		return

@@ -3,6 +3,19 @@
 [ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
 [ext_resource type="PackedScene" path="res://models/village/town_hall.glb" id="3_model"]
+[ext_resource type="Script" path="res://scripts/tier_effect.gd" id="4_effect"]
+
+[sub_resource type="Resource" id="Effect_2_0"]
+script = ExtResource("4_effect")
+stat = &"xp_bonus"
+value = 0.1
+text = "+10% XP in every skill"
+
+[sub_resource type="Resource" id="Effect_3_0"]
+script = ExtResource("4_effect")
+stat = &"xp_bonus"
+value = 0.2
+text = "+20% XP in every skill"
 
 [sub_resource type="Resource" id="Tier_1"]
 script = ExtResource("2_tier")
@@ -18,6 +31,7 @@ cost = Dictionary[StringName, int]({
 &"perch": 5
 })
 lines = PackedStringArray("A red roof! The whole valley can see we mean business now.", "The others may build their second tier. Go on, they've been asking.", "One more push and we'll have a hall with a bell tower. Imagine it!")
+effects = Array[ExtResource("4_effect")]([SubResource("Effect_2_0")])
 
 [sub_resource type="Resource" id="Tier_3"]
 script = ExtResource("2_tier")
@@ -30,6 +44,7 @@ cost = Dictionary[StringName, int]({
 &"trout": 10
 })
 lines = PackedStringArray("A bell tower and a clock! Nobody will ever be late again. Probably.", "Every house may now build as grand as it likes. Within reason. Mine is still the grandest.", "Look at this village. You did this, you know.")
+effects = Array[ExtResource("4_effect")]([SubResource("Effect_3_0")])
 
 [resource]
 script = ExtResource("1_def")

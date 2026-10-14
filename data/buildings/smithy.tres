@@ -3,6 +3,19 @@
 [ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
 [ext_resource type="PackedScene" path="res://models/village/smithy.glb" id="3_model"]
+[ext_resource type="Script" path="res://scripts/tier_effect.gd" id="4_effect"]
+
+[sub_resource type="Resource" id="Effect_2_0"]
+script = ExtResource("4_effect")
+stat = &"double_hit_chance"
+value = 0.2
+text = "Sharper tools: 20% chance a hit counts twice"
+
+[sub_resource type="Resource" id="Effect_3_0"]
+script = ExtResource("4_effect")
+stat = &"double_hit_chance"
+value = 0.4
+text = "Sharper tools: 40% chance a hit counts twice"
 
 [sub_resource type="Resource" id="Tier_1"]
 script = ExtResource("2_tier")
@@ -17,6 +30,7 @@ cost = Dictionary[StringName, int]({
 &"ore": 20
 })
 lines = PackedStringArray("A real forge! Hot enough to work properly now.", "Iron next. There's a dark seam in the rocks east of here, if your pick's up to it.", "Walls next. Bellows. A sign, so folk know where to find me.")
+effects = Array[ExtResource("4_effect")]([SubResource("Effect_2_0")])
 
 [sub_resource type="Resource" id="Tier_3"]
 script = ExtResource("2_tier")
@@ -27,6 +41,7 @@ cost = Dictionary[StringName, int]({
 &"iron": 20
 })
 lines = PackedStringArray("Look at that chimney smoke. That's the smell of honest work.", "Bellows, grindstone, quench trough. Couldn't ask for more.", "One day I'll forge you something special. When I know what.")
+effects = Array[ExtResource("4_effect")]([SubResource("Effect_3_0")])
 
 [resource]
 script = ExtResource("1_def")
