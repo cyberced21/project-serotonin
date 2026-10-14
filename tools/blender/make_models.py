@@ -215,6 +215,28 @@ def oak():
          slab=("wood.2", "wood.0", "wood.0", "wood.1"), slab_size=(0.48, 0.3), stump=(0.4, 0.34))
 
 
+def block_hand(along="z", grip=0.16):
+    """A blocky fist gripping the tool `grip` metres up its handle (choked up, so it's in view in
+    first person), with a sleeve cuff below it. `along` is the axis the handle runs along ("z" for
+    the axe / pickaxe, "y" for the spear)."""
+    skin, sleeve = "wood.7", "accent.4"
+    parts = [  # (name, size along (x, across, handle), offset (x, across, handle), colour)
+        ("HandFist", (0.085, 0.095, 0.1), (0.0, -0.012, grip), skin),
+        ("HandThumb", (0.03, 0.035, 0.05), (0.035, -0.045, grip + 0.04), "wood.6"),
+        ("HandCuff", (0.1, 0.11, 0.08), (0.0, -0.015, grip - 0.09), sleeve),
+    ]
+    for name, (sx, sa, sh), (ox, oa, oh), color in parts:
+        if along == "z":
+            make_object(name, _painted(box((sx, sa, sh)), color), (ox, oa, oh))
+        else:  # handle along y: swap the across / along axes
+            make_object(name, _painted(box((sx, sh, sa)), color), (ox, oh, oa))
+
+
+def _painted(bm, color):
+    paint(bm, lambda f: color)
+    return bm
+
+
 def pickaxe():
     """Handle along +Z from the grip (origin) up; head with two drooping spikes, along Y."""
     reset()
@@ -231,6 +253,7 @@ def pickaxe():
         # lay it along Y, pointing away from the collar, tip drooping 10 degrees
         make_object(f"Spike{'Front' if side > 0 else 'Back'}", bm, (0, side * 0.14, 0.405),
                     (-side * math.radians(90 + 10), 0, 0))
+    block_hand("z")
     export("pickaxe")
 
 
@@ -249,6 +272,7 @@ def axe():
     edge = lambda f: "metal.7" if f.normal.y > 0.7 else ("metal.5" if abs(f.normal.x) > 0.5 else "metal.3")
     paint(bm, edge)
     make_object("Blade", bm, (0, 0.1, 0.38))
+    block_hand("z")
     export("axe")
 
 
@@ -271,6 +295,7 @@ def spear():
         paint(bm, lambda f: "metal.5")
         make_object(f"Barb{'L' if side > 0 else 'R'}", bm, (side * 0.03, 1.27, 0),
                     (-math.pi / 2 - math.radians(150), 0, side * math.radians(25)))
+    block_hand("y", grip=0.42)
     export("spear")
 
 

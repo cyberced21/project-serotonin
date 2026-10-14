@@ -39,8 +39,8 @@ Design notes are in [village-design.md](village-design.md).
 
 ## Art & models
 
-- [ ] **Real-model pickups** — drops as tiny models instead of icon billboards.
-- [ ] **Block hands** on the viewmodel tools (part of the tool mesh, no rig).
+- [x] **Real-model pickups:** drops show the item's model (`Items.model`), tumbling on a fitted box, spinning in as they're collected.
+- [x] **Block hands:** a blocky fist and sleeve cuff are part of each tool model (`block_hand()` in `make_models.py`).
 - [ ] **Replace greybox leftovers** — the parkour blocks and the box-shaped chip / burst particles. (The hidden greybox meshes in `rock.tscn` / `tree.tscn` are gone.)
 - [x] **Scenery:** grass, flowers, bushes and boulders are scattered by `SceneryScatter` (layers in `main.tscn`, models in `make_models.py` `scenery()`).
 - [x] **Blender guide:** [blender-guide.md](blender-guide.md), remodelling the rock by hand.

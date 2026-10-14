@@ -27,6 +27,20 @@ static func icon(id: StringName) -> Texture2D:
 	return _icons[id]
 
 
+static var _models: Dictionary[StringName, PackedScene] = {}
+
+## The item's little 3D model for drops: models/items/<id>.glb, or models/fish/<id>.glb for
+## fish. Null if there's none (the drop shows the icon instead).
+static func model(id: StringName) -> PackedScene:
+	if not _models.has(id):
+		_models[id] = null
+		for path in ["res://models/items/%s.glb" % id, "res://models/fish/%s.glb" % id]:
+			if ResourceLoader.exists(path):
+				_models[id] = load(path)
+				break
+	return _models[id]
+
+
 ## Sort key, so the HUD lists items in a stable order (the order of DEFS).
 static func order(id: StringName) -> int:
 	var i := DEFS.keys().find(id)
