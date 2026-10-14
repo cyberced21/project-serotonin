@@ -25,6 +25,8 @@ const NPC_LAYER := 1 << 5
 @export var talk_radius := 3.2
 ## Head tracking range.
 @export var look_radius := 7.0
+## At night, the player this close to the door brings the villager back out to talk.
+@export var door_call_radius := 4.0
 @export var work_time := Vector2(12.0, 22.0)
 @export var idle_time := Vector2(3.0, 7.0)
 
@@ -42,6 +44,10 @@ var _cheer_time := 0.0
 var _anim_hit := false  # one sound per work swing
 var _yaw := 0.0
 var _hurry := 1.0  # walk speed multiplier
+var _inside := false  # gone home for the night
+var _visiting := false  # stepped out at night because the player came to the door
+var _model: Node3D
+var _shape: CollisionShape3D
 var _watching := false  # standing back while the building is upgraded
 var _audio: AudioStreamPlayer3D
 var _player: Node3D
@@ -55,13 +61,13 @@ func _ready() -> void:
 	collision_mask = 0
 	sync_to_physics = false
 	_build_model()
-	var shape := CollisionShape3D.new()
+	_shape = CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = 0.3
 	capsule.height = 1.5
-	shape.shape = capsule
-	shape.position.y = 0.75
-	add_child(shape)
+	_shape.shape = capsule
+	_shape.position.y = 0.75
+	add_child(_shape)
 	_audio = AudioStreamPlayer3D.new()
 	_audio.unit_size = 3.0
 	_audio.max_distance = 30.0
@@ -124,6 +130,7 @@ func _build_model() -> void:
 	var inst := model.instantiate() as Node3D
 	inst.name = "Model"
 	add_child(inst)
+	_model = inst
 	for m in inst.find_children("*", "MeshInstance3D", true, false):
 		(m as MeshInstance3D).material_override = PALETTE
 		_surfaces.append(m)
@@ -184,6 +191,8 @@ func _physics_process(delta: float) -> void:
 		_look(delta)
 		return
 
+	if _night_routine(delta, talking):
+		return
 	if talking and state != State.TALK and not _watching:
 		state = State.TALK
 	match state:
@@ -210,6 +219,61 @@ func _physics_process(delta: float) -> void:
 		State.WALK:
 			_walk(delta)
 	_look(delta)
+
+
+## After dark: walk to the door and go inside. Step back out when the player comes to the door
+## (and stay out while they're near), and for good at daybreak. True when it handled the frame.
+func _night_routine(delta: float, talking: bool) -> bool:
+	var door := building.spot("Door")
+	if door == null:
+		return false
+	var night := DayNight.is_night()
+	var at_door := _player != null and _player.global_position.distance_to(door.global_position) < door_call_radius
+	if _inside:
+		if night and not at_door:
+			return true  # asleep
+		_come_out(door)
+		_visiting = night
+		_enter(State.IDLE)
+		return false
+	if _visiting:
+		var near := _player != null and _player.global_position.distance_to(door.global_position) < door_call_radius + 2.0
+		if night and (near or talking):
+			if _player:
+				_turn_toward(_player.global_position, delta, 6.0)
+			_animate_idle()
+			_look(delta)
+			return true
+		_visiting = false
+	if not night or _watching or talking:
+		return false
+	if state == State.WALK and _target == door:
+		return false  # on the way home
+	if global_position.distance_to(_ground(door.global_position)) < 0.3:
+		_go_inside()
+		return true
+	_walk_to(door)
+	return false
+
+
+func _go_inside() -> void:
+	_inside = true
+	_shape.set_deferred("disabled", true)
+	set_highlighted(false)
+	var t := create_tween()
+	t.tween_property(_model, "scale", Vector3(0.6, 0.05, 0.6), 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	t.tween_callback(func() -> void: _model.visible = false)
+
+
+func _come_out(door: Marker3D) -> void:
+	_inside = false
+	global_position = _ground(door.global_position)
+	_face_marker(door)
+	_target = door
+	_shape.set_deferred("disabled", false)
+	_model.visible = true
+	_model.scale = Vector3(0.6, 0.05, 0.6)
+	create_tween().tween_property(_model, "scale", Vector3.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 ## Next place to go: mostly back to work, sometimes the door or the bench. Never where it is.

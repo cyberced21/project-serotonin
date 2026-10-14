@@ -35,6 +35,7 @@
 [ext_resource type="PackedScene" path="res://models/scenery/bush_low.glb" id="33_bush_low"]
 [ext_resource type="PackedScene" path="res://models/scenery/boulder_big.glb" id="34_boulder_big"]
 [ext_resource type="PackedScene" path="res://models/scenery/boulder_flat.glb" id="35_boulder_flat"]
+[ext_resource type="Script" path="res://scripts/day_night_sky.gd" id="36_sky"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
@@ -530,6 +531,11 @@ model = ExtResource("22_crates")
 [node name="Scenery" type="Node3D" parent="."]
 script = ExtResource("27_scatter")
 layers = Array[ExtResource("28_layer")]([SubResource("Layer_grass"), SubResource("Layer_flowers_warm"), SubResource("Layer_flowers_cool"), SubResource("Layer_bush_round"), SubResource("Layer_bush_low"), SubResource("Layer_boulder_big"), SubResource("Layer_boulder_flat")])
+
+[node name="Sky" type="Node" parent="." node_paths=PackedStringArray("sun", "environment")]
+script = ExtResource("36_sky")
+sun = NodePath("../Sun")
+environment = NodePath("../WorldEnvironment")
 
 [node name="Player" parent="." instance=ExtResource("1_player")]
 position = Vector3(0, 0.1, 2)

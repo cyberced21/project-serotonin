@@ -103,6 +103,7 @@ func _build_tiers() -> void:
 			m.transform = xform
 			m.material_override = PALETTE
 			_homes[m] = xform
+			_mark_night_glow(m)
 			var aabb := m.get_aabb()
 			if aabb.size.x * aabb.size.y * aabb.size.z >= MIN_COLLIDER_VOLUME:
 				var shape := CollisionShape3D.new()
@@ -115,6 +116,17 @@ func _build_tiers() -> void:
 			smoke.transform = Transform3D(Basis.IDENTITY, xform.origin)
 			_smoke[t].append(smoke)
 	inst.free()
+
+
+## Lamps and lanterns glow and light up after dark; window glass glows as if lit inside.
+static func _mark_night_glow(m: MeshInstance3D) -> void:
+	var n := String(m.name).to_lower()
+	if n.contains("post"):
+		return
+	if n.contains("lantern") or n.contains("_lamp"):
+		DayNightSky.make_glow(m, true)
+	elif n.contains("windowglass"):
+		DayNightSky.make_glow(m)
 
 
 static func _tier_of(node_name: String) -> int:

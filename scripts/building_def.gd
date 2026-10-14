@@ -16,6 +16,11 @@ extends Resource
 @export var villager_role := "Woodcutter"
 ## Said when the next upgrade is held back by the town hall's tier.
 @export_multiline var capped_line := "The mayor hasn't let us build any bigger yet."
+## Said when you knock at night (the villager steps out of the door to talk).
+@export_multiline var night_lines: PackedStringArray = [
+	"You're up late! Well, the lamps are lit. What can I do for you?",
+	"Couldn't sleep either? Come in out of the dark a moment.",
+]
 
 
 func max_tier() -> int:

@@ -24,6 +24,7 @@ SaveGame="*res://scripts/autoload/save_game.gd"
 Inventory="*res://scripts/autoload/inventory.gd"
 Skills="*res://scripts/autoload/skills.gd"
 Village="*res://scripts/autoload/village.gd"
+DayNight="*res://scripts/autoload/day_night.gd"
 
 [display]
 

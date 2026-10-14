@@ -52,3 +52,4 @@ tiers = Array[ExtResource("2_tier")]([SubResource("Tier_1"), SubResource("Tier_2
 villager_name = "Greta"
 villager_role = "Smith"
 capped_line = "Town hall's not grand enough yet, says the mayor. Can't have the smithy outshining it."
+night_lines = PackedStringArray("Forge is banked for the night, but I'm up. What do you need?", "Can't sleep with the smell of iron in my nose. Come in, come in.")

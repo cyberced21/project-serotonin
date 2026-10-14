@@ -100,6 +100,8 @@ func _pick_line() -> String:
 	var def := villager.building.def
 	if Village.is_capped(def.id):
 		return def.capped_line
+	if DayNight.is_night() and not def.night_lines.is_empty():
+		return def.night_lines[randi() % def.night_lines.size()]
 	var tier := def.get_tier(Village.tier(def.id))
 	if tier and not tier.lines.is_empty():
 		return tier.lines[randi() % tier.lines.size()]

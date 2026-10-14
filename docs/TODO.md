@@ -52,6 +52,7 @@ Design notes are in [village-design.md](village-design.md).
 
 ## World & tech
 
-- [ ] **Day / night cycle** (optional).
+- [x] **Day / night:** a 20-minute day (`DayNight` autoload) lit by the `Sky` node. Lamps and windows glow after dark, villagers go home at night, and fish are calmer at dawn and dusk.
+- [ ] **Stars and moon:** a starry night sky and a visible moon. Right now the procedural sky draws the light's disc.
 - [ ] **Terrain collision range** — Terrain3D only builds collision within 64 m of the camera; anything left further away (debris, drops) can fall through. Fine for now; revisit with bigger worlds.
 - [x] **Saved node keys:** every placed node has a `save_id`. Saves keyed by the old scene path carry over automatically.

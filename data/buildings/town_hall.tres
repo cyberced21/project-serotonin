@@ -55,3 +55,4 @@ tiers = Array[ExtResource("2_tier")]([SubResource("Tier_1"), SubResource("Tier_2
 villager_name = "Mayor Hartwell"
 villager_role = "Mayor"
 capped_line = ""
+night_lines = PackedStringArray("The mayor never sleeps! Well. The mayor was merely resting the eyes.", "Official business at this hour? Splendid. Let's hear it.")

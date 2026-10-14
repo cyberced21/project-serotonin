@@ -1,7 +1,7 @@
 extends CanvasLayer
 ## Inventory counters (top-left, one row per item you hold, in Items order) that pop when they
 ## change, a controls hint, a context XP bar (bottom-centre) for the skill you just trained, and
-## a level-up banner.
+## a level-up banner, and the time of day (top-right).
 
 const LEVEL_UP_SFX := preload("res://audio/level_up.wav")
 
@@ -26,6 +26,8 @@ var _xp_fill_tween: Tween
 var _banner: Label
 var _banner_tween: Tween
 
+var _clock: Label
+
 
 func _ready() -> void:
 	for id in Inventory.items:  # rows for anything already held after loading a save
@@ -41,6 +43,7 @@ func _ready() -> void:
 
 	_build_xp_bar()
 	_build_banner()
+	_build_clock()
 
 	Inventory.changed.connect(_on_changed)
 	Skills.xp_gained.connect(_on_xp_gained)
@@ -89,6 +92,21 @@ func _build_xp_bar() -> void:
 	_xp_fill.size = Vector2(0, 8)
 	_xp_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_xp_panel.add_child(_xp_fill)
+
+
+func _build_clock() -> void:
+	_clock = _make_label(22)
+	_clock.modulate = Color(1, 1, 1, 0.85)
+	_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	add_child(_clock)
+	_clock.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_KEEP_SIZE, 16)
+	_clock.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+
+
+func _process(_delta: float) -> void:
+	var text := "%s  %s" % [DayNight.part_of_day(), DayNight.clock_text()]
+	if _clock.text != text:
+		_clock.text = text
 
 
 func _build_banner() -> void:

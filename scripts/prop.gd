@@ -18,6 +18,8 @@ func _ready() -> void:
 	for m in inst.find_children("*", "MeshInstance3D", true, false):
 		var mesh := m as MeshInstance3D
 		mesh.material_override = PALETTE
+		if String(mesh.name).begins_with("Lamp"):  # lamp posts light up after dark
+			DayNightSky.make_glow(mesh, true)
 		var box := global_transform.affine_inverse() * mesh.global_transform * mesh.get_aabb()
 		bounds = box if first else bounds.merge(box)
 		first = false

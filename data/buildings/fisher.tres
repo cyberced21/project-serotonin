@@ -26,7 +26,7 @@ text = "25% chance a speared fish counts twice"
 [sub_resource type="Resource" id="Tier_1"]
 script = ExtResource("2_tier")
 name = "Tent & Rack"
-lines = PackedStringArray("Fish dry on the rack, I sleep in the tent. Some nights I mix them up.", "Perch, that's the trick. Plenty of perch, and some logs for a proper shack.", "Shh. You're stepping too loud. They can hear you, you know.")
+lines = PackedStringArray("Fish dry on the rack, I sleep in the tent. Some nights I mix them up.", "Perch, that's the trick. Plenty of perch, and some logs for a proper shack.", "Shh. You're stepping too loud. They can hear you, you know.", "Fish are dozy at dawn and dusk. That's when I do my best work.")
 
 [sub_resource type="Resource" id="Tier_2"]
 script = ExtResource("2_tier")
@@ -58,3 +58,4 @@ tiers = Array[ExtResource("2_tier")]([SubResource("Tier_1"), SubResource("Tier_2
 villager_name = "Ollie"
 villager_role = "Fisher"
 capped_line = "Can't build bigger than the town hall, the mayor says. Something about appearances."
+night_lines = PackedStringArray("Night fishing? Ha. The fish are smarter than that. What's up?", "Lantern's lit if you need it. Mind the dock in the dark.")

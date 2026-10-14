@@ -39,8 +39,13 @@ whatever you hit.
   - Low-poly water, swaying reeds and lily pads.
   - Grass clumps, flower patches, bushes and boulders scattered over the land. They stay off paths and water and away from buildings, and the plants sway in the wind.
   - Every model shares one palette texture.
+- **Day and night.** A day lasts 20 minutes: 14 of daylight, 6 of night.
+  - The sun swings across the sky, and the light warms at dawn and dusk.
+  - Nights are moonlit blue, with lamps, lanterns and windows glowing.
+  - Villagers go home after dark, but step out if you come to their door.
+  - Fish are dozy around dawn and dusk.
 - **Positional audio:** footsteps change with the surface (grass, dirt, stone, sand, snow, water), and the slide scrape, splashes and spear hits are placed in 3D.
-- **Saving:** skills, inventory, player position, and which nodes are depleted (with their respawn timers).
+- **Saving:** skills, inventory, player position, the village's tiers, the time of day, and which nodes are depleted (with their respawn timers).
 
 ## Controls
 
@@ -53,7 +58,7 @@ whatever you hit.
 | Gather / spear (hold) | Left mouse or E |
 | Talk to a villager | E |
 | Free the mouse | Esc (click to recapture) |
-| Debug: give 50 of every item / upgrade every building (wraps back to tier 1) | F7 / F8 (debug builds) |
+| Debug: skip ahead 3 hours / give 50 of every item / upgrade every building (wraps back to tier 1) | F6 / F7 / F8 (debug builds) |
 | Debug: give XP / reset save | F9 / F10 (debug builds) |
 
 ## Getting started
@@ -87,8 +92,8 @@ Key scripts:
 - **Gathering:** `resource_node.gd` (every tree and rock), `pickup.gd`, `items.gd`
 - **Fishing:** `spear_fishing.gd`, `fish_pond.gd`, `fish_school.gd`, `fish.gd`, `water_body.gd`
 - **Village:** `building.gd` (shows a tier, plays the upgrade), `villager.gd`, `upgrade_panel.gd`, `building_def.gd` / `building_tier.gd`, `prop.gd`
-- **World:** `footsteps.gd`, `pond_dressing.gd`, `scenery_scatter.gd` + `scatter_layer.gd`
-- **Autoloads:** `Skills`, `Inventory`, `SaveGame`, `Village` (building tiers and the town-hall cap), `Juice` (hit-stop and shake), `Sfx`, `GameInput`
+- **World:** `day_night_sky.gd`, `footsteps.gd`, `pond_dressing.gd`, `scenery_scatter.gd` + `scatter_layer.gd`
+- **Autoloads:** `Skills`, `Inventory`, `SaveGame`, `Village` (building tiers, the town-hall cap, perks), `DayNight` (the clock), `Juice` (hit-stop and shake), `Sfx`, `GameInput`
 
 ## Asset pipeline
 
