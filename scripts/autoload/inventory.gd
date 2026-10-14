@@ -13,6 +13,12 @@ func add(item: StringName, amount := 1) -> void:
 	SaveGame.mark_dirty()
 	changed.emit(item, items[item])
 
+## Debug: set a count directly.
+func set_count(item: StringName, amount: int) -> void:
+	items[item] = maxi(amount, 0)
+	SaveGame.mark_dirty()
+	changed.emit(item, items[item])
+
 func count(item: StringName) -> int:
 	return items.get(item, 0)
 

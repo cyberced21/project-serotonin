@@ -70,6 +70,21 @@ func upgrade(id: StringName) -> bool:
 	return true
 
 
+## Debug: put a building at tier `t` for free, ignoring the town hall's cap.
+func set_tier(id: StringName, t: int) -> void:
+	var def := get_def(id)
+	if def and t != tier(id):
+		_set_tier(id, clampi(t, 1, def.max_tier()))
+
+
+## Every registered building id, town hall first.
+func building_ids() -> Array[StringName]:
+	var ids: Array[StringName] = []
+	ids.assign(_defs.keys())
+	ids.sort_custom(func(a: StringName, b: StringName) -> bool: return a == TOWN_HALL or (b != TOWN_HALL and a < b))
+	return ids
+
+
 func _set_tier(id: StringName, t: int) -> void:
 	_tiers[id] = t
 	SaveGame.mark_dirty()

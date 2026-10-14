@@ -304,6 +304,12 @@ func _show_depleted() -> void:
 	collision.set_deferred("disabled", true)
 
 
+## Debug: if depleted, grow back now.
+func respawn_now() -> void:
+	if _respawn_timer:
+		_respawn_timer.time_left = 0.01
+
+
 ## respawn_time, shortened for rocks by Edda's assay office.
 func _regrow_time() -> float:
 	var regrow := Village.stat(&"rock_regrow") if skill == &"mining" else 0.0

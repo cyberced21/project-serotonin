@@ -16,7 +16,17 @@ var _restock: Array[float] = []  # pending restock timers, one per wiped-out sch
 func _ready() -> void:
 	water = get_parent() as WaterBody
 	assert(water, "FishPond must be a child of a WaterBody")
+	add_to_group("fish_pond")
 	_stock.call_deferred()
+
+
+## Debug: every school replaced by a fresh, full one right away.
+func restock_now() -> void:
+	_restock.clear()
+	for school in get_children():
+		if school is FishSchool:
+			school.queue_free()
+	_stock()
 
 
 func _stock() -> void:

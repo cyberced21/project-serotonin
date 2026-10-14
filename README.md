@@ -76,6 +76,7 @@ whatever you hit.
 | Gather / spear (hold) | Left mouse or E |
 | Talk to a villager | E |
 | Free the mouse | Esc (click to recapture) |
+| Debug menu: items, skill levels, building tiers, time of day and speed, pause, teleports, fly mode, a live readout, save wipe | F1 (debug builds) |
 | Debug: skip ahead 3 hours / give 50 of every item / upgrade every building (wraps back to tier 1) | F6 / F7 / F8 (debug builds) |
 | Debug: give XP / reset save | F9 / F10 (debug builds) |
 

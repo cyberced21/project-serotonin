@@ -14,6 +14,7 @@ const BINDINGS := {
 	"sprint": [KEY_SHIFT],
 	"crouch": [KEY_CTRL, KEY_C],
 	# debug builds only
+	"debug_menu": [KEY_F1],
 	"debug_skip_time": [KEY_F6],
 	"debug_give_items": [KEY_F7],
 	"debug_village_tier": [KEY_F8],

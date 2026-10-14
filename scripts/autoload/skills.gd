@@ -47,6 +47,18 @@ func add_xp(skill: StringName, amount: int) -> int:
 	return total - old
 
 
+## Debug: jump straight to the start of level `lvl` (up or down).
+func set_level(skill: StringName, lvl: int) -> void:
+	if not SKILLS.has(skill):
+		return
+	var before := level(skill)
+	xp[skill] = xp_for_level(clampi(lvl, 1, MAX_LEVEL))
+	SaveGame.mark_dirty()
+	xp_gained.emit(skill, 0, xp[skill])
+	if level(skill) > before:
+		leveled_up.emit(skill, level(skill))
+
+
 func xp_for_level(lvl: int) -> int:
 	return int(CURVE_BASE * pow(lvl - 1, CURVE_EXPONENT))
 

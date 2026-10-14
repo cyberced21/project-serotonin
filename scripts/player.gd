@@ -292,6 +292,17 @@ func from_dict(d: Dictionary) -> void:
 	reset_physics_interpolation()  # a teleport, not a move
 
 
+## Debug: jump to `to` (feet), facing `look_at_point` if given.
+func teleport(to: Vector3, look_at_point := Vector3.INF) -> void:
+	global_position = to
+	velocity = Vector3.ZERO
+	if look_at_point != Vector3.INF:
+		var d := look_at_point - to
+		rotation.y = atan2(-d.x, -d.z)
+		_pitch = 0.0
+	reset_physics_interpolation()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var motion := event as InputEventMouseMotion
@@ -396,7 +407,26 @@ func _land_dip(fall_speed: float) -> void:
 	_dip_vel += clampf(fall_speed, 0.0, 16.0) * landing_dip * 12.0
 
 
+## Debug (debug menu): fly through everything where you look. Space up, crouch down, sprint fast.
+var debug_fly := false:
+	set(on):
+		debug_fly = on
+		velocity = Vector3.ZERO
+
+
+func _fly(delta: float) -> void:
+	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var dir := camera.global_basis * Vector3(input.x, 0.0, input.y)
+	dir.y += Input.get_axis("crouch", "jump")
+	var speed := 30.0 if Input.is_action_pressed("sprint") else 10.0
+	velocity = velocity.lerp(dir.limit_length(1.0) * speed, minf(delta * 10.0, 1.0))
+	global_position += velocity * delta
+
+
 func _physics_process(delta: float) -> void:
+	if debug_fly:
+		_fly(delta)
+		return
 	if _state != State.MANTLE:
 		_move(delta)
 	_update_crouch(delta)
