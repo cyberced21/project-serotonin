@@ -14,8 +14,8 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 
 ## Gathering
 
-- [ ] **Weak points / interactive gathering** — aim at or hover over specific spots on a node for bonus damage / XP / effects. `HitInfo` already carries the hit point, normal and collider; weak points can be chunk colliders or small `Area3D`s.
-- [ ] **True tool sinking** — during the bite, swap the viewmodel tool for a world-space copy stuck in the node so it really sinks into the geometry (currently faked with motion + notch decal).
+- [x] **Weak points:** a glowing diamond on one chunk. A swing aimed at it counts an extra hit, gives double XP and a "Weak spot!" burst, then the spot moves (`ResourceNode` *Weak point* group).
+- [x] **True tool sinking:** during the bite, a world copy of the tool sticks with its edge buried in the node. The held fist stays on screen holding the handle (`player.gd` `_stick_in_world`).
 - [x] **Clean respawn ghost:** one silhouette outline via the stencil buffer (`ResourceNode.ghost_silhouette`, on by default).
 - [x] **Iron and oak:** `iron_rock.tscn` (Mining 15) and `oak_tree.tscn` (Woodcutting 15), used in the village's tier-3 costs.
 - [ ] **More node types** — gold / coal veins, more tree species (`rock()` / `tree()` in the Blender script take parameters; inherit `rock.tscn` / `tree.tscn`).

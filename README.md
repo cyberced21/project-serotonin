@@ -16,6 +16,8 @@ whatever you hit.
 - **Gathering with weight.**
   - The hit lands on the swing's impact frame, not when you press the button.
   - The tool sinks into the node, holds through the hit-stop, then yanks out and tears a chunk loose.
+  - Every node has a glowing weak spot. Hit it for an extra hit and double XP, and it moves.
+  - During the bite, the tool really sticks in the node until you yank it out.
   - Every hit leaves a notch. Rocks shed physics debris, and trees topple, crash down and spill logs.
   - Pitch rises as a node weakens.
 - **Skills:** Woodcutting, Mining and Fishing, each with XP and levels. Nodes and fish above your level bounce off or dodge.

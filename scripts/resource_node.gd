@@ -96,6 +96,15 @@ const FELLED_SHAPE_SCALE := 0.6
 ## The timer is hidden beyond this distance from the camera, to avoid clutter.
 @export var respawn_display_range := 30.0
 
+@export_group("Weak point")
+## A glowing spot on one of the chunks. Hitting near it counts as extra hits and doubles the XP;
+## then it jumps to another chunk.
+@export var weak_point := true
+## How close to the spot the swing must aim (m, measured across the line of the swing).
+@export var weak_point_radius := 0.28
+@export_range(0, 5) var weak_point_extra_hits := 1
+@export var weak_point_color := Color(1.0, 0.93, 0.55)
+
 @export_group("Feel")
 @export var hitstop_hit := 0.045
 @export var hitstop_break := 0.11
@@ -142,6 +151,7 @@ func _ready() -> void:
 		SaveGame.register(path_key, self)
 	else:
 		SaveGame.register(StringName("node:" + save_id), self, path_key)
+	_build_weak_point()  # after loading, so it lands on a chunk that's still there
 
 
 ## Moves the model's meshes into Visual/Body, Visual/Chunks and Rubble by name prefix, replacing
@@ -194,6 +204,8 @@ func can_gather() -> bool:
 func set_highlighted(on: bool) -> void:
 	for s in _surfaces:
 		s.set_instance_shader_parameter("highlight", 1.0 if on else 0.0)
+	if on and _weak and not _weak.visible and can_gather():  # levelled up since it was hidden
+		_place_weak_point()
 
 
 ## Called by the player on the impact frame of a swing. Returns true if the tool bit in
@@ -204,9 +216,12 @@ func hit(info: HitInfo) -> bool:
 	if not can_gather():
 		_deflect(info)
 		return false
-	# the smithy's sharper tools: sometimes a hit counts twice
+	# the smithy's sharper tools: sometimes a hit counts twice; the weak point always adds more
 	var double := randf() < Village.stat(&"double_hit_chance")
-	hits_left = maxi(hits_left - (2 if double else 1), 0)
+	var weak := _is_weak_hit(info)
+	hits_left = maxi(hits_left - (2 if double else 1) - (weak_point_extra_hits if weak else 0), 0)
+	if weak:
+		_weak_hit_feedback(info)
 	SaveGame.mark_dirty()
 	var stress := 1.0 - float(hits_left) / max_hits  # 0 -> 1 as it depletes
 
@@ -218,12 +233,14 @@ func hit(info: HitInfo) -> bool:
 	Juice.hitstop(hitstop_hit + (0.035 if double else 0.0))
 	if double:
 		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.35, 0), "Sharp!", SHARP_COLOR, 9)
-	_award_xp(xp_per_hit * (2 if double else 1))
+	_award_xp(xp_per_hit * (2 if double else 1) * (2 if weak else 1))
 
 	if hits_left == 0:
 		_break(info)
 	else:
 		_notch_at(info)
+		if weak:
+			_place_weak_point.call_deferred()  # after this hit's chunks have popped
 	return true
 
 
@@ -295,6 +312,7 @@ func _respawn_after(seconds: float) -> void:
 	_set_respawn_display(false)
 	hits_left = max_hits
 	_reset_visuals()
+	_place_weak_point()
 	visual.scale = Vector3.ONE * 0.4
 	create_tween().tween_property(visual, "scale", Vector3.ONE, 0.35) \
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -527,6 +545,88 @@ func _throw(piece: MeshInstance3D, xform: Transform3D, push: Vector3, speed: flo
 	t.tween_interval(DEBRIS_LIFETIME)
 	t.tween_property(piece, "scale", Vector3.ONE * 0.01, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 	t.tween_callback(body.queue_free)
+
+
+# --- weak point -----------------------------------------------------------------------------
+
+var _weak: MeshInstance3D
+
+
+func _build_weak_point() -> void:
+	if not weak_point:
+		return
+	_weak = MeshInstance3D.new()
+	_weak.name = "WeakPoint"
+	var gem := SphereMesh.new()  # 4 segments x 2 rings = a little diamond
+	gem.radial_segments = 4
+	gem.rings = 2
+	gem.radius = 0.055
+	gem.height = 0.11
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = weak_point_color
+	gem.material = mat
+	_weak.mesh = gem
+	_weak.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	visual.add_child(_weak)
+	var pulse := _weak.create_tween().set_loops()
+	pulse.tween_property(_weak, "scale", Vector3.ONE * 1.35, 0.45).set_trans(Tween.TRANS_SINE)
+	pulse.tween_property(_weak, "scale", Vector3.ONE * 0.85, 0.45).set_trans(Tween.TRANS_SINE)
+	_place_weak_point()
+
+
+## Puts the spot on a random outward-facing side face of a random intact chunk.
+func _place_weak_point() -> void:
+	if _weak == null:
+		return
+	var spots: Array[Transform3D] = []
+	for c in _intact_chunks():
+		var arrays := c.mesh.surface_get_arrays(0)
+		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX] else PackedInt32Array()
+		var count := idx.size() if not idx.is_empty() else verts.size()
+		var to_node := visual.global_transform.affine_inverse() * c.global_transform  # chunk -> Visual space
+		for i in range(0, count, 3):
+			var a := to_node * verts[idx[i] if not idx.is_empty() else i]
+			var b := to_node * verts[idx[i + 1] if not idx.is_empty() else i + 1]
+			var d := to_node * verts[idx[i + 2] if not idx.is_empty() else i + 2]
+			var n := (b - a).cross(d - a).normalized()
+			var centre := (a + b + d) / 3.0
+			var out := Vector3(centre.x, 0.0, centre.z).normalized()
+			if absf(n.y) < 0.6 and n.dot(out) > 0.3:  # a side face, facing out from the middle
+				spots.append(Transform3D(Basis.looking_at(-n, Vector3.UP if absf(n.y) < 0.95 else Vector3.FORWARD), centre + n * 0.03))
+	if spots.is_empty():
+		_weak.visible = false
+		return
+	var t: Transform3D = spots.pick_random()
+	_weak.transform = Transform3D(t.basis, t.origin)
+	_weak.visible = can_gather()
+
+
+## A swing is on the weak point if its line passes close to the spot.
+func _is_weak_hit(info: HitInfo) -> bool:
+	if _weak == null or not _weak.visible:
+		return false
+	var p := _weak.global_position
+	var dir := (info.position - info.from).normalized()
+	var along := (p - info.from).dot(dir)
+	var closest := info.from + dir * along
+	return closest.distance_to(p) < weak_point_radius
+
+
+func _weak_hit_feedback(info: HitInfo) -> void:
+	PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.6, 0), "Weak spot!", weak_point_color, 10)
+	Juice.shake(2.0)
+	Juice.hitstop(0.05)
+	var spark := chips.duplicate() as CPUParticles3D
+	get_parent().add_child(spark)
+	spark.global_position = _weak.global_position
+	spark.color = weak_point_color
+	spark.amount = 18
+	spark.initial_velocity_max = 5.0
+	spark.restart()
+	get_tree().create_timer(1.0).timeout.connect(spark.queue_free)
+	_play(break_audio, hit_sfx, 1.45)
 
 
 # --- respawn display ------------------------------------------------------------------------

@@ -91,6 +91,8 @@ extends CharacterBody3D
 @export var bite_hold := 0.06
 ## How long the yank back out takes. The chunk tears out at the end of it.
 @export var yank_time := 0.07
+## How far the tool's edge is buried in the node while it's stuck (m, world space).
+@export var stick_depth := 0.1
 
 ## Tool pivot rotation around X (radians): positive tilts the head back toward the camera.
 const REST_ANGLE := -0.3
@@ -110,6 +112,13 @@ enum State { NORMAL, SLIDE, MANTLE }
 const SLIDE_PITCH := {&"grass": 1.1, &"dirt": 0.9, &"rock": 1.3, &"sand": 0.75, &"snow": 1.0}
 const DEFLECT_COLOR := Color("ff8a7a")
 const TOOL_MATERIAL := preload("res://materials/node_palette.tres")
+## Where each tool's cutting edge is, in its model's space (tools/blender/make_models.py): the
+## point that gets buried in the node during the bite.
+const TOOL_HEADS := {&"axe": Vector3(0, 0.38, -0.185), &"pickaxe": Vector3(0, 0.385, -0.26)}
+## Where the hand holds the tools, up the handle (see block_hand() in make_models.py).
+const GRIP_HEIGHT := 0.16
+## Size of the stuck world copy relative to the model (a touch bigger reads better at a distance).
+const STUCK_SCALE := 1.3
 
 @onready var head: Node3D = $Head
 @onready var body_collision: CollisionShape3D = $CollisionShape3D
@@ -542,7 +551,7 @@ func _swing(tool: StringName) -> void:
 	if node:
 		var info := HitInfo.new(hit["position"], hit["normal"], node, camera.global_position)
 		if node.hit(info):
-			await _bite()
+			await _bite(tool, info)
 			if is_instance_valid(node):
 				node.pull(info)  # the chunk tears out as the tool comes free
 		else:
@@ -559,16 +568,81 @@ func _swing(tool: StringName) -> void:
 
 ## The tool sinks into the node and sticks (the hit-stop freezes it there), then gets yanked
 ## back out with a jerk — the moment the chunk comes free.
-func _bite() -> void:
+func _bite(tool: StringName, info: HitInfo) -> void:
 	tool_pivot.position = _tool_rest + Vector3(0, -bite_depth * 0.4, -bite_depth)
+	var stuck := _stick_in_world(tool, info)
 	var t := create_tween()
 	t.tween_interval(bite_hold)
+	# the world copy comes out and the held tool takes over for the yank
+	t.tween_callback(func() -> void:
+		if is_instance_valid(stuck):
+			stuck.queue_free()
+		_show_only_hand(tools[tool], false))
 	# yank: back toward the camera, head tipping up as it comes free
 	t.tween_property(tool_pivot, "position", _tool_rest + Vector3(0, 0.03, 0.09), yank_time) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	t.parallel().tween_property(tool_pivot, "rotation:x", STRIKE_ANGLE + 0.45, yank_time) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	await t.finished
+
+
+## For the bite, the tool really sticks in the node: a world copy of it (without the hand) is
+## placed with its edge buried in the surface (which hides the part inside), its grip on the line
+## of sight to the held hand, at about real size. The held tool hides all but the fist, which stays
+## on screen holding the end of the handle.
+func _stick_in_world(tool: StringName, info: HitInfo) -> Node3D:
+	var slot := tools[tool]
+	var vm_cam := slot.get_viewport().get_camera_3d()
+	if vm_cam == null or not TOOL_HEADS.has(tool):
+		return null
+	var edge: Vector3 = TOOL_HEADS[tool]
+	var grip_local := Vector3(0, GRIP_HEIGHT, 0)
+	var length := (edge - grip_local).length() * STUCK_SCALE  # grip -> edge, in the world
+	var hit := info.position - info.normal * stick_depth
+	# the grip: on the ray through the hand's screen position, `length` away from the hit
+	var hand_screen := vm_cam.unproject_position(slot.global_transform * grip_local)
+	var origin := camera.project_ray_origin(hand_screen)
+	var ray := camera.project_ray_normal(hand_screen)
+	var along := (hit - origin).dot(ray)
+	var off := (hit - origin - ray * along).length()
+	var t := along - sqrt(maxf(length * length - off * off, 0.0))  # the nearer point at that distance
+	var grip := origin + ray * maxf(t, 0.2)
+	# turn the model's grip->edge line onto grip->hit, with the blade (model -Z) into the surface
+	var model_frame := _frame(edge - grip_local, Vector3.FORWARD)
+	var world_frame := _frame(hit - grip, -info.normal)
+	var size := grip.distance_to(hit) / (edge - grip_local).length()
+	var basis := (world_frame * model_frame.transposed()).scaled(Vector3.ONE * size)
+	var copy := slot.duplicate() as Node3D
+	for m in copy.find_children("*", "MeshInstance3D", true, false):
+		(m as MeshInstance3D).layers = 1
+		m.visible = not _is_hand(m)
+	get_parent().add_child(copy)
+	copy.global_transform = Transform3D(basis, hit - basis * edge)  # the edge exactly at the hit
+	copy.visible = true
+	_show_only_hand(slot, true)
+	return copy
+
+
+## Hides (or shows again) everything of a held tool except its fist and cuff.
+func _show_only_hand(slot: Node3D, on: bool) -> void:
+	for m in slot.find_children("*", "MeshInstance3D", true, false):
+		m.visible = not on or _is_hand(m)
+
+
+## The fist, thumb and cuff of a tool model (HandFist, HandThumb, HandCuff — not the Handle).
+static func _is_hand(m: Node) -> bool:
+	var n := String(m.name)
+	return n.begins_with("Hand") and not n.begins_with("Handle")
+
+
+## An orthonormal frame: first axis along `along`, second toward `toward` (made perpendicular).
+static func _frame(along: Vector3, toward: Vector3) -> Basis:
+	var e1 := along.normalized()
+	var e2 := toward - e1 * toward.dot(e1)
+	if e2.length_squared() < 0.0001:
+		e2 = e1.cross(Vector3.UP if absf(e1.y) < 0.9 else Vector3.RIGHT)
+	e2 = e2.normalized()
+	return Basis(e1, e2, e1.cross(e2))
 
 
 ## Deflected (level too low): the tool rebounds off the surface instead of biting in.
