@@ -26,10 +26,20 @@ func _ready() -> void:
 	add_child(timer)
 
 
-func register(key: StringName, system: Object) -> void:
-	_systems[String(key)] = system
-	if _data.has(String(key)):
-		system.from_dict(_data[String(key)])
+## `legacy_key`: an older key the same system used to save under; its data moves to `key`.
+func register(key: StringName, system: Object, legacy_key: StringName = &"") -> void:
+	var k := String(key)
+	var old: Object = _systems.get(k)
+	if old != system and is_instance_valid(old) and (not old is Node or (old as Node).is_inside_tree()):
+		push_warning("SaveGame: '%s' is registered twice; give one of them a different save id" % k)
+	_systems[k] = system
+	var lk := String(legacy_key)
+	if not lk.is_empty() and not _data.has(k) and _data.has(lk):
+		_data[k] = _data[lk]
+		_data.erase(lk)
+		_dirty = true
+	if _data.has(k):
+		system.from_dict(_data[k])
 
 
 func mark_dirty() -> void:

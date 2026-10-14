@@ -444,6 +444,8 @@ func _update_target() -> void:
 	var node: ResourceNode = null
 	if talk == null and not hit.is_empty() and camera.global_position.distance_to(hit["position"]) <= reach:
 		node = _node_under_crosshair(hit)
+	if talk == null and node == null:
+		talk = _villager_behind_clutter()
 	if talk != _talk_target:
 		if is_instance_valid(_talk_target):
 			_talk_target.set_highlighted(false)
@@ -481,6 +483,23 @@ func _update_target() -> void:
 		hover_label.modulate = DEFLECT_COLOR
 	else:
 		hover_label.text = ""
+
+
+## The crosshair ray stops at the first thing it touches, so a post or pole in front of a
+## villager would hide them. This looks for a villager on the crosshair line ignoring the world,
+## then accepts them if any of head, chest or hips is in plain sight (a wall still hides them).
+func _villager_behind_clutter() -> Villager:
+	var from := camera.global_position
+	var space := get_world_3d().direct_space_state
+	var q := PhysicsRayQueryParameters3D.create(from, from - camera.global_basis.z * interact_reach, NPC_MASK, [get_rid()])
+	var v := space.intersect_ray(q).get("collider") as Villager
+	if v == null:
+		return null
+	for h in [0.5, 1.0, 1.3]:
+		var look := PhysicsRayQueryParameters3D.create(from, v.global_position + Vector3.UP * h, WORLD_MASK, [get_rid()])
+		if space.intersect_ray(look).is_empty():
+			return v
+	return null
 
 
 func _panel_open() -> bool:

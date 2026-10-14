@@ -43,6 +43,9 @@ const FELLED_SHAPE_SCALE := 0.6
 @export_range(0, 10) var drops_min := 2
 @export_range(0, 10) var drops_max := 4
 @export var respawn_time := 15.0
+## Unique key this node's state (hits left, respawn timer) is saved under. Give every placed
+## node its own. If empty, its scene path is used, which resets it when renamed or moved.
+@export var save_id: StringName
 
 @export_group("Skill")
 ## Skill id from Skills.SKILLS (e.g. woodcutting, mining).
@@ -128,7 +131,12 @@ func _ready() -> void:
 	_reset_visuals()
 	_build_respawn_display()
 	set_process(false)
-	SaveGame.register(StringName("node:%s" % get_path()), self)  # applies any saved state now
+	# applies any saved state now; older saves keyed nodes by scene path, so carry those over
+	var path_key := StringName("node:%s" % get_path())
+	if save_id.is_empty():
+		SaveGame.register(path_key, self)
+	else:
+		SaveGame.register(StringName("node:" + save_id), self, path_key)
 
 
 ## Moves the model's meshes into Visual/Body, Visual/Chunks and Rubble by name prefix, replacing

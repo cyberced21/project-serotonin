@@ -28,7 +28,7 @@ Design notes are in [village-design.md](village-design.md).
 - [ ] **Villager rig and schedules:** real skeletal animation, a day plan, and wandering the whole valley instead of only 2–3 spots.
 - [ ] **More villagers / a growing village:** new houses and villagers unlocked by the town hall.
 - [ ] **Sitting:** villagers stand at the benches; give them a sit pose.
-- [ ] **Talk ray occlusion:** thin pieces (the tier-1 smithy's tarp poles) can block the crosshair from reaching a villager behind them. Consider no collision on thin props, or a wider talk shape.
+- [x] **Talk ray occlusion:** a villager behind a pole still counts if their head, chest or hips is in plain sight (`player.gd` `_villager_behind_clutter`).
 - [ ] **Interiors:** buildings are solid shells. Could have doors you walk through.
 
 ## Movement
@@ -41,7 +41,7 @@ Design notes are in [village-design.md](village-design.md).
 
 - [ ] **Real-model pickups** — drops as tiny models instead of icon billboards.
 - [ ] **Block hands** on the viewmodel tools (part of the tool mesh, no rig).
-- [ ] **Replace greybox leftovers** — the parkour blocks, the old greybox meshes still inside `scenes/rock.tscn` / `scenes/tree.tscn` (hidden by the models), and the box-shaped chip / burst particles.
+- [ ] **Replace greybox leftovers** — the parkour blocks and the box-shaped chip / burst particles. (The hidden greybox meshes in `rock.tscn` / `tree.tscn` are gone.)
 - [ ] **Scenery** — bushes, grass tufts, boulders scattered over the terrain.
 - [ ] **Blender guide** — a step-by-step for remodelling the rock by hand, to learn modelling.
 - [ ] **Sculpt / paint the terrain** in the Terrain3D editor (note: re-running `tools/generate_test_terrain.gd` overwrites it).
@@ -54,4 +54,4 @@ Design notes are in [village-design.md](village-design.md).
 
 - [ ] **Day / night cycle** (optional).
 - [ ] **Terrain collision range** — Terrain3D only builds collision within 64 m of the camera; anything left further away (debris, drops) can fall through. Fine for now; revisit with bigger worlds.
-- [ ] **Saved node keys** — depleted-node state is saved by scene path, so renaming / moving a node in the editor resets it.
+- [x] **Saved node keys:** every placed node has a `save_id`. Saves keyed by the old scene path carry over automatically.

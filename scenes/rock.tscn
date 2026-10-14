@@ -3,23 +3,10 @@
 [ext_resource type="PackedScene" path="res://scenes/resource_node.tscn" id="1_base"]
 [ext_resource type="AudioStream" path="res://audio/stone_hit.tres" id="4_hit"]
 [ext_resource type="AudioStream" path="res://audio/stone_break.tres" id="5_break"]
-[ext_resource type="Material" path="res://materials/node_surface.tres" id="6_surface"]
 [ext_resource type="PackedScene" path="res://models/rock.glb" id="7_model"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_rock"]
 size = Vector3(1.3, 1, 1.2)
-
-[sub_resource type="BoxMesh" id="BoxMesh_core"]
-size = Vector3(0.9, 0.6, 0.8)
-
-[sub_resource type="BoxMesh" id="BoxMesh_big"]
-size = Vector3(0.5, 0.45, 0.5)
-
-[sub_resource type="BoxMesh" id="BoxMesh_small"]
-size = Vector3(0.38, 0.32, 0.36)
-
-[sub_resource type="BoxMesh" id="BoxMesh_rubble"]
-size = Vector3(0.8, 0.14, 0.7)
 
 [node name="Rock" instance=ExtResource("1_base")]
 item = &"ore"
@@ -40,55 +27,6 @@ shake_break = 5.0
 
 [node name="CollisionShape3D" parent="." index="0"]
 shape = SubResource("BoxShape3D_rock")
-
-[node name="Core" type="MeshInstance3D" parent="Visual/Body" index="0"]
-position = Vector3(0, 0.3, 0)
-rotation = Vector3(0, 0.3, 0)
-mesh = SubResource("BoxMesh_core")
-material_override = ExtResource("6_surface")
-instance_shader_parameters/albedo = Color(0.45, 0.45, 0.47, 1)
-
-[node name="ChunkA" type="MeshInstance3D" parent="Visual/Chunks" index="0"]
-position = Vector3(0.38, 0.42, 0.22)
-rotation = Vector3(0.2, 0.5, -0.15)
-mesh = SubResource("BoxMesh_big")
-material_override = ExtResource("6_surface")
-instance_shader_parameters/albedo = Color(0.55, 0.55, 0.57, 1)
-
-[node name="ChunkB" type="MeshInstance3D" parent="Visual/Chunks" index="1"]
-position = Vector3(-0.36, 0.38, 0.18)
-rotation = Vector3(-0.1, -0.4, 0.2)
-mesh = SubResource("BoxMesh_big")
-material_override = ExtResource("6_surface")
-instance_shader_parameters/albedo = Color(0.78, 0.47, 0.27, 1)
-
-[node name="ChunkC" type="MeshInstance3D" parent="Visual/Chunks" index="2"]
-position = Vector3(0.05, 0.72, -0.05)
-rotation = Vector3(0.3, 0.9, 0.1)
-mesh = SubResource("BoxMesh_small")
-material_override = ExtResource("6_surface")
-instance_shader_parameters/albedo = Color(0.6, 0.6, 0.62, 1)
-
-[node name="ChunkD" type="MeshInstance3D" parent="Visual/Chunks" index="3"]
-position = Vector3(0.25, 0.3, -0.42)
-rotation = Vector3(0, 0.2, 0.25)
-mesh = SubResource("BoxMesh_small")
-material_override = ExtResource("6_surface")
-instance_shader_parameters/albedo = Color(0.78, 0.47, 0.27, 1)
-
-[node name="ChunkE" type="MeshInstance3D" parent="Visual/Chunks" index="4"]
-position = Vector3(-0.28, 0.32, -0.36)
-rotation = Vector3(0.15, -0.7, 0)
-mesh = SubResource("BoxMesh_big")
-material_override = ExtResource("6_surface")
-instance_shader_parameters/albedo = Color(0.5, 0.5, 0.52, 1)
-
-[node name="Pile" type="MeshInstance3D" parent="Rubble" index="0"]
-position = Vector3(0, 0.07, 0)
-rotation = Vector3(0, 0.4, 0)
-mesh = SubResource("BoxMesh_rubble")
-material_override = ExtResource("6_surface")
-instance_shader_parameters/albedo = Color(0.42, 0.42, 0.44, 1)
 
 [node name="Burst" parent="." index="4"]
 position = Vector3(0, 0.5, 0)
