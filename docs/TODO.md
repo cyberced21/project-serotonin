@@ -28,7 +28,7 @@ Design notes are in [village-design.md](village-design.md).
 - [x] **Upgrade effects:** tiers give perks (`TierEffect`, summed by `Village.stat`). Smithy: chance of a double hit. Lodge: extra logs. Fisher: calmer fish, then bonus fish. Town hall: an XP bonus.
 - [ ] **Villager rig and schedules:** real skeletal animation, a day plan, and wandering the whole valley instead of only 2–3 spots.
 - [ ] **More villagers / a growing village:** new houses and villagers unlocked by the town hall.
-- [ ] **Sitting:** villagers stand at the benches; give them a sit pose.
+- [x] **Sitting:** villagers idling on a `Bench` spot sit on the seat (`Villager._animate_sit`).
 - [x] **Talk ray occlusion:** a villager behind a pole still counts if their head, chest or hips is in plain sight (`player.gd` `_villager_behind_clutter`).
 - [ ] **Interiors:** buildings are solid shells. Could have doors you walk through.
 

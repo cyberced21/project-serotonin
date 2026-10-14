@@ -3,8 +3,9 @@ extends AnimatableBody3D
 ## A toy villager living in the Building it's a child of. No rig and no navmesh: the model is
 ## separate parts (Body, Head, ArmL/R, LegL/R — see tools/blender/make_village.py) posed in code,
 ## and it walks in straight lines between its building's spots:
-##   Spots/Door, Spots/Bench (optional), Spots/Work1..3 (the work spot moves up with the tier).
-## A spot's +Z is the way the villager faces while standing there.
+##   Spots/Door, Spots/Work1..3 (the work spot moves up with the tier), and optionally
+##   Spots/Bench (on a bench seat: they sit there) and Spots/Square (somewhere to stand about).
+## A spot's +Z is the way the villager faces while standing (or sitting) there.
 ## When the player comes close it stops and turns to face them; E (see player.gd) opens the
 ## upgrade panel. When its building is upgraded, it cheers.
 
@@ -202,7 +203,11 @@ func _physics_process(delta: float) -> void:
 			if not talking:
 				_enter(State.IDLE)
 		State.IDLE:
-			_animate_idle()
+			if _seated():
+				_turn_to_yaw(_marker_yaw(_target), delta, 6.0)
+				_animate_sit()
+			else:
+				_animate_idle()
 			if _watching:
 				_turn_toward(building.global_position, delta, 5.0)
 			else:
@@ -280,7 +285,7 @@ func _come_out(door: Marker3D) -> void:
 func _pick_spot() -> Marker3D:
 	var options: Array[Marker3D] = []
 	var work_m := building.work_spot()
-	for m in [work_m, work_m, work_m, building.spot("Door"), building.spot("Bench")]:
+	for m in [work_m, work_m, work_m, building.spot("Door"), building.spot("Bench"), building.spot("Square")]:
 		if m and m != _target:
 			options.append(m)
 	return options.pick_random() if not options.is_empty() else _target
@@ -379,6 +384,20 @@ func _animate_idle() -> void:
 	_pose(&"ArmR", -0.04 * breathe, 0.08)
 	_pose(&"LegL", 0.0)
 	_pose(&"LegR", 0.0)
+
+
+## Idling on the Bench spot: sitting on the seat.
+func _seated() -> bool:
+	return _target != null and _target.name == "Bench" 		and Vector2(global_position.x - _target.global_position.x, global_position.z - _target.global_position.z).length() < 0.2
+
+
+func _animate_sit() -> void:
+	var sway := sin(_phase * 0.8)
+	_pose(&"Body", -0.08, sway * 0.02, 0.0, Vector3(0, 0.02, -0.05))  # sat back a little
+	_pose(&"LegL", -1.45, -0.06)  # legs out in front over the edge of the seat
+	_pose(&"LegR", -1.45, 0.06)
+	_pose(&"ArmL", -0.55, -0.12)  # hands on knees
+	_pose(&"ArmR", -0.55, 0.12)
 
 
 func _animate_walk() -> void:

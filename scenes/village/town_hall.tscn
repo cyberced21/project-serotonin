@@ -23,7 +23,7 @@ transform = Transform3D(1.0000, 0, -0.0000, 0, 1, 0, 0.0000, 0, 1.0000, -2.6, 0,
 [node name="Work3" type="Marker3D" parent="Spots"]
 transform = Transform3D(1.0000, 0, -0.0000, 0, 1, 0, 0.0000, 0, 1.0000, -1.2, 0, 5.0)
 
-[node name="Bench" type="Marker3D" parent="Spots"]
+[node name="Square" type="Marker3D" parent="Spots"]
 transform = Transform3D(1.0000, 0, -0.0000, 0, 1, 0, 0.0000, 0, 1.0000, 1.0, 0, 12.5)
 
 [node name="Villager" type="AnimatableBody3D" parent="."]
