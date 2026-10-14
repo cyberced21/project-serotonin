@@ -32,6 +32,7 @@ whatever you hit.
 - **A village to build up.** Over the hills, a dirt path leads to a valley with four villagers: a woodcutter, a smith, a fisher and the mayor.
   - Talk to a villager (E) to see what their building's next tier costs, then pay with the logs, ore and fish you've gathered.
   - Every building has three tiers. The town hall's tier caps the houses, so raising it opens the next round.
+  - The village grows: raising the town hall brings new neighbours, whose cottages build themselves (Rosa the baker at tier 2, Edda the prospector at tier 3).
   - Every tier above the first gives a perk, shown in the panel:
     - Smithy: sharper tools, so a hit can count twice.
     - Woodcutter: extra logs from every tree.

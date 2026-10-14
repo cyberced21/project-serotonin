@@ -28,7 +28,8 @@ Design notes are in [village-design.md](village-design.md).
 
 - [x] **Upgrade effects:** tiers give perks (`TierEffect`, summed by `Village.stat`). Smithy: chance of a double hit. Lodge: extra logs. Fisher: calmer fish, then bonus fish. Town hall: an XP bonus.
 - [ ] **Villager rig and schedules:** real skeletal animation, a day plan, and wandering the whole valley instead of only 2–3 spots.
-- [ ] **More villagers / a growing village:** new houses and villagers unlocked by the town hall.
+- [x] **A growing village:** town hall tier 2 brings Rosa the baker's cottage, tier 3 Edda the prospector's. They build themselves when unlocked (`Building.unlock_hall_tier`).
+- [ ] **Give the newcomers a job:** Rosa and Edda only chat. They could trade, or give perks that use birch, pine, coal and gold.
 - [x] **Sitting:** villagers idling on a `Bench` spot sit on the seat (`Villager._animate_sit`).
 - [x] **Talk ray occlusion:** a villager behind a pole still counts if their head, chest or hips is in plain sight (`player.gd` `_villager_behind_clutter`).
 - [ ] **Interiors:** buildings are solid shells. Could have doors you walk through.

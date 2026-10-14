@@ -614,6 +614,95 @@ def town_hall():
     export(os.path.join("village", "town_hall"))
 
 
+# --- cottages (unlocked by the town hall; one tier) -------------------------------------------
+
+def cottage(name, seed, walls, roof, extra):
+    """A small cottage, 4 x 3.5 m: stone footing, walls, gable roof, chimney, door and windows.
+    `extra(k)` adds the yard (garden bed, ore pile...)."""
+    reset()
+    k = Kit("T1", seed)
+    for x in (-1.35, 0.0, 1.35):
+        k.stone("Footing", (1.35, 0.4, 0.3), (x, -1.75, 0.15))
+        k.stone("Footing", (1.35, 0.4, 0.3), (x, 1.75, 0.15))
+    for sx in (-1, 1):
+        k.stone("Footing", (0.4, 3.1, 0.3), (sx * 2.0, 0, 0.15))
+    for sx in (-1, 1):
+        k.box("Wall", (1.45, 0.16, 2.1), (sx * 1.27, -1.75, 1.35), walls)
+        k.window((sx * 1.27, -1.85, 1.5), (0.6, 0.55))
+        k.box("Wall", (0.16, 3.4, 2.1), (sx * 2.0, 0, 1.35), walls)
+    k.box("Wall", (1.1, 0.16, 0.4), (0, -1.75, 2.2), walls)
+    k.box("Wall", (4.0, 0.16, 2.1), (0, 1.75, 1.35), walls)
+    for sx in (-1, 1):
+        k.gable("Gable", 1.8, 2.4, 3.4, sx * 2.0, 0.16, walls)
+    k.door((0, -1.8, 0.3), (0.95, 1.85), "wood.2")
+    k.gable_roof("Roof", 4.6, 1.75, 2.42, 3.5, 0.4, 2, roof)
+    for i in range(6):
+        k.stone("Chimney", (0.5, 0.5, 0.45), (1.3, 0.8, 2.6 + i * 0.4), ("stone.4", "stone.3", "stone.2", "stone.5"))
+    k.empty("Smoke", (1.3, 0.8, 5.1))
+    k.box("Step", (1.1, 0.35, 0.18), (0, -2.05, 0.09), ("stone.5", "stone.4", "stone.3"))
+    extra(k)
+    export(os.path.join("village", name))
+
+
+def baker_cottage():
+    def garden(k):  # a flower bed with a little fence, front left
+        k.box("Bed", (1.6, 0.9, 0.18), (-2.6, -3.0, 0.09), ("terrain.dirt", "wood.2", "wood.1"))
+        colors = ["accent.7", "accent.3", "neutral.7", "accent.6", "accent.1"]
+        for i in range(8):
+            k.box("Flower", (0.14, 0.14, 0.2), (-3.2 + (i % 4) * 0.4, -3.2 + (i // 4) * 0.4, 0.28), colors[i % 5], jit=0.02)
+        for x in (-3.5, -2.6, -1.7):
+            k.post("FencePost", 0.04, 0, 0.6, x, -3.55, ("wood.5", "wood.4", "wood.3"))
+        k.box("FenceRail", (1.9, 0.05, 0.06), (-2.6, -3.55, 0.45), "wood.5")
+        k.barrel((2.6, -1.0, 0), 0.26, 0.6)
+    cottage("baker_cottage", 801, ("neutral.6", "neutral.6", "neutral.5", "wood.7"),
+            ("wood.2", "wood.2", "wood.1", "wood.3"), garden)
+
+
+def prospector_cottage():
+    def ore_pile(k):  # sorted rocks out front right: coal, gold, copper
+        for i, c in enumerate(("ore.coal", "ore.gold", "ore.copper", "ore.coal", "stone.3", "ore.gold")):
+            a = i * math.tau / 6
+            k.add("Ore", blob(0.18, k.rng, jitter_amount=0.3, squash=(1.1, 1.0, 0.75)), (c, c, "stone.2"),
+                  (2.6 + math.cos(a) * 0.35, -2.9 + math.sin(a) * 0.35, 0.12))
+        k.add("Ore", blob(0.22, k.rng, jitter_amount=0.3), ("stone.4", "stone.3", "stone.2"), (2.6, -2.9, 0.3))
+        k.crate((-2.6, -2.4, 0), 0.55)
+        k.box("Sieve", (0.6, 0.6, 0.08), (-2.6, -2.4, 0.55), ("metal.3", "wood.4", "wood.3"))
+    cottage("prospector_cottage", 802, ("stone.4", "stone.4", "stone.3", "stone.5"),
+            ("stone.1", "stone.1", "stone.0", "stone.2"), ore_pile)
+
+
+def baker_villager():
+    def hat(k, p):  # a tall white baker's hat
+        attach(k, p["Head"], "HatBand", prism(10, 0.2, 0.2, 0.08), "neutral.6", (0, 0, 1.47))
+        attach(k, p["Head"], "HatPuff", blob(0.2, k.rng, jitter_amount=0.12, squash=(1.1, 1.1, 0.9)), "neutral.7", (0, 0, 1.62))
+
+    def extra(k, p):  # flour-dusted apron
+        attach(k, p["Body"], "Apron", box((0.44, 0.04, 0.6)), ("neutral.7", "neutral.6", "neutral.6"), (0, -0.18, 0.66))
+
+    def prop(k, p):  # a rolling pin
+        attach(k, p["ArmR"], "PropPin", prism(8, 0.04, 0.04, 0.4), "wood.6", (0.32, -0.08, 0.5), (0, math.pi / 2, 0))
+
+    villager("baker", "accent.7", "neutral.7", "wood.2", hat=hat, extra=extra, prop=prop)
+
+
+def prospector_villager():
+    def hat(k, p):  # a miner's helmet with a lamp
+        attach(k, p["Head"], "Helmet", prism(10, 0.22, 0.17, 0.16), ("wood.5", "wood.4", "wood.3"), (0, 0, 1.5))
+        attach(k, p["Head"], "HelmetBrim", prism(10, 0.26, 0.26, 0.03), "wood.4", (0, 0, 1.43))
+        attach(k, p["Head"], "HelmetLamp", box((0.08, 0.05, 0.07)), "accent.3", (0, -0.24, 1.52))
+
+    def extra(k, p):  # braces and a beard
+        for sx in (-1, 1):
+            attach(k, p["Body"], "Brace", box((0.06, 0.34, 0.5)), "wood.1", (sx * 0.13, 0, 0.8))
+        attach(k, p["Head"], "Beard", box((0.32, 0.08, 0.16)), "neutral.5", (0, -0.2, 1.12))
+
+    def prop(k, p):  # a small pick
+        attach(k, p["ArmR"], "PropHandle", box((0.04, 0.45, 0.04)), ("wood.6", "wood.4", "wood.3"), (0.32, -0.18, 0.5))
+        attach(k, p["ArmR"], "PropHead", box((0.04, 0.05, 0.34)), "metal.3", (0.32, -0.4, 0.5))
+
+    villager("prospector", "accent.2", "accent.2", "accent.4", hat=hat, extra=extra, prop=prop)
+
+
 # --- villagers --------------------------------------------------------------------------------
 
 def pivot_box(k, name, size, pivot, offset, colors, parent=None):
@@ -799,7 +888,8 @@ def signpost():
 
 
 os.makedirs(os.path.join(VILLAGE_DIR, "props"), exist_ok=True)
-for build in (woodcutter, smithy, fisher, town_hall,
+for build in (woodcutter, smithy, fisher, town_hall, baker_cottage, prospector_cottage,
               woodcutter_villager, smith_villager, fisher_villager, mayor_villager,
+              baker_villager, prospector_villager,
               bench, lamp_post, barrel_prop, crate_prop, signpost):
     build()

@@ -18,6 +18,8 @@
 [ext_resource type="PackedScene" path="res://scenes/village/woodcutter.tscn" id="15_woodcutter"]
 [ext_resource type="PackedScene" path="res://scenes/village/smithy.tscn" id="16_smithy"]
 [ext_resource type="PackedScene" path="res://scenes/village/fisher.tscn" id="17_fisher"]
+[ext_resource type="PackedScene" path="res://scenes/village/baker_cottage.tscn" id="55_baker"]
+[ext_resource type="PackedScene" path="res://scenes/village/prospector_cottage.tscn" id="56_prospector"]
 [ext_resource type="Script" path="res://scripts/prop.gd" id="18_prop"]
 [ext_resource type="PackedScene" path="res://models/village/props/bench.glb" id="19_bench"]
 [ext_resource type="PackedScene" path="res://models/village/props/lamp_post.glb" id="20_lamp"]
@@ -592,6 +594,14 @@ rotation = Vector3(0, -2.4, 0)
 
 [node name="Fisher" parent="Village" instance=ExtResource("17_fisher")]
 position = Vector3(88, 0, 54)
+
+[node name="BakerCottage" parent="Village" instance=ExtResource("55_baker")]
+position = Vector3(86, 0, 27)
+rotation = Vector3(0, 1.5708, 0)
+
+[node name="ProspectorCottage" parent="Village" instance=ExtResource("56_prospector")]
+position = Vector3(106, 0, 63)
+rotation = Vector3(0, 3.1416, 0)
 
 [node name="Props" type="Node3D" parent="Village"]
 

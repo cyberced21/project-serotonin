@@ -10,7 +10,7 @@ extends AnimatableBody3D
 ## upgrade panel. When its building is upgraded, it cheers.
 
 enum State { IDLE, WALK, WORK, TALK, CHEER }
-enum Work { CHOP, HAMMER, FISH, ORATE }
+enum Work { CHOP, HAMMER, FISH, ORATE, TEND }
 
 const PALETTE := preload("res://materials/node_palette.tres")
 const CHOP_SFX := preload("res://audio/wood_hit.tres")
@@ -46,6 +46,7 @@ var _anim_hit := false  # one sound per work swing
 var _yaw := 0.0
 var _hurry := 1.0  # walk speed multiplier
 var _inside := false  # gone home for the night
+var _away := false  # the building isn't there yet
 var _visiting := false  # stepped out at night because the player came to the door
 var _model: Node3D
 var _shape: CollisionShape3D
@@ -183,6 +184,15 @@ func _physics_process(delta: float) -> void:
 			_player.global_position.z - global_position.z).length()
 	var panel := get_tree().get_first_node_in_group("upgrade_panel") as UpgradePanel
 	var talking := (panel != null and panel.villager == self) or to_player < talk_radius
+
+	# not moved in yet (a cottage the town hall hasn't unlocked)
+	var away := building.tier_shown == 0
+	if away != _away:
+		_away = away
+		_model.visible = not away and not _inside
+		_shape.set_deferred("disabled", away or _inside)
+	if away:
+		return
 
 	if state == State.CHEER:
 		_cheer_time += delta
@@ -464,6 +474,12 @@ func _animate_work() -> void:
 			_pose(&"ArmR", -0.95 - twitch, 0.05)
 			_pose(&"ArmL", -0.9 - twitch * 0.5, -0.15)
 			_pose(&"Body", 0.0, 0.0, 0.0, Vector3(0, sin(_phase * 1.5) * 0.01, 0))
+		Work.TEND:
+			# bent over the garden: hands working in turn
+			var a := sin(_phase * 2.6)
+			_pose(&"ArmR", -1.1 + a * 0.35, 0.1)
+			_pose(&"ArmL", -1.1 - a * 0.35, -0.1)
+			_pose(&"Body", -0.35, 0.0, 0.0, Vector3(0, -0.03, 0))
 		Work.ORATE:
 			# hands behind the back, now and then a grand gesture
 			var g := maxf(sin(_phase * 0.9), 0.0)

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="BuildingDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
+[ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
+[ext_resource type="PackedScene" path="res://models/village/baker_cottage.glb" id="3_model"]
+
+[sub_resource type="Resource" id="Tier_1"]
+script = ExtResource("2_tier")
+name = "Cottage"
+lines = PackedStringArray("New in the village! The mayor said the town was growing, so here I am. Bread on Thursdays.", "These flowers won't water themselves. Well, they would if it rained more.", "Birch makes the best oven fire. Bright, quick, sweet-smelling. Just so you know.")
+
+[resource]
+script = ExtResource("1_def")
+id = &"baker_cottage"
+display_name = "Rosa's Cottage"
+model = ExtResource("3_model")
+tiers = Array[ExtResource("2_tier")]([SubResource("Tier_1")])
+villager_name = "Rosa"
+villager_role = "Baker"
+capped_line = ""
+night_lines = PackedStringArray("Shh, the dough's rising. Come back at dawn and you'll smell it.", "Oh! A visitor at this hour. Mind the flower bed.")

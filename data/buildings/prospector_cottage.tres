@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="BuildingDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
+[ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
+[ext_resource type="PackedScene" path="res://models/village/prospector_cottage.glb" id="3_model"]
+
+[sub_resource type="Resource" id="Tier_1"]
+script = ExtResource("2_tier")
+name = "Cottage"
+lines = PackedStringArray("Coal by the pass, gold up in the foothills of the peak. You'll need a good arm for both.", "Sorting rock is half the job. The other half is carrying it home.", "Pine burns long and hot. When the smithy wants a hotter forge, that's what they'll ask for.")
+
+[resource]
+script = ExtResource("1_def")
+id = &"prospector_cottage"
+display_name = "Edda's Cottage"
+model = ExtResource("3_model")
+tiers = Array[ExtResource("2_tier")]([SubResource("Tier_1")])
+villager_name = "Edda"
+villager_role = "Prospector"
+capped_line = ""
+night_lines = PackedStringArray("Lamp's still lit, I'm still sorting. What've you found?", "The stars are out. Good night for walking the hills, if you mind your footing.")

@@ -30,7 +30,7 @@ cost = Dictionary[StringName, int]({
 &"ore": 10,
 &"perch": 5
 })
-lines = PackedStringArray("A red roof! The whole valley can see we mean business now.", "The others may build their second tier. Go on, they've been asking.", "One more push and we'll have a hall with a bell tower. Imagine it!")
+lines = PackedStringArray("A red roof! The whole valley can see we mean business now.", "The others may build their second tier. And look, a new neighbour: Rosa the baker has moved in!", "One more push and we'll have a hall with a bell tower. Imagine it!")
 effects = Array[ExtResource("4_effect")]([SubResource("Effect_2_0")])
 
 [sub_resource type="Resource" id="Tier_3"]
@@ -43,7 +43,7 @@ cost = Dictionary[StringName, int]({
 &"iron": 10,
 &"trout": 10
 })
-lines = PackedStringArray("A bell tower and a clock! Nobody will ever be late again. Probably.", "Every house may now build as grand as it likes. Within reason. Mine is still the grandest.", "Look at this village. You did this, you know.")
+lines = PackedStringArray("A bell tower and a clock! Nobody will ever be late again. Probably.", "Every house may now build as grand as it likes. Within reason. Mine is still the grandest.", "Look at this village. A prospector, even! Edda arrived the day the bell went up. You did this, you know.")
 effects = Array[ExtResource("4_effect")]([SubResource("Effect_3_0")])
 
 [resource]

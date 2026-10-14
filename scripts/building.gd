@@ -8,6 +8,8 @@ extends Node3D
 ##   3. a settle bounce, a burst, the tier's name, and the villager cheers (upgraded signal)
 ## Children: Spots (Marker3Ds the villager walks between — see Villager) and the Villager.
 ## Empties in the model named *Smoke* get chimney smoke while their tier is shown.
+## With unlock_hall_tier set, the building (and its villager) isn't there at all until the town
+## hall reaches that tier; then it builds itself piece by piece, like an upgrade.
 
 signal upgraded(tier: int)
 
@@ -22,6 +24,8 @@ const MAX_TOKS := 14
 const POPUP_COLOR := Color("ffd27a")
 
 @export var def: BuildingDef
+## Builds itself when the town hall reaches this tier (0 = always there).
+@export var unlock_hall_tier := 0
 @export_group("Upgrade feel")
 ## Seconds the old tier takes to collapse (all pieces), and the new one to build up.
 @export var collapse_time := 0.45
@@ -50,8 +54,12 @@ func _ready() -> void:
 	Village.register_building(def)
 	_build_tiers()
 	_build_effects()
-	_show_tier(Village.tier(def.id))
+	_show_tier(Village.tier(def.id) if is_unlocked() else 0)
 	Village.tier_changed.connect(_on_tier_changed)
+
+
+func is_unlocked() -> bool:
+	return unlock_hall_tier <= 0 or Village.tier(Village.TOWN_HALL) >= unlock_hall_tier
 
 
 ## The marker the villager uses for `spot` (Door, Bench, Work1..3), or null.
@@ -166,7 +174,12 @@ func _set_collision(t: int, on: bool) -> void:
 # --- the upgrade ----------------------------------------------------------------------------
 
 func _on_tier_changed(id: StringName, t: int) -> void:
-	if id == def.id and t != tier_shown:
+	if id == Village.TOWN_HALL and id != def.id and unlock_hall_tier > 0:
+		if is_unlocked() and tier_shown == 0:
+			_play_upgrade(0, Village.tier(def.id))  # the town hall grew: move in
+		elif not is_unlocked() and tier_shown > 0:
+			_show_tier(0)  # (debug: the hall went back down)
+	elif id == def.id and t != tier_shown and is_unlocked():
 		_play_upgrade(tier_shown, t)
 
 
@@ -176,7 +189,9 @@ func _play_upgrade(from: int, to: int) -> void:
 	_show_tier(from)  # snap any half-played animation to a clean start
 
 	# 1. out with the old: top pieces first, squashing down into the dust
-	var old := _pieces(from)
+	var old: Array[Node3D] = []
+	if from > 0:  # (from 0: a new building going up where there was nothing)
+		old = _pieces(from)
 	old.sort_custom(func(a: Node3D, b: Node3D) -> bool: return _bottom(a) > _bottom(b))
 	_dust.restart()
 	_play(_thud, THUD_SFX, 0.7)
@@ -191,12 +206,13 @@ func _play_upgrade(from: int, to: int) -> void:
 	await get_tree().create_timer(collapse_time + 0.16).timeout
 	if run != _run:
 		return
-	_set_collision(from, false)
-	_tiers[from].visible = false
+	if from > 0:
+		_set_collision(from, false)
+		_tiers[from].visible = false
+		for s in _smoke[from]:
+			(s as CPUParticles3D).emitting = false
 	for p in old:
 		p.transform = _homes[p]
-	for s in _smoke[from]:
-		(s as CPUParticles3D).emitting = false
 
 	# 2. in with the new: bottom pieces first, each springing up out of the ground
 	tier_shown = to

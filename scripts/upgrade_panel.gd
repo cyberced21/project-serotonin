@@ -120,6 +120,7 @@ func _refresh() -> void:
 	for c in _costs.get_children():
 		c.queue_free()
 	var next := Village.next_tier(def.id)
+	_next.visible = def.max_tier() > 1  # homes with a single tier: just a chat
 	if next == null:
 		_next.text = "Fully upgraded!"
 		_next.add_theme_color_override("font_color", HAVE_COLOR)

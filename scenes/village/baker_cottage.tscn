@@ -1,0 +1,27 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/building.gd" id="1_building"]
+[ext_resource type="Resource" path="res://data/buildings/baker_cottage.tres" id="2_def"]
+[ext_resource type="Script" path="res://scripts/villager.gd" id="3_villager"]
+[ext_resource type="PackedScene" path="res://models/village/villager_baker.glb" id="4_model"]
+
+[node name="BakerCottage" type="Node3D"]
+script = ExtResource("1_building")
+def = ExtResource("2_def")
+unlock_hall_tier = 2
+
+[node name="Spots" type="Node3D" parent="."]
+
+[node name="Door" type="Marker3D" parent="Spots"]
+transform = Transform3D(1.0000, 0, -0.0000, 0, 1, 0, 0.0000, 0, 1.0000, 0, 0, 3.0)
+
+[node name="Work1" type="Marker3D" parent="Spots"]
+transform = Transform3D(1.0000, 0, -0.0000, 0, 1, 0, 0.0000, 0, 1.0000, -2.6, 0, 2.2)
+
+[node name="Square" type="Marker3D" parent="Spots"]
+transform = Transform3D(1.0000, 0, -0.0000, 0, 1, 0, 0.0000, 0, 1.0000, -11.0, 0, 10.0)
+
+[node name="Villager" type="AnimatableBody3D" parent="."]
+script = ExtResource("3_villager")
+model = ExtResource("4_model")
+work = 4
