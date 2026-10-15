@@ -22,6 +22,7 @@ const WORLD_LAYER := 1
 const MIN_COLLIDER_VOLUME := 0.004
 const MAX_TOKS := 14
 const POPUP_COLOR := Color("ffd27a")
+const CRYSTAL_GLOW := Color(0.7, 0.5, 1.0)
 
 @export var def: BuildingDef
 ## Builds itself when the town hall reaches this tier (0 = always there).
@@ -126,15 +127,21 @@ func _build_tiers() -> void:
 	inst.free()
 
 
-## Lamps and lanterns glow and light up after dark; window glass glows as if lit inside.
+## Lamps and lanterns glow and light up after dark; window glass glows as if lit inside. Crystal
+## pieces (the smithy's crystal forge) glow violet, and its crystal lanterns cast violet light.
 static func _mark_night_glow(m: MeshInstance3D) -> void:
 	var n := String(m.name).to_lower()
 	if n.contains("post"):
 		return
 	if n.contains("lantern") or n.contains("_lamp"):
 		DayNightSky.make_glow(m, true)
-	elif n.contains("windowglass"):
+	elif n.contains("windowglass") or n.contains("crystal"):
 		DayNightSky.make_glow(m)
+	if n.contains("crystal"):
+		m.set_instance_shader_parameter("glow_tint", CRYSTAL_GLOW)
+		for light in m.get_children():
+			if light is OmniLight3D:
+				(light as OmniLight3D).light_color = CRYSTAL_GLOW
 
 
 static func _tier_of(node_name: String) -> int:

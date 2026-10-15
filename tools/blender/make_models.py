@@ -171,6 +171,155 @@ def gold_rock():
     rock("gold_rock", seed=14, stone_shades=("stone.6", "stone.4", "stone.2", "stone.5"),
          ore=("ore.gold", "accent.2"), size=0.95, ore_chance=0.35, ore_everywhere=True)
 
+def shard(rng, length, radius):
+    """A six-sided crystal: a column ending in a point, base at the origin's -length/2."""
+    bm = prism(6, radius, radius * 0.12, length)
+    jitter(bm, 0.06, rng)
+    paint(bm, lambda f: "ore.amethyst" if f.normal.z > 0.2 or rng.random() < 0.7 else "accent.6")
+    return bm
+
+
+def tilted(base, length, tilt, azimuth):
+    """Centre of a column standing on `base`, leaning `tilt` out toward `azimuth` (Euler (0, tilt,
+    azimuth) turns +Z into this direction)."""
+    d = (math.sin(tilt) * math.cos(azimuth), math.sin(tilt) * math.sin(azimuth), math.cos(tilt))
+    return tuple(b + c * length / 2 for b, c in zip(base, d))
+
+
+def crystal_rock():
+    """A dark stone base bristling with violet crystals (Mining 40): the crystals are the chunks
+    that break off, the base stays, two stubs are left while it grows back."""
+    reset()
+    rng = random.Random(15)
+    bm = blob(0.5, rng, squash=(1.15, 1.0, 0.5))
+    paint(bm, shade_by_normal("stone.2", "stone.1", "stone.0", rng, side_alt="neutral.2"))
+    make_object("Body_Core", bm, (0, 0, 0.18))
+    shards = [  # (length, radius, tilt, azimuth)
+        (1.15, 0.16, 0.12, 0.0), (0.85, 0.13, 0.55, 0.4), (0.75, 0.12, 0.6, 2.2),
+        (0.9, 0.13, 0.5, 3.6), (0.6, 0.1, 0.75, 5.0),
+    ]
+    for i, (length, radius, tilt, a) in enumerate(shards):
+        base = (math.cos(a) * 0.16 * (i > 0), math.sin(a) * 0.16 * (i > 0), 0.3)
+        make_object(f"Chunk_{'ABCDE'[i]}", shard(rng, length, radius), tilted(base, length, tilt, a), (0, tilt, a))
+    for i, (a, length) in enumerate(((1.2, 0.22), (4.2, 0.18))):
+        base = (math.cos(a) * 0.2, math.sin(a) * 0.2, 0.28)
+        make_object(f"Rubble_{i}", shard(rng, length, 0.09), tilted(base, length, 0.4, a), (0, 0.4, a))
+    export("crystal_rock")
+
+
+def crystal_item():
+    reset()
+    rng = random.Random(39)
+    bm = blob(0.09, rng, jitter_amount=0.25, squash=(1.2, 1.0, 0.5))
+    paint(bm, shade_by_normal("stone.3", "stone.2", "stone.1", rng))
+    make_object("Base", bm, (0, 0, -0.02))
+    for i, (length, tilt, a) in enumerate(((0.26, 0.15, 0.5), (0.2, 0.7, 2.6), (0.17, 0.75, 4.6))):
+        base = (math.cos(a) * 0.04 * (i > 0), math.sin(a) * 0.04 * (i > 0), 0.0)
+        make_object(f"Shard{i}", shard(rng, length, 0.045), tilted(base, length, tilt, a), (0, tilt, a))
+    merge_all("Item")
+    export(os.path.join("items", "crystal"))
+
+
+# --- quarry props (scenes/biomes/quarry.tscn) -------------------------------------------------
+
+def plank(name, size, loc, rng, rot=(0, 0, 0), shades=("wood.5", "wood.4", "wood.3", "wood.4")):
+    bm = box(size)
+    jitter(bm, 0.03, rng)
+    paint(bm, shade_by_normal(shades[0], shades[1], shades[2], rng, side_alt=shades[3]))
+    return make_object(name, bm, loc, rot)
+
+
+def scaffold(name, seed, height, width=3.0, depth=1.6):
+    """Timber scaffolding with a plank deck `height` up: posts, a cross brace, a toe board.
+    Its whole box is solid in the game, so the deck is a step to mantle onto."""
+    reset()
+    rng = random.Random(seed)
+    for x in (-width / 2 + 0.1, width / 2 - 0.1):
+        for y in (-depth / 2 + 0.1, depth / 2 - 0.1):
+            plank("Post", (0.14, 0.14, height), (x, y, height / 2), rng, shades=("wood.3", "wood.2", "wood.1", "wood.3"))
+    for i in range(5):
+        plank(f"Deck{i}", (width, depth / 5 - 0.02, 0.07), (0, -depth / 2 + depth / 10 + i * depth / 5, height - 0.035),
+              rng, (0, 0, rng.uniform(-0.02, 0.02)))
+    brace = math.atan2(height - 0.4, width - 0.3)
+    plank("Brace", (math.hypot(width - 0.3, height - 0.4), 0.08, 0.1), (0, depth / 2 - 0.05, height / 2), rng,
+          (0, -brace, 0), shades=("wood.3", "wood.3", "wood.2", "wood.2"))
+    plank("ToeBoard", (width, 0.05, 0.18), (0, -depth / 2 + 0.03, height + 0.09), rng)
+    merge_all("Scaffold")
+    export(os.path.join("quarry", name))
+
+
+def ladder(name="ladder", length=5.6, lean=0.22):
+    """Two rails and rungs, leaning back `lean` radians (set against a wall). Just for looks."""
+    reset()
+    rng = random.Random(70)
+    up = (0, math.sin(lean), math.cos(lean))
+    for x in (-0.25, 0.25):
+        plank("Rail", (0.08, 0.08, length), (x, up[1] * length / 2, up[2] * length / 2), rng, (-lean, 0, 0),
+              shades=("wood.4", "wood.3", "wood.2", "wood.3"))
+    for i in range(int(length / 0.35)):
+        d = 0.3 + i * 0.35
+        plank(f"Rung{i}", (0.5, 0.05, 0.05), (0, up[1] * d, up[2] * d), rng, (-lean, 0, 0))
+    merge_all("Ladder")
+    export(os.path.join("quarry", name))
+
+
+def crane():
+    """A timber derrick on the rim: an A-frame, a boom reaching out over the pit (-Y), a rope
+    and a stone bucket hanging off its end, a winch drum and counterweight stones."""
+    reset()
+    rng = random.Random(71)
+    wood = ("wood.3", "wood.2", "wood.1", "wood.3")
+    plank("Base", (3.0, 2.4, 0.3), (0, 1.0, 0.15), rng, shades=wood)
+    for x in (-1.1, 1.1):
+        plank("Leg", (0.22, 0.22, 6.2), (x * 0.55, 0.6, 3.0), rng, (0, x * 0.17, 0), shades=wood)
+    plank("BackLeg", (0.2, 0.2, 6.4), (0, 1.9, 3.0), rng, (-0.42, 0, 0), shades=wood)
+    plank("Cap", (0.6, 0.6, 0.4), (0, 0.6, 6.0), rng, shades=wood)
+    boom = 0.35  # rises toward its tip
+    length = 7.5
+    plank("Boom", (0.2, length, 0.2), (0, 0.6 - math.cos(boom) * length / 2, 5.9 + math.sin(boom) * length / 2), rng,
+          (boom, 0, 0), shades=wood)
+    tip = (0, 0.6 - math.cos(boom) * length, 5.9 + math.sin(boom) * length)
+    rope = tip[2] - 2.0
+    plank("Rope", (0.04, 0.04, rope), (0, tip[1], tip[2] - rope / 2), rng, shades=("wood.6",) * 4)
+    bucket = prism(8, 0.45, 0.55, 0.6)
+    paint(bucket, shade_by_normal("stone.3", "metal.2", "metal.1", rng, side_alt="metal.3"))
+    make_object("Bucket", bucket, (0, tip[1], 1.7))
+    for i, x in enumerate((-0.25, 0.25)):
+        drum = prism(10, 0.3, 0.3, 0.5)
+        paint(drum, shade_by_normal("wood.5", "wood.4", "wood.3", rng))
+        make_object(f"Drum{i}", drum, (x * 3.6, 1.0, 0.75), (0, math.pi / 2, 0))
+    for i in range(3):
+        bm = blob(0.42, rng, jitter_amount=0.25, squash=(1.1, 1.0, 0.7))
+        paint(bm, shade_by_normal("stone.5", "stone.4", "stone.2", rng))
+        make_object(f"Weight{i}", bm, (-0.7 + i * 0.7, 1.9, 0.55))
+    merge_all("Crane")
+    export(os.path.join("quarry", "crane"))
+
+
+def quarry_rubble():
+    """Scenery: a little spill of pale broken stone, one merged mesh."""
+    reset()
+    rng = random.Random(72)
+    for i in range(6):
+        r = rng.uniform(0.1, 0.28)
+        bm = blob(r, rng, jitter_amount=0.35, squash=(1.2, 1.0, 0.6), subdiv=0)
+        paint(bm, shade_by_normal("stone.6", "stone.5", "stone.3", rng, side_alt="stone.4"))
+        a, d = rng.uniform(0, math.tau), rng.uniform(0, 0.5)
+        make_object(f"Stone{i}", bm, (math.cos(a) * d, math.sin(a) * d, r * 0.3))
+    merge_all("Rubble")
+    export(os.path.join("scenery", "quarry_rubble"))
+
+
+def quarry():
+    crystal_rock()
+    crystal_item()
+    scaffold("scaffold_low", 73, 1.8)
+    scaffold("scaffold_high", 74, 3.6)
+    ladder()
+    crane()
+    quarry_rubble()
+
+
 # The starter tree's canopy: (radius, jitter, squash, location, rotation) per blob.
 TREE_CANOPY = [
     (1.25, 0.2, (1.0, 1.0, 0.72), (0, 0, 3.5), (0, 0, 0.4)),
@@ -833,9 +982,10 @@ if __name__ == "__main__":  # make_village.py imports the helpers above without 
     os.makedirs(os.path.join(OUT_DIR, "scenery"), exist_ok=True)
     os.makedirs(os.path.join(OUT_DIR, "fish"), exist_ok=True)
     os.makedirs(os.path.join(OUT_DIR, "items"), exist_ok=True)
+    os.makedirs(os.path.join(OUT_DIR, "quarry"), exist_ok=True)
     builds = (rock, iron_rock, tree, oak, pickaxe, axe, spear, perch, trout, pike, log_item, ore_item,
               oak_item, iron_item, reeds, lily_pad, lily_flower, shore_stone, scenery, ruins,
-              coal_rock, gold_rock, birch, pine, more_items, arctic_char, forest)
+              coal_rock, gold_rock, birch, pine, more_items, arctic_char, forest, quarry)
     only = argv[2:]  # optional: names of the builders to run (e.g. `forest`), instead of all of them
     for build in builds:
         if not only or build.__name__ in only:

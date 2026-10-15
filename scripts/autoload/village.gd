@@ -2,8 +2,8 @@ extends Node
 ## The village's progress: which tier every building is at. Buildings in the world are views of
 ## this — they register their BuildingDef here, read their tier on load and animate when
 ## tier_changed fires. Later mechanics (upgrade effects) hook into tier_changed too.
-## Rule: no house may be upgraded past the town hall's tier; the town hall is capped only by
-## its own number of tiers.
+## Rule: no house may be upgraded past the town hall's tier (unless the tier says otherwise, see
+## BuildingTier.hall_tier); the town hall is capped only by its own number of tiers.
 ## Saved by building id (BuildingDef.id), not by scene path, so moving buildings is safe.
 
 signal tier_changed(id: StringName, tier: int)
@@ -41,7 +41,10 @@ func next_tier(id: StringName) -> BuildingTier:
 
 ## True when the next tier exists but the town hall isn't high enough for it yet.
 func is_capped(id: StringName) -> bool:
-	return id != TOWN_HALL and next_tier(id) != null and tier(id) + 1 > tier(TOWN_HALL)
+	var next := next_tier(id)
+	if id == TOWN_HALL or next == null:
+		return false
+	return (next.hall_tier if next.hall_tier > 0 else tier(id) + 1) > tier(TOWN_HALL)
 
 
 ## The total of a perk (see TierEffect) over every building's current tier.
@@ -126,5 +129,5 @@ func _debug_cycle_tiers() -> void:
 	if hall and tier(TOWN_HALL) < hall.max_tier():
 		_set_tier(TOWN_HALL, tier(TOWN_HALL) + 1)
 	for id in _defs:
-		if id != TOWN_HALL and tier(id) < mini(_defs[id].max_tier(), tier(TOWN_HALL)):
+		if id != TOWN_HALL and next_tier(id) != null and not is_capped(id):
 			_set_tier(id, tier(id) + 1)

@@ -21,11 +21,14 @@ uniform vec3 highlight_color : source_color = vec3(1.0, 0.92, 0.6);
 // 0..1: lamps, lanterns and windows lit after dark (set by DayNightSky).
 instance uniform float glow = 0.0;
 uniform vec3 glow_color : source_color = vec3(1.0, 0.74, 0.4);
+// Per-instance glow colour instead of the warm lamp one, used when its alpha is 1 (crystals).
+instance uniform vec4 glow_tint : source_color = vec4(1.0, 1.0, 1.0, 0.0);
 
 void fragment() {
 	float rim = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 2.0);
 	vec3 base = texture(palette, UV).rgb * albedo.rgb;
-	ALBEDO = mix(mix(base, glow_color, glow * 0.6), vec3(1.0), flash);
+	vec3 lit = mix(glow_color, glow_tint.rgb, glow_tint.a);
+	ALBEDO = mix(mix(base, lit, glow * 0.6), vec3(1.0), flash);
 	ROUGHNESS = 1.0;
-	EMISSION = vec3(flash) * 0.6 + highlight_color * (0.08 + rim * 0.5) * highlight + glow_color * glow * 2.0;
+	EMISSION = vec3(flash) * 0.6 + highlight_color * (0.08 + rim * 0.5) * highlight + lit * glow * 2.0;
 }

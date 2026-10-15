@@ -19,6 +19,9 @@ const MAX_TRIES_PER_NODE := 40
 @export var save_prefix := "spawned"
 ## World XZ rectangle to place in (x, z, width, depth).
 @export var area := Rect2(-20, -20, 40, 40)
+## Or a ring instead (centre x, z, inner radius, outer radius): one level of the quarry. An outer
+## radius of 0 = use `area`.
+@export var ring := Vector4.ZERO
 ## Only on these terrain texture ids (WorldMap.TEX_*). Empty = anywhere that isn't bare.
 @export var allowed_ids: Array[int] = []
 ## Minimum distance between nodes (this spawner's and any already in the world).
@@ -66,6 +69,9 @@ func _spawn() -> void:
 		var spot := hotspots[rng.randi() % maxi(hotspots.size(), 1)] if not hotspots.is_empty() else Vector3.ZERO
 		var off := Vector2.from_angle(rng.randf() * TAU) * sqrt(rng.randf()) * spot.z
 		var anywhere := Vector2(rng.randf_range(area.position.x, area.end.x), rng.randf_range(area.position.y, area.end.y))
+		if ring.w > 0.0:  # spread evenly over the ring's area
+			var r := sqrt(lerpf(ring.z * ring.z, ring.w * ring.w, (anywhere.x - area.position.x) / area.size.x))
+			anywhere = Vector2(ring.x, ring.y) + Vector2.from_angle((anywhere.y - area.position.y) / area.size.y * TAU) * r
 		var pick := rng.randf()
 		var yaw := rng.randf() * TAU
 		var p := Vector2(spot.x, spot.y) + off if in_hotspot else anywhere
@@ -89,7 +95,11 @@ func _spawn() -> void:
 
 ## The ground point at `p` if a node may stand there, else null.
 func _ground(terrain: Terrain3D, p: Vector2) -> Variant:
-	if not area.has_point(p):
+	if ring.w > 0.0:
+		var d := p.distance_to(Vector2(ring.x, ring.y))
+		if d < ring.z or d > ring.w:
+			return null
+	elif not area.has_point(p):
 		return null
 	var at := Vector3(p.x, 0.0, p.y)
 	var h: float = terrain.data.get_height(at)

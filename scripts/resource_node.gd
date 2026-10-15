@@ -64,6 +64,9 @@ const FELLED_SHAPE_SCALE := 0.6
 @export var burst_color := Color("38804c")
 ## Height above the node's origin where XP / level popups appear.
 @export var popup_height := 1.6
+## Chunks glow after dark (crystal), and a small light in `glow_color` hangs over the node.
+@export var glow_at_night := false
+@export var glow_color := Color(0.7, 0.5, 1.0)
 ## How hard broken-off chunks fly away (m/s).
 @export var debris_speed := 3.0
 
@@ -128,6 +131,7 @@ const FELLED_SHAPE_SCALE := 0.6
 @onready var break_audio: AudioStreamPlayer3D = $BreakAudio
 
 var hits_left := 0
+var _cut := 0.0  # hit_power's fraction of a hit, carried over to the next one
 var _surfaces: Array[GeometryInstance3D] = []
 var _flash_tween: Tween
 var _nudge_tween: Tween
@@ -159,6 +163,8 @@ func _ready() -> void:
 		SaveGame.register(StringName("node:" + save_id), self, path_key)
 	_build_weak_point()  # after loading, so it lands on a chunk that's still there
 	_limit_drawing(self)
+	if glow_at_night:
+		_setup_glow()
 
 
 ## Moves the model's meshes into Visual/Body, Visual/Chunks and Rubble by name prefix, replacing
@@ -223,10 +229,15 @@ func hit(info: HitInfo) -> bool:
 	if not can_gather():
 		_deflect(info)
 		return false
-	# the smithy's sharper tools: sometimes a hit counts twice; the weak point always adds more
-	var double := randf() < Village.stat(&"double_hit_chance")
+	# the smithy's sharper tools: sometimes a hit counts twice, and crystal edges cut deeper every
+	# time (the fraction carries over, so +0.5 means every other hit counts twice); the weak point
+	# always adds more
+	_cut += 1.0 + Village.stat(&"hit_power")
+	var cuts := int(_cut)
+	_cut -= cuts
+	var double := randf() < Village.stat(&"double_hit_chance") or cuts > 1
 	var weak := _is_weak_hit(info)
-	hits_left = maxi(hits_left - (2 if double else 1) - (weak_point_extra_hits if weak else 0), 0)
+	hits_left = maxi(hits_left - cuts - (1 if double and cuts == 1 else 0) - (weak_point_extra_hits if weak else 0), 0)
 	if weak:
 		_weak_hit_feedback(info)
 	SaveGame.mark_dirty()
@@ -754,6 +765,24 @@ func _chips_at(info: HitInfo) -> void:
 	chips.global_position = info.position + info.normal * 0.05
 	chips.direction = chips.global_basis.inverse() * (info.normal + Vector3.UP * 0.6).normalized()
 	chips.restart()
+
+
+func _setup_glow() -> void:
+	for c in chunks.get_children():
+		if c is MeshInstance3D:
+			DayNightSky.make_glow(c)
+			(c as MeshInstance3D).set_instance_shader_parameter("glow_tint", Color(glow_color, 1.0))
+	var light := OmniLight3D.new()
+	light.light_color = glow_color
+	light.omni_range = 6.0
+	light.omni_attenuation = 1.6
+	light.shadow_enabled = false
+	light.set_meta("night_energy", 1.4)
+	light.light_energy = 0.0
+	light.visible = false
+	light.add_to_group("night_light")
+	visual.add_child(light)  # goes when the node breaks, with the rest of Visual
+	light.position = Vector3.UP * 0.9
 
 
 ## Applies draw_distance to every mesh and particle system in the node, and chunk_shadows to the
