@@ -105,6 +105,12 @@ const FELLED_SHAPE_SCALE := 0.6
 @export_range(0, 5) var weak_point_extra_hits := 1
 @export var weak_point_color := Color(1.0, 0.93, 0.55)
 
+@export_group("Performance")
+## Beyond this distance (m) the node fades out and isn't drawn at all (0 = always drawn). The
+## forest's scenery trees stand in for far-away ones.
+@export var draw_distance := 110.0
+## Chunks are small: drawing their shadows costs a pass each for little to see.
+@export var chunk_shadows := false
 @export_group("Feel")
 @export var hitstop_hit := 0.045
 @export var hitstop_break := 0.11
@@ -152,6 +158,7 @@ func _ready() -> void:
 	else:
 		SaveGame.register(StringName("node:" + save_id), self, path_key)
 	_build_weak_point()  # after loading, so it lands on a chunk that's still there
+	_limit_drawing(self)
 
 
 ## Moves the model's meshes into Visual/Body, Visual/Chunks and Rubble by name prefix, replacing
@@ -747,6 +754,20 @@ func _chips_at(info: HitInfo) -> void:
 	chips.global_position = info.position + info.normal * 0.05
 	chips.direction = chips.global_basis.inverse() * (info.normal + Vector3.UP * 0.6).normalized()
 	chips.restart()
+
+
+## Applies draw_distance to every mesh and particle system in the node, and chunk_shadows to the
+## chunks. The felled trunk and broken-off pieces are copies, so they inherit it.
+func _limit_drawing(n: Node) -> void:
+	for c in n.get_children():
+		if c is GeometryInstance3D and draw_distance > 0.0:
+			var g := c as GeometryInstance3D
+			g.visibility_range_end = draw_distance
+			g.visibility_range_end_margin = 12.0
+			g.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+		if c is GeometryInstance3D and not chunk_shadows and c.get_parent() == chunks:
+			(c as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_limit_drawing(c)
 
 
 func _collect_surfaces(n: Node) -> void:

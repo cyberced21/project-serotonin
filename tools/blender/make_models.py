@@ -2,7 +2,9 @@
 
 Run headless from the project folder (Blender 4.2+ / 5.x):
 
-    blender -b -P tools/blender/make_models.py -- models art/palette.json
+    blender -b -P tools/blender/make_models.py -- models art/palette.json [builder ...]
+
+Name builders (e.g. `forest`) to rebuild only those models.
 
 Every model is built from a few primitives with jittered vertices, flat-shaded, and coloured by
 pointing each face's UVs at a swatch of art/palette.png (looked up by name in palette.json).
@@ -653,6 +655,92 @@ def boulder(name, seed, size, squash):
     export(os.path.join("scenery", name))
 
 
+# --- forest scenery: the Pinewood's canopy and floor (not gatherable) --------------------------
+
+def canopy_pine(name, seed, height, cones, needles):
+    """A background pine: like pine() but taller, darker and one merged mesh. cones: (radius,
+    height, z) per cone of needles, bottom up; needles: (top, side, bottom, side_alt) swatches."""
+    reset()
+    rng = random.Random(seed)
+    bm = prism(6, 0.32, 0.1, height)
+    jitter(bm, 0.05, rng)
+    paint(bm, shade_by_normal("wood.2", "wood.1", "wood.0", rng, side_alt="wood.2"))
+    make_object("Trunk", bm, (0, 0, height / 2))
+    for i, (r, h, z) in enumerate(cones):
+        bm = prism(7, r, 0.05, h)
+        jitter(bm, 0.09, rng)
+        paint(bm, shade_by_normal(needles[0], needles[1], needles[2], rng, side_alt=needles[3]))
+        make_object(f"Cone{i}", bm, (0, 0, z), (0, 0, rng.uniform(0, math.tau)))
+    merge_all("Pine")
+    export(os.path.join("scenery", name))
+
+
+def canopy_birch():
+    """A background birch: pale trunk, airy canopy of three blobs, one merged mesh."""
+    reset()
+    rng = random.Random(61)
+    bm = prism(6, 0.16, 0.1, 4.2)
+    jitter(bm, 0.06, rng)
+    paint(bm, shade_by_normal("neutral.6", "neutral.5", "neutral.4", rng, side_alt="neutral.1"))
+    make_object("Trunk", bm, (0, 0, 2.1))
+    leaves = shade_by_normal("leaves.5", "leaves.4", "leaves.2", rng, side_alt="leaves.3")
+    for i, (r, loc) in enumerate(((1.0, (0, 0, 4.0)), (0.75, (0.35, -0.2, 4.8)), (0.7, (-0.4, 0.3, 4.5)))):
+        bm = blob(r, rng, jitter_amount=0.22, squash=(0.95, 0.95, 1.0))
+        paint(bm, leaves)
+        make_object(f"Canopy{i}", bm, loc)
+    merge_all("Birch")
+    export(os.path.join("scenery", "canopy_birch"))
+
+
+def fern():
+    """A low fan of fronds: flat tapering blades arching out from the middle."""
+    reset()
+    rng = random.Random(62)
+    for i in range(7):
+        a = i * math.tau / 7 + rng.uniform(-0.2, 0.2)
+        length = rng.uniform(0.45, 0.65)
+        bm = prism(3, 0.09, 0.005, length)
+        bmesh.ops.scale(bm, vec=Vector((1.0, 0.25, 1.0)), verts=bm.verts)  # flatten into a frond
+        shade = rng.choice(["leaves.3", "leaves.4", "leaves.2"])
+        paint(bm, lambda f, shade=shade: shade)
+        tilt = rng.uniform(0.9, 1.2)  # lean out from upright
+        reach = math.sin(tilt) * length / 2
+        make_object(f"Frond{i}", bm, (math.cos(a) * reach, math.sin(a) * reach, math.cos(tilt) * length / 2 + 0.04),
+                    (0, tilt, a))
+    merge_all("Fern")
+    export(os.path.join("scenery", "fern"))
+
+
+def mushrooms():
+    """A little cluster of red-capped toadstools on pale stems."""
+    reset()
+    rng = random.Random(63)
+    for i in range(4):
+        h = rng.uniform(0.07, 0.16)
+        a, r = rng.uniform(0, math.tau), rng.uniform(0.0, 0.12)
+        x, y = math.cos(a) * r, math.sin(a) * r
+        bm = prism(5, 0.018, 0.014, h)
+        paint(bm, lambda f: "neutral.6")
+        make_object(f"Stem{i}", bm, (x, y, h / 2))
+        cap = rng.uniform(0.04, 0.07)
+        bm = blob(cap, rng, jitter_amount=0.15, squash=(1.0, 1.0, 0.55), subdiv=1)
+        c = "accent.0" if i % 3 else "wood.5"
+        paint(bm, lambda f, c=c: c if f.normal.z > -0.2 else "neutral.5")
+        make_object(f"Cap{i}", bm, (x, y, h + cap * 0.2))
+    merge_all("Mushrooms")
+    export(os.path.join("scenery", "mushrooms"))
+
+
+def forest():
+    canopy_pine("canopy_pine", 60, 6.5, ((2.1, 2.2, 2.9), (1.65, 2.0, 4.3), (1.15, 1.9, 5.7), (0.6, 1.4, 6.9)),
+                ("leaves.1", "leaves.0", "leaves.0", "leaves.1"))
+    canopy_pine("canopy_pine_young", 64, 3.6, ((1.3, 1.6, 1.7), (0.95, 1.4, 2.7), (0.55, 1.2, 3.6)),
+                ("leaves.2", "leaves.1", "leaves.0", "leaves.2"))
+    canopy_birch()
+    fern()
+    mushrooms()
+
+
 # --- ruins: the parkour blocks in the clearing ------------------------------------------------
 # Each fills exactly the box its collision uses (Godot size x, y, z = width, height, depth), centred
 # on the origin, so step / ledge / mantle heights stay what they were with the greybox boxes.
@@ -745,7 +833,10 @@ if __name__ == "__main__":  # make_village.py imports the helpers above without 
     os.makedirs(os.path.join(OUT_DIR, "scenery"), exist_ok=True)
     os.makedirs(os.path.join(OUT_DIR, "fish"), exist_ok=True)
     os.makedirs(os.path.join(OUT_DIR, "items"), exist_ok=True)
-    for build in (rock, iron_rock, tree, oak, pickaxe, axe, spear, perch, trout, pike, log_item, ore_item,
-                  oak_item, iron_item, reeds, lily_pad, lily_flower, shore_stone, scenery, ruins,
-                  coal_rock, gold_rock, birch, pine, more_items, arctic_char):
-        build()
+    builds = (rock, iron_rock, tree, oak, pickaxe, axe, spear, perch, trout, pike, log_item, ore_item,
+              oak_item, iron_item, reeds, lily_pad, lily_flower, shore_stone, scenery, ruins,
+              coal_rock, gold_rock, birch, pine, more_items, arctic_char, forest)
+    only = argv[2:]  # optional: names of the builders to run (e.g. `forest`), instead of all of them
+    for build in builds:
+        if not only or build.__name__ in only:
+            build()

@@ -160,7 +160,7 @@ Idle `ResourceNode`s don't process each frame, so the cost is draw calls (each n
 ## Phases (one commit each)
 
 1. **Ground.** ✅ Shapes live in `scripts/world_map.gd`; `generate_test_terrain.gd -- --preview=map.png` writes a top-down check. Generator rework (ids 2–5, ring road, quarry pit, forest glades and trail, field swells and crop squares), shader colours, footsteps for the new ids, the baked-node height check, and debug-menu teleports to each biome.
-2. **Spawner and the Pinewood.** `NodeSpawner` (seeded, stable `save_id`s like `forest_pine_###`), canopy layers with trunk collision, ~100 trees, ferns and mushrooms, `allowed_ids`, and the performance pass with measurements.
+2. **Spawner and the Pinewood.** ✅ `scenes/biomes/pinewood.tscn`. Densest view measured at ~710 draw calls, 1.2–3.2 ms GPU between runs (1280×720). `NodeSpawner` (seeded, stable `save_id`s like `forest_pine_###`), canopy layers with trunk collision, ~100 trees, ferns and mushrooms, `allowed_ids`, and the performance pass with measurements.
 3. **Greystone Quarry and crystal.** Ore bands, the crystal node, model, icon and item, quarry props, smithy tier 4 and its perk, the hall-cap exception.
 4. **Goldmeadow and Farming lite.** Skill, sickle, wheat and barley nodes and items, wheat scatter, hay, fences, carts, windmill.
 5. **The road.** Obstacle kit, set pieces, gate, checkpoints, HUD, saved bests, medals and banners.

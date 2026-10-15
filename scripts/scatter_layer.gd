@@ -17,8 +17,13 @@ extends Resource
 @export var sway := 0.0
 ## Lean with the slope instead of standing upright (boulders).
 @export var align_to_slope := false
+## Only on these terrain texture ids (WorldMap.TEX_*). Empty = anywhere that isn't bare.
+@export var allowed_ids: Array[int] = []
 ## Give each one a collision shape (boulders). Keep this for small counts.
 @export var collide := false
+## Collision box size (at scale 1), standing on the origin, instead of the whole model's bounds:
+## a trunk you bump into (and wall-run off) without a box round the canopy. Zero = the bounds.
+@export var collision_size := Vector3.ZERO
 @export var cast_shadow := true
 ## Hidden beyond this distance (0 = always drawn). Small things vanish early to save draw time.
 @export var visible_distance := 0.0
