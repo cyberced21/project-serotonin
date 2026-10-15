@@ -19,8 +19,12 @@ const SPLASH := preload("res://audio/movement/splash.tres")
 const WET_DEPTH := 0.06
 ## Fallbacks matching the defaults in shaders/terrain_lowpoly.gdshader, used when the terrain
 ## material doesn't override them.
-## Terrain cells painted with this texture id are dirt paths (see the terrain shader's path_texture).
-const PATH_TEXTURE := 1
+## What the painted surfaces (WorldMap.TEX_*) sound like on walkable ground: dirt paths, the
+## gravel road and quarry stone crunch; forest floor, meadow and crops are grassy.
+const TEXTURE_SOUNDS := {
+	WorldMap.TEX_PATH: &"dirt", WorldMap.TEX_ROAD: &"rock", WorldMap.TEX_QUARRY: &"rock",
+	WorldMap.TEX_FOREST: &"grass", WorldMap.TEX_FIELD: &"grass", WorldMap.TEX_CROP: &"grass",
+}
 const SHADER_DEFAULTS := {
 	&"dirt_slope": 0.86, &"rock_slope": 0.68, &"sand_height": -2.0, &"snow_height": 40.0,
 }
@@ -101,8 +105,13 @@ func surface() -> StringName:
 				return &"rock"
 			if h > _param(terrain, &"snow_height"):
 				return &"snow"
-			if slope < _param(terrain, &"dirt_slope") or terrain.data.get_control_base_id(feet) == PATH_TEXTURE:
+			var id: int = terrain.data.get_control_base_id(feet)
+			if id == WorldMap.TEX_QUARRY:
+				return &"rock"
+			if slope < _param(terrain, &"dirt_slope") and id != WorldMap.TEX_ROAD:
 				return &"dirt"
+			if TEXTURE_SOUNDS.has(id):
+				return TEXTURE_SOUNDS[id]
 			if h < _param(terrain, &"sand_height"):
 				return &"sand"
 			return &"grass"

@@ -5,7 +5,7 @@ extends CanvasLayer
 ##   Skills    set levels, add XP
 ##   Village   put any building at any tier (free, ignores the town hall's cap), current perks
 ##   World     time of day, time scale, pause, regrow every node, restock every pond
-##   Teleport  to each building, pond and kind of resource node (the nearest one)
+##   Teleport  to each building, biome landmark, pond and kind of resource node (the nearest one)
 ##   Player    fly mode, a live readout (can stay pinned on screen), save / wipe the save
 ## The old F6–F10 keys still work. Toggles that stay on (fly, pause, time scale) show as a tag at
 ## the top of the screen while the menu is closed.
@@ -305,6 +305,13 @@ func _rebuild_teleports() -> void:
 	for b in get_tree().get_nodes_in_group("building"):
 		var building := b as Building
 		grid.add_child(_button(building.def.display_name, _teleport_to_building.bind(building)))
+	_teleport_box.add_child(grid)
+
+	_teleport_box.add_child(_heading("Biomes"))
+	grid = _grid(3)
+	for place in WorldMap.LANDMARKS:
+		var spot: Array = WorldMap.LANDMARKS[place]
+		grid.add_child(_button(place, _teleport.bind(spot[0], spot[1])))
 	_teleport_box.add_child(grid)
 
 	_teleport_box.add_child(_heading("Water"))

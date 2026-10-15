@@ -3,11 +3,12 @@ extends Node3D
 ## Spreads scenery (grass, flowers, bushes, boulders: one ScatterLayer each) over the terrain inside
 ## `area`, seeded so it's the same every run. Each layer is drawn with MultiMeshes, one per
 ## CELL-metre square, so far-away cells can be culled by the layer's visible_distance.
-## Keeps off: dirt paths (terrain texture PATH_TEXTURE), water and sand, ground too steep for the
-## layer, snow (plants), and the space around gatherable nodes, buildings, props (the parkour
+## Keeps off: paths, roads, quarry stone and crop squares (BARE_TEXTURES), water and sand, ground
+## too steep for the layer, snow (plants), and the space around gatherable nodes, buildings, props (the parkour
 ## ruins included) and the player's spawn.
 
-const PATH_TEXTURE := 1
+## Painted surfaces nothing grows on (see WorldMap.TEX_*).
+const BARE_TEXTURES: Array[int] = [WorldMap.TEX_PATH, WorldMap.TEX_ROAD, WorldMap.TEX_QUARRY, WorldMap.TEX_CROP]
 const PALETTE := preload("res://materials/node_palette.tres")
 const SWAY := preload("res://shaders/sway_instanced.gdshader")
 const CELL := 32.0
@@ -80,11 +81,11 @@ func _place(terrain: Terrain3D, layer: ScatterLayer, p: Vector2, s: float, yaw: 
 	var n: Vector3 = terrain.data.get_normal(at)
 	if n.y < layer.min_normal_y:
 		return null
-	if terrain.data.get_control_base_id(at) == PATH_TEXTURE:
+	if terrain.data.get_control_base_id(at) in BARE_TEXTURES:
 		return null
 	if layer.clearance > 0.0:  # bigger things keep off the path's edges too
 		for o in [Vector3(1, 0, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1), Vector3(0, 0, -1)]:
-			if terrain.data.get_control_base_id(at + o * layer.clearance) == PATH_TEXTURE:
+			if terrain.data.get_control_base_id(at + o * layer.clearance) in BARE_TEXTURES:
 				return null
 	if WaterBody.depth_at(get_tree(), at) > 0.0:
 		return null
