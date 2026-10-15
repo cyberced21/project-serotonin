@@ -10,10 +10,18 @@ const PALETTE := preload("res://materials/node_palette.tres")
 ## Exact collision box, centred on the prop's origin, instead of one fitted around the model
 ## (the parkour blocks: mantle and step heights depend on it).
 @export var collision_size := Vector3.ZERO
+## Stand on the terrain wherever it's placed (props out on uneven ground), sunk this far in.
+@export var snap_to_ground := false
+@export var sink := 0.05
 
 
 func _ready() -> void:
 	add_to_group("prop")
+	if snap_to_ground:
+		var terrain := get_tree().get_first_node_in_group("terrain") as Terrain3D
+		var h: float = terrain.data.get_height(global_position) if terrain and terrain.data else NAN
+		if not is_nan(h):
+			global_position.y = h - sink
 	var inst := model.instantiate() as Node3D
 	add_child(inst)
 	var bounds := AABB()

@@ -3,9 +3,10 @@ extends Node3D
 ## Spreads scenery (grass, flowers, bushes, boulders: one ScatterLayer each) over the terrain inside
 ## `area`, seeded so it's the same every run. Each layer is drawn with MultiMeshes, one per
 ## CELL-metre square, so far-away cells can be culled by the layer's visible_distance.
-## Keeps off: paths, roads, quarry stone and crop squares (BARE_TEXTURES), water and sand, ground
-## too steep for the layer, snow (plants), and the space around gatherable nodes, buildings, props (the parkour
-## ruins included) and the player's spawn.
+## Keeps off: paths, roads, quarry stone and crop squares (BARE_TEXTURES, unless a layer's
+## allowed_ids say otherwise), water and sand, ground too steep for the layer, snow (plants), and
+## the space around gatherable nodes, buildings, props (the parkour ruins included) and the
+## player's spawn.
 
 ## Painted surfaces nothing grows on (see WorldMap.TEX_*).
 const BARE_TEXTURES: Array[int] = [WorldMap.TEX_PATH, WorldMap.TEX_ROAD, WorldMap.TEX_QUARRY, WorldMap.TEX_CROP]
@@ -76,6 +77,11 @@ func _scatter() -> void:
 			_build_collision(mesh, shapes, layer.collision_size)
 
 
+## A layer's own allowed_ids win (wheat grows on crop squares); otherwise anything not bare.
+static func _allowed(layer: ScatterLayer, id: int) -> bool:
+	return id in layer.allowed_ids if not layer.allowed_ids.is_empty() else id not in BARE_TEXTURES
+
+
 ## Whether `edge_ellipse` drops this spot. Only draws a number when it's on, so turning it on for
 ## one scatter node doesn't reshuffle the others.
 func _thinned(p: Vector2, rng: RandomNumberGenerator) -> bool:
@@ -97,12 +103,11 @@ func _place(terrain: Terrain3D, layer: ScatterLayer, p: Vector2, s: float, yaw: 
 	var n: Vector3 = terrain.data.get_normal(at)
 	if n.y < layer.min_normal_y:
 		return null
-	var id: int = terrain.data.get_control_base_id(at)
-	if id in BARE_TEXTURES or (not layer.allowed_ids.is_empty() and id not in layer.allowed_ids):
+	if not _allowed(layer, terrain.data.get_control_base_id(at)):
 		return null
 	if layer.clearance > 0.0:  # bigger things keep off the path's edges too
 		for o in [Vector3(1, 0, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1), Vector3(0, 0, -1)]:
-			if terrain.data.get_control_base_id(at + o * layer.clearance) in BARE_TEXTURES:
+			if not _allowed(layer, terrain.data.get_control_base_id(at + o * layer.clearance)):
 				return null
 	if WaterBody.depth_at(get_tree(), at) > 0.0:
 		return null

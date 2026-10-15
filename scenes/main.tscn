@@ -22,6 +22,7 @@
 [ext_resource type="PackedScene" path="res://scenes/village/prospector_cottage.tscn" id="56_prospector"]
 [ext_resource type="PackedScene" path="res://scenes/biomes/pinewood.tscn" id="57_pinewood"]
 [ext_resource type="PackedScene" path="res://scenes/biomes/quarry.tscn" id="58_quarry"]
+[ext_resource type="PackedScene" path="res://scenes/biomes/goldmeadow.tscn" id="59_goldmeadow"]
 [ext_resource type="Script" path="res://scripts/prop.gd" id="18_prop"]
 [ext_resource type="PackedScene" path="res://models/village/props/bench.glb" id="19_bench"]
 [ext_resource type="PackedScene" path="res://models/village/props/lamp_post.glb" id="20_lamp"]
@@ -681,6 +682,8 @@ model = ExtResource("22_crates")
 [node name="Pinewood" parent="." instance=ExtResource("57_pinewood")]
 
 [node name="Quarry" parent="." instance=ExtResource("58_quarry")]
+
+[node name="Goldmeadow" parent="." instance=ExtResource("59_goldmeadow")]
 
 [node name="Scenery" type="Node3D" parent="."]
 script = ExtResource("27_scatter")

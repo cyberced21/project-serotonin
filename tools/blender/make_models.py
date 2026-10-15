@@ -320,6 +320,255 @@ def quarry():
     quarry_rubble()
 
 
+# --- farming: the sickle, sheaves, and Goldmeadow's props --------------------------------------
+
+def sickle():
+    """Short handle along +Z; a crescent blade curving forward (+Y) and up from its top."""
+    reset()
+    rng = random.Random(80)
+    bm = box((0.036, 0.036, 0.26))
+    paint(bm, shade_by_normal("wood.6", "wood.4", "wood.3", rng, side_alt="wood.5"))
+    make_object("Handle", bm, (0, 0, 0.13))
+    bm = box((0.05, 0.05, 0.035))
+    paint(bm, lambda f: "metal.2")
+    make_object("Ferrule", bm, (0, 0, 0.27))
+    centre, r = (0.0, 0.13, 0.29), 0.13
+    steps = 8
+    for i in range(steps):  # from straight up out of the handle, round to pointing back down
+        a0 = math.pi + i * (math.pi * 1.05) / steps
+        a1 = math.pi + (i + 1) * (math.pi * 1.05) / steps
+        p0 = (centre[1] + math.cos(a0) * r, centre[2] - math.sin(a0) * r)
+        p1 = (centre[1] + math.cos(a1) * r, centre[2] - math.sin(a1) * r)
+        length = math.dist(p0, p1) + 0.008
+        width = 0.03 * (1.0 - i / steps * 0.7)  # tapering to the point
+        bm = box((0.012, length, width))
+        paint(bm, lambda f: "metal.7" if f.normal.z < -0.5 else ("metal.5" if abs(f.normal.x) > 0.5 else "metal.4"))
+        angle = math.atan2(p1[1] - p0[1], p1[0] - p0[0])
+        make_object(f"Blade{i}", bm, (0, (p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2), (angle, 0, 0))
+    block_hand("z", grip=0.12)
+    export("sickle")
+
+
+def stalks(rng, count, spread, height, stalk, ear, ear_size, droop=0.0, awns=None, thick=0.012):
+    """Upright stalks with an ear on top. Returns the (stalk, ear) objects made. droop tips the
+    ears over (barley); awns colours a few whiskers sticking up out of each ear."""
+    made = []
+    for i in range(count):
+        a, d = rng.uniform(0, math.tau), math.sqrt(rng.random()) * spread
+        x, y = math.cos(a) * d, math.sin(a) * d
+        h = height * rng.uniform(0.85, 1.1)
+        lean = (rng.uniform(-0.12, 0.12), rng.uniform(-0.12, 0.12), 0)
+        bm = prism(3, thick, thick * 0.7, h)
+        paint(bm, lambda f: stalk)
+        made.append(make_object(f"Stalk{i}", bm, (x, y, h / 2), lean))
+        bm = prism(4, ear_size * 0.3, ear_size * 0.12, ear_size)
+        paint(bm, lambda f: ear[0] if f.normal.z > -0.2 and rng.random() < 0.6 else ear[1])
+        tip = (lean[0] + droop, lean[1], rng.uniform(0, math.tau))
+        made.append(make_object(f"Ear{i}", bm, (x + lean[1] * h, y - lean[0] * h, h + ear_size * 0.4), tip))
+        if awns:
+            bm = prism(3, 0.004, 0.001, ear_size * 1.2)
+            paint(bm, lambda f: awns)
+            made.append(make_object(f"Awn{i}", bm, (x + lean[1] * h, y - lean[0] * h, h + ear_size), tip))
+    return made
+
+
+def join_named(name, objs):
+    """Joins `objs` into one mesh object called `name` (origin of the first)."""
+    for o in bpy.context.scene.objects:
+        o.select_set(o in objs)
+    bpy.context.view_layer.objects.active = objs[0]
+    bpy.ops.object.join()
+    bpy.context.view_layer.objects.active.name = name
+
+
+def sheaf(name, seed, stalk, ear, ear_size, droop=0.0, awns=None):
+    """A gatherable stand of grain (Farming): the stalks are the body, the ears break off in
+    bunches as chunks, and what's left is stubble with the cut stalks lying flat. Each part is
+    one mesh, so a field of them stays cheap to draw."""
+    reset()
+    rng = random.Random(seed)
+    made = stalks(rng, 14, 0.32, 0.95, stalk, ear, ear_size, droop, awns)
+    body = [o for o in made if o.name.startswith("Stalk")]
+    ears = [o for o in made if not o.name.startswith("Stalk")]
+    join_named("Body_Stalks", body)
+    for k in range(4):  # the ears in four bunches, each one chunk
+        join_named(f"Chunk_{'ABCD'[k]}", ears[k::4])
+    rubble = []
+    for i in range(10):  # stubble, and the cut stalks lying flat
+        a, d = rng.uniform(0, math.tau), math.sqrt(rng.random()) * 0.32
+        bm = prism(3, 0.012, 0.01, 0.08)
+        paint(bm, lambda f: stalk)
+        rubble.append(make_object(f"Stub{i}", bm, (math.cos(a) * d, math.sin(a) * d, 0.04)))
+    for i in range(6):
+        a = rng.uniform(-0.5, 0.5)
+        bm = prism(3, 0.012, 0.008, 0.8)
+        paint(bm, lambda f: stalk if rng.random() < 0.8 else ear[0])
+        rubble.append(make_object(f"Lying{i}", bm, (rng.uniform(-0.2, 0.2), rng.uniform(-0.25, 0.25), 0.03),
+                                  (math.pi / 2, 0, a)))
+    join_named("Rubble_Straw", rubble)
+    export(name)
+
+
+def grain_item(name, seed, stalk, ear, ear_size, droop=0.0, awns=None):
+    """A little tied bundle of stalks standing up, ears on top."""
+    reset()
+    rng = random.Random(seed)
+    stalks(rng, 7, 0.035, 0.2, stalk, ear, ear_size * 0.75, droop * 0.6, awns, thick=0.018)
+    bm = prism(8, 0.045, 0.045, 0.03)
+    paint(bm, lambda f: "wood.3")
+    make_object("Tie", bm, (0, 0, 0.08))
+    merge_all("Item")
+    export(os.path.join("items", name))
+
+
+def wheat_clump():
+    """Scenery: a clump of ripe wheat for the crop squares (not gatherable), one merged mesh."""
+    reset()
+    rng = random.Random(81)
+    stalks(rng, 9, 0.45, 0.9, "terrain.sand", ("accent.3", "wood.6"), 0.12)
+    merge_all("Wheat")
+    export(os.path.join("scenery", "wheat_clump"))
+
+
+WHEAT = dict(stalk="terrain.sand", ear=("accent.3", "wood.6"), ear_size=0.13)
+BARLEY = dict(stalk="leaves.7", ear=("wood.7", "terrain.sand"), ear_size=0.11, droop=0.9, awns="wood.7")
+
+
+def hay_round():
+    """A round bale lying on its side, 1.3 m tall: a mantle step."""
+    reset()
+    rng = random.Random(82)
+    bm = prism(12, 0.65, 0.65, 1.2)
+    jitter(bm, 0.03, rng)
+    paint(bm, lambda f: "wood.7" if abs(f.normal.z) > 0.9 else ("accent.3" if rng.random() < 0.3 else "terrain.sand"))
+    make_object("Bale", bm, (0, 0, 0.65), (0, math.pi / 2, 0))
+    for x in (-0.3, 0.3):
+        bm = prism(12, 0.66, 0.66, 0.05)
+        paint(bm, lambda f: "wood.3")
+        make_object("Twine", bm, (x, 0, 0.65), (0, math.pi / 2, 0))
+    merge_all("Hay")
+    export(os.path.join("field", "hay_round"))
+
+
+def hay_stack():
+    """Square bales stacked in two steps: 0.9 m, then 1.8 m at the back."""
+    reset()
+    rng = random.Random(83)
+    hay = lambda f: "wood.7" if abs(f.normal.y) > 0.9 else ("accent.3" if rng.random() < 0.25 else "terrain.sand")
+    for i, (x, y, z) in enumerate(((-0.6, -0.5, 0.45), (0.6, -0.5, 0.45), (-0.6, 0.5, 0.45), (0.6, 0.5, 0.45),
+                                   (-0.6, 0.5, 1.35), (0.6, 0.5, 1.35))):
+        bm = box((1.15, 0.95, 0.88))
+        jitter(bm, 0.03, rng)
+        paint(bm, hay)
+        make_object(f"Bale{i}", bm, (x, y, z), (0, 0, rng.uniform(-0.04, 0.04)))
+    merge_all("Hay")
+    export(os.path.join("field", "hay_stack"))
+
+
+def fence():
+    """A 3 m length of rail fence, 1 m tall: two posts, two rails, a bit of lean."""
+    reset()
+    rng = random.Random(84)
+    wood = ("wood.4", "wood.3", "wood.2", "wood.3")
+    for x in (-1.45, 1.45):
+        plank("Post", (0.12, 0.12, 1.05), (x, 0, 0.52), rng, (0, rng.uniform(-0.05, 0.05), 0), shades=wood)
+    for z in (0.45, 0.85):
+        plank("Rail", (3.0, 0.07, 0.11), (0, 0, z), rng, (rng.uniform(-0.03, 0.03), rng.uniform(-0.02, 0.02), 0),
+              shades=("wood.5", "wood.4", "wood.3", "wood.4"))
+    merge_all("Fence")
+    export(os.path.join("field", "fence"))
+
+
+def cart():
+    """A hay cart: plank bed with sides, two big wheels, shafts resting on the ground, a load."""
+    reset()
+    rng = random.Random(85)
+    wood = ("wood.5", "wood.4", "wood.3", "wood.4")
+    plank("Bed", (1.4, 2.4, 0.1), (0, 0, 0.85), rng, shades=wood)
+    for x in (-0.7, 0.7):
+        plank("Side", (0.06, 2.4, 0.4), (x, 0, 1.1), rng, shades=wood)
+    for y in (-1.2, 1.2):
+        plank("End", (1.4, 0.06, 0.4), (0, y, 1.1), rng, shades=wood)
+    for x in (-0.82, 0.82):
+        wheel = prism(10, 0.55, 0.55, 0.1)
+        paint(wheel, shade_by_normal("wood.3", "wood.2", "wood.1", rng))
+        make_object("Wheel", wheel, (x, 0.2, 0.55), (0, math.pi / 2, 0))
+    for x in (-0.35, 0.35):
+        plank("Shaft", (0.08, 2.0, 0.08), (x, -2.0, 0.45), rng, (-0.38, 0, 0), shades=wood)
+    for i in range(4):
+        bm = blob(0.42, rng, jitter_amount=0.25, squash=(1.2, 1.4, 0.6))
+        paint(bm, lambda f: "accent.3" if rng.random() < 0.4 else "terrain.sand")
+        make_object(f"Load{i}", bm, ((i % 2 - 0.5) * 0.6, (i // 2 - 0.5) * 1.0, 1.2))
+    merge_all("Cart")
+    export(os.path.join("field", "cart"))
+
+
+def windmill():
+    """Goldmeadow's landmark: a tapering eight-sided tower 11 m tall with a cap, and sails on an
+    axle out of the front (-Y). Two objects: Tower, and Sails with its origin on the hub, so the
+    game can turn it (scripts/windmill.gd)."""
+    reset()
+    rng = random.Random(86)
+    bm = prism(8, 2.6, 1.7, 9.0)
+    jitter(bm, 0.02, rng)
+    paint(bm, shade_by_normal("neutral.6", "neutral.6", "neutral.4", rng, side_alt="neutral.5"))
+    make_object("Body", bm, (0, 0, 4.5), (0, 0, math.pi / 8))
+    for i, z in enumerate((0.15, 3.0, 6.0)):
+        bm = prism(8, 2.65 - z * 0.1, 2.6 - z * 0.1, 0.25)
+        paint(bm, lambda f: "wood.3")
+        make_object(f"Band{i}", bm, (0, 0, z + 0.12), (0, 0, math.pi / 8))
+    bm = prism(8, 2.1, 0.3, 2.4)
+    paint(bm, shade_by_normal("wood.2", "wood.2", "wood.1", rng, side_alt="wood.3"))
+    make_object("Cap", bm, (0, 0, 10.2), (0, 0, math.pi / 8))
+    plank("Door", (1.0, 0.1, 1.9), (0, -2.55, 0.95), rng, (-0.19, 0, 0), shades=("wood.3", "wood.3", "wood.2", "wood.2"))
+    for i, z in enumerate((4.0, 7.0)):
+        plank(f"Window{i}", (0.6, 0.1, 0.7), (0, -2.42 + z * 0.09, z), rng, (-0.19, 0, 0),
+              shades=("neutral.2", "neutral.2", "neutral.1", "neutral.2"))
+    bm = prism(6, 0.2, 0.2, 1.2)
+    paint(bm, lambda f: "wood.2")
+    make_object("Axle", bm, (0, -1.8, 9.3), (math.pi / 2, 0, 0))
+    merge_all("Tower")
+    tower = bpy.context.view_layer.objects.active
+    tower.select_set(False)
+    # the sails, built round the hub at the origin, then moved out to the axle's end
+    names = []
+    for i in range(4):
+        a = i * math.pi / 2
+        arm = box((0.18, 0.12, 5.2))
+        paint(arm, lambda f: "wood.3")
+        names.append(make_object(f"Arm{i}", arm, (math.sin(a) * 2.7, 0, math.cos(a) * 2.7), (0, a, 0)))
+        sail = box((1.5, 0.04, 4.0))
+        paint(sail, lambda f: "neutral.7" if rng.random() < 0.8 else "neutral.6")
+        off = 0.85
+        names.append(make_object(f"Sail{i}", sail, (math.sin(a) * 3.2 + math.cos(a) * off, -0.05,
+                                                    math.cos(a) * 3.2 - math.sin(a) * off), (0, a, 0)))
+    hub = blob(0.35, rng, squash=(1, 1, 1))
+    paint(hub, lambda f: "wood.2")
+    names.append(make_object("Hub", hub))
+    for o in bpy.context.scene.objects:
+        o.select_set(o in names)
+    bpy.context.view_layer.objects.active = names[-1]  # the hub: the joined mesh keeps its origin
+    bpy.ops.object.join()
+    sails = bpy.context.view_layer.objects.active
+    sails.name = "Sails"
+    sails.location = (0, -2.45, 9.3)
+    export(os.path.join("field", "windmill"))
+
+
+def farming():
+    sickle()
+    sheaf("wheat_sheaf", 87, **WHEAT)
+    sheaf("barley_sheaf", 88, **BARLEY)
+    grain_item("wheat", 89, **WHEAT)
+    grain_item("barley", 90, **BARLEY)
+    wheat_clump()
+    hay_round()
+    hay_stack()
+    fence()
+    cart()
+    windmill()
+
+
 # The starter tree's canopy: (radius, jitter, squash, location, rotation) per blob.
 TREE_CANOPY = [
     (1.25, 0.2, (1.0, 1.0, 0.72), (0, 0, 3.5), (0, 0, 0.4)),
@@ -983,9 +1232,10 @@ if __name__ == "__main__":  # make_village.py imports the helpers above without 
     os.makedirs(os.path.join(OUT_DIR, "fish"), exist_ok=True)
     os.makedirs(os.path.join(OUT_DIR, "items"), exist_ok=True)
     os.makedirs(os.path.join(OUT_DIR, "quarry"), exist_ok=True)
+    os.makedirs(os.path.join(OUT_DIR, "field"), exist_ok=True)
     builds = (rock, iron_rock, tree, oak, pickaxe, axe, spear, perch, trout, pike, log_item, ore_item,
               oak_item, iron_item, reeds, lily_pad, lily_flower, shore_stone, scenery, ruins,
-              coal_rock, gold_rock, birch, pine, more_items, arctic_char, forest, quarry)
+              coal_rock, gold_rock, birch, pine, more_items, arctic_char, forest, quarry, farming)
     only = argv[2:]  # optional: names of the builders to run (e.g. `forest`), instead of all of them
     for build in builds:
         if not only or build.__name__ in only:

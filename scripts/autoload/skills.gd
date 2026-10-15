@@ -15,6 +15,7 @@ const SKILLS := {
 	&"woodcutting": {"name": "Woodcutting", "color": Color("9be27a")},
 	&"mining": {"name": "Mining", "color": Color("a9c1e8")},
 	&"fishing": {"name": "Fishing", "color": Color("6fd0d8")},
+	&"farming": {"name": "Farming", "color": Color("e8c45a")},
 }
 
 var xp: Dictionary[StringName, int] = {}

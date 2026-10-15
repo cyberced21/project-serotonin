@@ -34,6 +34,8 @@ ICONS = {
     "coal": ("items/coal.glb", (1.0, -1.0, 0.8)),
     "gold": ("items/gold.glb", (1.0, -1.0, 0.8)),
     "crystal": ("items/crystal.glb", (1.0, -1.0, 0.6)),
+    "wheat": ("items/wheat.glb", (1.0, -1.0, 0.45)),
+    "barley": ("items/barley.glb", (1.0, -1.0, 0.45)),
     "perch": ("fish/perch.glb", (1.0, 0.25, 0.45)),
     "trout": ("fish/trout.glb", (1.0, 0.25, 0.45)),
     "pike": ("fish/pike.glb", (1.0, 0.25, 0.45)),

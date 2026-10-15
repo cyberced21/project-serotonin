@@ -13,6 +13,8 @@ const DEFS := {
 	&"coal": {"name": "Coal"},
 	&"gold": {"name": "Gold ore"},
 	&"crystal": {"name": "Crystal"},
+	&"wheat": {"name": "Wheat"},
+	&"barley": {"name": "Barley"},
 	&"perch": {"name": "Perch"},
 	&"trout": {"name": "Trout"},
 	&"pike": {"name": "Pike"},

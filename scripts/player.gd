@@ -140,6 +140,7 @@ extends CharacterBody3D
 @export var pickaxe_model: PackedScene
 @export var axe_model: PackedScene
 @export var spear_model: PackedScene
+@export var sickle_model: PackedScene
 
 @export_group("Swing timing")
 @export var windup_time := 0.13
@@ -165,6 +166,11 @@ const STRIKE_ANGLE := -0.7
 ## At impact the arm reaches up (viewmodel space) so the tool's head lands right on the crosshair,
 ## where the world copy of it sticks into the node (measured: within ~5% of screen of the centre).
 const STRIKE_REACH := Vector3(0, 0.33, 0)
+## The sickle swings sideways instead: it's swung out to the right (rotation around the view
+## axis), then cuts across to the left, a bit quicker than the axe.
+const SICKLE_WINDUP := 1.0
+const SICKLE_STRIKE := -0.8
+const SICKLE_SPEED := 1.3
 ## A little lift during the wind-up.
 const WINDUP_LIFT := Vector3(0, 0.06, 0.04)
 ## How long the stuck tool takes to drive in, and to come back out (real seconds).
@@ -198,7 +204,7 @@ const TOOL_HEADS := {&"axe": Vector3(0, 0.38, -0.185), &"pickaxe": Vector3(0, 0.
 @onready var camera: Camera3D = $Head/Camera3D
 @onready var grip: Node3D = $Viewmodel/SubViewport/Camera3D/Grip
 @onready var tool_pivot: Node3D = %ToolPivot
-@onready var tools: Dictionary[StringName, Node3D] = {&"axe": %Axe, &"pickaxe": %Pickaxe, &"spear": %Spear}
+@onready var tools: Dictionary[StringName, Node3D] = {&"axe": %Axe, &"pickaxe": %Pickaxe, &"spear": %Spear, &"sickle": %Sickle}
 @onready var spearfishing: SpearFishing = $SpearFishing
 @onready var dot: Control = $Reticle/Dot
 @onready var hover_label: Label = $Reticle/Hover
@@ -272,6 +278,7 @@ func _ready() -> void:
 	_use_tool_model(tools[&"pickaxe"], pickaxe_model)
 	_use_tool_model(tools[&"axe"], axe_model)
 	_use_tool_model(tools[&"spear"], spear_model)
+	_use_tool_model(tools[&"sickle"], sickle_model)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	SaveGame.register(&"player", self)
 
@@ -969,10 +976,13 @@ func _swing(tool: StringName) -> void:
 		tools[id].visible = id == tool
 	_equipped = tool
 
-	# 1. wind-up (anticipation): tip back, lift a little
+	# 1. wind-up (anticipation): tip back, lift a little (the sickle: swing out to the side)
+	var sideways := tool == &"sickle"
+	var axis := "rotation:z" if sideways else "rotation:x"
+	var pace := SICKLE_SPEED if sideways else 1.0
 	var t := create_tween().set_parallel()
-	t.tween_property(tool_pivot, "rotation:x", WINDUP_ANGLE, windup_time).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	t.tween_property(tool_pivot, "position", _tool_rest + WINDUP_LIFT, windup_time).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	t.tween_property(tool_pivot, axis, SICKLE_WINDUP if sideways else WINDUP_ANGLE, windup_time / pace).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	t.tween_property(tool_pivot, "position", _tool_rest + WINDUP_LIFT, windup_time / pace).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	await t.finished
 
 	# 2. strike — whoosh starts with the fast part of the motion; the arm reaches up and forward so
@@ -982,8 +992,8 @@ func _swing(tool: StringName) -> void:
 		audio.pitch_scale = 1.0  # (the dash plays it lower)
 		audio.play()
 	t = create_tween().set_parallel()
-	t.tween_property(tool_pivot, "rotation:x", STRIKE_ANGLE, strike_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	t.tween_property(tool_pivot, "position", _tool_rest + STRIKE_REACH, strike_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.tween_property(tool_pivot, axis, SICKLE_STRIKE if sideways else STRIKE_ANGLE, strike_time / pace).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.tween_property(tool_pivot, "position", _tool_rest + STRIKE_REACH, strike_time / pace).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	await t.finished
 
 	# 3. impact frame — hits whatever the crosshair is on *now*; looked away = whiff
@@ -1000,8 +1010,9 @@ func _swing(tool: StringName) -> void:
 
 	# 4. recover
 	t = create_tween().set_parallel()
-	t.tween_property(tool_pivot, "rotation:x", REST_ANGLE, recover_time).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	t.tween_property(tool_pivot, "position", _tool_rest, recover_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	t.tween_property(tool_pivot, "rotation:x", REST_ANGLE, recover_time / pace).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_property(tool_pivot, "rotation:z", 0.0, recover_time / pace).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_property(tool_pivot, "position", _tool_rest, recover_time / pace).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	await t.finished
 	_cooldown = swing_cooldown
 	_swinging = false
