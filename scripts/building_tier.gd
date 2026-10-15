@@ -9,8 +9,9 @@ extends Resource
 ## Town hall tier needed before this tier can be built. 0 = this tier's own number (the usual
 ## rule: no house above the hall). The smithy's crystal tier sets 3, so it needs no fourth hall.
 @export_range(0, 9) var hall_tier := 0
-## The villager picks one of these when you talk to them at this tier.
-@export_multiline var lines: PackedStringArray = []
+## The villager picks one of these when you talk to them at this tier. (A PackedStringArray()
+## default, not []: see BuildingDef.night_lines for why.)
+@export_multiline var lines := PackedStringArray()
 ## What this tier does for the player while the building is at it (not on top of lower tiers:
 ## list the full perk). Summed across buildings by Village.stat().
 @export var effects: Array[TierEffect] = []

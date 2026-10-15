@@ -71,7 +71,8 @@ Plan and decisions: [plans/biomes.md](../plans/biomes.md).
 
 ## World & tech
 
-- [ ] **Editor re-save drops data:** opening the project in the Godot 4.7.2 editor once re-saved `data/buildings/*.tres` without any villager `lines`, and baked ~13 MB into `materials/terrain_assets.tres`. Restored from git; find out why before saving those in the editor.
+- [x] **Editor re-save dropped villager lines:** in the editor, non-`@tool` scripts run as placeholders, and a placeholder silently refused the saved `PackedStringArray` when the script's default was a bare `[]` / `[...]` literal. So `BuildingTier.lines` and `BuildingDef.night_lines` loaded empty (or as the default), and the next editor save wrote them out that way. Their defaults are now `PackedStringArray(...)`, and an in-editor re-save keeps all 75 lines. **Rule:** give exported packed arrays a `PackedXArray(...)` default, never a bare array literal. (Fields equal to their script default, like Tier 1's `name = "Lean-to"`, are left out of the file on purpose. That's normal and loses nothing.)
+- [ ] **Editor bloats `materials/terrain_assets.tres`:** Terrain3D's editor plugin fills in generated placeholder textures and a default grass mesh and saves them as ~13 MB of image data. The low-poly shader uses none of it. Until there's a fix, discard that change (`git checkout -- materials/terrain_assets.tres`).
 - [x] **Day / night:** a 20-minute day (`DayNight` autoload) lit by the `Sky` node. Lamps and windows glow after dark, villagers go home at night, and fish are calmer at dawn and dusk.
 - [x] **Stars and moon:** `shaders/sky.gdshader` draws the gradient, a sun disc by day, a moon disc and twinkling stars at night.
 - [x] **Terrain collision range:** Terrain3D now builds collision for the whole map up front (`collision_mode` Full/Game, ~0.1 s at 512 m). Revisit if the world gets much bigger.
