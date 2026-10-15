@@ -165,7 +165,7 @@ Idle `ResourceNode`s don't process each frame, so the cost is draw calls (each n
 4. **Goldmeadow and Farming lite.** ✅ `scenes/biomes/goldmeadow.tscn`. In the wheat: ~140 draw calls, 1.5 ms GPU. Watch out: every mesh on the palette material uses per-instance shader values, and Godot's default buffer for them overflowed when the sheaves were ~34 meshes each; keep node models to a handful of meshes. Skill, sickle, wheat and barley nodes and items, wheat scatter, hay, fences, carts, windmill.
 5. **The road.** ✅ `scenes/biomes/road.tscn`: `RoadCourse` (set pieces by metres from the gate) and `TimeTrial`. Checkpoint timeout is 40 s, not 20 (a sprinting lap is ~150 s, ~17 s between arches). Medal times 170 / 125 / 95 s are first guesses: tune them after real laps (TimeTrial exports). The global shader-variable buffer is raised to 262144 (project.godot): the default only fits ~4,000 meshes on the palette material. Obstacle kit, set pieces, gate, checkpoints, HUD, saved bests, medals and banners.
 6. **Biome feel.** ✅ `Biome` autoload + `data/biomes/*.tres` (BiomeMood); ambience from `tools/synth_ambience.py`. The quarry's fog thickens to 2× toward the floor. `Biome` autoload, `BiomeMood` layered onto DayNightSky, announcements, ambience.
-7. **Docs.** README (features, controls, the sickle) and the TODO additions below.
+7. **Docs.** ✅ README (features, controls, the sickle) and the TODO additions below.
 
 ## TODO additions (phase 7)
 
