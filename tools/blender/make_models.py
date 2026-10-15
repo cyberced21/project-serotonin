@@ -569,6 +569,175 @@ def farming():
     windmill()
 
 
+# --- the ring road's obstacle course and time-trial gates (scripts/road_course.gd) -----------
+# Across the road is X, along it is Y (the player runs toward +Y, Godot -Z), origin on the ground
+# in the middle.
+
+ROAD_WOOD = ("wood.5", "wood.4", "wood.3", "wood.4")
+
+
+def log_pile():
+    """Three logs across the road, 0.8 m high: hop it without breaking the chain."""
+    reset()
+    rng = random.Random(100)
+    for i, (x, z) in enumerate(((0, 0.22), (0, 0.22), (0, 0.6))):
+        y = (-0.23, 0.23, 0.0)[i]
+        bm = prism(8, 0.22, 0.22, 4.0)
+        jitter(bm, 0.03, rng)
+        paint(bm, lambda f: "wood.6" if abs(f.normal.z) > 0.9 else ("wood.2" if rng.random() < 0.5 else "wood.3"))
+        make_object(f"Log{i}", bm, (x, y, z), (0, math.pi / 2, rng.uniform(0, 0.4)))
+    merge_all("Logs")
+    export(os.path.join("road", "log_pile"))
+
+
+def low_wall():
+    """A dry-stone wall 4 m long and 1.1 m high: jump it or slide-cancel over."""
+    reset()
+    rng = random.Random(101)
+    for course, z in enumerate((0.28, 0.83)):
+        for i in range(4):
+            x = -1.5 + i + (0.25 if course else 0) - (0.12 if i == 3 and course else 0)
+            w = 0.98 if not (course and i == 3) else 0.72
+            bm = box((w, 0.5, 0.54))
+            jitter(bm, 0.05, rng)
+            paint(bm, shade_by_normal("stone.5", "stone.4", "stone.2", rng, side_alt="stone.3"))
+            make_object(f"Stone{course}{i}", bm, (x, 0, z))
+    merge_all("Wall")
+    export(os.path.join("road", "low_wall"))
+
+
+def crate_stack(name, seed, levels):
+    """Crates 1.9 m square, `levels` of them stacked 1 m each: a step, or a mantle at 2."""
+    reset()
+    rng = random.Random(seed)
+    for k in range(levels):
+        plank(f"Crate{k}", (1.9, 1.9, 0.98), (0, 0, 0.5 + k), rng, (0, 0, rng.uniform(-0.05, 0.05)), shades=ROAD_WOOD)
+        for y in (-0.96, 0.96):
+            plank(f"Slat{k}{y}", (1.95, 0.04, 0.12), (0, y, 0.5 + k), rng, shades=("wood.3",) * 4)
+    merge_all("Crates")
+    export(os.path.join("road", name))
+
+
+def wallrun_panel():
+    """A timber wall 11 m long and 3 m tall beside the road: one full wall run."""
+    reset()
+    rng = random.Random(102)
+    for i in range(5):
+        plank(f"Post{i}", (0.24, 0.24, 3.2), (0, -5.5 + i * 2.75, 1.6), rng, shades=("wood.3", "wood.2", "wood.1", "wood.2"))
+    for i in range(6):
+        plank(f"Board{i}", (0.16, 11.0, 0.48), (0, 0, 0.3 + i * 0.5), rng,
+              (rng.uniform(-0.01, 0.01), 0, 0), shades=("wood.5", "wood.5", "wood.4", "wood.6" if i % 2 else "wood.4"))
+    merge_all("Panel")
+    export(os.path.join("road", "wallrun_panel"))
+
+
+def kicker():
+    """A plank ramp 2 m wide rising 0.8 m over 2.6 m toward +Y: launch into a dash or long jump."""
+    reset()
+    rng = random.Random(103)
+    bm = box((2.0, 2.6, 0.8))
+    for v in bm.verts:
+        if v.co.y < 0 and v.co.z > 0:
+            v.co.z = -0.4  # the low end meets the ground
+    paint(bm, shade_by_normal("wood.5", "wood.4", "wood.3", rng, side_alt="wood.3"))
+    make_object("Ramp", bm, (0, 0, 0.4))
+    for i in range(5):
+        plank(f"Batten{i}", (2.0, 0.08, 0.04), (0, -1.0 + i * 0.55, 0.06 + (i * 0.55) * 0.8 / 2.6 + 0.04), rng,
+              (math.atan2(0.8, 2.6), 0, 0), shades=("wood.3",) * 4)
+    merge_all("Kicker")
+    export(os.path.join("road", "kicker"))
+
+
+def low_beam():
+    """A log on two posts across the road, 1.1 m clear underneath: slide under it."""
+    reset()
+    rng = random.Random(104)
+    for x in (-2.1, 2.1):
+        plank(f"Post{x}", (0.22, 0.22, 1.6), (x, 0, 0.8), rng, shades=("wood.3", "wood.2", "wood.1", "wood.2"))
+    bm = prism(8, 0.16, 0.16, 4.6)
+    paint(bm, lambda f: "wood.6" if abs(f.normal.z) > 0.9 else ("wood.2" if rng.random() < 0.5 else "wood.3"))
+    make_object("Beam", bm, (0, 0, 1.26), (0, math.pi / 2, 0))
+    merge_all("Beam")
+    export(os.path.join("road", "low_beam"))
+
+
+def bridge():
+    """A plank deck over the gully's earth bridge, with a rail on its outer (+X) side only, so
+    you can still leap off the open side across the gap."""
+    reset()
+    rng = random.Random(105)
+    for i in range(14):
+        plank(f"Plank{i}", (6.2, 0.48, 0.1), (0, -3.25 + i * 0.5, 0.05), rng, (0, 0, rng.uniform(-0.01, 0.01)),
+              shades=ROAD_WOOD)
+    for i in range(4):
+        plank(f"RailPost{i}", (0.14, 0.14, 1.1), (3.0, -3.2 + i * 2.13, 0.55), rng, shades=("wood.3",) * 4)
+    plank("Rail", (0.1, 6.8, 0.12), (3.0, 0, 1.05), rng, shades=("wood.4",) * 4)
+    merge_all("Bridge")
+    export(os.path.join("road", "bridge"))
+
+
+def gate():
+    """The time trial's start and finish: two tall posts and a cross beam over the road, and three
+    medal banners (BannerBronze, BannerSilver, BannerGold) the game shows as you earn them."""
+    reset()
+    rng = random.Random(106)
+    for x in (-5.0, 5.0):
+        plank(f"Post{x}", (0.4, 0.4, 5.6), (x, 0, 2.8), rng, shades=("wood.3", "wood.2", "wood.1", "wood.2"))
+        for i in range(4):  # chequered start bands
+            plank(f"Band{x}{i}", (0.44, 0.44, 0.3), (x, 0, 3.2 + i * 0.3), rng,
+                  shades=(("neutral.7",) if i % 2 else ("neutral.1",)) * 4)
+    plank("Beam", (10.8, 0.4, 0.45), (0, 0, 5.4), rng, shades=("wood.3", "wood.2", "wood.1", "wood.2"))
+    plank("Board", (3.2, 0.1, 0.9), (0, -0.25, 5.0), rng, shades=("wood.6", "wood.6", "wood.5", "wood.6"))
+    for i in range(6):  # a chequer strip on the board
+        plank(f"Check{i}", (0.45, 0.02, 0.3), (-1.25 + i * 0.5, -0.31, 5.0 + (0.15 if i % 2 else -0.15)), rng,
+              shades=("neutral.1",) * 4)
+    merge_all("Frame")
+    bpy.context.view_layer.objects.active.select_set(False)
+    for name, x, colour in (("BannerBronze", -3.2, "accent.2"), ("BannerSilver", 0.0, "metal.6"),
+                            ("BannerGold", 3.2, "accent.3")):
+        bm = box((1.3, 0.05, 1.6))
+        for v in bm.verts:  # a swallowtail notch at the bottom
+            if v.co.z < 0 and abs(v.co.x) < 0.1:
+                v.co.z += 0.25
+        paint(bm, lambda f, c=colour: c)
+        make_object(name, bm, (x, 0.0, 4.25))
+    export(os.path.join("road", "gate"))
+
+
+def checkpoint():
+    """A checkpoint arch: two posts and a rope of pennants (Flags, lit up when it's next)."""
+    reset()
+    rng = random.Random(107)
+    for x in (-4.6, 4.6):
+        plank(f"Post{x}", (0.26, 0.26, 4.2), (x, 0, 2.1), rng, shades=("wood.3", "wood.2", "wood.1", "wood.2"))
+    plank("Rope", (9.2, 0.04, 0.04), (0, 0, 3.95), rng, shades=("wood.6",) * 4)
+    merge_all("Frame")
+    bpy.context.view_layer.objects.active.select_set(False)
+    flags = []
+    for i in range(9):
+        bm = bmesh.new()
+        verts = [bm.verts.new(v) for v in ((-0.22, 0, 0), (0.22, 0, 0), (0, 0, -0.5))]
+        bm.faces.new(verts)
+        bmesh.ops.solidify(bm, geom=bm.faces[:], thickness=0.03)
+        paint(bm, lambda f, c=("accent.4", "accent.3", "accent.1")[i % 3]: c)
+        flags.append(make_object(f"Flag{i}", bm, (-4.0 + i * 1.0, 0, 3.93)))
+    join_named("Flags", flags)
+    export(os.path.join("road", "checkpoint"))
+
+
+def road():
+    log_pile()
+    low_wall()
+    crate_stack("crate_low", 108, 1)
+    crate_stack("crate_high", 109, 2)
+    wallrun_panel()
+    kicker()
+    low_beam()
+    bridge()
+    gate()
+    checkpoint()
+
+
 # The starter tree's canopy: (radius, jitter, squash, location, rotation) per blob.
 TREE_CANOPY = [
     (1.25, 0.2, (1.0, 1.0, 0.72), (0, 0, 3.5), (0, 0, 0.4)),
@@ -1233,9 +1402,10 @@ if __name__ == "__main__":  # make_village.py imports the helpers above without 
     os.makedirs(os.path.join(OUT_DIR, "items"), exist_ok=True)
     os.makedirs(os.path.join(OUT_DIR, "quarry"), exist_ok=True)
     os.makedirs(os.path.join(OUT_DIR, "field"), exist_ok=True)
+    os.makedirs(os.path.join(OUT_DIR, "road"), exist_ok=True)
     builds = (rock, iron_rock, tree, oak, pickaxe, axe, spear, perch, trout, pike, log_item, ore_item,
               oak_item, iron_item, reeds, lily_pad, lily_flower, shore_stone, scenery, ruins,
-              coal_rock, gold_rock, birch, pine, more_items, arctic_char, forest, quarry, farming)
+              coal_rock, gold_rock, birch, pine, more_items, arctic_char, forest, quarry, farming, road)
     only = argv[2:]  # optional: names of the builders to run (e.g. `forest`), instead of all of them
     for build in builds:
         if not only or build.__name__ in only:

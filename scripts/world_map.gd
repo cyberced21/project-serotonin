@@ -71,3 +71,34 @@ const LANDMARKS := {
 	"The gully": [Vector3(186, 0, -45), Vector3(184, 0, -20)],
 	"Frostpeak": [Vector3(-80, 0, -80), Vector3(-92, 0, -92)],
 }
+
+
+static var _ring: PackedVector2Array
+
+
+## Points about 1 m apart along a Catmull-Rom spline through `ctrl` (closed if `loop`). The
+## terrain generator lays the roads along these, so anything placed by them lines up.
+static func spline(ctrl: Array, loop: bool) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	var m := ctrl.size()
+	for s in (m if loop else m - 1):
+		var p0: Vector2 = ctrl[(s - 1 + m) % m] if loop else ctrl[maxi(s - 1, 0)]
+		var p1: Vector2 = ctrl[s]
+		var p2: Vector2 = ctrl[(s + 1) % m]
+		var p3: Vector2 = ctrl[(s + 2) % m] if loop else ctrl[mini(s + 2, m - 1)]
+		var steps := maxi(1, ceili(p1.distance_to(p2)))
+		for k in steps:
+			var t := float(k) / steps
+			out.append(0.5 * (2.0 * p1 + (p2 - p0) * t + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t * t
+					+ (3.0 * p1 - p0 - 3.0 * p2 + p3) * t * t * t))
+	if not loop:
+		out.append(ctrl[m - 1])
+	return out
+
+
+## The ring road's centre line (cached): the samples the terrain generator graded it along.
+static func ring() -> PackedVector2Array:
+	if _ring.is_empty():
+		_ring = spline(RING, true)
+	return _ring
+

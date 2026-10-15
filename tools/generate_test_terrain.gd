@@ -361,7 +361,7 @@ func _glades(h: PackedFloat32Array) -> void:
 ## road height (the ground along it, smoothed, then cut down wherever it would climb or fall
 ## faster than `grade`), a half width and a bank.
 func _make_route(ctrl: Array, loop: bool, half: float, grade: float, smooth_m: float, h: PackedFloat32Array) -> Dictionary:
-	var pts := _spline(ctrl, loop)
+	var pts := WorldMap.spline(ctrl, loop)
 	var n := pts.size()
 	var dirs := PackedVector2Array()
 	dirs.resize(n)
@@ -387,24 +387,6 @@ func _make_route(ctrl: Array, loop: bool, half: float, grade: float, smooth_m: f
 	var bank := PackedFloat32Array()
 	bank.resize(n)
 	return {"pts": pts, "dirs": dirs, "h": heights, "half": halfs, "bank": bank, "loop": loop}
-
-
-func _spline(ctrl: Array, loop: bool) -> PackedVector2Array:
-	var out := PackedVector2Array()
-	var m := ctrl.size()
-	for s in (m if loop else m - 1):
-		var p0: Vector2 = ctrl[(s - 1 + m) % m] if loop else ctrl[maxi(s - 1, 0)]
-		var p1: Vector2 = ctrl[s]
-		var p2: Vector2 = ctrl[(s + 1) % m]
-		var p3: Vector2 = ctrl[(s + 2) % m] if loop else ctrl[mini(s + 2, m - 1)]
-		var steps := maxi(1, ceili(p1.distance_to(p2)))
-		for k in steps:
-			var t := float(k) / steps
-			out.append(0.5 * (2.0 * p1 + (p2 - p0) * t + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t * t
-					+ (3.0 * p1 - p0 - 3.0 * p2 + p3) * t * t * t))
-	if not loop:
-		out.append(ctrl[m - 1])
-	return out
 
 
 func _smooth(a: PackedFloat32Array, radius: int, loop: bool) -> PackedFloat32Array:
