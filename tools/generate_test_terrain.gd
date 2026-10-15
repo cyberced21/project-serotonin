@@ -91,6 +91,8 @@ const GULLY_REACH := 30.0  # how far the gully runs out to either side before it
 const PROTECT_INNER := 3.0
 const PROTECT_OUTER := 10.0
 const MOVED_TOLERANCE := 0.05
+## Scenes placed on the new terrain (quarry props, spawners...): never pinned to the old ground.
+const BIOME_SCENES := "res://scenes/biomes/"
 
 var _noise := FastNoiseLite.new()
 var _bumps := FastNoiseLite.new()
@@ -529,7 +531,8 @@ func _nearest_sample(r: Dictionary, to: Vector2) -> int:
 
 # --- protecting hand-placed nodes -------------------------------------------------------------
 
-## Where everything placed by hand in main.tscn stands (nodes, ruins, buildings, props, water).
+## Where everything placed by hand in main.tscn stands (nodes, ruins, buildings, props, water),
+## leaving out the biome scenes.
 func _baked_points() -> Array[Vector2]:
 	var scene := load("res://scenes/main.tscn") as PackedScene
 	var main := scene.instantiate()
@@ -543,6 +546,8 @@ func _collect(node: Node, xform: Transform3D, depth: int, out: Array[Vector2]) -
 	for child in node.get_children():
 		if not child is Node3D or child is Terrain3D or child is Light3D or child.name == "Scenery":
 			continue
+		if child.scene_file_path.begins_with(BIOME_SCENES):
+			continue  # the biomes are built on the new ground, not the old
 		var t := xform * (child as Node3D).transform
 		out.append(Vector2(t.origin.x, t.origin.z))
 		if depth < 2:
