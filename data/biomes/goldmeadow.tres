@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BiomeMood" format=3]
+
+[ext_resource type="Script" path="res://scripts/biome_mood.gd" id="1_mood"]
+[ext_resource type="AudioStream" path="res://audio/ambience/field.wav" id="2_sound"]
+
+[resource]
+script = ExtResource("1_mood")
+display_name = "Goldmeadow"
+subtitle = "Farmland"
+fog_density = 0.6
+fog_tint = Color(1.06, 1.02, 0.9, 1)
+ambient = 1.08
+sun_tint = Color(1.08, 1.02, 0.9, 1)
+saturation = 1.2
+ambience = ExtResource("2_sound")

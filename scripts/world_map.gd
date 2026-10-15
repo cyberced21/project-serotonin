@@ -15,6 +15,13 @@ const TEX_FIELD := 4     # meadow
 const TEX_QUARRY := 5    # quarry stone
 const TEX_CROP := 6      # crop squares in the field
 
+## The original places (keep in sync with tools/generate_test_terrain.gd): the Biome autoload
+## tells them apart by distance.
+const CLEARING_CENTER := Vector2(0, -4)
+const VILLAGE_CENTER := Vector2(100, 40)
+const LAKE_CENTER := Vector2(-16, 74)
+const PEAK_CENTER := Vector2(-92, -92)
+
 ## Greystone Quarry: a stepped pit on a mountain shoulder west of the peak.
 const QUARRY_CENTER := Vector2(-175, -15)
 const QUARRY_RIM_HEIGHT := 26.0

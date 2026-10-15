@@ -7,6 +7,8 @@ extends Node
 ## Glowing things: meshes in the "night_glow" group get the palette shader's `glow` instance
 ## uniform; lights in the "night_light" group fade in (their energy at full night is stored as
 ## the "night_energy" meta).
+## The biome you're in tints all this (see the Biome autoload): its fog, ambient and sun factors
+## multiply the time of day's values, so the forest is dim and green at noon and dark at night.
 
 @export var sun: DirectionalLight3D
 @export var environment: WorldEnvironment
@@ -27,11 +29,14 @@ const MOON := Color(0.58, 0.68, 1.0)
 
 var _sky: ShaderMaterial
 var _glow := -1.0
+var _fog_density := 0.0  # the scene's own, before the biome's factor
 
 
 func _ready() -> void:
 	if environment and environment.environment.sky:
 		_sky = environment.environment.sky.sky_material as ShaderMaterial
+	if environment:
+		_fog_density = environment.environment.fog_density
 	_update()
 
 
@@ -53,7 +58,7 @@ func _update() -> void:
 		var yaw := sunrise_yaw + PI * across
 		sun.rotation = Vector3(-elev, yaw, 0.0)
 		var sun_color := SUN_LOW.lerp(SUN_NOON, clampf(h * 2.0, 0.0, 1.0))
-		sun.light_color = sun_color.lerp(MOON, night)
+		sun.light_color = sun_color.lerp(MOON, night) * Biome.sun_tint
 		sun.light_energy = lerpf(0.25, lerpf(0.55, 1.0, clampf(h * 1.5, 0.0, 1.0)), day)
 		sun.shadow_opacity = lerpf(0.55, 1.0, day)
 
@@ -68,8 +73,9 @@ func _update() -> void:
 		_sky.set_shader_parameter("night", night)
 	if environment:
 		var env := environment.environment
-		env.fog_light_color = horizon
-		env.ambient_light_energy = lerpf(0.45, 1.0, day)
+		env.fog_light_color = horizon * Biome.fog_tint
+		env.fog_density = _fog_density * Biome.fog_density
+		env.ambient_light_energy = lerpf(0.45, 1.0, day) * Biome.ambient
 		env.background_energy_multiplier = lerpf(0.6, 1.0, day)
 
 	# lamps, lanterns and windows

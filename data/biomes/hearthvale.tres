@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BiomeMood" format=3]
+
+[ext_resource type="Script" path="res://scripts/biome_mood.gd" id="1_mood"]
+
+[resource]
+script = ExtResource("1_mood")
+display_name = "Hearthvale"
+subtitle = "The village"
+fog_density = 0.9
+fog_tint = Color(1.04, 0.98, 0.9, 1)
+ambient = 1.05
+sun_tint = Color(1.05, 0.98, 0.9, 1)
+saturation = 1.05

@@ -236,7 +236,8 @@ func _readout_text() -> String:
 		lines.append("pos %.1f, %.1f, %.1f" % [pos.x, pos.y, pos.z])
 		lines.append("speed %.1f m/s  ·  %s%s" % [flat, Player.State.keys()[p._state].capitalize(),
 				"  ·  on floor" if p.is_on_floor() else ""])
-	lines.append("%s  ·  %s" % [DayNight.clock_text(), DayNight.part_of_day()])
+	lines.append("%s  ·  %s  ·  %s" % [DayNight.clock_text(), DayNight.part_of_day(),
+			String(Biome.current) if Biome.current != &"" else "no biome"])
 	return "\n".join(lines)
 
 
