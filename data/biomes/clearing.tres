@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BiomeMood" format=3]
+
+[ext_resource type="Script" path="res://scripts/biome_mood.gd" id="1_mood"]
+
+[resource]
+script = ExtResource("1_mood")
+display_name = "The Clearing"
+subtitle = "Where it all started"
+fog_density = 1.0
+fog_tint = Color(1, 1, 1, 1)
+ambient = 1.0
+sun_tint = Color(1, 1, 1, 1)
+saturation = 1.0

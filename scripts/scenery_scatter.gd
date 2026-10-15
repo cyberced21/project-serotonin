@@ -3,11 +3,13 @@ extends Node3D
 ## Spreads scenery (grass, flowers, bushes, boulders: one ScatterLayer each) over the terrain inside
 ## `area`, seeded so it's the same every run. Each layer is drawn with MultiMeshes, one per
 ## CELL-metre square, so far-away cells can be culled by the layer's visible_distance.
-## Keeps off: dirt paths (terrain texture PATH_TEXTURE), water and sand, ground too steep for the
-## layer, snow (plants), and the space around gatherable nodes, buildings, props (the parkour
-## ruins included) and the player's spawn.
+## Keeps off: paths, roads, quarry stone and crop squares (BARE_TEXTURES, unless a layer's
+## allowed_ids say otherwise), water and sand, ground too steep for the layer, snow (plants), and
+## the space around gatherable nodes, buildings, props (the parkour ruins included) and the
+## player's spawn.
 
-const PATH_TEXTURE := 1
+## Painted surfaces nothing grows on (see WorldMap.TEX_*).
+const BARE_TEXTURES: Array[int] = [WorldMap.TEX_PATH, WorldMap.TEX_ROAD, WorldMap.TEX_QUARRY, WorldMap.TEX_CROP]
 const PALETTE := preload("res://materials/node_palette.tres")
 const SWAY := preload("res://shaders/sway_instanced.gdshader")
 const CELL := 32.0
@@ -24,6 +26,11 @@ const SNOW_HEIGHT := 38.0
 @export var prop_radius := 1.0
 @export var building_margin := 1.0
 @export var spawn_radius := 3.0
+## More open spots to keep clear, (x, z, radius): glades.
+@export var clear_spots := PackedVector3Array()
+## Thin out toward the rim of an ellipse (centre x, z, radius x, z): full density in the middle,
+## a sparse fringe at the edge. Zero radii = off.
+@export var edge_ellipse := Vector4.ZERO
 
 var _keep_out: Array[Vector3] = []  # (x, z, radius)
 
@@ -54,6 +61,8 @@ func _scatter() -> void:
 				var p := centre + (off if layer.cluster.y > 1 else Vector2.ZERO)
 				var s := rng.randf_range(layer.scale_range.x, layer.scale_range.y)
 				var yaw := rng.randf() * TAU
+				if _thinned(p, rng):
+					continue
 				var xform: Variant = _place(terrain, layer, p, s, yaw)
 				if xform == null:
 					continue
@@ -65,7 +74,21 @@ func _scatter() -> void:
 					shapes.append(xform)
 		_build_cells(layer, mesh, cells)
 		if layer.collide:
-			_build_collision(mesh, shapes)
+			_build_collision(mesh, shapes, layer.collision_size)
+
+
+## A layer's own allowed_ids win (wheat grows on crop squares); otherwise anything not bare.
+static func _allowed(layer: ScatterLayer, id: int) -> bool:
+	return id in layer.allowed_ids if not layer.allowed_ids.is_empty() else id not in BARE_TEXTURES
+
+
+## Whether `edge_ellipse` drops this spot. Only draws a number when it's on, so turning it on for
+## one scatter node doesn't reshuffle the others.
+func _thinned(p: Vector2, rng: RandomNumberGenerator) -> bool:
+	if edge_ellipse.z <= 0.0 or edge_ellipse.w <= 0.0:
+		return false
+	var e := ((p - Vector2(edge_ellipse.x, edge_ellipse.y)) / Vector2(edge_ellipse.z, edge_ellipse.w)).length()
+	return rng.randf() < smoothstep(0.55, 1.05, e) * 0.85
 
 
 ## Where one of `layer` would stand at `p`, or null if it isn't allowed there.
@@ -80,11 +103,11 @@ func _place(terrain: Terrain3D, layer: ScatterLayer, p: Vector2, s: float, yaw: 
 	var n: Vector3 = terrain.data.get_normal(at)
 	if n.y < layer.min_normal_y:
 		return null
-	if terrain.data.get_control_base_id(at) == PATH_TEXTURE:
+	if not _allowed(layer, terrain.data.get_control_base_id(at)):
 		return null
 	if layer.clearance > 0.0:  # bigger things keep off the path's edges too
 		for o in [Vector3(1, 0, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1), Vector3(0, 0, -1)]:
-			if terrain.data.get_control_base_id(at + o * layer.clearance) == PATH_TEXTURE:
+			if not _allowed(layer, terrain.data.get_control_base_id(at + o * layer.clearance)):
 				return null
 	if WaterBody.depth_at(get_tree(), at) > 0.0:
 		return null
@@ -106,6 +129,8 @@ func _collect_keep_out() -> void:
 		_keep((p as Node3D).global_position, maxf((p as Prop).footprint_radius() + 0.5, prop_radius))
 	for b in get_tree().get_nodes_in_group("building"):
 		_keep((b as Node3D).global_position, (b as Building).footprint_radius() + building_margin)
+	for c in clear_spots:
+		_keep_out.append(c)
 	var player := get_tree().get_first_node_in_group("player") as Node3D
 	if player:
 		_keep(player.global_position, spawn_radius)
@@ -147,8 +172,9 @@ func _build_cells(layer: ScatterLayer, mesh: Mesh, cells: Dictionary[Vector2i, A
 		mmi.global_position = centre
 
 
-## One static body with a box per placed instance (boulders).
-func _build_collision(mesh: Mesh, xforms: Array[Transform3D]) -> void:
+## One static body with a box per placed instance (boulders), or a `size` box on each one's
+## origin (tree trunks).
+func _build_collision(mesh: Mesh, xforms: Array[Transform3D], size := Vector3.ZERO) -> void:
 	var body := StaticBody3D.new()
 	body.collision_layer = 1
 	body.collision_mask = 0
@@ -158,7 +184,14 @@ func _build_collision(mesh: Mesh, xforms: Array[Transform3D]) -> void:
 		var shape := CollisionShape3D.new()
 		var box := BoxShape3D.new()
 		# size the box rather than scaling the shape (physics wants unscaled shapes)
-		box.size = aabb.size * 0.85 * t.basis.get_scale().x  # a little inside the lumpy outline
+		var s := t.basis.get_scale().x
+		if size != Vector3.ZERO:
+			box.size = size * s
+			shape.shape = box
+			body.add_child(shape)
+			shape.global_transform = Transform3D(t.basis.orthonormalized(), t.origin + Vector3.UP * size.y * 0.5 * s)
+			continue
+		box.size = aabb.size * 0.85 * s  # a little inside the lumpy outline
 		shape.shape = box
 		body.add_child(shape)
 		shape.global_transform = Transform3D(t.basis.orthonormalized(), t * aabb.get_center())

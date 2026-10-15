@@ -34,6 +34,21 @@ Design notes are in [village-design.md](village-design.md).
 - [x] **Talk ray occlusion:** a villager behind a pole still counts if their head, chest or hips is in plain sight (`player.gd` `_villager_behind_clutter`).
 - [ ] **Interiors:** buildings are solid shells. Could have doors you walk through.
 
+## Biomes
+
+Plan and decisions: [plans/biomes.md](../plans/biomes.md).
+
+- [x] **The Pinewood, Greystone Quarry, Goldmeadow and the ring road**, with their own ground, light, fog, ambience and arrival cards (`WorldMap`, the `Biome` autoload, `data/biomes/`).
+- [x] **Crystal and the Crystal Forge:** Mining 40 on the quarry floor; the smithy's fourth tier (`BuildingTier.hall_tier` lets it need only town hall tier 3).
+- [x] **Farming lite:** the Farming skill, a sickle, wheat and barley in Goldmeadow.
+- [x] **Time trial** round the ring road: gate, eight checkpoints, splits, saved bests, medal banners on the gate.
+- [ ] **Mining tunnels** off the quarry's levels. Cut them into any level wall away from the haul road and the mantle stairs (see the generator's `_ramp_t` / `_stair_angles`).
+- [ ] **Full farming:** planting and growing, seasons, a farmer villager and building, Rosa baking with wheat, a farming perk, and something to spend wheat and barley on.
+- [ ] **Tune the medal times** (170 / 125 / 95 s are first guesses; `TimeTrial` exports in `scenes/biomes/road.tscn`) after some real laps.
+- [ ] **Lap ghost:** a see-through figure replaying your best lap.
+- [ ] **Trophy / achievement spot** in or near the town hall: medals, discoveries, maxed skills.
+- [ ] **A "leaves" footstep set** for the forest floor (it sounds like grass for now).
+
 ## Movement
 
 - [ ] **Grapple / rope** — for chasms and cliff-face nodes.
@@ -52,10 +67,12 @@ Design notes are in [village-design.md](village-design.md).
 
 ## Audio
 
-- [ ] **Real recordings** to replace the synthesized placeholders: footsteps (all surfaces + water), slide scrape, mantle, splash, spear hit (`audio/footsteps/`, `audio/movement/`, `audio/fishing/` — swap the `.wav`s, the `.tres` randomizers stay).
+- [ ] **Real recordings** to replace the synthesized placeholders: footsteps (all surfaces + water), slide scrape, mantle, splash, spear hit, and the biome ambience beds (`audio/footsteps/`, `audio/movement/`, `audio/fishing/`, `audio/ambience/` — swap the `.wav`s, the `.tres` randomizers stay).
 
 ## World & tech
 
+- [x] **Editor re-save dropped villager lines:** in the editor, non-`@tool` scripts run as placeholders, and a placeholder silently refused the saved `PackedStringArray` when the script's default was a bare `[]` / `[...]` literal. So `BuildingTier.lines` and `BuildingDef.night_lines` loaded empty (or as the default), and the next editor save wrote them out that way. Their defaults are now `PackedStringArray(...)`, and an in-editor re-save keeps all 75 lines. **Rule:** give exported packed arrays a `PackedXArray(...)` default, never a bare array literal. (Fields equal to their script default, like Tier 1's `name = "Lean-to"`, are left out of the file on purpose. That's normal and loses nothing.)
+- [ ] **Editor bloats `materials/terrain_assets.tres`:** Terrain3D's editor plugin fills in generated placeholder textures and a default grass mesh and saves them as ~13 MB of image data. The low-poly shader uses none of it. Until there's a fix, discard that change (`git checkout -- materials/terrain_assets.tres`).
 - [x] **Day / night:** a 20-minute day (`DayNight` autoload) lit by the `Sky` node. Lamps and windows glow after dark, villagers go home at night, and fish are calmer at dawn and dusk.
 - [x] **Stars and moon:** `shaders/sky.gdshader` draws the gradient, a sun disc by day, a moon disc and twinkling stars at night.
 - [x] **Terrain collision range:** Terrain3D now builds collision for the whole map up front (`collision_mode` Full/Game, ~0.1 s at 512 m). Revisit if the world gets much bigger.

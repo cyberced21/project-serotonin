@@ -1,0 +1,35 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/resource_node.tscn" id="1_base"]
+[ext_resource type="AudioStream" path="res://audio/footsteps/grass.tres" id="2_rustle"]
+[ext_resource type="PackedScene" path="res://models/barley_sheaf.glb" id="3_model"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_sheaf"]
+size = Vector3(0.8, 1, 0.8)
+
+[node name="Barley" instance=ExtResource("1_base")]
+item = &"barley"
+tool_type = &"sickle"
+max_hits = 4
+drops_min = 1
+drops_max = 3
+respawn_time = 35.0
+skill = &"farming"
+required_level = 15
+xp_per_hit = 8
+xp_on_break = 24
+model = ExtResource("3_model")
+chip_color = Color(0.86, 0.85, 0.5, 1)
+burst_color = Color(0.62, 0.74, 0.45, 1)
+popup_height = 1.2
+debris_speed = 1.5
+hit_sfx = ExtResource("2_rustle")
+break_sfx = ExtResource("2_rustle")
+stress_pitch = 0.25
+hitstop_hit = 0.03
+hitstop_break = 0.06
+shake_hit = 0.6
+shake_break = 1.5
+
+[node name="CollisionShape3D" parent="." index="0"]
+shape = SubResource("BoxShape3D_sheaf")

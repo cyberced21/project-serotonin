@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BiomeMood" format=3]
+
+[ext_resource type="Script" path="res://scripts/biome_mood.gd" id="1_mood"]
+
+[resource]
+script = ExtResource("1_mood")
+display_name = "Frostpeak"
+subtitle = "The summit"
+fog_density = 1.2
+fog_tint = Color(0.9, 0.96, 1.12, 1)
+ambient = 1.05
+sun_tint = Color(0.92, 0.97, 1.08, 1)
+saturation = 0.85

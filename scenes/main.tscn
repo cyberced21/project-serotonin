@@ -20,6 +20,10 @@
 [ext_resource type="PackedScene" path="res://scenes/village/fisher.tscn" id="17_fisher"]
 [ext_resource type="PackedScene" path="res://scenes/village/baker_cottage.tscn" id="55_baker"]
 [ext_resource type="PackedScene" path="res://scenes/village/prospector_cottage.tscn" id="56_prospector"]
+[ext_resource type="PackedScene" path="res://scenes/biomes/pinewood.tscn" id="57_pinewood"]
+[ext_resource type="PackedScene" path="res://scenes/biomes/quarry.tscn" id="58_quarry"]
+[ext_resource type="PackedScene" path="res://scenes/biomes/goldmeadow.tscn" id="59_goldmeadow"]
+[ext_resource type="PackedScene" path="res://scenes/biomes/road.tscn" id="60_road"]
 [ext_resource type="Script" path="res://scripts/prop.gd" id="18_prop"]
 [ext_resource type="PackedScene" path="res://models/village/props/bench.glb" id="19_bench"]
 [ext_resource type="PackedScene" path="res://models/village/props/lamp_post.glb" id="20_lamp"]
@@ -121,6 +125,7 @@ visible_distance = 70.0
 clearance = 0.0
 cluster = Vector2i(3, 7)
 cluster_radius = 0.9
+allowed_ids = Array[int]([0, 3, 4])
 
 [sub_resource type="Resource" id="Layer_flowers_warm"]
 script = ExtResource("28_layer")
@@ -136,6 +141,7 @@ visible_distance = 60.0
 clearance = 0.0
 cluster = Vector2i(3, 6)
 cluster_radius = 0.7
+allowed_ids = Array[int]([0, 4])
 
 [sub_resource type="Resource" id="Layer_flowers_cool"]
 script = ExtResource("28_layer")
@@ -151,6 +157,7 @@ visible_distance = 60.0
 clearance = 0.0
 cluster = Vector2i(3, 6)
 cluster_radius = 0.7
+allowed_ids = Array[int]([0, 4])
 
 [sub_resource type="Resource" id="Layer_bush_round"]
 script = ExtResource("28_layer")
@@ -166,6 +173,7 @@ visible_distance = 160.0
 clearance = 1.0
 cluster = Vector2i(1, 3)
 cluster_radius = 1.2
+allowed_ids = Array[int]([0])
 
 [sub_resource type="Resource" id="Layer_bush_low"]
 script = ExtResource("28_layer")
@@ -179,6 +187,7 @@ collide = false
 cast_shadow = true
 visible_distance = 160.0
 clearance = 1.0
+allowed_ids = Array[int]([0])
 
 [sub_resource type="Resource" id="Layer_boulder_big"]
 script = ExtResource("28_layer")
@@ -192,6 +201,7 @@ collide = true
 cast_shadow = true
 visible_distance = 0.0
 clearance = 1.5
+allowed_ids = Array[int]([0])
 
 [sub_resource type="Resource" id="Layer_boulder_flat"]
 script = ExtResource("28_layer")
@@ -205,6 +215,7 @@ collide = true
 cast_shadow = true
 visible_distance = 0.0
 clearance = 1.5
+allowed_ids = Array[int]([0])
 
 [node name="Main" type="Node3D"]
 physics_interpolation_mode = 2
@@ -668,6 +679,14 @@ position = Vector3(108.5, 0, 31.5)
 rotation = Vector3(0, -0.4, 0)
 script = ExtResource("18_prop")
 model = ExtResource("22_crates")
+
+[node name="Pinewood" parent="." instance=ExtResource("57_pinewood")]
+
+[node name="Quarry" parent="." instance=ExtResource("58_quarry")]
+
+[node name="Goldmeadow" parent="." instance=ExtResource("59_goldmeadow")]
+
+[node name="Road" parent="." instance=ExtResource("60_road")]
 
 [node name="Scenery" type="Node3D" parent="."]
 script = ExtResource("27_scatter")

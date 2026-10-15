@@ -10,10 +10,20 @@ const PALETTE := preload("res://materials/node_palette.tres")
 ## Exact collision box, centred on the prop's origin, instead of one fitted around the model
 ## (the parkour blocks: mantle and step heights depend on it).
 @export var collision_size := Vector3.ZERO
+## Collide with the model's own shape (ramps you run up, arches you pass under) instead of a box.
+@export var collision_from_mesh := false
+## Stand on the terrain wherever it's placed (props out on uneven ground), sunk this far in.
+@export var snap_to_ground := false
+@export var sink := 0.05
 
 
 func _ready() -> void:
 	add_to_group("prop")
+	if snap_to_ground:
+		var terrain := get_tree().get_first_node_in_group("terrain") as Terrain3D
+		var h: float = terrain.data.get_height(global_position) if terrain and terrain.data else NAN
+		if not is_nan(h):
+			global_position.y = h - sink
 	var inst := model.instantiate() as Node3D
 	add_child(inst)
 	var bounds := AABB()
@@ -26,7 +36,14 @@ func _ready() -> void:
 		var box := global_transform.affine_inverse() * mesh.global_transform * mesh.get_aabb()
 		bounds = box if first else bounds.merge(box)
 		first = false
-	if collide and not first:
+	if collide and collision_from_mesh:
+		for m in inst.find_children("*", "MeshInstance3D", true, false):
+			var mesh := m as MeshInstance3D
+			var shape := CollisionShape3D.new()
+			shape.shape = mesh.mesh.create_trimesh_shape()
+			add_child(shape)
+			shape.global_transform = mesh.global_transform
+	elif collide and not first:
 		var shape := CollisionShape3D.new()
 		shape.shape = BoxShape3D.new()
 		var exact := collision_size != Vector3.ZERO

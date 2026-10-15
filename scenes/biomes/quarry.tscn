@@ -1,0 +1,192 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/node_spawner.gd" id="1_spawner"]
+[ext_resource type="Script" path="res://scripts/spawn_entry.gd" id="2_entry"]
+[ext_resource type="PackedScene" path="res://scenes/rock.tscn" id="3_rock"]
+[ext_resource type="PackedScene" path="res://scenes/iron_rock.tscn" id="4_iron"]
+[ext_resource type="PackedScene" path="res://scenes/coal_rock.tscn" id="5_coal"]
+[ext_resource type="PackedScene" path="res://scenes/gold_rock.tscn" id="6_gold"]
+[ext_resource type="PackedScene" path="res://scenes/crystal_rock.tscn" id="7_crystal"]
+[ext_resource type="Script" path="res://scripts/prop.gd" id="8_prop"]
+[ext_resource type="Script" path="res://scripts/scenery_scatter.gd" id="9_scatter"]
+[ext_resource type="Script" path="res://scripts/scatter_layer.gd" id="10_layer"]
+[ext_resource type="PackedScene" path="res://models/scenery/quarry_rubble.glb" id="11_rubble"]
+[ext_resource type="PackedScene" path="res://models/scenery/boulder_flat.glb" id="12_boulder"]
+[ext_resource type="PackedScene" path="res://models/quarry/crane.glb" id="m_crane"]
+[ext_resource type="PackedScene" path="res://models/quarry/ladder.glb" id="m_ladder"]
+[ext_resource type="PackedScene" path="res://models/quarry/scaffold_high.glb" id="m_scaffold_high"]
+[ext_resource type="PackedScene" path="res://models/quarry/scaffold_low.glb" id="m_scaffold_low"]
+
+[sub_resource type="Resource" id="Rock"]
+script = ExtResource("2_entry")
+scene = ExtResource("3_rock")
+weight = 1.0
+
+[sub_resource type="Resource" id="Iron"]
+script = ExtResource("2_entry")
+scene = ExtResource("4_iron")
+weight = 2.0
+
+[sub_resource type="Resource" id="IronFew"]
+script = ExtResource("2_entry")
+scene = ExtResource("4_iron")
+weight = 1.0
+
+[sub_resource type="Resource" id="RockFew"]
+script = ExtResource("2_entry")
+scene = ExtResource("3_rock")
+weight = 1.0
+
+[sub_resource type="Resource" id="Coal"]
+script = ExtResource("2_entry")
+scene = ExtResource("5_coal")
+weight = 3.0
+
+[sub_resource type="Resource" id="Gold"]
+script = ExtResource("2_entry")
+scene = ExtResource("6_gold")
+weight = 1.0
+
+[sub_resource type="Resource" id="Crystal"]
+script = ExtResource("2_entry")
+scene = ExtResource("7_crystal")
+weight = 1.0
+
+[sub_resource type="Resource" id="Layer_rubble"]
+script = ExtResource("10_layer")
+model = ExtResource("11_rubble")
+density = 1.5
+scale_range = Vector2(0.7, 1.6)
+min_normal_y = 0.8
+align_to_slope = true
+allowed_ids = Array[int]([5])
+cast_shadow = false
+visible_distance = 60.0
+
+[sub_resource type="Resource" id="Layer_boulders"]
+script = ExtResource("10_layer")
+model = ExtResource("12_boulder")
+density = 0.08
+scale_range = Vector2(0.8, 1.6)
+min_normal_y = 0.8
+align_to_slope = true
+allowed_ids = Array[int]([5])
+collide = true
+clearance = 1.5
+
+[node name="Quarry" type="Node3D"]
+
+[node name="Ores" type="Node3D" parent="."]
+
+[node name="Level1" type="Node3D" parent="Ores"]
+script = ExtResource("1_spawner")
+entries = Array[ExtResource("2_entry")]([SubResource("Rock")])
+count = 6
+seed = 11
+save_prefix = "quarry_level1"
+ring = Vector4(-175, -15, 47, 50)
+allowed_ids = Array[int]([5])
+spacing = 5.0
+min_normal_y = 0.85
+hotspot_share = 0.0
+
+[node name="Level2" type="Node3D" parent="Ores"]
+script = ExtResource("1_spawner")
+entries = Array[ExtResource("2_entry")]([SubResource("Iron"), SubResource("RockFew")])
+count = 6
+seed = 12
+save_prefix = "quarry_level2"
+ring = Vector4(-175, -15, 37, 40)
+allowed_ids = Array[int]([5])
+spacing = 5.0
+min_normal_y = 0.85
+hotspot_share = 0.0
+
+[node name="Level3" type="Node3D" parent="Ores"]
+script = ExtResource("1_spawner")
+entries = Array[ExtResource("2_entry")]([SubResource("Coal"), SubResource("IronFew")])
+count = 6
+seed = 13
+save_prefix = "quarry_level3"
+ring = Vector4(-175, -15, 27, 30)
+allowed_ids = Array[int]([5])
+spacing = 5.0
+min_normal_y = 0.85
+hotspot_share = 0.0
+
+[node name="Level4" type="Node3D" parent="Ores"]
+script = ExtResource("1_spawner")
+entries = Array[ExtResource("2_entry")]([SubResource("Gold")])
+count = 3
+seed = 14
+save_prefix = "quarry_level4"
+ring = Vector4(-175, -15, 17, 20)
+allowed_ids = Array[int]([5])
+spacing = 5.0
+min_normal_y = 0.85
+hotspot_share = 0.0
+
+[node name="Floor" type="Node3D" parent="Ores"]
+script = ExtResource("1_spawner")
+entries = Array[ExtResource("2_entry")]([SubResource("Crystal")])
+count = 2
+seed = 15
+save_prefix = "quarry_floor"
+ring = Vector4(-175, -15, 0, 9)
+allowed_ids = Array[int]([5])
+spacing = 5.0
+min_normal_y = 0.85
+hotspot_share = 0.0
+
+[node name="Props" type="Node3D" parent="."]
+
+[node name="ScaffoldHighA" type="StaticBody3D" parent="Props"]
+position = Vector3(-131.80, 16.00, -15.00)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("8_prop")
+model = ExtResource("m_scaffold_high")
+
+[node name="ScaffoldLowA" type="StaticBody3D" parent="Props"]
+position = Vector3(-133.40, 16.00, -15.00)
+rotation = Vector3(0, 1.5708, 0)
+script = ExtResource("8_prop")
+model = ExtResource("m_scaffold_low")
+
+[node name="ScaffoldHighB" type="StaticBody3D" parent="Props"]
+position = Vector3(-166.77, 6.00, -36.16)
+rotation = Vector3(0, 2.7708, 0)
+script = ExtResource("8_prop")
+model = ExtResource("m_scaffold_high")
+
+[node name="ScaffoldLowB" type="StaticBody3D" parent="Props"]
+position = Vector3(-167.35, 6.00, -34.67)
+rotation = Vector3(0, 2.7708, 0)
+script = ExtResource("8_prop")
+model = ExtResource("m_scaffold_low")
+
+[node name="LadderA" type="StaticBody3D" parent="Props"]
+position = Vector3(-143.47, 11.00, -5.25)
+rotation = Vector3(0, 4.4124, 0)
+script = ExtResource("8_prop")
+model = ExtResource("m_ladder")
+collide = false
+
+[node name="LadderB" type="StaticBody3D" parent="Props"]
+position = Vector3(-186.57, 1.00, -8.04)
+rotation = Vector3(0, 2.1124, 0)
+script = ExtResource("8_prop")
+model = ExtResource("m_ladder")
+collide = false
+
+[node name="Crane" type="StaticBody3D" parent="Props"]
+position = Vector3(-117.68, 26.00, 2.73)
+rotation = Vector3(0, -1.8708, 0)
+script = ExtResource("8_prop")
+model = ExtResource("m_crane")
+collide = false
+
+[node name="Scenery" type="Node3D" parent="."]
+script = ExtResource("9_scatter")
+layers = Array[ExtResource("10_layer")]([SubResource("Layer_rubble"), SubResource("Layer_boulders")])
+area = Rect2(-245, -85, 140, 140)
+seed = 3

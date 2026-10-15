@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BiomeMood" format=3]
+
+[ext_resource type="Script" path="res://scripts/biome_mood.gd" id="1_mood"]
+[ext_resource type="AudioStream" path="res://audio/ambience/quarry.wav" id="2_sound"]
+
+[resource]
+script = ExtResource("1_mood")
+display_name = "Greystone Quarry"
+subtitle = "Five levels down"
+fog_density = 1.3
+fog_tint = Color(1.08, 1.0, 0.88, 1)
+ambient = 0.95
+sun_tint = Color(1.05, 0.98, 0.9, 1)
+saturation = 0.75
+ambience = ExtResource("2_sound")

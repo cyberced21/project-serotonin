@@ -26,6 +26,7 @@ Skills="*res://scripts/autoload/skills.gd"
 Village="*res://scripts/autoload/village.gd"
 DayNight="*res://scripts/autoload/day_night.gd"
 DebugMenu="*res://scripts/autoload/debug_menu.gd"
+Biome="*res://scripts/autoload/biome.gd"
 
 [display]
 
@@ -47,3 +48,4 @@ common/physics_interpolation=true
 
 rendering_device/driver.windows="d3d12"
 anti_aliasing/quality/msaa_3d=2
+limits/global_shader_variables/buffer_size=262144

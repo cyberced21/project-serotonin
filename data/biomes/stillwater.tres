@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BiomeMood" format=3]
+
+[ext_resource type="Script" path="res://scripts/biome_mood.gd" id="1_mood"]
+
+[resource]
+script = ExtResource("1_mood")
+display_name = "Stillwater"
+subtitle = "The lake"
+fog_density = 1.6
+fog_tint = Color(0.88, 0.96, 1.08, 1)
+ambient = 1.0
+sun_tint = Color(0.95, 0.98, 1.05, 1)
+saturation = 0.95

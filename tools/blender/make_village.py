@@ -1,10 +1,12 @@
-"""Generates the village models as .glb files: six buildings (three tiers each), their villagers
+"""Generates the village models as .glb files: six buildings (three tiers each; the smithy has a fourth), their villagers
 and a few props. Uses the helpers in make_models.py. Run headless from the project folder:
 
-    blender -b -P tools/blender/make_village.py -- models art/palette.json
+    blender -b -P tools/blender/make_village.py -- models art/palette.json [builder ...]
+
+(name builders, e.g. `smithy`, to rebuild only those)
 
 Outputs into models/village/:
-  <building>.glb           every tier's pieces in one file, named T1_*, T2_*, T3_*. The game
+  <building>.glb           every tier's pieces in one file, named T1_*, T2_*... The game
                            shows one tier at a time and builds the next one piece by piece,
                            lowest piece first. Empties named *Smoke* get chimney smoke.
   villager_<id>.glb        a toy villager in separate parts the game animates in code:
@@ -329,40 +331,8 @@ def forge(k, y, chimney_top, wide=1.0):
     return z
 
 
-def smithy():
-    reset()
-    k = Kit("T1", 201)
-    # an open-air camp: fire pit, anvil on a stump, a bucket, tools on a leaning board, a tarp
-    k.fire((-0.9, 0.2, 0))
-    k.anvil((0.9, -0.5, 0))
-    k.add("Bucket", prism(8, 0.18, 0.2, 0.3), ("accent.4", "wood.3", "wood.2"), (1.7, 0.5, 0.15))
-    k.box("ToolBoard", (1.0, 0.06, 1.4), (-0.2, 1.3, 0.68), ("wood.4", "wood.4", "wood.3"), rot=(0.25, 0, 0))
-    for x, h in ((-0.5, 0.5), (-0.2, 0.42), (0.1, 0.55)):
-        k.box("Tool", (0.05, 0.05, h), (x, 1.17, 0.85), "metal.2", rot=(0.25, 0, 0))
-    for x in (-1.5, 1.5):
-        k.post("TarpPole", 0.05, 0, 1.9 if x < 0 else 1.6, x, -0.9)
-    k.box("Tarp", (3.2, 1.6, 0.04), (0, -0.25, 1.65), ("neutral.4", "neutral.3", "neutral.3"), rot=(-0.35, 0.06, 0))
-    k.crate((-1.9, -0.9, 0), 0.55)
-
-    k = Kit("T2", 202)
-    # a stone forge under a roof on four posts
-    for x in (-2.4, 2.4):
-        for y in (-2.0, 2.0):
-            k.post("Post", 0.11, 0, 2.65, x, y)
-    for y in (-2.0, 2.0):
-        k.log("Beam", 5.2, 0.11, (0, y, 2.62), "x", sides=("wood.3", "wood.2"))
-    k.gable_roof("Roof", 5.8, 2.0, 2.68, 3.5, 0.45, 3, ("wood.2", "wood.2", "wood.1", "wood.3"))
-    for x in (-2.4, 2.4):
-        k.gable("Gable", 2.05, 2.68, 3.45, x, 0.12, ("wood.3", "wood.3", "wood.2"))
-    forge(k, 1.4, 4.4)
-    k.anvil((0.4, -0.6, 0))
-    k.barrel((-1.7, -0.5, 0), 0.3, 0.7)
-    k.add("Water", prism(10, 0.27, 0.27, 0.03), "accent.4", (-1.7, -0.5, 0.69))
-    k.box("ToolRack", (0.08, 0.9, 0.6), (2.32, 0.6, 1.4), "wood.4")
-    for i in range(3):
-        k.box("Tool", (0.04, 0.05, 0.45), (2.26, 0.3 + i * 0.3, 1.25), "metal.2")
-
-    k = Kit("T3", 203)
+def smithy_hall(k):
+    """The smithy's top look (tier 3), also the base of the tier-4 crystal forge."""
     # a proper smithy: stone walls, timber above, slate roof, big chimney, bellows, sign
     for course in range(3):
         z = 0.2 + course * 0.4
@@ -407,6 +377,58 @@ def smithy():
     k.box("SignArm", (0.9, 0.06, 0.06), (3.3, -3.0, 2.55), "wood.2")
     k.box("Sign", (0.7, 0.06, 0.5), (3.15, -3.0, 2.15), ("wood.6", "wood.6", "wood.5"))
     k.box("SignAnvil", (0.4, 0.08, 0.14), (3.15, -3.04, 2.15), "metal.1")
+
+
+def smithy():
+    reset()
+    k = Kit("T1", 201)
+    # an open-air camp: fire pit, anvil on a stump, a bucket, tools on a leaning board, a tarp
+    k.fire((-0.9, 0.2, 0))
+    k.anvil((0.9, -0.5, 0))
+    k.add("Bucket", prism(8, 0.18, 0.2, 0.3), ("accent.4", "wood.3", "wood.2"), (1.7, 0.5, 0.15))
+    k.box("ToolBoard", (1.0, 0.06, 1.4), (-0.2, 1.3, 0.68), ("wood.4", "wood.4", "wood.3"), rot=(0.25, 0, 0))
+    for x, h in ((-0.5, 0.5), (-0.2, 0.42), (0.1, 0.55)):
+        k.box("Tool", (0.05, 0.05, h), (x, 1.17, 0.85), "metal.2", rot=(0.25, 0, 0))
+    for x in (-1.5, 1.5):
+        k.post("TarpPole", 0.05, 0, 1.9 if x < 0 else 1.6, x, -0.9)
+    k.box("Tarp", (3.2, 1.6, 0.04), (0, -0.25, 1.65), ("neutral.4", "neutral.3", "neutral.3"), rot=(-0.35, 0.06, 0))
+    k.crate((-1.9, -0.9, 0), 0.55)
+
+    k = Kit("T2", 202)
+    # a stone forge under a roof on four posts
+    for x in (-2.4, 2.4):
+        for y in (-2.0, 2.0):
+            k.post("Post", 0.11, 0, 2.65, x, y)
+    for y in (-2.0, 2.0):
+        k.log("Beam", 5.2, 0.11, (0, y, 2.62), "x", sides=("wood.3", "wood.2"))
+    k.gable_roof("Roof", 5.8, 2.0, 2.68, 3.5, 0.45, 3, ("wood.2", "wood.2", "wood.1", "wood.3"))
+    for x in (-2.4, 2.4):
+        k.gable("Gable", 2.05, 2.68, 3.45, x, 0.12, ("wood.3", "wood.3", "wood.2"))
+    forge(k, 1.4, 4.4)
+    k.anvil((0.4, -0.6, 0))
+    k.barrel((-1.7, -0.5, 0), 0.3, 0.7)
+    k.add("Water", prism(10, 0.27, 0.27, 0.03), "accent.4", (-1.7, -0.5, 0.69))
+    k.box("ToolRack", (0.08, 0.9, 0.6), (2.32, 0.6, 1.4), "wood.4")
+    for i in range(3):
+        k.box("Tool", (0.04, 0.05, 0.45), (2.26, 0.3 + i * 0.3, 1.25), "metal.2")
+
+    smithy_hall(Kit("T3", 203))
+    # the crystal forge: the same smithy (same seed, so it looks the same), crystal set into the
+    # forge, a rack of shards, crystal lanterns at the door and a crystal on the sign
+    k = Kit("T4", 203)
+    smithy_hall(k)
+    for i, (x, h, tilt) in enumerate(((-0.5, 0.5, 0.3), (0.0, 0.7, 0.0), (0.5, 0.45, -0.35))):
+        k.add("ForgeCrystal", prism(6, 0.09, 0.012, h), ("ore.amethyst", "accent.6", "accent.6"),
+              (x * 1.2, 1.7 + 0.25, 1.0 + h / 2), (0, tilt, 0))
+    k.box("CrystalRack", (0.1, 1.0, 0.7), (-2.85, 0.8, 1.2), "wood.3")
+    for i in range(4):
+        k.add("RackCrystal", prism(6, 0.06, 0.01, 0.3), ("ore.amethyst", "accent.6", "accent.6"),
+              (-2.75, 0.45 + i * 0.24, 1.1), (0, math.pi / 2, 0))
+    for x in (-1.0, 1.0):
+        k.add("CrystalLantern", prism(6, 0.1, 0.02, 0.35), ("ore.amethyst", "ore.amethyst", "accent.6"),
+              (x * 2.82, -2.62, 2.3))
+    k.add("SignCrystal", prism(6, 0.07, 0.01, 0.26), ("ore.amethyst", "accent.6", "accent.6"), (3.15, -3.1, 2.15),
+          (0, 0.4, 0))
     export(os.path.join("village", "smithy"))
 
 
@@ -1070,8 +1092,10 @@ def signpost():
 
 
 os.makedirs(os.path.join(VILLAGE_DIR, "props"), exist_ok=True)
+only = sys.argv[sys.argv.index("--") + 3:]  # optional: names of the builders to run (e.g. `smithy`)
 for build in (woodcutter, smithy, fisher, town_hall, baker_cottage, prospector_cottage,
               woodcutter_villager, smith_villager, fisher_villager, mayor_villager,
               baker_villager, prospector_villager,
               bench, lamp_post, barrel_prop, crate_prop, signpost):
-    build()
+    if not only or build.__name__ in only:
+        build()

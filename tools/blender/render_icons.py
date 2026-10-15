@@ -2,7 +2,9 @@
 
 Run headless from the project folder, after make_models.py:
 
-    blender -b -P tools/blender/render_icons.py -- models art/palette.png art/icons
+    blender -b -P tools/blender/render_icons.py -- models art/palette.png art/icons [id ...]
+
+(name item ids to render only those; then outline only those too)
 
 For each entry in ICONS: import the .glb, give it the palette texture (nearest filtering, so each
 face is one flat colour), frame it with an orthographic camera from the given direction, and
@@ -18,6 +20,7 @@ from mathutils import Vector
 
 argv = sys.argv[sys.argv.index("--") + 1:]
 MODELS, PALETTE, OUT = argv[0], argv[1], argv[2]
+ONLY = argv[3:]
 SIZE = 128
 
 # item id -> (model path inside MODELS, view direction the camera looks FROM, Blender coords)
@@ -30,6 +33,9 @@ ICONS = {
     "pine": ("items/pine.glb", (1.0, -1.0, 0.9)),
     "coal": ("items/coal.glb", (1.0, -1.0, 0.8)),
     "gold": ("items/gold.glb", (1.0, -1.0, 0.8)),
+    "crystal": ("items/crystal.glb", (1.0, -1.0, 0.6)),
+    "wheat": ("items/wheat.glb", (1.0, -1.0, 0.45)),
+    "barley": ("items/barley.glb", (1.0, -1.0, 0.45)),
     "perch": ("fish/perch.glb", (1.0, 0.25, 0.45)),
     "trout": ("fish/trout.glb", (1.0, 0.25, 0.45)),
     "pike": ("fish/pike.glb", (1.0, 0.25, 0.45)),
@@ -107,4 +113,5 @@ def render(item_id, model, view):
 
 os.makedirs(OUT, exist_ok=True)
 for item_id, (model, view) in ICONS.items():
-    render(item_id, model, view)
+    if not ONLY or item_id in ONLY:
+        render(item_id, model, view)

@@ -17,6 +17,18 @@ stat = &"double_hit_chance"
 value = 0.4
 text = "Sharper tools: 40% chance a hit counts twice"
 
+[sub_resource type="Resource" id="Effect_4_0"]
+script = ExtResource("4_effect")
+stat = &"double_hit_chance"
+value = 0.4
+text = "Sharper tools: 40% chance a hit counts twice"
+
+[sub_resource type="Resource" id="Effect_4_1"]
+script = ExtResource("4_effect")
+stat = &"hit_power"
+value = 0.5
+text = "Crystal edges: every other hit cuts twice as deep"
+
 [sub_resource type="Resource" id="Tier_1"]
 script = ExtResource("2_tier")
 name = "Fire Pit"
@@ -41,15 +53,28 @@ cost = Dictionary[StringName, int]({
 &"iron": 20,
 &"coal": 10
 })
-lines = PackedStringArray("Look at that chimney smoke. That's the smell of honest work.", "Bellows, grindstone, quench trough. Couldn't ask for more.", "One day I'll forge you something special. When I know what.")
+lines = PackedStringArray("Look at that chimney smoke. That's the smell of honest work.", "Bellows, grindstone, quench trough. Couldn't ask for more.", "One day I'll forge you something special. When I know what.", "They say there's crystal at the bottom of the old quarry, west past the peak. Bring me some and I'll put an edge on your tools you won't believe.")
 effects = Array[ExtResource("4_effect")]([SubResource("Effect_3_0")])
+
+[sub_resource type="Resource" id="Tier_4"]
+script = ExtResource("2_tier")
+name = "Crystal Forge"
+cost = Dictionary[StringName, int]({
+&"iron": 20,
+&"coal": 20,
+&"gold": 10,
+&"crystal": 8
+})
+hall_tier = 3
+lines = PackedStringArray("Crystal in the quench, crystal on the edge. Listen to it ring!", "Down at the bottom of the quarry, you said? Worth every step back up.", "No more pretty words from me. Go and hit something.")
+effects = Array[ExtResource("4_effect")]([SubResource("Effect_4_0"), SubResource("Effect_4_1")])
 
 [resource]
 script = ExtResource("1_def")
 id = &"smithy"
 display_name = "Smithy"
 model = ExtResource("3_model")
-tiers = Array[ExtResource("2_tier")]([SubResource("Tier_1"), SubResource("Tier_2"), SubResource("Tier_3")])
+tiers = Array[ExtResource("2_tier")]([SubResource("Tier_1"), SubResource("Tier_2"), SubResource("Tier_3"), SubResource("Tier_4")])
 villager_name = "Greta"
 villager_role = "Smith"
 capped_line = "Town hall's not grand enough yet, says the mayor. Can't have the smithy outshining it."

@@ -60,6 +60,28 @@ uniform vec3 bed_color : source_color = vec3(0.36, 0.34, 0.24);
 uniform vec3 path_color : source_color = vec3(0.63, 0.52, 0.40);
 uniform int path_texture = 1;
 group_uniforms;
+// Biome surfaces, by control-map texture id (scripts/world_map.gd TEX_*). Cliffs stay rock.
+group_uniforms biomes;
+uniform vec3 road_color : source_color = vec3(0.66, 0.63, 0.57);
+uniform int road_texture = 2;
+uniform vec3 forest_color : source_color = vec3(0.23, 0.39, 0.22);
+uniform vec3 forest_color_2 : source_color = vec3(0.27, 0.43, 0.24);
+// Needle litter: patches on the forest floor, and its slopes.
+uniform vec3 needle_color : source_color = vec3(0.42, 0.33, 0.22);
+uniform int forest_texture = 3;
+uniform vec3 field_color : source_color = vec3(0.50, 0.62, 0.29);
+uniform vec3 field_color_2 : source_color = vec3(0.56, 0.66, 0.31);
+uniform int field_texture = 4;
+uniform vec3 quarry_color : source_color = vec3(0.71, 0.67, 0.59);
+// Quarry walls alternate two rock colours in bands this many metres tall.
+uniform vec3 quarry_rock : source_color = vec3(0.56, 0.53, 0.49);
+uniform vec3 quarry_rock_2 : source_color = vec3(0.47, 0.44, 0.41);
+uniform float quarry_band = 1.25;
+uniform int quarry_texture = 5;
+uniform vec3 crop_color : source_color = vec3(0.84, 0.70, 0.36);
+uniform vec3 crop_color_2 : source_color = vec3(0.79, 0.64, 0.31);
+uniform int crop_texture = 6;
+group_uniforms;
 group_uniforms bands;
 // Slope is the facet normal's Y: 1 = flat, 0 = vertical wall.
 uniform float dirt_slope : hint_range(0.0, 1.0) = 0.86;
@@ -194,10 +216,26 @@ void fragment() {
 
 	ivec3 c = get_index_coord(cell, FRAGMENT_PASS);
 	if (c.z >= 0) {
-		// Path: cells painted with texture id path_texture (base id = bits 27-31 of the control map).
+		// Surfaces by texture id (base id = bits 27-31 of the control map). Paths and roads only
+		// on walkable ground; the biomes swap the grass and dirt colours for their own.
 		uint control = floatBitsToUint(texelFetch(_control_maps, c, 0)).r;
-		if ((control >> 27u & 0x1Fu) == uint(path_texture) && slope >= rock_slope) {
+		int id = int(control >> 27u & 0x1Fu);
+		bool level = slope >= dirt_slope;
+		float pick = step(0.55, hash(patch));
+		if (id == path_texture && slope >= rock_slope) {
 			albedo = path_color;
+		} else if (id == road_texture && slope >= rock_slope) {
+			albedo = road_color;
+		} else if (id == forest_texture && slope >= rock_slope) {
+			albedo = level && hash(patch + 17.0) > 0.18 ? mix(forest_color, forest_color_2, pick) : needle_color;
+		} else if (id == field_texture && slope >= rock_slope) {
+			albedo = level ? mix(field_color, field_color_2, pick) : dirt_color;
+		} else if (id == crop_texture && slope >= rock_slope) {
+			albedo = mix(crop_color, crop_color_2, step(0.5, hash(cell)));
+		} else if (id == quarry_texture) {
+			// strata: banded by the fragment's own height, so a wall shows stripes across its facets
+			float band = mod(floor(w_vertex.y / quarry_band), 2.0);
+			albedo = level ? quarry_color : mix(quarry_rock, quarry_rock_2, band);
 		}
 	}
 	albedo *= 1.0 + (hash(cell) - 0.5) * 2.0 * variation;

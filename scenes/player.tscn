@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" path="res://models/axe.glb" id="9_axe"]
 [ext_resource type="PackedScene" path="res://models/spear.glb" id="10_spear"]
 [ext_resource type="Script" path="res://scripts/spear_fishing.gd" id="11_spearfishing"]
+[ext_resource type="PackedScene" path="res://models/sickle.glb" id="12_sickle"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.35
@@ -58,6 +59,7 @@ swing_sfx = ExtResource("3_swing")
 pickaxe_model = ExtResource("8_pickaxe")
 axe_model = ExtResource("9_axe")
 spear_model = ExtResource("10_spear")
+sickle_model = ExtResource("12_sickle")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 position = Vector3(0, 0.9, 0)
@@ -167,6 +169,10 @@ layers = 2
 cast_shadow = 0
 position = Vector3(0, 0.38, -0.09)
 mesh = SubResource("BoxMesh_axe_blade")
+
+[node name="Sickle" type="Node3D" parent="Viewmodel/SubViewport/Camera3D/Grip/ToolPivot"]
+unique_name_in_owner = true
+visible = false
 
 [node name="SpearGrip" type="Node3D" parent="Viewmodel/SubViewport/Camera3D"]
 position = Vector3(0.24, -0.3, -0.2)
