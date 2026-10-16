@@ -26,6 +26,7 @@ import sys
 import bmesh
 import bpy
 from mathutils import Euler, Vector
+from mathutils.bvhtree import BVHTree
 
 argv = sys.argv[sys.argv.index("--") + 1:]
 OUT_DIR = argv[0]
@@ -107,9 +108,12 @@ def prism(segments, r_bottom, r_top, height):
 
 
 def export(name, loose_edges=False):
+    """Writes models/<name>.glb. With `loose_edges` (the breakable rocks), also the Seam_* lines and
+    the "cut_mark" vertex colour (see mark_cut)."""
     path = os.path.join(OUT_DIR, name + ".glb")
+    colours = {"export_vertex_color": "NAME", "export_vertex_color_name": "cut_mark"} if loose_edges else {}
     bpy.ops.export_scene.gltf(filepath=path, export_format="GLB", export_yup=True,
-                              export_apply=True, export_materials="NONE", use_mesh_edges=loose_edges)
+                              export_apply=True, export_materials="NONE", use_mesh_edges=loose_edges, **colours)
     print("exported", path)
 
 
@@ -131,6 +135,17 @@ def voronoi_cell(src, seeds, index):
             for f in bmesh.ops.holes_fill(bm, edges=edges, sides=0)["faces"]:
                 f[cut] = 1
     return bm
+
+
+def mark_cut(bm, cut):
+    """Writes which faces are cut faces into a vertex colour named "cut_mark" (red on them, black on
+    the outside), so the game can tell a piece's outside from the faces it shares with its
+    neighbours. (The rock shader doesn't use vertex colour; the glTF exporter drops extra UVs.)"""
+    # (not "cut": that's the face layer, and a mesh keeps only one attribute per name)
+    layer = bm.loops.layers.color.get("cut_mark") or bm.loops.layers.color.new("cut_mark")
+    for f in bm.faces:
+        for loop in f.loops:
+            loop[layer] = (1.0, 0.0, 0.0, 1.0) if f[cut] else (0.0, 0.0, 0.0, 1.0)
 
 
 def outline(bm, cut):
@@ -239,6 +254,7 @@ def fractured(name, rng, whole, seeds, choose, stretch=None, post=None, rubble=(
             continue
         bmesh.ops.triangulate(bm, faces=bm.faces[:])
         paint(bm, lambda f, i=i, cut=cut: choose(f, f[cut] == 1, i))
+        mark_cut(bm, cut)
         if i > 0:
             make_object(f"Seam_{LETTERS[i - 1]}", outline(bm, cut))
         centre = sum((v.co for v in bm.verts), Vector()) / len(bm.verts)
@@ -600,11 +616,16 @@ def tilted(base, length, tilt, azimuth):
 
 def crystal_rock():
     """A dark stone base bristling with violet crystals (Mining 40): the crystals are the chunks
-    that break off, the base stays, two stubs are left while it grows back."""
+    that break off, the base stays, two stubs are left while it grows back. Each crystal is cut
+    off flush where it comes out of the stone, and that cut is its seam: a ring round its foot, so
+    the crack runs round the base of the crystal and finishing it snaps the crystal off."""
     reset()
     rng = random.Random(15)
     bm = blob(0.5, rng, squash=(1.15, 1.0, 0.5))
     paint(bm, shade_by_normal("stone.2", "stone.1", "stone.0", rng, side_alt="neutral.2"))
+    stone = bm.copy()  # where the crystals come out of it (world space)
+    bmesh.ops.translate(stone, vec=Vector((0, 0, 0.18)), verts=stone.verts)
+    surface = BVHTree.FromBMesh(stone)
     make_object("Body_Core", bm, (0, 0, 0.18))
     shards = [  # (length, radius, tilt, azimuth)
         (1.15, 0.16, 0.12, 0.0), (0.85, 0.13, 0.55, 0.4), (0.75, 0.12, 0.6, 2.2),
@@ -612,12 +633,25 @@ def crystal_rock():
     ]
     for i, (length, radius, tilt, a) in enumerate(shards):
         base = (math.cos(a) * 0.16 * (i > 0), math.sin(a) * 0.16 * (i > 0), 0.3)
-        make_object(f"Chunk_{'ABCDE'[i]}", shard(rng, length, radius), tilted(base, length, tilt, a), (0, tilt, a))
+        axis = Vector((math.sin(tilt) * math.cos(a), math.sin(tilt) * math.sin(a), math.cos(tilt)))
+        hit = surface.ray_cast(Vector(base), axis)  # from inside the stone, out along the crystal
+        buried = (hit[3] if hit[0] is not None else 0.0) + 0.01
+        piece = prism(6, radius, radius * 0.12, length)
+        jitter(piece, 0.06, rng)
+        cut = piece.faces.layers.int.new("cut")
+        chop(piece, Vector((0, 0, -length / 2 + buried)), Vector((0, 0, -1)), as_cut=True)
+        paint(piece, lambda f, cut=cut: "accent.7" if f[cut] else
+              ("ore.amethyst" if f.normal.z > 0.2 or rng.random() < 0.7 else "accent.6"))
+        where, turn = tilted(base, length, tilt, a), (0, tilt, a)
+        mark_cut(piece, cut)
+        make_object(f"Seam_{'ABCDE'[i]}", outline(piece, cut), where, turn)
+        make_object(f"Chunk_{'ABCDE'[i]}", piece, where, turn)
+    stone.free()
     for i, (a, length) in enumerate(((1.2, 0.22), (4.2, 0.18))):
         base = (math.cos(a) * 0.2, math.sin(a) * 0.2, 0.28)
         make_object(f"Rubble_{i}", shard(rng, length, 0.09), tilted(base, length, 0.4, a), (0, 0.4, a))
     scale_scene(1.5)  # as hefty as the boulders
-    export("crystal_rock")
+    export("crystal_rock", loose_edges=True)
 
 
 def crystal_item():

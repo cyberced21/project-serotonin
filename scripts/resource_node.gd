@@ -39,6 +39,10 @@ const DEBRIS_LIFETIME := 1.6
 const LANDED_TILT := 0.35
 const FELLED_LINGER := 2.5
 const FELLED_SHAPE_SCALE := 0.6
+## A piece split off along a crack moves at this times debris_speed (gently: it's big).
+const SPLIT_SPEED := 0.7
+## Render layer 11: a piece being cracked, with seam_crack_on_piece_only (its decals draw only there).
+const CRACKING_LAYER := 1 << 10
 
 @export_group("Gathering")
 @export var item: StringName = &"wood"
@@ -144,6 +148,10 @@ const FELLED_SHAPE_SCALE := 0.6
 ## The ore's colour: a share of the chips and pebbles, and the Crack!/Split! popups. (Cracks
 ## themselves are drawn in shades of chip_color, the rock's own stone.)
 @export var ore_color := Color(1.0, 0.6, 0.3)
+## Seam cracks draw only on the piece being cracked, not on what's round it (a crystal's crack
+## stays on the crystal instead of spilling onto the stone it grows from). Boulders leave it off,
+## so the crack shows on both sides of the seam.
+@export var seam_crack_on_piece_only := false
 ## Tip hit (pitched up per segment) and a completed crack splitting.
 @export var crack_layers: SoundLayers
 @export var split_layers: SoundLayers
@@ -486,6 +494,8 @@ func from_dict(d: Dictionary) -> void:
 func _reset_visuals() -> void:
 	for c in chunks.get_children():
 		c.visible = true
+		if c is VisualInstance3D:
+			(c as VisualInstance3D).layers &= ~CRACKING_LAYER
 	for n in notches.get_children():
 		n.queue_free()  # (cracks too)
 	_crack.clear()
@@ -861,7 +871,7 @@ func _split(info: HitInfo) -> void:
 			HitFx.spawn(hit_fx, get_parent(), to_global(centre), out, -out, chip_color, ore_color, 2.2)
 		HitFx.star(get_parent(), info.position + info.normal * 0.1, STAR_TIP, 2.0)
 		_add_rubble(info.position, 4)
-		_pop_chunk(piece, out + info.away() * 0.4, debris_speed * 1.2)
+		_pop_chunk(piece, _split_push(out, info), debris_speed * SPLIT_SPEED)
 		hits_left = maxi(hits_left - crack_split_hits, 0)
 		SaveGame.mark_dirty()
 		return
@@ -884,9 +894,19 @@ func _split(info: HitInfo) -> void:
 		HitFx.spawn(hit_fx, get_parent(), mid, out, -out, chip_color, ore_color, 2.2)
 	_add_rubble(info.position, 4)
 	for c in crossed:
-		_pop_chunk(c, out + info.away() * 0.4, debris_speed * 1.2)
+		_pop_chunk(c, _split_push(out, info), debris_speed * SPLIT_SPEED)
 	hits_left = maxi(hits_left - crack_split_hits, 0)
 	SaveGame.mark_dirty()
+
+
+## Which way a split-off piece goes: out from the rock along the ground, but never toward the
+## swinger, and leaning away from them. A boulder's piece is big; it tips off, not into your face.
+func _split_push(out: Vector3, info: HitInfo) -> Vector3:
+	var flat := Vector3(out.x, 0.0, out.z)
+	var toward := -info.away()
+	if flat.dot(toward) > 0.0:
+		flat -= toward * flat.dot(toward)
+	return flat * 0.5 + info.away() * 0.6
 
 
 func _split_feedback(info: HitInfo) -> void:
@@ -973,11 +993,13 @@ func _start_seam_crack(piece: MeshInstance3D, info: HitInfo) -> bool:
 		_seam_reach = saved["reach"]
 		_seam_step = saved["step"]
 		_seam_piece = piece
+		_mark_cracking(piece)
 		_place_seam_tips()
 		return true
 	if not _build_seam_arc(_seams[piece], to_local(info.position)):
 		return false
 	_seam_piece = piece
+	_mark_cracking(piece)
 	_seam_start = _arc_param(to_local(info.position))
 	var total := _seam_dist[-1]
 	_seam_reach = Vector2(total * 0.5, total * 0.5) if _seam_closed else Vector2(_seam_start, total - _seam_start)
@@ -1025,6 +1047,7 @@ func _place_seam_tips() -> void:
 		var p := _arc_point(s)
 		var along := _arc_point(s + end[1] * 0.05) - p
 		var tip := _tip_decal()
+		tip.cull_mask = _seam_mask()
 		tip.transform = Transform3D(_face_basis(along, _seam_up(p)), p)
 		_seam_tip_decals.append(tip)
 		_seam_tip_points.append(p)
@@ -1039,14 +1062,60 @@ func _seam_decals(a: float, b: float) -> void:
 	for j in count:
 		var p := _arc_point(a + length * j / count)
 		var q := _arc_point(a + length * (j + 1) / count)
-		_crack_decal(p, q, _seam_up((p + q) * 0.5))
+		_crack_decal(p, q, _seam_up((p + q) * 0.5), 0.3, _seam_mask())
 
 
-## The surface's normal at a point on a seam (cast in from straight out from the middle).
+## The surface's normal at a point on a seam, for the decal drawn there: that of the outside face
+## of the piece being cracked nearest the point (not one of its cut faces, against its neighbours:
+## the model marks those, see _piece_tris). Out from the middle would do for a boulder, but not
+## round the foot of a crystal, where it would point along the stone, not at the crystal.
 func _seam_up(p: Vector3) -> Vector3:
 	var out := (p - _shape_centre).normalized()
+	if _seam_piece:
+		var tris := _piece_tris(_seam_piece)
+		var centres: PackedVector3Array = tris[0]
+		var normals: PackedVector3Array = tris[1]
+		var to_node := visual.global_transform.affine_inverse() * _seam_piece.global_transform  # (Visual at rest)
+		var best := -1
+		var best_d := INF
+		for i in centres.size():
+			var c := to_node * centres[i]
+			var d := c.distance_squared_to(p)
+			if d < best_d:
+				best_d = d
+				best = i
+		if best != -1:
+			return (to_node.basis * normals[best]).normalized()
 	var s := _surface_at(p, out)
 	return s["normal"] if not s.is_empty() else out
+
+
+## Each outside triangle of a piece's mesh: [centres, normals], in the piece's own space. Its cut
+## faces are left out: the generator marks them red in the vertex colour (models without one
+## count every face as outside). Cached per mesh.
+var _tri_cache := {}
+
+func _piece_tris(piece: MeshInstance3D) -> Array:
+	if _tri_cache.has(piece.mesh):
+		return _tri_cache[piece.mesh]
+	var centres := PackedVector3Array()
+	var normals := PackedVector3Array()
+	for s in piece.mesh.get_surface_count():
+		var arrays := piece.mesh.surface_get_arrays(s)
+		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var marks: PackedColorArray = arrays[Mesh.ARRAY_COLOR] if arrays[Mesh.ARRAY_COLOR] else PackedColorArray()
+		var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX] else PackedInt32Array(range(verts.size()))
+		for i in range(0, idx.size() - 2, 3):
+			if not marks.is_empty() and marks[idx[i]].r > 0.5:
+				continue  # a cut face
+			var a := verts[idx[i]]
+			var b := verts[idx[i + 1]]
+			var c := verts[idx[i + 2]]
+			centres.append((a + b + c) / 3.0)
+			# Godot's front faces wind clockwise, so this points out of the mesh
+			normals.append((c - a).cross(b - a).normalized())
+	_tri_cache[piece.mesh] = [centres, normals]
+	return _tri_cache[piece.mesh]
 
 
 ## The part of a piece's outline above the ground nearest `near`: a whole loop if it never dips
@@ -1121,6 +1190,18 @@ func _arc_param(p: Vector3) -> float:
 			best_d = d
 			best = _seam_dist[i] + _seam_arc[i].distance_to(c)
 	return best
+
+
+## The render layers a seam crack's decals draw on: just the piece being cracked, or everything.
+func _seam_mask() -> int:
+	return CRACKING_LAYER if seam_crack_on_piece_only else WORLD_LAYER
+
+
+## With seam_crack_on_piece_only, puts `piece` on the cracking layer (it stays there, scars and
+## all, until the node grows back).
+func _mark_cracking(piece: MeshInstance3D) -> void:
+	if seam_crack_on_piece_only:
+		piece.layers |= CRACKING_LAYER
 
 
 ## Drops the seam crack (its tips go out; the cracks drawn so far stay). With `keep`, its progress
@@ -1214,16 +1295,20 @@ func _face_basis(along: Vector3, up: Vector3) -> Basis:
 	return Basis(x, up, x.cross(up))
 
 
-func _crack_decal(a: Vector3, b: Vector3, up: Vector3) -> void:
+## A stretch of crack from `a` to `b` on a surface facing `up`. `depth`: how far it projects either
+## way. A free crack lies on the collision hull, so it must reach down into the hollows the hull
+## spans; a seam lies on the mesh itself, so a shallow one keeps it off the stone round a crystal.
+## `mask`: the render layers it draws on.
+func _crack_decal(a: Vector3, b: Vector3, up: Vector3, depth := 0.9, mask := WORLD_LAYER) -> void:
 	if a.distance_to(b) < 0.01:
 		return
 	var d := Decal.new()
 	d.texture_albedo = _crack_textures(chip_color).pick_random()
-	# deep enough to reach the mesh in the hollows the collision spans; a little longer than the
-	# segment so neighbours overlap
-	d.size = Vector3(0.32, 0.9, a.distance_to(b) * 1.25)
-	d.normal_fade = 0.3
-	d.cull_mask = WORLD_LAYER  # not the held tool (render layer 2)
+	d.size = Vector3(0.32, depth, a.distance_to(b) * 1.25)  # a little longer, so neighbours overlap
+	# a seam's decals face the piece's own surface exactly: fade hard off anything turned away
+	# (the stone a crystal stands on)
+	d.normal_fade = 0.3 if depth > 0.5 else 0.65
+	d.cull_mask = mask  # (never the held tool, render layer 2)
 	notches.add_child(d)
 	d.transform = Transform3D(_face_basis(b - a, up), (a + b) * 0.5)
 

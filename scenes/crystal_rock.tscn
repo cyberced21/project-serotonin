@@ -19,3 +19,4 @@ ore_color = Color(0.73, 0.55, 1, 1)
 popup_height = 2.6
 spark_amount = 6
 glow_at_night = true
+seam_crack_on_piece_only = true
