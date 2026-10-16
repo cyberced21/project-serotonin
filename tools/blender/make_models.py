@@ -106,10 +106,10 @@ def prism(segments, r_bottom, r_top, height):
     return bm
 
 
-def export(name):
+def export(name, loose_edges=False):
     path = os.path.join(OUT_DIR, name + ".glb")
     bpy.ops.export_scene.gltf(filepath=path, export_format="GLB", export_yup=True,
-                              export_apply=True, export_materials="NONE")
+                              export_apply=True, export_materials="NONE", use_mesh_edges=loose_edges)
     print("exported", path)
 
 
@@ -133,14 +133,34 @@ def voronoi_cell(src, seeds, index):
     return bm
 
 
+def outline(bm, cut):
+    """The edges of a Voronoi piece where its outside meets a cut face: where it splits from the
+    rest, on the boulder's surface. A mesh of loose edges (exported as glTF lines)."""
+    seam = bmesh.new()
+    verts = {}
+    for e in bm.edges:
+        faces = e.link_faces
+        if len(faces) == 2 and faces[0][cut] != faces[1][cut]:
+            ends = []
+            for v in e.verts:
+                key = tuple(round(c, 4) for c in v.co)
+                if key not in verts:
+                    verts[key] = seam.verts.new(v.co)
+                ends.append(verts[key])
+            if ends[0] is not ends[1]:
+                seam.edges.new(ends)
+    return seam
+
+
 def rock(name="rock", seed=11, stone_shades=("stone.5", "stone.3", "stone.1", "stone.4"), fresh="stone.6",
          ore=("ore.copper", "ore.copper_dark"), size=1.0, veins=2, vein_width=0.08):
     """A hefty boulder, about 2.4 m across and 1.3 m tall, made to break apart: one lumpy boulder
     cut into Voronoi pieces that fit together exactly: a core (what's left at the end) and ten
     chunks (seven around the sides, three on top) that split off. Ore runs through it in `veins`
     flat bands (`vein_width` either side), so a streak carries on from one piece to the next and
-    into the faces a break exposes, which are otherwise fresh, paler stone. Plus rubble left
-    while it grows back. The default is the grey copper rock; iron_rock() and the others are
+    into the faces a break exposes, which are otherwise fresh, paler stone. Each chunk comes with
+    a Seam_* line along its outline (the game runs cracks along it). Plus rubble left while it
+    grows back. The default is the grey copper rock; iron_rock() and the others are
     darker or brighter ones with their own ore."""
     reset()
     rng = random.Random(seed)
@@ -200,6 +220,8 @@ def rock(name="rock", seed=11, stone_shades=("stone.5", "stone.3", "stone.1", "s
                 return ore[1] if f[cut] or f.normal.z <= 0.2 else ore[0]
             return fresh if f[cut] else stone(f)
         paint(bm, choose)
+        if i > 0:
+            make_object(f"Seam_{'ABCDEFGHIJ'[i - 1]}", outline(bm, cut))
         centre = sum((v.co for v in bm.verts), Vector()) / len(bm.verts)
         bmesh.ops.translate(bm, vec=-centre, verts=bm.verts)
         make_object("Body_Core" if i == 0 else f"Chunk_{'ABCDEFGHIJ'[i - 1]}", bm, centre)
@@ -211,7 +233,7 @@ def rock(name="rock", seed=11, stone_shades=("stone.5", "stone.3", "stone.1", "s
         bm = blob(rng.uniform(0.3, 0.45) * size, rng, jitter_amount=0.3, squash=(1.2, 1.0, 0.4), subdiv=1)
         paint(bm, shade_by_normal("stone.4", "stone.2", "stone.1", rng))
         make_object(f"Rubble_{i}", bm, (math.cos(a) * d, math.sin(a) * d, 0.08 * size), (0, 0, rng.uniform(0, math.tau)))
-    export(name)
+    export(name, loose_edges=True)
 
 
 def scale_scene(s):

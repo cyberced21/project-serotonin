@@ -216,24 +216,60 @@ func _apply_model() -> void:
 		for old in get_node(path).get_children():
 			old.get_parent().remove_child(old)
 			old.queue_free()
+	var seam_lines := {}  # chunk name -> its outline, in node space
 	for m in inst.find_children("*", "MeshInstance3D", true, false):
+		var xform := Transform3D.IDENTITY  # relative to the model root (it isn't in the tree)
+		var n: Node = m
+		while n != inst:
+			xform = (n as Node3D).transform * xform if n is Node3D else xform
+			n = n.get_parent()
+		if m.name.to_lower().begins_with("seam_"):
+			seam_lines["Chunk_" + m.name.substr(5)] = _seam_loop(m.mesh, xform)
+			continue
 		var dest := ""
 		for prefix in MODEL_PARTS:
 			if m.name.to_lower().begins_with(prefix):
 				dest = MODEL_PARTS[prefix]
 		if dest.is_empty():
 			continue
-		var xform := Transform3D.IDENTITY  # relative to the model root (it isn't in the tree)
-		var n: Node = m
-		while n != inst:
-			xform = (n as Node3D).transform * xform if n is Node3D else xform
-			n = n.get_parent()
 		m.get_parent().remove_child(m)
 		m.owner = null
 		get_node(dest).add_child(m)
 		m.transform = xform
 		m.material_override = NODE_PALETTE
 	inst.free()
+	for c in chunks.get_children():
+		var loop: PackedVector3Array = seam_lines.get(String(c.name), PackedVector3Array())
+		if loop.size() >= 3:
+			_seams[c] = loop
+
+
+## A Seam_* line mesh (pairs of points) as one ordered closed loop, in node space.
+static func _seam_loop(mesh: Mesh, xform: Transform3D) -> PackedVector3Array:
+	var arrays := mesh.surface_get_arrays(0)
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX] else PackedInt32Array(range(verts.size()))
+	var links := {}  # vertex -> the vertices it joins
+	for i in range(0, idx.size() - 1, 2):
+		links.get_or_add(idx[i], []).append(idx[i + 1])
+		links.get_or_add(idx[i + 1], []).append(idx[i])
+	var loop := PackedVector3Array()
+	if links.is_empty():
+		return loop
+	var prev := -1
+	var at: int = links.keys()[0]
+	for step in links.size():  # once round
+		loop.append(xform * verts[at])
+		var next := -1
+		for v in links[at]:
+			if v != prev:
+				next = v
+				break
+		if next == -1:
+			break
+		prev = at
+		at = next
+	return loop
 
 
 func _make_notches() -> Node3D:
@@ -435,6 +471,7 @@ func _reset_visuals() -> void:
 	_crack.clear()
 	_crack_normals.clear()
 	_crack_tip = null
+	_clear_seam_crack()
 	_queue_refit()
 	if _rubble_mm:
 		_rubble_mm.multimesh.visible_instance_count = 0
@@ -563,7 +600,9 @@ func _shed_chunks(stress: float, info: HitInfo, push: Vector3) -> void:
 	var should_be_gone := mini(floori(stress * total), total - 1)
 	var intact := _intact_chunks()
 	while total - intact.size() < should_be_gone and not intact.is_empty():
-		var nearest := _nearest(intact, info.position)
+		# the piece being cracked comes off when its crack is done, not before
+		var others := intact.filter(func(c: MeshInstance3D) -> bool: return c != _seam_piece)
+		var nearest := _nearest(others if not others.is_empty() else intact, info.position)
 		intact.erase(nearest)
 		_pop_chunk(nearest, push, debris_speed)
 
@@ -591,6 +630,8 @@ func _nearest(list: Array[MeshInstance3D], point: Vector3) -> MeshInstance3D:
 func _pop_chunk(chunk: MeshInstance3D, push: Vector3, speed: float) -> void:
 	chunk.visible = false
 	_queue_refit()
+	if chunk == _seam_piece:
+		_clear_seam_crack()
 	var piece := chunk.duplicate() as MeshInstance3D
 	_throw(piece, chunk.global_transform.orthonormalized(), push, speed)
 
@@ -731,22 +772,46 @@ var _crack_tip: Decal
 
 
 func _is_tip_hit(info: HitInfo) -> bool:
-	return not _crack.is_empty() and _crack_tip != null and _aimed_near(info, to_global(_crack[-1]), crack_tip_radius)
+	for p in crack_tips():
+		if _aimed_near(info, p, crack_tip_radius):
+			return true
+	return false
 
 
-## Grows the crack if the tip was hit, or starts one where this hit landed if there isn't one on
-## this side (one left on another side stays as a scar). True when the crack is complete.
+## Where the open crack's tips are (world space): both ends of a seam crack, the end of a
+## free one. Empty when there's no crack.
+func crack_tips() -> Array[Vector3]:
+	var out: Array[Vector3] = []
+	if _seam_piece:
+		for p in _seam_tip_points:
+			out.append(to_global(p))
+	elif not _crack.is_empty() and _crack_tip != null:
+		out.append(to_global(_crack[-1]))
+	return out
+
+
+## Grows the crack if a tip was hit, or starts one where this hit landed: along the seam of the
+## piece that was struck if it has one, else freely across the surface (the bare core, or a
+## model without seams). One left behind stays as a scar. True when the crack is complete.
 func _grow_crack(info: HitInfo, tip: bool) -> bool:
+	if tip and _seam_piece:
+		return _seam_advance(info)
+	if not tip:
+		var piece := _piece_struck(info)
+		if piece and _seams.has(piece):
+			if piece != _seam_piece:
+				_retire_tip()
+				_crack.clear()
+				_start_seam_crack(piece, info)
+			return false
 	if tip:
 		_extend_crack()
 		var seg := _crack.size() - 1
-		Sfx.play_at(crack_layers, info.position, 1.0 + 0.12 * seg)
-		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.6, 0), "Crack!", ore_color, 10)
-		Juice.shake(1.5)
-		Juice.hitstop(0.03)
+		_tip_feedback(info, seg)
 		return seg >= crack_segments
 	var n := (global_basis.inverse() * info.normal).normalized()
 	if _crack.is_empty() or n.dot(_crack_normal) < 0.5:
+		_clear_seam_crack()
 		_retire_tip()
 		_crack_normal = n
 		_crack.assign([to_local(info.position)])
@@ -756,17 +821,28 @@ func _grow_crack(info: HitInfo, tip: bool) -> bool:
 	return false
 
 
-## A full crack: everything it crossed splits off. On the bare core, the node breaks.
+## A full crack: a seam crack splits off the piece it outlined; a free one, everything it
+## crossed. On the bare core, the node breaks.
 func _split(info: HitInfo) -> void:
+	if _seam_piece:
+		var piece := _seam_piece
+		_clear_seam_crack()
+		_split_feedback(info)
+		var centre := to_local(piece.global_transform * piece.get_aabb().get_center())
+		var out := (global_basis * (centre - _shape_centre)).normalized()
+		if hit_fx:
+			HitFx.spawn(hit_fx, get_parent(), to_global(centre), out, -out, chip_color, ore_color, 2.2)
+		_add_rubble(info.position, 4)
+		_pop_chunk(piece, out + info.away() * 0.4, debris_speed * 1.2)
+		hits_left = maxi(hits_left - crack_split_hits, 0)
+		SaveGame.mark_dirty()
+		return
 	var path := _crack.duplicate()
 	var normals := _crack_normals.duplicate()
 	_crack.clear()
 	_crack_normals.clear()
 	_retire_tip()
-	Sfx.play_at(split_layers, info.position)
-	PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.85, 0), "Split!", ore_color, 12)
-	Juice.shake(3.0)
-	Juice.hitstop(0.07)
+	_split_feedback(info)
 	var intact := _intact_chunks()
 	if intact.is_empty():
 		hits_left = 0
@@ -783,6 +859,212 @@ func _split(info: HitInfo) -> void:
 		_pop_chunk(c, out + info.away() * 0.4, debris_speed * 1.2)
 	hits_left = maxi(hits_left - crack_split_hits, 0)
 	SaveGame.mark_dirty()
+
+
+func _split_feedback(info: HitInfo) -> void:
+	Sfx.play_at(split_layers, info.position)
+	PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.85, 0), "Split!", ore_color, 12)
+	Juice.shake(3.0)
+	Juice.hitstop(0.07)
+
+
+func _tip_feedback(info: HitInfo, segment: int) -> void:
+	Sfx.play_at(crack_layers, info.position, 1.0 + 0.12 * segment)
+	PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.6, 0), "Crack!", ore_color, 10)
+	Juice.shake(1.5)
+	Juice.hitstop(0.03)
+
+
+# --- seam cracks ----------------------------------------------------------------------------
+# A boulder made of pieces (the model's Seam_* lines) cracks along the outline of the piece you
+# struck: from the point of the seam nearest the hit, both ways at once, a step per tip hit,
+# until it's gone all the way round the visible outline. Then exactly that piece comes off.
+
+## Below this height (node space) a seam runs along the ground, where a crack can't be seen.
+const SEAM_GROUND := 0.15
+## Decals along a seam are this long at most (m).
+const SEAM_DECAL_STEP := 0.3
+
+## Each chunk's outline on the surface: MeshInstance3D -> closed loop of points (node space).
+var _seams := {}
+## The piece being cracked, and its outline above ground (arc points, distance along it at each).
+var _seam_piece: MeshInstance3D
+var _seam_arc := PackedVector3Array()
+var _seam_dist := PackedFloat32Array()
+var _seam_closed := false
+## Where on the arc the crack started, how far it will reach back and forward when complete, and
+## how many steps of crack_segments it has made.
+var _seam_start := 0.0
+var _seam_reach := Vector2.ZERO
+var _seam_step := 0
+var _seam_tip_points: Array[Vector3] = []
+var _seam_tip_decals: Array[Decal] = []
+var _face_cache := {}  # mesh -> its triangles, for _piece_struck
+
+
+## The chunk the swing actually hit (by its triangles, not the collision hull), or null if it hit
+## the core or nothing.
+func _piece_struck(info: HitInfo) -> MeshInstance3D:
+	var dir := (info.position - info.from).normalized()
+	var best: MeshInstance3D = null
+	var best_d := INF
+	for m in visual.find_children("*", "MeshInstance3D", true, false):
+		var mesh := m as MeshInstance3D
+		if not mesh.visible or mesh.mesh == null or not (mesh.get_parent() == chunks or mesh.get_parent().name == "Body"):
+			continue
+		var faces: PackedVector3Array = _face_cache.get(mesh.mesh, PackedVector3Array())
+		if faces.is_empty():
+			faces = mesh.mesh.get_faces()
+			_face_cache[mesh.mesh] = faces
+		var xf := mesh.global_transform
+		for i in range(0, faces.size() - 2, 3):
+			var hit_point = Geometry3D.ray_intersects_triangle(info.from, dir, xf * faces[i], xf * faces[i + 1], xf * faces[i + 2])
+			if hit_point != null:
+				var d := info.from.distance_to(hit_point)
+				if d < best_d:
+					best_d = d
+					best = mesh
+	return best if best and best.get_parent() == chunks else null
+
+
+func _start_seam_crack(piece: MeshInstance3D, info: HitInfo) -> void:
+	_clear_seam_crack()
+	if not _build_seam_arc(_seams[piece], to_local(info.position)):
+		return
+	_seam_piece = piece
+	_seam_start = _arc_param(to_local(info.position))
+	var total := _seam_dist[-1]
+	_seam_reach = Vector2(total * 0.5, total * 0.5) if _seam_closed else Vector2(_seam_start, total - _seam_start)
+	_seam_step = 0
+	_seam_grow()
+
+
+## A tip hit: one more step each way. True when it's gone all the way round.
+func _seam_advance(info: HitInfo) -> bool:
+	_seam_grow()
+	_tip_feedback(info, _seam_step)
+	return _seam_step >= crack_segments
+
+
+func _seam_grow() -> void:
+	var n := float(crack_segments)
+	var back := Vector2(_seam_reach.x * _seam_step / n, _seam_reach.x * (_seam_step + 1) / n)
+	var fwd := Vector2(_seam_reach.y * _seam_step / n, _seam_reach.y * (_seam_step + 1) / n)
+	_seam_step += 1
+	_seam_decals(_seam_start - back.y, _seam_start - back.x)
+	_seam_decals(_seam_start + fwd.x, _seam_start + fwd.y)
+	# the tips: each end that still has further to go
+	for d in _seam_tip_decals:
+		d.queue_free()
+	_seam_tip_decals.clear()
+	_seam_tip_points.clear()
+	if _seam_step >= crack_segments:
+		return
+	for end in [[_seam_start - back.y, -1.0], [_seam_start + fwd.y, 1.0]]:
+		var s: float = end[0]
+		var p := _arc_point(s)
+		var along := _arc_point(s + end[1] * 0.05) - p
+		var tip := _tip_decal()
+		tip.transform = Transform3D(_face_basis(along, _seam_up(p)), p)
+		_seam_tip_decals.append(tip)
+		_seam_tip_points.append(p)
+
+
+## Crack decals along the arc from distance `a` to `b`.
+func _seam_decals(a: float, b: float) -> void:
+	var length := b - a
+	if length < 0.02:
+		return
+	var count := ceili(length / SEAM_DECAL_STEP)
+	for j in count:
+		var p := _arc_point(a + length * j / count)
+		var q := _arc_point(a + length * (j + 1) / count)
+		_crack_decal(p, q, _seam_up((p + q) * 0.5))
+
+
+## The surface's normal at a point on a seam (cast in from straight out from the middle).
+func _seam_up(p: Vector3) -> Vector3:
+	var out := (p - _shape_centre).normalized()
+	var s := _surface_at(p, out)
+	return s["normal"] if not s.is_empty() else out
+
+
+## The part of a piece's outline above the ground nearest `near`: the whole loop if it never
+## dips under (closed), else the run of it between two dips. False if there's nothing usable.
+func _build_seam_arc(loop: PackedVector3Array, near: Vector3) -> bool:
+	var n := loop.size()
+	var low := -1
+	for i in n:
+		if loop[i].y < SEAM_GROUND:
+			low = i
+			break
+	var arc := PackedVector3Array()
+	if low == -1:
+		arc = loop.duplicate()
+		arc.append(loop[0])
+		_seam_closed = true
+	else:
+		_seam_closed = false
+		var runs: Array[PackedVector3Array] = []
+		var run := PackedVector3Array()
+		for k in n:
+			var p := loop[(low + 1 + k) % n]
+			if p.y < SEAM_GROUND:
+				if run.size() >= 2:
+					runs.append(run)
+				run = PackedVector3Array()
+			else:
+				run.append(p)
+		if run.size() >= 2:
+			runs.append(run)
+		var best_d := INF
+		for r in runs:
+			for p in r:
+				if p.distance_squared_to(near) < best_d:
+					best_d = p.distance_squared_to(near)
+					arc = r
+	if arc.size() < 2:
+		return false
+	_seam_arc = arc
+	_seam_dist = PackedFloat32Array([0.0])
+	for i in range(1, arc.size()):
+		_seam_dist.append(_seam_dist[-1] + arc[i - 1].distance_to(arc[i]))
+	return _seam_dist[-1] > 0.1
+
+
+## The point `s` along the arc (wrapping round a closed one).
+func _arc_point(s: float) -> Vector3:
+	var total := _seam_dist[-1]
+	s = fposmod(s, total) if _seam_closed else clampf(s, 0.0, total)
+	for i in _seam_arc.size() - 1:
+		if s <= _seam_dist[i + 1]:
+			var t := (s - _seam_dist[i]) / maxf(_seam_dist[i + 1] - _seam_dist[i], 0.0001)
+			return _seam_arc[i].lerp(_seam_arc[i + 1], t)
+	return _seam_arc[-1]
+
+
+## How far along the arc its nearest point to `p` is.
+func _arc_param(p: Vector3) -> float:
+	var best := 0.0
+	var best_d := INF
+	for i in _seam_arc.size() - 1:
+		var c := Geometry3D.get_closest_point_to_segment(p, _seam_arc[i], _seam_arc[i + 1])
+		var d := c.distance_squared_to(p)
+		if d < best_d:
+			best_d = d
+			best = _seam_dist[i] + _seam_arc[i].distance_to(c)
+	return best
+
+
+## Drops the seam crack (its tips go out; the cracks drawn so far stay as a scar).
+func _clear_seam_crack() -> void:
+	for d in _seam_tip_decals:
+		if is_instance_valid(d):
+			d.queue_free()
+	_seam_tip_decals.clear()
+	_seam_tip_points.clear()
+	_seam_piece = null
+	_seam_step = 0
 
 
 ## The first way a new crack heads: sideways and a little down (anywhere across the top).
@@ -876,18 +1158,23 @@ func _crack_decal(a: Vector3, b: Vector3, up: Vector3) -> void:
 ## pulsing so it's easy to find.
 func _place_tip() -> void:
 	if _crack_tip == null:
-		_crack_tip = Decal.new()
-		_crack_tip.texture_albedo = _notch_texture()
-		_crack_tip.texture_emission = _notch_texture()
-		_crack_tip.modulate = chip_color.lightened(0.3)
-		_crack_tip.size = Vector3(0.22, 0.9, 0.22)
-		_crack_tip.normal_fade = 0.3
-		_crack_tip.cull_mask = WORLD_LAYER
-		notches.add_child(_crack_tip)
-		var pulse := _crack_tip.create_tween().set_loops()
-		pulse.tween_property(_crack_tip, "emission_energy", 0.35, 0.5).set_trans(Tween.TRANS_SINE)
-		pulse.tween_property(_crack_tip, "emission_energy", 0.05, 0.5).set_trans(Tween.TRANS_SINE)
+		_crack_tip = _tip_decal()
 	_crack_tip.transform = Transform3D(_face_basis(_crack_dir, _crack_normals[-1]), _crack[-1])
+
+
+func _tip_decal() -> Decal:
+	var tip := Decal.new()
+	tip.texture_albedo = _notch_texture()
+	tip.texture_emission = _notch_texture()
+	tip.modulate = chip_color.lightened(0.3)
+	tip.size = Vector3(0.22, 0.9, 0.22)
+	tip.normal_fade = 0.3
+	tip.cull_mask = WORLD_LAYER
+	notches.add_child(tip)
+	var pulse := tip.create_tween().set_loops()
+	pulse.tween_property(tip, "emission_energy", 0.35, 0.5).set_trans(Tween.TRANS_SINE)
+	pulse.tween_property(tip, "emission_energy", 0.05, 0.5).set_trans(Tween.TRANS_SINE)
+	return tip
 
 
 ## The tip goes out; the crack's decals stay as a scar until the node respawns.
@@ -922,10 +1209,11 @@ static func _crack_textures(stone: Color) -> Array:
 		var path := PackedFloat32Array()
 		for y in H:
 			drift = clampf(drift * 0.88 + randf_range(-0.5, 0.5) + (randf_range(-2.0, 2.0) if randf() < 0.05 else 0.0), -1.4, 1.4)
-			x = clampf(x + drift, 9.0, W - 9.0)
-			path.append(x)
+			x = clampf(x + drift, W * 0.5 - 3.5, W * 0.5 + 3.5)  # a few cm either way: the seam gives the shape
+			# back to the middle at both ends, so a crack of several decals joins up without steps
+			path.append(lerpf(W * 0.5, x, sin(PI * y / (H - 1))))
 		var branches := []  # [start row, x per row]
-		for start in [36 + v * 9, 82 - v * 5]:
+		for start in [44 + v * 10]:
 			var bx := path[start]
 			var side := 1.0 if randf() < 0.5 else -1.0
 			var row := PackedFloat32Array()
