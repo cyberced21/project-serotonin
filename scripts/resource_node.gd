@@ -74,7 +74,7 @@ const FELLED_SHAPE_SCALE := 0.6
 ## How hard broken-off chunks fly away (m/s).
 @export var debris_speed := 3.0
 ## Chips, shards, dust and sparks per hit (scenes/fx/hit_fx.tscn), instead of the Chips particles.
-## Chips are chip_color with some crack_color (the ore) when the node has cracks.
+## Chips are chip_color with some ore_color (the ore) when the node has cracks.
 @export var hit_fx: PackedScene
 ## Sparks off the tool per hit (doubled on a crack tip). Harder rock, more sparks.
 @export_range(0, 32) var spark_amount := 0
@@ -138,8 +138,9 @@ const FELLED_SHAPE_SCALE := 0.6
 @export_range(0, 5) var crack_tip_extra_hits := 1
 ## Extra hits a completed crack does on top of the chunks it splits off.
 @export_range(0, 5) var crack_split_hits := 0
-## The tip's glow and the seam inside the crack: the ore's colour.
-@export var crack_color := Color(1.0, 0.6, 0.3)
+## The ore's colour: a share of the chips and pebbles, and the Crack!/Split! popups. (Cracks
+## themselves are drawn in shades of chip_color, the rock's own stone.)
+@export var ore_color := Color(1.0, 0.6, 0.3)
 ## Tip hit (pitched up per segment) and a completed crack splitting.
 @export var crack_layers: SoundLayers
 @export var split_layers: SoundLayers
@@ -740,7 +741,7 @@ func _grow_crack(info: HitInfo, tip: bool) -> bool:
 		_extend_crack()
 		var seg := _crack.size() - 1
 		Sfx.play_at(crack_layers, info.position, 1.0 + 0.12 * seg)
-		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.6, 0), "Crack!", crack_color, 10)
+		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.6, 0), "Crack!", ore_color, 10)
 		Juice.shake(1.5)
 		Juice.hitstop(0.03)
 		return seg >= crack_segments
@@ -763,7 +764,7 @@ func _split(info: HitInfo) -> void:
 	_crack_normals.clear()
 	_retire_tip()
 	Sfx.play_at(split_layers, info.position)
-	PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.85, 0), "Split!", crack_color, 12)
+	PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.85, 0), "Split!", ore_color, 12)
 	Juice.shake(3.0)
 	Juice.hitstop(0.07)
 	var intact := _intact_chunks()
@@ -776,7 +777,7 @@ func _split(info: HitInfo) -> void:
 	var out := (global_basis * _crack_normal).normalized()
 	if hit_fx:
 		var mid := to_global(path[path.size() / 2])
-		HitFx.spawn(hit_fx, get_parent(), mid, out, -out, chip_color, crack_color, 2.2)
+		HitFx.spawn(hit_fx, get_parent(), mid, out, -out, chip_color, ore_color, 2.2)
 	_add_rubble(info.position, 4)
 	for c in crossed:
 		_pop_chunk(c, out + info.away() * 0.4, debris_speed * 1.2)
@@ -860,34 +861,32 @@ func _face_basis(along: Vector3, up: Vector3) -> Basis:
 func _crack_decal(a: Vector3, b: Vector3, up: Vector3) -> void:
 	if a.distance_to(b) < 0.01:
 		return
-	var tex: Array = _crack_textures(crack_color).pick_random()
 	var d := Decal.new()
-	d.texture_albedo = tex[0]
-	d.texture_emission = tex[1]
-	d.emission_energy = 0.8
-	# deep enough to reach the mesh in the hollows between chunks, which the collision spans;
-	# a little longer than the segment so neighbours overlap
-	d.size = Vector3(0.2, 0.9, a.distance_to(b) * 1.25)
+	d.texture_albedo = _crack_textures(chip_color).pick_random()
+	# deep enough to reach the mesh in the hollows the collision spans; a little longer than the
+	# segment so neighbours overlap
+	d.size = Vector3(0.32, 0.9, a.distance_to(b) * 1.25)
 	d.normal_fade = 0.3
 	d.cull_mask = WORLD_LAYER  # not the held tool (render layer 2)
 	notches.add_child(d)
 	d.transform = Transform3D(_face_basis(b - a, up), (a + b) * 0.5)
 
 
-## The glowing spot at the crack's tip, pulsing.
+## The crack's tip: a pale spot of freshly broken stone (the rock's own colour, lighter), gently
+## pulsing so it's easy to find.
 func _place_tip() -> void:
 	if _crack_tip == null:
 		_crack_tip = Decal.new()
 		_crack_tip.texture_albedo = _notch_texture()
 		_crack_tip.texture_emission = _notch_texture()
-		_crack_tip.modulate = crack_color
-		_crack_tip.size = Vector3(0.24, 0.9, 0.24)
+		_crack_tip.modulate = chip_color.lightened(0.3)
+		_crack_tip.size = Vector3(0.22, 0.9, 0.22)
 		_crack_tip.normal_fade = 0.3
 		_crack_tip.cull_mask = WORLD_LAYER
 		notches.add_child(_crack_tip)
 		var pulse := _crack_tip.create_tween().set_loops()
-		pulse.tween_property(_crack_tip, "emission_energy", 3.0, 0.45).set_trans(Tween.TRANS_SINE)
-		pulse.tween_property(_crack_tip, "emission_energy", 1.0, 0.45).set_trans(Tween.TRANS_SINE)
+		pulse.tween_property(_crack_tip, "emission_energy", 0.35, 0.5).set_trans(Tween.TRANS_SINE)
+		pulse.tween_property(_crack_tip, "emission_energy", 0.05, 0.5).set_trans(Tween.TRANS_SINE)
 	_crack_tip.transform = Transform3D(_face_basis(_crack_dir, _crack_normals[-1]), _crack[-1])
 
 
@@ -898,35 +897,56 @@ func _retire_tip() -> void:
 		_crack_tip = null
 
 
-## Colour (html) -> four [albedo, emission] pairs of crack textures: a dark jagged line along the
-## texture's length (with a couple of short branches), and a thin seam of the colour inside it.
+## Stone colour (html) -> four crack textures in shades of it: a deep, dark jagged line along the
+## texture's length (with a couple of short branches), edged with a pale rim of chipped stone so
+## it reads as cut into the rock rather than drawn on it.
 static var _crack_tex := {}
 
-static func _crack_textures(color: Color) -> Array:
-	var key := color.to_html()
+static func _crack_textures(stone: Color) -> Array:
+	var key := stone.to_html()
 	if _crack_tex.has(key):
 		return _crack_tex[key]
+	# the chipped rim is what makes it read on dark stone, so the darker the stone, the paler it
+	var rim := stone.lightened(0.25 + (1.0 - stone.get_luminance()) * 0.25)
+	var shades := [rim, stone.darkened(0.7), stone.darkened(0.9)]  # rim, crack, its deepest middle
+	var widths := [5.4, 3.4, 1.4]  # px of 32 across the decal's 0.32 m
+	var alphas := [0.6, 0.97, 1.0]
 	var out := []
 	const W := 32
 	const H := 128
 	for v in 4:
 		var albedo := Image.create_empty(W, H, false, Image.FORMAT_RGBA8)
-		var seam := Image.create_empty(W, H, false, Image.FORMAT_RGBA8)
+		# a wandering line: it drifts and changes direction smoothly, with the odd sharp kink
 		var x := W * 0.5
+		var drift := 0.0
+		var path := PackedFloat32Array()
 		for y in H:
-			x = clampf(x + randf_range(-1.6, 1.6), 9.0, W - 9.0)
-			var fade := clampf(minf(y, H - 1 - y) / 10.0, 0.0, 1.0)  # soft ends where segments overlap
-			_crack_dot(albedo, x, y, 1.7, Color(0.06, 0.05, 0.04, 0.95 * fade))
-			_crack_dot(seam, x, y, 0.6, Color(color, fade))
-			if y in [40 + v * 9, 85 - v * 5]:  # a branch splits off here
-				var bx := x
-				var side := 1.0 if randf() < 0.5 else -1.0
-				for by in range(y, mini(y + randi_range(10, 20), H - 6)):
-					bx = clampf(bx + side * randf_range(0.3, 1.1), 3.0, W - 3.0)
-					_crack_dot(albedo, bx, by, 0.9, Color(0.06, 0.05, 0.04, 0.8 * fade))
+			drift = clampf(drift * 0.88 + randf_range(-0.5, 0.5) + (randf_range(-2.0, 2.0) if randf() < 0.05 else 0.0), -1.4, 1.4)
+			x = clampf(x + drift, 9.0, W - 9.0)
+			path.append(x)
+		var branches := []  # [start row, x per row]
+		for start in [36 + v * 9, 82 - v * 5]:
+			var bx := path[start]
+			var side := 1.0 if randf() < 0.5 else -1.0
+			var row := PackedFloat32Array()
+			for by in range(start, mini(start + randi_range(12, 22), H - 6)):
+				bx = clampf(bx + side * randf_range(0.4, 1.2), 4.0, W - 4.0)
+				row.append(bx)
+			branches.append([start, row])
+		for pass_ in 3:  # rim, then the crack over it, then its deepest middle
+			var colour: Color = shades[pass_]
+			for y in H:
+				var fade := clampf(minf(y, H - 1 - y) / 10.0, 0.0, 1.0)  # soft ends where segments overlap
+				_crack_dot(albedo, path[y], y, widths[pass_], Color(colour, alphas[pass_] * fade))
+			for b in branches:  # thinner, tapering away
+				var row: PackedFloat32Array = b[1]
+				for i in row.size():
+					var y: int = b[0] + i
+					var taper := 1.0 - float(i) / row.size() * 0.7
+					var fade := clampf(minf(y, H - 1 - y) / 10.0, 0.0, 1.0)
+					_crack_dot(albedo, row[i], y, widths[pass_] * 0.5 * taper, Color(colour, alphas[pass_] * fade))
 		albedo.generate_mipmaps()
-		seam.generate_mipmaps()
-		out.append([ImageTexture.create_from_image(albedo), ImageTexture.create_from_image(seam)])
+		out.append(ImageTexture.create_from_image(albedo))
 	_crack_tex[key] = out
 	return out
 
@@ -1131,7 +1151,7 @@ func _hit_effects(info: HitInfo, strength: float) -> void:
 	var swing := (info.position - info.from).normalized()
 	var sparks := roundi(spark_amount * (2.0 if strength > 1.2 else 1.0))
 	HitFx.spawn(hit_fx, get_parent(), info.position, info.normal, swing, chip_color,
-		crack_color if cracks else Color(0, 0, 0, 0), strength, sparks)
+		ore_color if cracks else Color(0, 0, 0, 0), strength, sparks)
 	_add_rubble(info.position, 1 if strength <= 1.0 else 2)
 
 
@@ -1189,7 +1209,7 @@ func _add_rubble(near: Vector3, count: int) -> void:
 		var s := randf_range(0.5, 1.6)
 		var basis := Basis.from_euler(Vector3(randf(), randf(), randf()) * TAU).scaled(Vector3(s, s * 0.6, s))
 		mm.set_instance_transform(n, Transform3D(basis, p + Vector3.UP * 0.02 * s))
-		var tint := crack_color if cracks and randf() < 0.25 else chip_color
+		var tint := ore_color if cracks and randf() < 0.25 else chip_color
 		mm.set_instance_color(n, tint.darkened(randf_range(0.0, 0.3)))
 		mm.visible_instance_count = n + 1
 

@@ -115,48 +115,95 @@ def export(name):
 
 # --- models -----------------------------------------------------------------------------------
 
-def rock(name="rock", seed=11, stone_shades=("stone.5", "stone.3", "stone.1", "stone.4"),
-         ore=("ore.copper", "ore.copper_dark"), size=1.0, ore_chance=0.45, ore_everywhere=False):
-    """A hefty boulder with ore flecks, about 2.4 m across and 1.4 m tall: a big core with ten
-    chunks packed over it (seven around the sides, three on top) so there's rock under every
-    swing and crack, and rubble left while it grows back. The default is the grey copper rock;
-    iron_rock() and the others are darker or brighter ones with their own ore."""
+def voronoi_cell(src, seeds, index):
+    """The part of the closed mesh `src` nearer seeds[index] than any other seed (one Voronoi
+    cell), capped where it was cut. Cap faces get 1 in the int face layer "cut"."""
+    bm = src.copy()
+    cut = bm.faces.layers.int.get("cut") or bm.faces.layers.int.new("cut")
+    a = seeds[index]
+    for j, b in enumerate(seeds):
+        if j == index or not bm.faces:
+            continue
+        res = bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:],
+                                     plane_co=(a + b) * 0.5, plane_no=(b - a).normalized(), clear_outer=True)
+        edges = [e for e in res["geom_cut"] if isinstance(e, bmesh.types.BMEdge) and e.is_boundary]
+        if edges:
+            for f in bmesh.ops.holes_fill(bm, edges=edges, sides=0)["faces"]:
+                f[cut] = 1
+    return bm
+
+
+def rock(name="rock", seed=11, stone_shades=("stone.5", "stone.3", "stone.1", "stone.4"), fresh="stone.6",
+         ore=("ore.copper", "ore.copper_dark"), size=1.0, veins=2, vein_width=0.08):
+    """A hefty boulder, about 2.4 m across and 1.3 m tall, made to break apart: one lumpy boulder
+    cut into Voronoi pieces that fit together exactly: a core (what's left at the end) and ten
+    chunks (seven around the sides, three on top) that split off. Ore runs through it in `veins`
+    flat bands (`vein_width` either side), so a streak carries on from one piece to the next and
+    into the faces a break exposes, which are otherwise fresh, paler stone. Plus rubble left
+    while it grows back. The default is the grey copper rock; iron_rock() and the others are
+    darker or brighter ones with their own ore."""
     reset()
     rng = random.Random(seed)
     top, side, bottom, alt = stone_shades
     stone = shade_by_normal(top, side, bottom, rng, side_alt=alt)
 
-    # the chunks sit on the core's surface and stand well proud of it, so they make most of the
-    # silhouette (and of the collision hull) and breaking one off visibly changes the shape
-    core_r, core_squash, core_z = 0.66 * size, (1.25, 1.05, 0.78), 0.48 * size
-    bm = blob(core_r, rng, jitter_amount=0.12, squash=core_squash, subdiv=3)
-    paint(bm, stone)
-    make_object("Body_Core", bm, (0, 0, core_z))
+    # the whole boulder: an icosphere, squashed, with broad lumps, a few big flat faces chopped
+    # off it (the way real boulders split), and sat flat on the ground
+    radius, squash, centre_z = 1.0 * size, (1.2, 1.05, 0.7), 0.5 * size
+    whole = bmesh.new()
+    bmesh.ops.create_icosphere(whole, subdivisions=3, radius=radius)
+    lumps = [(Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-0.3, 1))).normalized(),
+              rng.uniform(0.12, 0.24)) for _ in range(6)]
+    for v in whole.verts:
+        d = v.co.normalized()
+        v.co *= 1.0 + sum(amp * max(0.0, d.dot(l)) ** 2 for l, amp in lumps) + rng.uniform(-0.05, 0.05)
+        v.co = Vector((v.co.x * squash[0], v.co.y * squash[1], v.co.z * squash[2] + centre_z))
+    chops = [Vector((math.cos(a), math.sin(a), rng.uniform(-0.1, 0.9))).normalized()
+             for a in (rng.uniform(0, math.tau) for _ in range(5))] + [Vector((0, 0, -1))]
+    for i, n in enumerate(chops):
+        # the last chop is the base: flat on the ground, a little below it
+        point = Vector((0, 0, -0.04 * size)) if i == len(chops) - 1 else \
+            Vector((n.x * radius * squash[0], n.y * radius * squash[1], centre_z + n.z * radius * squash[2])) * rng.uniform(0.78, 0.88)
+        res = bmesh.ops.bisect_plane(whole, geom=whole.verts[:] + whole.edges[:] + whole.faces[:],
+                                     plane_co=point, plane_no=n, clear_outer=True)
+        bmesh.ops.holes_fill(whole, edges=[e for e in res["geom_cut"] if isinstance(e, bmesh.types.BMEdge) and e.is_boundary], sides=0)
+    # the chopped faces are big n-gons: in triangles, so veins can cross them
+    bmesh.ops.triangulate(whole, faces=whole.faces[:])
 
-    def on_core(azimuth, elevation, sink=0.95):
-        """A point `sink` of the way out to the core's surface in that direction."""
+    centre = Vector((0, 0, centre_z))
+    bands = [(Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-0.6, 0.6))).normalized(),
+              centre + Vector((rng.uniform(-0.3, 0.3), rng.uniform(-0.3, 0.3), rng.uniform(-0.15, 0.15))) * size,
+              vein_width * size * rng.uniform(0.7, 1.3)) for _ in range(veins)]
+
+    def in_vein(f):
+        c = f.calc_center_median()
+        return any(abs((c - p).dot(n)) < w * rng.uniform(0.6, 1.4) for n, p, w in bands)
+
+    def shell(azimuth, elevation, out):
         d = (math.cos(elevation) * math.cos(azimuth), math.cos(elevation) * math.sin(azimuth), math.sin(elevation))
-        return (d[0] * core_r * core_squash[0] * sink, d[1] * core_r * core_squash[1] * sink,
-                core_z + d[2] * core_r * core_squash[2] * sink)
+        return Vector((d[0] * radius * squash[0] * out, d[1] * radius * squash[1] * out,
+                       centre_z + d[2] * radius * squash[2] * out))
 
-    chunks = []  # (location, radius, has ore)
-    for i in range(7):  # around the sides, a bit above the ground
-        a = i * math.tau / 7 + rng.uniform(-0.15, 0.15)
-        chunks.append((on_core(a, rng.uniform(0.05, 0.3)), rng.uniform(0.42, 0.48), i % 2 == 1))
+    seeds = [Vector((0, 0, centre_z * 0.75))]  # the core
+    for i in range(7):  # around the sides
+        seeds.append(shell(i * math.tau / 7 + rng.uniform(-0.2, 0.2), rng.uniform(0.0, 0.3), 0.72))
     for i in range(3):  # on top
-        a = i * math.tau / 3 + rng.uniform(0, 1.0)
-        chunks.append((on_core(a, rng.uniform(0.7, 0.9), 0.85), rng.uniform(0.38, 0.44), i == 0))
-    for i, (loc, r, has_ore) in enumerate(chunks):
-        # 80 faces: still faceted, but enough surface for the crack decals to land on
-        bm = blob(r * size, rng, jitter_amount=0.16, squash=(1.1, 1.0, 0.8), subdiv=2)
+        seeds.append(shell(i * math.tau / 3 + rng.uniform(0, 1.0), rng.uniform(0.6, 0.85), 0.62))
 
-        def choose(f, has_ore=has_ore):
-            if (has_ore or ore_everywhere) and rng.random() < ore_chance:
-                return ore[0] if f.normal.z > 0.2 else ore[1]
-            return stone(f)
+    for i in range(len(seeds)):
+        bm = voronoi_cell(whole, seeds, i)
+        cut = bm.faces.layers.int["cut"]
+        bmesh.ops.triangulate(bm, faces=[f for f in bm.faces if f[cut]])
+
+        def choose(f, cut=cut):
+            if in_vein(f):
+                return ore[1] if f[cut] or f.normal.z <= 0.2 else ore[0]
+            return fresh if f[cut] else stone(f)
         paint(bm, choose)
-        rot = (rng.uniform(-0.4, 0.4), rng.uniform(-0.4, 0.4), rng.uniform(0, math.tau))
-        make_object(f"Chunk_{'ABCDEFGHIJ'[i]}", bm, loc, rot)
+        centre = sum((v.co for v in bm.verts), Vector()) / len(bm.verts)
+        bmesh.ops.translate(bm, vec=-centre, verts=bm.verts)
+        make_object("Body_Core" if i == 0 else f"Chunk_{'ABCDEFGHIJ'[i - 1]}", bm, centre)
+    whole.free()
 
     for i in range(4):  # a low spread of broken stone where it stood
         a = i * math.tau / 4 + rng.uniform(-0.4, 0.4)
@@ -176,21 +223,21 @@ def scale_scene(s):
 
 def iron_rock():
     """Bigger, darker boulder streaked with iron (Mining 15)."""
-    rock("iron_rock", seed=12, stone_shades=("stone.3", "stone.2", "stone.0", "stone.1"),
-         ore=("metal.7", "ore.iron"), size=1.1, ore_chance=0.4, ore_everywhere=True)
+    rock("iron_rock", seed=12, stone_shades=("stone.3", "stone.2", "stone.0", "stone.1"), fresh="stone.4",
+         ore=("ore.iron", "ore.iron_dark"), size=1.1, veins=3, vein_width=0.08)
 
 
 
 def coal_rock():
     """Dark boulder seamed with coal (Mining 20)."""
-    rock("coal_rock", seed=13, stone_shades=("stone.3", "stone.2", "stone.0", "stone.1"),
-         ore=("ore.coal", "neutral.1"), size=1.0, ore_chance=0.5, ore_everywhere=True)
+    rock("coal_rock", seed=13, stone_shades=("stone.3", "stone.2", "stone.0", "stone.1"), fresh="stone.4",
+         ore=("ore.coal", "neutral.1"), size=1.0, veins=3, vein_width=0.1)
 
 
 def gold_rock():
     """Pale boulder with a few bright gold flecks (Mining 30)."""
-    rock("gold_rock", seed=14, stone_shades=("stone.6", "stone.4", "stone.2", "stone.5"),
-         ore=("ore.gold", "accent.2"), size=0.95, ore_chance=0.35, ore_everywhere=True)
+    rock("gold_rock", seed=14, stone_shades=("stone.6", "stone.4", "stone.2", "stone.5"), fresh="stone.7",
+         ore=("ore.gold", "accent.2"), size=0.95, veins=1, vein_width=0.06)
 
 def shard(rng, length, radius):
     """A six-sided crystal: a column ending in a point, base at the origin's -length/2."""
