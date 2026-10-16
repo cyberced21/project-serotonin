@@ -162,6 +162,11 @@ extends CharacterBody3D
 @export var yank_time := 0.09
 ## How far the tool's edge is buried in the node while it's stuck (m, world space).
 @export var stick_depth := 0.1
+## On impact the view kicks up (degrees) and away from the hit, the FOV narrows (degrees), and
+## the tool quivers (radians) — all scaled by how big the hit was (ResourceNode.last_impact).
+@export var impact_kick := 0.6
+@export var impact_fov_punch := 1.0
+@export var tool_buzz := 0.03
 
 ## Tool pivot rotation around X (radians): positive tilts the head back toward the camera.
 const REST_ANGLE := -0.3
@@ -183,6 +188,9 @@ const STICK_TIME := 0.035
 ## over a few frames rather than a jump.
 const YANK_OFFSET := Vector3(0, 0.02, 0.07)
 const YANK_TIP := 0.22
+## The impact quiver: how fast it wobbles (Hz) and how quickly it dies away (s).
+const BUZZ_HZ := 38.0
+const BUZZ_DECAY := 0.07
 const WORLD_MASK := 1
 ## Villagers (see Villager.NPC_LAYER): the crosshair ray stops on them, mantling ignores them.
 const NPC_MASK := 1 << 6
@@ -205,7 +213,7 @@ const TOOL_HEADS := {&"axe": Vector3(0, 0.38, -0.185), &"pickaxe": Vector3(0, 0.
 @onready var head: Node3D = $Head
 @onready var body_collision: CollisionShape3D = $CollisionShape3D
 @onready var body_shape: CapsuleShape3D = body_collision.shape
-@onready var camera: Camera3D = $Head/Camera3D
+@onready var camera: ShakeCamera = $Head/Camera3D
 @onready var grip: Node3D = $Viewmodel/SubViewport/Camera3D/Grip
 @onready var tool_pivot: Node3D = %ToolPivot
 @onready var tools: Dictionary[StringName, Node3D] = {&"axe": %Axe, &"pickaxe": %Pickaxe, &"spear": %Spear, &"sickle": %Sickle}
@@ -242,6 +250,9 @@ var _talk_target: Villager
 var _swinging := false
 var _cooldown := 0.0
 var _tool_rest := Vector3.ZERO
+var _buzz := 0.0  # current quiver size (rad), see _impact_feel
+var _buzz_us := 0
+var _stuck_pivot: Node3D  # the world copy of the tool stuck in a node, while it is
 var _equipped: StringName = &""
 
 # the eye (see _process)
@@ -356,6 +367,9 @@ func _process(delta: float) -> void:
 		feet + Vector3.UP * (_eye + bob - _dip))
 	_update_tool_feel(delta, bob, run)
 	_update_speed_feel(delta, speed)
+	if is_instance_valid(_stuck_pivot):  # the stuck tool quivers round its buried edge
+		var a := _buzz_angle()
+		_stuck_pivot.global_basis = Basis(camera.global_basis.x, a) * Basis(camera.global_basis.z, a * 0.5)
 
 
 ## Rushing wind and faint speed lines, both growing from running pace up to max speed.
@@ -384,7 +398,8 @@ func _update_tool_feel(delta: float, bob: float, run: float) -> void:
 	_sway = _sway.lerp(target, 1.0 - exp(-12.0 * delta))
 	var stride := cos(_bob_phase) * _bob_amp * 0.5
 	var offset := Vector3(_sway.x * 0.35 + stride, -_sway.y * 0.35 + bob * 0.6 - _dip * 0.5 - _equip_dip, 0.0)
-	var tilt := Basis.from_euler(Vector3(_sway.y, _sway.x, _sway.x * 0.5 + run * 0.03))
+	var buzz := _buzz_angle()  # still ringing after the yank
+	var tilt := Basis.from_euler(Vector3(_sway.y + buzz, _sway.x, _sway.x * 0.5 + run * 0.03 + buzz * 0.6))
 	grip.transform = Transform3D(tilt * _grip_rest.basis, _grip_rest.origin + offset)
 
 
@@ -564,7 +579,7 @@ func _move(delta: float) -> void:
 	var spd_t := clampf((horizontal.length() - walk_speed) / (max_speed - walk_speed), 0.0, 1.0)
 	var kick := spd_t * speed_fov_kick + (slide_fov_kick * 0.5 if _state == State.SLIDE else 0.0) + _fov_punch
 	_fov_punch = move_toward(_fov_punch, 0.0, 40.0 * delta)
-	camera.fov = lerpf(camera.fov, _base_fov + kick, 1.0 - exp(-10.0 * delta))
+	camera.base_fov = lerpf(camera.base_fov, _base_fov + kick, 1.0 - exp(-10.0 * delta))  # (+ impact kicks)
 
 
 func _on_land(fall_speed: float) -> void:
@@ -1009,10 +1024,12 @@ func _swing(tool: StringName) -> void:
 	if node:
 		var info := HitInfo.new(hit["position"], hit["normal"], node, camera.global_position)
 		if node.hit(info):
+			_impact_feel(info, node.last_impact if "last_impact" in node else 1.0)
 			await _bite(tool, info)
 			if is_instance_valid(node):
 				node.pull(info)  # the chunk tears out as the tool comes free
 		else:
+			_impact_feel(info, 0.6, 2.5)  # bounced off: little kick, a nasty sting in the hands
 			await _bounce()
 
 	# 4. recover
@@ -1023,6 +1040,28 @@ func _swing(tool: StringName) -> void:
 	await t.finished
 	_cooldown = swing_cooldown
 	_swinging = false
+
+
+## The view kicks up and away from the hit and the FOV narrows for a moment (ShakeCamera.kick),
+## and the tool starts to quiver. `strength`: 1 for a hit, more for a crack tip or a split.
+func _impact_feel(info: HitInfo, strength: float, buzz_scale := 1.0) -> void:
+	var side := camera.global_basis.x.dot((info.position - camera.global_position).normalized())
+	var yaw := clampf(side * 4.0, -1.0, 1.0) * impact_kick * 0.6 * strength + randf_range(-0.15, 0.15)
+	camera.kick(impact_kick * strength, yaw, impact_fov_punch * strength)
+	_buzz = tool_buzz * strength * buzz_scale
+	_buzz_us = Time.get_ticks_usec()
+
+
+## The quiver right now (radians): a fast decaying wobble, in real time so it runs through the
+## hit-stop.
+func _buzz_angle() -> float:
+	if _buzz <= 0.0:
+		return 0.0
+	var t := (Time.get_ticks_usec() - _buzz_us) / 1_000_000.0
+	if t > BUZZ_DECAY * 5.0:
+		_buzz = 0.0
+		return 0.0
+	return _buzz * exp(-t / BUZZ_DECAY) * sin(TAU * BUZZ_HZ * t)
 
 
 ## The tool bites in and sticks (the hit-stop freezes it there), then gets yanked back out with a
@@ -1065,7 +1104,13 @@ func _stick_in_world(tool: StringName, info: HitInfo) -> Node3D:
 		var mesh := m as MeshInstance3D
 		mesh.layers = 1
 		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF  # it's huge in the world; no shadow
-	get_parent().add_child(copy)
+	# on a pivot at the buried edge, so it can quiver round the point that's stuck in the rock
+	var pivot := Node3D.new()
+	pivot.name = "StuckTool"
+	get_parent().add_child(pivot)
+	pivot.global_position = buried
+	pivot.add_child(copy)
+	_stuck_pivot = pivot
 	copy.global_transform = from
 	copy.set_meta("buried", buried)
 	slot.visible = false
@@ -1082,7 +1127,8 @@ func _unstick(stuck: Node3D, tool: StringName) -> void:
 		var t := stuck.create_tween().set_ignore_time_scale(true)
 		t.tween_property(stuck, "global_position", (back as Transform3D).origin, STICK_TIME) 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		await t.finished
-	stuck.queue_free()
+	stuck.get_parent().queue_free()  # (the pivot)
+	_stuck_pivot = null
 	slot.visible = true
 
 

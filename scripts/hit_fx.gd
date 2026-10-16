@@ -27,6 +27,68 @@ static func spawn(scene: PackedScene, parent: Node, at: Vector3, normal: Vector3
 	fx._play(normal, swing, stone, ore, strength, spark_count)
 
 
+## The impact star: a bright flash at the point of contact for two or three frames, popping out
+## and shrinking away, drawn over everything. Real time, so it shows during the hit-stop.
+## `size` is its width (m) at the peak.
+static func star(parent: Node, at: Vector3, color: Color, size := 0.5) -> void:
+	var quad := QuadMesh.new()
+	quad.size = Vector2.ONE
+	var flash := MeshInstance3D.new()
+	flash.mesh = quad
+	flash.material_override = _star_material(color)
+	flash.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(flash)
+	flash.global_position = at
+	flash.scale = Vector3.ONE * size * 0.5
+	var t := flash.create_tween().set_ignore_time_scale(true)
+	t.tween_property(flash, "scale", Vector3.ONE * size, 0.035).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	t.tween_property(flash, "scale", Vector3.ONE * size * 0.2, 0.035).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.tween_callback(flash.queue_free)
+
+
+static var _star_tex: Texture2D
+static var _star_materials := {}
+
+## Additive, unshaded, facing the camera, over everything; one per colour.
+static func _star_material(color: Color) -> Material:
+	var key := color.to_html()
+	if _star_materials.has(key):
+		return _star_materials[key]
+	if _star_tex == null:
+		_star_tex = _make_star_texture()
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	m.billboard_keep_scale = true
+	m.no_depth_test = true
+	m.render_priority = 10
+	m.albedo_texture = _star_tex
+	m.albedo_color = color
+	_star_materials[key] = m
+	return m
+
+
+## Four long spikes, four short diagonal ones and a hot core.
+static func _make_star_texture() -> Texture2D:
+	const S := 64
+	var img := Image.create_empty(S, S, false, Image.FORMAT_RGBA8)
+	var c := (S - 1) * 0.5
+	for y in S:
+		for x in S:
+			var d := Vector2(x - c, y - c) / c  # -1..1
+			var r := d.length()
+			var a := atan2(d.y, d.x)
+			var long := pow(absf(cos(a * 2.0)), 40.0) * clampf(1.0 - r, 0.0, 1.0)
+			var short := pow(absf(sin(a * 2.0)), 60.0) * clampf(1.0 - r * 1.8, 0.0, 1.0) * 0.7
+			var core := clampf(1.0 - r * 3.5, 0.0, 1.0)
+			var v := clampf(long + short + core * core, 0.0, 1.0)
+			img.set_pixel(x, y, Color(1, 1, 1, v))
+	img.generate_mipmaps()
+	return ImageTexture.create_from_image(img)
+
+
 ## A basis whose +Z points along `dir` (the emitters shoot along +Z).
 static func facing(dir: Vector3) -> Basis:
 	return Basis.looking_at(-dir, Vector3.UP if absf(dir.y) < 0.95 else Vector3.RIGHT)

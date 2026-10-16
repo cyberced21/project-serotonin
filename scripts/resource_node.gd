@@ -28,6 +28,9 @@ const GHOST_MASK_STENCIL := preload("res://shaders/ghost_mask_stencil.gdshader")
 const DEFLECT_SFX := preload("res://audio/stone_hit.tres")
 const DEFLECT_COLOR := Color("ff8a7a")
 const SHARP_COLOR := Color("ffd27a")
+## The impact star's tint: a plain hit, a crack tip (and splits).
+const STAR_HIT := Color(1.0, 0.97, 0.9)
+const STAR_TIP := Color(1.0, 0.78, 0.42)
 const WORLD_LAYER := 1
 ## Physics layer 4: debris collides with the world but not the player (layer 2) or pickups.
 const DEBRIS_LAYER := 1 << 3
@@ -152,6 +155,9 @@ const FELLED_SHAPE_SCALE := 0.6
 ## Chunks are small: drawing their shadows costs a pass each for little to see.
 @export var chunk_shadows := false
 @export_group("Feel")
+## How white the whole node flashes on a hit (0..1). Keep it low on big nodes: on a boulder a
+## full flash whites out the screen and drowns the impact star.
+@export_range(0.0, 1.0) var flash_strength := 0.7
 @export var hitstop_hit := 0.045
 @export var hitstop_break := 0.11
 @export var shake_hit := 1.5
@@ -168,6 +174,9 @@ const FELLED_SHAPE_SCALE := 0.6
 @onready var break_audio: AudioStreamPlayer3D = $BreakAudio
 
 var hits_left := 0
+## How big the last hit was, for the swinger's camera kick and tool quiver: 1 for a plain hit,
+## more for a crack tip / weak spot / sharp hit (1.5), a split (2) or the break (2.5).
+var last_impact := 1.0
 var _cut := 0.0  # hit_power's fraction of a hit, carried over to the next one
 var _surfaces: Array[GeometryInstance3D] = []
 var _flash_tween: Tween
@@ -334,8 +343,10 @@ func hit(info: HitInfo) -> bool:
 		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.35, 0), "Sharp!", SHARP_COLOR, 9)
 	_award_xp(xp_per_hit * (2 if double else 1) * (2 if weak or tip else 1))
 
-	if hits_left > 0 and cracks and _grow_crack(info, tip):
+	var split := hits_left > 0 and cracks and _grow_crack(info, tip)
+	if split:
 		_split(info)  # the crack ran all the way across
+	last_impact = 2.5 if hits_left == 0 else 2.0 if split else 1.5 if tip or weak or double else 1.0
 
 	if hits_left == 0:
 		_break(info)
@@ -832,6 +843,7 @@ func _split(info: HitInfo) -> void:
 		var out := (global_basis * (centre - _shape_centre)).normalized()
 		if hit_fx:
 			HitFx.spawn(hit_fx, get_parent(), to_global(centre), out, -out, chip_color, ore_color, 2.2)
+		HitFx.star(get_parent(), info.position + info.normal * 0.1, STAR_TIP, 2.0)
 		_add_rubble(info.position, 4)
 		_pop_chunk(piece, out + info.away() * 0.4, debris_speed * 1.2)
 		hits_left = maxi(hits_left - crack_split_hits, 0)
@@ -1440,6 +1452,7 @@ func _hit_effects(info: HitInfo, strength: float) -> void:
 	var sparks := roundi(spark_amount * (2.0 if strength > 1.2 else 1.0))
 	HitFx.spawn(hit_fx, get_parent(), info.position, info.normal, swing, chip_color,
 		ore_color if cracks else Color(0, 0, 0, 0), strength, sparks)
+	HitFx.star(get_parent(), info.position + info.normal * 0.08, STAR_TIP if strength > 1.2 else STAR_HIT, 0.8 * strength)
 	_add_rubble(info.position, 1 if strength <= 1.0 else 2)
 
 
@@ -1561,7 +1574,7 @@ func _flash() -> void:
 	_flash_tween = create_tween()
 	_flash_tween.tween_method(func(v: float) -> void:
 		for s in _surfaces:
-			s.set_instance_shader_parameter("flash", v), 0.7, 0.0, 0.09)
+			s.set_instance_shader_parameter("flash", v), flash_strength, 0.0, 0.09)
 
 
 ## "Impact": shove the visual away from the player and squash it slightly, then spring back.

@@ -42,6 +42,7 @@ crack_layers = ExtResource("11_crack_layers")
 split_layers = ExtResource("12_split_layers")
 crack_segment_length = 0.45
 crack_tip_radius = 0.3
+flash_strength = 0.18
 shake_hit = 2.0
 shake_break = 5.0
 
