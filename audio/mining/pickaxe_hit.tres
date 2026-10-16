@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="SoundLayers" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/sound_layers.gd" id="1_layers"]
+[ext_resource type="Script" path="res://scripts/sound_layer.gd" id="2_layer"]
+[ext_resource type="AudioStream" path="res://audio/stone_hit.tres" id="3_hit"]
+[ext_resource type="AudioStream" path="res://audio/stone_break.tres" id="4_break"]
+[ext_resource type="AudioStream" path="res://audio/footsteps/rock.tres" id="5_gravel"]
+
+[sub_resource type="Resource" id="Layer_crack"]
+script = ExtResource("2_layer")
+stream = ExtResource("3_hit")
+resource_name = "crack"
+
+[sub_resource type="Resource" id="Layer_tink"]
+script = ExtResource("2_layer")
+stream = ExtResource("3_hit")
+volume_db = -9.0
+pitch_jitter = 0.08
+pitch = 2.1
+resource_name = "tink"
+
+[sub_resource type="Resource" id="Layer_thump"]
+script = ExtResource("2_layer")
+stream = ExtResource("4_break")
+volume_db = -12.0
+pitch_jitter = 0.05
+follows_pitch = false
+pitch = 0.5
+resource_name = "thump"
+
+[sub_resource type="Resource" id="Layer_gravel"]
+script = ExtResource("2_layer")
+stream = ExtResource("5_gravel")
+delay = 0.09
+volume_db = -10.0
+pitch_jitter = 0.1
+pitch = 1.2
+resource_name = "gravel"
+
+[resource]
+script = ExtResource("1_layers")
+layers = Array[ExtResource("2_layer")]([SubResource("Layer_crack"), SubResource("Layer_tink"), SubResource("Layer_thump"), SubResource("Layer_gravel")])

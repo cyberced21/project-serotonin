@@ -12,6 +12,9 @@
 [ext_resource type="PackedScene" path="res://models/spear.glb" id="10_spear"]
 [ext_resource type="Script" path="res://scripts/spear_fishing.gd" id="11_spearfishing"]
 [ext_resource type="PackedScene" path="res://models/sickle.glb" id="12_sickle"]
+[ext_resource type="Script" path="res://scripts/sound_layers.gd" id="13_layers"]
+[ext_resource type="Resource" path="res://audio/mining/pickaxe_swing.tres" id="14_pick_swing"]
+[ext_resource type="Resource" path="res://audio/mining/pickaxe_windup.tres" id="15_pick_windup"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.35
@@ -56,6 +59,12 @@ collision_layer = 2
 collision_mask = 65
 script = ExtResource("1_script")
 swing_sfx = ExtResource("3_swing")
+tool_swing_layers = Dictionary[StringName, ExtResource("13_layers")]({
+&"pickaxe": ExtResource("14_pick_swing")
+})
+tool_windup_layers = Dictionary[StringName, ExtResource("13_layers")]({
+&"pickaxe": ExtResource("15_pick_windup")
+})
 pickaxe_model = ExtResource("8_pickaxe")
 axe_model = ExtResource("9_axe")
 spear_model = ExtResource("10_spear")

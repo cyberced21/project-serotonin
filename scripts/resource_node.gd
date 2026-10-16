@@ -75,6 +75,12 @@ const FELLED_SHAPE_SCALE := 0.6
 @export var break_sfx: AudioStream
 ## How much higher-pitched each hit gets as the node weakens (escalation).
 @export_range(0.0, 0.5) var stress_pitch := 0.15
+## Layered hit (audio/mining/): played instead of hit_sfx when set.
+@export var hit_layers: SoundLayers
+## The tool tearing back out of the node.
+@export var pull_layers: SoundLayers
+## Each broken-off piece clattering on the ground (its first couple of bounces).
+@export var debris_layers: SoundLayers
 
 @export_group("Topple")
 ## Trees: on break, Visual/Body falls over as one physics piece instead of vanishing.
@@ -243,7 +249,11 @@ func hit(info: HitInfo) -> bool:
 	SaveGame.mark_dirty()
 	var stress := 1.0 - float(hits_left) / max_hits  # 0 -> 1 as it depletes
 
-	_play(audio, hit_sfx, 1.0 + stress * stress_pitch - (0.12 if double else 0.0))
+	var pitch := 1.0 + stress * stress_pitch - (0.12 if double else 0.0)
+	if hit_layers:
+		Sfx.play_at(hit_layers, info.position, pitch, 2.0 if double else 0.0)
+	else:
+		_play(audio, hit_sfx, pitch)
 	_flash()
 	_nudge(info.away() * (1.6 if double else 1.0))
 	_chips_at(info)
@@ -268,6 +278,7 @@ func pull(info: HitInfo) -> void:
 	if hits_left <= 0:
 		return  # broke on this hit — the break already threw everything
 	var stress := 1.0 - float(hits_left) / max_hits
+	Sfx.play_at(pull_layers, info.position, 1.0 + stress * stress_pitch * 0.5)
 	var toward := -info.away()
 	_nudge(toward * 0.6)
 	var tear := (info.normal * 0.6 + toward * 0.6).normalized()
@@ -578,11 +589,27 @@ func _throw(piece: MeshInstance3D, xform: Transform3D, push: Vector3, speed: flo
 	var jitter := Vector3(randf_range(-1, 1), randf_range(0, 1), randf_range(-1, 1)) * 0.4
 	body.linear_velocity = (push + Vector3.UP * 0.8 + jitter).normalized() * speed
 	body.angular_velocity = Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * 6.0
+	if debris_layers:
+		_clatter(body, piece_scale)
 
 	var t := body.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)  # interpolated body
 	t.tween_interval(DEBRIS_LIFETIME)
 	t.tween_property(piece, "scale", Vector3.ONE * 0.01, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 	t.tween_callback(body.queue_free)
+
+
+## A piece of debris ticks when it lands, and again on its next bounce: louder the faster it was
+## going and the bigger it is (a torn-out fragment is a fraction of a chunk).
+func _clatter(body: RigidBody3D, piece_scale: float) -> void:
+	body.contact_monitor = true
+	body.max_contacts_reported = 1
+	var bounces := [0]  # (an array so the lambda can change it)
+	body.body_entered.connect(func(_other: Node) -> void:
+		if bounces[0] >= 2:
+			return
+		bounces[0] += 1
+		var strength := body.linear_velocity.length() / maxf(debris_speed, 0.1) * lerpf(0.6, 1.0, piece_scale)
+		Sfx.play_debris(debris_layers, body.global_position, strength * (0.6 if bounces[0] > 1 else 1.0)))
 
 
 # --- weak point -----------------------------------------------------------------------------

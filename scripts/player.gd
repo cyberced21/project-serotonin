@@ -136,6 +136,10 @@ extends CharacterBody3D
 ## How far away you can talk to a villager (m).
 @export var interact_reach := 3.2
 @export var swing_sfx: AudioStream
+## Per-tool layered sounds (audio/mining/), by tool id: the strike whoosh (instead of swing_sfx)
+## and the wind-up (a handle creak).
+@export var tool_swing_layers: Dictionary[StringName, SoundLayers] = {}
+@export var tool_windup_layers: Dictionary[StringName, SoundLayers] = {}
 ## Tool models (.glb, handle from the origin up +Y). Replace the greybox tools when set.
 @export var pickaxe_model: PackedScene
 @export var axe_model: PackedScene
@@ -980,6 +984,7 @@ func _swing(tool: StringName) -> void:
 	var sideways := tool == &"sickle"
 	var axis := "rotation:z" if sideways else "rotation:x"
 	var pace := SICKLE_SPEED if sideways else 1.0
+	Sfx.play_layers(tool_windup_layers.get(tool))
 	var t := create_tween().set_parallel()
 	t.tween_property(tool_pivot, axis, SICKLE_WINDUP if sideways else WINDUP_ANGLE, windup_time / pace).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	t.tween_property(tool_pivot, "position", _tool_rest + WINDUP_LIFT, windup_time / pace).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
@@ -987,7 +992,9 @@ func _swing(tool: StringName) -> void:
 
 	# 2. strike — whoosh starts with the fast part of the motion; the arm reaches up and forward so
 	# the head lands right on the crosshair
-	if swing_sfx:
+	if tool_swing_layers.has(tool):
+		Sfx.play_layers(tool_swing_layers[tool])
+	elif swing_sfx:
 		audio.stream = swing_sfx
 		audio.pitch_scale = 1.0  # (the dash plays it lower)
 		audio.play()

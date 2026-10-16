@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="SoundLayers" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/sound_layers.gd" id="1_layers"]
+[ext_resource type="Script" path="res://scripts/sound_layer.gd" id="2_layer"]
+[ext_resource type="AudioStream" path="res://audio/movement/mantle.tres" id="3_rustle"]
+
+[sub_resource type="Resource" id="Layer_creak"]
+script = ExtResource("2_layer")
+stream = ExtResource("3_rustle")
+volume_db = -16.0
+pitch_jitter = 0.08
+pitch = 1.3
+resource_name = "creak"
+
+[resource]
+script = ExtResource("1_layers")
+layers = Array[ExtResource("2_layer")]([SubResource("Layer_creak")])
