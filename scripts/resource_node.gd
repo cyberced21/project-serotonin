@@ -41,6 +41,14 @@ const FELLED_LINGER := 2.5
 const FELLED_SHAPE_SCALE := 0.6
 ## A piece split off along a crack moves at this times debris_speed (gently: it's big).
 const SPLIT_SPEED := 0.7
+## How much quieter the plain hit plays under a crack tip splitting, and under a piece splitting
+## off (or the break), so big moments stand out instead of piling up (dB).
+const HIT_DUCK_TIP := -6.0
+const HIT_DUCK_SPLIT := -9.0
+## A crack creaking on (a hit on the cracked piece, not on a tip) plays this much quieter (dB).
+const CRACK_CREAK_DB := -12.0
+## What the crack did on this hit, for _hit_sounds.
+enum { CRACK_NONE, CRACK_CREAK, CRACK_TIP }
 ## Render layer 11: a piece being cracked, with seam_crack_on_piece_only (its decals draw only there).
 const CRACKING_LAYER := 1 << 10
 
@@ -185,6 +193,8 @@ var hits_left := 0
 ## How big the last hit was, for the swinger's camera kick and tool quiver: 1 for a plain hit,
 ## more for a crack tip / weak spot / sharp hit (1.5), a split (2) or the break (2.5).
 var last_impact := 1.0
+var _crack_sound := 0  # CRACK_* : what this hit's crack did, for _hit_sounds
+var _crack_step := 0  # ... and how far along it is (each step a little higher)
 var _cut := 0.0  # hit_power's fraction of a hit, carried over to the next one
 var _surfaces: Array[GeometryInstance3D] = []
 var _flash_tween: Tween
@@ -346,10 +356,7 @@ func hit(info: HitInfo) -> bool:
 	var stress := 1.0 - float(hits_left) / max_hits  # 0 -> 1 as it depletes
 
 	var pitch := 1.0 + stress * stress_pitch - (0.12 if double else 0.0)
-	if hit_layers:
-		Sfx.play_at(hit_layers, info.position, pitch, 2.0 if double else 0.0)
-	else:
-		_play(audio, hit_sfx, pitch)
+	_crack_sound = 0  # (set by the crack code below; the sounds are played together at the end)
 	_flash()
 	_nudge(info.away() * (1.6 if double else 1.0))
 	_hit_effects(info, 1.5 if tip else 1.0)
@@ -363,6 +370,7 @@ func hit(info: HitInfo) -> bool:
 	if split:
 		_split(info)  # the crack ran all the way across
 	last_impact = 2.5 if hits_left == 0 else 2.0 if split else 1.5 if tip or weak or double else 1.0
+	_hit_sounds(info, pitch, double, split)
 
 	if hits_left == 0:
 		_break(info)
@@ -386,6 +394,24 @@ func pull(info: HitInfo) -> void:
 	_spawn_fragment(info, tear)
 	if _seams.is_empty():  # (a boulder of pieces only loses them along cracks)
 		_shed_chunks(stress, info, tear)
+
+
+## This hit's sounds, chosen together so they don't pile up: the plain hit (ducked under a crack
+## tip's split, further under a piece splitting off or the break), then the crack creaking on
+## quietly, its tip splitting, or the piece splitting off. (tools/measure_mix.py mirrors this.)
+func _hit_sounds(info: HitInfo, pitch: float, double: bool, split: bool) -> void:
+	var duck := HIT_DUCK_SPLIT if split or hits_left == 0 else HIT_DUCK_TIP if _crack_sound == CRACK_TIP else 0.0
+	if hit_layers:
+		Sfx.play_at(hit_layers, info.position, pitch, duck + (2.0 if double else 0.0))
+	else:
+		_play(audio, hit_sfx, pitch)
+	if split:
+		Sfx.play_at(split_layers, info.position)
+	elif _crack_sound == CRACK_TIP:
+		Sfx.play_at(crack_layers, info.position, 1.0 + 0.12 * _crack_step)
+	elif _crack_sound == CRACK_CREAK:
+		Sfx.play_at(crack_layers, info.position, 1.0 + 0.12 * _crack_step, CRACK_CREAK_DB)
+	_crack_sound = 0
 
 
 ## Under-levelled: the tool bounces off — clank, small nudge, no damage, no XP.
@@ -839,6 +865,8 @@ func _grow_crack(info: HitInfo, tip: bool) -> bool:
 			_crack.clear()
 			if _start_seam_crack(piece, info):  # back to a piece cracked before: carry on
 				return _seam_advance(info, 1, false)
+			_crack_sound = CRACK_CREAK  # a crack opening
+			_crack_step = _seam_step
 			return _seam_step >= crack_segments
 		# the bare core: a free crack, below
 	if tip:
@@ -910,14 +938,14 @@ func _split_push(out: Vector3, info: HitInfo) -> Vector3:
 
 
 func _split_feedback(info: HitInfo) -> void:
-	Sfx.play_at(split_layers, info.position)
 	PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.85, 0), "Split!", ore_color, 12)
 	Juice.shake(3.0)
 	Juice.hitstop(0.07)
 
 
 func _tip_feedback(info: HitInfo, segment: int) -> void:
-	Sfx.play_at(crack_layers, info.position, 1.0 + 0.12 * segment)
+	_crack_sound = CRACK_TIP
+	_crack_step = segment
 	PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.6, 0), "Crack!", ore_color, 10)
 	Juice.shake(1.5)
 	Juice.hitstop(0.03)
@@ -1016,7 +1044,8 @@ func _seam_advance(info: HitInfo, steps: int, tip: bool) -> bool:
 	if tip:
 		_tip_feedback(info, _seam_step)
 	else:
-		Sfx.play_at(crack_layers, info.position, 1.0 + 0.12 * _seam_step, -8.0)  # a quieter creak
+		_crack_sound = CRACK_CREAK  # (played quieter, with the hit: _hit_sounds)
+		_crack_step = _seam_step
 	return _seam_step >= crack_segments
 
 

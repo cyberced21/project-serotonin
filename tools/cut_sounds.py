@@ -18,33 +18,28 @@ import numpy as np
 
 RATE = 48000
 MIN_TAKE = 0.08  # shorter "takes" are clicks, not sounds
+LOUDNESS = -14.0  # dBFS, the loudest 50 ms of every clip (the layer stacks then set the mix)
 
 # (layer, source file name, how to cut it, at most this many clips, longest clip in seconds)
 #   takes  - one clip per take, split where the sound drops away
-#   slices - evenly spaced slices of a continuous sound
-#   whoosh - each take up to (not including) its loudest moment: the swing before the hit
+#   slices - the busiest stretches of a continuous sound
+#   whoosh - the swing before each impact (each loudest moment)
 #   whole  - the whole file, trimmed
+# One source per layer, so its variations differ in detail, not in kind (mixing a case dropped on
+# concrete with body punches made every hit a different recipe).
 RECIPES = [
     ("hit_crack", "ice, crack, ice block snapping-001.wav", "takes", 5, 0.45),
     ("hit_tink", "GOREMisc_Concrete_MetalPipe02_InMotionAudio_SinisterTextures5.wav", "whole", 1, 0.4),
-    ("hit_tink", "METLImpt_Metal Old File Impact Tap Against Tire Iron Metallic Hit 01_ESM_HDGM.wav", "whole", 1, 0.4),
-    ("hit_thump", "OBJLug_CaseDown_Concrete12_InMotionAudio_InstrumentCase.wav", "takes", 1, 0.6),
     ("hit_thump", "FGHTImpt_4 x Punch, Body 02_344 Audio_Cinematic Fight Vol 1.wav", "takes", 4, 0.5),
     ("hit_gravel", "FOODMisc_Broom Sweeping Up Snacks On Hard Floor 2_344 Audio_CInema Experience.wav", "slices", 5, 0.45),
     ("pull_scrape", "GOREMisc_Cladding_Scratch06_InMotionAudio_SinisterTextures5.wav", "takes", 3, 0.6),
-    ("pull_scrape", "GOREMisc_Cladding_NailScratch19_InMotionAudio_SinisterTextures5.wav", "takes", 2, 0.6),
     ("pull_pebbles", "GAMEBoard_Event Board Reset Organic Multiple Pieces Wood Small 02_ESM_BG.wav", "whole", 1, 0.9),
-    ("pull_pebbles", "Arrow Hit Rattle.wav", "whole", 1, 0.9),
     ("swing_whoosh", "SWSH_SWING IMPACTS Quick Heavy Weapon Swing To Thud Impact Var 01_DDUMAIS_MWP2.wav", "whoosh", 5, 0.3),
-    ("windup_creak", "OBJLug_Handle_Movement15_InMotionAudio_InstrumentCase.wav", "whole", 1, 0.8),
     ("windup_creak", "FOLYClth_ClothMovement29_InMotionAudio_FoleyT-Shirt.wav", "takes", 2, 0.6),
     ("crack_split", "ice, surface cracking, fissure, fast, hard-003.wav", "takes", 4, 0.6),
     ("split_crunch", "GORESplt_Gore Designed Transient Heavy Impact Smash 01_ESM_HALG.wav", "whole", 1, 1.2),
-    ("split_crunch", "ICEBrk_Skill Freeze Whoosh Break Impact Layered Movement Shatter 03_ESM_TDG.wav", "whole", 1, 1.4),
     ("split_rubble", "Woosh Debris.wav", "whole", 1, 1.8),
-    ("split_rubble", "GAMEBoard_Event Board Reset Organic Multiple Pieces Wood Small 02_ESM_BG.wav", "whole", 1, 0.9),
     ("debris_tick", "GAMEBoard_Game Play Piece Action Organic Connect Dots Fall Bounce 04_ESM_BG.wav", "whole", 1, 0.2),
-    ("debris_tick", "Arrow Hit Rattle.wav", "takes", 3, 0.15),
 ]
 
 
@@ -123,14 +118,27 @@ def takes(x, max_len, floor_db=-32.0, gap=0.06):
     return out
 
 
+def loudness(clip, window=0.05):
+    """How loud a short sound feels: the RMS of its loudest 50 ms."""
+    n = min(int(window * RATE), len(clip))
+    return np.sqrt(np.convolve(clip * clip, np.ones(n) / n, mode="valid")).max()
+
+
 def finish(clip):
-    """Faded in and out, peak normalised to -1 dBFS."""
+    """Faded in and out, and brought to the same loudness as every other clip (LOUDNESS), with a
+    soft limit on peaks so a sharp click can't stick out above a dense crackle (or clip)."""
     clip = clip - clip.mean()
     fade_in, fade_out = min(int(0.002 * RATE), len(clip) // 4), min(int(0.03 * RATE), len(clip) // 3)
     clip[:fade_in] *= np.linspace(0, 1, fade_in)
     clip[len(clip) - fade_out:] *= np.linspace(1, 0, fade_out)
-    peak = np.abs(clip).max()
-    return clip * (10 ** (-1 / 20) / peak) if peak > 0 else clip
+    level = loudness(clip)
+    if level <= 0:
+        return clip
+    clip = clip * (10 ** (LOUDNESS / 20) / level)
+    knee, ceiling = 10 ** (-6 / 20), 10 ** (-1 / 20)
+    over = np.abs(clip) > knee  # above the knee, peaks are bent smoothly toward the ceiling
+    clip[over] = np.sign(clip[over]) * (knee + (ceiling - knee) * np.tanh((np.abs(clip[over]) - knee) / (ceiling - knee)))
+    return clip
 
 
 def cut(x, how, count, max_len):
