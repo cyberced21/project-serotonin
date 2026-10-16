@@ -368,7 +368,8 @@ func pull(info: HitInfo) -> void:
 	_nudge(toward * 0.6)
 	var tear := (info.normal * 0.6 + toward * 0.6).normalized()
 	_spawn_fragment(info, tear)
-	_shed_chunks(stress, info, tear)
+	if _seams.is_empty():  # (a boulder of pieces only loses them along cracks)
+		_shed_chunks(stress, info, tear)
 
 
 ## Under-levelled: the tool bounces off — clank, small nudge, no damage, no XP.
@@ -483,6 +484,7 @@ func _reset_visuals() -> void:
 	_crack_normals.clear()
 	_crack_tip = null
 	_clear_seam_crack()
+	_seam_progress.clear()
 	_queue_refit()
 	if _rubble_mm:
 		_rubble_mm.multimesh.visible_instance_count = 0
@@ -643,6 +645,7 @@ func _pop_chunk(chunk: MeshInstance3D, push: Vector3, speed: float) -> void:
 	_queue_refit()
 	if chunk == _seam_piece:
 		_clear_seam_crack()
+	_seam_progress.erase(chunk)
 	var piece := chunk.duplicate() as MeshInstance3D
 	_throw(piece, chunk.global_transform.orthonormalized(), push, speed)
 
@@ -805,16 +808,21 @@ func crack_tips() -> Array[Vector3]:
 ## piece that was struck if it has one, else freely across the surface (the bare core, or a
 ## model without seams). One left behind stays as a scar. True when the crack is complete.
 func _grow_crack(info: HitInfo, tip: bool) -> bool:
-	if tip and _seam_piece:
-		return _seam_advance(info)
-	if not tip:
+	if not _seams.is_empty():
+		# a boulder made of pieces: every hit on a piece cracks it a step further round its seam
+		# (a tip hit, two), so pieces only ever come off along a crack
+		if tip and _seam_piece:
+			return _seam_advance(info, 2, true)
 		var piece := _piece_struck(info)
 		if piece and _seams.has(piece):
-			if piece != _seam_piece:
-				_retire_tip()
-				_crack.clear()
-				_start_seam_crack(piece, info)
-			return false
+			if piece == _seam_piece:
+				return _seam_advance(info, 1, false)
+			_retire_tip()
+			_crack.clear()
+			if _start_seam_crack(piece, info):  # back to a piece cracked before: carry on
+				return _seam_advance(info, 1, false)
+			return _seam_step >= crack_segments
+		# the bare core: a free crack, below
 	if tip:
 		_extend_crack()
 		var seg := _crack.size() - 1
@@ -822,7 +830,7 @@ func _grow_crack(info: HitInfo, tip: bool) -> bool:
 		return seg >= crack_segments
 	var n := (global_basis.inverse() * info.normal).normalized()
 	if _crack.is_empty() or n.dot(_crack_normal) < 0.5:
-		_clear_seam_crack()
+		_clear_seam_crack(true)
 		_retire_tip()
 		_crack_normal = n
 		_crack.assign([to_local(info.position)])
@@ -889,8 +897,10 @@ func _tip_feedback(info: HitInfo, segment: int) -> void:
 
 # --- seam cracks ----------------------------------------------------------------------------
 # A boulder made of pieces (the model's Seam_* lines) cracks along the outline of the piece you
-# struck: from the point of the seam nearest the hit, both ways at once, a step per tip hit,
-# until it's gone all the way round the visible outline. Then exactly that piece comes off.
+# strike: from the point of the seam nearest the hit, both ways at once, a step per hit on that
+# piece (two for a hit on a tip), until it's gone all the way round the visible outline. Then
+# exactly that piece comes off: pieces only ever leave along a crack (no wear-down shedding).
+# Leave a piece half-cracked for another and its crack stays, to carry on from later.
 
 ## Below this height (node space) a seam runs along the ground, where a crack can't be seen.
 const SEAM_GROUND := 0.15
@@ -911,6 +921,8 @@ var _seam_reach := Vector2.ZERO
 var _seam_step := 0
 var _seam_tip_points: Array[Vector3] = []
 var _seam_tip_decals: Array[Decal] = []
+## Pieces cracked part of the way and left for another: piece -> its crack (arc, reach, step...).
+var _seam_progress := {}
 var _face_cache := {}  # mesh -> its triangles, for _piece_struck
 
 
@@ -939,22 +951,42 @@ func _piece_struck(info: HitInfo) -> MeshInstance3D:
 	return best if best and best.get_parent() == chunks else null
 
 
-func _start_seam_crack(piece: MeshInstance3D, info: HitInfo) -> void:
-	_clear_seam_crack()
+## Makes `piece` the one being cracked: picks up its crack where it was left if it has one (true),
+## else starts one at the point of its seam nearest the hit, a first step already made.
+func _start_seam_crack(piece: MeshInstance3D, info: HitInfo) -> bool:
+	_clear_seam_crack(true)
+	if _seam_progress.has(piece):
+		var saved: Dictionary = _seam_progress[piece]
+		_seam_progress.erase(piece)
+		_seam_arc = saved["arc"]
+		_seam_dist = saved["dist"]
+		_seam_closed = saved["closed"]
+		_seam_start = saved["start"]
+		_seam_reach = saved["reach"]
+		_seam_step = saved["step"]
+		_seam_piece = piece
+		_place_seam_tips()
+		return true
 	if not _build_seam_arc(_seams[piece], to_local(info.position)):
-		return
+		return false
 	_seam_piece = piece
 	_seam_start = _arc_param(to_local(info.position))
 	var total := _seam_dist[-1]
 	_seam_reach = Vector2(total * 0.5, total * 0.5) if _seam_closed else Vector2(_seam_start, total - _seam_start)
 	_seam_step = 0
 	_seam_grow()
+	return false
 
 
-## A tip hit: one more step each way. True when it's gone all the way round.
-func _seam_advance(info: HitInfo) -> bool:
-	_seam_grow()
-	_tip_feedback(info, _seam_step)
+## `steps` more steps each way (a tip hit makes two). True when it's gone all the way round.
+func _seam_advance(info: HitInfo, steps: int, tip: bool) -> bool:
+	for i in steps:
+		if _seam_step < crack_segments:
+			_seam_grow()
+	if tip:
+		_tip_feedback(info, _seam_step)
+	else:
+		Sfx.play_at(crack_layers, info.position, 1.0 + 0.12 * _seam_step, -8.0)  # a quieter creak
 	return _seam_step >= crack_segments
 
 
@@ -965,14 +997,22 @@ func _seam_grow() -> void:
 	_seam_step += 1
 	_seam_decals(_seam_start - back.y, _seam_start - back.x)
 	_seam_decals(_seam_start + fwd.x, _seam_start + fwd.y)
-	# the tips: each end that still has further to go
+	_place_seam_tips()
+
+
+## The tips: each end that still has further to go.
+func _place_seam_tips() -> void:
 	for d in _seam_tip_decals:
-		d.queue_free()
+		if is_instance_valid(d):
+			d.queue_free()
 	_seam_tip_decals.clear()
 	_seam_tip_points.clear()
 	if _seam_step >= crack_segments:
 		return
-	for end in [[_seam_start - back.y, -1.0], [_seam_start + fwd.y, 1.0]]:
+	var n := float(crack_segments)
+	var back := _seam_reach.x * _seam_step / n
+	var fwd := _seam_reach.y * _seam_step / n
+	for end in [[_seam_start - back, -1.0], [_seam_start + fwd, 1.0]]:
 		var s: float = end[0]
 		var p := _arc_point(s)
 		var along := _arc_point(s + end[1] * 0.05) - p
@@ -1068,8 +1108,15 @@ func _arc_param(p: Vector3) -> float:
 	return best
 
 
-## Drops the seam crack (its tips go out; the cracks drawn so far stay as a scar).
-func _clear_seam_crack() -> void:
+## Drops the seam crack (its tips go out; the cracks drawn so far stay). With `keep`, its progress
+## is remembered, to carry on if that piece is struck again.
+func _clear_seam_crack(keep := false) -> void:
+	if _seam_piece:
+		if keep and _seam_piece.visible and _seam_step < crack_segments:
+			_seam_progress[_seam_piece] = {"arc": _seam_arc, "dist": _seam_dist, "closed": _seam_closed,
+				"start": _seam_start, "reach": _seam_reach, "step": _seam_step}
+		else:
+			_seam_progress.erase(_seam_piece)
 	for d in _seam_tip_decals:
 		if is_instance_valid(d):
 			d.queue_free()
