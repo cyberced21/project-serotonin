@@ -248,13 +248,15 @@ func _apply_model() -> void:
 		m.material_override = NODE_PALETTE
 	inst.free()
 	for c in chunks.get_children():
-		var loop: PackedVector3Array = seam_lines.get(String(c.name), PackedVector3Array())
-		if loop.size() >= 3:
-			_seams[c] = loop
+		var loops: Array = seam_lines.get(String(c.name), [])
+		if not loops.is_empty():
+			_seams[c] = loops
 
 
-## A Seam_* line mesh (pairs of points) as one ordered closed loop, in node space.
-static func _seam_loop(mesh: Mesh, xform: Transform3D) -> PackedVector3Array:
+## A Seam_* line mesh (pairs of points) as ordered closed loops, in node space. Usually one; a
+## piece walled in by others on all sides (a column in the middle) has one round its top and
+## another round its foot.
+static func _seam_loop(mesh: Mesh, xform: Transform3D) -> Array[PackedVector3Array]:
 	var arrays := mesh.surface_get_arrays(0)
 	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
 	var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX] else PackedInt32Array(range(verts.size()))
@@ -262,23 +264,29 @@ static func _seam_loop(mesh: Mesh, xform: Transform3D) -> PackedVector3Array:
 	for i in range(0, idx.size() - 1, 2):
 		links.get_or_add(idx[i], []).append(idx[i + 1])
 		links.get_or_add(idx[i + 1], []).append(idx[i])
-	var loop := PackedVector3Array()
-	if links.is_empty():
-		return loop
-	var prev := -1
-	var at: int = links.keys()[0]
-	for step in links.size():  # once round
-		loop.append(xform * verts[at])
-		var next := -1
-		for v in links[at]:
-			if v != prev:
-				next = v
+	var loops: Array[PackedVector3Array] = []
+	var seen := {}
+	for start in links:
+		if seen.has(start):
+			continue
+		var loop := PackedVector3Array()
+		var prev := -1
+		var at: int = start
+		while not seen.has(at):  # round this loop
+			seen[at] = true
+			loop.append(xform * verts[at])
+			var next := -1
+			for v in links[at]:
+				if v != prev and not seen.has(v):
+					next = v
+					break
+			if next == -1:
 				break
-		if next == -1:
-			break
-		prev = at
-		at = next
-	return loop
+			prev = at
+			at = next
+		if loop.size() >= 3:
+			loops.append(loop)
+	return loops
 
 
 func _make_notches() -> Node3D:
@@ -1041,40 +1049,47 @@ func _seam_up(p: Vector3) -> Vector3:
 	return s["normal"] if not s.is_empty() else out
 
 
-## The part of a piece's outline above the ground nearest `near`: the whole loop if it never
-## dips under (closed), else the run of it between two dips. False if there's nothing usable.
-func _build_seam_arc(loop: PackedVector3Array, near: Vector3) -> bool:
-	var n := loop.size()
-	var low := -1
-	for i in n:
-		if loop[i].y < SEAM_GROUND:
-			low = i
-			break
+## The part of a piece's outline above the ground nearest `near`: a whole loop if it never dips
+## under (closed), else the run of one between two dips, cut off right at ground height (so a
+## seam running straight up from the ground keeps its upright part). False if there's nothing.
+func _build_seam_arc(loops: Array, near: Vector3) -> bool:
 	var arc := PackedVector3Array()
-	if low == -1:
-		arc = loop.duplicate()
-		arc.append(loop[0])
-		_seam_closed = true
-	else:
-		_seam_closed = false
+	var closed := false
+	var best_d := INF
+	for loop: PackedVector3Array in loops:
+		var n := loop.size()
+		var low := -1
+		for i in n:
+			if loop[i].y < SEAM_GROUND:
+				low = i
+				break
 		var runs: Array[PackedVector3Array] = []
-		var run := PackedVector3Array()
-		for k in n:
-			var p := loop[(low + 1 + k) % n]
-			if p.y < SEAM_GROUND:
-				if run.size() >= 2:
-					runs.append(run)
-				run = PackedVector3Array()
-			else:
-				run.append(p)
-		if run.size() >= 2:
-			runs.append(run)
-		var best_d := INF
+		if low == -1:
+			var whole := loop.duplicate()
+			whole.append(loop[0])
+			runs.append(whole)
+		else:
+			var run := PackedVector3Array()
+			var prev := loop[low]
+			for k in n:
+				var p := loop[(low + 1 + k) % n]
+				var under := p.y < SEAM_GROUND
+				if under != (prev.y < SEAM_GROUND):  # crossing the ground line: end or start there
+					run.append(prev.lerp(p, (SEAM_GROUND - prev.y) / (p.y - prev.y)))
+				if under:
+					if run.size() >= 2:
+						runs.append(run)
+					run = PackedVector3Array()
+				else:
+					run.append(p)
+				prev = p
 		for r in runs:
 			for p in r:
 				if p.distance_squared_to(near) < best_d:
 					best_d = p.distance_squared_to(near)
 					arc = r
+					closed = low == -1
+	_seam_closed = closed
 	if arc.size() < 2:
 		return false
 	_seam_arc = arc
