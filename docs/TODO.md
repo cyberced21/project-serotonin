@@ -83,8 +83,8 @@ Plan and decisions: [plans/biomes.md](../plans/biomes.md).
 
 - [ ] **Real recordings** to replace the synthesized placeholders: footsteps (all surfaces + water), slide scrape, mantle, splash, spear hit, and the biome ambience beds (`audio/footsteps/`, `audio/movement/`, `audio/fishing/`, `audio/ambience/` — swap the `.wav`s, the `.tres` randomizers stay).
 - [x] **Mining sounds:** cut from the GDC 2026 sampler (`tools/cut_sounds.py`).
-- [ ] **Better rock material:** the sampler has almost no real rock. Ice cracks, concrete impacts and a broom sweeping crumbs stand in for stone cracking, the pick's bite and gravel. A dedicated rock / debris library would beat them (add recipes to `tools/cut_sounds.py`, the layer stacks stay).
-- [ ] **Tune the mining mix** by ear in game: each layer's volume, pitch and delay in `audio/mining/*.tres`.
+- [x] **Even mining levels:** every clip at the same loudness, one source per layer, and the plain hit ducks under a crack tip or a split (`ResourceNode._hit_sounds`). Measured with `tools/measure_mix.py`: a plain hit stays within a 3.4 dB window (was 10.7), a tip hit lands 2 dB above it, a split 3.7 dB.
+- [ ] **Better source material for mining (next):** playtested, the sounds are even now but still don't feel right. The sampler has almost no real rock: ice cracks, a metal pipe on concrete, body punches and a broom sweeping crumbs stand in for stone cracking, the pick's bite, the thump and gravel, and the split crunch is a "gore smash". Find a real rock / mining library (stone impacts, pick on rock, rubble, gravel), then point the recipes in `tools/cut_sounds.py` at it: the layer stacks, the loudness matching and the ducking all stay. Re-run `tools/measure_mix.py` and rebalance the layer volumes after.
 
 ## World & tech
 
