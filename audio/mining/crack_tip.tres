@@ -1,25 +1,25 @@
-[gd_resource type="Resource" script_class="SoundLayers" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="SoundLayers" format=3]
 
 [ext_resource type="Script" path="res://scripts/sound_layers.gd" id="1_layers"]
 [ext_resource type="Script" path="res://scripts/sound_layer.gd" id="2_layer"]
-[ext_resource type="AudioStream" path="res://audio/stone_hit.tres" id="3_hit"]
-[ext_resource type="AudioStream" path="res://audio/footsteps/rock.tres" id="4_gravel"]
+[ext_resource type="AudioStream" path="res://audio/mining/sfx/crack_split.tres" id="s0"]
+[ext_resource type="AudioStream" path="res://audio/mining/sfx/hit_gravel.tres" id="s1"]
 
 [sub_resource type="Resource" id="Layer_split"]
 script = ExtResource("2_layer")
-stream = ExtResource("3_hit")
+stream = ExtResource("s0")
 volume_db = -3.0
-pitch_jitter = 0.04
-pitch = 1.5
+pitch_jitter = 0.05
+pitch = 0.9
 resource_name = "split"
 
 [sub_resource type="Resource" id="Layer_trickle"]
 script = ExtResource("2_layer")
-stream = ExtResource("4_gravel")
-delay = 0.06
-volume_db = -9.0
+stream = ExtResource("s1")
+delay = 0.05
+volume_db = -12.0
 pitch_jitter = 0.1
-pitch = 1.5
+pitch = 1.2
 resource_name = "trickle"
 
 [resource]

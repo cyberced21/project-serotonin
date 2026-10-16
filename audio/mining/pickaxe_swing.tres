@@ -1,14 +1,15 @@
-[gd_resource type="Resource" script_class="SoundLayers" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="SoundLayers" format=3]
 
 [ext_resource type="Script" path="res://scripts/sound_layers.gd" id="1_layers"]
 [ext_resource type="Script" path="res://scripts/sound_layer.gd" id="2_layer"]
-[ext_resource type="AudioStream" path="res://audio/swing.tres" id="3_swing"]
+[ext_resource type="AudioStream" path="res://audio/mining/sfx/swing_whoosh.tres" id="s0"]
 
 [sub_resource type="Resource" id="Layer_whoosh"]
 script = ExtResource("2_layer")
-stream = ExtResource("3_swing")
+stream = ExtResource("s0")
+volume_db = -3.0
 pitch_jitter = 0.05
-pitch = 0.8
+pitch = 0.9
 resource_name = "whoosh"
 
 [resource]

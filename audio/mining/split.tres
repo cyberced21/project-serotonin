@@ -1,34 +1,33 @@
-[gd_resource type="Resource" script_class="SoundLayers" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="SoundLayers" format=3]
 
 [ext_resource type="Script" path="res://scripts/sound_layers.gd" id="1_layers"]
 [ext_resource type="Script" path="res://scripts/sound_layer.gd" id="2_layer"]
-[ext_resource type="AudioStream" path="res://audio/stone_break.tres" id="3_break"]
-[ext_resource type="AudioStream" path="res://audio/stone_hit.tres" id="4_hit"]
-[ext_resource type="AudioStream" path="res://audio/footsteps/rock.tres" id="5_gravel"]
+[ext_resource type="AudioStream" path="res://audio/mining/sfx/hit_crack.tres" id="s0"]
+[ext_resource type="AudioStream" path="res://audio/mining/sfx/split_crunch.tres" id="s1"]
+[ext_resource type="AudioStream" path="res://audio/mining/sfx/split_rubble.tres" id="s2"]
 
 [sub_resource type="Resource" id="Layer_crunch"]
 script = ExtResource("2_layer")
-stream = ExtResource("3_break")
+stream = ExtResource("s1")
 volume_db = -2.0
 pitch_jitter = 0.05
-pitch = 1.15
+pitch = 0.9
 resource_name = "crunch"
 
 [sub_resource type="Resource" id="Layer_snap"]
 script = ExtResource("2_layer")
-stream = ExtResource("4_hit")
-volume_db = -4.0
+stream = ExtResource("s0")
+volume_db = -5.0
 pitch_jitter = 0.05
-pitch = 1.8
+pitch = 0.75
 resource_name = "snap"
 
 [sub_resource type="Resource" id="Layer_rubble"]
 script = ExtResource("2_layer")
-stream = ExtResource("5_gravel")
-delay = 0.14
+stream = ExtResource("s2")
+delay = 0.12
 volume_db = -6.0
-pitch_jitter = 0.1
-pitch = 0.9
+pitch_jitter = 0.08
 resource_name = "rubble"
 
 [resource]

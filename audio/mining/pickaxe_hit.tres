@@ -1,40 +1,41 @@
-[gd_resource type="Resource" script_class="SoundLayers" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="SoundLayers" format=3]
 
 [ext_resource type="Script" path="res://scripts/sound_layers.gd" id="1_layers"]
 [ext_resource type="Script" path="res://scripts/sound_layer.gd" id="2_layer"]
-[ext_resource type="AudioStream" path="res://audio/stone_hit.tres" id="3_hit"]
-[ext_resource type="AudioStream" path="res://audio/stone_break.tres" id="4_break"]
-[ext_resource type="AudioStream" path="res://audio/footsteps/rock.tres" id="5_gravel"]
+[ext_resource type="AudioStream" path="res://audio/mining/sfx/hit_crack.tres" id="s0"]
+[ext_resource type="AudioStream" path="res://audio/mining/sfx/hit_gravel.tres" id="s1"]
+[ext_resource type="AudioStream" path="res://audio/mining/sfx/hit_thump.tres" id="s2"]
+[ext_resource type="AudioStream" path="res://audio/mining/sfx/hit_tink.tres" id="s3"]
 
 [sub_resource type="Resource" id="Layer_crack"]
 script = ExtResource("2_layer")
-stream = ExtResource("3_hit")
+stream = ExtResource("s0")
+pitch_jitter = 0.06
+pitch = 0.85
 resource_name = "crack"
 
 [sub_resource type="Resource" id="Layer_tink"]
 script = ExtResource("2_layer")
-stream = ExtResource("3_hit")
-volume_db = -9.0
-pitch_jitter = 0.08
-pitch = 2.1
+stream = ExtResource("s3")
+volume_db = -8.0
+pitch_jitter = 0.06
 resource_name = "tink"
 
 [sub_resource type="Resource" id="Layer_thump"]
 script = ExtResource("2_layer")
-stream = ExtResource("4_break")
-volume_db = -12.0
+stream = ExtResource("s2")
+volume_db = -6.0
 pitch_jitter = 0.05
 follows_pitch = false
-pitch = 0.5
+pitch = 0.75
 resource_name = "thump"
 
 [sub_resource type="Resource" id="Layer_gravel"]
 script = ExtResource("2_layer")
-stream = ExtResource("5_gravel")
-delay = 0.09
-volume_db = -10.0
+stream = ExtResource("s1")
+delay = 0.07
+volume_db = -11.0
 pitch_jitter = 0.1
-pitch = 1.2
 resource_name = "gravel"
 
 [resource]

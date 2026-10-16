@@ -203,6 +203,9 @@ const STICK_TIME := 0.035
 ## over a few frames rather than a jump.
 const YANK_OFFSET := Vector3(0, 0.02, 0.07)
 const YANK_TIP := 0.22
+## A layered swing swoosh (tool_swing_layers) starts this long before the tool lands: its clips
+## are this long and swell into the hit (audio/mining/sfx/swing_whoosh_*).
+const SWOOSH_LEAD := 0.3
 ## The impact quiver: how fast it wobbles (Hz) and how quickly it dies away (s).
 const BUZZ_HZ := 38.0
 const BUZZ_DECAY := 0.07
@@ -1034,17 +1037,19 @@ func _swing(tool: StringName) -> void:
 	var ease := Tween.EASE_IN_OUT if smooth else Tween.EASE_OUT
 	var windup: float = windup_time / pace * pose.get("windup_scale", 1.0)
 	Sfx.play_layers(tool_windup_layers.get(tool))
+	if tool_swing_layers.has(tool):  # the swoosh swells into the hit: start it so it ends there
+		var strike_len := strike_time / pace
+		get_tree().create_timer(maxf(windup + strike_len - SWOOSH_LEAD, 0.0)).timeout.connect(
+			Sfx.play_layers.bind(tool_swing_layers[tool]))
 	var t := create_tween().set_parallel()
 	t.tween_property(tool_pivot, axis, SICKLE_WINDUP if sideways else pose["windup"], windup).set_trans(Tween.TRANS_SINE).set_ease(ease)
 	t.tween_property(tool_pivot, "position", _tool_rest + pose["lift"], windup).set_trans(Tween.TRANS_SINE).set_ease(ease)
 	t.tween_property(self, "_grip_blend", 1.0, windup).set_trans(Tween.TRANS_SINE).set_ease(ease)
 	await t.finished
 
-	# 2. strike — whoosh starts with the fast part of the motion; the arm reaches up and forward so
-	# the head lands right on the crosshair
-	if tool_swing_layers.has(tool):
-		Sfx.play_layers(tool_swing_layers[tool])
-	elif swing_sfx:
+	# 2. strike — whoosh starts with the fast part of the motion (the layered swoosh already began
+	# in the wind-up); the arm reaches up and forward so the head lands right on the crosshair
+	if not tool_swing_layers.has(tool) and swing_sfx:
 		audio.stream = swing_sfx
 		audio.pitch_scale = 1.0  # (the dash plays it lower)
 		audio.play()
