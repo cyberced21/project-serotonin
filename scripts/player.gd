@@ -176,6 +176,10 @@ extends CharacterBody3D
 ## while swinging (position, and rotation in radians), turning to it during the wind-up and back
 ## after; tools without one swing from the Grip node's own placement in player.tscn, which is
 ## also everyone's rest pose (turned well to the side: a diagonal chop).
+## Optional: "ready" / "ready_blend": a stance taken while the crosshair is on something the tool
+## can work (pivot tilt, and how far toward the swing grip), so a swing starts from where the tool
+## already is and holding to mine doesn't bounce back to rest between swings. "smooth": ease the
+## wind-up and recovery in and out (no overshoot); "windup_scale" / "recover_scale" lengthen them.
 const DEFAULT_SWING := {"rest": -0.3, "windup": 0.7, "strike": -0.7,
 	"lift": Vector3(0, 0.06, 0.04), "reach": Vector3(0, 0.33, 0), "pace": 1.0}
 const SWINGS := {
@@ -185,7 +189,8 @@ const SWINGS := {
 	# the centre, the hands low on the right)
 	&"pickaxe": {"rest": -0.3, "windup": 1.0, "strike": -0.8,
 		"lift": Vector3(-0.04, 0.62, -0.12), "reach": Vector3(-0.1, 0.425, 0.075), "pace": 0.85,
-		"swing_grip": Vector3(0.2, -0.5, -0.62), "swing_turn": Vector3(0, 0.2, 0.05)},
+		"swing_grip": Vector3(0.2, -0.5, -0.62), "swing_turn": Vector3(0, 0.2, 0.05),
+		"ready": 0.15, "ready_blend": 0.6, "smooth": true, "windup_scale": 1.7, "recover_scale": 1.6},
 }
 ## The sickle swings sideways instead: it's swung out to the right (rotation around the view
 ## axis), then cuts across to the left, a bit quicker than the axe.
@@ -412,6 +417,12 @@ func _update_tool_feel(delta: float, bob: float, run: float) -> void:
 	_sway = _sway.lerp(target, 1.0 - exp(-12.0 * delta))
 	var stride := cos(_bob_phase) * _bob_amp * 0.5
 	var offset := Vector3(_sway.x * 0.35 + stride, -_sway.y * 0.35 + bob * 0.6 - _dip * 0.5 - _equip_dip, 0.0)
+	var pose := _swing_pose(_equipped)
+	if not _swinging and pose.has("ready"):  # ease into the ready stance, or back to rest
+		var ready := _ready_stance()
+		var k := 1.0 - exp(-(6.0 if ready else 3.5) * delta)
+		_grip_blend = lerpf(_grip_blend, pose["ready_blend"] if ready else 0.0, k)
+		tool_pivot.rotation.x = lerpf(tool_pivot.rotation.x, pose["ready"] if ready else pose["rest"], k)
 	_grip_rest = _grip_default.interpolate_with(_grip_swing, _grip_blend)
 	var buzz := _buzz_angle()  # still ringing after the yank
 	var tilt := Basis.from_euler(Vector3(_sway.y + buzz, _sway.x, _sway.x * 0.5 + run * 0.03 + buzz * 0.6))
@@ -1019,11 +1030,14 @@ func _swing(tool: StringName) -> void:
 	var sideways := tool == &"sickle"
 	var axis := "rotation:z" if sideways else "rotation:x"
 	var pace: float = SICKLE_SPEED if sideways else pose["pace"]
+	var smooth: bool = pose.get("smooth", false)
+	var ease := Tween.EASE_IN_OUT if smooth else Tween.EASE_OUT
+	var windup: float = windup_time / pace * pose.get("windup_scale", 1.0)
 	Sfx.play_layers(tool_windup_layers.get(tool))
 	var t := create_tween().set_parallel()
-	t.tween_property(tool_pivot, axis, SICKLE_WINDUP if sideways else pose["windup"], windup_time / pace).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	t.tween_property(tool_pivot, "position", _tool_rest + pose["lift"], windup_time / pace).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	t.tween_property(self, "_grip_blend", 1.0, windup_time / pace).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	t.tween_property(tool_pivot, axis, SICKLE_WINDUP if sideways else pose["windup"], windup).set_trans(Tween.TRANS_SINE).set_ease(ease)
+	t.tween_property(tool_pivot, "position", _tool_rest + pose["lift"], windup).set_trans(Tween.TRANS_SINE).set_ease(ease)
+	t.tween_property(self, "_grip_blend", 1.0, windup).set_trans(Tween.TRANS_SINE).set_ease(ease)
 	await t.finished
 
 	# 2. strike — whoosh starts with the fast part of the motion; the arm reaches up and forward so
@@ -1053,12 +1067,16 @@ func _swing(tool: StringName) -> void:
 			_impact_feel(info, 0.6, 2.5)  # bounced off: little kick, a nasty sting in the hands
 			await _bounce(tool)
 
-	# 4. recover
+	# 4. recover — back to the ready stance if there's more to mine, else to rest
+	var recover: float = recover_time / pace * pose.get("recover_scale", 1.0)
+	var ready := _ready_stance()
+	var trans := Tween.TRANS_SINE if smooth else Tween.TRANS_BACK
 	t = create_tween().set_parallel()
-	t.tween_property(tool_pivot, "rotation:x", pose["rest"], recover_time / pace).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	t.tween_property(tool_pivot, "rotation:z", 0.0, recover_time / pace).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	t.tween_property(tool_pivot, "position", _tool_rest, recover_time / pace).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	t.tween_property(self, "_grip_blend", 0.0, recover_time / pace * 1.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	t.tween_property(tool_pivot, "rotation:x", pose["ready"] if ready else pose["rest"], recover).set_trans(trans).set_ease(ease)
+	t.tween_property(tool_pivot, "rotation:z", 0.0, recover).set_trans(trans).set_ease(ease)
+	t.tween_property(tool_pivot, "position", _tool_rest, recover).set_trans(Tween.TRANS_QUAD if not smooth else Tween.TRANS_SINE).set_ease(ease)
+	t.tween_property(self, "_grip_blend", pose.get("ready_blend", 0.0) if ready else 0.0, recover * (1.0 if ready else 1.6)) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await t.finished
 	_cooldown = swing_cooldown
 	_swinging = false
@@ -1178,6 +1196,13 @@ func _bounce(tool: StringName) -> void:
 	t.tween_property(tool_pivot, "position", _tool_rest + pose["reach"] + Vector3(0, 0.03, 0.1), 0.06) 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	t.tween_property(tool_pivot, "rotation:x", pose["strike"] + 0.7, 0.06).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	await t.finished
+
+
+## Squared up, ready to swing: the equipped tool has a ready stance and the crosshair is on
+## something it can work.
+func _ready_stance() -> bool:
+	return _swing_pose(_equipped).has("ready") and is_instance_valid(_target) \
+		and _target.tool_type == _equipped and _target.can_gather()
 
 
 ## How `tool` is swung and held (SWINGS, else DEFAULT_SWING).
