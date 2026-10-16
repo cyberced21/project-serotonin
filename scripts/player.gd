@@ -168,20 +168,30 @@ extends CharacterBody3D
 @export var impact_fov_punch := 1.0
 @export var tool_buzz := 0.03
 
-## Tool pivot rotation around X (radians): positive tilts the head back toward the camera.
-const REST_ANGLE := -0.3
-const WINDUP_ANGLE := 0.7
-const STRIKE_ANGLE := -0.7
-## At impact the arm reaches up (viewmodel space) so the tool's head lands right on the crosshair,
-## where the world copy of it sticks into the node (measured: within ~5% of screen of the centre).
-const STRIKE_REACH := Vector3(0, 0.33, 0)
+## How each tool is swung. "rest" / "windup" / "strike": the tool pivot's rotation around X
+## (radians; positive tilts the head back toward the camera). "lift": how far the hands rise
+## winding up, "reach": where they are at impact (both from the rest position, in grip space) —
+## the reach puts the tool's head right on the crosshair, where its world copy sticks into the node.
+## "pace" speeds the whole swing up or down. "swing_grip" / "swing_turn": where the hands bring it
+## while swinging (position, and rotation in radians), turning to it during the wind-up and back
+## after; tools without one swing from the Grip node's own placement in player.tscn, which is
+## also everyone's rest pose (turned well to the side: a diagonal chop).
+const DEFAULT_SWING := {"rest": -0.3, "windup": 0.7, "strike": -0.7,
+	"lift": Vector3(0, 0.06, 0.04), "reach": Vector3(0, 0.33, 0), "pace": 1.0}
+const SWINGS := {
+	# overhead: squared up straight ahead, so it swings in the plane you're looking along — raised
+	# with the head going up out of view, then down through the middle of it, pick first, onto the
+	# crosshair (reach solved against the viewmodel camera: the tip lands within a few pixels of
+	# the centre, the hands low on the right)
+	&"pickaxe": {"rest": -0.3, "windup": 1.0, "strike": -0.8,
+		"lift": Vector3(-0.04, 0.62, -0.12), "reach": Vector3(-0.1, 0.425, 0.075), "pace": 0.85,
+		"swing_grip": Vector3(0.2, -0.5, -0.62), "swing_turn": Vector3(0, 0.2, 0.05)},
+}
 ## The sickle swings sideways instead: it's swung out to the right (rotation around the view
 ## axis), then cuts across to the left, a bit quicker than the axe.
 const SICKLE_WINDUP := 1.0
 const SICKLE_STRIKE := -0.8
 const SICKLE_SPEED := 1.3
-## A little lift during the wind-up.
-const WINDUP_LIFT := Vector3(0, 0.06, 0.04)
 ## How long the stuck tool takes to drive in, and to come back out (real seconds).
 const STICK_TIME := 0.035
 ## The yank out of the node: back toward the eye, head tipping up. Kept small so it reads as a jerk
@@ -266,7 +276,10 @@ var _bob_amp := 0.0
 var _dip := 0.0  # landing dip spring (m, + = down)
 var _dip_vel := 0.0
 # the held tool
-var _grip_rest := Transform3D.IDENTITY
+var _grip_rest := Transform3D.IDENTITY  # the grip this frame: rest, or turning to the swing grip
+var _grip_default := Transform3D.IDENTITY  # the Grip node's own placement: everyone's rest pose
+var _grip_swing := Transform3D.IDENTITY  # the equipped tool's grip while swinging (see SWINGS)
+var _grip_blend := 0.0  # 0 at rest .. 1 squared up for the swing
 var _look_delta := Vector2.ZERO  # mouse motion since the last frame
 var _sway := Vector2.ZERO
 var _equip_dip := 0.0
@@ -283,7 +296,8 @@ func _ready() -> void:
 		scrape.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		scrape.loop_begin = 0
 		scrape.loop_end = int(scrape.get_length() * scrape.mix_rate)  # in frames; works for any import compression
-	tool_pivot.rotation.x = REST_ANGLE
+	tool_pivot.rotation.x = DEFAULT_SWING["rest"]
+	_grip_default = grip.transform
 	_grip_rest = grip.transform
 	# the eye is placed by hand each frame (see _process); the viewmodel is animated per frame too
 	head.top_level = true
@@ -398,6 +412,7 @@ func _update_tool_feel(delta: float, bob: float, run: float) -> void:
 	_sway = _sway.lerp(target, 1.0 - exp(-12.0 * delta))
 	var stride := cos(_bob_phase) * _bob_amp * 0.5
 	var offset := Vector3(_sway.x * 0.35 + stride, -_sway.y * 0.35 + bob * 0.6 - _dip * 0.5 - _equip_dip, 0.0)
+	_grip_rest = _grip_default.interpolate_with(_grip_swing, _grip_blend)
 	var buzz := _buzz_angle()  # still ringing after the yank
 	var tilt := Basis.from_euler(Vector3(_sway.y + buzz, _sway.x, _sway.x * 0.5 + run * 0.03 + buzz * 0.6))
 	grip.transform = Transform3D(tilt * _grip_rest.basis, _grip_rest.origin + offset)
@@ -984,6 +999,11 @@ func _equip(tool: StringName) -> void:
 	_equipped = tool
 	for id in tools:
 		tools[id].visible = id == tool
+	# each tool swings its own way (the new one comes up from below, so the change is hidden)
+	var pose := _swing_pose(tool)
+	_grip_swing = Transform3D(Basis.from_euler(pose["swing_turn"]), pose["swing_grip"]) if pose.has("swing_grip") else _grip_default
+	_grip_blend = 0.0
+	tool_pivot.rotation = Vector3(pose["rest"], 0.0, 0.0)
 	if not first:  # the new tool comes up from below the view
 		_equip_dip = 0.35
 		create_tween().tween_property(self, "_equip_dip", 0.0, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -991,18 +1011,19 @@ func _equip(tool: StringName) -> void:
 
 func _swing(tool: StringName) -> void:
 	_swinging = true
-	for id in tools:
-		tools[id].visible = id == tool
-	_equipped = tool
+	_equip(tool)
+	var pose := _swing_pose(tool)
 
-	# 1. wind-up (anticipation): tip back, lift a little (the sickle: swing out to the side)
+	# 1. wind-up (anticipation): tip back, lift (the pickaxe: right up overhead; the sickle: swing
+	# out to the side)
 	var sideways := tool == &"sickle"
 	var axis := "rotation:z" if sideways else "rotation:x"
-	var pace := SICKLE_SPEED if sideways else 1.0
+	var pace: float = SICKLE_SPEED if sideways else pose["pace"]
 	Sfx.play_layers(tool_windup_layers.get(tool))
 	var t := create_tween().set_parallel()
-	t.tween_property(tool_pivot, axis, SICKLE_WINDUP if sideways else WINDUP_ANGLE, windup_time / pace).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	t.tween_property(tool_pivot, "position", _tool_rest + WINDUP_LIFT, windup_time / pace).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	t.tween_property(tool_pivot, axis, SICKLE_WINDUP if sideways else pose["windup"], windup_time / pace).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	t.tween_property(tool_pivot, "position", _tool_rest + pose["lift"], windup_time / pace).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	t.tween_property(self, "_grip_blend", 1.0, windup_time / pace).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	await t.finished
 
 	# 2. strike — whoosh starts with the fast part of the motion; the arm reaches up and forward so
@@ -1014,8 +1035,8 @@ func _swing(tool: StringName) -> void:
 		audio.pitch_scale = 1.0  # (the dash plays it lower)
 		audio.play()
 	t = create_tween().set_parallel()
-	t.tween_property(tool_pivot, axis, SICKLE_STRIKE if sideways else STRIKE_ANGLE, strike_time / pace).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	t.tween_property(tool_pivot, "position", _tool_rest + STRIKE_REACH, strike_time / pace).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.tween_property(tool_pivot, axis, SICKLE_STRIKE if sideways else pose["strike"], strike_time / pace).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.tween_property(tool_pivot, "position", _tool_rest + pose["reach"], strike_time / pace).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	await t.finished
 
 	# 3. impact frame — hits whatever the crosshair is on *now*; looked away = whiff
@@ -1030,13 +1051,14 @@ func _swing(tool: StringName) -> void:
 				node.pull(info)  # the chunk tears out as the tool comes free
 		else:
 			_impact_feel(info, 0.6, 2.5)  # bounced off: little kick, a nasty sting in the hands
-			await _bounce()
+			await _bounce(tool)
 
 	# 4. recover
 	t = create_tween().set_parallel()
-	t.tween_property(tool_pivot, "rotation:x", REST_ANGLE, recover_time / pace).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_property(tool_pivot, "rotation:x", pose["rest"], recover_time / pace).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	t.tween_property(tool_pivot, "rotation:z", 0.0, recover_time / pace).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	t.tween_property(tool_pivot, "position", _tool_rest, recover_time / pace).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	t.tween_property(self, "_grip_blend", 0.0, recover_time / pace * 1.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await t.finished
 	_cooldown = swing_cooldown
 	_swinging = false
@@ -1067,7 +1089,8 @@ func _buzz_angle() -> float:
 ## The tool bites in and sticks (the hit-stop freezes it there), then gets yanked back out with a
 ## jerk — the moment the chunk comes free. Sticking: see _stick_in_world.
 func _bite(tool: StringName, info: HitInfo) -> void:
-	var strike := _tool_rest + STRIKE_REACH
+	var pose := _swing_pose(tool)
+	var strike: Vector3 = _tool_rest + pose["reach"]
 	var stuck := _stick_in_world(tool, info)
 	if stuck == null:  # no world copy for this tool: just shove the held one forward
 		tool_pivot.position = strike + Vector3(0, -bite_depth * 0.4, -bite_depth)
@@ -1079,7 +1102,7 @@ func _bite(tool: StringName, info: HitInfo) -> void:
 	# yank: back toward the camera, head tipping up as it comes free
 	t = create_tween().set_parallel()
 	t.tween_property(tool_pivot, "position", strike + YANK_OFFSET, yank_time) 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	t.tween_property(tool_pivot, "rotation:x", STRIKE_ANGLE + YANK_TIP, yank_time) 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	t.tween_property(tool_pivot, "rotation:x", pose["strike"] + YANK_TIP, yank_time) 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	await t.finished
 
 
@@ -1149,8 +1172,14 @@ func _screen_matched(slot: Node3D, tool: StringName, depth_point: Vector3) -> Va
 
 
 ## Deflected (level too low): the tool rebounds off the surface instead of biting in.
-func _bounce() -> void:
+func _bounce(tool: StringName) -> void:
+	var pose := _swing_pose(tool)
 	var t := create_tween().set_parallel().set_ignore_time_scale(true)
-	t.tween_property(tool_pivot, "position", _tool_rest + STRIKE_REACH + Vector3(0, 0.03, 0.1), 0.06) 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	t.tween_property(tool_pivot, "rotation:x", STRIKE_ANGLE + 0.7, 0.06).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_property(tool_pivot, "position", _tool_rest + pose["reach"] + Vector3(0, 0.03, 0.1), 0.06) 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_property(tool_pivot, "rotation:x", pose["strike"] + 0.7, 0.06).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	await t.finished
+
+
+## How `tool` is swung and held (SWINGS, else DEFAULT_SWING).
+func _swing_pose(tool: StringName) -> Dictionary:
+	return SWINGS.get(tool, DEFAULT_SWING)
