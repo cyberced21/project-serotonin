@@ -114,6 +114,25 @@ const FELLED_SHAPE_SCALE := 0.6
 @export_range(0, 5) var weak_point_extra_hits := 1
 @export var weak_point_color := Color(1.0, 0.93, 0.55)
 
+@export_group("Cracks")
+## Rocks: hits open a crack across the struck face, with a glowing tip. Hitting near the tip
+## extends it (counts extra hits, doubles the XP); a full crack splits off every chunk it crossed,
+## and on the bare core it breaks the node. Replaces the weak point.
+@export var cracks := false
+@export_range(2, 6) var crack_segments := 3
+## How far the tip jumps per segment (m) — far enough that you have to re-aim to follow it.
+@export var crack_segment_length := 0.3
+## How close to the tip the swing must aim (m, measured across the line of the swing).
+@export var crack_tip_radius := 0.25
+@export_range(0, 5) var crack_tip_extra_hits := 1
+## Extra hits a completed crack does on top of the chunks it splits off.
+@export_range(0, 5) var crack_split_hits := 0
+## The tip's glow and the seam inside the crack: the ore's colour.
+@export var crack_color := Color(1.0, 0.6, 0.3)
+## Tip hit (pitched up per segment) and a completed crack splitting.
+@export var crack_layers: SoundLayers
+@export var split_layers: SoundLayers
+
 @export_group("Performance")
 ## Beyond this distance (m) the node fades out and isn't drawn at all (0 = always drawn). The
 ## forest's scenery trees stand in for far-away ones.
@@ -243,7 +262,9 @@ func hit(info: HitInfo) -> bool:
 	_cut -= cuts
 	var double := randf() < Village.stat(&"double_hit_chance") or cuts > 1
 	var weak := _is_weak_hit(info)
-	hits_left = maxi(hits_left - cuts - (1 if double and cuts == 1 else 0) - (weak_point_extra_hits if weak else 0), 0)
+	var tip := cracks and _is_tip_hit(info)
+	hits_left = maxi(hits_left - cuts - (1 if double and cuts == 1 else 0) - (weak_point_extra_hits if weak else 0)
+		- (crack_tip_extra_hits if tip else 0), 0)
 	if weak:
 		_weak_hit_feedback(info)
 	SaveGame.mark_dirty()
@@ -261,7 +282,10 @@ func hit(info: HitInfo) -> bool:
 	Juice.hitstop(hitstop_hit + (0.035 if double else 0.0))
 	if double:
 		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.35, 0), "Sharp!", SHARP_COLOR, 9)
-	_award_xp(xp_per_hit * (2 if double else 1) * (2 if weak else 1))
+	_award_xp(xp_per_hit * (2 if double else 1) * (2 if weak or tip else 1))
+
+	if hits_left > 0 and cracks and _grow_crack(info, tip):
+		_split(info)  # the crack ran all the way across
 
 	if hits_left == 0:
 		_break(info)
@@ -390,7 +414,9 @@ func _reset_visuals() -> void:
 	for c in chunks.get_children():
 		c.visible = true
 	for n in notches.get_children():
-		n.queue_free()
+		n.queue_free()  # (cracks too)
+	_crack.clear()
+	_crack_tip = null
 	visual.visible = true
 	rubble.visible = false
 	collision.set_deferred("disabled", false)
@@ -612,13 +638,224 @@ func _clatter(body: RigidBody3D, piece_scale: float) -> void:
 		Sfx.play_debris(debris_layers, body.global_position, strength * (0.6 if bounces[0] > 1 else 1.0)))
 
 
+# --- cracks ---------------------------------------------------------------------------------
+# A crack runs across one face of the collision box (which is where swings land); its decals
+# project onto the real mesh behind it. Points are in node space and decals are placed relative
+# to Visual at rest, so the hit's nudge doesn't knock them off the spot.
+
+## The crack being worked on, from where it started to the tip. Empty when there isn't one.
+var _crack: Array[Vector3] = []
+## The face it runs across (node-space normal) and which way it's heading.
+var _crack_normal := Vector3.UP
+var _crack_dir := Vector3.RIGHT
+var _crack_tip: Decal
+
+
+func _is_tip_hit(info: HitInfo) -> bool:
+	return not _crack.is_empty() and _crack_tip != null and _aimed_near(info, to_global(_crack[-1]), crack_tip_radius)
+
+
+## Grows the crack if the tip was hit, or starts one where this hit landed if there isn't one on
+## this face (one left on another face stays as a scar). True when the crack is complete.
+func _grow_crack(info: HitInfo, tip: bool) -> bool:
+	if tip:
+		_extend_crack()
+		var seg := _crack.size() - 1
+		Sfx.play_at(crack_layers, info.position, 1.0 + 0.12 * seg)
+		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.6, 0), "Crack!", crack_color, 10)
+		Juice.shake(1.5)
+		Juice.hitstop(0.03)
+		return seg >= crack_segments
+	var n := (global_basis.inverse() * info.normal).normalized()
+	if _crack.is_empty() or n.dot(_crack_normal) < 0.7:
+		_retire_tip()
+		_crack_normal = n
+		_crack.assign([_clamp_to_face(to_local(info.position))])
+		_crack_dir = _first_crack_direction(n)
+		_extend_crack()
+	return false
+
+
+## A full crack: everything it crossed splits off. On the bare core, the node breaks.
+func _split(info: HitInfo) -> void:
+	var path := _crack.duplicate()
+	_crack.clear()
+	_retire_tip()
+	Sfx.play_at(split_layers, info.position)
+	PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.85, 0), "Split!", crack_color, 12)
+	Juice.shake(3.0)
+	Juice.hitstop(0.07)
+	var intact := _intact_chunks()
+	if intact.is_empty():
+		hits_left = 0
+		return
+	var crossed := intact.filter(func(c: MeshInstance3D) -> bool: return _crack_crosses(c, path))
+	if crossed.is_empty():
+		crossed = [_nearest(intact, to_global(path[path.size() / 2]))]
+	var out := (global_basis * _crack_normal).normalized()
+	for c in crossed:
+		_pop_chunk(c, out + info.away() * 0.4, debris_speed * 1.2)
+	hits_left = maxi(hits_left - crack_split_hits, 0)
+	SaveGame.mark_dirty()
+
+
+## The first way a new crack heads: sideways across the face and a little down (anywhere across
+## the top).
+func _first_crack_direction(n: Vector3) -> Vector3:
+	if absf(n.y) > 0.7:
+		var a := randf() * TAU
+		return Vector3(cos(a), 0.0, sin(a))
+	var d := n.cross(Vector3.UP).normalized() * (1.0 if randf() < 0.5 else -1.0)
+	d += Vector3.DOWN * randf_range(0.0, 0.7)
+	return (d - n * d.dot(n)).normalized()
+
+
+## Adds a segment, wandering a little, turning away from the face's edge if it runs into it.
+func _extend_crack() -> void:
+	var from := _crack[-1]
+	var best := from
+	var best_len := -1.0
+	for turn in [randf_range(-0.5, 0.5), randf_range(-0.5, 0.5), 1.2, -1.2]:
+		var to := _clamp_to_face(from + _crack_dir.rotated(_crack_normal, turn) * crack_segment_length)
+		var length := from.distance_to(to)
+		if length > best_len + 0.02:
+			best = to
+			best_len = length
+	if best_len > 0.01:
+		_crack_dir = (best - from).normalized()
+	_crack.append(best)
+	_crack_decal(from, best)
+	_place_tip()
+
+
+## Keeps a point on the struck face of the collision box, away from its edges (the mesh is
+## rounder than the box, so near the corners there'd be nothing to draw on).
+func _clamp_to_face(p: Vector3) -> Vector3:
+	var box := collision.shape as BoxShape3D
+	if box == null:
+		return p
+	var ext := box.size * 0.5
+	var local := collision.transform.affine_inverse() * p
+	var n := collision.basis.inverse() * _crack_normal
+	for i in 3:
+		var limit := ext[i] if absf(n[i]) > 0.7 else ext[i] * 0.7
+		local[i] = clampf(local[i], -limit, limit)
+	return collision.transform * local
+
+
+## Whether a chunk lies under the crack: near it seen face-on, and on the struck side.
+func _crack_crosses(chunk: MeshInstance3D, path: Array) -> bool:
+	var aabb := chunk.get_aabb()
+	var centre := to_local(chunk.global_transform * aabb.get_center())
+	if (centre - collision.position).dot(_crack_normal) < -0.1:
+		return false
+	var radius := aabb.size[aabb.get_longest_axis_index()] * 0.5
+	for i in path.size() - 1:
+		var d: Vector3 = centre - Geometry3D.get_closest_point_to_segment(centre, path[i], path[i + 1])
+		if (d - _crack_normal * d.dot(_crack_normal)).length() < radius:
+			return true
+	return false
+
+
+## A basis whose Y is the crack's face normal (decals project along Y) and Z runs along `along`.
+func _face_basis(along: Vector3) -> Basis:
+	var y := _crack_normal
+	var x := y.cross(along).normalized()
+	if x.length_squared() < 0.5:
+		x = y.cross(Vector3.FORWARD if absf(y.z) < 0.9 else Vector3.RIGHT).normalized()
+	return Basis(x, y, x.cross(y))
+
+
+func _crack_decal(a: Vector3, b: Vector3) -> void:
+	if a.distance_to(b) < 0.01:
+		return
+	var tex: Array = _crack_textures(crack_color).pick_random()
+	var d := Decal.new()
+	d.texture_albedo = tex[0]
+	d.texture_emission = tex[1]
+	d.emission_energy = 0.8
+	d.size = Vector3(0.14, 0.7, a.distance_to(b) * 1.25)  # overlaps the next segment a little
+	d.normal_fade = 0.3
+	d.cull_mask = WORLD_LAYER  # not the held tool (render layer 2)
+	notches.add_child(d)
+	d.transform = Transform3D(_face_basis(b - a), (a + b) * 0.5)
+
+
+## The glowing spot at the crack's tip, pulsing.
+func _place_tip() -> void:
+	if _crack_tip == null:
+		_crack_tip = Decal.new()
+		_crack_tip.texture_albedo = _notch_texture()
+		_crack_tip.texture_emission = _notch_texture()
+		_crack_tip.modulate = crack_color
+		_crack_tip.size = Vector3(0.2, 0.7, 0.2)
+		_crack_tip.normal_fade = 0.3
+		_crack_tip.cull_mask = WORLD_LAYER
+		notches.add_child(_crack_tip)
+		var pulse := _crack_tip.create_tween().set_loops()
+		pulse.tween_property(_crack_tip, "emission_energy", 3.0, 0.45).set_trans(Tween.TRANS_SINE)
+		pulse.tween_property(_crack_tip, "emission_energy", 1.0, 0.45).set_trans(Tween.TRANS_SINE)
+	_crack_tip.transform = Transform3D(_face_basis(_crack_dir), _crack[-1])
+
+
+## The tip goes out; the crack's decals stay as a scar until the node respawns.
+func _retire_tip() -> void:
+	if _crack_tip:
+		_crack_tip.queue_free()
+		_crack_tip = null
+
+
+## Colour (html) -> four [albedo, emission] pairs of crack textures: a dark jagged line along the
+## texture's length (with a couple of short branches), and a thin seam of the colour inside it.
+static var _crack_tex := {}
+
+static func _crack_textures(color: Color) -> Array:
+	var key := color.to_html()
+	if _crack_tex.has(key):
+		return _crack_tex[key]
+	var out := []
+	const W := 32
+	const H := 128
+	for v in 4:
+		var albedo := Image.create_empty(W, H, false, Image.FORMAT_RGBA8)
+		var seam := Image.create_empty(W, H, false, Image.FORMAT_RGBA8)
+		var x := W * 0.5
+		for y in H:
+			x = clampf(x + randf_range(-1.6, 1.6), 9.0, W - 9.0)
+			var fade := clampf(minf(y, H - 1 - y) / 10.0, 0.0, 1.0)  # soft ends where segments overlap
+			_crack_dot(albedo, x, y, 1.7, Color(0.06, 0.05, 0.04, 0.95 * fade))
+			_crack_dot(seam, x, y, 0.6, Color(color, fade))
+			if y in [40 + v * 9, 85 - v * 5]:  # a branch splits off here
+				var bx := x
+				var side := 1.0 if randf() < 0.5 else -1.0
+				for by in range(y, mini(y + randi_range(10, 20), H - 6)):
+					bx = clampf(bx + side * randf_range(0.3, 1.1), 3.0, W - 3.0)
+					_crack_dot(albedo, bx, by, 0.9, Color(0.06, 0.05, 0.04, 0.8 * fade))
+		albedo.generate_mipmaps()
+		seam.generate_mipmaps()
+		out.append([ImageTexture.create_from_image(albedo), ImageTexture.create_from_image(seam)])
+	_crack_tex[key] = out
+	return out
+
+
+## One row of a line `radius` px wide around `cx`, antialiased, never lightening what's there.
+static func _crack_dot(img: Image, cx: float, y: int, radius: float, color: Color) -> void:
+	for px in range(floori(cx - radius - 1.0), ceili(cx + radius + 1.0)):
+		if px < 0 or px >= img.get_width():
+			continue
+		var cover := clampf(radius + 0.5 - absf(px + 0.5 - cx), 0.0, 1.0)
+		var a := color.a * cover
+		if a > img.get_pixel(px, y).a:
+			img.set_pixel(px, y, Color(color, a))
+
+
 # --- weak point -----------------------------------------------------------------------------
 
 var _weak: MeshInstance3D
 
 
 func _build_weak_point() -> void:
-	if not weak_point:
+	if not weak_point or cracks:
 		return
 	_weak = MeshInstance3D.new()
 	_weak.name = "WeakPoint"
@@ -672,11 +909,14 @@ func _place_weak_point() -> void:
 func _is_weak_hit(info: HitInfo) -> bool:
 	if _weak == null or not _weak.visible:
 		return false
-	var p := _weak.global_position
+	return _aimed_near(info, _weak.global_position, weak_point_radius)
+
+
+## Whether the swing's line passes within `radius` of `point`.
+func _aimed_near(info: HitInfo, point: Vector3, radius: float) -> bool:
 	var dir := (info.position - info.from).normalized()
-	var along := (p - info.from).dot(dir)
-	var closest := info.from + dir * along
-	return closest.distance_to(p) < weak_point_radius
+	var closest := info.from + dir * (point - info.from).dot(dir)
+	return closest.distance_to(point) < radius
 
 
 func _weak_hit_feedback(info: HitInfo) -> void:
@@ -766,7 +1006,8 @@ func _notch_at(info: HitInfo) -> void:
 	var up := info.normal
 	var side := up.cross(Vector3.FORWARD if absf(up.dot(Vector3.FORWARD)) < 0.9 else Vector3.RIGHT).normalized()
 	var rot := Basis(side, up, side.cross(up)).rotated(up, randf() * TAU)
-	decal.global_transform = Transform3D(rot, info.position)
+	# relative to Visual at rest: the hit has just nudged it, and it springs back
+	decal.transform = global_transform.affine_inverse() * Transform3D(rot, info.position)
 
 
 static var _notch_tex: Texture2D

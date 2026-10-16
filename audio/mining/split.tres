@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="SoundLayers" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/sound_layers.gd" id="1_layers"]
+[ext_resource type="Script" path="res://scripts/sound_layer.gd" id="2_layer"]
+[ext_resource type="AudioStream" path="res://audio/stone_break.tres" id="3_break"]
+[ext_resource type="AudioStream" path="res://audio/stone_hit.tres" id="4_hit"]
+[ext_resource type="AudioStream" path="res://audio/footsteps/rock.tres" id="5_gravel"]
+
+[sub_resource type="Resource" id="Layer_crunch"]
+script = ExtResource("2_layer")
+stream = ExtResource("3_break")
+volume_db = -2.0
+pitch_jitter = 0.05
+pitch = 1.15
+resource_name = "crunch"
+
+[sub_resource type="Resource" id="Layer_snap"]
+script = ExtResource("2_layer")
+stream = ExtResource("4_hit")
+volume_db = -4.0
+pitch_jitter = 0.05
+pitch = 1.8
+resource_name = "snap"
+
+[sub_resource type="Resource" id="Layer_rubble"]
+script = ExtResource("2_layer")
+stream = ExtResource("5_gravel")
+delay = 0.14
+volume_db = -6.0
+pitch_jitter = 0.1
+pitch = 0.9
+resource_name = "rubble"
+
+[resource]
+script = ExtResource("1_layers")
+layers = Array[ExtResource("2_layer")]([SubResource("Layer_crunch"), SubResource("Layer_snap"), SubResource("Layer_rubble")])

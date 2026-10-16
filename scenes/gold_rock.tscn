@@ -13,4 +13,5 @@ xp_on_break = 60
 chip_color = Color(0.95, 0.8, 0.35, 1)
 burst_color = Color(0.6, 0.6, 0.62, 1)
 model = ExtResource("2_model")
+crack_color = Color(1, 0.82, 0.3, 1)
 popup_height = 1.3
