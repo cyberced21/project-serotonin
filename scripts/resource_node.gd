@@ -69,6 +69,13 @@ const FELLED_SHAPE_SCALE := 0.6
 @export var glow_color := Color(0.7, 0.5, 1.0)
 ## How hard broken-off chunks fly away (m/s).
 @export var debris_speed := 3.0
+## Chips, shards, dust and sparks per hit (scenes/fx/hit_fx.tscn), instead of the Chips particles.
+## Chips are chip_color with some crack_color (the ore) when the node has cracks.
+@export var hit_fx: PackedScene
+## Sparks off the tool per hit (doubled on a crack tip). Harder rock, more sparks.
+@export_range(0, 32) var spark_amount := 0
+## Pebbles that pile up around the base as it's worn down, until it grows back (0 = none).
+@export_range(0, 64) var lingering_rubble := 0
 
 @export_group("Audio")
 @export var hit_sfx: AudioStream
@@ -177,6 +184,7 @@ func _ready() -> void:
 	chips.color = chip_color
 	burst.color = burst_color
 	hits_left = max_hits
+	_build_rubble()
 	_reset_visuals()
 	_build_respawn_display()
 	set_process(false)
@@ -277,7 +285,7 @@ func hit(info: HitInfo) -> bool:
 		_play(audio, hit_sfx, pitch)
 	_flash()
 	_nudge(info.away() * (1.6 if double else 1.0))
-	_chips_at(info)
+	_hit_effects(info, 1.5 if tip else 1.0)
 	Juice.shake(shake_hit + stress * 1.5 + (1.5 if double else 0.0))
 	Juice.hitstop(hitstop_hit + (0.035 if double else 0.0))
 	if double:
@@ -408,6 +416,9 @@ func from_dict(d: Dictionary) -> void:
 		var gone := mini(floori(stress * total), total - 1)
 		for k in gone:
 			chunks.get_child(k).visible = false
+		# and the pebbles those hits would have knocked down
+		for k in max_hits - hits_left:
+			_add_rubble(to_global(Vector3(randf_range(-1, 1), 0.5, randf_range(-1, 1))), 1)
 
 
 func _reset_visuals() -> void:
@@ -417,6 +428,8 @@ func _reset_visuals() -> void:
 		n.queue_free()  # (cracks too)
 	_crack.clear()
 	_crack_tip = null
+	if _rubble_mm:
+		_rubble_mm.multimesh.visible_instance_count = 0
 	visual.visible = true
 	rubble.visible = false
 	collision.set_deferred("disabled", false)
@@ -693,6 +706,10 @@ func _split(info: HitInfo) -> void:
 	if crossed.is_empty():
 		crossed = [_nearest(intact, to_global(path[path.size() / 2]))]
 	var out := (global_basis * _crack_normal).normalized()
+	if hit_fx:
+		var mid := to_global(path[path.size() / 2])
+		HitFx.spawn(hit_fx, get_parent(), mid, out, -out, chip_color, crack_color, 2.2)
+	_add_rubble(info.position, 4)
 	for c in crossed:
 		_pop_chunk(c, out + info.away() * 0.4, debris_speed * 1.2)
 	hits_left = maxi(hits_left - crack_split_hits, 0)
@@ -1027,6 +1044,79 @@ static func _notch_texture() -> Texture2D:
 		tex.height = 64
 		_notch_tex = tex
 	return _notch_tex
+
+
+## Chips and dust (and sparks) where the tool went in, and a pebble or two on the ground.
+## `strength` above 1 for bigger hits.
+func _hit_effects(info: HitInfo, strength: float) -> void:
+	if hit_fx == null:
+		_chips_at(info)
+		return
+	var swing := (info.position - info.from).normalized()
+	var sparks := roundi(spark_amount * (2.0 if strength > 1.2 else 1.0))
+	HitFx.spawn(hit_fx, get_parent(), info.position, info.normal, swing, chip_color,
+		crack_color if cracks else Color(0, 0, 0, 0), strength, sparks)
+	_add_rubble(info.position, 1 if strength <= 1.0 else 2)
+
+
+# --- lingering rubble -----------------------------------------------------------------------
+
+var _rubble_mm: MultiMeshInstance3D
+
+
+func _build_rubble() -> void:
+	if lingering_rubble <= 0:
+		return
+	var pebble := SphereMesh.new()  # 6 x 3 = a low-poly lump
+	pebble.radius = 0.06
+	pebble.height = 0.08
+	pebble.radial_segments = 6
+	pebble.rings = 3
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.roughness = 1.0
+	pebble.material = mat
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true
+	mm.mesh = pebble
+	mm.instance_count = lingering_rubble
+	mm.visible_instance_count = 0
+	_rubble_mm = MultiMeshInstance3D.new()
+	_rubble_mm.name = "LingeringRubble"
+	_rubble_mm.multimesh = mm
+	_rubble_mm.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(_rubble_mm)
+
+
+## Drops `count` pebbles on the ground around the base, on the side `near` is on (mostly stone,
+## some ore). Stops once the pile is full.
+func _add_rubble(near: Vector3, count: int) -> void:
+	if _rubble_mm == null:
+		return
+	var mm := _rubble_mm.multimesh
+	var box := collision.shape as BoxShape3D
+	var footprint := maxf(box.size.x, box.size.z) * 0.5 if box else 0.5
+	var side := to_local(near) - collision.position
+	side.y = 0.0
+	if side.length_squared() < 0.001:
+		side = Vector3(randf_range(-1, 1), 0, randf_range(-1, 1))
+	var space := get_world_3d().direct_space_state
+	for i in count:
+		var n := mm.visible_instance_count
+		if n >= mm.instance_count:
+			return
+		var p := side.normalized().rotated(Vector3.UP, randf_range(-0.9, 0.9)) * (footprint + randf_range(0.0, 0.45))
+		var query := PhysicsRayQueryParameters3D.create(to_global(p + Vector3.UP * 1.5), to_global(p + Vector3.DOWN * 1.5), WORLD_LAYER, [get_rid()])
+		var ground := space.intersect_ray(query)
+		if ground:
+			p = to_local(ground["position"])
+		var s := randf_range(0.5, 1.6)
+		var basis := Basis.from_euler(Vector3(randf(), randf(), randf()) * TAU).scaled(Vector3(s, s * 0.6, s))
+		mm.set_instance_transform(n, Transform3D(basis, p + Vector3.UP * 0.02 * s))
+		var tint := crack_color if cracks and randf() < 0.25 else chip_color
+		mm.set_instance_color(n, tint.darkened(randf_range(0.0, 0.3)))
+		mm.visible_instance_count = n + 1
 
 
 func _chips_at(info: HitInfo) -> void:
