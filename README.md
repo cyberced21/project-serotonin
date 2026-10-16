@@ -17,11 +17,16 @@ whatever you hit.
 - **Gathering with weight.**
   - The hit lands on the swing's impact frame, not when you press the button.
   - The tool sinks into the node, holds through the hit-stop, then yanks out and tears a chunk loose.
-  - Every node has a glowing weak spot. Hit it for an extra hit and double XP, and it moves.
-  - During the bite, the tool really sticks in the node until you yank it out.
-  - Every hit leaves a notch. Rocks shed physics debris, and trees topple, crash down and spill logs.
-  - Pitch rises as a node weakens.
+  - During the bite, the tool really sticks in the node until you yank it out, quivering.
+  - Every hit leaves a notch. Trees have a glowing weak spot (an extra hit and double XP, then it moves), and they topple, crash down and spill logs.
+  - Each hit is felt: a layered sound (crack, tink, thump, a gravel trickle a beat later), chips that bounce on the ground, a dust puff, sparks, an impact star, a camera kick with a quick narrowing of the view, and pebbles piling up round the rock. Pitch rises as a node weakens.
+- **Mining: rocks made to break apart.**
+  - Rocks are hefty boulders (about 2.4 m) cut into pieces that fit together exactly. Their collision follows the real shape, refitted as pieces come off.
+  - Hit a piece and a crack runs along its seam, both ways from where you struck. Every hit takes it further, and hitting one of its two glowing tips counts double (an extra hit and double XP). When the crack has gone all the way round, exactly that piece splits off and tips away, showing the fresh stone and ore inside.
+  - Leave a piece half-cracked and its crack waits for you. Pieces only ever come off along a crack.
+  - The pickaxe squares up when you look at a rock, then swings overhead and comes down pick-first on the crosshair.
 - **Skills:** Woodcutting, Mining, Fishing and Farming, each with XP and levels. Nodes and fish above your level bounce off or dodge.
+  - Every ore has its own look, built for cracking: **copper** is a weathered boulder with a green cap whose seams follow its copper veins, **iron** a cluster of basalt columns bleeding rust, **coal** layered seams of coal and shale that split into slabs, **gold** a dull brown geode, thinly veined, with a quartz rim and a gold core inside, and **crystal** violet crystals that crack round their base and snap off.
   - Higher-level nodes:
     - Birch (Woodcutting 8) grows west of the clearing.
     - Oak (15) grows around the village, and iron rocks (Mining 15) sit east of the smithy. The village's top tiers ask for them.
@@ -77,7 +82,7 @@ whatever you hit.
   - Nights are moonlit blue, with lamps, lanterns and windows glowing.
   - Villagers go home after dark, but step out if you come to their door.
   - Fish are dozy around dawn and dusk.
-- **Positional audio:** footsteps change with the surface (grass, dirt, stone, sand, snow, water; the road and quarry crunch), and the slide scrape, splashes and spear hits are placed in 3D.
+- **Positional audio:** footsteps change with the surface (grass, dirt, stone, sand, snow, water; the road and quarry crunch), and the slide scrape, splashes and spear hits are placed in 3D. Mining sounds are real recordings, built up in layers, each with several variations.
 - **Saving:** skills, inventory, player position, the village's tiers, the time of day, which nodes are depleted (with their respawn timers), the biomes you've discovered, and your best lap and medals.
 
 ## Controls
@@ -108,7 +113,8 @@ Saves are written to `user://save.json`. Press F10 in a debug build to wipe the 
 ```
 addons/terrain_3d/   Terrain3D v1.0.2 (MIT) — terrain + editor tools
 art/                 palette.png (+ palette.json), icons/ rendered item icons
-audio/               sfx; footsteps/, movement/, fishing/, ambience/ are synthesized placeholders
+audio/               sfx; footsteps/, movement/, fishing/, ambience/ are synthesized placeholders;
+                     mining/ the layered mining sounds, its sfx/ clips cut from the GDC 2026 bundle
 data/biomes/         BiomeMood resources (each biome's light, ambience and card)
 data/buildings/      BuildingDef resources (tiers, costs, villager lines)
 data/fish/           FishSpecies resources (perch, trout, pike, char)
@@ -123,8 +129,9 @@ tools/               asset-generation scripts (see below)
 ```
 
 Key scripts:
-- **Player and feel:** `player.gd` (movement, swing, bite), `viewmodel.gd` (held tool), `shake_camera.gd`
-- **Gathering:** `resource_node.gd` (every tree and rock), `pickup.gd`, `items.gd`
+- **Player and feel:** `player.gd` (movement, per-tool swings, bite), `viewmodel.gd` (held tool), `shake_camera.gd` (shake, impact kick, FOV)
+- **Gathering:** `resource_node.gd` (every tree and rock: hits, cracks along seams, splits, fitted collision), `hit_fx.gd` (chips, dust, sparks, impact star), `pickup.gd`, `items.gd`
+- **Layered sound:** `sound_layers.gd` / `sound_layer.gd` (a sound built from timed layers), played through `Sfx`
 - **Fishing:** `spear_fishing.gd`, `fish_pond.gd`, `fish_school.gd`, `fish.gd`, `water_body.gd`
 - **Village:** `building.gd` (shows a tier, plays the upgrade), `villager.gd`, `upgrade_panel.gd`, `building_def.gd` / `building_tier.gd`, `prop.gd`
 - **World:** `world_map.gd` (where the biomes, roads and landmarks are, shared with the terrain generator), `day_night_sky.gd`, `footsteps.gd`, `pond_dressing.gd`, `scenery_scatter.gd` + `scatter_layer.gd`, `node_spawner.gd` + `spawn_entry.gd` (seeded gatherable nodes with stable save ids), `windmill.gd`
@@ -141,6 +148,9 @@ Most content is generated by scripts, so it's easy to tweak and regenerate. Run 
 | Low-poly models → `models/*.glb` (needs Blender 4.2+) | `blender -b -P tools/blender/make_models.py -- models art/palette.json` (add builder names such as `forest quarry farming road` to rebuild only those) |
 | Village buildings, villagers and props → `models/village/` | `blender -b -P tools/blender/make_village.py -- models art/palette.json` (or name builders, e.g. `smithy`) |
 | Item icons → `art/icons/*.png` | `blender -b -P tools/blender/render_icons.py -- models art/palette.png art/icons`, then `python tools/outline_icons.py` (name item ids after either to do only those) |
+| Ore design candidates → `models/designs/` (not used by the game; two looks per ore) | `blender -b -P tools/blender/make_models.py -- models art/palette.json designs` |
+| Mining sound clips → `audio/mining/sfx/` (needs the Sonniss GDC 2026 bundle, which isn't in the repo) | `blender -b -P tools/cut_sounds.py -- <bundle folder> audio/mining/sfx` (Blender's Python, for numpy). Each layer has one source, every clip at the same loudness. |
+| Check the mining mix without listening (how loud each event comes out, and how much that varies hit to hit) | `blender -b -P tools/measure_mix.py --` |
 | Placeholder sounds (footsteps, slide, wind, mantle, splash, spear) | `python tools/synth_movement_sounds.py` (needs numpy) |
 | Placeholder biome ambience (forest, field, quarry) | `python tools/synth_ambience.py` (needs numpy) |
 | Terrain: the original layout plus the biomes and roads (**overwrites** `terrain_data/`) | `godot --headless --path . -s res://tools/generate_test_terrain.gd` (add `-- --preview=map.png` for a top-down check). It keeps the ground under hand-placed nodes as it was and reports any that moved. |
@@ -154,6 +164,8 @@ Models colour their faces by pointing UVs at palette swatches. To hand-edit a mo
 - **Moving a biome or a road:** edit `scripts/world_map.gd` and regenerate the terrain. The spawners, scatter and road course follow the new shapes.
 - **Keep node models to a few meshes.** Every mesh on the palette material uses per-instance shader slots. The global buffer for them is raised in `project.godot`, but a model of dozens of loose parts, times a field of them, still adds up.
 - **A new resource node:** in Godot, right-click `scenes/resource_node.tscn` → *New Inherited Scene*. Set the item, skill and sounds, then either add meshes under `Visual/Body`, `Visual/Chunks` and `Rubble`, or set `model` to a `.glb` whose objects are named `Body_*`, `Chunk_*` and `Rubble_*`.
+- **A new rock that cracks:** inherit `scenes/rock.tscn` (cracks, fitted collision, the layered sounds and hit effects are already on) and build its model with `fractured()` in `make_models.py`, like the ore rocks. That gives each `Chunk_X` a `Seam_X` line (its outline, which the crack follows) and marks the cut faces in a `cut_mark` vertex colour. Set `chip_color` to the rock's stone (cracks are drawn in it) and `ore_color` to its ore. `seam_crack_on_piece_only` keeps a crack off what surrounds the piece (the crystal rock uses it).
+- **A new layered sound:** make a `SoundLayers` `.tres` (see `audio/mining/`) with a `SoundLayer` per layer (stream, delay, volume, pitch, jitter), and play it with `Sfx.play_at()` or `Sfx.play_layers()`.
 - **A new item:** add a row to `Items.DEFS` (`scripts/items.gd`) and an entry to `ICONS` in `tools/blender/render_icons.py`.
 - **A new fish:** add a model to the Blender script and a `FishSpecies` `.tres` in `data/fish/`, then list it in the pond's `Fish` node (`FishPond.schools`).
 - **A new skill:** add a row to `Skills.SKILLS` (`scripts/autoload/skills.gd`).
@@ -174,3 +186,4 @@ Models colour their faces by pointing UVs at palette swatches. To hand-edit a mo
 
 - [Terrain3D](https://github.com/TokisanGames/Terrain3D) by Cory Petkovsek, Roope Palmroos and contributors (MIT). `shaders/terrain_lowpoly.gdshader` builds on its example shader.
 - Models made with [Blender](https://www.blender.org/). The game is built with [Godot](https://godotengine.org/).
+- Mining sounds cut from the [Sonniss GDC 2026 Game Audio Bundle](https://sonniss.com/gameaudiogdc) (royalty free, no attribution required). Per-clip sources: `audio/mining/sfx/SOURCES.md`.

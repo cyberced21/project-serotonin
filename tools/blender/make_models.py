@@ -26,6 +26,7 @@ import sys
 import bmesh
 import bpy
 from mathutils import Euler, Vector
+from mathutils.bvhtree import BVHTree
 
 argv = sys.argv[sys.argv.index("--") + 1:]
 OUT_DIR = argv[0]
@@ -106,70 +107,497 @@ def prism(segments, r_bottom, r_top, height):
     return bm
 
 
-def export(name):
+def export(name, loose_edges=False):
+    """Writes models/<name>.glb. With `loose_edges` (the breakable rocks), also the Seam_* lines and
+    the "cut_mark" vertex colour (see mark_cut)."""
     path = os.path.join(OUT_DIR, name + ".glb")
+    colours = {"export_vertex_color": "NAME", "export_vertex_color_name": "cut_mark"} if loose_edges else {}
     bpy.ops.export_scene.gltf(filepath=path, export_format="GLB", export_yup=True,
-                              export_apply=True, export_materials="NONE")
+                              export_apply=True, export_materials="NONE", use_mesh_edges=loose_edges, **colours)
     print("exported", path)
 
 
 # --- models -----------------------------------------------------------------------------------
 
-def rock(name="rock", seed=11, stone_shades=("stone.5", "stone.3", "stone.1", "stone.4"),
-         ore=("ore.copper", "ore.copper_dark"), size=1.0, ore_chance=0.45, ore_everywhere=False):
-    """Boulder with ore flecks: a core, five chunks that break off, and rubble.
-    The default is the grey copper rock; iron_rock() is a bigger, darker one with iron."""
+def voronoi_cell(src, seeds, index):
+    """The part of the closed mesh `src` nearer seeds[index] than any other seed (one Voronoi
+    cell), capped where it was cut. Cap faces get 1 in the int face layer "cut"."""
+    bm = src.copy()
+    cut = bm.faces.layers.int.get("cut") or bm.faces.layers.int.new("cut")
+    a = seeds[index]
+    for j, b in enumerate(seeds):
+        if j == index or not bm.faces:
+            continue
+        res = bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:],
+                                     plane_co=(a + b) * 0.5, plane_no=(b - a).normalized(), clear_outer=True)
+        edges = [e for e in res["geom_cut"] if isinstance(e, bmesh.types.BMEdge) and e.is_boundary]
+        if edges:
+            for f in bmesh.ops.holes_fill(bm, edges=edges, sides=0)["faces"]:
+                f[cut] = 1
+    return bm
+
+
+def mark_cut(bm, cut):
+    """Writes which faces are cut faces into a vertex colour named "cut_mark" (red on them, black on
+    the outside), so the game can tell a piece's outside from the faces it shares with its
+    neighbours. (The rock shader doesn't use vertex colour; the glTF exporter drops extra UVs.)"""
+    # (not "cut": that's the face layer, and a mesh keeps only one attribute per name)
+    layer = bm.loops.layers.color.get("cut_mark") or bm.loops.layers.color.new("cut_mark")
+    for f in bm.faces:
+        for loop in f.loops:
+            loop[layer] = (1.0, 0.0, 0.0, 1.0) if f[cut] else (0.0, 0.0, 0.0, 1.0)
+
+
+def outline(bm, cut):
+    """The edges of a Voronoi piece where its outside meets a cut face: where it splits from the
+    rest, on the boulder's surface. A mesh of loose edges (exported as glTF lines)."""
+    seam = bmesh.new()
+    verts = {}
+    for e in bm.edges:
+        faces = e.link_faces
+        if len(faces) == 2 and faces[0][cut] != faces[1][cut]:
+            ends = []
+            for v in e.verts:
+                key = tuple(round(c, 4) for c in v.co)
+                if key not in verts:
+                    verts[key] = seam.verts.new(v.co)
+                ends.append(verts[key])
+            if ends[0] is not ends[1]:
+                seam.edges.new(ends)
+    return seam
+
+
+# --- ore designs ------------------------------------------------------------------------------
+# Candidate looks for each ore, two apiece, built to break apart like rock() (core, chunks, seams,
+# rubble) so the crack minigame works on all of them. Exported to models/designs/ for review; the
+# game doesn't use them until one is picked. Build them with the `designs` builder.
+
+LETTERS = "ABCDEFGHIJKLMNOP"
+
+
+def stretched_cell(src, seeds, index, stretch):
+    """voronoi_cell, with distances measured as if the axes were scaled by `stretch`: a large z
+    favours flat horizontal cuts (layers), a tiny z upright ones (columns)."""
+    s = Vector(stretch)
+    bm = src.copy()
+    for v in bm.verts:
+        v.co = Vector((v.co.x * s.x, v.co.y * s.y, v.co.z * s.z))
+    cell = voronoi_cell(bm, [Vector((p.x * s.x, p.y * s.y, p.z * s.z)) for p in seeds], index)
+    bm.free()
+    for v in cell.verts:
+        v.co = Vector((v.co.x / s.x, v.co.y / s.y, v.co.z / s.z))
+    cell.normal_update()
+    return cell
+
+
+def chop(bm, point, normal, as_cut=False):
+    """Cuts away everything on the `normal` side of the plane and caps the hole: as outside
+    surface, or with `as_cut` as a cut face. (Set either way: a filled face copies the "cut" mark
+    from its neighbours, so a cap on a piece's cut sides would otherwise pass for one.)"""
+    res = bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:],
+                                 plane_co=point, plane_no=normal, clear_outer=True)
+    edges = [e for e in res["geom_cut"] if isinstance(e, bmesh.types.BMEdge) and e.is_boundary]
+    if edges:
+        layer = bm.faces.layers.int.get("cut")
+        for f in bmesh.ops.holes_fill(bm, edges=edges, sides=0)["faces"]:
+            if layer is not None:
+                f[layer] = 1 if as_cut else 0
+
+
+def boulder_mesh(rng, size=1.0, subdiv=3, squash=(1.2, 1.05, 0.7), lumps=6, lump_amp=(0.12, 0.24),
+                 chops=5, chop_depth=(0.78, 0.88), noise=0.05):
+    """rock()'s boulder, with the knobs exposed: an icosphere squashed, lumped, chopped flat in a
+    few places and sat on the ground. Returns (mesh, centre height)."""
+    radius, centre_z = size, size * squash[2] * 0.72
+    whole = bmesh.new()
+    bmesh.ops.create_icosphere(whole, subdivisions=subdiv, radius=radius)
+    bumps = [(Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-0.3, 1))).normalized(),
+              rng.uniform(*lump_amp)) for _ in range(lumps)]
+    for v in whole.verts:
+        d = v.co.normalized()
+        v.co *= 1.0 + sum(amp * max(0.0, d.dot(l)) ** 2 for l, amp in bumps) + rng.uniform(-noise, noise)
+        v.co = Vector((v.co.x * squash[0], v.co.y * squash[1], v.co.z * squash[2] + centre_z))
+    for _ in range(chops):
+        a = rng.uniform(0, math.tau)
+        n = Vector((math.cos(a), math.sin(a), rng.uniform(-0.1, 0.9))).normalized()
+        chop(whole, Vector((n.x * radius * squash[0], n.y * radius * squash[1],
+                            centre_z + n.z * radius * squash[2])) * rng.uniform(*chop_depth), n)
+    chop(whole, Vector((0, 0, -0.04 * size)), Vector((0, 0, -1)))  # the base
+    bmesh.ops.triangulate(whole, faces=whole.faces[:])
+    return whole, centre_z
+
+
+def shell_seeds(rng, size, squash, centre_z, sides=7, tops=3, out=(0.72, 0.62)):
+    """rock()'s seeds: one for the core, `sides` round the sides, `tops` on top."""
+    def at(azimuth, elevation, k):
+        return Vector((math.cos(elevation) * math.cos(azimuth) * size * squash[0] * k,
+                       math.cos(elevation) * math.sin(azimuth) * size * squash[1] * k,
+                       centre_z + math.sin(elevation) * size * squash[2] * k))
+    seeds = [Vector((0, 0, centre_z * 0.75))]
+    seeds += [at(i * math.tau / sides + rng.uniform(-0.2, 0.2), rng.uniform(0.0, 0.3), out[0]) for i in range(sides)]
+    seeds += [at(i * math.tau / tops + rng.uniform(0, 1.0), rng.uniform(0.6, 0.85), out[1]) for i in range(tops)]
+    return seeds
+
+
+def fractured(name, rng, whole, seeds, choose, stretch=None, post=None, rubble=("stone.4", "stone.2", "stone.1"),
+              size=1.0, out="designs"):
+    """Cuts `whole` into Voronoi pieces round `seeds` (the first is the core) and builds them as
+    rock() does: Body_Core, Chunk_* each with its Seam_*, and Rubble_*. choose(face, is_cut, piece)
+    picks each face's swatch; post(piece_mesh, piece, cut_layer) can reshape a piece first. Exports
+    to models/<out>/<name>.glb (out="" for the game's own models/<name>.glb)."""
+    for i in range(len(seeds)):
+        bm = stretched_cell(whole, seeds, i, stretch) if stretch else voronoi_cell(whole, seeds, i)
+        cut = bm.faces.layers.int.get("cut") or bm.faces.layers.int.new("cut")
+        if post:
+            post(bm, i, cut)
+        if not bm.faces:
+            continue
+        bmesh.ops.triangulate(bm, faces=bm.faces[:])
+        paint(bm, lambda f, i=i, cut=cut: choose(f, f[cut] == 1, i))
+        mark_cut(bm, cut)
+        if i > 0:
+            make_object(f"Seam_{LETTERS[i - 1]}", outline(bm, cut))
+        centre = sum((v.co for v in bm.verts), Vector()) / len(bm.verts)
+        bmesh.ops.translate(bm, vec=-centre, verts=bm.verts)
+        make_object("Body_Core" if i == 0 else f"Chunk_{LETTERS[i - 1]}", bm, centre)
+    whole.free()
+    for i in range(4):
+        a = i * math.tau / 4 + rng.uniform(-0.4, 0.4)
+        d = rng.uniform(0.2, 0.6) * size
+        bm = blob(rng.uniform(0.3, 0.45) * size, rng, jitter_amount=0.3, squash=(1.2, 1.0, 0.4), subdiv=1)
+        paint(bm, shade_by_normal(*rubble, rng))
+        make_object(f"Rubble_{i}", bm, (math.cos(a) * d, math.sin(a) * d, 0.08 * size), (0, 0, rng.uniform(0, math.tau)))
+    export(os.path.join(out, name) if out else name, loose_edges=True)
+
+
+def mirrored(s, n, p):
+    """`s` reflected through the plane through `p` with normal `n`."""
+    return s - 2.0 * (s - p).dot(n) * n
+
+
+def near_plane(c, planes):
+    """Whether a point is inside any of the bands (normal, point, half-width)."""
+    return any(abs((c - p).dot(n)) < w for n, p, w in planes)
+
+
+def slice_mesh(bm, cuts):
+    """Cuts the mesh's faces along each plane (point, normal) without removing anything, so a band
+    or vein painted by face position gets crisp straight edges instead of ragged triangles."""
+    for p, n in cuts:
+        bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=p, plane_no=n)
+
+
+def band_cuts(bands):
+    """Both edges of every band (normal, point, half-width), for slice_mesh."""
+    return [(p + n * w * side, n) for n, p, w in bands for side in (-1, 1)]
+
+
+def layer_cuts(normal, spacing, lo, hi):
+    """Parallel planes `spacing` apart along `normal`, from `lo` to `hi` (distances from the origin)."""
+    return [(normal * (lo + k * spacing), normal) for k in range(int((hi - lo) / spacing) + 1)]
+
+
+def copper_verdigris(name="copper_verdigris", out="designs"):
+    """Copper A: a rounded warm-grey boulder crusted with green verdigris on top, cut by two
+    copper veins. The pieces are seeded in pairs mirrored across each vein, so the seams run along
+    the veins: every split opens up a bright sheet of copper."""
     reset()
-    rng = random.Random(seed)
-    top, side, bottom, alt = stone_shades
-    stone = shade_by_normal(top, side, bottom, rng, side_alt=alt)
+    rng = random.Random(101)
+    squash = (1.2, 1.05, 0.72)
+    whole, cz = boulder_mesh(rng, 1.0, squash=squash, chops=3, lump_amp=(0.15, 0.28))
+    centre = Vector((0, 0, cz))
+    veins = [(Vector((1, 0.35, 0.25)).normalized(), centre + Vector((0.15, 0, 0)), 0.07),
+             (Vector((-0.3, 1, -0.4)).normalized(), centre + Vector((0, -0.1, 0.1)), 0.06)]
+    crust_z = cz + 0.38  # verdigris above this, where rain and weather get at it
+    slice_mesh(whole, band_cuts(veins) + [(Vector((0, 0, crust_z)), Vector((0, 0, 1)))])
+    seeds = [Vector((0, 0, cz * 0.7))]
+    for n, p, _ in veins:  # pairs either side of each vein
+        for a in (0.6, 2.2):
+            s = centre + Vector((math.cos(a) * 0.75, math.sin(a) * 0.65, rng.uniform(-0.05, 0.2)))
+            s += n * (0.28 - (s - p).dot(n))  # a fixed distance on one side ...
+            seeds += [s, mirrored(s, n, p)]  # ... and its twin on the other
+    seeds += [centre + Vector((0.2, 0.25, 0.42)), centre + Vector((-0.35, -0.2, 0.38))]
+    stone = shade_by_normal("stone.5", "stone.4", "stone.2", rng, side_alt="terrain.rock")
 
-    bm = blob(0.46 * size, rng, squash=(1.1, 1.0, 0.62))
-    paint(bm, stone)
-    make_object("Body_Core", bm, (0, 0, 0.28 * size))
+    def choose(f, is_cut, i):
+        c = f.calc_center_median()
+        if near_plane(c, veins):
+            return "ore.copper" if is_cut or f.normal.z > 0.2 else "ore.copper_dark"
+        if is_cut:
+            return "stone.6"
+        if c.z > crust_z and f.normal.z > 0.2:
+            return "leaves.6" if f.normal.z > 0.6 else "leaves.5"
+        return stone(f)
+    fractured(name, rng, whole, seeds, choose, out=out)
 
-    chunks = [  # (location, radius, has copper)
-        ((0.36, -0.2, 0.36), 0.27, False),
-        ((-0.36, -0.16, 0.33), 0.27, True),
-        ((0.04, 0.05, 0.62), 0.21, False),
-        ((0.24, 0.38, 0.28), 0.22, True),
-        ((-0.27, 0.34, 0.3), 0.26, False),
-    ]
-    for i, (loc, r, copper) in enumerate(chunks):
-        bm = blob(r * size, rng, jitter_amount=0.25, squash=(1.0, 0.95, 0.85), subdiv=1)
 
-        def choose(f, copper=copper):
-            if (copper or ore_everywhere) and rng.random() < ore_chance:
-                return ore[0] if f.normal.z > 0.2 else ore[1]
+def copper_malachite():
+    """Copper B: a dark stone boulder under a thick green malachite crust; inside it's banded in
+    stripes of light and dark green, so every break shows the banding."""
+    reset()
+    rng = random.Random(102)
+    squash = (1.15, 1.05, 0.75)
+    whole, cz = boulder_mesh(rng, 1.0, squash=squash, chops=4, lump_amp=(0.18, 0.3))
+    axis = Vector((0.3, 0.2, 1)).normalized()
+    slice_mesh(whole, layer_cuts(axis, 0.07, -0.3, 1.6))
+    seeds = shell_seeds(rng, 1.0, squash, cz)
+    stone = shade_by_normal("stone.3", "stone.2", "stone.1", rng)
+
+    def choose(f, is_cut, i):
+        c = f.calc_center_median()
+        if is_cut:
+            band = int((c.dot(axis) + 0.3) / 0.07) % 4
+            return ("leaves.6", "leaves.4", "leaves.2", "leaves.4")[band]
+        if f.normal.z > 0.45:
+            return "leaves.4" if f.normal.z > 0.75 else "leaves.3"
+        return stone(f)
+    fractured("copper_malachite", rng, whole, seeds, choose, rubble=("leaves.3", "stone.2", "stone.1"))
+
+
+def iron_columns(name="iron_columns", out="designs"):
+    """Iron A: a cluster of dark basalt columns of different heights (upright Voronoi cells of a
+    tall prism, each with its own flat top), rust bleeding down from the tops; the faces a break
+    opens glint with iron."""
+    reset()
+    rng = random.Random(103)
+    size = 1.1
+    whole = prism(9, 1.15 * size, 1.05 * size, 2.0 * size)
+    bmesh.ops.translate(whole, vec=Vector((0, 0, 1.0 * size - 0.04)), verts=whole.verts)
+    for v in whole.verts:
+        v.co.x *= 1.05 + rng.uniform(-0.04, 0.04)
+        v.co.y *= 0.95 + rng.uniform(-0.04, 0.04)
+    seeds = [Vector((0, 0, 0.5))]
+    for k in range(6):  # a ring round the middle column ...
+        a = k * math.tau / 6 + rng.uniform(-0.15, 0.15)
+        seeds.append(Vector((math.cos(a) * 0.52, math.sin(a) * 0.48, 0.5)))
+    for k in range(5):  # ... and an outer one
+        a = k * math.tau / 5 + 0.3 + rng.uniform(-0.2, 0.2)
+        seeds.append(Vector((math.cos(a) * 1.0, math.sin(a) * 0.92, 0.5)))
+    tops = [size * 1.55] + [size * rng.uniform(1.05, 1.4) for _ in range(6)] + [size * rng.uniform(0.55, 0.95) for _ in range(5)]
+    rust = [size * rng.uniform(0.2, 0.4) for _ in seeds]  # how far rust runs down each one
+
+    def post(bm, i, cut):  # a flat (slightly tilted) top at this column's height
+        tilt = Vector((rng.uniform(-0.12, 0.12), rng.uniform(-0.12, 0.12), 1)).normalized()
+        chop(bm, Vector((0, 0, tops[i])), tilt)
+        slice_mesh(bm, [(Vector((0, 0, tops[i] - rust[i])), Vector((0, 0, 1)))])
+
+    def choose(f, is_cut, i):
+        c = f.calc_center_median()
+        if is_cut:
+            return "metal.5" if rng.random() < 0.25 else "metal.3"
+        if f.normal.z > 0.8:
+            return "stone.3"
+        if c.z > tops[i] - rust[i]:  # rust running down from the top
+            return "wood.3" if i % 3 else "accent.0"
+        return "stone.1" if i % 2 else "stone.2"
+    fractured(name, rng, whole, seeds, choose, stretch=(1, 1, 0.02), post=post, size=size,
+              rubble=("stone.2", "stone.1", "stone.0"), out=out)
+
+
+def iron_banded():
+    """Iron B: an angular slab of banded iron: layers of deep red jasper and steel-grey hematite,
+    weathered paler on top. The pieces break mostly along the layers."""
+    reset()
+    rng = random.Random(104)
+    size = 1.1
+    squash = (1.25, 1.0, 0.68)
+    whole, cz = boulder_mesh(rng, size, subdiv=2, squash=squash, lumps=3, lump_amp=(0.05, 0.12), chops=8,
+                             chop_depth=(0.75, 0.9))
+    tilt = Vector((0.12, 0.05, 1)).normalized()
+    slice_mesh(whole, layer_cuts(tilt, 0.13, -0.26, 1.6))
+    seeds = shell_seeds(rng, size, squash, cz)
+
+    def choose(f, is_cut, i):
+        band = int((f.calc_center_median().dot(tilt) + 0.26) / 0.13) % 2
+        if f.normal.z > 0.75 and not is_cut:
+            return "stone.4"
+        if is_cut:
+            return "accent.1" if band == 0 else "metal.5"
+        return "accent.0" if band == 0 else "metal.2"
+    fractured("iron_banded", rng, whole, seeds, choose, stretch=(1, 1, 1.6), size=size,
+              rubble=("accent.0", "metal.2", "stone.1"))
+
+
+def coal_strata(name="coal_strata", out="designs"):
+    """Coal A: a low, wide outcrop of layered rock: thick black coal seams between grey shale,
+    and the pieces come away as slabs along the layers."""
+    reset()
+    rng = random.Random(105)
+    squash = (1.35, 1.1, 0.6)
+    whole, cz = boulder_mesh(rng, 1.0, squash=squash, lumps=4, lump_amp=(0.08, 0.16), chops=4)
+    thick = [0.16, 0.07, 0.2, 0.08, 0.14, 0.07, 0.18, 0.08, 0.2]  # coal, shale, coal ... upward
+    edges, z = [], -0.04
+    for t in thick:
+        z += t
+        edges.append(z)
+    slice_mesh(whole, [(Vector((0, 0, e)), Vector((0, 0, 1))) for e in edges])
+    seeds = [Vector((0, 0, 0.12))]
+    for level, (lz, n) in enumerate(((0.3, 4), (0.62, 4), (0.9, 3))):
+        for k in range(n):
+            a = k * math.tau / n + level * 0.7 + rng.uniform(-0.2, 0.2)
+            seeds.append(Vector((math.cos(a) * 0.6, math.sin(a) * 0.5, lz)))
+
+    def is_coal(height):
+        return next((k for k, e in enumerate(edges) if height < e), len(edges)) % 2 == 0
+
+    def choose(f, is_cut, i):
+        c = f.calc_center_median()
+        coal = is_coal(c.z)
+        if is_cut:
+            return ("neutral.2" if rng.random() < 0.25 else "ore.coal") if coal else "stone.4"
+        if f.normal.z > 0.75:
+            return "neutral.2" if coal else "stone.4"
+        if coal:
+            return "ore.coal" if f.normal.z > -0.3 else "neutral.0"
+        return "stone.3" if f.normal.z > -0.3 else "stone.2"
+    fractured(name, rng, whole, seeds, choose, stretch=(1, 1, 3.0),
+              rubble=("neutral.2", "ore.coal", "neutral.0"), out=out)
+
+
+def coal_lump():
+    """Coal B: one big glossy lump of coal, all sharp facets: black, with bright glints where the
+    light catches a face, and a little grey stone clinging to its base."""
+    reset()
+    rng = random.Random(106)
+    squash = (1.15, 1.05, 0.8)
+    whole, cz = boulder_mesh(rng, 1.0, subdiv=2, squash=squash, lumps=3, lump_amp=(0.1, 0.2), chops=10,
+                             chop_depth=(0.7, 0.88), noise=0.08)
+    seeds = shell_seeds(rng, 1.0, squash, cz)
+
+    def choose(f, is_cut, i):
+        c = f.calc_center_median()
+        if is_cut:
+            return "neutral.3" if rng.random() < 0.12 else "neutral.1"
+        if c.z < 0.18:
+            return "stone.2"
+        if f.normal.z > 0.55:
+            return "neutral.4" if rng.random() < 0.15 else "neutral.2"
+        return "ore.coal" if f.normal.z > -0.2 else "neutral.0"
+    fractured("coal_lump", rng, whole, seeds, choose, rubble=("neutral.2", "ore.coal", "neutral.0"))
+
+
+def gold_quartz():
+    """Gold A: a milky-white quartz boulder threaded with thin gold veins, gold flecks scattered
+    either side of them; the broken faces are clear white quartz with the veins running through."""
+    reset()
+    rng = random.Random(107)
+    size = 0.95
+    squash = (1.15, 1.05, 0.75)
+    whole, cz = boulder_mesh(rng, size, squash=squash, chops=5, lump_amp=(0.12, 0.22))
+    centre = Vector((0, 0, cz))
+    veins = [(Vector((0.8, 0.3, 0.5)).normalized(), centre, 0.045),
+             (Vector((-0.4, 0.9, 0.2)).normalized(), centre + Vector((0.2, 0.1, 0)), 0.035)]
+    slice_mesh(whole, band_cuts(veins))
+    halo = [(n, p, w * 3.0) for n, p, w in veins]
+    seeds = shell_seeds(rng, size, squash, cz)
+
+    def choose(f, is_cut, i):
+        c = f.calc_center_median()
+        if near_plane(c, veins):
+            return "ore.gold" if is_cut or f.normal.z > 0.0 else "accent.2"
+        if near_plane(c, halo) and rng.random() < 0.3:
+            return "ore.gold"
+        if is_cut:
+            return "neutral.7" if rng.random() < 0.7 else "neutral.6"
+        if f.normal.z > 0.55:
+            return "neutral.6"
+        return "neutral.5" if f.normal.z > -0.3 else "stone.4"
+    fractured("gold_quartz", rng, whole, seeds, choose, size=size, rubble=("neutral.6", "neutral.5", "stone.4"))
+
+
+def gold_geode():
+    """Gold B: a dull, rough brown boulder you would walk past, until a piece splits off and the
+    inside glitters: a rim of white quartz, then gold crystal all the way in."""
+    reset()
+    rng = random.Random(108)
+    size = 0.95
+    squash = (1.1, 1.05, 0.8)
+    whole, cz = boulder_mesh(rng, size, squash=squash, chops=2, lump_amp=(0.15, 0.25), noise=0.07)
+    seeds = shell_seeds(rng, size, squash, cz)
+    centre = Vector((0, 0, cz))
+    stone = shade_by_normal("wood.3", "wood.2", "stone.1", rng, side_alt="stone.2")
+
+    def post(bm, i, cut):  # break the big cut faces up, so the rim and the crystal read
+        bmesh.ops.subdivide_edges(bm, edges=[e for e in bm.edges if any(f[cut] for f in e.link_faces)],
+                                  cuts=2, use_grid_fill=True)
+
+    def choose(f, is_cut, i):
+        if not is_cut:
             return stone(f)
-        paint(bm, choose)
-        rot = (rng.uniform(-0.4, 0.4), rng.uniform(-0.4, 0.4), rng.uniform(0, math.tau))
-        make_object(f"Chunk_{'ABCDE'[i]}", bm, tuple(c * size for c in loc), rot)
+        depth = (f.calc_center_median() - centre).length / size
+        if depth > 0.7:
+            return "neutral.6"
+        return "accent.3" if rng.random() < 0.35 else "ore.gold"
+    fractured("gold_geode", rng, whole, seeds, choose, post=post, size=size, rubble=("wood.3", "wood.2", "stone.1"))
 
-    for i, (loc, r) in enumerate([((0.15, 0.05, 0.07), 0.22), ((-0.2, -0.1, 0.06), 0.17), ((0.0, 0.25, 0.05), 0.14)]):
-        bm = blob(r * size, rng, jitter_amount=0.3, squash=(1.2, 1.0, 0.4), subdiv=1)
-        paint(bm, shade_by_normal("stone.4", "stone.2", "stone.1", rng))
-        make_object(f"Rubble_{i}", bm, tuple(c * size for c in loc), (0, 0, rng.uniform(0, math.tau)))
-    export(name)
+
+def gold_veined(name="gold_veined", out="designs"):
+    """Gold (the pick): the geode, with a few thin gold veins on the outside so it can still be
+    spotted from a distance. Dull brown outside, a quartz rim and gold crystal within."""
+    reset()
+    rng = random.Random(109)
+    size = 0.95
+    squash = (1.1, 1.05, 0.8)
+    whole, cz = boulder_mesh(rng, size, squash=squash, chops=3, lump_amp=(0.15, 0.25), noise=0.06)
+    centre = Vector((0, 0, cz))
+    veins = [(Vector((0.7, 0.3, 0.65)).normalized(), centre + Vector((0.1, 0, 0)), 0.03),
+             (Vector((-0.5, 0.85, 0.15)).normalized(), centre + Vector((0, 0.15, 0.05)), 0.025),
+             (Vector((0.2, -0.6, 0.8)).normalized(), centre + Vector((-0.2, -0.1, 0.1)), 0.02)]
+    slice_mesh(whole, band_cuts(veins))
+    seeds = shell_seeds(rng, size, squash, cz)
+    stone = shade_by_normal("wood.3", "wood.2", "stone.1", rng, side_alt="stone.2")
+
+    def post(bm, i, cut):  # break the big cut faces up, so the rim and the crystal read
+        bmesh.ops.subdivide_edges(bm, edges=[e for e in bm.edges if any(f[cut] for f in e.link_faces)],
+                                  cuts=2, use_grid_fill=True)
+
+    def choose(f, is_cut, i):
+        c = f.calc_center_median()
+        if not is_cut:
+            if near_plane(c, veins):
+                return "ore.gold" if f.normal.z > -0.2 else "accent.2"
+            return stone(f)
+        if (c - centre).length / size > 0.7:
+            return "neutral.6"
+        return "accent.3" if rng.random() < 0.35 else "ore.gold"
+    fractured(name, rng, whole, seeds, choose, post=post, size=size, rubble=("wood.3", "wood.2", "stone.1"), out=out)
+
+
+def designs():
+    os.makedirs(os.path.join(OUT_DIR, "designs"), exist_ok=True)
+    for build in (copper_verdigris, copper_malachite, iron_columns, iron_banded,
+                  coal_strata, coal_lump, gold_quartz, gold_geode, gold_veined):
+        build()
+
+
+def scale_scene(s):
+    """Scales everything built so far about the origin (applied on export)."""
+    for obj in bpy.data.objects:
+        obj.location *= s
+        obj.scale *= s
+
+
+# The game's rocks: the ore designs picked for each (see "ore designs" above).
+
+def rock():
+    """Copper (Mining 1): the verdigris boulder."""
+    copper_verdigris("rock", out="")
 
 
 def iron_rock():
-    """Bigger, darker boulder streaked with iron (Mining 15)."""
-    rock("iron_rock", seed=12, stone_shades=("stone.3", "stone.2", "stone.0", "stone.1"),
-         ore=("metal.7", "ore.iron"), size=1.15, ore_chance=0.4, ore_everywhere=True)
-
+    """Iron (Mining 15): basalt columns."""
+    iron_columns("iron_rock", out="")
 
 
 def coal_rock():
-    """Dark boulder seamed with coal (Mining 20)."""
-    rock("coal_rock", seed=13, stone_shades=("stone.3", "stone.2", "stone.0", "stone.1"),
-         ore=("ore.coal", "neutral.1"), size=1.05, ore_chance=0.5, ore_everywhere=True)
+    """Coal (Mining 20): coal seams between shale."""
+    coal_strata("coal_rock", out="")
 
 
 def gold_rock():
-    """Pale boulder with a few bright gold flecks (Mining 30)."""
-    rock("gold_rock", seed=14, stone_shades=("stone.6", "stone.4", "stone.2", "stone.5"),
-         ore=("ore.gold", "accent.2"), size=0.95, ore_chance=0.35, ore_everywhere=True)
+    """Gold (Mining 30): the veined geode."""
+    gold_veined("gold_rock", out="")
+
 
 def shard(rng, length, radius):
     """A six-sided crystal: a column ending in a point, base at the origin's -length/2."""
@@ -188,11 +616,16 @@ def tilted(base, length, tilt, azimuth):
 
 def crystal_rock():
     """A dark stone base bristling with violet crystals (Mining 40): the crystals are the chunks
-    that break off, the base stays, two stubs are left while it grows back."""
+    that break off, the base stays, two stubs are left while it grows back. Each crystal is cut
+    off flush where it comes out of the stone, and that cut is its seam: a ring round its foot, so
+    the crack runs round the base of the crystal and finishing it snaps the crystal off."""
     reset()
     rng = random.Random(15)
     bm = blob(0.5, rng, squash=(1.15, 1.0, 0.5))
     paint(bm, shade_by_normal("stone.2", "stone.1", "stone.0", rng, side_alt="neutral.2"))
+    stone = bm.copy()  # where the crystals come out of it (world space)
+    bmesh.ops.translate(stone, vec=Vector((0, 0, 0.18)), verts=stone.verts)
+    surface = BVHTree.FromBMesh(stone)
     make_object("Body_Core", bm, (0, 0, 0.18))
     shards = [  # (length, radius, tilt, azimuth)
         (1.15, 0.16, 0.12, 0.0), (0.85, 0.13, 0.55, 0.4), (0.75, 0.12, 0.6, 2.2),
@@ -200,11 +633,25 @@ def crystal_rock():
     ]
     for i, (length, radius, tilt, a) in enumerate(shards):
         base = (math.cos(a) * 0.16 * (i > 0), math.sin(a) * 0.16 * (i > 0), 0.3)
-        make_object(f"Chunk_{'ABCDE'[i]}", shard(rng, length, radius), tilted(base, length, tilt, a), (0, tilt, a))
+        axis = Vector((math.sin(tilt) * math.cos(a), math.sin(tilt) * math.sin(a), math.cos(tilt)))
+        hit = surface.ray_cast(Vector(base), axis)  # from inside the stone, out along the crystal
+        buried = (hit[3] if hit[0] is not None else 0.0) + 0.01
+        piece = prism(6, radius, radius * 0.12, length)
+        jitter(piece, 0.06, rng)
+        cut = piece.faces.layers.int.new("cut")
+        chop(piece, Vector((0, 0, -length / 2 + buried)), Vector((0, 0, -1)), as_cut=True)
+        paint(piece, lambda f, cut=cut: "accent.7" if f[cut] else
+              ("ore.amethyst" if f.normal.z > 0.2 or rng.random() < 0.7 else "accent.6"))
+        where, turn = tilted(base, length, tilt, a), (0, tilt, a)
+        mark_cut(piece, cut)
+        make_object(f"Seam_{'ABCDE'[i]}", outline(piece, cut), where, turn)
+        make_object(f"Chunk_{'ABCDE'[i]}", piece, where, turn)
+    stone.free()
     for i, (a, length) in enumerate(((1.2, 0.22), (4.2, 0.18))):
         base = (math.cos(a) * 0.2, math.sin(a) * 0.2, 0.28)
         make_object(f"Rubble_{i}", shard(rng, length, 0.09), tilted(base, length, 0.4, a), (0, 0.4, a))
-    export("crystal_rock")
+    scale_scene(1.5)  # as hefty as the boulders
+    export("crystal_rock", loose_edges=True)
 
 
 def crystal_item():
@@ -1409,4 +1856,7 @@ if __name__ == "__main__":  # make_village.py imports the helpers above without 
     only = argv[2:]  # optional: names of the builders to run (e.g. `forest`), instead of all of them
     for build in builds:
         if not only or build.__name__ in only:
+            build()
+    for build in (designs,):  # only when asked for by name: candidates, not game models
+        if build.__name__ in only:
             build()

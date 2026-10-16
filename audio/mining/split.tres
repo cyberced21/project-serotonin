@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="SoundLayers" format=3]
+
+[ext_resource type="Script" path="res://scripts/sound_layers.gd" id="1_layers"]
+[ext_resource type="Script" path="res://scripts/sound_layer.gd" id="2_layer"]
+[ext_resource type="AudioStream" path="res://audio/mining/sfx/hit_crack.tres" id="s0"]
+[ext_resource type="AudioStream" path="res://audio/mining/sfx/split_crunch.tres" id="s1"]
+[ext_resource type="AudioStream" path="res://audio/mining/sfx/split_rubble.tres" id="s2"]
+
+[sub_resource type="Resource" id="Layer_crunch"]
+script = ExtResource("2_layer")
+stream = ExtResource("s1")
+volume_db = 3.0
+pitch_jitter = 0.05
+pitch = 0.9
+resource_name = "crunch"
+
+[sub_resource type="Resource" id="Layer_snap"]
+script = ExtResource("2_layer")
+stream = ExtResource("s0")
+pitch_jitter = 0.05
+pitch = 0.75
+resource_name = "snap"
+
+[sub_resource type="Resource" id="Layer_rubble"]
+script = ExtResource("2_layer")
+stream = ExtResource("s2")
+delay = 0.12
+volume_db = -3.0
+pitch_jitter = 0.08
+resource_name = "rubble"
+
+[resource]
+script = ExtResource("1_layers")
+layers = Array[ExtResource("2_layer")]([SubResource("Layer_crunch"), SubResource("Layer_snap"), SubResource("Layer_rubble")])
