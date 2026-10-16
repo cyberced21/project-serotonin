@@ -117,53 +117,74 @@ def export(name):
 
 def rock(name="rock", seed=11, stone_shades=("stone.5", "stone.3", "stone.1", "stone.4"),
          ore=("ore.copper", "ore.copper_dark"), size=1.0, ore_chance=0.45, ore_everywhere=False):
-    """Boulder with ore flecks: a core, five chunks that break off, and rubble.
-    The default is the grey copper rock; iron_rock() is a bigger, darker one with iron."""
+    """A hefty boulder with ore flecks, about 2.4 m across and 1.4 m tall: a big core with ten
+    chunks packed over it (seven around the sides, three on top) so there's rock under every
+    swing and crack, and rubble left while it grows back. The default is the grey copper rock;
+    iron_rock() and the others are darker or brighter ones with their own ore."""
     reset()
     rng = random.Random(seed)
     top, side, bottom, alt = stone_shades
     stone = shade_by_normal(top, side, bottom, rng, side_alt=alt)
 
-    bm = blob(0.46 * size, rng, squash=(1.1, 1.0, 0.62))
+    # the chunks sit on the core's surface and stand well proud of it, so they make most of the
+    # silhouette (and of the collision hull) and breaking one off visibly changes the shape
+    core_r, core_squash, core_z = 0.66 * size, (1.25, 1.05, 0.78), 0.48 * size
+    bm = blob(core_r, rng, jitter_amount=0.12, squash=core_squash, subdiv=3)
     paint(bm, stone)
-    make_object("Body_Core", bm, (0, 0, 0.28 * size))
+    make_object("Body_Core", bm, (0, 0, core_z))
 
-    chunks = [  # (location, radius, has copper)
-        ((0.36, -0.2, 0.36), 0.27, False),
-        ((-0.36, -0.16, 0.33), 0.27, True),
-        ((0.04, 0.05, 0.62), 0.21, False),
-        ((0.24, 0.38, 0.28), 0.22, True),
-        ((-0.27, 0.34, 0.3), 0.26, False),
-    ]
-    for i, (loc, r, copper) in enumerate(chunks):
-        bm = blob(r * size, rng, jitter_amount=0.25, squash=(1.0, 0.95, 0.85), subdiv=1)
+    def on_core(azimuth, elevation, sink=0.95):
+        """A point `sink` of the way out to the core's surface in that direction."""
+        d = (math.cos(elevation) * math.cos(azimuth), math.cos(elevation) * math.sin(azimuth), math.sin(elevation))
+        return (d[0] * core_r * core_squash[0] * sink, d[1] * core_r * core_squash[1] * sink,
+                core_z + d[2] * core_r * core_squash[2] * sink)
 
-        def choose(f, copper=copper):
-            if (copper or ore_everywhere) and rng.random() < ore_chance:
+    chunks = []  # (location, radius, has ore)
+    for i in range(7):  # around the sides, a bit above the ground
+        a = i * math.tau / 7 + rng.uniform(-0.15, 0.15)
+        chunks.append((on_core(a, rng.uniform(0.05, 0.3)), rng.uniform(0.42, 0.48), i % 2 == 1))
+    for i in range(3):  # on top
+        a = i * math.tau / 3 + rng.uniform(0, 1.0)
+        chunks.append((on_core(a, rng.uniform(0.7, 0.9), 0.85), rng.uniform(0.38, 0.44), i == 0))
+    for i, (loc, r, has_ore) in enumerate(chunks):
+        # 80 faces: still faceted, but enough surface for the crack decals to land on
+        bm = blob(r * size, rng, jitter_amount=0.16, squash=(1.1, 1.0, 0.8), subdiv=2)
+
+        def choose(f, has_ore=has_ore):
+            if (has_ore or ore_everywhere) and rng.random() < ore_chance:
                 return ore[0] if f.normal.z > 0.2 else ore[1]
             return stone(f)
         paint(bm, choose)
         rot = (rng.uniform(-0.4, 0.4), rng.uniform(-0.4, 0.4), rng.uniform(0, math.tau))
-        make_object(f"Chunk_{'ABCDE'[i]}", bm, tuple(c * size for c in loc), rot)
+        make_object(f"Chunk_{'ABCDEFGHIJ'[i]}", bm, loc, rot)
 
-    for i, (loc, r) in enumerate([((0.15, 0.05, 0.07), 0.22), ((-0.2, -0.1, 0.06), 0.17), ((0.0, 0.25, 0.05), 0.14)]):
-        bm = blob(r * size, rng, jitter_amount=0.3, squash=(1.2, 1.0, 0.4), subdiv=1)
+    for i in range(4):  # a low spread of broken stone where it stood
+        a = i * math.tau / 4 + rng.uniform(-0.4, 0.4)
+        d = rng.uniform(0.2, 0.6) * size
+        bm = blob(rng.uniform(0.3, 0.45) * size, rng, jitter_amount=0.3, squash=(1.2, 1.0, 0.4), subdiv=1)
         paint(bm, shade_by_normal("stone.4", "stone.2", "stone.1", rng))
-        make_object(f"Rubble_{i}", bm, tuple(c * size for c in loc), (0, 0, rng.uniform(0, math.tau)))
+        make_object(f"Rubble_{i}", bm, (math.cos(a) * d, math.sin(a) * d, 0.08 * size), (0, 0, rng.uniform(0, math.tau)))
     export(name)
+
+
+def scale_scene(s):
+    """Scales everything built so far about the origin (applied on export)."""
+    for obj in bpy.data.objects:
+        obj.location *= s
+        obj.scale *= s
 
 
 def iron_rock():
     """Bigger, darker boulder streaked with iron (Mining 15)."""
     rock("iron_rock", seed=12, stone_shades=("stone.3", "stone.2", "stone.0", "stone.1"),
-         ore=("metal.7", "ore.iron"), size=1.15, ore_chance=0.4, ore_everywhere=True)
+         ore=("metal.7", "ore.iron"), size=1.1, ore_chance=0.4, ore_everywhere=True)
 
 
 
 def coal_rock():
     """Dark boulder seamed with coal (Mining 20)."""
     rock("coal_rock", seed=13, stone_shades=("stone.3", "stone.2", "stone.0", "stone.1"),
-         ore=("ore.coal", "neutral.1"), size=1.05, ore_chance=0.5, ore_everywhere=True)
+         ore=("ore.coal", "neutral.1"), size=1.0, ore_chance=0.5, ore_everywhere=True)
 
 
 def gold_rock():
@@ -204,6 +225,7 @@ def crystal_rock():
     for i, (a, length) in enumerate(((1.2, 0.22), (4.2, 0.18))):
         base = (math.cos(a) * 0.2, math.sin(a) * 0.2, 0.28)
         make_object(f"Rubble_{i}", shard(rng, length, 0.09), tilted(base, length, 0.4, a), (0, 0.4, a))
+    scale_scene(1.5)  # as hefty as the boulders
     export("crystal_rock")
 
 

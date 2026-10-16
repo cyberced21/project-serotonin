@@ -46,6 +46,10 @@ const FELLED_SHAPE_SCALE := 0.6
 @export_range(0, 10) var drops_min := 2
 @export_range(0, 10) var drops_max := 4
 @export var respawn_time := 15.0
+## Rocks: the collision is fitted to the model (a convex hull of the body and the chunks still
+## on, refitted as they break off), so swings and cracks land on the rock itself rather than on
+## the box in the scene. Trees keep their trunk shape (topple uses it).
+@export var fit_collision := false
 ## Unique key this node's state (hits left, respawn timer) is saved under. Give every placed
 ## node its own. If empty, its scene path is used, which resets it when renamed or moved.
 @export var save_id: StringName
@@ -181,6 +185,7 @@ func _ready() -> void:
 	_burst_home = burst.position
 	_break_audio_home = break_audio.position
 	_collect_surfaces(visual)
+	_fit_collision()
 	chips.color = chip_color
 	burst.color = burst_color
 	hits_left = max_hits
@@ -427,7 +432,9 @@ func _reset_visuals() -> void:
 	for n in notches.get_children():
 		n.queue_free()  # (cracks too)
 	_crack.clear()
+	_crack_normals.clear()
 	_crack_tip = null
+	_queue_refit()
 	if _rubble_mm:
 		_rubble_mm.multimesh.visible_instance_count = 0
 	visual.visible = true
@@ -582,6 +589,7 @@ func _nearest(list: Array[MeshInstance3D], point: Vector3) -> MeshInstance3D:
 ## Hides the chunk and throws a physics copy of it, which shrinks away after a moment.
 func _pop_chunk(chunk: MeshInstance3D, push: Vector3, speed: float) -> void:
 	chunk.visible = false
+	_queue_refit()
 	var piece := chunk.duplicate() as MeshInstance3D
 	_throw(piece, chunk.global_transform.orthonormalized(), push, speed)
 
@@ -651,14 +659,71 @@ func _clatter(body: RigidBody3D, piece_scale: float) -> void:
 		Sfx.play_debris(debris_layers, body.global_position, strength * (0.6 if bounces[0] > 1 else 1.0)))
 
 
-# --- cracks ---------------------------------------------------------------------------------
-# A crack runs across one face of the collision box (which is where swings land); its decals
-# project onto the real mesh behind it. Points are in node space and decals are placed relative
-# to Visual at rest, so the hit's nudge doesn't knock them off the spot.
+# --- fitted collision -----------------------------------------------------------------------
 
-## The crack being worked on, from where it started to the tip. Empty when there isn't one.
+## Middle of the collision shape and its widest half-width on the ground (node space).
+var _shape_centre := Vector3(0, 0.5, 0)
+var _footprint := 0.6
+var _refit_queued := false
+
+
+func _queue_refit() -> void:
+	if fit_collision and not _refit_queued:
+		_refit_queued = true
+		_fit_collision.call_deferred()
+
+
+## A convex hull around every visible piece in Visual. (Visual at rest is the node's own space;
+## measured relative to it, so a nudge in progress doesn't skew the shape.)
+func _fit_collision() -> void:
+	_refit_queued = false
+	if fit_collision:
+		var seen := {}
+		var points := PackedVector3Array()
+		var to_visual := visual.global_transform.affine_inverse()
+		for m in visual.find_children("*", "MeshInstance3D", true, false):
+			var mesh := m as MeshInstance3D
+			if not mesh.visible or mesh.mesh == null:
+				continue
+			var xform := to_visual * mesh.global_transform
+			for s in mesh.mesh.get_surface_count():
+				var verts: PackedVector3Array = mesh.mesh.surface_get_arrays(s)[Mesh.ARRAY_VERTEX]
+				for v in verts:
+					var p := (xform * v).snappedf(0.005)  # flat-shaded meshes repeat every corner
+					if not seen.has(p):
+						seen[p] = true
+						points.append(p)
+		if points.size() >= 4:
+			var hull := ConvexPolygonShape3D.new()
+			hull.points = points
+			collision.shape = hull
+			collision.transform = Transform3D.IDENTITY
+	var box := AABB()
+	if collision.shape is ConvexPolygonShape3D:
+		var pts := (collision.shape as ConvexPolygonShape3D).points
+		box = AABB(pts[0], Vector3.ZERO)
+		for p in pts:
+			box = box.expand(p)
+	elif collision.shape is BoxShape3D:
+		box = AABB(-(collision.shape as BoxShape3D).size * 0.5, (collision.shape as BoxShape3D).size)
+		box.position += collision.position
+	else:
+		return
+	_shape_centre = box.get_center()
+	_footprint = maxf(box.size.x, box.size.z) * 0.5
+
+
+# --- cracks ---------------------------------------------------------------------------------
+# A crack runs over the node's collision surface (fit_collision makes that the real shape), each
+# new point found by casting back onto it, so it bends with the rock; its decals project onto the
+# mesh. Points are in node space and decals are placed relative to Visual at rest, so the hit's
+# nudge doesn't knock them off the spot.
+
+## The crack being worked on, from where it started to the tip, and the surface normal at each
+## point (node space). Empty when there isn't one.
 var _crack: Array[Vector3] = []
-## The face it runs across (node-space normal) and which way it's heading.
+var _crack_normals: Array[Vector3] = []
+## The side it started on, and which way it's heading.
 var _crack_normal := Vector3.UP
 var _crack_dir := Vector3.RIGHT
 var _crack_tip: Decal
@@ -669,7 +734,7 @@ func _is_tip_hit(info: HitInfo) -> bool:
 
 
 ## Grows the crack if the tip was hit, or starts one where this hit landed if there isn't one on
-## this face (one left on another face stays as a scar). True when the crack is complete.
+## this side (one left on another side stays as a scar). True when the crack is complete.
 func _grow_crack(info: HitInfo, tip: bool) -> bool:
 	if tip:
 		_extend_crack()
@@ -680,10 +745,11 @@ func _grow_crack(info: HitInfo, tip: bool) -> bool:
 		Juice.hitstop(0.03)
 		return seg >= crack_segments
 	var n := (global_basis.inverse() * info.normal).normalized()
-	if _crack.is_empty() or n.dot(_crack_normal) < 0.7:
+	if _crack.is_empty() or n.dot(_crack_normal) < 0.5:
 		_retire_tip()
 		_crack_normal = n
-		_crack.assign([_clamp_to_face(to_local(info.position))])
+		_crack.assign([to_local(info.position)])
+		_crack_normals.assign([n])
 		_crack_dir = _first_crack_direction(n)
 		_extend_crack()
 	return false
@@ -692,7 +758,9 @@ func _grow_crack(info: HitInfo, tip: bool) -> bool:
 ## A full crack: everything it crossed splits off. On the bare core, the node breaks.
 func _split(info: HitInfo) -> void:
 	var path := _crack.duplicate()
+	var normals := _crack_normals.duplicate()
 	_crack.clear()
+	_crack_normals.clear()
 	_retire_tip()
 	Sfx.play_at(split_layers, info.position)
 	PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.85, 0), "Split!", crack_color, 12)
@@ -702,7 +770,7 @@ func _split(info: HitInfo) -> void:
 	if intact.is_empty():
 		hits_left = 0
 		return
-	var crossed := intact.filter(func(c: MeshInstance3D) -> bool: return _crack_crosses(c, path))
+	var crossed := intact.filter(func(c: MeshInstance3D) -> bool: return _crack_crosses(c, path, normals))
 	if crossed.is_empty():
 		crossed = [_nearest(intact, to_global(path[path.size() / 2]))]
 	var out := (global_basis * _crack_normal).normalized()
@@ -716,74 +784,80 @@ func _split(info: HitInfo) -> void:
 	SaveGame.mark_dirty()
 
 
-## The first way a new crack heads: sideways across the face and a little down (anywhere across
-## the top).
+## The first way a new crack heads: sideways and a little down (anywhere across the top).
 func _first_crack_direction(n: Vector3) -> Vector3:
 	if absf(n.y) > 0.7:
 		var a := randf() * TAU
-		return Vector3(cos(a), 0.0, sin(a))
+		var flat := Vector3(cos(a), 0.0, sin(a))
+		return (flat - n * flat.dot(n)).normalized()
 	var d := n.cross(Vector3.UP).normalized() * (1.0 if randf() < 0.5 else -1.0)
 	d += Vector3.DOWN * randf_range(0.0, 0.7)
 	return (d - n * d.dot(n)).normalized()
 
 
-## Adds a segment, wandering a little, turning away from the face's edge if it runs into it.
+## Adds a segment, wandering a little: of a few headings, the one that gets furthest over the
+## surface without wrapping round to the far side.
 func _extend_crack() -> void:
 	var from := _crack[-1]
-	var best := from
-	var best_len := -1.0
+	var up := _crack_normals[-1]
+	var best := {}
+	var best_len := 0.0
 	for turn in [randf_range(-0.5, 0.5), randf_range(-0.5, 0.5), 1.2, -1.2]:
-		var to := _clamp_to_face(from + _crack_dir.rotated(_crack_normal, turn) * crack_segment_length)
-		var length := from.distance_to(to)
+		var s := _surface_at(from + _crack_dir.rotated(up, turn) * crack_segment_length, up)
+		if s.is_empty() or (s["normal"] as Vector3).dot(_crack_normal) < 0.3:
+			continue
+		var length := from.distance_to(s["position"])
 		if length > best_len + 0.02:
-			best = to
+			best = s
 			best_len = length
-	if best_len > 0.01:
-		_crack_dir = (best - from).normalized()
-	_crack.append(best)
-	_crack_decal(from, best)
+	if best.is_empty():  # nowhere to go: a short step on the spot's own plane, so it still grows
+		best = {"position": from + _crack_dir * crack_segment_length * 0.4, "normal": up}
+	var to: Vector3 = best["position"]
+	var n: Vector3 = best["normal"]
+	var step := to - from
+	if step.length_squared() > 0.0001:
+		_crack_dir = (step - n * step.dot(n)).normalized()
+	_crack.append(to)
+	_crack_normals.append(n)
+	_crack_decal(from, to, (up + n).normalized())
 	_place_tip()
 
 
-## Keeps a point on the struck face of the collision box, away from its edges (the mesh is
-## rounder than the box, so near the corners there'd be nothing to draw on).
-func _clamp_to_face(p: Vector3) -> Vector3:
-	var box := collision.shape as BoxShape3D
-	if box == null:
-		return p
-	var ext := box.size * 0.5
-	var local := collision.transform.affine_inverse() * p
-	var n := collision.basis.inverse() * _crack_normal
-	for i in 3:
-		var limit := ext[i] if absf(n[i]) > 0.7 else ext[i] * 0.7
-		local[i] = clampf(local[i], -limit, limit)
-	return collision.transform * local
+## The node's own surface under `p` (casting in along -`n` from outside it): its position and
+## normal, in node space. Empty if the cast misses it.
+func _surface_at(p: Vector3, n: Vector3) -> Dictionary:
+	var query := PhysicsRayQueryParameters3D.create(to_global(p + n * 0.6), to_global(p - n * 0.6), collision_layer)
+	var hit_result := get_world_3d().direct_space_state.intersect_ray(query)
+	if hit_result.is_empty() or hit_result["collider"] != self:
+		return {}
+	return {"position": to_local(hit_result["position"]),
+		"normal": (global_basis.inverse() * (hit_result["normal"] as Vector3)).normalized()}
 
 
 ## Whether a chunk lies under the crack: near it seen face-on, and on the struck side.
-func _crack_crosses(chunk: MeshInstance3D, path: Array) -> bool:
+func _crack_crosses(chunk: MeshInstance3D, path: Array, normals: Array) -> bool:
 	var aabb := chunk.get_aabb()
 	var centre := to_local(chunk.global_transform * aabb.get_center())
-	if (centre - collision.position).dot(_crack_normal) < -0.1:
+	if (centre - _shape_centre).dot(_crack_normal) < -0.1:
 		return false
 	var radius := aabb.size[aabb.get_longest_axis_index()] * 0.5
 	for i in path.size() - 1:
+		var up: Vector3 = ((normals[i] as Vector3) + (normals[i + 1] as Vector3)).normalized()
 		var d: Vector3 = centre - Geometry3D.get_closest_point_to_segment(centre, path[i], path[i + 1])
-		if (d - _crack_normal * d.dot(_crack_normal)).length() < radius:
+		if (d - up * d.dot(up)).length() < radius:
 			return true
 	return false
 
 
-## A basis whose Y is the crack's face normal (decals project along Y) and Z runs along `along`.
-func _face_basis(along: Vector3) -> Basis:
-	var y := _crack_normal
-	var x := y.cross(along).normalized()
+## A basis whose Y is `up` (decals project along Y) and Z runs along `along`.
+func _face_basis(along: Vector3, up: Vector3) -> Basis:
+	var x := up.cross(along).normalized()
 	if x.length_squared() < 0.5:
-		x = y.cross(Vector3.FORWARD if absf(y.z) < 0.9 else Vector3.RIGHT).normalized()
-	return Basis(x, y, x.cross(y))
+		x = up.cross(Vector3.FORWARD if absf(up.z) < 0.9 else Vector3.RIGHT).normalized()
+	return Basis(x, up, x.cross(up))
 
 
-func _crack_decal(a: Vector3, b: Vector3) -> void:
+func _crack_decal(a: Vector3, b: Vector3, up: Vector3) -> void:
 	if a.distance_to(b) < 0.01:
 		return
 	var tex: Array = _crack_textures(crack_color).pick_random()
@@ -791,11 +865,13 @@ func _crack_decal(a: Vector3, b: Vector3) -> void:
 	d.texture_albedo = tex[0]
 	d.texture_emission = tex[1]
 	d.emission_energy = 0.8
-	d.size = Vector3(0.14, 0.7, a.distance_to(b) * 1.25)  # overlaps the next segment a little
+	# deep enough to reach the mesh in the hollows between chunks, which the collision spans;
+	# a little longer than the segment so neighbours overlap
+	d.size = Vector3(0.2, 0.9, a.distance_to(b) * 1.25)
 	d.normal_fade = 0.3
 	d.cull_mask = WORLD_LAYER  # not the held tool (render layer 2)
 	notches.add_child(d)
-	d.transform = Transform3D(_face_basis(b - a), (a + b) * 0.5)
+	d.transform = Transform3D(_face_basis(b - a, up), (a + b) * 0.5)
 
 
 ## The glowing spot at the crack's tip, pulsing.
@@ -805,14 +881,14 @@ func _place_tip() -> void:
 		_crack_tip.texture_albedo = _notch_texture()
 		_crack_tip.texture_emission = _notch_texture()
 		_crack_tip.modulate = crack_color
-		_crack_tip.size = Vector3(0.2, 0.7, 0.2)
+		_crack_tip.size = Vector3(0.24, 0.9, 0.24)
 		_crack_tip.normal_fade = 0.3
 		_crack_tip.cull_mask = WORLD_LAYER
 		notches.add_child(_crack_tip)
 		var pulse := _crack_tip.create_tween().set_loops()
 		pulse.tween_property(_crack_tip, "emission_energy", 3.0, 0.45).set_trans(Tween.TRANS_SINE)
 		pulse.tween_property(_crack_tip, "emission_energy", 1.0, 0.45).set_trans(Tween.TRANS_SINE)
-	_crack_tip.transform = Transform3D(_face_basis(_crack_dir), _crack[-1])
+	_crack_tip.transform = Transform3D(_face_basis(_crack_dir, _crack_normals[-1]), _crack[-1])
 
 
 ## The tip goes out; the crack's decals stay as a scar until the node respawns.
@@ -1095,9 +1171,8 @@ func _add_rubble(near: Vector3, count: int) -> void:
 	if _rubble_mm == null:
 		return
 	var mm := _rubble_mm.multimesh
-	var box := collision.shape as BoxShape3D
-	var footprint := maxf(box.size.x, box.size.z) * 0.5 if box else 0.5
-	var side := to_local(near) - collision.position
+	var footprint := _footprint * 0.85  # the hull's widest; pebbles tuck in against the base
+	var side := to_local(near) - _shape_centre
 	side.y = 0.0
 	if side.length_squared() < 0.001:
 		side = Vector3(randf_range(-1, 1), 0, randf_range(-1, 1))

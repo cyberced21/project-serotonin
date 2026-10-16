@@ -359,7 +359,7 @@ rotation = Vector3(0, 6.25, 0)
 
 [node name="Rock2" parent="Nodes" instance=ExtResource("4_rock")]
 save_id = &"rock_2"
-position = Vector3(7, 0, 1)
+position = Vector3(8, 0, 2)
 rotation = Vector3(0, 2.95, 0)
 
 [node name="Rock3" parent="Nodes" instance=ExtResource("4_rock")]
