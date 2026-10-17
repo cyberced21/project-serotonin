@@ -24,6 +24,7 @@ break_sfx = ExtResource("5_break")
 topple = true
 land_sfx = ExtResource("5_break")
 carve_notch = true
+bark_color = Color(0.451, 0.31, 0.2, 1)
 
 [node name="CollisionShape3D" parent="." index="0"]
 position = Vector3(0, 1.6, 0)

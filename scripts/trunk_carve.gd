@@ -21,10 +21,18 @@ const SPREAD := 1.6
 const CORE := 0.12
 ## A face this far off its original direction is cut wood rather than bark (dot of normals).
 const CUT_FACE := 0.97
-## Palette swatches (art/palette.json "uv", same space as the model's UVs): the notch's cut faces,
-## and the end grain where the trunk is cut through (the same pale wood for now).
+## Palette swatches (art/palette.json "uv", same space as the model's UVs): the notch's cut faces
+## are pale wood; the end grain where the trunk is cut through is growth rings, from the outline in
+## (share of the way out, swatch): a darker band of sapwood under the bark, then pale and mid
+## rings round to the heart.
 const CUT_UV := Vector2(0.9375, 0.3125)  # wood.7
-const END_UV := Vector2(0.9375, 0.3125)  # wood.7
+const GRAIN := [
+	[1.0, Vector2(0.6875, 0.3125)],  # wood.5
+	[0.86, Vector2(0.9375, 0.3125)],  # wood.7
+	[0.62, Vector2(0.8125, 0.3125)],  # wood.6
+	[0.42, Vector2(0.9375, 0.3125)],  # wood.7
+	[0.22, Vector2(0.8125, 0.3125)],  # wood.6
+]
 
 var original: ArrayMesh
 ## The notch's ring height (mesh space), or NAN before the first hit.
@@ -200,7 +208,7 @@ func _cap_loop(verts: PackedVector3Array) -> PackedVector3Array:
 
 
 ## An ArrayMesh of `index`'s triangles over `verts`, flat-shaded, notch faces in cut wood; with a
-## `cap` loop, also a fan across it facing `cap_up`, in end grain.
+## `cap` loop, also the cut across it facing `cap_up`, in growth rings (GRAIN).
 func _build(verts: PackedVector3Array, index: PackedInt32Array, cap := PackedVector3Array(),
 		cap_up := Vector3.ZERO) -> ArrayMesh:
 	var st := SurfaceTool.new()
@@ -222,18 +230,32 @@ func _build(verts: PackedVector3Array, index: PackedInt32Array, cap := PackedVec
 			centre += p
 		centre /= cap.size()
 		st.set_normal(cap_up)
-		st.set_uv(END_UV)
-		for k in cap.size():
-			var p := cap[k]
-			var q := cap[(k + 1) % cap.size()]
-			# keep the fan facing cap_up whichever way round the loop runs
-			if signf(_face_normal(centre, p, q).dot(cap_up)) * _winding < 0.0:
-				var t := p
-				p = q
-				q = t
-			for v in [centre, p, q]:
-				st.add_vertex(v)
+		for g in GRAIN.size():  # each ring: a band between its outline and the next one in
+			var outer: float = GRAIN[g][0]
+			var inner: float = GRAIN[g + 1][0] if g + 1 < GRAIN.size() else 0.0
+			st.set_uv(GRAIN[g][1])
+			for k in cap.size():
+				var p := cap[k]
+				var q := cap[(k + 1) % cap.size()]
+				var a := centre.lerp(p, outer)
+				var b := centre.lerp(q, outer)
+				var c := centre.lerp(q, inner)
+				var d := centre.lerp(p, inner)
+				_up_tri(st, a, b, c, cap_up)
+				if inner > 0.0:
+					_up_tri(st, a, c, d, cap_up)
 	return st.commit()
+
+
+## A triangle wound to face `up`, whichever way round the points come.
+func _up_tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, up: Vector3) -> void:
+	if signf(_face_normal(a, b, c).dot(up)) * _winding < 0.0:
+		var t := b
+		b = c
+		c = t
+	st.add_vertex(a)
+	st.add_vertex(b)
+	st.add_vertex(c)
 
 
 static func _face_normal(a: Vector3, b: Vector3, c: Vector3) -> Vector3:

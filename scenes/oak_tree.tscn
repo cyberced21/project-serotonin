@@ -13,9 +13,10 @@ respawn_time = 30.0
 required_level = 15
 xp_per_hit = 9
 xp_on_break = 30
-chip_color = Color(0.55, 0.38, 0.26, 1)
+chip_color = Color(0.761, 0.6, 0.424, 1)
 burst_color = Color(0.16, 0.36, 0.2, 1)
 model = ExtResource("2_model")
+bark_color = Color(0.31, 0.2, 0.133, 1)
 popup_height = 2.2
 
 [node name="CollisionShape3D" parent="." index="0"]

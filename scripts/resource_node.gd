@@ -136,6 +136,9 @@ const CRACKING_LAYER := 1 << 10
 @export var clean_cut_radius := 0.13
 @export_range(0.0, 1.0) var clean_cut_after := 0.25
 @export var clean_cut_color := Color("f3d9a4")
+## Flakes of bark peel off round the notch's rim as it grows, in this colour (chips are chip_color,
+## the cut wood).
+@export var bark_color := Color("5f4029")
 
 @export_group("Respawn display")
 ## Countdown above the spot while the node is depleted.
@@ -756,6 +759,25 @@ func _carve_hit(info: HitInfo, cuts: int) -> void:
 	_trunk.mesh = _carve.carved()
 	info.position = _trunk.global_transform * _carve.bite_point(dir)
 	info.normal = (_trunk.global_basis * dir).normalized()
+	for i in cuts:
+		_peel_bark(dir)
+
+
+## A flake of bark breaking off the rim of the notch, a little to one side of `dir` (trunk space).
+func _peel_bark(dir: Vector3) -> void:
+	var side := dir.normalized().rotated(Vector3.UP, randf_range(-0.6, 0.6))
+	var deep := _carve.depth_toward(side)
+	var y := _carve.ring + randf_range(-0.04, deep / TrunkCarve.SLOPE_UP + 0.06)
+	var at := Vector3(0.0, y, 0.0) + side * _carve.radius_at(_carve.ring, side)
+	var flake := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = Vector3(randf_range(0.06, 0.11), randf_range(0.07, 0.13), 0.018)
+	flake.mesh = box
+	flake.material_override = NODE_SURFACE
+	flake.set_instance_shader_parameter("albedo", bark_color.darkened(randf_range(0.0, 0.2)))
+	var out := (_trunk.global_basis * side).normalized()
+	_throw(flake, Transform3D(Basis.looking_at(-out), _trunk.global_transform * at + out * 0.02),
+		out + Vector3.UP * 0.3, debris_speed * randf_range(0.4, 0.7))
 
 
 ## A clean cut: the swing is aimed into the mouth of a notch that's already well started, from

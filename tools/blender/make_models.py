@@ -1185,13 +1185,6 @@ def road():
     checkpoint()
 
 
-# The starter tree's canopy: (radius, jitter, squash, location, rotation) per blob.
-TREE_CANOPY = [
-    (1.25, 0.2, (1.0, 1.0, 0.72), (0, 0, 3.5), (0, 0, 0.4)),
-    (0.85, 0.22, (1.0, 1.0, 0.8), (0.15, -0.1, 4.45), (0, 0, 1.1)),
-]
-
-
 ## The chopping band of a carved trunk: rings this far apart from CARVE_BAND[0] to CARVE_BAND[1]
 ## up the trunk (m), so the notch (ResourceNode's TrunkCarve) has vertices to push in. The notch
 ## sits on one of these rings, and the tree splits there when it falls.
@@ -1274,10 +1267,12 @@ def jitter_in_place(bm, amount, rng):
         v.co += Vector((rng.uniform(-amount, amount), rng.uniform(-amount, amount), rng.uniform(-amount, amount)))
 
 
-# --- tree design candidates (models/designs/tree_*.glb; not used by the game) -----------------
-# Two looks per tree, all on a ringed trunk the axe can notch, for picking one each. Every tree:
-# a rounder trunk with a root flare and a little lean or curve above the chopping band, a few
-# branches, and the canopy as more, smaller clumps on the branch ends.
+# --- trees ----------------------------------------------------------------------------------
+# Two candidate looks per tree (models/designs/), all on a ringed trunk the axe can notch; the
+# picked one of each also builds the game's tree (tree_round -> tree, birch_airy -> birch,
+# oak_spreading -> oak, pine_classic -> pine). Every tree: a rounder trunk with a root flare and
+# a little lean or curve above the chopping band, a few branches, and the canopy as more, smaller
+# clumps on the branch ends.
 
 STARTER_BARK = ("wood.5", "wood.3", "wood.2", "wood.2")
 STARTER_LEAVES = ("leaves.5", "leaves.3", "leaves.1", "leaves.4")
@@ -1311,8 +1306,17 @@ def fan(n, radius, z, rng, start=0.0, jit=0.25):
             for i in range(n)]
 
 
-def tree_round():
-    """Starter A: a rounded crown of clumps on three spreading branches, a little root flare."""
+def cut_stump(r_bottom, r_top, bark, rng):
+    """Rubble_Stump: what shows while a tree regrows if its notch wasn't saved (the game leaves
+    the real cut stump otherwise, see TrunkCarve)."""
+    bm = prism(12, r_bottom * 1.1, r_top, 0.4)
+    paint(bm, lambda f: "wood.7" if f.normal.z > 0.9 else (bark[1] if rng.random() < 0.6 else bark[3]))
+    make_object("Rubble_Stump", bm, (0, 0, 0.2))
+
+
+def tree_round(name="tree_round", out="designs"):
+    """Starter A (picked: the game's tree): a rounded crown of clumps on three spreading branches,
+    a little root flare."""
     reset()
     rng = random.Random(70)
     make_object("Body_Trunk", ringed_trunk(rng, 12, 0.24, 0.15, 2.9, STARTER_BARK, flare=0.3, lean=(0.12, 0.05)))
@@ -1322,7 +1326,8 @@ def tree_round():
     spots += [(0.95, (0.1, 0.0, 3.85), (1, 1, 0.8)), (0.6, (0.5, -0.4, 4.2), (1, 1, 0.85)),
               (0.55, (-0.45, 0.35, 4.15), (1, 1, 0.85))]
     clumps(rng, spots, STARTER_LEAVES)
-    export(os.path.join("designs", "tree_round"))
+    cut_stump(0.24, 0.22, STARTER_BARK, rng)
+    export(os.path.join(out, name))
 
 
 def tree_tiered():
@@ -1341,9 +1346,9 @@ def tree_tiered():
     export(os.path.join("designs", "tree_tiered"))
 
 
-def birch_airy():
-    """Birch A: a slim white trunk dashed with black, curving gently, and small upright clumps
-    hung along its upper half."""
+def birch_airy(name="birch_airy", out="designs"):
+    """Birch A (picked: the game's birch): a slim white trunk dashed with black, curving gently,
+    and small upright clumps hung along its upper half."""
     reset()
     rng = random.Random(72)
     make_object("Body_Trunk", ringed_trunk(rng, 10, 0.17, 0.09, 4.3, BIRCH_BARK, flare=0.15, lobes=4,
@@ -1360,7 +1365,8 @@ def birch_airy():
     spots.append((0.5, (0.32, -0.1, 4.55), (0.85, 0.85, 1.3)))
     limbs(rng, pairs, BIRCH_BARK)
     clumps(rng, spots, BIRCH_LEAVES)
-    export(os.path.join("designs", "birch_airy"))
+    cut_stump(0.17, 0.16, BIRCH_BARK, rng)
+    export(os.path.join(out, name))
 
 
 def birch_forked():
@@ -1380,9 +1386,9 @@ def birch_forked():
     export(os.path.join("designs", "birch_forked"))
 
 
-def oak_spreading():
-    """Oak A: a stout trunk on big buttress roots, four thick limbs reaching out wide, a broad
-    crown of heavy clumps."""
+def oak_spreading(name="oak_spreading", out="designs"):
+    """Oak A (picked: the game's oak): a stout trunk on big buttress roots, four thick limbs
+    reaching out wide, a broad crown of heavy clumps."""
     reset()
     rng = random.Random(74)
     make_object("Body_Trunk", ringed_trunk(rng, 12, 0.36, 0.26, 2.4, OAK_BARK, flare=0.5, lobes=6, lean=(0.08, 0.0)))
@@ -1391,7 +1397,8 @@ def oak_spreading():
     spots = [(1.0, (e[0], e[1], e[2] + 0.2), (1.15, 1.15, 0.65)) for e in ends]
     spots += [(1.25, (0.05, 0.0, 3.55), (1.15, 1.15, 0.65))]
     clumps(rng, spots, OAK_LEAVES)
-    export(os.path.join("designs", "oak_spreading"))
+    cut_stump(0.36, 0.33, OAK_BARK, rng)
+    export(os.path.join(out, name))
 
 
 def oak_gnarled():
@@ -1414,15 +1421,15 @@ def oak_gnarled():
     export(os.path.join("designs", "oak_gnarled"))
 
 
-def pine_classic():
-    """Pine A: a tall straight trunk with stacked cones of needles, their rims drooping and
-    ragged."""
+def pine_classic(name="pine_classic", out="designs"):
+    """Pine A (picked: the game's pine): a tall straight trunk with stacked cones of needles,
+    their rims drooping and ragged. The lowest rim stays above the chopping band."""
     reset()
     rng = random.Random(76)
-    make_object("Body_Trunk", ringed_trunk(rng, 10, 0.3, 0.1, 5.6, PINE_BARK, flare=0.25, lobes=5,
-                                           upper=(2.0, 2.6, 3.4, 4.2)))
+    make_object("Body_Trunk", ringed_trunk(rng, 10, 0.3, 0.1, 5.9, PINE_BARK, flare=0.25, lobes=5,
+                                           upper=(2.0, 2.6, 3.4, 4.2, 5.0)))
     shade = shade_by_normal(PINE_NEEDLES[0], PINE_NEEDLES[1], PINE_NEEDLES[2], rng, side_alt=PINE_NEEDLES[3])
-    for i, (r, h, z) in enumerate(((1.9, 1.5, 2.3), (1.6, 1.4, 3.1), (1.25, 1.3, 3.9), (0.9, 1.2, 4.6), (0.5, 1.1, 5.3))):
+    for i, (r, h, z) in enumerate(((1.9, 1.5, 2.65), (1.6, 1.4, 3.4), (1.25, 1.3, 4.1), (0.9, 1.2, 4.75), (0.5, 1.1, 5.4))):
         bm = prism(9, r, 0.06, h)
         for v in bm.verts:  # ragged rim, the points drooping
             if v.co.z < 0:
@@ -1431,7 +1438,8 @@ def pine_classic():
                 v.co.y *= rng.uniform(0.85, 1.1)
         paint(bm, shade)
         make_object(f"Body_Canopy{i}", bm, (0, 0, z), (0, 0, rng.uniform(0, math.tau)))
-    export(os.path.join("designs", "pine_classic"))
+    cut_stump(0.3, 0.28, PINE_BARK, rng)
+    export(os.path.join(out, name))
 
 
 def pine_scots():
@@ -1464,63 +1472,14 @@ def tree_designs():
         build()
 
 
-def tree(name="tree", seed=7, trunk=(0.24, 0.15, 3.2), bark=("wood.5", "wood.3", "wood.2", "wood.2"),
-         leaf_shades=("leaves.5", "leaves.3", "leaves.1", "leaves.4"), canopy=TREE_CANOPY,
-         slab=("wood.3", "wood.1", "wood.1", "wood.0"), slab_size=(0.34, 0.2), stump=(0.28, 0.23),
-         sides=12, carved=True):
-    """Tapered trunk, lumpy canopy blobs, bark slabs that chip off, a stump.
-    The default is the starter tree; oak() is a stouter, darker, wider one (still six-sided,
-    uncarved, with bark slabs, until the tree designs are picked).
-    slab_size: (width, distance from the trunk's centre) of the bark slabs.
-    carved: a rounder ringed trunk (ringed_trunk) for the axe to notch, and no bark slabs (the
-    notch is where they'd be)."""
-    reset()
-    rng = random.Random(seed)
-    r_bottom, r_top, height = trunk
-
-    if carved:
-        make_object("Body_Trunk", ringed_trunk(rng, sides, r_bottom, r_top, height, bark))
-    else:
-        bm = prism(sides, r_bottom, r_top, height)
-        jitter(bm, 0.06, rng)
-        paint(bm, shade_by_normal(bark[0], bark[1], bark[2], rng, side_alt=bark[3]))
-        make_object("Body_Trunk", bm, (0, 0, height / 2))
-
-    leaves = shade_by_normal(leaf_shades[0], leaf_shades[1], leaf_shades[2], rng, side_alt=leaf_shades[3])
-    names = ["Body_Canopy", "Body_CanopyTop"] + [f"Body_Canopy{i}" for i in range(2, len(canopy))]
-    for (radius, jit, squash, loc, rot), obj_name in zip(canopy, names):
-        bm = blob(radius, rng, jitter_amount=jit, squash=squash)
-        paint(bm, leaves)
-        make_object(obj_name, bm, loc, rot)
-
-    # bark slabs hugging the trunk at chopping height, one per side the axe can come from
-    width, dist = slab_size
-    for i in range(0 if carved else 4):
-        a = i * math.tau / 4 + 0.3
-        bm = box((width, 0.07, 0.3))
-        jitter(bm, 0.12, rng)
-        paint(bm, shade_by_normal(slab[0], slab[1], slab[2], rng, side_alt=slab[3]))
-        loc = (math.cos(a) * dist, math.sin(a) * dist, 1.3)
-        make_object(f"Chunk_Bark{i}", bm, loc, (0, 0, a + math.pi / 2))
-
-    bm = prism(6, stump[0], stump[1], 0.4)
-    jitter(bm, 0.06, rng)
-    paint(bm, lambda f: "wood.7" if f.normal.z > 0.9 else (bark[1] if rng.random() < 0.6 else bark[2]))
-    make_object("Rubble_Stump", bm, (0, 0, 0.2))
-    export(name)
+def tree():
+    """The starter tree (Woodcutting 1)."""
+    tree_round("tree", "")
 
 
 def oak():
-    """A stout oak (Woodcutting 15): thick dark trunk, one broad canopy of three dark blobs."""
-    tree("oak", seed=8, trunk=(0.36, 0.24, 2.8), bark=("wood.3", "wood.1", "wood.0", "wood.2"),
-         leaf_shades=("leaves.3", "leaves.2", "leaves.0", "leaves.1"),
-         canopy=[
-             (1.55, 0.2, (1.15, 1.1, 0.62), (0, 0, 3.2), (0, 0, 0.3)),
-             (1.05, 0.22, (1.0, 1.0, 0.7), (0.95, 0.35, 3.55), (0, 0, 1.0)),
-             (1.0, 0.22, (1.0, 1.0, 0.7), (-0.85, -0.45, 3.65), (0, 0, 2.2)),
-         ],
-         slab=("wood.2", "wood.0", "wood.0", "wood.1"), slab_size=(0.48, 0.3), stump=(0.4, 0.34),
-         sides=6, carved=False)
+    """A stout oak (Woodcutting 15)."""
+    oak_spreading("oak", "")
 
 
 def block_hand(along="z", grip=0.16):
@@ -1546,42 +1505,13 @@ def _painted(bm, color):
 
 
 def birch():
-    """A slim white birch with a light, airy canopy (Woodcutting 8)."""
-    tree("birch", seed=9, trunk=(0.17, 0.11, 3.4), bark=("neutral.7", "neutral.6", "neutral.5", "neutral.1"),
-         leaf_shades=("leaves.7", "leaves.6", "leaves.4", "leaves.5"),
-         canopy=[
-             (0.95, 0.22, (0.9, 0.9, 1.0), (0, 0, 3.6), (0, 0, 0.5)),
-             (0.7, 0.24, (1.0, 1.0, 0.9), (0.3, -0.2, 4.4), (0, 0, 1.2)),
-         ],
-         slab=("neutral.6", "neutral.5", "neutral.5", "neutral.1"), slab_size=(0.26, 0.15), stump=(0.2, 0.17),
-         sides=6, carved=False)
+    """A slim white birch (Woodcutting 8)."""
+    birch_airy("birch", "")
 
 
 def pine():
-    """A tall pine (Woodcutting 25): straight dark trunk, three stacked cones of needles."""
-    reset()
-    rng = random.Random(10)
-    bm = prism(6, 0.3, 0.12, 5.0)
-    jitter(bm, 0.05, rng)
-    paint(bm, shade_by_normal("wood.3", "wood.1", "wood.0", rng, side_alt="wood.2"))
-    make_object("Body_Trunk", bm, (0, 0, 2.5))
-    needles = shade_by_normal("leaves.2", "leaves.1", "leaves.0", rng, side_alt="leaves.2")
-    for i, (r, h, z) in enumerate(((1.7, 1.8, 2.6), (1.3, 1.6, 3.7), (0.85, 1.6, 4.8))):
-        bm = prism(7, r, 0.05, h)
-        jitter(bm, 0.08, rng)
-        paint(bm, needles)
-        make_object("Body_Canopy" if i == 0 else f"Body_Canopy{i}", bm, (0, 0, z), (0, 0, rng.uniform(0, math.tau)))
-    for i in range(4):
-        a = i * math.tau / 4 + 0.3
-        bm = box((0.42, 0.07, 0.3))
-        jitter(bm, 0.12, rng)
-        paint(bm, shade_by_normal("wood.2", "wood.0", "wood.0", rng, side_alt="wood.1"))
-        make_object(f"Chunk_Bark{i}", bm, (math.cos(a) * 0.25, math.sin(a) * 0.25, 1.3), (0, 0, a + math.pi / 2))
-    bm = prism(6, 0.34, 0.3, 0.4)
-    jitter(bm, 0.06, rng)
-    paint(bm, lambda f: "wood.6" if f.normal.z > 0.9 else ("wood.1" if rng.random() < 0.6 else "wood.0"))
-    make_object("Rubble_Stump", bm, (0, 0, 0.2))
-    export("pine")
+    """A tall pine (Woodcutting 25)."""
+    pine_classic("pine", "")
 
 
 def pickaxe():
