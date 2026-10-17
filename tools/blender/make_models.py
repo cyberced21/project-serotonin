@@ -1951,17 +1951,26 @@ def boulder(name, seed, size, squash):
 # --- forest scenery: the Pinewood's canopy and floor (not gatherable) --------------------------
 
 def canopy_pine(name, seed, height, cones, needles):
-    """A background pine: like pine() but taller, darker and one merged mesh. cones: (radius,
-    height, z) per cone of needles, bottom up; needles: (top, side, bottom, side_alt) swatches."""
+    """A background pine in the game pine's look (pine_classic): taller, darker and one merged
+    mesh, its cones' rims ragged and drooping. cones: (radius, height, z) per cone of needles,
+    bottom up; needles: (top, side, bottom, side_alt) swatches."""
     reset()
     rng = random.Random(seed)
-    bm = prism(6, 0.32, 0.1, height)
+    bm = prism(8, 0.32, 0.1, height)
+    for v in bm.verts:  # a little root flare
+        if v.co.z < -height / 2 + 0.01:
+            v.co.x *= 1.3
+            v.co.y *= 1.3
     jitter(bm, 0.05, rng)
     paint(bm, shade_by_normal("wood.2", "wood.1", "wood.0", rng, side_alt="wood.2"))
     make_object("Trunk", bm, (0, 0, height / 2))
     for i, (r, h, z) in enumerate(cones):
-        bm = prism(7, r, 0.05, h)
-        jitter(bm, 0.09, rng)
+        bm = prism(9, r, 0.05, h)
+        for v in bm.verts:  # ragged rim, the points drooping
+            if v.co.z < 0:
+                v.co.z -= rng.uniform(0.05, 0.3)
+                v.co.x *= rng.uniform(0.85, 1.1)
+                v.co.y *= rng.uniform(0.85, 1.1)
         paint(bm, shade_by_normal(needles[0], needles[1], needles[2], rng, side_alt=needles[3]))
         make_object(f"Cone{i}", bm, (0, 0, z), (0, 0, rng.uniform(0, math.tau)))
     merge_all("Pine")
@@ -1969,16 +1978,22 @@ def canopy_pine(name, seed, height, cones, needles):
 
 
 def canopy_birch():
-    """A background birch: pale trunk, airy canopy of three blobs, one merged mesh."""
+    """A background birch in the game birch's look (birch_airy): a slim white trunk dashed with
+    black, small upright clumps up its top half; one merged mesh."""
     reset()
     rng = random.Random(61)
-    bm = prism(6, 0.16, 0.1, 4.2)
-    jitter(bm, 0.06, rng)
-    paint(bm, shade_by_normal("neutral.6", "neutral.5", "neutral.4", rng, side_alt="neutral.1"))
-    make_object("Trunk", bm, (0, 0, 2.1))
-    leaves = shade_by_normal("leaves.5", "leaves.4", "leaves.2", rng, side_alt="leaves.3")
-    for i, (r, loc) in enumerate(((1.0, (0, 0, 4.0)), (0.75, (0.35, -0.2, 4.8)), (0.7, (-0.4, 0.3, 4.5)))):
-        bm = blob(r, rng, jitter_amount=0.22, squash=(0.95, 0.95, 1.0))
+    bm = prism(8, 0.16, 0.09, 4.6)
+    bmesh.ops.subdivide_edges(bm, edges=[e for e in bm.edges if abs(e.verts[0].co.z - e.verts[1].co.z) > 1.0],
+                              cuts=7)  # rings up the trunk, for the dashes to sit on
+    jitter(bm, 0.03, rng)
+    paint(bm, lambda f: "neutral.1" if abs(f.normal.z) < 0.9 and rng.random() < 0.16
+          else ("neutral.7" if rng.random() < 0.6 else "neutral.6"))
+    make_object("Trunk", bm, (0, 0, 2.3))
+    leaves = shade_by_normal(*BIRCH_LEAVES[:3], rng, side_alt=BIRCH_LEAVES[3])
+    spots = [(0.55, (math.cos(i * 2.2) * 0.4, math.sin(i * 2.2) * 0.4, z)) for i, z in enumerate((2.9, 3.4, 3.85, 4.3))]
+    spots.append((0.55, (0.0, 0.0, 4.8)))
+    for i, (r, loc) in enumerate(spots):
+        bm = blob(r, rng, jitter_amount=0.2, squash=(0.8, 0.8, 1.25))
         paint(bm, leaves)
         make_object(f"Canopy{i}", bm, loc)
     merge_all("Birch")
