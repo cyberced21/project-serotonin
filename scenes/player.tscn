@@ -60,10 +60,12 @@ collision_mask = 65
 script = ExtResource("1_script")
 swing_sfx = ExtResource("3_swing")
 tool_swing_layers = Dictionary[StringName, ExtResource("13_layers")]({
-&"pickaxe": ExtResource("14_pick_swing")
+&"pickaxe": ExtResource("14_pick_swing"),
+&"axe": ExtResource("14_pick_swing")
 })
 tool_windup_layers = Dictionary[StringName, ExtResource("13_layers")]({
-&"pickaxe": ExtResource("15_pick_windup")
+&"pickaxe": ExtResource("15_pick_windup"),
+&"axe": ExtResource("15_pick_windup")
 })
 pickaxe_model = ExtResource("8_pickaxe")
 axe_model = ExtResource("9_axe")

@@ -152,6 +152,10 @@ const CRACKING_LAYER := 1 << 10
 ## whoosh of it falling.
 @export var creak_layers: SoundLayers
 @export var fall_layers: SoundLayers
+## A clean cut's snap (also, pitched down, the trunk giving way on the last hit), and the felled
+## tree landing (instead of land_sfx).
+@export var clean_layers: SoundLayers
+@export var land_layers: SoundLayers
 
 @export_group("Respawn display")
 ## Countdown above the spot while the node is depleted.
@@ -437,7 +441,10 @@ func hit(info: HitInfo) -> bool:
 	last_impact = 2.5 if hits_left == 0 else 2.0 if split else 1.5 if tip or weak or double or _clean else 1.0
 	_hit_sounds(info, pitch, double, split)
 	if _clean and hits_left > 0:  # a sharper crack on top of the thunk
-		_play(break_audio, hit_sfx, 1.35)
+		if clean_layers:
+			Sfx.play_at(clean_layers, info.position)
+		else:
+			_play(break_audio, hit_sfx, 1.35)
 
 	if hits_left == 0:
 		_break(info)
@@ -471,7 +478,7 @@ func pull(info: HitInfo) -> void:
 ## tip's split, further under a piece splitting off or the break), then the crack creaking on
 ## quietly, its tip splitting, or the piece splitting off. (tools/measure_mix.py mirrors this.)
 func _hit_sounds(info: HitInfo, pitch: float, double: bool, split: bool) -> void:
-	var duck := HIT_DUCK_SPLIT if split or hits_left == 0 else HIT_DUCK_TIP if _crack_sound == CRACK_TIP else 0.0
+	var duck := HIT_DUCK_SPLIT if split or hits_left == 0 else HIT_DUCK_TIP if _crack_sound == CRACK_TIP or _clean else 0.0
 	if hit_layers:
 		Sfx.play_at(hit_layers, info.position, pitch, duck + (2.0 if double else 0.0))
 	else:
@@ -508,7 +515,10 @@ func _popup_pos() -> Vector3:
 
 func _break(info: HitInfo) -> void:
 	_award_xp(xp_on_break, true)
-	_play(break_audio, break_sfx)
+	if _carve and clean_layers:  # the hinge giving way: a deep snap of the last fibres
+		Sfx.play_at(clean_layers, info.position, 0.6, 3.0)
+	else:
+		_play(break_audio, break_sfx)
 	for c in _intact_chunks():
 		_pop_chunk(c, info.away(), debris_speed * 0.7)
 	_show_depleted()
@@ -730,7 +740,10 @@ func _topple(info: HitInfo, log_mesh: Mesh = null) -> void:
 	felled.linear_damp = 1.5
 	var top := felled.global_transform * Vector3(0, height * 0.75, 0)
 	break_audio.global_position = top
-	_play(break_audio, land_sfx, land_pitch)
+	if land_layers:
+		Sfx.play_at(land_layers, top)
+	else:
+		_play(break_audio, land_sfx, land_pitch)
 	burst.global_position = top
 	burst.restart()
 	var player := get_tree().get_first_node_in_group("player") as Node3D
