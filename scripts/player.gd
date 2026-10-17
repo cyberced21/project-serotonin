@@ -175,7 +175,8 @@ extends CharacterBody3D
 ## "pace" speeds the whole swing up or down. "swing_grip" / "swing_turn": where the hands bring it
 ## while swinging (position, and rotation in radians), turning to it during the wind-up and back
 ## after; tools without one swing from the Grip node's own placement in player.tscn, which is
-## also everyone's rest pose (turned well to the side: a diagonal chop).
+## also everyone's rest pose (turned well to the side: a diagonal chop). "yank": where the hands
+## go as the tool is pulled back out (grip space; default YANK_OFFSET).
 ## Optional: "ready" / "ready_blend": a stance taken while the crosshair is on something the tool
 ## can work (pivot tilt, and how far toward the swing grip), so a swing starts from where the tool
 ## already is and holding to mine doesn't bounce back to rest between swings. "smooth": ease the
@@ -191,6 +192,15 @@ const SWINGS := {
 		"lift": Vector3(-0.04, 0.62, -0.12), "reach": Vector3(-0.1, 0.425, 0.075), "pace": 0.85,
 		"swing_grip": Vector3(0.2, -0.5, -0.62), "swing_turn": Vector3(0, 0.2, 0.05),
 		"ready": 0.15, "ready_blend": 0.6, "smooth": true, "windup_scale": 1.7, "recover_scale": 1.6},
+	# flat side chop: the grip is rolled so the pivot's X axis stands up, so the swing sweeps across
+	# the view instead of down it, tilted a little so the head rides higher than the hands. Pulled
+	# back out to the right with the bit level, then across right-to-left, biting into the trunk at
+	# the crosshair (reach solved against the viewmodel camera, the hands low on the right).
+	&"axe": {"rest": -0.3, "windup": 1.1, "strike": -0.12,
+		"lift": Vector3(-0.031, -0.024, 0.022), "reach": Vector3(-0.175, 0.0, -0.046), "pace": 0.95,
+		"swing_grip": Vector3(0.22, -0.38, -0.42), "swing_turn": Vector3(0.286, 1.662, -1.258),
+		"ready": 0.6, "ready_blend": 0.75, "smooth": true, "windup_scale": 1.5, "recover_scale": 1.4,
+		"yank": Vector3(-0.038, -0.054, 0.03)},
 }
 ## The sickle swings sideways instead: it's swung out to the right (rotation around the view
 ## axis), then cuts across to the left, a bit quicker than the axe.
@@ -226,7 +236,7 @@ const TOOL_MATERIAL := preload("res://materials/node_palette.tres")
 const SPEED_LINES := preload("res://shaders/speed_lines.gdshader")
 ## Where each tool's cutting edge is, in its model's space (tools/blender/make_models.py): the
 ## point that gets buried in the node during the bite.
-const TOOL_HEADS := {&"axe": Vector3(0, 0.38, -0.185), &"pickaxe": Vector3(0, 0.385, -0.26)}
+const TOOL_HEADS := {&"axe": Vector3(0, 0.5, -0.18), &"pickaxe": Vector3(0, 0.385, -0.26)}
 
 @onready var head: Node3D = $Head
 @onready var body_collision: CollisionShape3D = $CollisionShape3D
@@ -1124,7 +1134,7 @@ func _bite(tool: StringName, info: HitInfo) -> void:
 		await _unstick(stuck, tool)
 	# yank: back toward the camera, head tipping up as it comes free
 	t = create_tween().set_parallel()
-	t.tween_property(tool_pivot, "position", strike + YANK_OFFSET, yank_time) 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	t.tween_property(tool_pivot, "position", strike + pose.get("yank", YANK_OFFSET), yank_time) 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	t.tween_property(tool_pivot, "rotation:x", pose["strike"] + YANK_TIP, yank_time) 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	await t.finished
 

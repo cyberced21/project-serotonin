@@ -25,7 +25,7 @@ import sys
 
 import bmesh
 import bpy
-from mathutils import Euler, Vector
+from mathutils import Euler, Matrix, Vector
 from mathutils.bvhtree import BVHTree
 
 argv = sys.argv[sys.argv.index("--") + 1:]
@@ -1323,21 +1323,89 @@ def pickaxe():
     export("pickaxe")
 
 
+def hull(points):
+    """The convex hull of `points` as a bmesh."""
+    bm = bmesh.new()
+    for p in points:
+        bm.verts.new(p)
+    out = bmesh.ops.convex_hull(bm, input=bm.verts)
+    inside = [g for g in out["geom_interior"] + out["geom_unused"] if isinstance(g, bmesh.types.BMVert)]
+    bmesh.ops.delete(bm, geom=inside, context="VERTS")
+    bm.normal_update()
+    return bm
+
+
+# The felling axe's head, its eye on the origin, the handle running through it along Z and the
+# bit pointing +Y. Sections across the bit: (distance out along Y, half thickness in X, half height
+# in Z, and how far the bit droops at that point). A narrow neck, then the cheeks flare out to a
+# tall edge, a little curved and a little lower than the eye, the way a felling bit sweeps down.
+AXE_NECK = [(0.02, 0.026, 0.036, 0.0), (0.085, 0.017, 0.04, -0.004)]
+AXE_BIT = [(0.08, 0.018, 0.042, -0.004), (0.15, 0.009, 0.074, -0.012), (0.172, 0.002, 0.08, -0.014)]
+AXE_EDGE_BULGE = 0.012  # how far the middle of the edge stands out past its corners
+AXE_EDGE_FROM = 0.148  # past this the faces are the honed edge (bright)
+
+
+def felling_head():
+    """The felling axe's head as one bmesh: a square poll behind, the eye round the handle, a narrow
+    neck and a flaring, thin-ground bit with a curved edge. Painted: dark poll and eye, mid cheeks,
+    a bright honed strip along the edge."""
+    parts = []
+    for sections in (AXE_NECK, AXE_BIT):
+        points = []
+        for y, hx, hz, droop in sections:
+            for sx in (-1, 1):
+                for sz in (-1, 1):
+                    points.append((sx * hx, y, sz * hz + droop))
+        if sections is AXE_BIT:  # the edge bows out in the middle
+            y, hx, hz, droop = sections[-1]
+            for sx in (-1, 1):
+                for t in (-0.5, 0.0, 0.5):
+                    bulge = AXE_EDGE_BULGE * (1.0 - t * t * 2.5)
+                    points.append((sx * hx, y + bulge, t * hz * 1.6 + droop))
+        parts.append(hull(points))
+    # the eye (wrapped round the handle) and the poll behind it, one block
+    parts.append(box((0.05, 0.075, 0.084)))
+    for v in parts[-1].verts:
+        v.co.y -= 0.012
+    bm = bmesh.new()
+    for part in parts:
+        mesh = bpy.data.meshes.new("tmp")
+        part.to_mesh(mesh)
+        bm.from_mesh(mesh)
+        bpy.data.meshes.remove(mesh)
+        part.free()
+    paint(bm, axe_head_shade)
+    return bm
+
+
+def axe_head_shade(f):
+    """felling_head's paint (in its own space): a dark poll and eye, mid cheeks, a bright edge."""
+    c = f.calc_center_median()
+    if c.y > AXE_EDGE_FROM:
+        return "metal.7"
+    if c.y < 0.03:
+        return "metal.2" if f.normal.y < -0.7 else "metal.3"
+    return "metal.5" if abs(f.normal.x) > 0.6 else "metal.4"
+
+
+AXE_HANDLE = 0.6  # long enough to swing from the end; the hand chokes up on it (block_hand)
+AXE_HEAD_Z = 0.5  # where the eye sits up the handle
+
+
 def axe():
-    """Handle along +Z; a fan-shaped blade sticking out forward (+Y) near the top."""
+    """A felling axe: a long handle along +Z, a little thicker at the knob end, and a felling head
+    (felling_head) near the top with its bit pointing forward (+Y)."""
     reset()
     rng = random.Random(4)
-    bm = box((0.038, 0.038, 0.5))
+    bm = prism(4, 0.024, 0.02, AXE_HANDLE)
+    for v in bm.verts:  # a knob at the very end so it doesn't slip out of the hands
+        if v.co.z < -AXE_HANDLE / 2 + 0.01:
+            v.co.x *= 1.35
+            v.co.y *= 1.5
+    bmesh.ops.rotate(bm, verts=bm.verts, matrix=Matrix.Rotation(math.pi / 4, 3, "Z"))
     paint(bm, shade_by_normal("wood.6", "wood.4", "wood.3", rng, side_alt="wood.5"))
-    make_object("Handle", bm, (0, 0, 0.21))
-    bm = box((0.03, 0.17, 0.11))
-    for v in bm.verts:  # widen toward the cutting edge (far +Y end) and thin it to an edge
-        if v.co.y > 0:
-            v.co.z *= 1.7
-            v.co.x *= 0.35
-    edge = lambda f: "metal.7" if f.normal.y > 0.7 else ("metal.5" if abs(f.normal.x) > 0.5 else "metal.3")
-    paint(bm, edge)
-    make_object("Blade", bm, (0, 0.1, 0.38))
+    make_object("Handle", bm, (0, 0, AXE_HEAD_Z + 0.04 - AXE_HANDLE / 2))
+    make_object("Head", felling_head(), (0, 0, AXE_HEAD_Z))
     block_hand("z")
     export("axe")
 
