@@ -139,6 +139,19 @@ const CRACKING_LAYER := 1 << 10
 ## Flakes of bark peel off round the notch's rim as it grows, in this colour (chips are chip_color,
 ## the cut wood).
 @export var bark_color := Color("5f4029")
+## Every hit shakes the canopy (m it swings out at first) and shakes a few leaves loose.
+@export var canopy_shake := 0.08
+@export_range(0, 32) var leaves_per_hit := 6
+## Once this share of the hits is done the tree sways and creaks on every hit; the last hit's
+## crack holds it leaning on the hinge for `fell_pause` (s) before it goes.
+@export_range(0.0, 1.0) var sway_after := 0.6
+@export var sway_degrees := 1.6
+@export var fell_pause := 0.4
+@export var fell_lean_degrees := 4.0
+## The trunk creaking as it sways and leans (and, quieter, as the notch nears the limit), and the
+## whoosh of it falling.
+@export var creak_layers: SoundLayers
+@export var fall_layers: SoundLayers
 
 @export_group("Respawn display")
 ## Countdown above the spot while the node is depleted.
@@ -230,6 +243,10 @@ var _trunk: MeshInstance3D  # ... the trunk it's carved into
 var _trunk_rest := Transform3D.IDENTITY  # ... where the trunk sits in the node, at rest
 var _stump: MeshInstance3D  # ... and what's left of it once the tree is down
 var _clean := false  # the last hit was a clean cut (its chip comes out big)
+var _canopy := {}  # canopy mesh -> its rest position (carve_notch trees shake it on a hit)
+var _leaves: CPUParticles3D
+var _shake_tween: Tween
+var _sway_tween: Tween
 
 
 func _ready() -> void:
@@ -342,6 +359,10 @@ func _setup_carve() -> void:
 		return
 	_carve = TrunkCarve.new(_trunk.mesh, notch_band)
 	_trunk_rest = global_transform.affine_inverse() * _trunk.global_transform
+	for m in _trunk.get_parent().get_children():
+		if m is MeshInstance3D and m != _trunk:
+			_canopy[m] = (m as Node3D).position
+	_leaves = _make_leaves()
 
 
 func _make_notches() -> Node3D:
@@ -393,6 +414,7 @@ func hit(info: HitInfo) -> bool:
 		_weak_hit_feedback(info)
 	if _carve:
 		_carve_hit(info, before - hits_left)
+		_tree_reacts(info, 1.0 - float(hits_left) / max_hits)
 	SaveGame.mark_dirty()
 	var stress := 1.0 - float(hits_left) / max_hits  # 0 -> 1 as it depletes
 
@@ -685,6 +707,11 @@ func _topple(info: HitInfo, log_mesh: Mesh = null) -> void:
 	get_parent().add_child(felled)
 	felled.global_transform = global_transform.orthonormalized()
 	felled.reset_physics_interpolation()
+	if log_mesh and fell_pause > 0.0:
+		await _lean_on_hinge(felled, away, hinge)
+		if not is_instance_valid(felled):
+			return
+	Sfx.play_at(fall_layers, global_position + Vector3.UP * (hinge + 1.5))
 	# start it rotating around its *base* (the hinge on the stump), not its centre of mass —
 	# otherwise the base skids along the ground and the fall loses all its energy
 	var spin := Vector3.UP.cross(away).normalized() * topple_push
@@ -727,6 +754,98 @@ func _topple(info: HitInfo, log_mesh: Mesh = null) -> void:
 	t.tween_property(felled, "global_position", felled.global_position + Vector3.DOWN * 1.2, 1.0) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	t.tween_callback(felled.queue_free)
+
+
+## The cut tree holds for a moment, creaking over a few degrees on the hinge, before it goes.
+func _lean_on_hinge(felled: RigidBody3D, away: Vector3, hinge: float) -> void:
+	felled.freeze = true
+	var pivot := global_transform * Vector3(0.0, hinge, 0.0)
+	var start := felled.global_transform
+	var axis := Vector3.UP.cross(away).normalized()
+	Sfx.play_at(creak_layers, pivot, 0.8)
+	var lean := func(angle: float) -> void:
+		var turn := Transform3D(Basis(axis, angle), pivot) * Transform3D(Basis.IDENTITY, -pivot)
+		felled.global_transform = turn * start
+	var t := felled.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	t.tween_method(lean, 0.0, deg_to_rad(fell_lean_degrees), fell_pause).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await t.finished
+	if is_instance_valid(felled):
+		felled.freeze = false
+
+
+## The tree reacts to a hit: the canopy shakes and drops a few leaves, and late in the chop
+## (`stress` past sway_after) the whole tree sways away and back, creaking.
+func _tree_reacts(info: HitInfo, stress: float) -> void:
+	var away := info.away()
+	if _shake_tween:
+		_shake_tween.kill()
+	var amp := canopy_shake * (1.0 + stress)
+	_shake_tween = create_tween()
+	_shake_tween.tween_method(func(t: float) -> void:
+		var off := away * amp * sin(t * 28.0) * exp(-t * 6.0)
+		for m: Node3D in _canopy:
+			m.position = _canopy[m] + off * (0.6 + 0.4 * (m.get_index() % 3) / 2.0), 0.0, 0.8, 0.8)
+	_shake_tween.tween_callback(func() -> void:
+		for m: Node3D in _canopy:
+			m.position = _canopy[m])
+	if _leaves and leaves_per_hit > 0:
+		_leaves.amount = maxi(leaves_per_hit + roundi(stress * leaves_per_hit), 1)
+		_leaves.restart()
+	if stress >= sway_after and hits_left > 0:
+		var axis := Vector3.UP.cross(away).normalized()
+		var big := deg_to_rad(sway_degrees) * (0.6 + stress)
+		if _sway_tween:
+			_sway_tween.kill()
+		_sway_tween = create_tween()
+		var local_axis := (global_basis.inverse() * axis).normalized()
+		_sway_tween.tween_method(func(t: float) -> void:  # (the rotation alone: the hit's squash stays)
+			visual.quaternion = Quaternion(local_axis, big * sin(t * 7.0) * exp(-t * 2.2)), 0.0, 1.6, 1.6)
+		_sway_tween.tween_callback(func() -> void: visual.quaternion = Quaternion.IDENTITY)
+		Sfx.play_at(creak_layers, global_position + Vector3.UP * 2.0, 0.9 + randf() * 0.2, -3.0 + 6.0 * (stress - sway_after))
+
+
+## Leaves shaken loose from the canopy: a few at a time, fluttering down.
+func _make_leaves() -> CPUParticles3D:
+	if _canopy.is_empty():
+		return null
+	var box := AABB()
+	var first := true
+	for m: MeshInstance3D in _canopy:
+		var b := _trunk_rest * _trunk.transform.affine_inverse() * m.transform * m.get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	var p := CPUParticles3D.new()
+	p.name = "Leaves"
+	p.emitting = false
+	p.one_shot = true
+	p.explosiveness = 0.7
+	p.lifetime = 2.6
+	p.local_coords = false
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	p.emission_box_extents = box.size * Vector3(0.4, 0.25, 0.4)
+	p.position = box.get_center() - Vector3.UP * box.size.y * 0.2
+	p.direction = Vector3.DOWN
+	p.spread = 70.0
+	p.gravity = Vector3(0, -1.1, 0)
+	p.initial_velocity_min = 0.2
+	p.initial_velocity_max = 0.7
+	p.damping_min = 0.4
+	p.damping_max = 1.0
+	p.angular_velocity_min = -240.0
+	p.angular_velocity_max = 240.0
+	p.particle_flag_rotate_y = true
+	var leaf := BoxMesh.new()
+	leaf.size = Vector3(0.09, 0.012, 0.06)
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.roughness = 1.0
+	leaf.material = mat
+	p.mesh = leaf
+	p.color = burst_color
+	p.scale_amount_min = 0.7
+	p.scale_amount_max = 1.3
+	add_child(p)  # (not under Visual: it isn't one of the surfaces that flash)
+	return p
 
 
 ## Which way a notched tree falls: sideways to the swinger and a little away, never onto them.
@@ -1800,8 +1919,8 @@ func _hit_effects(info: HitInfo, strength: float) -> void:
 		return
 	var swing := (info.position - info.from).normalized()
 	var sparks := roundi(spark_amount * (2.0 if strength > 1.2 else 1.0))
-	HitFx.spawn(hit_fx, get_parent(), info.position, info.normal, swing, chip_color,
-		ore_color if cracks else Color(0, 0, 0, 0), strength, sparks)
+	var second := ore_color if cracks else bark_color if _carve else Color(0, 0, 0, 0)
+	HitFx.spawn(hit_fx, get_parent(), info.position, info.normal, swing, chip_color, second, strength, sparks)
 	HitFx.star(get_parent(), info.position + info.normal * 0.08, STAR_TIP if strength > 1.2 else STAR_HIT, 0.8 * strength)
 	_add_rubble(info.position, 1 if strength <= 1.0 else 2)
 
