@@ -129,6 +129,13 @@ const CRACKING_LAYER := 1 << 10
 @export_range(0.3, 0.85) var notch_depth := 0.65
 ## The heights (m, up the trunk) the notch can sit at: the first hit's height, clamped to this.
 @export var notch_band := Vector2(0.6, 1.4)
+## A swing aimed into the notch's mouth is a clean cut: it counts this many extra hits, doubles
+## the XP and throws a big chip. How close to the middle of the mouth it must aim (m, across the
+## line of the swing), and how deep the notch must be first (share of the fall depth).
+@export_range(0, 5) var clean_cut_extra_hits := 1
+@export var clean_cut_radius := 0.13
+@export_range(0.0, 1.0) var clean_cut_after := 0.25
+@export var clean_cut_color := Color("f3d9a4")
 
 @export_group("Respawn display")
 ## Countdown above the spot while the node is depleted.
@@ -219,6 +226,7 @@ var _carve: TrunkCarve  # carve_notch: the notch in the trunk
 var _trunk: MeshInstance3D  # ... the trunk it's carved into
 var _trunk_rest := Transform3D.IDENTITY  # ... where the trunk sits in the node, at rest
 var _stump: MeshInstance3D  # ... and what's left of it once the tree is down
+var _clean := false  # the last hit was a clean cut (its chip comes out big)
 
 
 func _ready() -> void:
@@ -375,8 +383,9 @@ func hit(info: HitInfo) -> bool:
 	var double := randf() < Village.stat(&"double_hit_chance") or cuts > 1
 	var weak := _is_weak_hit(info)
 	var tip := cracks and _is_tip_hit(info)
+	_clean = _carve != null and _is_clean_cut(info)
 	hits_left = maxi(hits_left - cuts - (1 if double and cuts == 1 else 0) - (weak_point_extra_hits if weak else 0)
-		- (crack_tip_extra_hits if tip else 0), 0)
+		- (crack_tip_extra_hits if tip else 0) - (clean_cut_extra_hits if _clean else 0), 0)
 	if weak:
 		_weak_hit_feedback(info)
 	if _carve:
@@ -388,18 +397,22 @@ func hit(info: HitInfo) -> bool:
 	_crack_sound = 0  # (set by the crack code below; the sounds are played together at the end)
 	_flash()
 	_nudge(info.away() * (1.6 if double else 1.0))
-	_hit_effects(info, 1.5 if tip else 1.0)
+	_hit_effects(info, 1.5 if tip or _clean else 1.0)
 	Juice.shake(shake_hit + stress * 1.5 + (1.5 if double else 0.0))
 	Juice.hitstop(hitstop_hit + (0.035 if double else 0.0))
 	if double:
 		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.35, 0), "Sharp!", SHARP_COLOR, 9)
-	_award_xp(xp_per_hit * (2 if double else 1) * (2 if weak or tip else 1))
+	if _clean:
+		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.6, 0), "Clean cut!", clean_cut_color, 10)
+	_award_xp(xp_per_hit * (2 if double else 1) * (2 if weak or tip or _clean else 1))
 
 	var split := hits_left > 0 and cracks and _grow_crack(info, tip)
 	if split:
 		_split(info)  # the crack ran all the way across
-	last_impact = 2.5 if hits_left == 0 else 2.0 if split else 1.5 if tip or weak or double else 1.0
+	last_impact = 2.5 if hits_left == 0 else 2.0 if split else 1.5 if tip or weak or double or _clean else 1.0
 	_hit_sounds(info, pitch, double, split)
+	if _clean and hits_left > 0:  # a sharper crack on top of the thunk
+		_play(break_audio, hit_sfx, 1.35)
 
 	if hits_left == 0:
 		_break(info)
@@ -421,7 +434,10 @@ func pull(info: HitInfo) -> void:
 	var toward := -info.away()
 	_nudge(toward * 0.6)
 	var tear := (info.normal * 0.6 + toward * 0.6).normalized()
-	_spawn_fragment(info, tear)
+	if _carve:
+		_throw_chip(info, tear, _clean)
+	else:
+		_spawn_fragment(info, tear)
 	if _seams.is_empty():  # (a boulder of pieces only loses them along cracks)
 		_shed_chunks(stress, info, tear)
 
@@ -529,18 +545,25 @@ func _respawn_after(seconds: float) -> void:
 # makes it start fresh. Respawn timers count game time: they pause while the game is closed.
 
 func to_dict() -> Dictionary:
-	if _respawn_timer:
-		return {"respawn_left": _respawn_timer.time_left}
-	return {"hits_left": hits_left}
+	var d := {"respawn_left": _respawn_timer.time_left} if _respawn_timer else {"hits_left": hits_left}
+	if _carve and _carve.is_started():  # (a felled tree keeps its notch until it regrows: the stump)
+		d["notch"] = _carve.to_dict()
+	return d
 
 
 func from_dict(d: Dictionary) -> void:
+	if _carve and d.has("notch"):
+		_carve.from_dict(d["notch"])
 	if d.has("respawn_left"):
 		hits_left = 0
 		_show_depleted()
+		if _carve and _carve.is_started():
+			_make_stump(_carve.split()["stump"])
 		_respawn_after(maxf(float(d["respawn_left"]), 0.1))
 	elif d.has("hits_left"):
 		hits_left = clampi(int(d["hits_left"]), 1, max_hits)
+		if _carve and _carve.is_started():
+			_trunk.mesh = _carve.carved()
 		# hide the chunks that would already have broken off
 		var total := chunks.get_child_count()
 		var stress := 1.0 - float(hits_left) / max_hits
@@ -733,6 +756,35 @@ func _carve_hit(info: HitInfo, cuts: int) -> void:
 	_trunk.mesh = _carve.carved()
 	info.position = _trunk.global_transform * _carve.bite_point(dir)
 	info.normal = (_trunk.global_basis * dir).normalized()
+
+
+## A clean cut: the swing is aimed into the mouth of a notch that's already well started, from
+## (about) the side it was cut from.
+func _is_clean_cut(info: HitInfo) -> bool:
+	if not _carve.is_started():
+		return false
+	var to_trunk := _trunk.global_transform.affine_inverse()
+	var dir := to_trunk.basis * (info.from - info.position)
+	dir.y = 0.0
+	var full := _carve.radius_at(_carve.ring, dir) * notch_depth
+	var deep := _carve.depth_toward(dir)
+	if deep < full * clean_cut_after:
+		return false
+	var mouth := _trunk.global_transform * (_carve.bite_point(dir) + dir.normalized() * deep * 0.5)
+	return _aimed_near(info, mouth, clean_cut_radius)
+
+
+## A wood chip flying out of the notch as the axe comes free: a flat wedge of cut wood, a big
+## one off a clean cut.
+func _throw_chip(info: HitInfo, push: Vector3, big: bool) -> void:
+	var chip := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = Vector3(0.11, 0.025, 0.07) * (1.8 if big else 1.0)
+	chip.mesh = box
+	chip.material_override = NODE_SURFACE
+	chip.set_instance_shader_parameter("albedo", chip_color)
+	var rot := Basis.from_euler(Vector3(randf_range(-0.4, 0.4), randf() * TAU, randf_range(-0.4, 0.4)))
+	_throw(chip, Transform3D(rot, info.position + info.normal * 0.06), push, debris_speed * (1.0 if big else 0.8))
 
 
 ## The bottom of the carved trunk stays standing while the tree regrows.

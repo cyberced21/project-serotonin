@@ -100,6 +100,20 @@ func hit(y: float, dir: Vector3, share: float) -> void:
 		depth[b] = minf(depth[b] + amount * w, limit)
 
 
+func to_dict() -> Dictionary:
+	return {"ring": snappedf(ring, 0.001), "depth": Array(depth).map(func(v: float) -> float: return snappedf(v, 0.001))}
+
+
+func from_dict(d: Dictionary) -> void:
+	reset()
+	if not d.has("ring") or not d.has("depth"):
+		return
+	ring = _nearest_ring(float(d["ring"]))  # (snapped back onto a ring, in case the model changed)
+	var saved: Array = d["depth"]
+	for b in mini(saved.size(), BINS):
+		depth[b] = float(saved[b])
+
+
 ## How deep the notch is toward `dir` (interpolated between bins).
 func depth_toward(dir: Vector3) -> float:
 	var f := fposmod(atan2(dir.z, dir.x), TAU) / TAU * BINS
