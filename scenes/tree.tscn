@@ -23,6 +23,7 @@ hit_sfx = ExtResource("4_hit")
 break_sfx = ExtResource("5_break")
 topple = true
 land_sfx = ExtResource("5_break")
+carve_notch = true
 
 [node name="CollisionShape3D" parent="." index="0"]
 position = Vector3(0, 1.6, 0)

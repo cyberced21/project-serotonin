@@ -1192,20 +1192,71 @@ TREE_CANOPY = [
 ]
 
 
+## The chopping band of a carved trunk: rings this far apart from CARVE_BAND[0] to CARVE_BAND[1]
+## up the trunk (m), so the notch (ResourceNode's TrunkCarve) has vertices to push in. The notch
+## sits on one of these rings, and the tree splits there when it falls.
+CARVE_BAND = (0.55, 1.45)
+CARVE_RING_STEP = 0.05
+
+
+def ringed_trunk(rng, sides, r_bottom, r_top, height, bark, wobble=0.035):
+    """A tapered trunk standing on the origin, built as rings: sparse up the trunk and dense
+    through the chopping band (CARVE_BAND), every ring level so the notch can find them. Each
+    column of the bark wobbles in or out a little as a whole, and is shaded as one strip."""
+    zs = [0.0, 0.25]
+    z = CARVE_BAND[0]
+    while z <= CARVE_BAND[1] + 1e-6:
+        zs.append(round(z, 4))
+        z += CARVE_RING_STEP
+    zs += [z for z in (2.0, 2.6) if z < height - 0.3] + [height]
+    wobble_of = [1.0 + rng.uniform(-wobble, wobble) / max(r_bottom, 0.1) for _ in range(sides)]
+    strip = [bark[1] if rng.random() < 0.6 else bark[3] for _ in range(sides)]
+    bm = bmesh.new()
+    rings = []
+    for z in zs:
+        r = r_bottom + (r_top - r_bottom) * z / height
+        rings.append([bm.verts.new((math.cos(i * math.tau / sides) * r * wobble_of[i],
+                                    math.sin(i * math.tau / sides) * r * wobble_of[i], z)) for i in range(sides)])
+    for lo, hi in zip(rings, rings[1:]):
+        for i in range(sides):
+            j = (i + 1) % sides
+            bm.faces.new((lo[i], lo[j], hi[j], hi[i]))
+    bm.faces.new(list(reversed(rings[0])))
+    bm.faces.new(rings[-1])
+    bm.normal_update()
+
+    def shade(f):
+        if f.normal.z > 0.9:
+            return bark[0]
+        if f.normal.z < -0.9:
+            return bark[2]
+        c = f.calc_center_median()
+        return strip[round(math.atan2(c.y, c.x) / (math.tau / sides) - 0.5) % sides]
+    paint(bm, shade)
+    return bm
+
+
 def tree(name="tree", seed=7, trunk=(0.24, 0.15, 3.2), bark=("wood.5", "wood.3", "wood.2", "wood.2"),
          leaf_shades=("leaves.5", "leaves.3", "leaves.1", "leaves.4"), canopy=TREE_CANOPY,
-         slab=("wood.3", "wood.1", "wood.1", "wood.0"), slab_size=(0.34, 0.2), stump=(0.28, 0.23)):
-    """Six-sided tapered trunk, lumpy canopy blobs, bark slabs that chip off, a stump.
-    The default is the starter tree; oak() is a stouter, darker, wider one.
-    slab_size: (width, distance from the trunk's centre) of the bark slabs."""
+         slab=("wood.3", "wood.1", "wood.1", "wood.0"), slab_size=(0.34, 0.2), stump=(0.28, 0.23),
+         sides=12, carved=True):
+    """Tapered trunk, lumpy canopy blobs, bark slabs that chip off, a stump.
+    The default is the starter tree; oak() is a stouter, darker, wider one (still six-sided,
+    uncarved, with bark slabs, until the tree designs are picked).
+    slab_size: (width, distance from the trunk's centre) of the bark slabs.
+    carved: a rounder ringed trunk (ringed_trunk) for the axe to notch, and no bark slabs (the
+    notch is where they'd be)."""
     reset()
     rng = random.Random(seed)
     r_bottom, r_top, height = trunk
 
-    bm = prism(6, r_bottom, r_top, height)
-    jitter(bm, 0.06, rng)
-    paint(bm, shade_by_normal(bark[0], bark[1], bark[2], rng, side_alt=bark[3]))
-    make_object("Body_Trunk", bm, (0, 0, height / 2))
+    if carved:
+        make_object("Body_Trunk", ringed_trunk(rng, sides, r_bottom, r_top, height, bark))
+    else:
+        bm = prism(sides, r_bottom, r_top, height)
+        jitter(bm, 0.06, rng)
+        paint(bm, shade_by_normal(bark[0], bark[1], bark[2], rng, side_alt=bark[3]))
+        make_object("Body_Trunk", bm, (0, 0, height / 2))
 
     leaves = shade_by_normal(leaf_shades[0], leaf_shades[1], leaf_shades[2], rng, side_alt=leaf_shades[3])
     names = ["Body_Canopy", "Body_CanopyTop"] + [f"Body_Canopy{i}" for i in range(2, len(canopy))]
@@ -1216,7 +1267,7 @@ def tree(name="tree", seed=7, trunk=(0.24, 0.15, 3.2), bark=("wood.5", "wood.3",
 
     # bark slabs hugging the trunk at chopping height, one per side the axe can come from
     width, dist = slab_size
-    for i in range(4):
+    for i in range(0 if carved else 4):
         a = i * math.tau / 4 + 0.3
         bm = box((width, 0.07, 0.3))
         jitter(bm, 0.12, rng)
@@ -1240,7 +1291,8 @@ def oak():
              (1.05, 0.22, (1.0, 1.0, 0.7), (0.95, 0.35, 3.55), (0, 0, 1.0)),
              (1.0, 0.22, (1.0, 1.0, 0.7), (-0.85, -0.45, 3.65), (0, 0, 2.2)),
          ],
-         slab=("wood.2", "wood.0", "wood.0", "wood.1"), slab_size=(0.48, 0.3), stump=(0.4, 0.34))
+         slab=("wood.2", "wood.0", "wood.0", "wood.1"), slab_size=(0.48, 0.3), stump=(0.4, 0.34),
+         sides=6, carved=False)
 
 
 def block_hand(along="z", grip=0.16):
@@ -1273,7 +1325,8 @@ def birch():
              (0.95, 0.22, (0.9, 0.9, 1.0), (0, 0, 3.6), (0, 0, 0.5)),
              (0.7, 0.24, (1.0, 1.0, 0.9), (0.3, -0.2, 4.4), (0, 0, 1.2)),
          ],
-         slab=("neutral.6", "neutral.5", "neutral.5", "neutral.1"), slab_size=(0.26, 0.15), stump=(0.2, 0.17))
+         slab=("neutral.6", "neutral.5", "neutral.5", "neutral.1"), slab_size=(0.26, 0.15), stump=(0.2, 0.17),
+         sides=6, carved=False)
 
 
 def pine():

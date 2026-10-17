@@ -120,6 +120,16 @@ const CRACKING_LAYER := 1 << 10
 ## Tipping speed at the start of the fall (rad/s).
 @export var topple_push := 0.8
 
+@export_group("Notch")
+## Trees: the axe carves a notch into the trunk's own mesh (Body_Trunk, a ringed trunk from
+## make_models.py) instead of leaving bite marks, and the tree falls from the notch, sideways to
+## the swinger, leaving the cut stump behind. Replaces the weak point. See TrunkCarve.
+@export var carve_notch := false
+## How deep the notch is by the time the tree falls, as a share of the trunk's radius.
+@export_range(0.3, 0.85) var notch_depth := 0.65
+## The heights (m, up the trunk) the notch can sit at: the first hit's height, clamped to this.
+@export var notch_band := Vector2(0.6, 1.4)
+
 @export_group("Respawn display")
 ## Countdown above the spot while the node is depleted.
 @export var show_respawn_timer := true
@@ -205,11 +215,16 @@ var _respawn_timer: SceneTreeTimer
 var _timer_label: Label3D
 var _ghost: Node3D
 var _ghost_outline: ShaderMaterial
+var _carve: TrunkCarve  # carve_notch: the notch in the trunk
+var _trunk: MeshInstance3D  # ... the trunk it's carved into
+var _trunk_rest := Transform3D.IDENTITY  # ... where the trunk sits in the node, at rest
+var _stump: MeshInstance3D  # ... and what's left of it once the tree is down
 
 
 func _ready() -> void:
 	add_to_group("gatherable")
 	_apply_model()
+	_setup_carve()
 	_burst_home = burst.position
 	_break_audio_home = break_audio.position
 	_collect_surfaces(visual)
@@ -307,6 +322,17 @@ static func _seam_loop(mesh: Mesh, xform: Transform3D) -> Array[PackedVector3Arr
 	return loops
 
 
+func _setup_carve() -> void:
+	if not carve_notch:
+		return
+	_trunk = visual.get_node_or_null("Body/Body_Trunk") as MeshInstance3D
+	if _trunk == null or not _trunk.mesh is ArrayMesh:
+		push_warning("%s: carve_notch needs a Body_Trunk mesh" % name)
+		return
+	_carve = TrunkCarve.new(_trunk.mesh, notch_band)
+	_trunk_rest = global_transform.affine_inverse() * _trunk.global_transform
+
+
 func _make_notches() -> Node3D:
 	var n := Node3D.new()
 	n.name = "Notches"
@@ -339,6 +365,7 @@ func hit(info: HitInfo) -> bool:
 	if not can_gather():
 		_deflect(info)
 		return false
+	var before := hits_left
 	# the smithy's sharper tools: sometimes a hit counts twice, and crystal edges cut deeper every
 	# time (the fraction carries over, so +0.5 means every other hit counts twice); the weak point
 	# always adds more
@@ -352,6 +379,8 @@ func hit(info: HitInfo) -> bool:
 		- (crack_tip_extra_hits if tip else 0), 0)
 	if weak:
 		_weak_hit_feedback(info)
+	if _carve:
+		_carve_hit(info, before - hits_left)
 	SaveGame.mark_dirty()
 	var stress := 1.0 - float(hits_left) / max_hits  # 0 -> 1 as it depletes
 
@@ -375,7 +404,8 @@ func hit(info: HitInfo) -> bool:
 	if hits_left == 0:
 		_break(info)
 	else:
-		_notch_at(info)
+		if not _carve:
+			_notch_at(info)
 		if weak:
 			_place_weak_point.call_deferred()  # after this hit's chunks have popped
 	return true
@@ -444,7 +474,12 @@ func _break(info: HitInfo) -> void:
 	Juice.shake(shake_break)
 	Juice.hitstop(hitstop_break)
 	if topple:
-		_topple(info)  # not awaited: the fall plays out while the respawn timer runs
+		var log_mesh: Mesh = null
+		if _carve and _carve.is_started():
+			var parts := _carve.split()
+			_make_stump(parts["stump"])
+			log_mesh = parts["log"]
+		_topple(info, log_mesh)  # not awaited: the fall plays out while the respawn timer runs
 	else:
 		burst.restart()
 		_spawn_drops(info)
@@ -532,6 +567,15 @@ func _reset_visuals() -> void:
 	_queue_refit()
 	if _rubble_mm:
 		_rubble_mm.multimesh.visible_instance_count = 0
+	if _carve:
+		_carve.reset()
+		_trunk.mesh = _carve.original
+		if _stump:
+			rubble.remove_child(_stump)
+			_stump.queue_free()
+			_stump = null
+		for c in rubble.get_children():
+			c.visible = true
 	visual.visible = true
 	rubble.visible = false
 	collision.set_deferred("disabled", false)
@@ -568,8 +612,11 @@ func _launch_drop(from: Vector3, velocity: Vector3, delay: float) -> void:
 
 ## Copies Visual/Body into one rigid body standing where the tree was and tips it away from
 ## the player. Gravity does the rest; when it has fallen over: thud, leaf burst, logs along the trunk.
-func _topple(info: HitInfo) -> void:
-	var away := info.away()
+## With `log_mesh` (a carved tree), that's the trunk from the notch up: it hinges over at the notch
+## and falls sideways to the player.
+func _topple(info: HitInfo, log_mesh: Mesh = null) -> void:
+	var away := info.away() if log_mesh == null else _fall_direction(info)
+	var hinge := 0.0 if log_mesh == null else (_trunk_rest * Vector3(0.0, _carve.ring, 0.0)).y
 	var felled := RigidBody3D.new()
 	felled.collision_layer = DEBRIS_LAYER
 	felled.collision_mask = WORLD_LAYER
@@ -581,6 +628,8 @@ func _topple(info: HitInfo) -> void:
 		if not mesh is MeshInstance3D:
 			continue
 		var piece := mesh.duplicate() as MeshInstance3D
+		if mesh == _trunk and log_mesh:
+			piece.mesh = log_mesh
 		piece.set_instance_shader_parameter("flash", 0.0)
 		piece.set_instance_shader_parameter("highlight", 0.0)
 		felled.add_child(piece)
@@ -592,10 +641,16 @@ func _topple(info: HitInfo) -> void:
 		shape.transform = mesh.transform * Transform3D(Basis.IDENTITY, aabb.get_center())
 		felled.add_child(shape)
 		height = maxf(height, mesh.position.y + aabb.end.y)
-	# the node's own collision shape (the trunk) at full size
+	# the node's own collision shape (the trunk) at full size; a carved tree's from the notch up
 	var trunk := CollisionShape3D.new()
 	trunk.shape = collision.shape
 	trunk.transform = collision.transform
+	if log_mesh and collision.shape is BoxShape3D:
+		var box := collision.shape.duplicate() as BoxShape3D
+		var top := collision.position.y + box.size.y * 0.5
+		box.size.y = maxf(top - hinge, 0.2)
+		trunk.shape = box
+		trunk.position.y = (top + hinge) * 0.5
 	felled.add_child(trunk)
 	# top-heavy on purpose (canopy), so once it starts leaning it keeps going
 	felled.center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
@@ -608,7 +663,7 @@ func _topple(info: HitInfo) -> void:
 	# otherwise the base skids along the ground and the fall loses all its energy
 	var spin := Vector3.UP.cross(away).normalized() * topple_push
 	felled.angular_velocity = spin
-	felled.linear_velocity = spin.cross(Vector3.UP * felled.center_of_mass.y)
+	felled.linear_velocity = spin.cross(Vector3.UP * (felled.center_of_mass.y - hinge))
 
 	# wait for it to lean over far enough (or give up after a few seconds)
 	var start := Time.get_ticks_msec()
@@ -646,6 +701,51 @@ func _topple(info: HitInfo) -> void:
 	t.tween_property(felled, "global_position", felled.global_position + Vector3.DOWN * 1.2, 1.0) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	t.tween_callback(felled.queue_free)
+
+
+## Which way a notched tree falls: sideways to the swinger and a little away, never onto them.
+## Whichever side is clear of other trees, else either.
+func _fall_direction(info: HitInfo) -> Vector3:
+	var away := info.away()
+	var sides: Array[Vector3] = [away.cross(Vector3.UP), -away.cross(Vector3.UP)]
+	sides.shuffle()
+	var space := get_world_3d().direct_space_state
+	var from := global_position + Vector3.UP * 2.0
+	for side in sides:
+		var dir := (side + away * 0.35).normalized()
+		var query := PhysicsRayQueryParameters3D.create(from, from + dir * 3.5, WORLD_LAYER, [get_rid()])
+		if space.intersect_ray(query).is_empty():
+			return dir
+	return (sides[0] + away * 0.35).normalized()
+
+
+# --- notch ----------------------------------------------------------------------------------
+
+## The notch deepens toward the swinger (`cuts`: how many hits this one counted for), and the hit
+## moves onto the notch's surface, where the axe really bites and the chips fly from, instead of
+## the trunk's collision box.
+func _carve_hit(info: HitInfo, cuts: int) -> void:
+	var to_trunk := _trunk.global_transform.affine_inverse()
+	var dir := to_trunk.basis * (info.from - info.position)
+	dir.y = 0.0
+	var y := (to_trunk * info.position).y
+	_carve.hit(y, dir, notch_depth * cuts / max_hits)
+	_trunk.mesh = _carve.carved()
+	info.position = _trunk.global_transform * _carve.bite_point(dir)
+	info.normal = (_trunk.global_basis * dir).normalized()
+
+
+## The bottom of the carved trunk stays standing while the tree regrows.
+func _make_stump(mesh: Mesh) -> void:
+	for c in rubble.get_children():
+		c.visible = false
+	_stump = MeshInstance3D.new()
+	_stump.name = "CutStump"
+	_stump.mesh = mesh
+	_stump.material_override = NODE_PALETTE
+	rubble.add_child(_stump)
+	_stump.transform = rubble.transform.affine_inverse() * _trunk_rest
+	_limit_drawing(rubble)
 
 
 # --- chunks ---------------------------------------------------------------------------------
@@ -1444,7 +1544,7 @@ var _weak: MeshInstance3D
 
 
 func _build_weak_point() -> void:
-	if not weak_point or cracks:
+	if not weak_point or cracks or carve_notch:
 		return
 	_weak = MeshInstance3D.new()
 	_weak.name = "WeakPoint"
