@@ -44,8 +44,8 @@ Plan and decisions: `plans/woodcutting-overhaul.md`.
 - [x] **Felling from the notch:** the trunk splits there, hangs on the hinge, falls sideways to the swinger toward the clear side, and leaves the cut stump with growth rings.
 - [x] **New trees** picked from rendered candidates (`tree_designs`): round starter, airy birch, spreading oak, classic pine; the scenery forest matches.
 - [x] **Feel:** wood chips and dust, bark peeling, canopy shake and leaves, sway and creak late in the chop.
-- [x] **Wood sounds** (placeholders) from the GDC 2026 bundle: thunk, knock, chips, snap, creak, fall, landing.
-- [ ] **Better wood sound sources:** the bundle has no forestry pack; repoint `WOOD_RECIPES` in `tools/cut_sounds.py` at a real wood / foley library. Not yet heard in play either.
+- [x] **Wood sounds, synthesized** (`tools/synth_wood_sounds.py`; the GDC bundle's stand-ins sounded wrong): thunk, bite, chips, snap, creak, fibres tearing, crown rushing, landing.
+- [ ] **Tune the synthesized wood sounds by ear** in play (each sound is one function in the script; the stacks' levels are in `audio/woodcutting/*.tres`).
 - [ ] **The notch on birch** shows less (pale cut wood on white bark); a darker cut colour for it if it reads poorly.
 - [ ] **Bucking the fallen trunk into logs** with more swings (left out of this overhaul).
 

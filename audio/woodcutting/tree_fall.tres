@@ -8,7 +8,7 @@
 [sub_resource type="Resource" id="Layer_tear"]
 script = ExtResource("2_layer")
 stream = ExtResource("s1")
-pitch = 0.8
+pitch = 1.0
 pitch_jitter = 0.05
 resource_name = "tear"
 

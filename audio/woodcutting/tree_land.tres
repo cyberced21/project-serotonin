@@ -8,7 +8,7 @@
 [sub_resource type="Resource" id="Layer_slump"]
 script = ExtResource("2_layer")
 stream = ExtResource("s1")
-pitch = 0.7
+pitch = 1.0
 pitch_jitter = 0.05
 resource_name = "slump"
 
@@ -16,7 +16,7 @@ resource_name = "slump"
 script = ExtResource("2_layer")
 stream = ExtResource("s0")
 volume_db = -5.0
-pitch = 0.8
+pitch = 1.0
 follows_pitch = false
 resource_name = "boom"
 

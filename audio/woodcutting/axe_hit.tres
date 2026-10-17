@@ -9,7 +9,7 @@
 [sub_resource type="Resource" id="Layer_thunk"]
 script = ExtResource("2_layer")
 stream = ExtResource("s2")
-pitch = 0.9
+pitch = 1.0
 pitch_jitter = 0.05
 resource_name = "thunk"
 
@@ -18,7 +18,7 @@ script = ExtResource("2_layer")
 stream = ExtResource("s1")
 volume_db = -5.0
 pitch_jitter = 0.08
-pitch = 0.9
+pitch = 1.0
 resource_name = "bite"
 
 [sub_resource type="Resource" id="Layer_chips"]

@@ -1,23 +1,17 @@
 # Woodcutting sound effects: sources
 
-Cut from the **Sonniss GDC 2026 Game Audio Bundle** with `tools/cut_sounds.py ... woodcutting` (which
-lists exactly which file each clip comes from and how it's cut). Licence: royalty free for use in
-games, commercial included, no attribution required; the raw files may not be redistributed, so only
-these processed clips are in the project. To recut them, download the bundle and see the top of
-`tools/cut_sounds.py`.
+All synthesized by `tools/synth_wood_sounds.py` (`python tools/synth_wood_sounds.py`), no
+recordings. Rerunning it rewrites every clip here and the randomizer `.tres` for each layer; the
+layered stacks in `audio/woodcutting/` (volumes, delays, pitch) are hand-written and stay as they are.
 
-The bundle has no forestry pack, so these are the woodiest sounds in it. They're placeholders until
-a real wood / foley library replaces them: repoint the `WOOD_RECIPES` in `tools/cut_sounds.py` and
-recut, and the stacks in `audio/woodcutting/` pick the new clips up.
-
-| Clips | Source (library — file) | Used as |
+| Clips | How it's made | Used in |
 |---|---|---|
-| `chop_thunk_*` | 344 Audio, Haunting Ambiences Vol. 3 — Wooden Hit, Dark, Heavy Hit | the axe's thunk into the trunk |
-| `chop_bite_*` | 344 Audio, Historical Weapons Vol. 2 — Spear And Stick Impact, Wooden | the edge's knock, and the yank |
-| `clean_crack_*` | David Dumais Audio, Melee Weapons 2 — Whip Snap Crack 05 | a clean cut's snap; the hinge giving way |
-| `chip_scatter_*` | Epic Stock Media, Board Game — Organic Multiple Pieces Wood Small | chips skittering off |
-| `trunk_creak_*` | 344 Audio, Cinema Experience Vol. 1 — Sitting Down, Creaky Seat | the trunk creaking as it sways |
-| `fibre_tear_*` | Ivo Vicic, Campfire — Dropping Fresh Pine Branches in Fire, Crackling | the last fibres tearing as it goes |
-| `crown_rush_*` | Epic Stock Media, Public Spaces — Strong Wind On Trees Foliage | the crown rushing down |
-| `land_slump_*` | 344 Audio, Antique Books — Pile Of Antique Books Falling Over | the trunk slumping onto the ground |
-| `land_boom_*` | Federico Soler, Effective Trailer Booms Vol. 2 — 011 | the low thud under it |
+| `chop_thunk_*` | six low wooden resonances ringing down fast, a knock, a few fibre snaps | `axe_hit` |
+| `chop_bite_*` | a short bright noise burst and two high rings: the edge going in | `axe_hit`, `axe_pull` |
+| `clean_crack_*` | a hard broadband snap, then a quick run of smaller snaps, the trunk ringing | `clean_cut` (and, deeper, the hinge giving way) |
+| `chip_scatter_*` | small chips landing and bouncing: high wooden ticks, each bounce quicker and quieter | `axe_hit`, `axe_pull` |
+| `trunk_creak_*` | stick-slip friction (the wood grabbing and slipping 16–48 times a second, ringing three low resonances each time) | `trunk_creak` |
+| `fibre_tear_*` | a crackle that thickens then thins out, over a slow groan | `tree_fall` |
+| `crown_rush_*` | air and rustling leaves swelling as the crown falls, twigs snapping | `tree_fall` |
+| `land_slump_*` | a heavy wooden thud and two bounces, leaves crashing, a few twigs | `tree_land` |
+| `land_boom_*` | a deep thump under it | `tree_land` |

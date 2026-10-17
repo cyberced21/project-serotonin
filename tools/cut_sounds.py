@@ -1,10 +1,10 @@
-"""Cuts the mining and woodcutting sound effects out of the Sonniss GDC 2026 game audio bundle.
+"""Cuts the mining sound effects out of the Sonniss GDC 2026 game audio bundle. (The woodcutting
+ones are synthesized instead: tools/synth_wood_sounds.py.)
 
 The bundle can't be redistributed, so it isn't in the project: download it, then run (Blender's
 bundled Python has numpy, which this needs):
 
     blender -b --python-exit-code 1 -P tools/cut_sounds.py -- <bundle folder> audio/mining/sfx
-    blender -b --python-exit-code 1 -P tools/cut_sounds.py -- <bundle folder> audio/woodcutting/sfx woodcutting
 
 Each RECIPE takes clips out of one source file: the takes in it (split where it goes quiet), or
 evenly spaced slices of a continuous texture, or just the swoosh before a swing's impact. Every clip
@@ -42,24 +42,6 @@ RECIPES = [
     ("split_rubble", "Woosh Debris.wav", "whole", 1, 1.8),
     ("debris_tick", "GAMEBoard_Game Play Piece Action Organic Connect Dots Fall Bounce 04_ESM_BG.wav", "whole", 1, 0.2),
 ]
-
-# Woodcutting. The bundle has no forestry pack, so these are the woodiest things in it: a heavy
-# wooden door hit for the axe's thunk, wooden staff hits for the bite of the edge, a whip crack for
-# a clean cut, a creaking wooden seat for the trunk, pine branches crackling for its fibres giving
-# way, wind through trees for the crown rushing down, and a pile of books slumping over a low boom
-# for it landing.
-WOOD_RECIPES = [
-    ("chop_thunk", "WOODImpt_Wooden Hit, Dark, Heavy Hit, Vampire's Prison_344 Audio_Haunting Ambiences Vol 3.wav", "takes", 4, 0.5),
-    ("chop_bite", "WEAPBlnt_Spear And Stick Impact, Wooden MKH 2_344 Audio_Medieval Weapons Vol 2.wav", "takes", 4, 0.3),
-    ("clean_crack", "WEAPWhip_WHIP Snap Crack 05_DDUMAIS_MWP2.wav", "takes", 2, 0.35),
-    ("chip_scatter", "GAMEBoard_Event Board Reset Organic Multiple Pieces Wood Small 02_ESM_BG.wav", "slices", 2, 0.5),
-    ("trunk_creak", "FOLYProp_Sitting Down, Creaky Seat, Squeaks 3_344 Audio_CInema Experience.wav", "takes", 3, 1.2),
-    ("fibre_tear", "24 Campfire, Dropping Fresh Pine Branches in Fire, Crackling, Sizzling Strong, Close 02.wav", "slices", 2, 1.1),
-    ("crown_rush", "AMBPark_Berlin City Humboldthain Park Strong Wind On Trees Foliage Traffic Wash 03_ESM_CPS.wav", "slices", 2, 2.2),
-    ("land_slump", "PAPRMisc_Pile Of Antique Books Falling Over 8_344 Audio_Antiques - Books.wav", "whole", 1, 1.6),
-    ("land_boom", "EffectiveTrailer_Booms_Vol2_011.wav", "whole", 1, 1.8),
-]
-SETS = {"mining": RECIPES, "woodcutting": WOOD_RECIPES}
 
 
 def read_wav(path):
@@ -202,15 +184,14 @@ def write_wav(path, clip):
 def main():
     args = sys.argv[sys.argv.index("--") + 1:]
     bundle, out_dir = args[0], args[1]
-    recipes = SETS[args[2] if len(args) > 2 else "mining"]
     os.makedirs(out_dir, exist_ok=True)
-    layers = {r[0] for r in recipes}
+    layers = {r[0] for r in RECIPES}
     for old in os.listdir(out_dir):  # this script's own clips only: recipes may make fewer now
         if old.endswith(".wav") and old.rsplit("_", 1)[0] in layers:
             os.remove(os.path.join(out_dir, old))
     paths = {name: os.path.join(d, name) for d, _, names in os.walk(bundle) for name in names}
     counts = {}
-    for layer, name, how, count, max_len in recipes:
+    for layer, name, how, count, max_len in RECIPES:
         if name not in paths:
             print("MISSING", name)
             continue

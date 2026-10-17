@@ -7,7 +7,7 @@
 [sub_resource type="Resource" id="Layer_creak"]
 script = ExtResource("2_layer")
 stream = ExtResource("s0")
-pitch = 0.55
+pitch = 1.0
 pitch_jitter = 0.08
 volume_db = -2.0
 resource_name = "creak"

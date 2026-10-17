@@ -10,7 +10,7 @@ script = ExtResource("2_layer")
 stream = ExtResource("s0")
 volume_db = -3.0
 pitch_jitter = 0.06
-pitch = 0.72
+pitch = 1.0
 resource_name = "snap"
 
 [sub_resource type="Resource" id="Layer_crackle"]
