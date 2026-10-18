@@ -2,8 +2,14 @@
 
 [ext_resource type="PackedScene" path="res://scenes/rock.tscn" id="1_base"]
 [ext_resource type="PackedScene" path="res://models/coal_rock.glb" id="2_model"]
+[ext_resource type="Resource" path="res://audio/mining/coal/pickaxe_hit.tres" id="v_pickaxe_hit"]
+[ext_resource type="Resource" path="res://audio/mining/coal/crack_tip.tres" id="v_crack_tip"]
+[ext_resource type="Resource" path="res://audio/mining/coal/split.tres" id="v_split"]
 
 [node name="CoalRock" instance=ExtResource("1_base")]
+hit_layers = ExtResource("v_pickaxe_hit")
+crack_layers = ExtResource("v_crack_tip")
+split_layers = ExtResource("v_split")
 item = &"coal"
 max_hits = 8
 respawn_time = 35.0

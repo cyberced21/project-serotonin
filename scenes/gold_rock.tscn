@@ -2,8 +2,14 @@
 
 [ext_resource type="PackedScene" path="res://scenes/rock.tscn" id="1_base"]
 [ext_resource type="PackedScene" path="res://models/gold_rock.glb" id="2_model"]
+[ext_resource type="Resource" path="res://audio/mining/gold/pickaxe_hit.tres" id="v_pickaxe_hit"]
+[ext_resource type="Resource" path="res://audio/mining/gold/crack_tip.tres" id="v_crack_tip"]
+[ext_resource type="Resource" path="res://audio/mining/gold/split.tres" id="v_split"]
 
 [node name="GoldRock" instance=ExtResource("1_base")]
+hit_layers = ExtResource("v_pickaxe_hit")
+crack_layers = ExtResource("v_crack_tip")
+split_layers = ExtResource("v_split")
 item = &"gold"
 max_hits = 10
 respawn_time = 60.0

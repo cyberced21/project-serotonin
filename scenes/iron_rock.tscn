@@ -2,11 +2,17 @@
 
 [ext_resource type="PackedScene" path="res://scenes/rock.tscn" id="1_rock"]
 [ext_resource type="PackedScene" path="res://models/iron_rock.glb" id="2_model"]
+[ext_resource type="Resource" path="res://audio/mining/iron/pickaxe_hit.tres" id="v_pickaxe_hit"]
+[ext_resource type="Resource" path="res://audio/mining/iron/crack_tip.tres" id="v_crack_tip"]
+[ext_resource type="Resource" path="res://audio/mining/iron/split.tres" id="v_split"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_iron"]
 size = Vector3(2.5, 1.7, 2.3)
 
 [node name="IronRock" instance=ExtResource("1_rock")]
+hit_layers = ExtResource("v_pickaxe_hit")
+crack_layers = ExtResource("v_crack_tip")
+split_layers = ExtResource("v_split")
 item = &"iron"
 max_hits = 8
 respawn_time = 30.0

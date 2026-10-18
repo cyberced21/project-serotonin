@@ -1,28 +1,31 @@
 # Mining sound effects: sources
 
-Cut from the **Sonniss GDC 2026 Game Audio Bundle** with `tools/cut_sounds.py` (which lists exactly
-which file each clip comes from and how it's cut). Licence: royalty free for use in games, commercial
-included, no attribution required; the raw files may not be redistributed, so only these processed
-clips are in the project. To recut them, download the bundle and see the top of `tools/cut_sounds.py`.
+All synthesized by `tools/synth_mining_sounds.py` (`python tools/synth_mining_sounds.py`), no
+recordings. (They used to be cut from the Sonniss GDC 2026 bundle by `tools/cut_sounds.py`, which
+is kept but no longer used.) Rerunning it rewrites every clip here and the randomizer `.tres` for each
+layer; the layered stacks in `audio/mining/` (volumes, delays, pitch) are hand-written and stay as
+they are. Every clip is brought to the same loudness (its loudest 50 ms).
 
-| Clips | Source (library — file) |
-|---|---|
-| `hit_crack_*` | Alexander Kopeikin, 100 kHz Designed Ice — ice, crack, ice block snapping |
-| `hit_tink_*` | InMotionAudio, Sinister Textures 5 — Concrete MetalPipe 02 |
-| `hit_thump_*` | 344 Audio, Cinematic Fight Vol. 1 — 4 x Punch, Body 02 |
-| `hit_gravel_*` | 344 Audio, Cinema Experience Vol. 1 — Broom Sweeping Up Snacks On Hard Floor 2 |
-| `pull_scrape_*` | InMotionAudio, Sinister Textures 5 — Cladding Scratch 06 |
-| `pull_pebbles_*` | Epic Stock Media, Board Game — Board Reset Organic Multiple Pieces Wood Small 02 |
-| `swing_whoosh_*` | David Dumais Audio, Melee Weapons Pack 2 — Swing Impacts Quick Heavy Weapon Swing To Thud (the swing before each impact) |
-| `windup_creak_*` | InMotionAudio, Foley T-Shirt — Cloth Movement 29 |
-| `crack_split_*` | Alexander Kopeikin, 100 kHz Designed Ice — ice, surface cracking, fissure, fast, hard |
-| `split_crunch_*` | Epic Stock Media, Halloween Game — Gore Designed Transient Heavy Impact Smash 01 |
-| `split_rubble_*` | Cinematic Sound Design, Colossal Impacts — Woosh Debris |
-| `debris_tick_*` | Epic Stock Media, Board Game — Piece Action Connect Dots Fall Bounce 04 |
+| Clips | How it's made | Used in |
+|---|---|---|
+| `hit_crack_*` | a hard bright crack, a stiff stone knock and a few snaps | `pickaxe_hit`, `split` |
+| `hit_tink_*` | the steel pick ringing (three inharmonic modes) over the rock's own ring, kept 180 Hz clear of each other so they don't beat | `pickaxe_hit` |
+| `hit_thump_*` | four low stone resonances dying almost at once, a low knock, a little grit | `pickaxe_hit` |
+| `hit_gravel_*` | grit and chips pattering down, thinning out, a few bigger chips knocking | `pickaxe_hit`, `crack_tip` |
+| `pull_scrape_*` | steel grinding on stone, catching at uneven moments | `pickaxe_pull` |
+| `pull_pebbles_*` | a few pebbles knocked loose, rolling off | `pickaxe_pull` |
+| `swing_whoosh_*` | noise whose band sweeps up to the swing's fastest moment and down | `pickaxe_swing` |
+| `windup_creak_*` | a soft rustle of sleeves, the leather grip giving | `pickaxe_windup` |
+| `crack_split_*` | snaps coming faster as a crack races along, ringing off the fresh faces | `crack_tip` |
+| `split_crunch_*` | a heavy grinding crunch over the body's low thud, a spray of snaps | `split` |
+| `split_rubble_*` | the piece tumbling down in a few knocks, grit settling | `split` |
+| `debris_tick_*` | one chip landing: a tiny high tick | `debris_stone` |
 
-One source per layer, every clip brought to the same loudness (its loudest 50 ms). Each
-`<layer>.tres` is a randomizer over that layer's clips; the layer stacks in `audio/mining/`
-(`pickaxe_hit.tres` and the rest) set each layer's timing, volume and pitch.
+**Per ore.** The layers that are the rock's own body (`hit_tink`, `hit_thump`, `crack_split`,
+`split_crunch`) are baked again in a voice per ore, into `iron/`, `coal/`, `gold/` and `crystal/`,
+with each ore's copies of `pickaxe_hit`, `crack_tip` and `split` in `audio/mining/<ore>/`: iron's
+basalt rings harder and longer, coal is dull and crumbly, gold's quartz rim rings bright, crystal
+chimes. Copper (the plain rock) plays the base layers.
 
 Check the mix without listening: `blender -b -P tools/measure_mix.py --` mixes every event many
 times and reports how loud each comes out and how much that varies.
