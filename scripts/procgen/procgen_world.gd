@@ -9,6 +9,14 @@ extends Node3D
 const SCENE := "res://scenes/procgen.tscn"
 const MAIN_SCENE := "res://scenes/main.tscn"
 const Player := preload("res://scripts/player.gd")
+const WATER_SHADER := preload("res://shaders/water_lowpoly.gdshader")
+const PERCH := preload("res://data/fish/perch.tres")
+const TROUT := preload("res://data/fish/trout.tres")
+const PIKE := preload("res://data/fish/pike.tres")
+const CHAR := preload("res://data/fish/char.tres")
+## Schools per water body, as in the hand-built ponds and lake.
+const POND_SCHOOLS: Array[FishSpecies] = [PERCH, PERCH, TROUT, PIKE]
+const LAKE_SCHOOLS: Array[FishSpecies] = [TROUT, TROUT, PERCH, CHAR, CHAR]
 
 ## The seed the scene builds next time it loads (enter() sets it).
 static var world_seed := 1
@@ -52,7 +60,11 @@ func _ready() -> void:
 	map = ProcgenMap.new(world_seed)
 	map.generate()
 	_build_terrain()
+	_build_water()
 	Biome.locator = func(p: Vector3) -> StringName: return map.biome_at(Vector2(p.x, p.z))
+	if not map.quarry.is_empty():
+		Biome.quarry_rim_height = map.quarry["rim_height"]
+		Biome.quarry_depth = map.quarry["depth"]
 	print("Procgen: seed %d generated in %d ms" % [world_seed, Time.get_ticks_msec() - started])
 	_place_player()
 	_player.process_mode = Node.PROCESS_MODE_INHERIT
@@ -61,6 +73,56 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	Biome.locator = Callable()
+	Biome.reset_quarry()
+
+
+## A WaterBody per basin the map carved, built like the hand-made ponds in main.tscn: a box volume,
+## the water surface, reeds and lily pads (PondDressing) and fish (FishPond).
+func _build_water() -> void:
+	var material := ShaderMaterial.new()
+	material.shader = WATER_SHADER
+	for i in map.waters.size():
+		var w: Dictionary = map.waters[i]
+		var r: float = w["radius"]
+		var lake: bool = w["lake"]
+		var size := 2.0 * r + 8.0  # the box covers the shallows round the ragged shore too
+		var body := WaterBody.new()
+		body.name = w["name"]
+		body.position = Vector3(w["center"].x, 0.0, w["center"].y)
+		body.collision_layer = 0
+		body.collision_mask = 0
+		body.surface_height = ProcgenMap.WATER_LEVEL
+		var volume := CollisionShape3D.new()
+		volume.name = "Volume"
+		volume.position.y = -1.0
+		var box := BoxShape3D.new()
+		box.size = Vector3(size, 3.0, size)
+		volume.shape = box
+		body.add_child(volume)
+		var dressing := PondDressing.new()
+		dressing.name = "Dressing"
+		dressing.seed = map.sub_seed(StringName("dressing_%d" % i))
+		var area := r * r / 81.0  # relative to the hand-built clearing pond (radius 9)
+		dressing.reed_clumps = roundi(9 * area)
+		dressing.lily_pads = roundi(14 * area)
+		dressing.stones = roundi(12 * sqrt(area))
+		body.add_child(dressing)
+		var fish := FishPond.new()
+		fish.name = "Fish"
+		fish.schools = LAKE_SCHOOLS if lake else POND_SCHOOLS
+		body.add_child(fish)
+		var surface := MeshInstance3D.new()
+		surface.name = "Surface"
+		surface.position.y = ProcgenMap.WATER_LEVEL
+		surface.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var plane := PlaneMesh.new()
+		plane.material = material
+		plane.size = Vector2(size, size)
+		plane.subdivide_width = int(size) - 1
+		plane.subdivide_depth = int(size) - 1
+		surface.mesh = plane
+		body.add_child(surface)
+		add_child(body)
 
 
 func _build_terrain() -> void:

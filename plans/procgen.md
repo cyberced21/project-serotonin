@@ -40,12 +40,12 @@ generated map.
    "Generating…" overlay, the debug menu's Procgen section, `--procgen --seed=N`, and a save per seed.
 2. **Biomes** ✅: the warped Voronoi ring, a height profile per biome blended over the borders, the
    control map painted per biome, biome moods, title cards and ambience.
-3. **Water and the quarry**: basin stamps with `WaterBody` + `FishPond`; the 3-ring quarry stamp with
-   a spiral ramp, mantle stairs on two walls and crystal on the floor.
+3. **Water and the quarry** ✅: basin stamps with `WaterBody` + `FishPond`; the 3-ring quarry stamp with
+   a spiral ramp and mantle stairs on every wall (its crystal comes with the spawners in phase 5).
 4. **Trails**: A\* on a coarse grid (slope and water cost) from the hub to every biome and lake,
    smoothed, painted as dirt, graded.
 5. **Population**: `NodeSpawner` and `SceneryScatter` per biome, node levels rising with distance
-   from the hub. The whole game loop works on any seed.
+   from the hub, crystal on the quarry floor. The whole game loop works on any seed.
 6. **Model variants**: `make_models.py --variants 4` for ores, trees (trunks kept in the range
    `trunk_carve.gd` expects) and big scenery; the spawners pick a variant from the seed.
 7. **Wood voicing**: per-species pools in `synth_wood_sounds.py`, wired to each tree type.
