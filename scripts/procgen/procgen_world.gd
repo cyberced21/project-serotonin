@@ -67,6 +67,9 @@ func _ready() -> void:
 		Biome.quarry_depth = map.quarry["depth"]
 	print("Procgen: seed %d generated in %d ms" % [world_seed, Time.get_ticks_msec() - started])
 	_place_player()
+	ProcgenPopulation.populate(self, map)
+	await get_tree().process_frame  # the spawners and the scenery fill in at the end of that frame
+	print("Procgen: seed %d ready in %d ms" % [world_seed, Time.get_ticks_msec() - started])
 	_player.process_mode = Node.PROCESS_MODE_INHERIT
 	overlay.queue_free()
 

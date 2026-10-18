@@ -45,6 +45,10 @@ const MAX_TRIES_PER_NODE := 40
 @export var prop_margin := 1.0
 @export var spawn_radius := 4.0
 
+## Set from code to narrow where nodes may go further: func(p: Vector2) -> bool, world XZ (a
+## procgen world keeps each spawner to its own biome cell).
+var accept := Callable()
+
 var _taken: Array[Vector3] = []  # (x, z, radius) already used
 
 
@@ -100,6 +104,8 @@ func _ground(terrain: Terrain3D, p: Vector2) -> Variant:
 		if d < ring.z or d > ring.w:
 			return null
 	elif not area.has_point(p):
+		return null
+	if accept.is_valid() and not accept.call(p):
 		return null
 	var at := Vector3(p.x, 0.0, p.y)
 	var h: float = terrain.data.get_height(at)

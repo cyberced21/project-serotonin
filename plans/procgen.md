@@ -44,7 +44,7 @@ generated map.
    a spiral ramp and mantle stairs on every wall (its crystal comes with the spawners in phase 5).
 4. **Trails** ✅: A\* on a coarse grid (slope and water cost) from the hub to every biome and lake,
    smoothed, painted as dirt, graded.
-5. **Population**: `NodeSpawner` and `SceneryScatter` per biome, node levels rising with distance
+5. **Population** ✅: `NodeSpawner` and `SceneryScatter` per biome, node levels rising with distance
    from the hub, crystal on the quarry floor. The whole game loop works on any seed.
 6. **Model variants**: `make_models.py --variants 4` for ores, trees (trunks kept in the range
    `trunk_carve.gd` expects) and big scenery; the spawners pick a variant from the seed.
