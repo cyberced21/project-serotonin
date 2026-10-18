@@ -9,3 +9,7 @@ extends Resource
 ## Relative chance at the ellipse's rim; in between it slides from `weight`. Negative = same as
 ## `weight`.
 @export var edge_weight := -1.0
+## Other models the scene's node may wear instead of its own (models/variants/*.glb, the same
+## design from other seeds). Each placed node keeps one, picked from its save id, so it looks the
+## same every load. Empty = always the scene's own model.
+@export var variants: Array[PackedScene] = []

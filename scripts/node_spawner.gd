@@ -82,11 +82,15 @@ func _spawn() -> void:
 		var ground: Variant = _ground(terrain, p)
 		if ground == null:
 			continue
-		var scene := _pick(p, pick)
-		if scene == null:
+		var entry := _pick(p, pick)
+		if entry == null:
 			continue
-		var node := scene.instantiate() as ResourceNode
+		var node := entry.scene.instantiate() as ResourceNode
 		node.save_id = StringName("%s_%03d" % [save_prefix, placed])
+		if not entry.variants.is_empty():  # its own model or one of the variants, by save id
+			var v := hash(node.save_id) % (entry.variants.size() + 1)
+			if v > 0:
+				node.model = entry.variants[v - 1]
 		node.name = String(node.save_id)
 		node.position = to_local(ground as Vector3) - Vector3.UP * sink
 		node.rotation.y = yaw
@@ -135,9 +139,9 @@ func _allowed(id: int) -> bool:
 	return id in allowed_ids
 
 
-## An entry's scene, chosen by weight (`pick` in 0..1), with the weights slid toward their edge
-## values the further out of the ellipse's middle `p` is.
-func _pick(p: Vector2, pick: float) -> PackedScene:
+## An entry, chosen by weight (`pick` in 0..1), with the weights slid toward their edge values
+## the further out of the ellipse's middle `p` is.
+func _pick(p: Vector2, pick: float) -> SpawnEntry:
 	var edge := 0.0
 	if ellipse.z > 0.0 and ellipse.w > 0.0:
 		edge = clampf(((p - Vector2(ellipse.x, ellipse.y)) / Vector2(ellipse.z, ellipse.w)).length(), 0.0, 1.0)
@@ -153,8 +157,8 @@ func _pick(p: Vector2, pick: float) -> PackedScene:
 	for i in entries.size():
 		x -= weights[i]
 		if x <= 0.0:
-			return entries[i].scene
-	return entries[-1].scene
+			return entries[i]
+	return entries[-1]
 
 
 func _collect_taken() -> void:

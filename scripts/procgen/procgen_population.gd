@@ -9,6 +9,8 @@ extends RefCounted
 ##   layers (so no layer samples ground it can't grow on): grass, flowers, bushes and boulders on
 ##   open ground, canopies and ferns on forest floor, meadow grass on the field, rubble in the
 ##   quarry. The rim is left bare.
+## Models with baked variants (models/variants/) are mixed in: nodes wear one picked by their save
+## id, scenery layers are split across the looks.
 ## Spawners come first in the tree so the scenery keeps off their nodes.
 
 const TREE := preload("res://scenes/tree.tscn")
@@ -43,6 +45,8 @@ const QUARRY_LEVELS := [
 	{"count": 6, "entries": [[COAL, 3.0], [GOLD, 1.5]]},
 ]
 const CRYSTALS := 4
+## How many baked variants each model may have (tools/blender/make_models.py's VARIANTS).
+const VARIANTS := 4
 ## Scenery fills this square (the valley inside the rim).
 const SCENERY_AREA := Rect2(-185, -185, 370, 370)
 
@@ -88,6 +92,9 @@ static func _spawner(map: ProcgenMap, node_name: String, spec: Dictionary) -> No
 		var e := SpawnEntry.new()
 		e.scene = pair[0]
 		e.weight = pair[1]
+		var probe := (pair[0] as PackedScene).instantiate()  # only to read which model it wears
+		e.variants = _variants_of(probe.get("model"))
+		probe.free()
 		entries.append(e)
 	spawner.entries = entries
 	return spawner
@@ -193,9 +200,39 @@ static func _scenery(map: ProcgenMap, i: int, box: Rect2) -> SceneryScatter:
 		_layer("scenery/quarry_rubble", 1.5, [WorldMap.TEX_QUARRY], {"scale_range": Vector2(0.7, 1.6),
 				"min_normal_y": 0.8, "align_to_slope": true, "cast_shadow": false, "visible_distance": 60.0}),
 	]
-	scatter.layers = layers.filter(func(l: ScatterLayer) -> bool:
-		return l.allowed_ids.any(func(id: int) -> bool: return id in ground))
+	var picked: Array[ScatterLayer] = []
+	for l in layers:
+		if l.allowed_ids.any(func(id: int) -> bool: return id in ground):
+			picked.append_array(_with_variants(l))
+	scatter.layers = picked
 	return scatter
+
+
+## The baked variants of a model (models/variants/<name>_v<n>.glb), if any.
+static func _variants_of(model: PackedScene) -> Array[PackedScene]:
+	var out: Array[PackedScene] = []
+	if model == null:
+		return out
+	var base := model.resource_path.get_file().get_basename()
+	for v in range(1, VARIANTS + 1):
+		var path := "res://models/variants/%s_v%d.glb" % [base, v]
+		if ResourceLoader.exists(path):
+			out.append(load(path))
+	return out
+
+
+## A layer per look (the model and each of its variants), sharing the density between them.
+static func _with_variants(layer: ScatterLayer) -> Array[ScatterLayer]:
+	var looks := _variants_of(layer.model)
+	var out: Array[ScatterLayer] = [layer]
+	if looks.is_empty():
+		return out
+	layer.density /= looks.size() + 1
+	for look in looks:
+		var copy := layer.duplicate() as ScatterLayer
+		copy.model = look
+		out.append(copy)
+	return out
 
 
 static func _layer(model: String, density: float, ids: Array, props: Dictionary) -> ScatterLayer:

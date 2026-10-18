@@ -31,9 +31,20 @@ from mathutils.bvhtree import BVHTree
 argv = sys.argv[sys.argv.index("--") + 1:]
 OUT_DIR = argv[0]
 SWATCHES = json.load(open(argv[1]))["swatches"]
+## How many variants of each model the `variants` builder makes (see variants()).
+VARIANTS = 4
+_variant = 0  # 0 = the model itself; 1..VARIANTS while variants() is baking
+
+
 
 
 # --- helpers ----------------------------------------------------------------------------------
+
+def seeded(seed):
+    """The random generator every model is built from. Its seed is the model's own, shifted while
+    variants() bakes, so a variant is the same model drawn from a different seed."""
+    return random.Random(seed + 7919 * _variant)
+
 
 def reset():
     bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -110,6 +121,8 @@ def prism(segments, r_bottom, r_top, height):
 def export(name, loose_edges=False):
     """Writes models/<name>.glb. With `loose_edges` (the breakable rocks), also the Seam_* lines and
     the "cut_mark" vertex colour (see mark_cut)."""
+    if _variant:  # a variant: models/variants/<name>_v<n>.glb, whatever folder the model lives in
+        name = os.path.join("variants", f"{os.path.basename(name)}_v{_variant}")
     path = os.path.join(OUT_DIR, name + ".glb")
     colours = {"export_vertex_color": "NAME", "export_vertex_color_name": "cut_mark"} if loose_edges else {}
     bpy.ops.export_scene.gltf(filepath=path, export_format="GLB", export_yup=True,
@@ -302,7 +315,7 @@ def copper_verdigris(name="copper_verdigris", out="designs"):
     copper veins. The pieces are seeded in pairs mirrored across each vein, so the seams run along
     the veins: every split opens up a bright sheet of copper."""
     reset()
-    rng = random.Random(101)
+    rng = seeded(101)
     squash = (1.2, 1.05, 0.72)
     whole, cz = boulder_mesh(rng, 1.0, squash=squash, chops=3, lump_amp=(0.15, 0.28))
     centre = Vector((0, 0, cz))
@@ -335,7 +348,7 @@ def copper_malachite():
     """Copper B: a dark stone boulder under a thick green malachite crust; inside it's banded in
     stripes of light and dark green, so every break shows the banding."""
     reset()
-    rng = random.Random(102)
+    rng = seeded(102)
     squash = (1.15, 1.05, 0.75)
     whole, cz = boulder_mesh(rng, 1.0, squash=squash, chops=4, lump_amp=(0.18, 0.3))
     axis = Vector((0.3, 0.2, 1)).normalized()
@@ -359,7 +372,7 @@ def iron_columns(name="iron_columns", out="designs"):
     tall prism, each with its own flat top), rust bleeding down from the tops; the faces a break
     opens glint with iron."""
     reset()
-    rng = random.Random(103)
+    rng = seeded(103)
     size = 1.1
     whole = prism(9, 1.15 * size, 1.05 * size, 2.0 * size)
     bmesh.ops.translate(whole, vec=Vector((0, 0, 1.0 * size - 0.04)), verts=whole.verts)
@@ -398,7 +411,7 @@ def iron_banded():
     """Iron B: an angular slab of banded iron: layers of deep red jasper and steel-grey hematite,
     weathered paler on top. The pieces break mostly along the layers."""
     reset()
-    rng = random.Random(104)
+    rng = seeded(104)
     size = 1.1
     squash = (1.25, 1.0, 0.68)
     whole, cz = boulder_mesh(rng, size, subdiv=2, squash=squash, lumps=3, lump_amp=(0.05, 0.12), chops=8,
@@ -422,7 +435,7 @@ def coal_strata(name="coal_strata", out="designs"):
     """Coal A: a low, wide outcrop of layered rock: thick black coal seams between grey shale,
     and the pieces come away as slabs along the layers."""
     reset()
-    rng = random.Random(105)
+    rng = seeded(105)
     squash = (1.35, 1.1, 0.6)
     whole, cz = boulder_mesh(rng, 1.0, squash=squash, lumps=4, lump_amp=(0.08, 0.16), chops=4)
     thick = [0.16, 0.07, 0.2, 0.08, 0.14, 0.07, 0.18, 0.08, 0.2]  # coal, shale, coal ... upward
@@ -458,7 +471,7 @@ def coal_lump():
     """Coal B: one big glossy lump of coal, all sharp facets: black, with bright glints where the
     light catches a face, and a little grey stone clinging to its base."""
     reset()
-    rng = random.Random(106)
+    rng = seeded(106)
     squash = (1.15, 1.05, 0.8)
     whole, cz = boulder_mesh(rng, 1.0, subdiv=2, squash=squash, lumps=3, lump_amp=(0.1, 0.2), chops=10,
                              chop_depth=(0.7, 0.88), noise=0.08)
@@ -480,7 +493,7 @@ def gold_quartz():
     """Gold A: a milky-white quartz boulder threaded with thin gold veins, gold flecks scattered
     either side of them; the broken faces are clear white quartz with the veins running through."""
     reset()
-    rng = random.Random(107)
+    rng = seeded(107)
     size = 0.95
     squash = (1.15, 1.05, 0.75)
     whole, cz = boulder_mesh(rng, size, squash=squash, chops=5, lump_amp=(0.12, 0.22))
@@ -509,7 +522,7 @@ def gold_geode():
     """Gold B: a dull, rough brown boulder you would walk past, until a piece splits off and the
     inside glitters: a rim of white quartz, then gold crystal all the way in."""
     reset()
-    rng = random.Random(108)
+    rng = seeded(108)
     size = 0.95
     squash = (1.1, 1.05, 0.8)
     whole, cz = boulder_mesh(rng, size, squash=squash, chops=2, lump_amp=(0.15, 0.25), noise=0.07)
@@ -535,7 +548,7 @@ def gold_veined(name="gold_veined", out="designs"):
     """Gold (the pick): the geode, with a few thin gold veins on the outside so it can still be
     spotted from a distance. Dull brown outside, a quartz rim and gold crystal within."""
     reset()
-    rng = random.Random(109)
+    rng = seeded(109)
     size = 0.95
     squash = (1.1, 1.05, 0.8)
     whole, cz = boulder_mesh(rng, size, squash=squash, chops=3, lump_amp=(0.15, 0.25), noise=0.06)
@@ -620,7 +633,7 @@ def crystal_rock():
     off flush where it comes out of the stone, and that cut is its seam: a ring round its foot, so
     the crack runs round the base of the crystal and finishing it snaps the crystal off."""
     reset()
-    rng = random.Random(15)
+    rng = seeded(15)
     bm = blob(0.5, rng, squash=(1.15, 1.0, 0.5))
     paint(bm, shade_by_normal("stone.2", "stone.1", "stone.0", rng, side_alt="neutral.2"))
     stone = bm.copy()  # where the crystals come out of it (world space)
@@ -656,7 +669,7 @@ def crystal_rock():
 
 def crystal_item():
     reset()
-    rng = random.Random(39)
+    rng = seeded(39)
     bm = blob(0.09, rng, jitter_amount=0.25, squash=(1.2, 1.0, 0.5))
     paint(bm, shade_by_normal("stone.3", "stone.2", "stone.1", rng))
     make_object("Base", bm, (0, 0, -0.02))
@@ -680,7 +693,7 @@ def scaffold(name, seed, height, width=3.0, depth=1.6):
     """Timber scaffolding with a plank deck `height` up: posts, a cross brace, a toe board.
     Its whole box is solid in the game, so the deck is a step to mantle onto."""
     reset()
-    rng = random.Random(seed)
+    rng = seeded(seed)
     for x in (-width / 2 + 0.1, width / 2 - 0.1):
         for y in (-depth / 2 + 0.1, depth / 2 - 0.1):
             plank("Post", (0.14, 0.14, height), (x, y, height / 2), rng, shades=("wood.3", "wood.2", "wood.1", "wood.3"))
@@ -698,7 +711,7 @@ def scaffold(name, seed, height, width=3.0, depth=1.6):
 def ladder(name="ladder", length=5.6, lean=0.22):
     """Two rails and rungs, leaning back `lean` radians (set against a wall). Just for looks."""
     reset()
-    rng = random.Random(70)
+    rng = seeded(70)
     up = (0, math.sin(lean), math.cos(lean))
     for x in (-0.25, 0.25):
         plank("Rail", (0.08, 0.08, length), (x, up[1] * length / 2, up[2] * length / 2), rng, (-lean, 0, 0),
@@ -714,7 +727,7 @@ def crane():
     """A timber derrick on the rim: an A-frame, a boom reaching out over the pit (-Y), a rope
     and a stone bucket hanging off its end, a winch drum and counterweight stones."""
     reset()
-    rng = random.Random(71)
+    rng = seeded(71)
     wood = ("wood.3", "wood.2", "wood.1", "wood.3")
     plank("Base", (3.0, 2.4, 0.3), (0, 1.0, 0.15), rng, shades=wood)
     for x in (-1.1, 1.1):
@@ -746,7 +759,7 @@ def crane():
 def quarry_rubble():
     """Scenery: a little spill of pale broken stone, one merged mesh."""
     reset()
-    rng = random.Random(72)
+    rng = seeded(72)
     for i in range(6):
         r = rng.uniform(0.1, 0.28)
         bm = blob(r, rng, jitter_amount=0.35, squash=(1.2, 1.0, 0.6), subdiv=0)
@@ -772,7 +785,7 @@ def quarry():
 def sickle():
     """Short handle along +Z; a crescent blade curving forward (+Y) and up from its top."""
     reset()
-    rng = random.Random(80)
+    rng = seeded(80)
     bm = box((0.036, 0.036, 0.26))
     paint(bm, shade_by_normal("wood.6", "wood.4", "wood.3", rng, side_alt="wood.5"))
     make_object("Handle", bm, (0, 0, 0.13))
@@ -833,7 +846,7 @@ def sheaf(name, seed, stalk, ear, ear_size, droop=0.0, awns=None):
     bunches as chunks, and what's left is stubble with the cut stalks lying flat. Each part is
     one mesh, so a field of them stays cheap to draw."""
     reset()
-    rng = random.Random(seed)
+    rng = seeded(seed)
     made = stalks(rng, 14, 0.32, 0.95, stalk, ear, ear_size, droop, awns)
     body = [o for o in made if o.name.startswith("Stalk")]
     ears = [o for o in made if not o.name.startswith("Stalk")]
@@ -859,7 +872,7 @@ def sheaf(name, seed, stalk, ear, ear_size, droop=0.0, awns=None):
 def grain_item(name, seed, stalk, ear, ear_size, droop=0.0, awns=None):
     """A little tied bundle of stalks standing up, ears on top."""
     reset()
-    rng = random.Random(seed)
+    rng = seeded(seed)
     stalks(rng, 7, 0.035, 0.2, stalk, ear, ear_size * 0.75, droop * 0.6, awns, thick=0.018)
     bm = prism(8, 0.045, 0.045, 0.03)
     paint(bm, lambda f: "wood.3")
@@ -871,7 +884,7 @@ def grain_item(name, seed, stalk, ear, ear_size, droop=0.0, awns=None):
 def wheat_clump():
     """Scenery: a clump of ripe wheat for the crop squares (not gatherable), one merged mesh."""
     reset()
-    rng = random.Random(81)
+    rng = seeded(81)
     stalks(rng, 9, 0.45, 0.9, "terrain.sand", ("accent.3", "wood.6"), 0.12)
     merge_all("Wheat")
     export(os.path.join("scenery", "wheat_clump"))
@@ -884,7 +897,7 @@ BARLEY = dict(stalk="leaves.7", ear=("wood.7", "terrain.sand"), ear_size=0.11, d
 def hay_round():
     """A round bale lying on its side, 1.3 m tall: a mantle step."""
     reset()
-    rng = random.Random(82)
+    rng = seeded(82)
     bm = prism(12, 0.65, 0.65, 1.2)
     jitter(bm, 0.03, rng)
     paint(bm, lambda f: "wood.7" if abs(f.normal.z) > 0.9 else ("accent.3" if rng.random() < 0.3 else "terrain.sand"))
@@ -900,7 +913,7 @@ def hay_round():
 def hay_stack():
     """Square bales stacked in two steps: 0.9 m, then 1.8 m at the back."""
     reset()
-    rng = random.Random(83)
+    rng = seeded(83)
     hay = lambda f: "wood.7" if abs(f.normal.y) > 0.9 else ("accent.3" if rng.random() < 0.25 else "terrain.sand")
     for i, (x, y, z) in enumerate(((-0.6, -0.5, 0.45), (0.6, -0.5, 0.45), (-0.6, 0.5, 0.45), (0.6, 0.5, 0.45),
                                    (-0.6, 0.5, 1.35), (0.6, 0.5, 1.35))):
@@ -915,7 +928,7 @@ def hay_stack():
 def fence():
     """A 3 m length of rail fence, 1 m tall: two posts, two rails, a bit of lean."""
     reset()
-    rng = random.Random(84)
+    rng = seeded(84)
     wood = ("wood.4", "wood.3", "wood.2", "wood.3")
     for x in (-1.45, 1.45):
         plank("Post", (0.12, 0.12, 1.05), (x, 0, 0.52), rng, (0, rng.uniform(-0.05, 0.05), 0), shades=wood)
@@ -929,7 +942,7 @@ def fence():
 def cart():
     """A hay cart: plank bed with sides, two big wheels, shafts resting on the ground, a load."""
     reset()
-    rng = random.Random(85)
+    rng = seeded(85)
     wood = ("wood.5", "wood.4", "wood.3", "wood.4")
     plank("Bed", (1.4, 2.4, 0.1), (0, 0, 0.85), rng, shades=wood)
     for x in (-0.7, 0.7):
@@ -955,7 +968,7 @@ def windmill():
     axle out of the front (-Y). Two objects: Tower, and Sails with its origin on the hub, so the
     game can turn it (scripts/windmill.gd)."""
     reset()
-    rng = random.Random(86)
+    rng = seeded(86)
     bm = prism(8, 2.6, 1.7, 9.0)
     jitter(bm, 0.02, rng)
     paint(bm, shade_by_normal("neutral.6", "neutral.6", "neutral.4", rng, side_alt="neutral.5"))
@@ -1026,7 +1039,7 @@ ROAD_WOOD = ("wood.5", "wood.4", "wood.3", "wood.4")
 def log_pile():
     """Three logs across the road, 0.8 m high: hop it without breaking the chain."""
     reset()
-    rng = random.Random(100)
+    rng = seeded(100)
     for i, (x, z) in enumerate(((0, 0.22), (0, 0.22), (0, 0.6))):
         y = (-0.23, 0.23, 0.0)[i]
         bm = prism(8, 0.22, 0.22, 4.0)
@@ -1040,7 +1053,7 @@ def log_pile():
 def low_wall():
     """A dry-stone wall 4 m long and 1.1 m high: jump it or slide-cancel over."""
     reset()
-    rng = random.Random(101)
+    rng = seeded(101)
     for course, z in enumerate((0.28, 0.83)):
         for i in range(4):
             x = -1.5 + i + (0.25 if course else 0) - (0.12 if i == 3 and course else 0)
@@ -1056,7 +1069,7 @@ def low_wall():
 def crate_stack(name, seed, levels):
     """Crates 1.9 m square, `levels` of them stacked 1 m each: a step, or a mantle at 2."""
     reset()
-    rng = random.Random(seed)
+    rng = seeded(seed)
     for k in range(levels):
         plank(f"Crate{k}", (1.9, 1.9, 0.98), (0, 0, 0.5 + k), rng, (0, 0, rng.uniform(-0.05, 0.05)), shades=ROAD_WOOD)
         for y in (-0.96, 0.96):
@@ -1068,7 +1081,7 @@ def crate_stack(name, seed, levels):
 def wallrun_panel():
     """A timber wall 11 m long and 3 m tall beside the road: one full wall run."""
     reset()
-    rng = random.Random(102)
+    rng = seeded(102)
     for i in range(5):
         plank(f"Post{i}", (0.24, 0.24, 3.2), (0, -5.5 + i * 2.75, 1.6), rng, shades=("wood.3", "wood.2", "wood.1", "wood.2"))
     for i in range(6):
@@ -1081,7 +1094,7 @@ def wallrun_panel():
 def kicker():
     """A plank ramp 2 m wide rising 0.8 m over 2.6 m toward +Y: launch into a dash or long jump."""
     reset()
-    rng = random.Random(103)
+    rng = seeded(103)
     bm = box((2.0, 2.6, 0.8))
     for v in bm.verts:
         if v.co.y < 0 and v.co.z > 0:
@@ -1098,7 +1111,7 @@ def kicker():
 def low_beam():
     """A log on two posts across the road, 1.1 m clear underneath: slide under it."""
     reset()
-    rng = random.Random(104)
+    rng = seeded(104)
     for x in (-2.1, 2.1):
         plank(f"Post{x}", (0.22, 0.22, 1.6), (x, 0, 0.8), rng, shades=("wood.3", "wood.2", "wood.1", "wood.2"))
     bm = prism(8, 0.16, 0.16, 4.6)
@@ -1112,7 +1125,7 @@ def bridge():
     """A plank deck over the gully's earth bridge, with a rail on its outer (+X) side only, so
     you can still leap off the open side across the gap."""
     reset()
-    rng = random.Random(105)
+    rng = seeded(105)
     for i in range(14):
         plank(f"Plank{i}", (6.2, 0.48, 0.1), (0, -3.25 + i * 0.5, 0.05), rng, (0, 0, rng.uniform(-0.01, 0.01)),
               shades=ROAD_WOOD)
@@ -1127,7 +1140,7 @@ def gate():
     """The time trial's start and finish: two tall posts and a cross beam over the road, and three
     medal banners (BannerBronze, BannerSilver, BannerGold) the game shows as you earn them."""
     reset()
-    rng = random.Random(106)
+    rng = seeded(106)
     for x in (-5.0, 5.0):
         plank(f"Post{x}", (0.4, 0.4, 5.6), (x, 0, 2.8), rng, shades=("wood.3", "wood.2", "wood.1", "wood.2"))
         for i in range(4):  # chequered start bands
@@ -1154,7 +1167,7 @@ def gate():
 def checkpoint():
     """A checkpoint arch: two posts and a rope of pennants (Flags, lit up when it's next)."""
     reset()
-    rng = random.Random(107)
+    rng = seeded(107)
     for x in (-4.6, 4.6):
         plank(f"Post{x}", (0.26, 0.26, 4.2), (x, 0, 2.1), rng, shades=("wood.3", "wood.2", "wood.1", "wood.2"))
     plank("Rope", (9.2, 0.04, 0.04), (0, 0, 3.95), rng, shades=("wood.6",) * 4)
@@ -1318,7 +1331,7 @@ def tree_round(name="tree_round", out="designs"):
     """Starter A (picked: the game's tree): a rounded crown of clumps on three spreading branches,
     a little root flare."""
     reset()
-    rng = random.Random(70)
+    rng = seeded(70)
     make_object("Body_Trunk", ringed_trunk(rng, 12, 0.24, 0.15, 2.9, STARTER_BARK, flare=0.3, lean=(0.12, 0.05)))
     ends = fan(3, 0.95, 3.5, rng, 0.4)
     limbs(rng, [((0.1, 0.03, 2.5), e, 0.09, 0.04) for e in ends], STARTER_BARK)
@@ -1333,7 +1346,7 @@ def tree_round(name="tree_round", out="designs"):
 def tree_tiered():
     """Starter B: a straighter trunk with two tiers of flat clumps and a small crown on top."""
     reset()
-    rng = random.Random(71)
+    rng = seeded(71)
     make_object("Body_Trunk", ringed_trunk(rng, 12, 0.23, 0.13, 3.9, STARTER_BARK, flare=0.2, lean=(-0.06, 0.08),
                                            upper=(2.0, 2.6, 3.2)))
     low = fan(4, 1.0, 2.75, rng, 0.2)
@@ -1350,7 +1363,7 @@ def birch_airy(name="birch_airy", out="designs"):
     """Birch A (picked: the game's birch): a slim white trunk dashed with black, curving gently,
     and small upright clumps hung along its upper half."""
     reset()
-    rng = random.Random(72)
+    rng = seeded(72)
     make_object("Body_Trunk", ringed_trunk(rng, 10, 0.17, 0.09, 4.3, BIRCH_BARK, flare=0.15, lobes=4,
                                            lean=(0.3, -0.1), marks=("neutral.1", 0.16), upper=(2.0, 2.6, 3.2, 3.8)))
     spots = []
@@ -1373,7 +1386,7 @@ def birch_forked():
     """Birch B: a white trunk that forks above head height into two slender leaders, each with
     a loose crown."""
     reset()
-    rng = random.Random(73)
+    rng = seeded(73)
     make_object("Body_Trunk", ringed_trunk(rng, 10, 0.17, 0.11, 2.6, BIRCH_BARK, flare=0.15, lobes=4,
                                            lean=(0.05, 0.05), marks=("neutral.1", 0.16)))
     tops = [(0.55, 0.2, 4.4), (-0.45, -0.25, 4.1)]
@@ -1390,7 +1403,7 @@ def oak_spreading(name="oak_spreading", out="designs"):
     """Oak A (picked: the game's oak): a stout trunk on big buttress roots, four thick limbs
     reaching out wide, a broad crown of heavy clumps."""
     reset()
-    rng = random.Random(74)
+    rng = seeded(74)
     make_object("Body_Trunk", ringed_trunk(rng, 12, 0.36, 0.26, 2.4, OAK_BARK, flare=0.5, lobes=6, lean=(0.08, 0.0)))
     ends = fan(4, 1.6, 3.0, rng, 0.5)
     limbs(rng, [((0, 0, 2.1), e, 0.16, 0.07) for e in ends], OAK_BARK)
@@ -1404,7 +1417,7 @@ def oak_spreading(name="oak_spreading", out="designs"):
 def oak_gnarled():
     """Oak B: a thick leaning trunk, crooked limbs (two bends each), a wide flat-topped crown."""
     reset()
-    rng = random.Random(75)
+    rng = seeded(75)
     make_object("Body_Trunk", ringed_trunk(rng, 12, 0.38, 0.27, 2.5, OAK_BARK, flare=0.4, lobes=5, lean=(0.45, 0.2),
                                            wobble=0.05))
     top = (0.45, 0.2, 2.35)
@@ -1425,7 +1438,7 @@ def pine_classic(name="pine_classic", out="designs"):
     """Pine A (picked: the game's pine): a tall straight trunk with stacked cones of needles,
     their rims drooping and ragged. The lowest rim stays above the chopping band."""
     reset()
-    rng = random.Random(76)
+    rng = seeded(76)
     make_object("Body_Trunk", ringed_trunk(rng, 10, 0.3, 0.1, 5.9, PINE_BARK, flare=0.25, lobes=5,
                                            upper=(2.0, 2.6, 3.4, 4.2, 5.0)))
     shade = shade_by_normal(PINE_NEEDLES[0], PINE_NEEDLES[1], PINE_NEEDLES[2], rng, side_alt=PINE_NEEDLES[3])
@@ -1446,7 +1459,7 @@ def pine_scots():
     """Pine B: a tall bare trunk, warm-barked toward the top, with a crown of flat dark tufts on
     short branches."""
     reset()
-    rng = random.Random(77)
+    rng = seeded(77)
     bark = ("wood.4", "wood.2", "wood.1", "wood.4")
     make_object("Body_Trunk", ringed_trunk(rng, 10, 0.27, 0.1, 5.4, bark, flare=0.2, lean=(-0.25, 0.15),
                                            upper=(2.0, 2.8, 3.6, 4.4)))
@@ -1517,7 +1530,7 @@ def pine():
 def pickaxe():
     """Handle along +Z from the grip (origin) up; head with two drooping spikes, along Y."""
     reset()
-    rng = random.Random(3)
+    rng = seeded(3)
     bm = box((0.038, 0.038, 0.5))
     paint(bm, shade_by_normal("wood.6", "wood.4", "wood.3", rng, side_alt="wood.5"))
     make_object("Handle", bm, (0, 0, 0.21))
@@ -1607,7 +1620,7 @@ def axe():
     """A felling axe: a long handle along +Z, a little thicker at the knob end, and a felling head
     (felling_head) near the top with its bit pointing forward (+Y)."""
     reset()
-    rng = random.Random(4)
+    rng = seeded(4)
     bm = prism(4, 0.024, 0.02, AXE_HANDLE)
     for v in bm.verts:  # a knob at the very end so it doesn't slip out of the hands
         if v.co.z < -AXE_HANDLE / 2 + 0.01:
@@ -1625,7 +1638,7 @@ def spear():
     """Fishing spear pointing forward (+Y, Godot -Z) from the grip at the origin: wooden shaft,
     a dark binding wrap, and a barbed metal tip at about 1.2 m."""
     reset()
-    rng = random.Random(5)
+    rng = seeded(5)
     bm = prism(6, 0.022, 0.02, 1.45)
     paint(bm, shade_by_normal("wood.6", "wood.4", "wood.3", rng, side_alt="wood.5"))
     make_object("Shaft", bm, (0, 0.45, 0), (-math.pi / 2, 0, 0))  # from -0.27 to 1.18 along Y
@@ -1704,26 +1717,26 @@ def fish(name, length, width, height, painter, tail_taper=0.85, snout=1.0):
 
 
 def perch():
-    rng = random.Random(21)
+    rng = seeded(21)
     fish("perch", 0.24, 0.07, 0.1, fish_painter("leaves.4", "leaves.6", "accent.3", "accent.2", rng,
                                                 bars="leaves.1", length=0.24))
 
 
 def trout():
-    rng = random.Random(22)
+    rng = seeded(22)
     fish("trout", 0.34, 0.08, 0.1, fish_painter("leaves.1", "metal.6", "neutral.7", "leaves.2", rng,
                                                 stripe="accent.7", length=0.34))
 
 
 def pike():
-    rng = random.Random(23)
+    rng = seeded(23)
     fish("pike", 0.7, 0.1, 0.11, fish_painter("leaves.2", "leaves.4", "wood.7", "leaves.3", rng,
                                               spots="accent.3", length=0.7), tail_taper=0.7, snout=0.55)
 
 
 def arctic_char():
     """Deep-water fish of the lake: dark back, pale spots, a bright orange belly."""
-    rng = random.Random(24)
+    rng = seeded(24)
     fish("char", 0.44, 0.09, 0.11, fish_painter("metal.1", "metal.3", "accent.2", "accent.1", rng,
                                                spots="neutral.6", length=0.44), tail_taper=0.8, snout=0.85)
 
@@ -1732,7 +1745,7 @@ def arctic_char():
 
 def log_item():
     reset()
-    rng = random.Random(31)
+    rng = seeded(31)
     bm = prism(6, 0.09, 0.085, 0.42)
     jitter(bm, 0.05, rng)
     paint(bm, lambda f: "wood.7" if abs(f.normal.z) > 0.9 else ("wood.3" if rng.random() < 0.6 else "wood.2"))
@@ -1742,7 +1755,7 @@ def log_item():
 
 def oak_item():
     reset()
-    rng = random.Random(33)
+    rng = seeded(33)
     bm = prism(6, 0.12, 0.115, 0.38)
     jitter(bm, 0.05, rng)
     paint(bm, lambda f: "wood.7" if abs(f.normal.z) > 0.9 else ("wood.2" if rng.random() < 0.6 else "wood.1"))
@@ -1757,7 +1770,7 @@ def oak_item():
 
 def iron_item():
     reset()
-    rng = random.Random(34)
+    rng = seeded(34)
     bm = blob(0.14, rng, jitter_amount=0.3, squash=(1.0, 0.9, 0.8))
     paint(bm, lambda f: ("metal.7" if f.normal.z > 0.5 else ("ore.iron" if f.normal.z > -0.2 else "ore.iron_dark"))
           if rng.random() < 0.75 else ("stone.2" if f.normal.z > 0.3 else "stone.0"))
@@ -1767,7 +1780,7 @@ def iron_item():
 
 def log_item_variant(name, seed, bark, end_grain, radius=0.09):
     reset()
-    rng = random.Random(seed)
+    rng = seeded(seed)
     bm = prism(6, radius, radius * 0.95, 0.42)
     jitter(bm, 0.05, rng)
     paint(bm, lambda f: end_grain if abs(f.normal.z) > 0.9 else (bark[0] if rng.random() < 0.6 else bark[1]))
@@ -1777,7 +1790,7 @@ def log_item_variant(name, seed, bark, end_grain, radius=0.09):
 
 def ore_item_variant(name, seed, ore, stone, ore_share):
     reset()
-    rng = random.Random(seed)
+    rng = seeded(seed)
     bm = blob(0.13, rng, jitter_amount=0.3, squash=(1.0, 0.9, 0.8))
     paint(bm, lambda f: (ore[0] if f.normal.z > 0.0 else ore[1]) if rng.random() < ore_share
           else (stone[0] if f.normal.z > 0.3 else stone[1]))
@@ -1794,7 +1807,7 @@ def more_items():
 
 def ore_item():
     reset()
-    rng = random.Random(32)
+    rng = seeded(32)
     bm = blob(0.13, rng, jitter_amount=0.3, squash=(1.0, 0.9, 0.8))
     paint(bm, lambda f: ("ore.copper" if f.normal.z > 0.0 else "ore.copper_dark") if rng.random() < 0.55
           else ("stone.4" if f.normal.z > 0.3 else "stone.2"))
@@ -1807,7 +1820,7 @@ def ore_item():
 def reeds():
     """A clump of tapered reed blades with a few cattail heads. Origin at the base (on the bed)."""
     reset()
-    rng = random.Random(41)
+    rng = seeded(41)
     for i in range(9):
         h = rng.uniform(0.9, 1.6)
         bm = prism(3, 0.018, 0.002, h)
@@ -1825,7 +1838,7 @@ def reeds():
 def lily_pad():
     """A flat floating pad with a notch cut out; origin at its centre on the water line."""
     reset()
-    rng = random.Random(42)
+    rng = seeded(42)
     bm = bmesh.new()
     centre = bm.verts.new((0, 0, 0.0))
     ring = []
@@ -1849,7 +1862,7 @@ def lily_pad():
 def lily_flower():
     """A lily pad with a small pink-white flower on it."""
     reset()
-    rng = random.Random(43)
+    rng = seeded(43)
     bm = prism(8, 0.2, 0.2, 0.01)
     paint(bm, lambda f: "leaves.4")
     make_object("Pad", bm, (0, 0, 0.005))
@@ -1867,7 +1880,7 @@ def lily_flower():
 
 def shore_stone():
     reset()
-    rng = random.Random(44)
+    rng = seeded(44)
     bm = blob(0.28, rng, jitter_amount=0.28, squash=(1.2, 1.0, 0.55))
     paint(bm, shade_by_normal("stone.5", "stone.3", "stone.2", rng, side_alt="terrain.moss"))  # a little moss
     make_object("Stone", bm, (0, 0, 0.06))
@@ -1892,7 +1905,7 @@ def merge_all(name):
 
 def grass_tuft():
     reset()
-    rng = random.Random(51)
+    rng = seeded(51)
     for i in range(7):
         h = rng.uniform(0.25, 0.5)
         bm = prism(3, 0.03, 0.002, h)
@@ -1907,7 +1920,7 @@ def grass_tuft():
 
 def flowers(name, seed, petals):
     reset()
-    rng = random.Random(seed)
+    rng = seeded(seed)
     for i in range(4):
         h = rng.uniform(0.22, 0.38)
         a, r = rng.uniform(0, math.tau), rng.uniform(0.03, 0.14)
@@ -1929,7 +1942,7 @@ def flowers(name, seed, petals):
 
 def bush(name, seed, blobs, shades):
     reset()
-    rng = random.Random(seed)
+    rng = seeded(seed)
     for i, (loc, r) in enumerate(blobs):
         bm = blob(r, rng, jitter_amount=0.22, squash=(1.0, 1.0, 0.8))
         paint(bm, shade_by_normal(shades[0], shades[1], shades[2], rng, side_alt=shades[3]))
@@ -1940,7 +1953,7 @@ def bush(name, seed, blobs, shades):
 
 def boulder(name, seed, size, squash):
     reset()
-    rng = random.Random(seed)
+    rng = seeded(seed)
     bm = blob(size, rng, jitter_amount=0.25, squash=squash, subdiv=1)
     paint(bm, shade_by_normal("stone.4", "stone.3", "stone.1", rng, side_alt="terrain.moss"))
     make_object("Boulder", bm, (0, 0, size * squash[2] * 0.6))  # sunk a little into the ground
@@ -1955,7 +1968,7 @@ def canopy_pine(name, seed, height, cones, needles):
     mesh, its cones' rims ragged and drooping. cones: (radius, height, z) per cone of needles,
     bottom up; needles: (top, side, bottom, side_alt) swatches."""
     reset()
-    rng = random.Random(seed)
+    rng = seeded(seed)
     bm = prism(8, 0.32, 0.1, height)
     for v in bm.verts:  # a little root flare
         if v.co.z < -height / 2 + 0.01:
@@ -1981,7 +1994,7 @@ def canopy_birch():
     """A background birch in the game birch's look (birch_airy): a slim white trunk dashed with
     black, small upright clumps up its top half; one merged mesh."""
     reset()
-    rng = random.Random(61)
+    rng = seeded(61)
     bm = prism(8, 0.16, 0.09, 4.6)
     bmesh.ops.subdivide_edges(bm, edges=[e for e in bm.edges if abs(e.verts[0].co.z - e.verts[1].co.z) > 1.0],
                               cuts=7)  # rings up the trunk, for the dashes to sit on
@@ -2003,7 +2016,7 @@ def canopy_birch():
 def fern():
     """A low fan of fronds: flat tapering blades arching out from the middle."""
     reset()
-    rng = random.Random(62)
+    rng = seeded(62)
     for i in range(7):
         a = i * math.tau / 7 + rng.uniform(-0.2, 0.2)
         length = rng.uniform(0.45, 0.65)
@@ -2022,7 +2035,7 @@ def fern():
 def mushrooms():
     """A little cluster of red-capped toadstools on pale stems."""
     reset()
-    rng = random.Random(63)
+    rng = seeded(63)
     for i in range(4):
         h = rng.uniform(0.07, 0.16)
         a, r = rng.uniform(0, math.tau), rng.uniform(0.0, 0.12)
@@ -2040,13 +2053,32 @@ def mushrooms():
 
 
 def forest():
+    canopies()
+    fern()
+    mushrooms()
+
+
+def canopies():
+    """The forest's background trees."""
     canopy_pine("canopy_pine", 60, 6.5, ((2.1, 2.2, 2.9), (1.65, 2.0, 4.3), (1.15, 1.9, 5.7), (0.6, 1.4, 6.9)),
                 ("leaves.1", "leaves.0", "leaves.0", "leaves.1"))
     canopy_pine("canopy_pine_young", 64, 3.6, ((1.3, 1.6, 1.7), (0.95, 1.4, 2.7), (0.55, 1.2, 3.6)),
                 ("leaves.2", "leaves.1", "leaves.0", "leaves.2"))
     canopy_birch()
-    fern()
-    mushrooms()
+
+
+def variants():
+    """VARIANTS more of every model a procgen world picks from (models/variants/<name>_v<n>.glb):
+    the ore rocks, the choppable trees, bushes, boulders and background trees. Each is its model
+    built again from a shifted seed: the same design, every piece and crack its own."""
+    global _variant
+    os.makedirs(os.path.join(OUT_DIR, "variants"), exist_ok=True)
+    for v in range(1, VARIANTS + 1):
+        _variant = v
+        for build in (rock, iron_rock, coal_rock, gold_rock, crystal_rock, tree, birch, oak, pine,
+                      big_scenery, canopies):
+            build()
+    _variant = 0
 
 
 # --- ruins: the parkour blocks in the clearing ------------------------------------------------
@@ -2056,7 +2088,7 @@ def forest():
 def stone_block(name, size, seed, cap=False):
     """Courses of chunky stone bricks filling a box; staggered joints, a little moss on top."""
     reset()
-    rng = random.Random(seed)
+    rng = seeded(seed)
     w, h, d = size  # Godot x, y, z  ->  Blender x, z, y
     courses = max(1, round(h / 0.28))
     ch = h / courses
@@ -2098,7 +2130,7 @@ def stone_block(name, size, seed, cap=False):
 def plank_ramp(name, size, seed):
     """Planks across two long beams, filling the ramp's box."""
     reset()
-    rng = random.Random(seed)
+    rng = seeded(seed)
     w, h, d = size
     for x in (-w / 2 + 0.3, w / 2 - 0.3):
         bm = box((0.26, d - 0.04, h * 0.55))
@@ -2128,6 +2160,11 @@ def scenery():
     grass_tuft()
     flowers("flowers_warm", 52, ["accent.3", "accent.2", "neutral.7"])
     flowers("flowers_cool", 53, ["accent.7", "accent.6", "accent.5"])
+    big_scenery()
+
+
+def big_scenery():
+    """The bushes and boulders: big enough that repeats of one shape are noticed."""
     bush("bush_round", 54, [((0, 0, 0.35), 0.5), ((0.35, 0.15, 0.3), 0.38), ((-0.3, -0.2, 0.28), 0.36)],
          ("leaves.4", "leaves.3", "leaves.1", "leaves.2"))
     bush("bush_low", 55, [((0, 0, 0.22), 0.4), ((0.45, -0.1, 0.18), 0.32), ((-0.4, 0.2, 0.2), 0.34),
@@ -2151,6 +2188,6 @@ if __name__ == "__main__":  # make_village.py imports the helpers above without 
     for build in builds:
         if not only or build.__name__ in only:
             build()
-    for build in (designs, tree_designs):  # only when asked for by name: candidates, not game models
+    for build in (designs, tree_designs, variants):  # only when asked for by name: not the game's own models
         if build.__name__ in only:
             build()
