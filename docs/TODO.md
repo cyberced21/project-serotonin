@@ -76,6 +76,19 @@ Plan and decisions: [plans/biomes.md](../plans/biomes.md).
 - [ ] **Trophy / achievement spot** in or near the town hall: medals, discoveries, maxed skills.
 - [ ] **A "leaves" footstep set** for the forest floor (it sounds like grass for now).
 
+## Generated worlds (experimental)
+
+Plan and decisions: [plans/procgen.md](../plans/procgen.md). On the `procgen` branch.
+
+- [x] **A world from a seed:** biome ring, water with fish, a quarry pit, trails, spawners and scenery per biome, four baked variants of every gatherable and big scenery model (`scripts/procgen/`, `scenes/procgen.tscn`).
+- [x] **A voice per tree species and per ore** (`tools/synth_wood_sounds.py`, `tools/synth_mining_sounds.py`). This changes the hand-built world's sounds too.
+- [ ] **Playtest and listen:** walk a few seeds; listen to every tree species and ore (the voices are measured, not heard yet: no steady pulsing, no beating tones, pitch and ring in the intended order).
+- [ ] **Load time:** about 8 s on seed 42: ~1.8 s for the map, ~2.7 s spawning (each fractured ore rock takes ~50 ms to build), ~1.4 s scenery, the rest the first frame's shaders. Could spread the spawning over frames behind the overlay, or cache built rocks.
+- [ ] **The quarry ambience hum** (55 + 82.5 Hz) repeats 27.5 times a second: a low growl. Worth a listen given how the breeze turned out.
+- [ ] **A village or camp in generated worlds**, and the ring road / time trial: left out for now (they're hand-placed with baked heights).
+- [ ] **Hand-sculpting a seed:** a seed you like could be baked to `terrain_data`-style files and edited.
+- [ ] **Merge or drop:** the branch carries the wood and mining voicing and the camera fix (already on `main`); the procgen world itself only touches the debug menu, `SaveGame.use_file`, `Biome.locator` and `NodeSpawner.accept` / `SpawnEntry.variants`.
+
 ## Movement
 
 - [ ] **Grapple / rope** — for chasms and cliff-face nodes.
@@ -97,7 +110,8 @@ Plan and decisions: [plans/biomes.md](../plans/biomes.md).
 - [ ] **Real recordings** to replace the synthesized placeholders: footsteps (all surfaces + water), slide scrape, mantle, splash, spear hit, and the biome ambience beds (`audio/footsteps/`, `audio/movement/`, `audio/fishing/`, `audio/ambience/` — swap the `.wav`s, the `.tres` randomizers stay).
 - [x] **Mining sounds:** cut from the GDC 2026 sampler (`tools/cut_sounds.py`).
 - [x] **Even mining levels:** every clip at the same loudness, one source per layer, and the plain hit ducks under a crack tip or a split (`ResourceNode._hit_sounds`). Measured with `tools/measure_mix.py`: a plain hit stays within a 3.4 dB window (was 10.7), a tip hit lands 2 dB above it, a split 3.7 dB.
-- [ ] **Better source material for mining (next):** playtested, the sounds are even now but still don't feel right. The sampler has almost no real rock: ice cracks, a metal pipe on concrete, body punches and a broom sweeping crumbs stand in for stone cracking, the pick's bite, the thump and gravel, and the split crunch is a "gore smash". Find a real rock / mining library (stone impacts, pick on rock, rubble, gravel), then point the recipes in `tools/cut_sounds.py` at it: the layer stacks, the loudness matching and the ducking all stay. Re-run `tools/measure_mix.py` and rebalance the layer volumes after.
+- [x] **Synthesized mining sounds** (`tools/synth_mining_sounds.py`, 2026-10-17, `procgen` branch) replace the GDC clips below, with a voice per ore. Re-run `tools/measure_mix.py` and rebalance the stack volumes after a listen.
+- [ ] ~~**Better source material for mining (next):**~~ superseded by the synthesis above. playtested, the sounds are even now but still don't feel right. The sampler has almost no real rock: ice cracks, a metal pipe on concrete, body punches and a broom sweeping crumbs stand in for stone cracking, the pick's bite, the thump and gravel, and the split crunch is a "gore smash". Find a real rock / mining library (stone impacts, pick on rock, rubble, gravel), then point the recipes in `tools/cut_sounds.py` at it: the layer stacks, the loudness matching and the ducking all stay. Re-run `tools/measure_mix.py` and rebalance the layer volumes after.
 
 ## World & tech
 

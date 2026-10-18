@@ -51,6 +51,15 @@ whatever you hit.
     - A crane on the rim, scaffold steps, ladders, and haze that thickens as you go down.
   - **Goldmeadow** (south-east): rolling farmland. Crop squares of wheat and barley between dirt tracks, a windmill with turning sails (wall-run it), a fenced pasture with hay bales, a hay cart, lone oaks, and crickets.
   - **Hearthvale** (the village), **Stillwater** (the lake), **The Clearing** and **Frostpeak** have moods of their own too.
+- **Generated worlds (experimental).** From the debug menu's *Procgen* tab (or `-- --procgen --seed=N`), step into a world built from a seed in a few seconds, with its own character and save.
+  - A flat clearing to start in, a ring of biomes round it (Pinewood, Goldmeadow, Greystone Quarry, Frostpeak, Stillwater) with wandering borders, gentler ones near the hub and harder ones further out, and mountains round the edge.
+  - Ponds and a lake with fish, a three-level quarry pit with its haul road and mantle stairs, and dirt trails winding from the clearing to every biome and shore.
+  - Every biome filled with its own trees, rocks, grain and scenery. Each tree, rock, bush and boulder may be one of four baked variants of its model, so no two look alike.
+
+  | Seed 42, over Goldmeadow toward Frostpeak | Seed 42 from above (`tools/procgen_preview.gd`) |
+  |---|---|
+  | ![A generated world](docs/images/procgen.png) | ![Its map](docs/images/procgen_map.png) |
+
 - **The ring road and its time trial.** A 1 km gravel loop, graded smooth, with banked bends, rock cuttings to wall-run along, spurs into every area, and a gully you can bridge or leap.
   - An obstacle course runs all the way round: log piles to hop, low walls, crate steps to mantle, wall-run panels and side-to-side alleys, ramps, low beams to slide under. Every piece leaves part of the road clear.
   - Run through the start gate (where the forest trail meets the road) and the clock starts. Pass eight checkpoint arches in order: the next one's pennants light up, and each shows your split against your best.
@@ -88,7 +97,7 @@ whatever you hit.
   - Nights are moonlit blue, with lamps, lanterns and windows glowing.
   - Villagers go home after dark, but step out if you come to their door.
   - Fish are dozy around dawn and dusk.
-- **Positional audio:** footsteps change with the surface (grass, dirt, stone, sand, snow, water; the road and quarry crunch), and the slide scrape, splashes and spear hits are placed in 3D. Mining sounds are real recordings and woodcutting sounds are synthesized (a wooden thunk, fibres snapping, the trunk creaking, the crown rushing down), both built up in layers, each with several variations.
+- **Positional audio:** footsteps change with the surface (grass, dirt, stone, sand, snow, water; the road and quarry crunch), and the slide scrape, splashes and spear hits are placed in 3D. Mining and woodcutting sounds are synthesized (a wooden thunk, fibres snapping, the trunk creaking; a stone knock, the pick ringing, cracks running), built up in layers, each with several variations. Every tree species and every ore has its own voice: a birch rings high and short, an oak deep and long; iron rings hard, coal crumbles, crystal chimes.
 - **Saving:** skills, inventory, player position, the village's tiers, the time of day, which nodes are depleted (with their respawn timers), the biomes you've discovered, and your best lap and medals.
 
 ## Controls
@@ -102,7 +111,7 @@ whatever you hit.
 | Gather (axe, pickaxe or sickle: whichever fits what you aim at) / spear (hold) | Left mouse or E |
 | Talk to a villager | E |
 | Free the mouse | Esc (click to recapture) |
-| Debug menu: items, skill levels, building tiers, time of day and speed, pause, teleports (buildings, biomes, ponds, nodes), fly mode, a live readout (with the biome), save wipe | F1 (debug builds) |
+| Debug menu: items, skill levels, building tiers, time of day and speed, pause, teleports (buildings, biomes, ponds, nodes), fly mode, a live readout (with the biome), save wipe, generated worlds (enter a seed, a new random one, back to the main world) | F1 (debug builds) |
 | Debug: skip ahead 3 hours / give 50 of every item / upgrade every building (wraps back to tier 1) | F6 / F7 / F8 (debug builds) |
 | Debug: give XP / reset save | F9 / F10 (debug builds) |
 
@@ -141,6 +150,7 @@ Key scripts:
 - **Fishing:** `spear_fishing.gd`, `fish_pond.gd`, `fish_school.gd`, `fish.gd`, `water_body.gd`
 - **Village:** `building.gd` (shows a tier, plays the upgrade), `villager.gd`, `upgrade_panel.gd`, `building_def.gd` / `building_tier.gd`, `prop.gd`
 - **World:** `world_map.gd` (where the biomes, roads and landmarks are, shared with the terrain generator), `day_night_sky.gd`, `footsteps.gd`, `pond_dressing.gd`, `scenery_scatter.gd` + `scatter_layer.gd`, `node_spawner.gd` + `spawn_entry.gd` (seeded gatherable nodes with stable save ids), `windmill.gd`
+- **Generated worlds:** `procgen/procgen_map.gd` (the seed's heights, surfaces, biome cells, water, quarry and trails, as plain arrays), `procgen/procgen_world.gd` (builds `scenes/procgen.tscn` from it, enter / leave, a save per seed), `procgen/procgen_population.gd` (the spawners and scenery per biome cell). Plan and decisions: [plans/procgen.md](plans/procgen.md)
 - **The road:** `road_course.gd` (set pieces by metres along the road), `time_trial.gd`
 - **Autoloads:** `Skills`, `Inventory`, `SaveGame`, `Village` (building tiers, the town-hall cap, perks), `DayNight` (the clock), `Biome` (where you are, the mood, cards and ambience), `Juice` (hit-stop and shake), `Sfx`, `GameInput`
 
@@ -156,8 +166,10 @@ Most content is generated by scripts, so it's easy to tweak and regenerate. Run 
 | Item icons → `art/icons/*.png` | `blender -b -P tools/blender/render_icons.py -- models art/palette.png art/icons`, then `python tools/outline_icons.py` (name item ids after either to do only those) |
 | Ore design candidates → `models/designs/` (not used by the game; two looks per ore) | `blender -b -P tools/blender/make_models.py -- models art/palette.json designs` |
 | Tree design candidates → `models/designs/` (two looks per tree; the picked ones also build `tree`, `birch`, `oak` and `pine`) | `blender -b -P tools/blender/make_models.py -- models art/palette.json tree_designs` |
-| Mining sound clips → `audio/mining/sfx/` (needs the Sonniss GDC 2026 bundle, which isn't in the repo) | `blender -b -P tools/cut_sounds.py -- <bundle folder> audio/mining/sfx` (Blender's Python, for numpy). Each layer has one source, every clip at the same loudness. |
-| Woodcutting sound clips → `audio/woodcutting/sfx/` (synthesized, no bundle needed) | `python tools/synth_wood_sounds.py` |
+| Model variants for generated worlds → `models/variants/` (4 of each ore rock, choppable tree, bush, boulder and background tree, from shifted seeds) | `blender -b -P tools/blender/make_models.py -- models art/palette.json variants` |
+| Mining sound clips → `audio/mining/sfx/` (synthesized, plus a voice per ore in `sfx/<ore>/` and its stacks in `audio/mining/<ore>/`) | `python tools/synth_mining_sounds.py` |
+| Woodcutting sound clips → `audio/woodcutting/sfx/` (synthesized, plus a voice per species in `sfx/<species>/` and its stacks in `audio/woodcutting/<species>/`) | `python tools/synth_wood_sounds.py` |
+| A top-down picture of a generated world (biomes, water, the quarry, trails), and how long it took | `godot --headless --path . -s res://tools/procgen_preview.gd -- --seed=42 [--seed=7 ...] [--out=dir]` |
 | Check the mining mix without listening (how loud each event comes out, and how much that varies hit to hit) | `blender -b -P tools/measure_mix.py --` |
 | Placeholder sounds (footsteps, slide, wind, mantle, splash, spear) | `python tools/synth_movement_sounds.py` (needs numpy) |
 | Placeholder biome ambience (forest, field, quarry) | `python tools/synth_ambience.py` (needs numpy) |
