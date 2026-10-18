@@ -383,10 +383,13 @@ func _process(delta: float) -> void:
 	var run := clampf(inverse_lerp(walk_speed, sprint_speed, speed), 0.0, 1.0)
 	_bob_phase = fmod(_bob_phase + speed / lerpf(footsteps.walk_stride, footsteps.sprint_stride, run) * PI * delta, TAU)
 	var bob := (0.5 - absf(sin(_bob_phase))) * _bob_amp
-	# landing dip: a critically damped spring back up
-	var stiffness := 90.0
-	_dip_vel += (-stiffness * _dip - 2.0 * sqrt(stiffness) * _dip_vel) * delta
-	_dip += _dip_vel * delta
+	# landing dip: a critically damped spring back up, stepped with its exact solution so a long
+	# frame (a load, a shader compile) can't make it overshoot and run away with the camera
+	var w := sqrt(90.0)  # stiffness 90
+	var decay := exp(-w * delta)
+	var k := _dip_vel + w * _dip
+	_dip_vel = (_dip_vel - w * k * delta) * decay
+	_dip = (_dip + k * delta) * decay
 	# lean into strafes
 	var lean_target := -_move_input.x * deg_to_rad(strafe_lean_deg) if grounded else 0.0
 	if _state == State.WALLRUN:  # tilt away from the wall
