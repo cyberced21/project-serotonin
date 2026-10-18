@@ -120,6 +120,43 @@ const CRACKING_LAYER := 1 << 10
 ## Tipping speed at the start of the fall (rad/s).
 @export var topple_push := 0.8
 
+@export_group("Notch")
+## Trees: the axe carves a notch into the trunk's own mesh (Body_Trunk, a ringed trunk from
+## make_models.py) instead of leaving bite marks, and the tree falls from the notch, sideways to
+## the swinger, leaving the cut stump behind. Replaces the weak point. See TrunkCarve.
+@export var carve_notch := false
+## How deep the notch is by the time the tree falls, as a share of the trunk's radius.
+@export_range(0.3, 0.85) var notch_depth := 0.65
+## The heights (m, up the trunk) the notch can sit at: the first hit's height, clamped to this.
+@export var notch_band := Vector2(0.6, 1.4)
+## A swing aimed into the notch's mouth is a clean cut: it counts this many extra hits, doubles
+## the XP and throws a big chip. How close to the middle of the mouth it must aim (m, across the
+## line of the swing), and how deep the notch must be first (share of the fall depth).
+@export_range(0, 5) var clean_cut_extra_hits := 1
+@export var clean_cut_radius := 0.13
+@export_range(0.0, 1.0) var clean_cut_after := 0.25
+@export var clean_cut_color := Color("f3d9a4")
+## Flakes of bark peel off round the notch's rim as it grows, in this colour (chips are chip_color,
+## the cut wood).
+@export var bark_color := Color("5f4029")
+## Every hit shakes the canopy (m it swings out at first) and shakes a few leaves loose.
+@export var canopy_shake := 0.08
+@export_range(0, 32) var leaves_per_hit := 6
+## Once this share of the hits is done the tree sways and creaks on every hit; the last hit's
+## crack holds it leaning on the hinge for `fell_pause` (s) before it goes.
+@export_range(0.0, 1.0) var sway_after := 0.6
+@export var sway_degrees := 1.6
+@export var fell_pause := 0.4
+@export var fell_lean_degrees := 4.0
+## The trunk creaking as it sways and leans (and, quieter, as the notch nears the limit), and the
+## whoosh of it falling.
+@export var creak_layers: SoundLayers
+@export var fall_layers: SoundLayers
+## A clean cut's snap (also, pitched down, the trunk giving way on the last hit), and the felled
+## tree landing (instead of land_sfx).
+@export var clean_layers: SoundLayers
+@export var land_layers: SoundLayers
+
 @export_group("Respawn display")
 ## Countdown above the spot while the node is depleted.
 @export var show_respawn_timer := true
@@ -205,11 +242,21 @@ var _respawn_timer: SceneTreeTimer
 var _timer_label: Label3D
 var _ghost: Node3D
 var _ghost_outline: ShaderMaterial
+var _carve: TrunkCarve  # carve_notch: the notch in the trunk
+var _trunk: MeshInstance3D  # ... the trunk it's carved into
+var _trunk_rest := Transform3D.IDENTITY  # ... where the trunk sits in the node, at rest
+var _stump: MeshInstance3D  # ... and what's left of it once the tree is down
+var _clean := false  # the last hit was a clean cut (its chip comes out big)
+var _canopy := {}  # canopy mesh -> its rest position (carve_notch trees shake it on a hit)
+var _leaves: CPUParticles3D
+var _shake_tween: Tween
+var _sway_tween: Tween
 
 
 func _ready() -> void:
 	add_to_group("gatherable")
 	_apply_model()
+	_setup_carve()
 	_burst_home = burst.position
 	_break_audio_home = break_audio.position
 	_collect_surfaces(visual)
@@ -307,6 +354,21 @@ static func _seam_loop(mesh: Mesh, xform: Transform3D) -> Array[PackedVector3Arr
 	return loops
 
 
+func _setup_carve() -> void:
+	if not carve_notch:
+		return
+	_trunk = visual.get_node_or_null("Body/Body_Trunk") as MeshInstance3D
+	if _trunk == null or not _trunk.mesh is ArrayMesh:
+		push_warning("%s: carve_notch needs a Body_Trunk mesh" % name)
+		return
+	_carve = TrunkCarve.new(_trunk.mesh, notch_band)
+	_trunk_rest = global_transform.affine_inverse() * _trunk.global_transform
+	for m in _trunk.get_parent().get_children():
+		if m is MeshInstance3D and m != _trunk:
+			_canopy[m] = (m as Node3D).position
+	_leaves = _make_leaves()
+
+
 func _make_notches() -> Node3D:
 	var n := Node3D.new()
 	n.name = "Notches"
@@ -339,6 +401,7 @@ func hit(info: HitInfo) -> bool:
 	if not can_gather():
 		_deflect(info)
 		return false
+	var before := hits_left
 	# the smithy's sharper tools: sometimes a hit counts twice, and crystal edges cut deeper every
 	# time (the fraction carries over, so +0.5 means every other hit counts twice); the weak point
 	# always adds more
@@ -348,10 +411,14 @@ func hit(info: HitInfo) -> bool:
 	var double := randf() < Village.stat(&"double_hit_chance") or cuts > 1
 	var weak := _is_weak_hit(info)
 	var tip := cracks and _is_tip_hit(info)
+	_clean = _carve != null and _is_clean_cut(info)
 	hits_left = maxi(hits_left - cuts - (1 if double and cuts == 1 else 0) - (weak_point_extra_hits if weak else 0)
-		- (crack_tip_extra_hits if tip else 0), 0)
+		- (crack_tip_extra_hits if tip else 0) - (clean_cut_extra_hits if _clean else 0), 0)
 	if weak:
 		_weak_hit_feedback(info)
+	if _carve:
+		_carve_hit(info, before - hits_left)
+		_tree_reacts(info, 1.0 - float(hits_left) / max_hits)
 	SaveGame.mark_dirty()
 	var stress := 1.0 - float(hits_left) / max_hits  # 0 -> 1 as it depletes
 
@@ -359,23 +426,31 @@ func hit(info: HitInfo) -> bool:
 	_crack_sound = 0  # (set by the crack code below; the sounds are played together at the end)
 	_flash()
 	_nudge(info.away() * (1.6 if double else 1.0))
-	_hit_effects(info, 1.5 if tip else 1.0)
+	_hit_effects(info, 1.5 if tip or _clean else 1.0)
 	Juice.shake(shake_hit + stress * 1.5 + (1.5 if double else 0.0))
 	Juice.hitstop(hitstop_hit + (0.035 if double else 0.0))
 	if double:
 		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.35, 0), "Sharp!", SHARP_COLOR, 9)
-	_award_xp(xp_per_hit * (2 if double else 1) * (2 if weak or tip else 1))
+	if _clean:
+		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.6, 0), "Clean cut!", clean_cut_color, 10)
+	_award_xp(xp_per_hit * (2 if double else 1) * (2 if weak or tip or _clean else 1))
 
 	var split := hits_left > 0 and cracks and _grow_crack(info, tip)
 	if split:
 		_split(info)  # the crack ran all the way across
-	last_impact = 2.5 if hits_left == 0 else 2.0 if split else 1.5 if tip or weak or double else 1.0
+	last_impact = 2.5 if hits_left == 0 else 2.0 if split else 1.5 if tip or weak or double or _clean else 1.0
 	_hit_sounds(info, pitch, double, split)
+	if _clean and hits_left > 0:  # a sharper crack on top of the thunk
+		if clean_layers:
+			Sfx.play_at(clean_layers, info.position)
+		else:
+			_play(break_audio, hit_sfx, 1.35)
 
 	if hits_left == 0:
 		_break(info)
 	else:
-		_notch_at(info)
+		if not _carve:
+			_notch_at(info)
 		if weak:
 			_place_weak_point.call_deferred()  # after this hit's chunks have popped
 	return true
@@ -391,7 +466,10 @@ func pull(info: HitInfo) -> void:
 	var toward := -info.away()
 	_nudge(toward * 0.6)
 	var tear := (info.normal * 0.6 + toward * 0.6).normalized()
-	_spawn_fragment(info, tear)
+	if _carve:
+		_throw_chip(info, tear, _clean)
+	else:
+		_spawn_fragment(info, tear)
 	if _seams.is_empty():  # (a boulder of pieces only loses them along cracks)
 		_shed_chunks(stress, info, tear)
 
@@ -400,7 +478,7 @@ func pull(info: HitInfo) -> void:
 ## tip's split, further under a piece splitting off or the break), then the crack creaking on
 ## quietly, its tip splitting, or the piece splitting off. (tools/measure_mix.py mirrors this.)
 func _hit_sounds(info: HitInfo, pitch: float, double: bool, split: bool) -> void:
-	var duck := HIT_DUCK_SPLIT if split or hits_left == 0 else HIT_DUCK_TIP if _crack_sound == CRACK_TIP else 0.0
+	var duck := HIT_DUCK_SPLIT if split or hits_left == 0 else HIT_DUCK_TIP if _crack_sound == CRACK_TIP or _clean else 0.0
 	if hit_layers:
 		Sfx.play_at(hit_layers, info.position, pitch, duck + (2.0 if double else 0.0))
 	else:
@@ -437,14 +515,22 @@ func _popup_pos() -> Vector3:
 
 func _break(info: HitInfo) -> void:
 	_award_xp(xp_on_break, true)
-	_play(break_audio, break_sfx)
+	if _carve and clean_layers:  # the hinge giving way: a deep snap of the last fibres
+		Sfx.play_at(clean_layers, info.position, 0.6, 3.0)
+	else:
+		_play(break_audio, break_sfx)
 	for c in _intact_chunks():
 		_pop_chunk(c, info.away(), debris_speed * 0.7)
 	_show_depleted()
 	Juice.shake(shake_break)
 	Juice.hitstop(hitstop_break)
 	if topple:
-		_topple(info)  # not awaited: the fall plays out while the respawn timer runs
+		var log_mesh: Mesh = null
+		if _carve and _carve.is_started():
+			var parts := _carve.split()
+			_make_stump(parts["stump"])
+			log_mesh = parts["log"]
+		_topple(info, log_mesh)  # not awaited: the fall plays out while the respawn timer runs
 	else:
 		burst.restart()
 		_spawn_drops(info)
@@ -494,18 +580,25 @@ func _respawn_after(seconds: float) -> void:
 # makes it start fresh. Respawn timers count game time: they pause while the game is closed.
 
 func to_dict() -> Dictionary:
-	if _respawn_timer:
-		return {"respawn_left": _respawn_timer.time_left}
-	return {"hits_left": hits_left}
+	var d := {"respawn_left": _respawn_timer.time_left} if _respawn_timer else {"hits_left": hits_left}
+	if _carve and _carve.is_started():  # (a felled tree keeps its notch until it regrows: the stump)
+		d["notch"] = _carve.to_dict()
+	return d
 
 
 func from_dict(d: Dictionary) -> void:
+	if _carve and d.has("notch"):
+		_carve.from_dict(d["notch"])
 	if d.has("respawn_left"):
 		hits_left = 0
 		_show_depleted()
+		if _carve and _carve.is_started():
+			_make_stump(_carve.split()["stump"])
 		_respawn_after(maxf(float(d["respawn_left"]), 0.1))
 	elif d.has("hits_left"):
 		hits_left = clampi(int(d["hits_left"]), 1, max_hits)
+		if _carve and _carve.is_started():
+			_trunk.mesh = _carve.carved()
 		# hide the chunks that would already have broken off
 		var total := chunks.get_child_count()
 		var stress := 1.0 - float(hits_left) / max_hits
@@ -532,6 +625,15 @@ func _reset_visuals() -> void:
 	_queue_refit()
 	if _rubble_mm:
 		_rubble_mm.multimesh.visible_instance_count = 0
+	if _carve:
+		_carve.reset()
+		_trunk.mesh = _carve.original
+		if _stump:
+			rubble.remove_child(_stump)
+			_stump.queue_free()
+			_stump = null
+		for c in rubble.get_children():
+			c.visible = true
 	visual.visible = true
 	rubble.visible = false
 	collision.set_deferred("disabled", false)
@@ -568,8 +670,11 @@ func _launch_drop(from: Vector3, velocity: Vector3, delay: float) -> void:
 
 ## Copies Visual/Body into one rigid body standing where the tree was and tips it away from
 ## the player. Gravity does the rest; when it has fallen over: thud, leaf burst, logs along the trunk.
-func _topple(info: HitInfo) -> void:
-	var away := info.away()
+## With `log_mesh` (a carved tree), that's the trunk from the notch up: it hinges over at the notch
+## and falls sideways to the player.
+func _topple(info: HitInfo, log_mesh: Mesh = null) -> void:
+	var away := info.away() if log_mesh == null else _fall_direction(info)
+	var hinge := 0.0 if log_mesh == null else (_trunk_rest * Vector3(0.0, _carve.ring, 0.0)).y
 	var felled := RigidBody3D.new()
 	felled.collision_layer = DEBRIS_LAYER
 	felled.collision_mask = WORLD_LAYER
@@ -581,6 +686,8 @@ func _topple(info: HitInfo) -> void:
 		if not mesh is MeshInstance3D:
 			continue
 		var piece := mesh.duplicate() as MeshInstance3D
+		if mesh == _trunk and log_mesh:
+			piece.mesh = log_mesh
 		piece.set_instance_shader_parameter("flash", 0.0)
 		piece.set_instance_shader_parameter("highlight", 0.0)
 		felled.add_child(piece)
@@ -592,10 +699,16 @@ func _topple(info: HitInfo) -> void:
 		shape.transform = mesh.transform * Transform3D(Basis.IDENTITY, aabb.get_center())
 		felled.add_child(shape)
 		height = maxf(height, mesh.position.y + aabb.end.y)
-	# the node's own collision shape (the trunk) at full size
+	# the node's own collision shape (the trunk) at full size; a carved tree's from the notch up
 	var trunk := CollisionShape3D.new()
 	trunk.shape = collision.shape
 	trunk.transform = collision.transform
+	if log_mesh and collision.shape is BoxShape3D:
+		var box := collision.shape.duplicate() as BoxShape3D
+		var top := collision.position.y + box.size.y * 0.5
+		box.size.y = maxf(top - hinge, 0.2)
+		trunk.shape = box
+		trunk.position.y = (top + hinge) * 0.5
 	felled.add_child(trunk)
 	# top-heavy on purpose (canopy), so once it starts leaning it keeps going
 	felled.center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
@@ -604,11 +717,16 @@ func _topple(info: HitInfo) -> void:
 	get_parent().add_child(felled)
 	felled.global_transform = global_transform.orthonormalized()
 	felled.reset_physics_interpolation()
+	if log_mesh and fell_pause > 0.0:
+		await _lean_on_hinge(felled, away, hinge)
+		if not is_instance_valid(felled):
+			return
+	Sfx.play_at(fall_layers, global_position + Vector3.UP * (hinge + 1.5))
 	# start it rotating around its *base* (the hinge on the stump), not its centre of mass —
 	# otherwise the base skids along the ground and the fall loses all its energy
 	var spin := Vector3.UP.cross(away).normalized() * topple_push
 	felled.angular_velocity = spin
-	felled.linear_velocity = spin.cross(Vector3.UP * felled.center_of_mass.y)
+	felled.linear_velocity = spin.cross(Vector3.UP * (felled.center_of_mass.y - hinge))
 
 	# wait for it to lean over far enough (or give up after a few seconds)
 	var start := Time.get_ticks_msec()
@@ -622,7 +740,10 @@ func _topple(info: HitInfo) -> void:
 	felled.linear_damp = 1.5
 	var top := felled.global_transform * Vector3(0, height * 0.75, 0)
 	break_audio.global_position = top
-	_play(break_audio, land_sfx, land_pitch)
+	if land_layers:
+		Sfx.play_at(land_layers, top)
+	else:
+		_play(break_audio, land_sfx, land_pitch)
 	burst.global_position = top
 	burst.restart()
 	var player := get_tree().get_first_node_in_group("player") as Node3D
@@ -646,6 +767,191 @@ func _topple(info: HitInfo) -> void:
 	t.tween_property(felled, "global_position", felled.global_position + Vector3.DOWN * 1.2, 1.0) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	t.tween_callback(felled.queue_free)
+
+
+## The cut tree holds for a moment, creaking over a few degrees on the hinge, before it goes.
+func _lean_on_hinge(felled: RigidBody3D, away: Vector3, hinge: float) -> void:
+	felled.freeze = true
+	var pivot := global_transform * Vector3(0.0, hinge, 0.0)
+	var start := felled.global_transform
+	var axis := Vector3.UP.cross(away).normalized()
+	Sfx.play_at(creak_layers, pivot, 0.8)
+	var lean := func(angle: float) -> void:
+		var turn := Transform3D(Basis(axis, angle), pivot) * Transform3D(Basis.IDENTITY, -pivot)
+		felled.global_transform = turn * start
+	var t := felled.create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	t.tween_method(lean, 0.0, deg_to_rad(fell_lean_degrees), fell_pause).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await t.finished
+	if is_instance_valid(felled):
+		felled.freeze = false
+
+
+## The tree reacts to a hit: the canopy shakes and drops a few leaves, and late in the chop
+## (`stress` past sway_after) the whole tree sways away and back, creaking.
+func _tree_reacts(info: HitInfo, stress: float) -> void:
+	var away := info.away()
+	if _shake_tween:
+		_shake_tween.kill()
+	var amp := canopy_shake * (1.0 + stress)
+	_shake_tween = create_tween()
+	_shake_tween.tween_method(func(t: float) -> void:
+		var off := away * amp * sin(t * 28.0) * exp(-t * 6.0)
+		for m: Node3D in _canopy:
+			m.position = _canopy[m] + off * (0.6 + 0.4 * (m.get_index() % 3) / 2.0), 0.0, 0.8, 0.8)
+	_shake_tween.tween_callback(func() -> void:
+		for m: Node3D in _canopy:
+			m.position = _canopy[m])
+	if _leaves and leaves_per_hit > 0:
+		_leaves.amount = maxi(leaves_per_hit + roundi(stress * leaves_per_hit), 1)
+		_leaves.restart()
+	if stress >= sway_after and hits_left > 0:
+		var axis := Vector3.UP.cross(away).normalized()
+		var big := deg_to_rad(sway_degrees) * (0.6 + stress)
+		if _sway_tween:
+			_sway_tween.kill()
+		_sway_tween = create_tween()
+		var local_axis := (global_basis.inverse() * axis).normalized()
+		_sway_tween.tween_method(func(t: float) -> void:  # (the rotation alone: the hit's squash stays)
+			visual.quaternion = Quaternion(local_axis, big * sin(t * 7.0) * exp(-t * 2.2)), 0.0, 1.6, 1.6)
+		_sway_tween.tween_callback(func() -> void: visual.quaternion = Quaternion.IDENTITY)
+		Sfx.play_at(creak_layers, global_position + Vector3.UP * 2.0, 0.9 + randf() * 0.2, -3.0 + 6.0 * (stress - sway_after))
+
+
+## Leaves shaken loose from the canopy: a few at a time, fluttering down.
+func _make_leaves() -> CPUParticles3D:
+	if _canopy.is_empty():
+		return null
+	var box := AABB()
+	var first := true
+	for m: MeshInstance3D in _canopy:
+		var b := _trunk_rest * _trunk.transform.affine_inverse() * m.transform * m.get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	var p := CPUParticles3D.new()
+	p.name = "Leaves"
+	p.emitting = false
+	p.one_shot = true
+	p.explosiveness = 0.7
+	p.lifetime = 2.6
+	p.local_coords = false
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	p.emission_box_extents = box.size * Vector3(0.4, 0.25, 0.4)
+	p.position = box.get_center() - Vector3.UP * box.size.y * 0.2
+	p.direction = Vector3.DOWN
+	p.spread = 70.0
+	p.gravity = Vector3(0, -1.1, 0)
+	p.initial_velocity_min = 0.2
+	p.initial_velocity_max = 0.7
+	p.damping_min = 0.4
+	p.damping_max = 1.0
+	p.angular_velocity_min = -240.0
+	p.angular_velocity_max = 240.0
+	p.particle_flag_rotate_y = true
+	var leaf := BoxMesh.new()
+	leaf.size = Vector3(0.09, 0.012, 0.06)
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.roughness = 1.0
+	leaf.material = mat
+	p.mesh = leaf
+	p.color = burst_color
+	p.scale_amount_min = 0.7
+	p.scale_amount_max = 1.3
+	add_child(p)  # (not under Visual: it isn't one of the surfaces that flash)
+	return p
+
+
+## Which way a notched tree falls: sideways to the swinger and a little away, never onto them.
+## Whichever side is clear of other trees, else either.
+func _fall_direction(info: HitInfo) -> Vector3:
+	var away := info.away()
+	var sides: Array[Vector3] = [away.cross(Vector3.UP), -away.cross(Vector3.UP)]
+	sides.shuffle()
+	var space := get_world_3d().direct_space_state
+	var from := global_position + Vector3.UP * 2.0
+	for side in sides:
+		var dir := (side + away * 0.35).normalized()
+		var query := PhysicsRayQueryParameters3D.create(from, from + dir * 3.5, WORLD_LAYER, [get_rid()])
+		if space.intersect_ray(query).is_empty():
+			return dir
+	return (sides[0] + away * 0.35).normalized()
+
+
+# --- notch ----------------------------------------------------------------------------------
+
+## The notch deepens toward the swinger (`cuts`: how many hits this one counted for), and the hit
+## moves onto the notch's surface, where the axe really bites and the chips fly from, instead of
+## the trunk's collision box.
+func _carve_hit(info: HitInfo, cuts: int) -> void:
+	var to_trunk := _trunk.global_transform.affine_inverse()
+	var dir := to_trunk.basis * (info.from - info.position)
+	dir.y = 0.0
+	var y := (to_trunk * info.position).y
+	_carve.hit(y, dir, notch_depth * cuts / max_hits)
+	_trunk.mesh = _carve.carved()
+	info.position = _trunk.global_transform * _carve.bite_point(dir)
+	info.normal = (_trunk.global_basis * dir).normalized()
+	for i in cuts:
+		_peel_bark(dir)
+
+
+## A flake of bark breaking off the rim of the notch, a little to one side of `dir` (trunk space).
+func _peel_bark(dir: Vector3) -> void:
+	var side := dir.normalized().rotated(Vector3.UP, randf_range(-0.6, 0.6))
+	var deep := _carve.depth_toward(side)
+	var y := _carve.ring + randf_range(-0.04, deep / TrunkCarve.SLOPE_UP + 0.06)
+	var at := Vector3(0.0, y, 0.0) + side * _carve.radius_at(_carve.ring, side)
+	var flake := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = Vector3(randf_range(0.06, 0.11), randf_range(0.07, 0.13), 0.018)
+	flake.mesh = box
+	flake.material_override = NODE_SURFACE
+	flake.set_instance_shader_parameter("albedo", bark_color.darkened(randf_range(0.0, 0.2)))
+	var out := (_trunk.global_basis * side).normalized()
+	_throw(flake, Transform3D(Basis.looking_at(-out), _trunk.global_transform * at + out * 0.02),
+		out + Vector3.UP * 0.3, debris_speed * randf_range(0.4, 0.7))
+
+
+## A clean cut: the swing is aimed into the mouth of a notch that's already well started, from
+## (about) the side it was cut from.
+func _is_clean_cut(info: HitInfo) -> bool:
+	if not _carve.is_started():
+		return false
+	var to_trunk := _trunk.global_transform.affine_inverse()
+	var dir := to_trunk.basis * (info.from - info.position)
+	dir.y = 0.0
+	var full := _carve.radius_at(_carve.ring, dir) * notch_depth
+	var deep := _carve.depth_toward(dir)
+	if deep < full * clean_cut_after:
+		return false
+	var mouth := _trunk.global_transform * (_carve.bite_point(dir) + dir.normalized() * deep * 0.5)
+	return _aimed_near(info, mouth, clean_cut_radius)
+
+
+## A wood chip flying out of the notch as the axe comes free: a flat wedge of cut wood, a big
+## one off a clean cut.
+func _throw_chip(info: HitInfo, push: Vector3, big: bool) -> void:
+	var chip := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = Vector3(0.11, 0.025, 0.07) * (1.8 if big else 1.0)
+	chip.mesh = box
+	chip.material_override = NODE_SURFACE
+	chip.set_instance_shader_parameter("albedo", chip_color)
+	var rot := Basis.from_euler(Vector3(randf_range(-0.4, 0.4), randf() * TAU, randf_range(-0.4, 0.4)))
+	_throw(chip, Transform3D(rot, info.position + info.normal * 0.06), push, debris_speed * (1.0 if big else 0.8))
+
+
+## The bottom of the carved trunk stays standing while the tree regrows.
+func _make_stump(mesh: Mesh) -> void:
+	for c in rubble.get_children():
+		c.visible = false
+	_stump = MeshInstance3D.new()
+	_stump.name = "CutStump"
+	_stump.mesh = mesh
+	_stump.material_override = NODE_PALETTE
+	rubble.add_child(_stump)
+	_stump.transform = rubble.transform.affine_inverse() * _trunk_rest
+	_limit_drawing(rubble)
 
 
 # --- chunks ---------------------------------------------------------------------------------
@@ -1444,7 +1750,7 @@ var _weak: MeshInstance3D
 
 
 func _build_weak_point() -> void:
-	if not weak_point or cracks:
+	if not weak_point or cracks or carve_notch:
 		return
 	_weak = MeshInstance3D.new()
 	_weak.name = "WeakPoint"
@@ -1626,8 +1932,8 @@ func _hit_effects(info: HitInfo, strength: float) -> void:
 		return
 	var swing := (info.position - info.from).normalized()
 	var sparks := roundi(spark_amount * (2.0 if strength > 1.2 else 1.0))
-	HitFx.spawn(hit_fx, get_parent(), info.position, info.normal, swing, chip_color,
-		ore_color if cracks else Color(0, 0, 0, 0), strength, sparks)
+	var second := ore_color if cracks else bark_color if _carve else Color(0, 0, 0, 0)
+	HitFx.spawn(hit_fx, get_parent(), info.position, info.normal, swing, chip_color, second, strength, sparks)
 	HitFx.star(get_parent(), info.position + info.normal * 0.08, STAR_TIP if strength > 1.2 else STAR_HIT, 0.8 * strength)
 	_add_rubble(info.position, 1 if strength <= 1.0 else 2)
 

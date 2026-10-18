@@ -30,11 +30,24 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 - [x] **An ore look each:** copper verdigris, iron basalt columns, coal strata, gold veined geode, crystal snapping off at the base (the other candidates are in `models/designs/`).
 - [x] **Overhead pickaxe swing** with a ready stance (`player.gd` `SWINGS`).
 - [x] **Real mining sounds** from the GDC 2026 bundle (`tools/cut_sounds.py`, `audio/mining/sfx/`).
-- [ ] **The axe** still chops in the old diagonal from the side. Give it a natural swing of its own in `SWINGS` (a chop into the trunk from over the shoulder).
-- [ ] **Cracks on trees:** split along the grain, like the rocks' seams. Trees still use the weak point.
 - [ ] **Iron's crack is faint** on the dark basalt; a paler rim for it if it reads poorly in play.
 - [ ] **More ways to mine** (ideas, none picked yet): pry a cracked piece off by pulling the mouse back; keystones (take pieces in the right order or the rest collapses into rubble); ore only from the faces a split exposes; triple points where three seams meet crack all three pieces.
 - [ ] **Fewer, bigger pieces** per rock (4–6 instead of 10) if splits come too often.
+
+### Woodcutting overhaul
+
+Plan and decisions: `plans/woodcutting-overhaul.md`.
+
+- [x] **Felling axe** with a flat side chop of its own in `SWINGS`; the woodcutter villager carries it too.
+- [x] **A notch carved into the trunk** (`TrunkCarve`): set by the first hit, deepened toward the swinger, 65% through by the fall, saved with the game. Replaces the weak point on trees.
+- [x] **Clean cuts** into the notch's mouth: an extra hit, double XP, a big chip, a snap.
+- [x] **Felling from the notch:** the trunk splits there, hangs on the hinge, falls sideways to the swinger toward the clear side, and leaves the cut stump with growth rings.
+- [x] **New trees** picked from rendered candidates (`tree_designs`): round starter, airy birch, spreading oak, classic pine; the scenery forest matches.
+- [x] **Feel:** wood chips and dust, bark peeling, canopy shake and leaves, sway and creak late in the chop.
+- [x] **Wood sounds, synthesized** (`tools/synth_wood_sounds.py`; the GDC bundle's stand-ins sounded wrong): thunk, bite, chips, snap, creak, fibres tearing, crown rushing, landing.
+- [ ] **Tune the synthesized wood sounds by ear** in play (each sound is one function in the script; the stacks' levels are in `audio/woodcutting/*.tres`).
+- [ ] **The notch on birch** shows less (pale cut wood on white bark); a darker cut colour for it if it reads poorly.
+- [ ] **Bucking the fallen trunk into logs** with more swings (left out of this overhaul).
 
 ## Village
 

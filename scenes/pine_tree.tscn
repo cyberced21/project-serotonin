@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" path="res://models/pine.glb" id="2_model"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_pine"]
-size = Vector3(0.75, 5.0, 0.75)
+size = Vector3(0.75, 5.9, 0.75)
 
 [node name="PineTree" instance=ExtResource("1_base")]
 item = &"pine"
@@ -13,11 +13,12 @@ respawn_time = 40.0
 required_level = 25
 xp_per_hit = 12
 xp_on_break = 45
-chip_color = Color(0.6, 0.42, 0.28, 1)
+chip_color = Color(0.761, 0.6, 0.424, 1)
 burst_color = Color(0.14, 0.3, 0.18, 1)
 model = ExtResource("2_model")
+bark_color = Color(0.31, 0.2, 0.133, 1)
 popup_height = 2.4
 
 [node name="CollisionShape3D" parent="." index="0"]
-position = Vector3(0, 2.5, 0)
+position = Vector3(0, 2.95, 0)
 shape = SubResource("BoxShape3D_pine")

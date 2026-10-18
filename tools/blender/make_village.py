@@ -23,8 +23,8 @@ import random
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from make_models import (OUT_DIR, blob, box, bmesh, bpy, export, make_object, paint, prism,  # noqa: E402
-                         reset, Vector)
+from make_models import (OUT_DIR, axe_head_shade, blob, box, bmesh, bpy, export, felling_head,  # noqa: E402
+                         make_object, paint, prism, reset, Vector)
 
 VILLAGE_DIR = os.path.join(OUT_DIR, "village")
 
@@ -981,7 +981,8 @@ def woodcutter_villager():
 
     def prop(k, p):  # axe held forward
         attach(k, p["ArmR"], "PropHandle", box((0.045, 0.6, 0.045)), ("wood.6", "wood.4", "wood.3"), (0.32, -0.25, 0.5))
-        attach(k, p["ArmR"], "PropBlade", box((0.03, 0.16, 0.2)), "metal.5", (0.32, -0.5, 0.58))
+        # the player's felling axe head, turned so its bit points up off the handle
+        attach(k, p["ArmR"], "PropBlade", felling_head(), axe_head_shade, (0.32, -0.5, 0.5), (math.pi / 2, 0, 0))
 
     villager("woodcutter", "accent.1", "accent.0", "wood.1", hat=hat, extra=extra, prop=prop)
 

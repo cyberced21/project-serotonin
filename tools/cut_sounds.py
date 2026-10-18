@@ -1,4 +1,5 @@
-"""Cuts the mining sound effects out of the Sonniss GDC 2026 game audio bundle.
+"""Cuts the mining sound effects out of the Sonniss GDC 2026 game audio bundle. (The woodcutting
+ones are synthesized instead: tools/synth_wood_sounds.py.)
 
 The bundle can't be redistributed, so it isn't in the project: download it, then run (Blender's
 bundled Python has numpy, which this needs):
@@ -147,7 +148,8 @@ def cut(x, how, count, max_len):
         return [x[found[0][0]:found[0][1]]] if found else []
     if how == "slices":  # the busiest stretches of it, not overlapping (a texture has pauses)
         length = int(max_len * RATE)
-        energy = np.convolve(x * x, np.ones(length), mode="valid")
+        run = np.concatenate(([0.0], np.cumsum(x.astype(np.float64) ** 2)))
+        energy = run[length:] - run[:-length]  # (a running sum: long ambiences stay quick)
         starts = []
         for i in np.argsort(-energy[:: length // 8]) * (length // 8):
             if all(abs(i - s) >= length for s in starts):
