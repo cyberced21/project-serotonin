@@ -3,7 +3,7 @@
     python tools/synth_ambience.py
 
 audio/ambience/: forest.wav (a soft breeze, birdsong, the odd creaking trunk), field.wav
-(crickets over open wind) and quarry.wav (a low echoey hum, water dripping somewhere below).
+(two crickets chirping over open wind) and quarry.wav (a low echoey hum, water dripping somewhere below).
 Each is LENGTH seconds and loops seamlessly (the end is crossfaded into the start). The Biome
 autoload crossfades them as you move between biomes. Replace any with a real recording.
 """
@@ -48,13 +48,25 @@ def chirp(rng):
 
 
 def creak(rng):
-    """A trunk groaning in the wind: a slow, rough, low tone with a wobble."""
-    n = secs(rng.uniform(0.6, 1.0))
+    """A trunk straining in the wind, off in the trees: wood catching and slipping in slow,
+    uneven grabs, each one knocking the trunk's low resonances. The grabs are too slow and too
+    irregular to fuse into a pitch, so it reads as a creak, not a buzz (a steady tone made of
+    grabs, like the sawtooth this replaced, is heard as an electric buzz)."""
+    length = rng.uniform(0.8, 1.4)
+    n = secs(length)
+    out = np.zeros(n)
+    body = [(f * rng.uniform(0.9, 1.1), d) for f, d in ((95, 0.05), (170, 0.035), (290, 0.022), (460, 0.014))]
+    m = secs(0.12)
+    tm = np.arange(m) / RATE
+    at = 0.0
+    while at < length:
+        swell = np.sin(np.pi * at / length)  # slow, strained, then slow again
+        pulse = sum(np.sin(2 * np.pi * f * tm + rng.uniform(0, 6.28)) * np.exp(-tm / d) for f, d in body)
+        place(out, pulse * rng.uniform(0.5, 1.0) * (0.3 + 0.7 * swell), at)
+        rate = 9.0 + 14.0 * swell  # grabs per second
+        at += rng.uniform(0.6, 1.5) / rate
     t = np.arange(n) / RATE
-    f = rng.uniform(180, 260) * (1.0 + 0.15 * np.sin(2 * np.pi * 3.0 * t))
-    phase = np.cumsum(f) / RATE
-    saw = 2.0 * (phase % 1.0) - 1.0
-    return band(saw, 150, 1200) * np.sin(np.pi * t / t[-1]) ** 2
+    return lowpass(out, 1100) * np.sin(np.pi * t / t[-1]) ** 2
 
 
 def forest(rng):
@@ -63,20 +75,39 @@ def forest(rng):
     for at in np.sort(rng.uniform(0.3, LENGTH - 0.5, 7)):
         place(x, chirp(rng) * rng.uniform(0.25, 0.5), at)
     for at in rng.uniform(1.0, LENGTH - 1.5, 2):
-        place(x, creak(rng) * 0.2, at)
+        place(x, creak(rng) * 0.06, at)
     return seamless(x)
+
+
+def cricket_chirp(rng, pitch):
+    """One chirp: three or four quick pulses of a pure tone, each faded in and out (a hard on/off
+    gate makes every edge a click, and thirty clicks a second is a rasp)."""
+    pulses = rng.integers(3, 5)
+    pulse = secs(0.018)
+    gap = secs(rng.uniform(0.012, 0.016))
+    out = np.zeros(pulses * (pulse + gap))
+    t = np.arange(pulse) / RATE
+    shape = np.sin(np.pi * t / t[-1]) ** 2
+    for k in range(pulses):
+        tone = np.sin(2 * np.pi * pitch * (1.0 - 0.02 * t / t[-1]) * t) * shape
+        out[k * (pulse + gap):k * (pulse + gap) + pulse] += tone
+    return out
 
 
 def field(rng):
     total = secs(LENGTH + SEAM)
     x = breeze(rng, total, 200, 1400, depth=0.5, period=5.0) * 0.45
-    t = np.arange(total) / RATE
-    for voice in range(3):  # a few crickets, each its own pitch and rhythm
-        carrier = np.sin(2 * np.pi * rng.uniform(4200, 5200) * t)
-        pulses = (np.sin(2 * np.pi * rng.uniform(26, 34) * t) > 0.3).astype(float)
-        trains = (np.sin(2 * np.pi * rng.uniform(0.6, 0.9) * t + rng.uniform(0, 6)) > -0.2).astype(float)
-        x += lowpass(carrier * pulses * trains, 6000) * rng.uniform(0.06, 0.1)
-    return seamless(x)
+    for voice in range(2):  # two crickets off in the grass, each its own pitch, pace and pauses
+        pitch = rng.uniform(4000, 4800)
+        gain = rng.uniform(0.025, 0.04)
+        at = rng.uniform(0.0, 1.0)
+        while at < LENGTH + SEAM - 0.3:
+            if rng.random() < 0.15:  # now and then one stops for a moment
+                at += rng.uniform(1.0, 2.5)
+                continue
+            place(x, cricket_chirp(rng, pitch) * gain * rng.uniform(0.7, 1.0), at)
+            at += rng.uniform(0.45, 0.7)
+    return seamless(lowpass(x, 6000))
 
 
 def drip(rng):
