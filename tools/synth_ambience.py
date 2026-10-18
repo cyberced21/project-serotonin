@@ -26,10 +26,39 @@ def seamless(x):
     return x[:n]
 
 
+def colored_noise(rng, total, curve):
+    """Noise shaped in the frequency domain: `curve(f)` is the gain at each frequency (Hz). Unlike
+    the one-pole filters, this can cut as steeply as it likes, so nothing hisses through above the
+    band."""
+    spec = np.fft.rfft(rng.standard_normal(total))
+    f = np.fft.rfftfreq(total, 1.0 / RATE)
+    x = np.fft.irfft(spec * curve(f), total)
+    return x / (np.max(np.abs(x)) + 1e-9)
+
+
+def steep_band(f, low, high, order=4):
+    """A band's gain: flat between `low` and `high`, falling 6 × order dB per octave outside."""
+    f = np.maximum(f, 1e-3)
+    return 1.0 / np.sqrt((1.0 + (low / f) ** (2 * order)) * (1.0 + (f / high) ** (2 * order)))
+
+
+def gusts(rng, total, period, depth):
+    """A slow, uneven swell between 1 - depth and 1: smoothed noise, about one gust per `period`
+    seconds, rather than a sine wobble you can count."""
+    g = colored_noise(rng, total, lambda f: steep_band(f, 0.02, 1.0 / period, order=2))
+    g = (g - g.min()) / (g.max() - g.min() + 1e-9)
+    return 1.0 - depth + depth * g
+
+
 def breeze(rng, total, low, high, depth=0.35, period=4.0):
-    t = np.arange(total) / RATE
-    swell = 1.0 - depth + depth * np.sin(2 * np.pi * t / period) * np.sin(2 * np.pi * t / (period * 2.3) + 0.7)
-    return band(rng.standard_normal(total), low, high) * swell
+    """Wind in the open: mostly a soft low rush, deep-coloured noise (falling with frequency like
+    the real thing) between `low` and a few hundred Hz. The gusts swell it and brighten it, opening
+    a quieter airy layer up toward `high`, so a gust is heard as wind picking up, not a volume knob."""
+    g = gusts(rng, total, period, depth)
+    deep = lambda f: steep_band(f, 70.0, 3.5 * low) * (150.0 / np.maximum(f, 150.0))  # brown-ish above 150 Hz
+    rush = colored_noise(rng, total, deep)
+    air = colored_noise(rng, total, lambda f: steep_band(f, 2.0 * low, high) * (300.0 / np.maximum(f, 300.0)) ** 0.5)
+    return rush * g + air * 0.45 * g ** 3
 
 
 def chirp(rng):
@@ -99,7 +128,7 @@ def field(rng):
     x = breeze(rng, total, 200, 1400, depth=0.5, period=5.0) * 0.45
     for voice in range(2):  # two crickets off in the grass, each its own pitch, pace and pauses
         pitch = rng.uniform(4000, 4800)
-        gain = rng.uniform(0.025, 0.04)
+        gain = rng.uniform(0.12, 0.18)
         at = rng.uniform(0.0, 1.0)
         while at < LENGTH + SEAM - 0.3:
             if rng.random() < 0.15:  # now and then one stops for a moment
