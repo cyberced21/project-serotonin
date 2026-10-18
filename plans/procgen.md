@@ -48,7 +48,7 @@ generated map.
    from the hub, crystal on the quarry floor. The whole game loop works on any seed.
 6. **Model variants** ✅: `make_models.py --variants 4` for ores, trees (trunks kept in the range
    `trunk_carve.gd` expects) and big scenery; the spawners pick a variant from the seed.
-7. **Wood voicing**: per-species pools in `synth_wood_sounds.py`, wired to each tree type.
+7. **Wood voicing** ✅: per-species pools in `synth_wood_sounds.py`, wired to each tree type.
 8. **Mining synthesis**: `synth_mining_sounds.py`, voiced per ore, replacing the GDC recordings.
 9. **Wrap-up**: README, TODO, a screenshot.
 

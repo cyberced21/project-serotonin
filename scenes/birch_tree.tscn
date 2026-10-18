@@ -2,6 +2,9 @@
 
 [ext_resource type="PackedScene" path="res://scenes/tree.tscn" id="1_base"]
 [ext_resource type="PackedScene" path="res://models/birch.glb" id="2_model"]
+[ext_resource type="Resource" path="res://audio/woodcutting/birch/axe_hit.tres" id="v_axe_hit"]
+[ext_resource type="Resource" path="res://audio/woodcutting/birch/trunk_creak.tres" id="v_trunk_creak"]
+[ext_resource type="Resource" path="res://audio/woodcutting/birch/tree_land.tres" id="v_tree_land"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_birch"]
 size = Vector3(0.45, 4.3, 0.45)
@@ -16,6 +19,9 @@ xp_on_break = 20
 chip_color = Color(0.92, 0.9, 0.85, 1)
 burst_color = Color(0.5, 0.75, 0.4, 1)
 model = ExtResource("2_model")
+hit_layers = ExtResource("v_axe_hit")
+creak_layers = ExtResource("v_trunk_creak")
+land_layers = ExtResource("v_tree_land")
 popup_height = 2.2
 bark_color = Color(0.878, 0.878, 0.89, 1)
 

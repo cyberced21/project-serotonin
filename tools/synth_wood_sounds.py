@@ -111,7 +111,19 @@ def stick_slip(rng, n, rate_from, rate_to, body, wobble=0.25):
 
 # --- the sounds ------------------------------------------------------------------------------
 
-def chop_thunk(rng):
+# How each species' wood rings next to the starter tree's: its resonances shifted in pitch and
+# lasting longer or shorter. A thin birch rings high and dies fast, a dense oak low and long, a
+# pine in between, a little longer. Only the layers that are the trunk's own body are voiced
+# (VOICED); the edge's bite, the chips and the leaves sound the same on any tree.
+NEUTRAL = {"pitch": 1.0, "decay": 1.0}
+VOICES = {
+    "birch": {"pitch": 1.3, "decay": 0.75},
+    "oak": {"pitch": 0.78, "decay": 1.35},
+    "pine": {"pitch": 0.92, "decay": 1.2},
+}
+
+
+def chop_thunk(rng, voice=NEUTRAL):
     """The axe going into the trunk: a dull wooden 'thock'. The body's low resonances ring down
     fast, under a short crunch of fibres where the edge goes in."""
     n = secs(0.42)
@@ -119,8 +131,8 @@ def chop_thunk(rng):
     out = np.zeros(n)
     for freq, decay, amp in ((92, 0.11, 1.0), (151, 0.08, 0.7), (238, 0.06, 0.5), (367, 0.04, 0.35),
                              (540, 0.03, 0.22), (790, 0.02, 0.12)):
-        out += mode(n, freq * k * rng.uniform(0.96, 1.04), decay * rng.uniform(0.85, 1.15), amp,
-                    rng.uniform(0, 6.28), glide=0.06)
+        out += mode(n, freq * k * voice["pitch"] * rng.uniform(0.96, 1.04),
+                    decay * voice["decay"] * rng.uniform(0.85, 1.15), amp, rng.uniform(0, 6.28), glide=0.06)
     out += shaped(rng, n, 200, 1800, tilt=-3) * env(n, 0.0008, 0.018) * 0.9  # the knock itself
     out += clicks(rng, n, np.sort(rng.uniform(0.002, 0.03, 6)), rng.uniform(0.08, 0.2, 6), 900, 4000)
     return out
@@ -165,11 +177,12 @@ def chip_scatter(rng):
     return out
 
 
-def trunk_creak(rng, length):
+def trunk_creak(rng, length, voice=NEUTRAL):
     """The trunk straining: wood grinding on wood in slow grabs, a low groaning creak."""
     n = secs(length)
-    body = ((rng.uniform(180, 240), 0.03, 1.0), (rng.uniform(420, 520), 0.02, 0.6),
-            (rng.uniform(780, 950), 0.012, 0.35))
+    p, d = voice["pitch"], voice["decay"]
+    body = ((rng.uniform(180, 240) * p, 0.03 * d, 1.0), (rng.uniform(420, 520) * p, 0.02 * d, 0.6),
+            (rng.uniform(780, 950) * p, 0.012 * d, 0.35))
     out = stick_slip(rng, n, rng.uniform(16, 22), rng.uniform(34, 48), body)
     out += shaped(rng, n, 150, 700) * 0.03  # the grind under it
     return out * env(n, length * 0.25, length * 0.3, hold=length * 0.3)
@@ -206,14 +219,15 @@ def crown_rush(rng):
     return out
 
 
-def land_slump(rng):
+def land_slump(rng, voice=NEUTRAL):
     """The trunk landing: a heavy wooden thud, the crown crashing into the ground round it, and
     a bounce or two."""
     n = secs(1.0)
     out = np.zeros(n)
     for at, gain in ((0.0, 1.0), (rng.uniform(0.16, 0.2), 0.45), (rng.uniform(0.3, 0.36), 0.2)):
         m = secs(0.5)
-        hit = sum(mode(m, f * rng.uniform(0.95, 1.05), d, a, rng.uniform(0, 6.28), glide=0.1, attack=0.002)
+        hit = sum(mode(m, f * voice["pitch"] * rng.uniform(0.95, 1.05), d * voice["decay"], a,
+                       rng.uniform(0, 6.28), glide=0.1, attack=0.002)
                   for f, d, a in ((84, 0.2, 1.0), (131, 0.14, 0.8), (205, 0.09, 0.6), (318, 0.05, 0.4)))
         hit += shaped(rng, m, 80, 900, tilt=-3) * env(m, 0.001, 0.035) * 0.8
         place(out, hit, at, gain)
@@ -242,6 +256,14 @@ SOUNDS = [  # (layer, how many, build)
     ("land_slump", 2, land_slump),
     ("land_boom", 1, land_boom),
 ]
+VOICED = [  # (layer, how many, build(rng, voice)): baked again per species into sfx/<species>/
+    ("chop_thunk", 4, chop_thunk),
+    ("trunk_creak", 3, lambda rng, voice: trunk_creak(rng, rng.uniform(0.6, 1.0), voice)),
+    ("land_slump", 2, land_slump),
+]
+# The stacks (audio/woodcutting/<stack>.tres) that play voiced layers: each species gets its own
+# copy, audio/woodcutting/<species>/<stack>.tres, with its voiced layers swapped in.
+VOICED_STACKS = ("axe_hit", "trunk_creak", "tree_land")
 
 
 # --- finishing --------------------------------------------------------------------------------
@@ -272,15 +294,16 @@ def write_wav(path, clip):
         w.writeframes((np.clip(clip, -1, 1) * 32767).astype("<i2").tobytes())
 
 
-def write_randomizer(layer, count):
+def write_randomizer(layer, count, folder=""):
+    sfx = "res://audio/woodcutting/sfx/" + (folder + "/" if folder else "")
     lines = ['[gd_resource type="AudioStreamRandomizer" format=3]', ""]
-    lines += [f'[ext_resource type="AudioStream" path="res://audio/woodcutting/sfx/{layer}_{i + 1:02d}.wav" id="{i + 1}"]'
+    lines += [f'[ext_resource type="AudioStream" path="{sfx}{layer}_{i + 1:02d}.wav" id="{i + 1}"]'
               for i in range(count)]
     lines += ["", "[resource]", "playback_mode = 0", "random_pitch = 1.0", "random_volume_offset_db = 1.0",
               f"streams_count = {count}"]
     for i in range(count):
         lines += [f'stream_{i}/stream = ExtResource("{i + 1}")', f"stream_{i}/weight = 1.0"]
-    with open(os.path.join(OUT, layer + ".tres"), "w", newline="\n") as f:
+    with open(os.path.join(OUT, folder, layer + ".tres"), "w", newline="\n") as f:
         f.write("\n".join(lines) + "\n")
 
 
@@ -298,6 +321,31 @@ def main():
             write_wav(path, clip)
             print(f"{name}_{i + 1:02d}.wav  {len(clip) / RATE:4.2f}s")
         write_randomizer(name, count)
+    for k, (species, voice) in enumerate(VOICES.items()):
+        voiced(species, voice, np.random.default_rng(100 + k))
+
+
+def voiced(species, voice, rng):
+    """One species' voiced layers (sfx/<species>/) and its own copies of the stacks that play them."""
+    folder = os.path.join(OUT, species)
+    os.makedirs(folder, exist_ok=True)
+    for old in os.listdir(folder):
+        if old.endswith(".wav"):
+            os.remove(os.path.join(folder, old))
+    for name, count, build in VOICED:
+        for i in range(count):
+            write_wav(os.path.join(folder, f"{name}_{i + 1:02d}.wav"), finish(build(rng, voice).astype(np.float64)))
+        write_randomizer(name, count, species)
+        print(f"{species}/{name} x{count}")
+    stacks = os.path.join(OUT, "..", species)
+    os.makedirs(stacks, exist_ok=True)
+    for stack in VOICED_STACKS:
+        with open(os.path.join(OUT, "..", stack + ".tres"), encoding="utf-8") as f:
+            text = f.read()
+        for name, _, _ in VOICED:
+            text = text.replace(f"res://audio/woodcutting/sfx/{name}.tres", f"res://audio/woodcutting/sfx/{species}/{name}.tres")
+        with open(os.path.join(stacks, stack + ".tres"), "w", newline="\n") as f:
+            f.write(text)
 
 
 if __name__ == "__main__":

@@ -2,6 +2,9 @@
 
 [ext_resource type="PackedScene" path="res://scenes/tree.tscn" id="1_base"]
 [ext_resource type="PackedScene" path="res://models/pine.glb" id="2_model"]
+[ext_resource type="Resource" path="res://audio/woodcutting/pine/axe_hit.tres" id="v_axe_hit"]
+[ext_resource type="Resource" path="res://audio/woodcutting/pine/trunk_creak.tres" id="v_trunk_creak"]
+[ext_resource type="Resource" path="res://audio/woodcutting/pine/tree_land.tres" id="v_tree_land"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_pine"]
 size = Vector3(0.75, 5.9, 0.75)
@@ -16,6 +19,9 @@ xp_on_break = 45
 chip_color = Color(0.761, 0.6, 0.424, 1)
 burst_color = Color(0.14, 0.3, 0.18, 1)
 model = ExtResource("2_model")
+hit_layers = ExtResource("v_axe_hit")
+creak_layers = ExtResource("v_trunk_creak")
+land_layers = ExtResource("v_tree_land")
 bark_color = Color(0.31, 0.2, 0.133, 1)
 popup_height = 2.4
 

@@ -2,6 +2,9 @@
 
 [ext_resource type="PackedScene" path="res://scenes/tree.tscn" id="1_tree"]
 [ext_resource type="PackedScene" path="res://models/oak.glb" id="2_model"]
+[ext_resource type="Resource" path="res://audio/woodcutting/oak/axe_hit.tres" id="v_axe_hit"]
+[ext_resource type="Resource" path="res://audio/woodcutting/oak/trunk_creak.tres" id="v_trunk_creak"]
+[ext_resource type="Resource" path="res://audio/woodcutting/oak/tree_land.tres" id="v_tree_land"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_oak"]
 size = Vector3(0.85, 2.8, 0.85)
@@ -16,6 +19,9 @@ xp_on_break = 30
 chip_color = Color(0.761, 0.6, 0.424, 1)
 burst_color = Color(0.16, 0.36, 0.2, 1)
 model = ExtResource("2_model")
+hit_layers = ExtResource("v_axe_hit")
+creak_layers = ExtResource("v_trunk_creak")
+land_layers = ExtResource("v_tree_land")
 bark_color = Color(0.31, 0.2, 0.133, 1)
 popup_height = 2.2
 
