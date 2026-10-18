@@ -7,8 +7,10 @@ extends CanvasLayer
 ##   World     time of day, time scale, pause, regrow every node, restock every pond
 ##   Teleport  to each building, biome landmark, pond and kind of resource node (the nearest one)
 ##   Player    fly mode, a live readout (can stay pinned on screen), save / wipe the save
+##   Procgen   enter a generated world by seed, or a new random one, and back to the main world
 ## The old F6–F10 keys still work. Toggles that stay on (fly, pause, time scale) show as a tag at
 ## the top of the screen while the menu is closed.
+## `--procgen` on the command line (after `--`) starts in a generated world; `--seed=N` picks it.
 
 const WIDTH := 460.0
 const BG := Color(0.09, 0.075, 0.06, 0.94)
@@ -43,6 +45,8 @@ var _fly: CheckBox
 var _pin: CheckBox
 var _reset_button: Button
 var _reset_armed := false
+var _procgen_status: Label
+var _seed_edit: LineEdit
 
 
 func _ready() -> void:
@@ -56,6 +60,19 @@ func _ready() -> void:
 	Inventory.changed.connect(func(_i: StringName, _c: int) -> void: _refresh_items())
 	Skills.xp_gained.connect(func(_s: StringName, _a: int, _t: int) -> void: _refresh_skills())
 	Village.tier_changed.connect(func(_id: StringName, _t: int) -> void: _refresh_village())
+	_start_from_cmdline.call_deferred()
+
+
+## `-- --procgen [--seed=N]`: straight into a generated world (a random seed if none is given).
+func _start_from_cmdline() -> void:
+	var args := OS.get_cmdline_user_args()
+	if not args.has("--procgen"):
+		return
+	var s := ProcgenWorld.random_seed()
+	for arg in args:
+		if arg.begins_with("--seed="):
+			s = arg.trim_prefix("--seed=").to_int()
+	ProcgenWorld.enter(get_tree(), s)
 
 
 func is_open() -> bool:
@@ -71,6 +88,7 @@ func open() -> void:
 	_refresh_items()
 	_refresh_skills()
 	_disarm_reset()
+	_refresh_procgen()
 	_fly.set_pressed_no_signal(_player() != null and _player().debug_fly)
 	_pause.set_pressed_no_signal(get_tree().paused)
 	_panel.visible = true
@@ -177,6 +195,36 @@ func _on_reset_pressed() -> void:
 	get_tree().paused = false
 	Engine.time_scale = 1.0
 	SaveGame.reset()
+
+
+func _procgen_world() -> ProcgenWorld:
+	return get_tree().get_first_node_in_group("procgen_world") as ProcgenWorld
+
+
+func _enter_procgen(s: int) -> void:
+	close()
+	get_tree().paused = false
+	Engine.time_scale = 1.0
+	ProcgenWorld.enter(get_tree(), s)
+
+
+func _enter_typed_seed() -> void:
+	var text := _seed_edit.text.strip_edges()
+	_enter_procgen(text.to_int() if text.is_valid_int() else ProcgenWorld.random_seed())
+
+
+func _leave_procgen() -> void:
+	close()
+	get_tree().paused = false
+	Engine.time_scale = 1.0
+	ProcgenWorld.leave(get_tree())
+
+
+func _refresh_procgen() -> void:
+	var world := _procgen_world()
+	_procgen_status.text = ("In a generated world, seed %d" % ProcgenWorld.world_seed) if world 			else "In the main world"
+	if world and _seed_edit.text.is_empty():
+		_seed_edit.text = str(ProcgenWorld.world_seed)
 
 
 func _disarm_reset() -> void:
@@ -310,9 +358,13 @@ func _rebuild_teleports() -> void:
 
 	_teleport_box.add_child(_heading("Biomes"))
 	grid = _grid(3)
-	for place in WorldMap.LANDMARKS:
-		var spot: Array = WorldMap.LANDMARKS[place]
-		grid.add_child(_button(place, _teleport.bind(spot[0], spot[1])))
+	if _procgen_world():
+		var hub := Vector3(ProcgenMap.HUB_CENTER.x, 0, ProcgenMap.HUB_CENTER.y)
+		grid.add_child(_button("Hub", _teleport.bind(hub, hub + Vector3.FORWARD)))
+	else:
+		for place in WorldMap.LANDMARKS:
+			var spot: Array = WorldMap.LANDMARKS[place]
+			grid.add_child(_button(place, _teleport.bind(spot[0], spot[1])))
 	_teleport_box.add_child(grid)
 
 	_teleport_box.add_child(_heading("Water"))
@@ -381,6 +433,7 @@ func _build() -> void:
 	_teleport_box = VBoxContainer.new()
 	_tabs.add_child(_scroll("Teleport", _teleport_box))
 	_tabs.add_child(_scroll("Player", _build_player()))
+	_tabs.add_child(_scroll("Procgen", _build_procgen()))
 
 	var hint := _label(13)
 	hint.text = "F1 / Esc  close"
@@ -539,6 +592,29 @@ func _build_player() -> Control:
 	keys.text = "Keys: F6 skip time  ·  F7 +50 items  ·  F8 village tiers\nF9 +500 XP (last skill)  ·  F10 wipe save"
 	keys.modulate = DIM
 	box.add_child(keys)
+	return box
+
+
+func _build_procgen() -> Control:
+	var box := VBoxContainer.new()
+	_procgen_status = _label(16)
+	box.add_child(_procgen_status)
+	box.add_child(_heading("Generated world"))
+	var row := HBoxContainer.new()
+	_seed_edit = LineEdit.new()
+	_seed_edit.placeholder_text = "seed"
+	_seed_edit.custom_minimum_size = Vector2(120, 0)
+	_seed_edit.text_submitted.connect(func(_t: String) -> void: _enter_typed_seed())
+	row.add_child(_seed_edit)
+	row.add_child(_button("Enter this seed", _enter_typed_seed))
+	box.add_child(row)
+	box.add_child(_button("New seed (random)", func() -> void: _enter_procgen(ProcgenWorld.random_seed())))
+	box.add_child(_button("Back to the main world", _leave_procgen))
+	var note := _label(13)
+	note.text = "Every seed has its own character and save (user://procgen_<seed>.json).
+The main world's save is never touched."
+	note.modulate = DIM
+	box.add_child(note)
 	return box
 
 

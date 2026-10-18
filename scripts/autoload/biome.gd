@@ -29,6 +29,8 @@ const SAMPLE_EVERY := 0.2
 ## Fog in the quarry thickens toward the floor: up to this many times its mood's at the bottom.
 const QUARRY_DEPTH_FOG := 2.0
 
+## Replaces WorldMap's shapes when set: func(at: Vector3) -> StringName. A procgen world sets it.
+var locator := Callable()
 ## The biome you're in (&"" between them, in the wild hills: plain light, no card).
 var current: StringName = &""
 var discovered: Dictionary[StringName, bool] = {}
@@ -76,8 +78,10 @@ func _process(delta: float) -> void:
 	_blend(delta, player.global_position)
 
 
-## Which biome a world position is in, by WorldMap's shapes (first match wins).
+## Which biome a world position is in, by WorldMap's shapes (first match wins), or the locator's.
 func biome_at(p: Vector3) -> StringName:
+	if locator.is_valid():
+		return locator.call(p)
 	var w := Vector2(p.x, p.z)
 	if w.distance_to(WorldMap.QUARRY_CENTER) < WorldMap.QUARRY_WALLS[0] + WorldMap.QUARRY_APRON + 8.0:
 		return &"quarry"

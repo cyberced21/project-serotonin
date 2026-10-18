@@ -35,7 +35,7 @@ generated map.
 ## Phases
 
 0. **Setup** ✅: merge `woodcutting-overhaul` into local `main`, branch `procgen`, this plan.
-1. **Playable skeleton**: `scenes/procgen.tscn` builds a noise heightmap at runtime (flat hub,
+1. **Playable skeleton** ✅: `scenes/procgen.tscn` builds a noise heightmap at runtime (flat hub,
    rolling ground, mountain rim), hands it to Terrain3D, and drops the player in the hub. The
    "Generating…" overlay, the debug menu's Procgen section, `--procgen --seed=N`, and a save per seed.
 2. **Biomes**: the warped Voronoi ring, a height profile per biome blended over the borders, the

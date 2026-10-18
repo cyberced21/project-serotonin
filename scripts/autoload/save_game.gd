@@ -1,14 +1,15 @@
 extends Node
-## Saves registered systems to user://save.json. A system calls SaveGame.register(key, self)
-## and implements to_dict() -> Dictionary and from_dict(d: Dictionary). Registering applies
+## Saves registered systems to user://save.json (a procgen world swaps in its own file: use_file()).
+## A system calls SaveGame.register(key, self) and implements to_dict() -> Dictionary and from_dict(d: Dictionary). Registering applies
 ## any saved data immediately, so it doesn't matter when a system registers (autoload or scene).
 ## Saves on quit, when asked (e.g. level-up), and every AUTOSAVE_INTERVAL if something changed.
 
-const PATH := "user://save.json"
-const TMP_PATH := "user://save.json.tmp"
+const MAIN_PATH := "user://save.json"
 const VERSION := 1
 const AUTOSAVE_INTERVAL := 30.0
 
+## The file being saved to: MAIN_PATH, or a procgen world's own (ProcgenWorld.save_path()).
+var path := MAIN_PATH
 var _data: Dictionary = {}                  # key -> last saved/loaded dict
 var _systems: Dictionary[String, Object] = {}
 var _dirty := false
@@ -42,6 +43,32 @@ func register(key: StringName, system: Object, legacy_key: StringName = &"") -> 
 		system.from_dict(_data[k])
 
 
+## Whether the current file has saved data for `key`.
+func has(key: StringName) -> bool:
+	return _data.has(String(key))
+
+
+## Saves to the current file, then switches to `new_path`: the systems that live on (autoloads)
+## take that file's data, or their defaults if it has none. Systems in the current scene are let
+## go: call this just before changing scenes.
+func use_file(new_path: String) -> void:
+	if new_path == path:
+		return
+	save()
+	var scene := get_tree().current_scene
+	for key in _systems.keys():
+		var system := _systems[key]
+		if not is_instance_valid(system) or (scene and system is Node
+				and (system == scene or scene.is_ancestor_of(system))):
+			_systems.erase(key)
+	path = new_path
+	_data.clear()
+	_load()
+	for key in _systems:
+		_systems[key].from_dict(_data.get(key, {}))
+	_dirty = false
+
+
 func mark_dirty() -> void:
 	_dirty = true
 
@@ -51,16 +78,17 @@ func save() -> void:
 		var system := _systems[key]
 		if is_instance_valid(system):
 			_data[key] = system.to_dict()  # freed systems keep their last saved data
-	var f := FileAccess.open(TMP_PATH, FileAccess.WRITE)
+	var tmp_path := path + ".tmp"
+	var f := FileAccess.open(tmp_path, FileAccess.WRITE)
 	if f == null:
-		push_warning("SaveGame: can't write %s (%s)" % [TMP_PATH, error_string(FileAccess.get_open_error())])
+		push_warning("SaveGame: can't write %s (%s)" % [tmp_path, error_string(FileAccess.get_open_error())])
 		return
 	f.store_string(JSON.stringify({"version": VERSION, "data": _data}, "\t"))
 	f.close()
 	# write-then-rename so a crash mid-write can't corrupt the existing save
-	if FileAccess.file_exists(PATH):
-		DirAccess.remove_absolute(PATH)
-	var err := DirAccess.rename_absolute(TMP_PATH, PATH)
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(path)
+	var err := DirAccess.rename_absolute(tmp_path, path)
 	if err != OK:
 		push_warning("SaveGame: can't move save into place (%s)" % error_string(err))
 		return
@@ -69,8 +97,8 @@ func save() -> void:
 
 ## Debug: wipe the save, reset every system to defaults and reload the scene.
 func reset() -> void:
-	if FileAccess.file_exists(PATH):
-		DirAccess.remove_absolute(PATH)
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(path)
 	_data.clear()
 	for key in _systems:
 		if is_instance_valid(_systems[key]):
@@ -80,11 +108,11 @@ func reset() -> void:
 
 
 func _load() -> void:
-	if not FileAccess.file_exists(PATH):
+	if not FileAccess.file_exists(path):
 		return
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(PATH))
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
 	if not (parsed is Dictionary and parsed.get("data") is Dictionary):
-		push_warning("SaveGame: %s is corrupt, starting fresh" % PATH)
+		push_warning("SaveGame: %s is corrupt, starting fresh" % path)
 		return
 	if int(parsed.get("version", 0)) > VERSION:
 		push_warning("SaveGame: save is from a newer version (%s)" % parsed.get("version"))
