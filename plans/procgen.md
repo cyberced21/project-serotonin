@@ -38,7 +38,7 @@ generated map.
 1. **Playable skeleton** ✅: `scenes/procgen.tscn` builds a noise heightmap at runtime (flat hub,
    rolling ground, mountain rim), hands it to Terrain3D, and drops the player in the hub. The
    "Generating…" overlay, the debug menu's Procgen section, `--procgen --seed=N`, and a save per seed.
-2. **Biomes**: the warped Voronoi ring, a height profile per biome blended over the borders, the
+2. **Biomes** ✅: the warped Voronoi ring, a height profile per biome blended over the borders, the
    control map painted per biome, biome moods, title cards and ambience.
 3. **Water and the quarry**: basin stamps with `WaterBody` + `FishPond`; the 3-ring quarry stamp with
    a spiral ramp, mantle stairs on two walls and crystal on the floor.

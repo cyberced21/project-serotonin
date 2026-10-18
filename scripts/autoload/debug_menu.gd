@@ -358,9 +358,14 @@ func _rebuild_teleports() -> void:
 
 	_teleport_box.add_child(_heading("Biomes"))
 	grid = _grid(3)
-	if _procgen_world():
-		var hub := Vector3(ProcgenMap.HUB_CENTER.x, 0, ProcgenMap.HUB_CENTER.y)
-		grid.add_child(_button("Hub", _teleport.bind(hub, hub + Vector3.FORWARD)))
+	var world := _procgen_world()
+	if world:
+		for site in (world.map.sites if world.map else []):
+			var mood: BiomeMood = Biome.MOODS[site["biome"]]
+			var at := Vector3(site["pos"].x, 0, site["pos"].y)
+			var b := _button(mood.display_name.trim_prefix("The "), _teleport.bind(at, at + Vector3.FORWARD))
+			b.tooltip_text = "Tier %d" % site["tier"]
+			grid.add_child(b)
 	else:
 		for place in WorldMap.LANDMARKS:
 			var spot: Array = WorldMap.LANDMARKS[place]

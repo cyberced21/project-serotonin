@@ -42,7 +42,7 @@ static func random_seed() -> int:
 
 func _ready() -> void:
 	add_to_group("procgen_world")
-	Biome.locator = func(_p: Vector3) -> StringName: return &""  # no biomes yet
+	Biome.locator = func(_p: Vector3) -> StringName: return &""  # until the map exists
 	_player.process_mode = Node.PROCESS_MODE_DISABLED
 	var overlay := _overlay()
 	# let the overlay draw before the generator holds up the frame
@@ -52,6 +52,7 @@ func _ready() -> void:
 	map = ProcgenMap.new(world_seed)
 	map.generate()
 	_build_terrain()
+	Biome.locator = func(p: Vector3) -> StringName: return map.biome_at(Vector2(p.x, p.z))
 	print("Procgen: seed %d generated in %d ms" % [world_seed, Time.get_ticks_msec() - started])
 	_place_player()
 	_player.process_mode = Node.PROCESS_MODE_INHERIT
@@ -73,6 +74,7 @@ func _build_terrain() -> void:
 			if id != WorldMap.TEX_DEFAULT:
 				var w := ProcgenMap.world(x, y)
 				_terrain.data.set_control_base_id(Vector3(w.x, 0, w.y), id)
+	_terrain.data.update_maps(Terrain3DRegion.TYPE_CONTROL)  # painting at runtime only reaches the GPU here
 
 
 ## A fresh character starts in the hub; a saved one where they left off, but never under the ground.

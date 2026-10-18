@@ -121,7 +121,7 @@ func _blend(delta: float, at: Vector3) -> void:
 	var target: BiomeMood = MOODS.get(current)
 	var k := 1.0 - exp(-delta * 3.0 / BLEND)  # most of the way there in BLEND seconds
 	var density := target.fog_density if target else 1.0
-	if current == &"quarry":  # thicker toward the floor
+	if current == &"quarry" and not locator.is_valid():  # thicker toward the floor of the hand-built pit
 		var depth := clampf((WorldMap.QUARRY_RIM_HEIGHT - at.y) / (WorldMap.QUARRY_LEVEL_DROP * 5.0), 0.0, 1.0)
 		density *= lerpf(1.0, QUARRY_DEPTH_FOG, depth)
 	fog_density = lerpf(fog_density, density, k)
