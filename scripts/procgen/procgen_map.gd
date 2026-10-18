@@ -60,8 +60,9 @@ const QUARRY_RIM_HEIGHT := 18.0
 const QUARRY_LEVEL_DROP := 5.0
 const QUARRY_APRON := 8.0
 const QUARRY_BLEND := 24.0
-## The quarry site is pulled at least this close to the hub, so the pit stays clear of the rim.
-const QUARRY_MAX_DISTANCE := 112.0
+## The quarry site is pulled at least this close to the hub, so the pit only bites into the rim
+## (like the hand-built quarry on its mountain shoulder) and keeps clear of the inner ring.
+const QUARRY_MAX_DISTANCE := 126.0
 ## The haul road: each ramp runs along the inside of a wall, this wide, climbing one level over
 ## RAMP_LENGTH metres; the next ramp down starts RAMP_GAP metres further round.
 const RAMP_WIDTH := 4.5
@@ -70,6 +71,23 @@ const RAMP_GAP := 4.0
 ## Mantle stairs: two on every wall where it drops in three steps instead of one, each LEDGE deep.
 const LEDGE := 1.6
 const STAIR_WIDTH := 6.0
+
+## Trails: A* on a grid of TRAIL_CELL-metre squares, from the hub to every biome and to the shore
+## of every pond and lake past the hub. Steep squares cost more (so trails wind round hills), water
+## and the rim can't be crossed. Each route is smoothed, painted as dirt TRAIL_HALF_WIDTH either
+## side of its line, and graded: the ground across it is levelled to a smoothed height along it,
+## easing back to the land over TRAIL_SHOULDER.
+const TRAIL_CELL := 4.0
+const TRAIL_SLOPE_COST := 90.0
+const TRAIL_MAX_SLOPE := 0.5  # steeper squares are impassable
+## Steepest the graded trail may climb (rise per metre); steeper ground is cut into.
+const TRAIL_MAX_GRADE := 0.3
+const TRAIL_HALF_WIDTH := 1.6
+const TRAIL_SHOULDER := 3.5
+## Metres either side over which the height along a trail is averaged before it's graded to it.
+const TRAIL_SMOOTH := 8.0
+## A trail to Frostpeak stops where its slopes begin, below this height.
+const TRAIL_MAX_HEIGHT := 22.0
 
 var seed := 0
 var heights := PackedFloat32Array()
@@ -82,6 +100,8 @@ var sites: Array[Dictionary] = []
 var waters: Array[Dictionary] = []
 ## The quarry pit, if there is one: {center: Vector2, rim_height: float, depth: float, walls: Array[float]}.
 var quarry: Dictionary = {}
+## The trails' centre lines, world XZ, one point a metre, each starting at the hub.
+var trails: Array[PackedVector2Array] = []
 
 var _hills := FastNoiseLite.new()
 var _swell := FastNoiseLite.new()
@@ -147,6 +167,7 @@ func generate() -> void:
 			_pixel(world(x, y), i)
 	_stamp_quarry()
 	_place_water()
+	_lay_trails()
 
 
 static func world(x: int, y: int) -> Vector2:
@@ -442,6 +463,172 @@ func _basin(water_name: String, at: Vector2, r: float, depth: float, lake: bool)
 		if pd < r + 3.0:
 			ids[i] = WorldMap.TEX_DEFAULT)  # the shader's sand and bed, not forest floor or field
 	waters.append({"name": water_name, "center": at, "radius": r, "depth": depth, "lake": lake})
+
+
+# --- trails -----------------------------------------------------------------------------------
+
+func _lay_trails() -> void:
+	trails.clear()
+	var astar := _trail_grid()
+	var start := _trail_cell(HUB_CENTER)
+	astar.set_point_solid(start, false)
+	for t in _trail_targets():
+		# a target on ground a trail can't reach (steep, wet) moves back toward the hub until it can
+		var target := t
+		var goal := _trail_cell(target)
+		for k in 40:
+			if not astar.is_point_solid(goal):
+				break
+			target = target.move_toward(HUB_CENTER, TRAIL_CELL)
+			goal = _trail_cell(target)
+		var cells_path := astar.get_id_path(start, goal)
+		if cells_path.size() < 2:
+			continue
+		var pts := PackedVector2Array()
+		for c in cells_path:
+			pts.append(_trail_world(c))
+		pts[pts.size() - 1] = target
+		trails.append(_resample(_chaikin(_chaikin(_chaikin(pts))), 1.0))
+	_grade_and_paint()
+
+
+## Where trails go: each biome (Frostpeak's foot, the quarry's haul road at the rim; Stillwater by
+## way of its lake) and the shore of each water past the hub, on the side facing the hub.
+func _trail_targets() -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for i in range(1, sites.size()):
+		var p: Vector2 = sites[i]["pos"]
+		match sites[i]["biome"]:
+			&"stillwater":
+				continue  # its site is under the lake, which gets a trail of its own
+			&"quarry":
+				var b := QUARRY_WALLS[0]
+				p += Vector2.from_angle(_ramp_top[0]) * (b + 2.0) if not _ramp_top.is_empty() else Vector2.ZERO
+			&"frostpeak":
+				while height_at(p) > TRAIL_MAX_HEIGHT and p.distance_to(HUB_CENTER) > 4.0:
+					p = p.move_toward(HUB_CENTER, 2.0)
+		out.append(p)
+	for w in waters:
+		var c: Vector2 = w["center"]
+		if c.distance_to(HUB_CENTER) < HUB_RADIUS + 10.0:
+			continue  # the hub's own pond is in sight of the spawn
+		out.append(c + (HUB_CENTER - c).normalized() * (float(w["radius"]) + 3.0))
+	return out
+
+
+## The coarse cost grid: a square's weight grows with the steepest drop to its neighbours.
+func _trail_grid() -> AStarGrid2D:
+	var n := int(SIZE / TRAIL_CELL)
+	var astar := AStarGrid2D.new()
+	astar.region = Rect2i(0, 0, n, n)
+	astar.cell_size = Vector2.ONE * TRAIL_CELL
+	astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+	astar.default_compute_heuristic = AStarGrid2D.HEURISTIC_OCTILE
+	astar.default_estimate_heuristic = AStarGrid2D.HEURISTIC_OCTILE
+	astar.update()
+	for y in n:
+		for x in n:
+			var c := Vector2i(x, y)
+			var w := _trail_world(c)
+			var h := height_at(w)
+			var slope := 0.0
+			for d in [Vector2(TRAIL_CELL, 0), Vector2(0, TRAIL_CELL), Vector2(-TRAIL_CELL, 0), Vector2(0, -TRAIL_CELL)]:
+				slope = maxf(slope, absf(height_at(w + d) - h) / TRAIL_CELL)
+			var wet := h < WATER_LEVEL + 0.05
+			if wet or slope > TRAIL_MAX_SLOPE or _rim(w) > 0.3 or _in_pit(w):
+				astar.set_point_solid(c, true)
+			else:
+				astar.set_point_weight_scale(c, 1.0 + TRAIL_SLOPE_COST * slope * slope)
+	return astar
+
+
+func _in_pit(w: Vector2) -> bool:
+	return not quarry.is_empty() and w.distance_to(quarry["center"]) < QUARRY_WALLS[0] + 1.0
+
+
+func _trail_cell(w: Vector2) -> Vector2i:
+	var p := (w - Vector2(ORIGIN.x, ORIGIN.z)) / TRAIL_CELL
+	var n := int(SIZE / TRAIL_CELL)
+	return Vector2i(clampi(int(p.x), 0, n - 1), clampi(int(p.y), 0, n - 1))
+
+
+func _trail_world(c: Vector2i) -> Vector2:
+	return Vector2(ORIGIN.x, ORIGIN.z) + (Vector2(c) + Vector2(0.5, 0.5)) * TRAIL_CELL
+
+
+## One round of corner cutting: the grid's staircase becomes a curve after a few.
+static func _chaikin(pts: PackedVector2Array) -> PackedVector2Array:
+	var out := PackedVector2Array([pts[0]])
+	for i in pts.size() - 1:
+		out.append(pts[i].lerp(pts[i + 1], 0.25))
+		out.append(pts[i].lerp(pts[i + 1], 0.75))
+	out.append(pts[pts.size() - 1])
+	return out
+
+
+## Points every `step` metres along a polyline.
+static func _resample(pts: PackedVector2Array, step: float) -> PackedVector2Array:
+	var out := PackedVector2Array([pts[0]])
+	var carry := 0.0
+	for i in pts.size() - 1:
+		var a := pts[i]
+		var b := pts[i + 1]
+		var length := a.distance_to(b)
+		var t := step - carry
+		while t <= length:
+			out.append(a.lerp(b, t / length))
+			t += step
+		carry = length - (t - step)
+	if out[out.size() - 1].distance_to(pts[pts.size() - 1]) > 0.1:
+		out.append(pts[pts.size() - 1])
+	return out
+
+
+## Keeps neighbouring heights within `grade` of each other (a metre apart), lowering the high side:
+## sweeping forward then back leaves no step steeper than that, cutting into rises.
+static func _limit_grade(a: PackedFloat32Array, grade: float) -> void:
+	for k in range(1, a.size()):
+		a[k] = minf(a[k], a[k - 1] + grade)
+	for k in range(a.size() - 2, -1, -1):
+		a[k] = minf(a[k], a[k + 1] + grade)
+
+
+## Grades every trail into the ground and paints it as dirt. Each pixel near a trail takes the
+## nearest trail point's smoothed height, fully within the trail's width, easing off over the
+## shoulder. Water, the quarry pit and the hub (already flat) are left alone.
+func _grade_and_paint() -> void:
+	var best := {}  # pixel index -> [distance to the nearest trail point, that point's graded height]
+	var reach := TRAIL_HALF_WIDTH + TRAIL_SHOULDER
+	var window := int(TRAIL_SMOOTH)
+	for line in trails:
+		var raw := PackedFloat32Array()
+		for p in line:
+			raw.append(height_at(p))
+		var profile := PackedFloat32Array()
+		for k in line.size():
+			var sum := 0.0
+			var count := 0
+			for j in range(maxi(k - window, 0), mini(k + window, line.size() - 1) + 1):
+				sum += raw[j]
+				count += 1
+			profile.append(maxf(sum / count, WATER_LEVEL + 0.25))
+		_limit_grade(profile, TRAIL_MAX_GRADE)  # points are a metre apart
+		for k in line.size():
+			var graded := profile[k]
+			var at := line[k]
+			_for_pixels_near(at, reach, func(i: int, w: Vector2) -> void:
+				var d := w.distance_to(at)
+				if not best.has(i) or d < best[i][0]:
+					best[i] = [d, graded])
+	for i in best:
+		var w := world(i % SIZE, i / SIZE)
+		if heights[i] < WATER_LEVEL + 0.1 or _in_pit(w) or w.distance_to(HUB_CENTER) < HUB_RADIUS:
+			continue
+		var d: float = best[i][0]
+		var t := 1.0 - smoothstep(TRAIL_HALF_WIDTH, reach, d)
+		heights[i] = lerpf(heights[i], best[i][1], t)
+		if d < TRAIL_HALF_WIDTH:
+			ids[i] = WorldMap.TEX_PATH
 
 
 # --- preview ----------------------------------------------------------------------------------

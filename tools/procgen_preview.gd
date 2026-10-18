@@ -22,5 +22,6 @@ func _initialize() -> void:
 		var ms := Time.get_ticks_msec() - started
 		var path := out.path_join("procgen_%d.png" % s)
 		var err := map.write_preview(path)
-		print("seed %d: %d ms, %s %s" % [s, ms, path, "" if err == OK else error_string(err)])
+		print("seed %d: %d ms, %d trails, %d waters, %s %s" % [s, ms, map.trails.size(), map.waters.size(), path,
+				"" if err == OK else error_string(err)])
 	quit()

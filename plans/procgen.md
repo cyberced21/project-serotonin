@@ -42,7 +42,7 @@ generated map.
    control map painted per biome, biome moods, title cards and ambience.
 3. **Water and the quarry** ✅: basin stamps with `WaterBody` + `FishPond`; the 3-ring quarry stamp with
    a spiral ramp and mantle stairs on every wall (its crystal comes with the spawners in phase 5).
-4. **Trails**: A\* on a coarse grid (slope and water cost) from the hub to every biome and lake,
+4. **Trails** ✅: A\* on a coarse grid (slope and water cost) from the hub to every biome and lake,
    smoothed, painted as dirt, graded.
 5. **Population**: `NodeSpawner` and `SceneryScatter` per biome, node levels rising with distance
    from the hub, crystal on the quarry floor. The whole game loop works on any seed.
