@@ -78,14 +78,17 @@ Plan and decisions: [plans/biomes.md](../plans/biomes.md).
 
 ## Generated worlds (experimental)
 
-Plan and decisions: [plans/procgen.md](../plans/procgen.md). On the `procgen` branch.
+Plans and decisions: [plans/procgen.md](../plans/procgen.md), [plans/procgen-variety.md](../plans/procgen-variety.md). On the `procgen` branch.
 
 - [x] **A world from a seed:** biome ring, water with fish, a quarry pit, trails, spawners and scenery per biome, four baked variants of every gatherable and big scenery model (`scripts/procgen/`, `scenes/procgen.tscn`).
 - [x] **A voice per tree species and per ore** (`tools/synth_wood_sounds.py`, `tools/synth_mining_sounds.py`). This changes the hand-built world's sounds too.
 - [ ] **Playtest and listen:** walk a few seeds; listen to every tree species and ore (the voices are measured, not heard yet: no steady pulsing, no beating tones, pitch and ring in the intended order).
-- [ ] **Load time:** about 8 s on seed 42: ~1.8 s for the map, ~2.7 s spawning (each fractured ore rock takes ~50 ms to build), ~1.4 s scenery, the rest the first frame's shaders. Could spread the spawning over frames behind the overlay, or cache built rocks.
+- [ ] **Load time:** about 4–7 s per seed now (measured headless; ~8 s windowed before the variety work): ~1.8 s for the map, ~2.7 s spawning (each fractured ore rock takes ~50 ms to build), ~1.4 s scenery, the rest the first frame's shaders. Could spread the spawning over frames behind the overlay, or cache built rocks.
 - [ ] **The quarry ambience hum** (55 + 82.5 Hz) repeats 27.5 times a second: a low growl. Worth a listen given how the breeze turned out.
-- [ ] **A village or camp in generated worlds**, and the ring road / time trial: left out for now (they're hand-placed with baked heights).
+- [x] **Variety:** a kind per biome, Hearthvale (the village) on every seed, rivers, ruins, camps and rare spots, rich and lean resources, an off-centre start (`plans/procgen-variety.md`).
+- [ ] **New screenshots:** `docs/images/procgen.png` predates the village, rivers and landmarks (skipped while a game was using the GPU; take them with the shots script when the machine's free).
+- [ ] **Walk the new pieces:** climb both ruins to their reward, wade a river and its fords, check the Lakeside Village's fisher meets the pond, see each kind's ground in person.
+- [ ] **The ring road / time trial in generated worlds:** still left out (hand-placed with baked heights).
 - [ ] **Hand-sculpting a seed:** a seed you like could be baked to `terrain_data`-style files and edited.
 - [ ] **Merge or drop:** the branch carries the wood and mining voicing and the camera fix (already on `main`); the procgen world itself only touches the debug menu, `SaveGame.use_file`, `Biome.locator` and `NodeSpawner.accept` / `SpawnEntry.variants`.
 

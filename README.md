@@ -52,11 +52,15 @@ whatever you hit.
   - **Goldmeadow** (south-east): rolling farmland. Crop squares of wheat and barley between dirt tracks, a windmill with turning sails (wall-run it), a fenced pasture with hay bales, a hay cart, lone oaks, and crickets.
   - **Hearthvale** (the village), **Stillwater** (the lake), **The Clearing** and **Frostpeak** have moods of their own too.
 - **Generated worlds (experimental).** From the debug menu's *Procgen* tab (or `-- --procgen --seed=N`), step into a world built from a seed in a few seconds, with its own character and save.
-  - A flat clearing to start in, a ring of biomes round it (Pinewood, Goldmeadow, Greystone Quarry, Frostpeak, Stillwater) with wandering borders, gentler ones near the hub and harder ones further out, and mountains round the edge.
-  - Ponds and a lake with fish, a three-level quarry pit with its haul road and mantle stairs, and dirt trails winding from the clearing to every biome and shore.
-  - Every biome filled with its own trees, rocks, grain and scenery. Each tree, rock, bush and boulder may be one of four baked variants of its model, so no two look alike.
+  - A clearing to start in (somewhere near the middle), a ring of biomes round it with wandering borders, gentler ones near the start and harder ones further out, and mountains round the edge. Every biome is there on every seed, since progression needs them all.
+  - **Every biome rolls a kind**, named on its arrival card: a Pine Forest, Birch Grove or Old Growth; Grainfields, Orchard Downs or Rolling Downs; a Great Lake, a Marsh or an Island Lake; a Terraced, Deep or Broken quarry pit; a Lone Peak, Twin Peaks or a Ridge; a Meadow or a Hollow to start in. A kind changes the ground, the trees and rocks, and the scenery.
+  - **Hearthvale**, a village on every seed: the six buildings, their villagers and the upgrades (saved with that seed), round a square with lanes, in a valley or by its own pond.
+  - **Water:** ponds and a lake with fish, and a river (sometimes two) winding down from the mountains into the lake; trails ford it.
+  - **Out in the wilds:** ruins to climb (a Broken Tower or an Old Colonnade, an ore rock waiting on top), abandoned camps, and rare spots (a crystal outcrop or gold vein in the mountains, a ring of ancient oaks, a pond full of pike, a flower meadow).
+  - **Rich and lean:** each seed has twice as much of one resource and half as much of another; the debug menu's *Procgen* tab says which.
+  - Dirt trails wind from the clearing to every biome and shore. Each tree, rock, bush and boulder may be one of four baked variants of its model, so no two look alike.
 
-  | Seed 42, over Goldmeadow toward Frostpeak | Seed 42 from above (`tools/procgen_preview.gd`) |
+  | A generated world (before rivers, villages and landmarks) | Seed 42 from above (`tools/procgen_preview.gd`: ruins magenta, camps orange, rare spots yellow) |
   |---|---|
   | ![A generated world](docs/images/procgen.png) | ![Its map](docs/images/procgen_map.png) |
 
@@ -150,7 +154,7 @@ Key scripts:
 - **Fishing:** `spear_fishing.gd`, `fish_pond.gd`, `fish_school.gd`, `fish.gd`, `water_body.gd`
 - **Village:** `building.gd` (shows a tier, plays the upgrade), `villager.gd`, `upgrade_panel.gd`, `building_def.gd` / `building_tier.gd`, `prop.gd`
 - **World:** `world_map.gd` (where the biomes, roads and landmarks are, shared with the terrain generator), `day_night_sky.gd`, `footsteps.gd`, `pond_dressing.gd`, `scenery_scatter.gd` + `scatter_layer.gd`, `node_spawner.gd` + `spawn_entry.gd` (seeded gatherable nodes with stable save ids), `windmill.gd`
-- **Generated worlds:** `procgen/procgen_map.gd` (the seed's heights, surfaces, biome cells, water, quarry and trails, as plain arrays), `procgen/procgen_world.gd` (builds `scenes/procgen.tscn` from it, enter / leave, a save per seed), `procgen/procgen_population.gd` (the spawners and scenery per biome cell). Plan and decisions: [plans/procgen.md](plans/procgen.md)
+- **Generated worlds:** `procgen/procgen_map.gd` (the seed's heights, surfaces, biome cells, water, quarry and trails, as plain arrays), `procgen/procgen_world.gd` (builds `scenes/procgen.tscn` from it, enter / leave, a save per seed), `procgen/procgen_population.gd` (the spawners and scenery per biome cell, by kind), `procgen/procgen_landmarks.gd` (ruins, camps, rare spots). Plans and decisions: [plans/procgen.md](plans/procgen.md), [plans/procgen-variety.md](plans/procgen-variety.md)
 - **The road:** `road_course.gd` (set pieces by metres along the road), `time_trial.gd`
 - **Autoloads:** `Skills`, `Inventory`, `SaveGame`, `Village` (building tiers, the town-hall cap, perks), `DayNight` (the clock), `Biome` (where you are, the mood, cards and ambience), `Juice` (hit-stop and shake), `Sfx`, `GameInput`
 

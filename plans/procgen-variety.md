@@ -52,7 +52,7 @@ from what each biome is like, where things sit, and what turns up between them.
    seed) and an abandoned camp or two (cart, hay, log pile, crates).
 5. **Rich and lean seeds** ✅: one resource doubled, one halved; shown in the debug menu's Procgen tab
    and the preview tool's output.
-6. **Wrap-up**: README, TODO, screenshots.
+6. **Wrap-up** ✅: README, TODO, screenshots.
 
 ## Verifying
 
