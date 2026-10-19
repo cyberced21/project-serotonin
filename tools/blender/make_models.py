@@ -1169,18 +1169,27 @@ def crane():
     export(os.path.join("quarry", "crane"))
 
 
+def weathered(bm, at=(0, 0, 0), moss_amount=0.6):
+    """A whole stone (no breaks) weathered like the ore rocks (bake_weathering), moved to `at`
+    first so its foot sits in the ground the bake darkens against."""
+    bmesh.ops.translate(bm, vec=Vector(at), verts=bm.verts)
+    cut = bm.faces.layers.int.get("cut") or bm.faces.layers.int.new("cut")
+    bake_weathering(bm, cut, BVHTree.FromBMesh(bm), max(v.co.z for v in bm.verts), moss_amount=moss_amount)
+    return bm
+
+
 def quarry_rubble():
     """Scenery: a little spill of pale broken stone, one merged mesh."""
     reset()
     rng = seeded(72)
     for i in range(6):
         r = rng.uniform(0.1, 0.28)
-        bm = blob(r, rng, jitter_amount=0.35, squash=(1.2, 1.0, 0.6), subdiv=0)
-        paint(bm, shade_by_normal("stone.6", "stone.5", "stone.3", rng, side_alt="stone.4"))
+        bm = blob(r, rng, jitter_amount=0.35, squash=(1.2, 1.0, 0.6), subdiv=1)
+        paint(bm, shade_by_normal("stone.6", "stone.5", "stone.4", rng))
         a, d = rng.uniform(0, math.tau), rng.uniform(0, 0.5)
-        make_object(f"Stone{i}", bm, (math.cos(a) * d, math.sin(a) * d, r * 0.3))
+        make_object(f"Stone{i}", weathered(bm, (math.cos(a) * d, math.sin(a) * d, r * 0.3), moss_amount=0.1))
     merge_all("Rubble")
-    export(os.path.join("scenery", "quarry_rubble"))
+    export(os.path.join("scenery", "quarry_rubble"), loose_edges=True)
 
 
 def quarry():
@@ -2305,10 +2314,10 @@ def lily_flower():
 def shore_stone():
     reset()
     rng = seeded(44)
-    bm = blob(0.28, rng, jitter_amount=0.28, squash=(1.2, 1.0, 0.55))
-    paint(bm, shade_by_normal("stone.5", "stone.3", "stone.2", rng, side_alt="terrain.moss"))  # a little moss
-    make_object("Stone", bm, (0, 0, 0.06))
-    export(os.path.join("scenery", "shore_stone"))
+    bm = blob(0.28, rng, jitter_amount=0.28, squash=(1.2, 1.0, 0.55), subdiv=2)
+    paint(bm, shade_by_normal("stone.5", "stone.4", "stone.3", rng))
+    make_object("Stone", weathered(bm, (0, 0, 0.06), moss_amount=0.9))  # (by the water: mossy)
+    export(os.path.join("scenery", "shore_stone"), loose_edges=True)
 
 
 # --- terrain scenery (scattered by scripts/scenery_scatter.gd with MultiMesh) -----------------
@@ -2378,11 +2387,11 @@ def bush(name, seed, blobs, shades):
 def boulder(name, seed, size, squash):
     reset()
     rng = seeded(seed)
-    bm = blob(size, rng, jitter_amount=0.25, squash=squash, subdiv=1)
-    paint(bm, shade_by_normal("stone.4", "stone.3", "stone.1", rng, side_alt="terrain.moss"))
-    make_object("Boulder", bm, (0, 0, size * squash[2] * 0.6))  # sunk a little into the ground
+    bm = blob(size, rng, jitter_amount=0.25, squash=squash, subdiv=2)
+    paint(bm, shade_by_normal("stone.5", "stone.4", "stone.3", rng))
+    make_object("Boulder", weathered(bm, (0, 0, size * squash[2] * 0.6)))  # sunk a little into the ground
     merge_all("Boulder")
-    export(os.path.join("scenery", name))
+    export(os.path.join("scenery", name), loose_edges=True)
 
 
 # --- forest scenery: the Pinewood's canopy and floor (not gatherable) --------------------------

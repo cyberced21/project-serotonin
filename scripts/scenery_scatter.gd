@@ -151,7 +151,7 @@ func _keep(at: Vector3, radius: float) -> void:
 
 
 func _build_cells(layer: ScatterLayer, mesh: Mesh, cells: Dictionary[Vector2i, Array]) -> void:
-	var material := PALETTE as Material
+	var material := PaletteMaterial.for_mesh(mesh)  # (weathered stones: the rock material)
 	if PaletteMaterial.has_cards(mesh):
 		material = PaletteMaterial.FOLIAGE  # leaf cards: their own wind
 	elif layer.sway > 0.0:

@@ -68,7 +68,7 @@ func _dress() -> void:
 		if p == Vector3.INF or terrain == null:
 			continue
 		var ground: float = terrain.data.get_height(p)
-		_place(stone_model, Vector3(p.x, ground - 0.04, p.z), _rng.randf_range(0.6, 1.5), PALETTE_MATERIAL)
+		_place(stone_model, Vector3(p.x, ground - 0.04, p.z), _rng.randf_range(0.6, 1.5), PaletteMaterial.ROCK)  # (weathered)
 
 
 ## A random point over this water's volume whose depth passes `accept`. With `near_shore`,
