@@ -335,17 +335,34 @@ def loudness(clip, window=0.05):
     return np.sqrt(np.convolve(clip * clip, np.ones(n) / n, mode="valid")).max()
 
 
+def limit(clip, ceiling_db=-1.0, ahead=0.0015, release=0.04):
+    """Peaks held under `ceiling_db` by turning the whole sound down for a moment around them:
+    the gain starts falling `ahead` s before a peak and recovers over `release` s. (Bending each
+    sample over a curve instead clips the wave's shape, and on sharp strikes that's crackle.)"""
+    ceiling = 10 ** (ceiling_db / 20)
+    need = np.minimum(1.0, ceiling / np.maximum(np.abs(clip), 1e-9))
+    if need.min() >= 1.0:
+        return clip
+    w = max(secs(ahead), 1)
+    padded = np.concatenate([np.ones(w), need, np.ones(w)])
+    gain = np.lib.stride_tricks.sliding_window_view(padded, 2 * w + 1).min(axis=1)  # each peak's dip, both sides
+    # recover slowly after it: the cut held at its deepest, dying by e every `release` s. That's
+    # max over earlier samples j of cut[j] * e^-(i-j)/r, which in logs is a running maximum.
+    i = np.arange(len(gain)) / secs(release)
+    cut = np.log(np.maximum(1.0 - gain, 1e-12)) + i
+    gain = 1.0 - np.exp(np.maximum.accumulate(cut) - i)
+    gain = np.convolve(gain, np.ones(w) / w, mode="same")  # no corners: every sample still under its dip
+    return clip * np.minimum(gain, need)
+
+
 def finish(clip):
-    """Fades, then the same loudness as every other clip, peaks bent softly under 0 dB."""
+    """Fades, then the same loudness as every other clip, peaks held under -1 dB (limit())."""
     clip = clip - clip.mean()
     fade_in, fade_out = min(secs(0.001), len(clip) // 4), min(secs(0.03), len(clip) // 3)
     clip[:fade_in] *= np.linspace(0, 1, fade_in)
     clip[len(clip) - fade_out:] *= np.linspace(1, 0, fade_out)
     clip *= 10 ** (LOUDNESS / 20) / max(loudness(clip), 1e-9)
-    knee, ceiling = 10 ** (-6 / 20), 10 ** (-1 / 20)
-    over = np.abs(clip) > knee
-    clip[over] = np.sign(clip[over]) * (knee + (ceiling - knee) * np.tanh((np.abs(clip[over]) - knee) / (ceiling - knee)))
-    return clip
+    return limit(clip)
 
 
 def write_wav(path, clip):

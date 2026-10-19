@@ -40,6 +40,12 @@ window/stretch/aspect="expand"
 
 enabled=PackedStringArray("res://addons/terrain_3d/plugin.cfg")
 
+[importer_defaults]
+
+wav={
+"compress/mode": 0
+}
+
 [physics]
 
 3d/physics_engine="Jolt Physics"
