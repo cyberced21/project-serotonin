@@ -22,6 +22,7 @@ const SCRATCH := "_scratch"
 const META_VERSION := 1
 const CLASSIC_SCENE := "res://scenes/main.tscn"
 const PROCGEN_SCENE := "res://scenes/procgen.tscn"
+const MENU_SCENE := "res://scenes/menu/main_menu.tscn"
 ## Where the old flat saves were (save.json, procgen_<seed>.json).
 const OLD_SAVES := "user://"
 
@@ -29,6 +30,8 @@ var root := DEFAULT_ROOT
 ## The world being played ("" in the menu), and its meta.
 var current := ""
 var current_meta: Dictionary = {}
+## True when the command line names a world: the menu skips its backdrop (it'd be gone next frame).
+var skip_menu := false
 var _session_start := 0  # ticks (ms) when playtime was last banked
 
 
@@ -43,6 +46,9 @@ func _ready() -> void:
 		migrate(OLD_SAVES)
 	_ensure_classic()
 	SaveGame.saved.connect(_on_saved)
+	for arg in args:
+		if arg in ["--classic", "--procgen"] or arg.begins_with("--world="):
+			skip_menu = true
 	_start_from_cmdline.call_deferred(args)
 
 
@@ -205,8 +211,8 @@ func play_scratch(s: int) -> void:
 	play(SCRATCH)
 
 
-## Saves, lets go of the world and changes to `scene` (the menu).
-func leave(scene: String) -> void:
+## Saves, lets go of the world and changes to `scene` (the main menu by default).
+func leave(scene := MENU_SCENE) -> void:
 	if current.is_empty():
 		get_tree().change_scene_to_file(scene)
 		return
@@ -250,10 +256,7 @@ func _start_from_cmdline(args: PackedStringArray) -> void:
 		if arg.begins_with("--world="):
 			play(arg.trim_prefix("--world="))
 			return
-	# until there's a menu: booting the classic scene plays the classic world, as before (not under
-	# a -s tool script, which has no scene yet and picks its own save)
-	var scene := get_tree().current_scene
-	if scene and scene.scene_file_path == CLASSIC_SCENE:
+	if args.has("--classic"):
 		play(CLASSIC)
 
 

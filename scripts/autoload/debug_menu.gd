@@ -7,7 +7,7 @@ extends CanvasLayer
 ##   World     time of day, time scale, pause, regrow every node, restock every pond
 ##   Teleport  to each building, biome landmark, pond and kind of resource node (the nearest one)
 ##   Player    fly mode, a live readout (can stay pinned on screen), save / wipe the save
-##   Procgen   a scratch generated world by seed, or a new random one, and back to the classic world
+##   Procgen   a scratch generated world by seed, or a new random one, and back to the main menu
 ##   Graphics  Low / Medium / High presets and each costly effect on its own (GraphicsSettings)
 ## The old F6–F10 keys still work. Toggles that stay on (fly, pause, time scale) show as a tag at
 ## the top of the screen while the menu is closed.
@@ -208,7 +208,7 @@ func _leave_procgen() -> void:
 	close()
 	get_tree().paused = false
 	Engine.time_scale = 1.0
-	Worlds.play(Worlds.CLASSIC)
+	Worlds.leave()
 
 
 func _refresh_procgen() -> void:
@@ -627,7 +627,7 @@ func _build_procgen() -> Control:
 	row.add_child(_button("Enter this seed", _enter_typed_seed))
 	box.add_child(row)
 	box.add_child(_button("New seed (random)", func() -> void: _enter_procgen(ProcgenMap.random_seed())))
-	box.add_child(_button("Back to the classic world", _leave_procgen))
+	box.add_child(_button("Back to the main menu", _leave_procgen))
 	var note := _label(13)
 	note.text = "Seeds entered here go into a scratch world (worlds/_scratch), wiped each time.
 Your own worlds are never touched."
