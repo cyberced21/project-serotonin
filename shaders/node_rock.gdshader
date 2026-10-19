@@ -6,8 +6,8 @@ shader_type spatial;
 // of a rock drawn as one mesh (pieces_gone). The code is in node_surface.gdshaderinc (ROCK).
 
 // How the ore (the palette's ore row) catches the light.
-uniform float ore_roughness = 0.42;
-uniform float ore_metallic = 0.4;
+uniform float ore_roughness = 0.5;
+uniform float ore_metallic = 0.35;
 // Fresh breaks against the weathered skin.
 uniform float fresh_brightness = 1.1;
 

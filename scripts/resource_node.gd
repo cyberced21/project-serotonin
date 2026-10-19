@@ -522,6 +522,7 @@ func _popup_pos() -> Vector3:
 
 
 func _break(info: HitInfo) -> void:
+	_clear_fault()
 	_award_xp(xp_on_break, true)
 	if _carve and clean_layers:  # the hinge giving way: a deep snap of the last fibres
 		Sfx.play_at(clean_layers, info.position, 0.6, 3.0)
@@ -654,6 +655,10 @@ func _reset_visuals() -> void:
 	if not _links.is_empty():
 		_drops_owed = _drop_count()
 		_spilled = 0
+		_tough.clear()
+		for piece in _tough_pieces:
+			_tough[piece] = 1
+		_place_fault.call_deferred()  # (after a saved rock's missing pieces are hidden)
 		for k in 5:  # pebbles round its foot from the start
 			_add_rubble(to_global(Vector3(randf_range(-1, 1), 0.3, randf_range(-1, 1))), 1)
 	if _rubble_mm:
@@ -1030,6 +1035,9 @@ func _pop_chunk(chunk: MeshInstance3D, push: Vector3, speed: float) -> void:
 	if chunk == _seam_piece:
 		_clear_seam_crack()
 	_seam_progress.erase(chunk)
+	if chunk == _fault_piece:  # knocked out some other way: the fault opens up elsewhere
+		_clear_fault()
+		create_tween().tween_callback(_place_fault).set_delay(FAULT_DELAY)
 	var piece := chunk.duplicate() as MeshInstance3D
 	_throw(piece, chunk.global_transform.orthonormalized(), push, speed)
 
@@ -1179,6 +1187,15 @@ const PIECE_GROUND := 0.12
 var _links := {}
 var _grounded := {}  # pieces resting on the ground -> true
 var _ore_pieces := {}  # pieces carrying ore -> true
+## The ore's own rules, from its .pieces.json: pieces rest only on pieces under them (columns,
+## strata) rather than on any neighbour; the share gone at which it shatters; how many
+## neighbours a hit takes besides the piece struck; and tough pieces that take two hits.
+var _support_below := false
+var _shatter_at := SHATTER_AT
+var _knock := 1
+var _tough_pieces: Array[MeshInstance3D] = []
+var _tough := {}  # tough piece -> hits it still takes before it comes out
+var _rest_y := {}  # piece -> the height of its middle at rest (node space)
 ## The pieces in the merged mesh's order (the shader's piece index), and that mesh.
 var _pieces: Array[MeshInstance3D] = []
 var _merged: MeshInstance3D
@@ -1192,6 +1209,7 @@ func _load_links() -> void:
 	_links.clear()
 	_grounded.clear()
 	_ore_pieces.clear()
+	_tough_pieces.clear()
 	var path := model.resource_path.get_basename() + ".pieces.json"
 	if not FileAccess.file_exists(path):
 		return
@@ -1215,6 +1233,19 @@ func _load_links() -> void:
 		var piece := chunks.get_node_or_null(piece_name) as MeshInstance3D
 		if piece:
 			_ore_pieces[piece] = true
+	for piece_name: String in data.get("grounded", []):  # (resting on the part that never breaks)
+		var piece := chunks.get_node_or_null(piece_name) as MeshInstance3D
+		if piece:
+			_grounded[piece] = true
+	for piece_name: String in data.get("tough", []):
+		var piece := chunks.get_node_or_null(piece_name) as MeshInstance3D
+		if piece:
+			_tough_pieces.append(piece)
+	_support_below = data.get("support", "") == "below"
+	_shatter_at = float(data.get("shatter_at", SHATTER_AT))
+	_knock = int(data.get("knock", 1))
+	for piece in _links:
+		_rest_y[piece] = (chunks.transform * piece.transform * piece.get_aabb().get_center()).y
 	_merge_pieces()
 
 
@@ -1350,12 +1381,28 @@ func _knock_out(info: HitInfo, count: int) -> int:
 	if struck == null:
 		hits_left = 0
 		return 0
+	var fault := _fault_piece != null and (struck == _fault_piece 		or to_local(info.position).distance_to(_fault_point) < FAULT_RADIUS)
+	if _tough.get(struck, 0) > 0 and not fault:  # a tough piece: this hit only cracks it
+		_tough[struck] -= 1
+		if hit_fx:
+			HitFx.spawn(hit_fx, get_parent(), info.position, info.normal, -info.normal, chip_color, ore_color, 1.2)
+		_hits_from_pieces()
+		return 0
 	var at := info.position
+	var reach := FAULT_REACH if fault else KNOCK_RADIUS
 	var near: Array = (_links[struck] as Array).filter(func(c: MeshInstance3D) -> bool:
-		return c.visible and _piece_centre(c).distance_to(at) < KNOCK_RADIUS)
+		return c.visible and _piece_centre(c).distance_to(at) < reach)
+	if fault:  # the whole cluster round it, neighbours of neighbours too
+		for c: MeshInstance3D in near.duplicate():
+			for o: MeshInstance3D in _links[c]:
+				if o != struck and o.visible and not near.has(o) and _piece_centre(o).distance_to(at) < reach:
+					near.append(o)
 	near.sort_custom(func(a: MeshInstance3D, b: MeshInstance3D) -> bool:
 		return _piece_centre(a).distance_squared_to(at) < _piece_centre(b).distance_squared_to(at))
-	var out: Array = [struck] + near.slice(0, randi_range(count, count + 1))
+	var extra := _knock + count - 1
+	var out: Array = [struck] + near.filter(func(c: MeshInstance3D) -> bool: return fault or _tough.get(c, 0) == 0) 		.slice(0, FAULT_BREAK - 1 if fault else randi_range(extra, extra + 1))
+	if fault:
+		_fault_feedback(info)
 	for c: MeshInstance3D in out:
 		var away := (global_basis * (to_local(_piece_centre(c)) - _shape_centre)).normalized()
 		if hit_fx:
@@ -1367,9 +1414,14 @@ func _knock_out(info: HitInfo, count: int) -> int:
 		var away := (global_basis * (to_local(_piece_centre(c)) - _shape_centre)).normalized()
 		_pop_chunk(c, away * 0.3, debris_speed * 0.25)
 		_spill_ore(c, info)
-	var gone := 1.0 - float(_intact_chunks().size()) / _links.size()
-	hits_left = 0 if gone >= SHATTER_AT else maxi(1, ceili((SHATTER_AT - gone) / SHATTER_AT * max_hits))
+	_hits_from_pieces()
 	return falling.size()
+
+
+## hits_left from how much of the rock is gone (0 once it's time to shatter).
+func _hits_from_pieces() -> void:
+	var gone := 1.0 - float(_intact_chunks().size()) / _links.size()
+	hits_left = 0 if gone >= _shatter_at else maxi(1, ceili((_shatter_at - gone) / _shatter_at * max_hits))
 
 
 func _piece_centre(piece: MeshInstance3D) -> Vector3:
@@ -1385,7 +1437,10 @@ func _unsupported() -> Array[MeshInstance3D]:
 			held[c] = true
 			queue.append(c)
 	while not queue.is_empty():
-		for o: MeshInstance3D in _links[queue.pop_back()]:
+		var c: MeshInstance3D = queue.pop_back()
+		for o: MeshInstance3D in _links[c]:
+			if _support_below and _rest_y[c] > _rest_y[o] - 0.05:
+				continue  # (o doesn't rest on c: c isn't under it)
 			if o.visible and not held.has(o):
 				held[o] = true
 				queue.append(o)
@@ -1394,6 +1449,75 @@ func _unsupported() -> Array[MeshInstance3D]:
 		if c.visible and not held.has(c):
 			out.append(c)
 	return out
+
+
+## The fault: one spot on an ore rock where it's ready to give, a hairline crack with grit
+## trickling out of it. Find it and hit it and a whole cluster breaks out (FAULT_BREAK pieces,
+## tough ones too) with a deep crunch; then it opens up somewhere else a moment later.
+const FAULT_RADIUS := 0.35
+const FAULT_REACH := 1.1
+const FAULT_BREAK := 6
+const FAULT_DELAY := 0.8
+var _fault_piece: MeshInstance3D
+var _fault_point := Vector3.ZERO  # node space
+var _fault_marks: Array[Node] = []
+
+
+func _place_fault() -> void:
+	_clear_fault()
+	if _links.is_empty() or hits_left <= 0:
+		return
+	var spots := []  # [piece, point, normal], node space: outside faces on the sides, off the ground
+	for piece in _pieces:
+		if not piece.visible:
+			continue
+		var tris := _piece_tris(piece)
+		var centres: PackedVector3Array = tris[0]
+		var normals: PackedVector3Array = tris[1]
+		var xf := chunks.transform * piece.transform  # (stand-ins never move)
+		for i in centres.size():
+			var n := (xf.basis * normals[i]).normalized()
+			var p := xf * centres[i]
+			if n.y > -0.1 and n.y < 0.8 and p.y > 0.3:
+				spots.append([piece, p, n])
+	if spots.is_empty():
+		return
+	var spot: Array = spots.pick_random()
+	_fault_piece = spot[0]
+	_fault_point = spot[1]
+	var n: Vector3 = spot[2]
+	var side := n.cross(Vector3.UP)
+	side = (side if side.length() > 0.1 else Vector3.RIGHT).normalized().rotated(n, randf_range(-0.7, 0.7))
+	var crack := _crack_decal(_fault_point - side * 0.3, _fault_point + side * 0.3, n, 0.3)
+	if crack:
+		_fault_marks.append(crack)
+	var dust := _tip_dust(_fault_point, n)
+	dust.amount = 16
+	dust.lifetime = 1.2
+	dust.scale_amount_max = 0.7
+	_fault_marks.append(dust)
+
+
+func _clear_fault() -> void:
+	for m in _fault_marks:
+		if is_instance_valid(m):
+			m.queue_free()
+	_fault_marks.clear()
+	_fault_piece = null
+
+
+func _fault_feedback(info: HitInfo) -> void:
+	_clear_fault()
+	create_tween().tween_callback(_place_fault).set_delay(FAULT_DELAY)
+	PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.85, 0), "Fault!", ore_color, 13)
+	_award_xp(xp_per_hit * 3, true)
+	Juice.shake(3.5)
+	Juice.hitstop(0.09)
+	HitFx.star(get_parent(), info.position + info.normal * 0.1, STAR_TIP, 2.5)
+	if split_layers:
+		Sfx.play_at(split_layers, info.position, 0.75)  # a deep crunch ...
+	_play(break_audio, break_sfx, 1.25)  # ... and the stone giving way
+	_add_rubble(info.position, 4)
 
 
 func _collapse_feedback(info: HitInfo, pieces: int) -> void:
@@ -1981,9 +2105,9 @@ func _face_basis(along: Vector3, up: Vector3) -> Basis:
 ## way. A free crack lies on the collision hull, so it must reach down into the hollows the hull
 ## spans; a seam lies on the mesh itself, so a shallow one keeps it off the stone round a crystal.
 ## `mask`: the render layers it draws on.
-func _crack_decal(a: Vector3, b: Vector3, up: Vector3, depth := 0.9, mask := WORLD_LAYER) -> void:
+func _crack_decal(a: Vector3, b: Vector3, up: Vector3, depth := 0.9, mask := WORLD_LAYER) -> Decal:
 	if a.distance_to(b) < 0.01:
-		return
+		return null
 	var d := Decal.new()
 	d.texture_albedo = _crack_textures(chip_color).pick_random()
 	d.size = Vector3(0.32, depth, a.distance_to(b) * 1.25)  # a little longer, so neighbours overlap
@@ -1993,6 +2117,7 @@ func _crack_decal(a: Vector3, b: Vector3, up: Vector3, depth := 0.9, mask := WOR
 	d.cull_mask = mask  # (never the held tool, render layer 2)
 	notches.add_child(d)
 	d.transform = Transform3D(_face_basis(b - a, up), (a + b) * 0.5)
+	return d
 
 
 ## The crack's tip: a pale spot of freshly broken stone (the rock's own colour, lighter), gently

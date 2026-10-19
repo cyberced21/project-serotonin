@@ -9,12 +9,14 @@ extends SceneTree
 ##   --ore=NAME     the rock's scene: rock (copper), iron_rock, coal_rock, gold_rock, crystal_rock
 ##   --distance=M  how far from the rock to stand (default 4)
 ##   --angle=DEG   watch from this far round the rock (the hits still come from the front)
+##   --fault       aim every hit at the rock's fault while it has one
 ##   --tips         aim the hits after the first at the nearest crack tip
 ##   --label=NAME   sub-folder of docs/images/ores/ to save into (default "latest")
 ## The game is played on a throwaway save, so the real one is never touched.
 
 var ore := "rock"
 var tips := false
+var fault := false
 var out_dir := "res://docs/images/ores/latest"
 var distance := 4.0
 var angle := 0.0
@@ -30,6 +32,8 @@ func _initialize() -> void:
 			angle = arg.trim_prefix("--angle=").to_float()
 		elif arg == "--tips":
 			tips = true
+		elif arg == "--fault":
+			fault = true
 		elif arg.begins_with("--label="):
 			out_dir = "res://docs/images/ores/" + arg.trim_prefix("--label=")
 	_run.call_deferred()
@@ -45,6 +49,7 @@ func _run() -> void:
 	if gfx:
 		gfx.set("persist", false)
 	root.get_node("DayNight").set("time", 0.42)
+	root.get_node("Skills").call("set_level", &"mining", 50)  # (every ore can be mined)
 	var node := _find_rock()
 	if node == null:
 		push_error("no %s.tscn in the world" % ore)
@@ -57,6 +62,13 @@ func _run() -> void:
 	for i in 2:
 		p.call("teleport", at + watch * distance, at)
 		await _wait(0.5)
+	if fault and node.get("_fault_piece") != null:  # watch from the fault's side
+		var f: Vector3 = node.to_global(node.get("_fault_point")) - at
+		watch = Vector3(f.x, 0.0, f.z).normalized()
+		back = watch
+		for i in 2:
+			p.call("teleport", at + watch * distance, at)
+			await _wait(0.5)
 	var cam := p.get("camera") as Camera3D
 	(cam.get_parent() as Node3D).rotation.x = -0.25  # look down at it
 	await _wait(2.5)
@@ -72,11 +84,18 @@ func _run() -> void:
 		var tip_points: Array = node.call("crack_tips")
 		if tips and not tip_points.is_empty():
 			target = tip_points[0]
-		var hit := _cast(eye, target)
+		var aimed_fault: bool = fault and node.get("_fault_piece") != null
+		if aimed_fault:
+			target = node.to_global(node.get("_fault_point"))
+		var from := eye
+		if aimed_fault:  # swing at it from its own side
+			var out := target - (at + Vector3.UP * 0.6)
+			from = target + Vector3(out.x, 0.0, out.z).normalized() * 2.5 + Vector3.UP * 0.6
+		var hit := _cast(from, target)
 		if hit.is_empty():
 			push_error("missed the rock")
 			break
-		var info := HitInfo.new(hit["position"], hit["normal"], hit["collider"], eye)
+		var info := HitInfo.new(hit["position"], hit["normal"], hit["collider"], from)
 		var chunks_before := _visible_chunks(node)
 		node.call("hit", info)
 		node.call("set_highlighted", false)  # (the aim outline would wash the rock out)
@@ -84,7 +103,7 @@ func _run() -> void:
 		await _shot("%s_%d_jolt" % [ore, i + 1])
 		await _wait(0.6)
 		await _shot("%s_%d" % [ore, i + 1])
-		print("HIT %d  tip=%s  chunks %d -> %d" % [i + 1, not tip_points.is_empty() and tips, chunks_before, _visible_chunks(node)])
+		print("HIT %d  tip=%s  fault=%s  chunks %d -> %d" % [i + 1, not tip_points.is_empty() and tips, aimed_fault, chunks_before, _visible_chunks(node)])
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://ore_closeup_save.json"))
 	quit()
 

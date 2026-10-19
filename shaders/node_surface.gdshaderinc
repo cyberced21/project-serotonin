@@ -110,12 +110,15 @@ void fragment() {
 #ifdef ROCK
 	// weathered outside (the baked shade), fresh breaks (alpha 0) clean and a touch brighter
 	float fresh = 1.0 - step(0.5, v_shade.a);
-	// (baked as seen, sRGB: brought into linear like any colour, or the shading barely shows)
-	base *= mix(pow(v_shade.rgb, vec3(2.2)), vec3(fresh_brightness), fresh);
-	float ore = float(int(floor(UV.y * 8.0)) == 1);  // the palette's ore row glints
+	// (baked as seen, sRGB: brought into linear like any colour, or the shading barely shows.
+	// Squared, near enough: pow(shade, 2.2) came out NaN on some pixels, which the glow smeared
+	// into big white blobs)
+	base *= mix(v_shade.rgb * v_shade.rgb, vec3(fresh_brightness), fresh);
+	int row = int(floor(UV.y * 8.0));
+	float ore = float(row == 1 || row == 5);  // the palette's ore and metal rows glint
 	ROUGHNESS = mix(0.95, ore_roughness, ore);
 	METALLIC = ore * ore_metallic;
-	SPECULAR = mix(0.2, 0.6, ore);
+	SPECULAR = mix(0.2, 0.5, ore);
 #else
 	ROUGHNESS = 1.0;
 #endif
