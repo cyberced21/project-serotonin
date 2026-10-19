@@ -46,6 +46,8 @@ func _run() -> void:
 	change_scene_to_file("res://scenes/main.tscn")
 	await _wait(2.0)
 	var gfx := root.get_node_or_null("GraphicsSettings")
+	if gfx:
+		gfx.set("persist", false)  # never write the player's settings.cfg
 	if gfx and preset != "":
 		gfx.call("apply_preset", StringName(preset))
 	var day_night := root.get_node("DayNight")

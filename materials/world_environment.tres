@@ -1,0 +1,44 @@
+[gd_resource type="Environment" format=3]
+
+[ext_resource type="Shader" path="res://shaders/sky.gdshader" id="1_sky_shader"]
+
+[sub_resource type="ShaderMaterial" id="SkyMaterial_world"]
+shader = ExtResource("1_sky_shader")
+
+[sub_resource type="Sky" id="Sky_world"]
+sky_material = SubResource("SkyMaterial_world")
+
+[resource]
+background_mode = 2
+sky = SubResource("Sky_world")
+ambient_light_source = 3
+tonemap_mode = 3
+tonemap_exposure = 1.1
+tonemap_white = 6.0
+ssao_radius = 1.4
+ssao_intensity = 2.2
+ssao_power = 1.6
+ssao_detail = 0.6
+ssao_light_affect = 0.15
+ssil_radius = 6.0
+ssil_intensity = 0.7
+glow_levels/1 = 0.0
+glow_levels/2 = 0.6
+glow_levels/3 = 1.0
+glow_levels/4 = 0.6
+glow_levels/5 = 0.4
+glow_intensity = 0.55
+glow_strength = 1.0
+glow_bloom = 0.04
+glow_blend_mode = 1
+glow_hdr_threshold = 0.9
+fog_enabled = true
+fog_light_color = Color(0.66, 0.74, 0.78, 1)
+fog_density = 0.008
+fog_sky_affect = 0.3
+volumetric_fog_density = 0.006
+volumetric_fog_albedo = Color(0.92, 0.94, 0.96, 1)
+volumetric_fog_anisotropy = 0.6
+volumetric_fog_length = 96.0
+volumetric_fog_sky_affect = 0.0
+adjustment_enabled = true

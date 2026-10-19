@@ -8,6 +8,7 @@ extends CanvasLayer
 ##   Teleport  to each building, biome landmark, pond and kind of resource node (the nearest one)
 ##   Player    fly mode, a live readout (can stay pinned on screen), save / wipe the save
 ##   Procgen   enter a generated world by seed, or a new random one, and back to the main world
+##   Graphics  Low / Medium / High presets and each costly effect on its own (GraphicsSettings)
 ## The old F6–F10 keys still work. Toggles that stay on (fly, pause, time scale) show as a tag at
 ## the top of the screen while the menu is closed.
 ## `--procgen` on the command line (after `--`) starts in a generated world; `--seed=N` picks it.
@@ -47,6 +48,10 @@ var _reset_button: Button
 var _reset_armed := false
 var _procgen_status: Label
 var _seed_edit: LineEdit
+var _gfx_preset: Label
+var _gfx_checks: Dictionary[StringName, CheckBox] = {}
+var _gfx_sliders: Dictionary[StringName, HSlider] = {}
+var _gfx_msaa: Dictionary[int, Button] = {}
 
 
 func _ready() -> void:
@@ -460,6 +465,7 @@ func _build() -> void:
 	_tabs.add_child(_scroll("Teleport", _teleport_box))
 	_tabs.add_child(_scroll("Player", _build_player()))
 	_tabs.add_child(_scroll("Procgen", _build_procgen()))
+	_tabs.add_child(_scroll("Graphics", _build_graphics()))
 
 	var hint := _label(13)
 	hint.text = "F1 / Esc  close"
@@ -642,6 +648,73 @@ The main world's save is never touched."
 	note.modulate = DIM
 	box.add_child(note)
 	return box
+
+
+func _build_graphics() -> Control:
+	var box := VBoxContainer.new()
+	_gfx_preset = _label(16)
+	box.add_child(_gfx_preset)
+	var row := HBoxContainer.new()
+	for p in GraphicsSettings.PRESET_ORDER:
+		row.add_child(_button(String(p).capitalize(), GraphicsSettings.apply_preset.bind(p)))
+	box.add_child(row)
+
+	box.add_child(_heading("Effects"))
+	var checks := {
+		&"ssao": "Ambient occlusion (SSAO): contact shadows in corners",
+		&"ssil": "Bounced light (SSIL)",
+		&"volumetric_fog": "Volumetric fog and light shafts",
+		&"glow": "Bloom (glow round bright things)",
+		&"fxaa": "FXAA (cheap edge smoothing)",
+	}
+	for key in checks:
+		var c := _check(checks[key], func(on: bool) -> void: GraphicsSettings.set_value(key, on))
+		_gfx_checks[key] = c
+		box.add_child(c)
+
+	box.add_child(_heading("Anti-aliasing (MSAA)"))
+	row = HBoxContainer.new()
+	for n in [0, 2, 4]:
+		var b := _button("Off" if n == 0 else "%d×" % n, func() -> void: GraphicsSettings.set_value(&"msaa", n))
+		_gfx_msaa[n] = b
+		row.add_child(b)
+	box.add_child(row)
+
+	var sliders := {
+		&"shadow_distance": ["Shadow distance (m)", 30.0, 200.0, 10.0],
+		&"grass_density": ["Grass density", 0.0, 1.0, 0.05],
+		&"foliage_distance": ["Grass and foliage draw distance", 0.3, 1.0, 0.05],
+	}
+	for key in sliders:
+		var spec: Array = sliders[key]
+		box.add_child(_heading(spec[0]))
+		var s := HSlider.new()
+		s.min_value = spec[1]
+		s.max_value = spec[2]
+		s.step = spec[3]
+		s.focus_mode = Control.FOCUS_NONE
+		s.drag_ended.connect(func(_c: bool) -> void: GraphicsSettings.set_value(key, s.value))
+		_gfx_sliders[key] = s
+		box.add_child(s)
+
+	var note := _label(13)
+	note.text = "Saved to user://settings.cfg, not the game save."
+	note.modulate = DIM
+	box.add_child(note)
+	GraphicsSettings.changed.connect(_refresh_graphics)
+	_refresh_graphics()
+	return box
+
+
+func _refresh_graphics() -> void:
+	_gfx_preset.text = "Preset: %s" % String(GraphicsSettings.preset).capitalize()
+	for key in _gfx_checks:
+		_gfx_checks[key].set_pressed_no_signal(bool(GraphicsSettings.get_value(key)))
+	for key in _gfx_sliders:
+		_gfx_sliders[key].set_value_no_signal(float(GraphicsSettings.get_value(key)))
+	var msaa := int(GraphicsSettings.get_value(&"msaa"))
+	for n in _gfx_msaa:
+		_gfx_msaa[n].modulate = ACCENT if n == msaa else Color.WHITE
 
 
 func _scroll(title: String, content: Control) -> ScrollContainer:

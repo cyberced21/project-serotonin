@@ -18,6 +18,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 GameInput="*res://scripts/autoload/game_input.gd"
+GraphicsSettings="*res://scripts/autoload/graphics_settings.gd"
 Juice="*res://scripts/autoload/juice.gd"
 Sfx="*res://scripts/autoload/sfx.gd"
 SaveGame="*res://scripts/autoload/save_game.gd"

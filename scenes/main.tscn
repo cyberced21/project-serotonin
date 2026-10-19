@@ -43,7 +43,7 @@
 [ext_resource type="PackedScene" path="res://models/scenery/boulder_big.glb" id="34_boulder_big"]
 [ext_resource type="PackedScene" path="res://models/scenery/boulder_flat.glb" id="35_boulder_flat"]
 [ext_resource type="Script" path="res://scripts/day_night_sky.gd" id="36_sky"]
-[ext_resource type="Shader" path="res://shaders/sky.gdshader" id="37_sky_shader"]
+[ext_resource type="Environment" path="res://materials/world_environment.tres" id="37_sky_shader_env"]
 [ext_resource type="PackedScene" path="res://models/ruins/step_050.glb" id="40_ruin"]
 [ext_resource type="PackedScene" path="res://models/ruins/step_100.glb" id="41_ruin"]
 [ext_resource type="PackedScene" path="res://models/ruins/step_150.glb" id="42_ruin"]
@@ -86,22 +86,6 @@ subdivide_depth = 35
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_lake"]
 size = Vector3(36, 3, 36)
-
-[sub_resource type="ShaderMaterial" id="ProceduralSkyMaterial_sky"]
-shader = ExtResource("37_sky_shader")
-
-[sub_resource type="Sky" id="Sky_main"]
-sky_material = SubResource("ProceduralSkyMaterial_sky")
-
-[sub_resource type="Environment" id="Environment_main"]
-background_mode = 2
-sky = SubResource("Sky_main")
-ambient_light_source = 3
-tonemap_mode = 2
-fog_enabled = true
-fog_light_color = Color(0.66, 0.74, 0.78, 1)
-fog_density = 0.008
-fog_sky_affect = 0.3
 
 [sub_resource type="Terrain3DMaterial" id="Terrain3DMaterial_lowpoly"]
 shader_override_enabled = true
@@ -221,7 +205,7 @@ allowed_ids = Array[int]([0])
 physics_interpolation_mode = 2
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_main")
+environment = ExtResource("37_sky_shader_env")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
 rotation = Vector3(-0.9, 0.6, 0)
