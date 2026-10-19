@@ -8,6 +8,8 @@ extends SceneTree
 ##   --label=NAME     sub-folder of docs/images/graphics/ to save into (default "latest")
 ##   --preset=NAME    low / medium / high: graphics preset to apply first (default: the saved one)
 ##   --only=a,b       only these views (by name)
+##   --procgen=SEED   instead: a generated world, three views from its spawn (its save is thrown
+##                    away afterwards unless it was already there)
 ## The game is played on a throwaway save, so the real one is never touched.
 
 const VIEWS := [
@@ -27,6 +29,7 @@ const VIEWS := [
 var out_dir := "res://docs/images/graphics/latest"
 var preset := ""
 var only: PackedStringArray = PackedStringArray()
+var procgen_seed := -1
 
 
 func _initialize() -> void:
@@ -37,6 +40,8 @@ func _initialize() -> void:
 			preset = arg.trim_prefix("--preset=")
 		elif arg.begins_with("--only="):
 			only = arg.trim_prefix("--only=").split(",")
+		elif arg.begins_with("--procgen="):
+			procgen_seed = arg.trim_prefix("--procgen=").to_int()
 	_run.call_deferred()
 
 
@@ -55,6 +60,10 @@ func _run() -> void:
 	if gfx and preset != "":
 		gfx.call("apply_preset", StringName(preset))
 	var day_night := root.get_node("DayNight")
+	if procgen_seed >= 0:
+		await _procgen_tour(day_night)
+		quit()
+		return
 	var p := get_first_node_in_group("player") as Node3D
 	for v in VIEWS:
 		if not only.is_empty() and not only.has(v[0]):
@@ -76,6 +85,27 @@ func _run() -> void:
 		await _shot(v[0])
 		print("VIEW %-16s %5.1f fps   at %s yaw %.2f" % [v[0], fps, p.global_position.snapped(Vector3.ONE * 0.1), p.rotation.y])
 	quit()
+
+
+func _procgen_tour(day_night: Node) -> void:
+	var world_script: GDScript = load("res://scripts/procgen/procgen_world.gd")  # (autoload-dependent)
+	var save := ProjectSettings.globalize_path(world_script.save_path(procgen_seed))
+	var existed := FileAccess.file_exists(save)
+	world_script.enter(self, procgen_seed)
+	await _wait(12.0)  # generation takes a few seconds
+	day_night.set("time", 0.4)
+	var p := get_first_node_in_group("player") as Node3D
+	var at := p.global_position
+	for i in 3:
+		var yaw := i * TAU / 3.0
+		_go(p, at, at + Vector3(sin(yaw), 0.0, cos(yaw)) * 10.0)
+		await _wait(2.0)
+		var fps := await _measure_fps(2.0)
+		await _shot("procgen_%d_%d" % [procgen_seed, i])
+		print("VIEW procgen %d/%d %5.1f fps" % [procgen_seed, i, fps])
+	if not existed:
+		root.get_node("SaveGame").set("path", "user://graphics_tour_save.json")  # don't rewrite it on quit
+		DirAccess.remove_absolute(save)
 
 
 func _wait(seconds: float) -> void:

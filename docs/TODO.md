@@ -108,6 +108,16 @@ Plans and decisions: [plans/procgen.md](../plans/procgen.md), [plans/procgen-var
 - [x] **Blender guide:** [blender-guide.md](blender-guide.md), remodelling the rock by hand.
 - [ ] **Sculpt / paint the terrain** in the Terrain3D editor (note: re-running `tools/generate_test_terrain.gd` overwrites it).
 
+### Graphics overhaul (Valheim-style, [plans/graphics.md](../plans/graphics.md))
+
+- [x] Phases 0–9: detail textures, smooth textured terrain, smooth shading, leaf-card trees, dense grass, mist / grading / darker nights / firelight, water and sky, presets.
+- [ ] **Playtest the look in motion:** grass parting and swaying, leaf flutter, the shake and fall of a leaf-card tree, felled-tree chips and leaf drops, lamp flicker. Only stills were checked.
+- [ ] **Night darkness:** nights are much darker now; tune `DayNightSky`'s night ambient (0.32) and moonlight (0.24) by eye.
+- [ ] **README gameplay shots** (mining, woodcutting, spearfishing, pond) still show the old look; retake them.
+- [ ] **Ghost outlines on leaf-card trees** (trees above your level) outline whole card quads, not the leaves.
+- [ ] **Old grass tufts** (`grass_tuft` ScatterLayer) now sit among the dense grass; keep them as accents or drop them.
+- [ ] **Buildings, props and villagers** got the detail overlay only; real per-model textures (re-UV) would be the next step up close.
+
 ## Audio
 
 - [ ] **Real recordings** to replace the synthesized placeholders: footsteps (all surfaces + water), slide scrape, mantle, splash, spear hit, and the biome ambience beds (`audio/footsteps/`, `audio/movement/`, `audio/fishing/`, `audio/ambience/` — swap the `.wav`s, the `.tres` randomizers stay).
