@@ -7,10 +7,13 @@ render_mode specular_disabled, cull_disabled;
 // with a slow gust rolling across the world on top.
 
 uniform sampler2D palette : source_color, filter_nearest, repeat_disable, hint_default_white;
+#include "res://shaders/detail.gdshaderinc"
+
 uniform float strength = 0.25;
 uniform float speed = 1.3;
 
 void vertex() {
+	DETAIL_CAPTURE
 	vec3 origin = MODEL_MATRIX[3].xyz;
 	float phase = fract(sin(dot(origin.xz, vec2(12.9898, 78.233))) * 43758.5453) * 6.2831;
 	float gust = 0.6 + 0.4 * sin(TIME * 0.35 + origin.x * 0.04 + origin.z * 0.03);
@@ -22,6 +25,6 @@ void vertex() {
 }
 
 void fragment() {
-	ALBEDO = texture(palette, UV).rgb;
+	ALBEDO = texture(palette, UV).rgb * DETAIL(UV);
 	ROUGHNESS = 1.0;
 }

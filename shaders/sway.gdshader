@@ -6,6 +6,8 @@ render_mode specular_disabled, cull_disabled;
 // each clump sways out of step with its neighbours.
 
 uniform sampler2D palette : source_color, filter_nearest, repeat_disable, hint_default_white;
+#include "res://shaders/detail.gdshaderinc"
+
 uniform float strength = 0.05;
 uniform float speed = 1.3;
 instance uniform float base_y = 0.0;
@@ -13,6 +15,7 @@ instance uniform float base_y = 0.0;
 instance uniform float sway_phase = 0.0;
 
 void vertex() {
+	DETAIL_CAPTURE
 	vec3 world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	float h = max(world.y - base_y, 0.0);
 	float lean = h * h * strength;
@@ -23,6 +26,6 @@ void vertex() {
 }
 
 void fragment() {
-	ALBEDO = texture(palette, UV).rgb;
+	ALBEDO = texture(palette, UV).rgb * DETAIL(UV);
 	ROUGHNESS = 1.0;
 }
