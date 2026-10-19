@@ -121,10 +121,15 @@ func _display() -> Control:
 	var mode := _choice(["Windowed", "Borderless", "Fullscreen"], func(i: int) -> void:
 		Settings.set_value("display", "window_mode", Settings.WINDOW_MODES[i]))
 	box.add_child(_row("Window", mode))
-	var names: Array = Settings.RESOLUTIONS.map(func(r: Vector2i) -> String: return "%d × %d" % [r.x, r.y])
-	var res := _choice(names, func(i: int) -> void:
-		Settings.set_value("display", "resolution", Settings.RESOLUTIONS[i]))
-	box.add_child(_row("Window size", res))
+	var res := _choice([], func(i: int) -> void:
+		Settings.set_value("display", "resolution", Settings.resolutions()[i]))
+	box.add_child(_row("Resolution", res))
+	var upscale := _choice(["Bilinear (soft)", "FSR 1.0 (sharper)"], func(i: int) -> void:
+		Settings.set_value("display", "upscaling", Settings.UPSCALERS[i]))
+	box.add_child(_row("Upscaling", upscale))
+	var note := MenuUI.label("", 14, MenuUI.DIM)
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(note)
 	var vsync := _check("VSync (no tearing; caps the frame rate to the screen)", func(on: bool) -> void:
 		Settings.set_value("display", "vsync", on))
 	box.add_child(vsync)
@@ -134,8 +139,25 @@ func _display() -> Control:
 	_refreshers.append(func() -> void:
 		var m: StringName = Settings.get_value("display", "window_mode")
 		mode.select(maxi(Settings.WINDOW_MODES.find(m), 0))
-		res.select(maxi(Settings.RESOLUTIONS.find(Settings.get_value("display", "resolution")), 0))
-		res.disabled = m != &"windowed"
+		var options := Settings.resolutions()
+		res.clear()
+		for r in options:
+			res.add_item("%d × %d" % [r.x, r.y])
+		var current: Vector2i = Settings.get_value("display", "resolution")
+		var pick := options.find(current)
+		if pick < 0:  # not offered on this screen: the nearest that is
+			pick = 0
+			for k in options.size():
+				if absi(options[k].y - current.y) < absi(options[pick].y - current.y):
+					pick = k
+		res.select(pick)
+		upscale.select(maxi(Settings.UPSCALERS.find(Settings.get_value("display", "upscaling")), 0))
+		var scaled := m != &"windowed" and Settings.render_size().y < get_tree().root.size.y if is_inside_tree() else false
+		upscale.disabled = not scaled
+		if m == &"windowed":
+			note.text = "Windowed: the resolution is the window's size."
+		else:
+			note.text = "The 3D view is drawn at the resolution and scaled up to the screen; menus and text stay sharp. Lower it for more frames."
 		vsync.set_pressed_no_signal(bool(Settings.get_value("display", "vsync")))
 		fps.select(maxi(Settings.FPS_CAPS.find(int(Settings.get_value("display", "max_fps"))), 0)))
 	return box

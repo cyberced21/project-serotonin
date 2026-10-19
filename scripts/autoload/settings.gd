@@ -2,7 +2,10 @@ extends Node
 ## Display, audio and controls settings, saved to user://settings.cfg beside GraphicsSettings'
 ## section (so they hold across worlds and wipes). Applied live; the player reads the controls
 ## each frame. The Settings screen (scripts/menu/settings_screen.gd) edits them.
-##   display   window mode, windowed size, VSync, frame cap
+##   display   window mode, resolution, upscaling, VSync, frame cap. The resolution is the
+##             window's size when windowed; borderless and fullscreen fill the screen and draw the
+##             3D view at the resolution, scaled up (bilinear or FSR), the menus and text staying
+##             sharp at the screen's own.
 ##   audio     volume per bus: Master, Effects, Ambience, Movement (0..1)
 ##   controls  mouse sensitivity (× the player's own), invert Y, field of view, camera motion
 ##             (how much of the camera kicks, shakes and speed widening to keep, 0..1)
@@ -11,12 +14,15 @@ signal changed
 
 const PATH := GraphicsSettings.PATH
 const WINDOW_MODES: Array[StringName] = [&"windowed", &"borderless", &"fullscreen"]
-const RESOLUTIONS: Array[Vector2i] = [Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080),
-		Vector2i(2560, 1440)]
+## Resolutions offered (16:9), up to the screen's; the screen's own is always offered too.
+const RESOLUTIONS: Array[Vector2i] = [Vector2i(960, 540), Vector2i(1280, 720), Vector2i(1600, 900),
+		Vector2i(1920, 1080), Vector2i(2560, 1440), Vector2i(3200, 1800), Vector2i(3840, 2160)]
+const UPSCALERS: Array[StringName] = [&"bilinear", &"fsr"]
 const FPS_CAPS: Array[int] = [0, 30, 60, 120, 144, 240]
 const BUSES: Array[StringName] = [&"Master", &"Effects", &"Ambience", &"Movement"]
 const DEFAULTS := {
-	"display": {"window_mode": &"windowed", "resolution": Vector2i(1280, 720), "vsync": true, "max_fps": 0},
+	"display": {"window_mode": &"windowed", "resolution": Vector2i(1280, 720), "upscaling": &"fsr",
+			"vsync": true, "max_fps": 0},
 	"audio": {"Master": 1.0, "Effects": 1.0, "Ambience": 1.0, "Movement": 1.0},
 	"controls": {"sensitivity": 1.0, "invert_y": false, "fov": 75.0, "camera_motion": 1.0},
 }
@@ -31,6 +37,7 @@ func _ready() -> void:
 	_load()
 	_apply_display()
 	_apply_audio()
+	get_tree().root.size_changed.connect(_apply_render_scale)
 
 
 func get_value(section: String, key: String) -> Variant:
@@ -76,10 +83,40 @@ func camera_motion() -> float:
 	return float(get_value("controls", "camera_motion"))
 
 
+## The resolutions this screen can show (up to its size, and its own size).
+func resolutions() -> Array[Vector2i]:
+	var screen := _screen_size()
+	var out: Array[Vector2i] = []
+	for r in RESOLUTIONS:
+		if r.x <= screen.x and r.y <= screen.y:
+			out.append(r)
+	if not out.has(screen):
+		out.append(screen)
+	return out
+
+
+## The 3D view's resolution now: the window's size times the render scale.
+func render_size() -> Vector2i:
+	var root := get_tree().root
+	return Vector2i(Vector2(root.size) * root.scaling_3d_scale)
+
+
+func _screen_size() -> Vector2i:
+	if DisplayServer.get_name() == "headless":
+		return Vector2i(1920, 1080)
+	return DisplayServer.screen_get_size(DisplayServer.window_get_current_screen())
+
+
 # --- applying ---------------------------------------------------------------------------------
 
 func _apply_display() -> void:
 	if DisplayServer.get_name() == "headless":
+		return
+	Engine.max_fps = int(get_value("display", "max_fps"))
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if get_value("display", "vsync")
+			else DisplayServer.VSYNC_DISABLED)
+	if Engine.is_embedded_in_editor():  # the editor's Game tab owns that window
+		_apply_render_scale()
 		return
 	var mode: StringName = get_value("display", "window_mode")
 	match mode:
@@ -97,9 +134,19 @@ func _apply_display() -> void:
 			if DisplayServer.window_get_size() != size:
 				DisplayServer.window_set_size(size)
 				DisplayServer.window_set_position(usable.position + (usable.size - size) / 2)
-	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if get_value("display", "vsync")
-			else DisplayServer.VSYNC_DISABLED)
-	Engine.max_fps = int(get_value("display", "max_fps"))
+	_apply_render_scale()
+
+
+## Borderless and fullscreen: the 3D view at the chosen resolution, scaled up to the window.
+## Windowed: the window already is that size, so 1:1.
+func _apply_render_scale() -> void:
+	var root := get_tree().root
+	var scale := 1.0
+	if get_value("display", "window_mode") != &"windowed" and root.size.y > 0:
+		var res: Vector2i = get_value("display", "resolution")
+		scale = clampf(float(res.y) / root.size.y, 0.25, 1.0)
+	root.scaling_3d_scale = scale
+	root.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if get_value("display", "upscaling") == &"fsr" 			and scale < 1.0 else Viewport.SCALING_3D_MODE_BILINEAR
 
 
 func _apply_audio() -> void:

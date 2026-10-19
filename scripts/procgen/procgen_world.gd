@@ -46,7 +46,6 @@ func _ready() -> void:
 	_player.process_mode = Node.PROCESS_MODE_DISABLED
 	var loading := LoadingScreen.new(world_name, Worlds.thumb_path(Worlds.current) if Worlds.current != "" else "")
 	add_child(loading)
-	get_viewport().disable_3d = true  # nothing to see behind the loading screen: no frame time spent drawing it
 	await get_tree().process_frame
 	var started := Time.get_ticks_msec()
 	map = ProcgenMap.new(world_seed, settings)
@@ -84,7 +83,6 @@ func _ready() -> void:
 		loading.report(placed + t * (1.0 - placed) * 0.95, "Growing the forest" if t < 0.6 else "Scattering the meadows"))
 	times.append("nodes and scenery %d" % (Time.get_ticks_msec() - lap))
 	loading.report(1.0, "Almost there")
-	get_viewport().disable_3d = false
 	for i in 3:  # the first frames compile the shaders; keep them behind the loading screen
 		await get_tree().process_frame
 	print("Procgen: seed %d (%s) ready in %d ms: %s" % [world_seed, map.settings["size"],
@@ -96,7 +94,6 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	if _thread:  # left while the map was still generating
 		_thread.wait_to_finish()
-	get_viewport().disable_3d = false
 	Biome.locator = Callable()
 	Biome.reset_quarry()
 
