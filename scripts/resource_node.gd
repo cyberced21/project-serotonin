@@ -316,6 +316,7 @@ func _apply_model() -> void:
 		var loops: Array = seam_lines.get(String(c.name), [])
 		if not loops.is_empty():
 			_seams[c] = loops
+	_load_links()
 
 
 ## A Seam_* line mesh (pairs of points) as ordered closed loops, in node space. Usually one; a
@@ -420,6 +421,9 @@ func hit(info: HitInfo) -> bool:
 		_carve_hit(info, before - hits_left)
 		_tree_reacts(info, 1.0 - float(hits_left) / max_hits)
 	SaveGame.mark_dirty()
+	var collapsed := 0
+	if not _links.is_empty():
+		collapsed = _knock_out(info, 2 if double else 1)  # (sets hits_left)
 	var stress := 1.0 - float(hits_left) / max_hits  # 0 -> 1 as it depletes
 
 	var pitch := 1.0 + stress * stress_pitch - (0.12 if double else 0.0)
@@ -435,10 +439,12 @@ func hit(info: HitInfo) -> bool:
 		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.6, 0), "Clean cut!", clean_cut_color, 10)
 	_award_xp(xp_per_hit * (2 if double else 1) * (2 if weak or tip or _clean else 1))
 
-	var split := hits_left > 0 and cracks and _grow_crack(info, tip)
+	var split := hits_left > 0 and cracks and _links.is_empty() and _grow_crack(info, tip)
 	if split:
 		_split(info)  # the crack ran all the way across
-	last_impact = 2.5 if hits_left == 0 else 2.0 if split else 1.5 if tip or weak or double or _clean else 1.0
+	if collapsed > 0 and hits_left > 0:
+		_collapse_feedback(info, collapsed)
+	last_impact = 2.5 if hits_left == 0 else 2.0 if split or collapsed > 0 else 1.5 if tip or weak or double or _clean else 1.0
 	_hit_sounds(info, pitch, double, split)
 	if _clean and hits_left > 0:  # a sharper crack on top of the thunk
 		if clean_layers:
@@ -449,7 +455,7 @@ func hit(info: HitInfo) -> bool:
 	if hits_left == 0:
 		_break(info)
 	else:
-		if not _carve:
+		if not _carve and _links.is_empty():  # (a rock of pieces shows the hit by losing them)
 			_notch_at(info)
 		if weak:
 			_place_weak_point.call_deferred()  # after this hit's chunks have popped
@@ -470,7 +476,7 @@ func pull(info: HitInfo) -> void:
 		_throw_chip(info, tear, _clean)
 	else:
 		_spawn_fragment(info, tear)
-	if _seams.is_empty():  # (a boulder of pieces only loses them along cracks)
+	if _seams.is_empty() and _links.is_empty():  # (a boulder of pieces only loses them along cracks / where struck)
 		_shed_chunks(stress, info, tear)
 
 
@@ -1123,6 +1129,111 @@ func _fit_collision() -> void:
 		return
 	_shape_centre = box.get_center()
 	_footprint = maxf(box.size.x, box.size.z) * 0.5
+
+
+# --- breaking where struck ------------------------------------------------------------------
+# A rock made of many small pieces (its model has a <name>.pieces.json saying which touch): every
+# hit knocks out the piece struck and a few neighbours, anything left with no chain of pieces
+# down to the ground falls (a collapse: undercut a ledge and it all comes down), and once
+# SHATTER_AT of it is gone the rest breaks apart.
+
+## The share of the pieces gone at which the rest shatters.
+const SHATTER_AT := 0.35
+## Neighbours of the struck piece this close to the hit (m) can come out with it.
+const KNOCK_RADIUS := 0.8
+## A piece reaching this low (node space, m) rests on the ground.
+const PIECE_GROUND := 0.12
+
+## Piece (MeshInstance3D) -> the pieces it touches. Empty for any other node.
+var _links := {}
+var _grounded := {}  # pieces resting on the ground -> true
+
+
+func _load_links() -> void:
+	_links.clear()
+	_grounded.clear()
+	var path := model.resource_path.get_basename() + ".pieces.json"
+	if not FileAccess.file_exists(path):
+		return
+	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if not data is Dictionary:
+		return
+	for piece_name: String in data:
+		var piece := chunks.get_node_or_null(piece_name) as MeshInstance3D
+		if piece == null:
+			continue
+		var touching: Array[MeshInstance3D] = []
+		for other: String in data[piece_name]:
+			var o := chunks.get_node_or_null(other) as MeshInstance3D
+			if o:
+				touching.append(o)
+		_links[piece] = touching
+		if (chunks.transform * piece.transform * piece.get_aabb()).position.y < PIECE_GROUND:
+			_grounded[piece] = true
+
+
+## Knocks out the piece struck and up to `count` of its neighbours near the hit, then drops
+## whatever that left hanging, and sets hits_left from how much is gone. The pieces that fell.
+func _knock_out(info: HitInfo, count: int) -> int:
+	var intact := _intact_chunks()
+	var struck := _piece_struck(info)
+	if struck == null:
+		struck = _nearest(intact, info.position)
+	if struck == null:
+		hits_left = 0
+		return 0
+	var at := info.position
+	var near: Array = (_links[struck] as Array).filter(func(c: MeshInstance3D) -> bool:
+		return c.visible and _piece_centre(c).distance_to(at) < KNOCK_RADIUS)
+	near.sort_custom(func(a: MeshInstance3D, b: MeshInstance3D) -> bool:
+		return _piece_centre(a).distance_squared_to(at) < _piece_centre(b).distance_squared_to(at))
+	var out: Array = [struck] + near.slice(0, randi_range(count, count + 1))
+	for c: MeshInstance3D in out:
+		var away := (global_basis * (to_local(_piece_centre(c)) - _shape_centre)).normalized()
+		if hit_fx:
+			HitFx.spawn(hit_fx, get_parent(), _piece_centre(c), info.normal, -info.normal, chip_color, ore_color, 0.8)
+		_pop_chunk(c, _split_push(away, info), debris_speed * 0.6)
+	var falling := _unsupported()
+	for c in falling:
+		var away := (global_basis * (to_local(_piece_centre(c)) - _shape_centre)).normalized()
+		_pop_chunk(c, away * 0.3, debris_speed * 0.25)
+	var gone := 1.0 - float(_intact_chunks().size()) / _links.size()
+	hits_left = 0 if gone >= SHATTER_AT else maxi(1, ceili((SHATTER_AT - gone) / SHATTER_AT * max_hits))
+	return falling.size()
+
+
+func _piece_centre(piece: MeshInstance3D) -> Vector3:
+	return piece.global_transform * piece.get_aabb().get_center()
+
+
+## The pieces still there with no chain of pieces still there down to the ground.
+func _unsupported() -> Array[MeshInstance3D]:
+	var held := {}
+	var queue: Array[MeshInstance3D] = []
+	for c: MeshInstance3D in _grounded:
+		if c.visible:
+			held[c] = true
+			queue.append(c)
+	while not queue.is_empty():
+		for o: MeshInstance3D in _links[queue.pop_back()]:
+			if o.visible and not held.has(o):
+				held[o] = true
+				queue.append(o)
+	var out: Array[MeshInstance3D] = []
+	for c: MeshInstance3D in _links:
+		if c.visible and not held.has(c):
+			out.append(c)
+	return out
+
+
+func _collapse_feedback(info: HitInfo, pieces: int) -> void:
+	PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.85, 0), "Collapse!", ore_color, 12)
+	_award_xp(xp_per_hit * mini(pieces, 4), true)
+	Juice.shake(2.5)
+	Juice.hitstop(0.06)
+	if split_layers:
+		Sfx.play_at(split_layers, info.position)
+	_add_rubble(info.position, mini(pieces, 4))
 
 
 # --- cracks ---------------------------------------------------------------------------------
@@ -2096,7 +2207,7 @@ func _limit_drawing(n: Node) -> void:
 			g.visibility_range_end = draw_distance
 			g.visibility_range_end_margin = 12.0
 			g.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
-		if c is GeometryInstance3D and not chunk_shadows and c.get_parent() == chunks:
+		if c is GeometryInstance3D and not chunk_shadows and _links.is_empty() and c.get_parent() == chunks:
 			(c as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		_limit_drawing(c)
 

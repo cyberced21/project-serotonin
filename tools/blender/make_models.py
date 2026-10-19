@@ -256,9 +256,12 @@ def spherical_normals(obj, centre=(0, 0, 0), squash=(1, 1, 1)):
 
 def voronoi_cell(src, seeds, index):
     """The part of the closed mesh `src` nearer seeds[index] than any other seed (one Voronoi
-    cell), capped where it was cut. Cap faces get 1 in the int face layer "cut"."""
+    cell), capped where it was cut. Cap faces get 1 in the int face layer "cut", and the index + 1
+    of the seed across them in the int face layer "across" (so the cell's neighbours are the
+    seeds named by the cut faces that survive)."""
     bm = src.copy()
     cut = bm.faces.layers.int.get("cut") or bm.faces.layers.int.new("cut")
+    across = bm.faces.layers.int.get("across") or bm.faces.layers.int.new("across")
     a = seeds[index]
     for j, b in enumerate(seeds):
         if j == index or not bm.faces:
@@ -269,6 +272,7 @@ def voronoi_cell(src, seeds, index):
         if edges:
             for f in bmesh.ops.holes_fill(bm, edges=edges, sides=0)["faces"]:
                 f[cut] = 1
+                f[across] = j + 1
     return bm
 
 
@@ -405,6 +409,63 @@ def fractured(name, rng, whole, seeds, choose, stretch=None, post=None, rubble=(
     export(os.path.join(out, name) if out else name, loose_edges=True)
 
 
+def shatter_seeds(rng, size, squash, centre_z, outer=30, inner=6):
+    """Seeds for a rock that breaks where it's struck: `outer` spread evenly just under the
+    surface (small pieces, the flakes), `inner` deep inside (the big slabs of the middle)."""
+    def at(azimuth, elevation, k):
+        return Vector((math.cos(elevation) * math.cos(azimuth) * size * squash[0] * k,
+                       math.cos(elevation) * math.sin(azimuth) * size * squash[1] * k,
+                       centre_z + math.sin(elevation) * size * squash[2] * k))
+    seeds = []
+    golden = math.pi * (3.0 - math.sqrt(5.0))
+    for i in range(outer):  # a Fibonacci spiral over the upper part of the shape: even, not gridded
+        h = -0.15 + 1.1 * (i + 0.5) / outer
+        seeds.append(at(i * golden + rng.uniform(-0.25, 0.25), math.asin(max(-1.0, min(1.0, h))),
+                        rng.uniform(0.7, 0.86)))
+    for i in range(inner):
+        seeds.append(at(i * math.tau / inner + rng.uniform(-0.4, 0.4), rng.uniform(-0.1, 0.6), rng.uniform(0.15, 0.4)))
+    return seeds
+
+
+def shattered(name, rng, whole, seeds, choose, rubble=("stone.4", "stone.2", "stone.1"), size=1.0, out=""):
+    """Cuts `whole` into Voronoi pieces round `seeds`, all alike (no core): Chunk_NN, plus
+    Rubble_*. The game knocks pieces off where they're struck and drops whatever's left hanging,
+    so it needs to know which pieces touch: models/<out>/<name>.pieces.json maps each piece to
+    its neighbours. choose(face, is_cut, piece) picks each face's swatch."""
+    names = [f"Chunk_{i:02d}" for i in range(len(seeds))]
+    links = {n: set() for n in names}
+    for i in range(len(seeds)):
+        bm = voronoi_cell(whole, seeds, i)
+        cut = bm.faces.layers.int.get("cut")
+        across = bm.faces.layers.int.get("across")
+        if not bm.faces:
+            continue
+        bmesh.ops.triangulate(bm, faces=bm.faces[:])
+        for f in bm.faces:
+            if f[cut] and f[across] > 0 and f.calc_area() > 1e-4:
+                links[names[i]].add(names[f[across] - 1])
+                links[names[f[across] - 1]].add(names[i])
+        paint(bm, lambda f, i=i, cut=cut: choose(f, f[cut] == 1, i))
+        mark_cut(bm, cut)
+        centre = sum((v.co for v in bm.verts), Vector()) / len(bm.verts)
+        bmesh.ops.translate(bm, vec=-centre, verts=bm.verts)
+        make_object(names[i], bm, centre)
+    whole.free()
+    for i in range(4):
+        a = i * math.tau / 4 + rng.uniform(-0.4, 0.4)
+        d = rng.uniform(0.2, 0.6) * size
+        bm = blob(rng.uniform(0.3, 0.45) * size, rng, jitter_amount=0.3, squash=(1.2, 1.0, 0.4), subdiv=1)
+        paint(bm, shade_by_normal(*rubble, rng))
+        make_object(f"Rubble_{i}", bm, (math.cos(a) * d, math.sin(a) * d, 0.08 * size), (0, 0, rng.uniform(0, math.tau)))
+    path = os.path.join(out, name) if out else name
+    export(path, loose_edges=True)
+    if _variant:
+        path = os.path.join("variants", f"{os.path.basename(path)}_v{_variant}")
+    present = {o.name for o in bpy.context.scene.objects}
+    with open(os.path.join(OUT_DIR, path + ".pieces.json"), "w") as f:
+        json.dump({n: sorted(l & present) for n, l in links.items() if n in present}, f, indent=1)
+
+
 def mirrored(s, n, p):
     """`s` reflected through the plane through `p` with normal `n`."""
     return s - 2.0 * (s - p).dot(n) * n
@@ -432,7 +493,7 @@ def layer_cuts(normal, spacing, lo, hi):
     return [(normal * (lo + k * spacing), normal) for k in range(int((hi - lo) / spacing) + 1)]
 
 
-def copper_verdigris(name="copper_verdigris", out="designs"):
+def copper_verdigris(name="copper_verdigris", out="designs", shatter=False):
     """Copper A: a rounded warm-grey boulder crusted with green verdigris on top, cut by two
     copper veins. The pieces are seeded in pairs mirrored across each vein, so the seams run along
     the veins: every split opens up a bright sheet of copper."""
@@ -463,7 +524,10 @@ def copper_verdigris(name="copper_verdigris", out="designs"):
         if c.z > crust_z and f.normal.z > 0.2:
             return "leaves.6" if f.normal.z > 0.6 else "leaves.5"
         return stone(f)
-    fractured(name, rng, whole, seeds, choose, out=out)
+    if shatter:
+        shattered(name, rng, whole, shatter_seeds(rng, 1.0, squash, cz), choose, out=out)
+    else:
+        fractured(name, rng, whole, seeds, choose, out=out)
 
 
 def copper_malachite():
@@ -715,8 +779,8 @@ def scale_scene(s):
 # The game's rocks: the ore designs picked for each (see "ore designs" above).
 
 def rock():
-    """Copper (Mining 1): the verdigris boulder."""
-    copper_verdigris("rock", out="")
+    """Copper (Mining 1): the verdigris boulder, breaking where it's struck."""
+    copper_verdigris("rock", out="", shatter=True)
 
 
 def iron_rock():

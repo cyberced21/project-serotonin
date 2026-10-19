@@ -1,6 +1,6 @@
 extends SceneTree
-## Ore close-up: stands in front of an ore rock in the main world, strikes the same spot until a
-## piece splits off (a tip hit when there is one, with --tips) and saves a screenshot after every
+## Ore close-up: stands in front of an ore rock in the main world, strikes the same spot until it
+## breaks (a tip hit when there is one, with --tips) and saves a screenshot after every
 ## hit, plus one mid-jolt, to judge how pieces loosen and come away.
 ##
 ##   godot --path . --screen 1 --resolution 1280x720 -s res://tools/ore_closeup.gd -- --ore=rock
@@ -85,8 +85,6 @@ func _run() -> void:
 		await _wait(0.6)
 		await _shot("%s_%d" % [ore, i + 1])
 		print("HIT %d  tip=%s  chunks %d -> %d" % [i + 1, not tip_points.is_empty() and tips, chunks_before, _visible_chunks(node)])
-		if _visible_chunks(node) < chunks_before:
-			break
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://ore_closeup_save.json"))
 	quit()
 
