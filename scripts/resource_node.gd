@@ -1304,12 +1304,15 @@ func _merge_pieces() -> void:
 	for piece in _pieces:
 		piece.layers = 0  # (still there for aiming and the hull; the merged mesh draws it)
 		piece.material_override = ROCK_MATERIAL
+	for b in get_node("Visual/Body").get_children():  # a part that never breaks (crystal's stone)
+		if b is MeshInstance3D:
+			(b as MeshInstance3D).material_override = ROCK_MATERIAL
 
 
 ## Sits the rock in the ground: a patch of trodden dirt projected round its foot (a decal, so it
 ## follows the terrain), wider than the rock by this much (m).
 const DIRT_MARGIN := 0.7
-const DIRT_COLOR := Color(0.3, 0.24, 0.18, 0.85)
+const DIRT_COLOR := Color(0.3, 0.24, 0.18, 0.45)  # (faint: on pale quarry sand it reads as a scorch)
 static var _dirt_tex: ImageTexture
 
 
@@ -2474,7 +2477,7 @@ func _chips_at(info: HitInfo) -> void:
 
 
 func _setup_glow() -> void:
-	for c in chunks.get_children():
+	for c: Node in chunks.get_children() + ([_merged] if _merged else []):
 		if c is MeshInstance3D:
 			DayNightSky.make_glow(c)
 			(c as MeshInstance3D).set_instance_shader_parameter("glow_tint", Color(glow_color, 1.0))

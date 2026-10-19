@@ -527,17 +527,23 @@ def shattered(name, rng, whole, seeds, choose, rubble=("stone.4", "stone.2", "st
         bm = blob(rng.uniform(0.3, 0.45) * size, rng, jitter_amount=0.3, squash=(1.2, 1.0, 0.4), subdiv=1)
         paint(bm, shade_by_normal(*rubble, rng))
         make_object(f"Rubble_{i}", bm, (math.cos(a) * d, math.sin(a) * d, 0.08 * size), (0, 0, rng.uniform(0, math.tau)))
-    path = os.path.join(out, name) if out else name
-    export(path, loose_edges=True)
+    export_pieces(os.path.join(out, name) if out else name, links,
+                  {n for n, a in ore_area.items() if a > 0.04}, rules)  # (ore: a real share of vein, not a sliver)
+
+
+def export_pieces(name, links, ore, rules=None):
+    """Exports the scene as models/<name>.glb (see export) plus <name>.pieces.json for a rock
+    that breaks where it's struck: {"links": piece -> the pieces it touches, "ore": [pieces],
+    and any `rules`} (see shattered), naming only pieces that were built."""
+    export(name, loose_edges=True)
     if _variant:
-        path = os.path.join("variants", f"{os.path.basename(path)}_v{_variant}")
+        name = os.path.join("variants", f"{os.path.basename(name)}_v{_variant}")
     present = {o.name for o in bpy.context.scene.objects}
-    ore = {n for n, a in ore_area.items() if a > 0.04}  # a real share of vein, not a sliver
-    with open(os.path.join(OUT_DIR, path + ".pieces.json"), "w") as f:
-        data = {"links": {n: sorted(l & present) for n, l in links.items() if n in present},
-                "ore": sorted(ore & present)}
-        for k, v in (rules or {}).items():
-            data[k] = sorted(set(v) & present) if isinstance(v, (set, list)) else v
+    data = {"links": {n: sorted(set(l) & present) for n, l in links.items() if n in present},
+            "ore": sorted(set(ore) & present)}
+    for k, v in (rules or {}).items():
+        data[k] = sorted(set(v) & present) if isinstance(v, (set, list)) else v
+    with open(os.path.join(OUT_DIR, name + ".pieces.json"), "w") as f:
         json.dump(data, f, indent=1)
 
 
@@ -1008,19 +1014,30 @@ def tilted(base, length, tilt, azimuth):
     return tuple(b + c * length / 2 for b, c in zip(base, d))
 
 
+def mark_fresh(bm, cut):
+    """Unweathered (glassy crystal): the "cut_mark" colour white, alpha 0 on cut faces."""
+    layer = bm.loops.layers.float_color.get("cut_mark") or bm.loops.layers.float_color.new("cut_mark")
+    for f in bm.faces:
+        for loop in f.loops:
+            loop[layer] = (1.0, 1.0, 1.0, 0.0 if f[cut] else 1.0)
+
+
 def crystal_rock():
-    """A dark stone base bristling with violet crystals (Mining 40): the crystals are the chunks
-    that break off, the base stays, two stubs are left while it grows back. Each crystal is cut
-    off flush where it comes out of the stone, and that cut is its seam: a ring round its foot, so
-    the crack runs round the base of the crystal and finishing it snaps the crystal off."""
+    """A dark stone base bristling with violet crystals (Mining 40). The base stays; each crystal
+    is two or three shards end to end, the foot one resting on the stone: hit a shard and it
+    breaks out, knock out a foot and the rest of that crystal comes down with it. Two stubs are
+    left while it grows back. The stone is weathered; the crystals clean and glassy."""
     reset()
     rng = seeded(15)
     bm = blob(0.5, rng, squash=(1.15, 1.0, 0.5))
-    paint(bm, shade_by_normal("stone.2", "stone.1", "stone.0", rng, side_alt="neutral.2"))
+    paint(bm, shade_by_normal("stone.3", "stone.2", "stone.1", rng))
     stone = bm.copy()  # where the crystals come out of it (world space)
     bmesh.ops.translate(stone, vec=Vector((0, 0, 0.18)), verts=stone.verts)
     surface = BVHTree.FromBMesh(stone)
+    body_cut = bm.faces.layers.int.new("cut")
+    bake_weathering(bm, body_cut, BVHTree.FromBMesh(bm), 0.5, moss_amount=0.5)
     make_object("Body_Core", bm, (0, 0, 0.18))
+    links, ore, grounded = {}, set(), []
     shards = [  # (length, radius, tilt, azimuth)
         (1.15, 0.16, 0.12, 0.0), (0.85, 0.13, 0.55, 0.4), (0.75, 0.12, 0.6, 2.2),
         (0.9, 0.13, 0.5, 3.6), (0.6, 0.1, 0.75, 5.0),
@@ -1030,22 +1047,37 @@ def crystal_rock():
         axis = Vector((math.sin(tilt) * math.cos(a), math.sin(tilt) * math.sin(a), math.cos(tilt)))
         hit = surface.ray_cast(Vector(base), axis)  # from inside the stone, out along the crystal
         buried = (hit[3] if hit[0] is not None else 0.0) + 0.01
-        piece = prism(6, radius, radius * 0.12, length)
-        jitter(piece, 0.06, rng)
-        cut = piece.faces.layers.int.new("cut")
-        chop(piece, Vector((0, 0, -length / 2 + buried)), Vector((0, 0, -1)), as_cut=True)
-        paint(piece, lambda f, cut=cut: "accent.7" if f[cut] else
-              ("ore.amethyst" if f.normal.z > 0.2 or rng.random() < 0.7 else "accent.6"))
+        whole = prism(6, radius, radius * 0.12, length)
+        jitter(whole, 0.06, rng)
+        whole.faces.layers.int.new("cut")
+        chop(whole, Vector((0, 0, -length / 2 + buried)), Vector((0, 0, -1)), as_cut=True)
         where, turn = tilted(base, length, tilt, a), (0, tilt, a)
-        mark_cut(piece, cut)
-        make_object(f"Seam_{'ABCDE'[i]}", outline(piece, cut), where, turn)
-        make_object(f"Chunk_{'ABCDE'[i]}", piece, where, turn)
+        bottom = -length / 2 + buried
+        count = 3 if length > 0.8 else 2
+        joints = [bottom + (length / 2 - bottom) * (k / count + rng.uniform(-0.06, 0.06)) for k in range(1, count)]
+        names = [f"Chunk_{'ABCDE'[i]}{k}" for k in range(count)]
+        for k in range(count):  # the shards, foot to tip, split across the crystal
+            piece = whole.copy()
+            cut = piece.faces.layers.int.get("cut")
+            if k < count - 1:
+                chop(piece, Vector((0, 0, joints[k])), Vector((0, 0, 1)), as_cut=True)
+            if k > 0:
+                chop(piece, Vector((0, 0, joints[k - 1])), Vector((0, 0, -1)), as_cut=True)
+            paint(piece, lambda f, cut=cut: "accent.7" if f[cut] else
+                  ("ore.amethyst" if f.normal.z > 0.2 or rng.random() < 0.7 else "accent.6"))
+            mark_fresh(piece, cut)
+            make_object(names[k], piece, where, turn)
+            links[names[k]] = [n for n in (names[k - 1] if k else None, names[k + 1] if k < count - 1 else None) if n]
+            ore.add(names[k])
+        grounded.append(names[0])
+        whole.free()
     stone.free()
     for i, (a, length) in enumerate(((1.2, 0.22), (4.2, 0.18))):
         base = (math.cos(a) * 0.2, math.sin(a) * 0.2, 0.28)
         make_object(f"Rubble_{i}", shard(rng, length, 0.09), tilted(base, length, 0.4, a), (0, 0.4, a))
     scale_scene(1.5)  # as hefty as the boulders
-    export("crystal_rock", loose_edges=True)
+    export_pieces("crystal_rock", links, ore, {"grounded": grounded, "knock": 0, "shatter_at": 0.7,
+                                               "tough": list(links)})  # (crystal is hard: two hits a shard)
 
 
 def crystal_item():
@@ -2471,7 +2503,7 @@ def ore_variants():
     os.makedirs(os.path.join(OUT_DIR, "variants"), exist_ok=True)
     for v in range(1, VARIANTS + 1):
         _variant = v
-        for build in (rock, iron_rock, coal_rock, gold_rock):
+        for build in (rock, iron_rock, coal_rock, gold_rock, crystal_rock):
             build()
     _variant = 0
 

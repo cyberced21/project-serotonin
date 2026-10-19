@@ -1,0 +1,85 @@
+{
+ "links": {
+  "Chunk_A0": [
+   "Chunk_A1"
+  ],
+  "Chunk_A1": [
+   "Chunk_A0",
+   "Chunk_A2"
+  ],
+  "Chunk_A2": [
+   "Chunk_A1"
+  ],
+  "Chunk_B0": [
+   "Chunk_B1"
+  ],
+  "Chunk_B1": [
+   "Chunk_B0",
+   "Chunk_B2"
+  ],
+  "Chunk_B2": [
+   "Chunk_B1"
+  ],
+  "Chunk_C0": [
+   "Chunk_C1"
+  ],
+  "Chunk_C1": [
+   "Chunk_C0"
+  ],
+  "Chunk_D0": [
+   "Chunk_D1"
+  ],
+  "Chunk_D1": [
+   "Chunk_D0",
+   "Chunk_D2"
+  ],
+  "Chunk_D2": [
+   "Chunk_D1"
+  ],
+  "Chunk_E0": [
+   "Chunk_E1"
+  ],
+  "Chunk_E1": [
+   "Chunk_E0"
+  ]
+ },
+ "ore": [
+  "Chunk_A0",
+  "Chunk_A1",
+  "Chunk_A2",
+  "Chunk_B0",
+  "Chunk_B1",
+  "Chunk_B2",
+  "Chunk_C0",
+  "Chunk_C1",
+  "Chunk_D0",
+  "Chunk_D1",
+  "Chunk_D2",
+  "Chunk_E0",
+  "Chunk_E1"
+ ],
+ "grounded": [
+  "Chunk_A0",
+  "Chunk_B0",
+  "Chunk_C0",
+  "Chunk_D0",
+  "Chunk_E0"
+ ],
+ "knock": 0,
+ "shatter_at": 0.7,
+ "tough": [
+  "Chunk_A0",
+  "Chunk_A1",
+  "Chunk_A2",
+  "Chunk_B0",
+  "Chunk_B1",
+  "Chunk_B2",
+  "Chunk_C0",
+  "Chunk_C1",
+  "Chunk_D0",
+  "Chunk_D1",
+  "Chunk_D2",
+  "Chunk_E0",
+  "Chunk_E1"
+ ]
+}

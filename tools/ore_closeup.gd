@@ -55,6 +55,9 @@ func _run() -> void:
 		push_error("no %s.tscn in the world" % ore)
 		quit(1)
 		return
+	if not node.call("is_available"):  # (still growing back, as the quarry's crystals start)
+		node.call("respawn_now")
+		await _wait(0.6)
 	var p := get_first_node_in_group("player") as Node3D
 	var at := node.global_position
 	var back := Vector3(-at.x, 0.0, -at.z).normalized()  # stand on the side toward the world's middle
@@ -74,6 +77,8 @@ func _run() -> void:
 	await _wait(2.5)
 	node.call("set_highlighted", false)
 	await _shot("%s_0" % ore)
+	print("ROCK %s at %s  respawning %s  available %s  pieces %d  hits_left %d" % [node.name, at.snapped(Vector3.ONE * 0.1), node.get("_respawn_timer") != null,
+		node.call("is_available"), _visible_chunks(node), node.get("hits_left")])
 	var aim := at + Vector3.UP * 0.6
 	var eye := at + back * distance + Vector3.UP * (cam.global_position.y - p.global_position.y)
 	eye.y += p.global_position.y - at.y
