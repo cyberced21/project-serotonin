@@ -454,11 +454,11 @@ def bake_weathering(bm, cut, bvh, top_z, moss=(0.55, 0.82, 0.42), moss_amount=0.
         occluded = 0
         for x, y, z in AO_RAYS:
             d = t * x + b * y + n * z
-            if d.z < 0 and o.z + d.z * reach < 0:  # into the ground
-                occluded += 1
+            if d.z < 0 and o.z + d.z * reach < 0:  # into the ground (half: it's bright open ground)
+                occluded += 0.5
             elif bvh.ray_cast(o, d, reach)[0] is not None:
                 occluded += 1
-        ao = 1.0 - 0.8 * occluded / len(AO_RAYS)
+        ao = 1.0 - 0.65 * occluded / len(AO_RAYS)
         h = max(0.0, min(1.0, v.co.z / top_z))
         convex, edges = 0.0, 0
         for e in v.link_edges:
@@ -466,7 +466,7 @@ def bake_weathering(bm, cut, bvh, top_z, moss=(0.55, 0.82, 0.42), moss_amount=0.
                 convex -= (e.other_vert(v).co - v.co).normalized().dot(n)
                 edges += 1
         wear = 1.0 + 0.6 * max(0.0, convex / edges if edges else 0.0)
-        s = ao * (0.6 + 0.4 * h) * wear * (1.0 + 0.14 * noise.noise(v.co * 4.0))
+        s = ao * (0.72 + 0.28 * h) * wear * (1.0 + 0.14 * noise.noise(v.co * 4.0))
         s = max(0.0, min(1.0, s))
         patch = noise.noise(v.co * 2.2 + Vector((7.0, 3.0, 1.0))) * 0.5 + 0.5
         low = 1.0 - max(0.0, min(1.0, v.co.z / 0.5))
@@ -733,13 +733,17 @@ def iron_banded():
               rubble=("accent.0", "metal.2", "stone.1"))
 
 
-def coal_strata(name="coal_strata", out="designs"):
+def coal_strata(name="coal_strata", out="designs", shatter=False):
     """Coal A: a low, wide outcrop of layered rock: thick black coal seams between grey shale,
-    and the pieces come away as slabs along the layers."""
+    and the pieces come away as slabs along the layers. With `shatter`, it's stacked plates that
+    rest on the ones beneath: undercut it and a whole layer drops."""
     reset()
     rng = seeded(105)
     squash = (1.35, 1.1, 0.6)
-    whole, cz = boulder_mesh(rng, 1.0, squash=squash, lumps=4, lump_amp=(0.08, 0.16), chops=4)
+    whole, cz = boulder_mesh(rng, 1.0, subdiv=4 if shatter else 3, squash=squash, lumps=4,
+                             lump_amp=(0.08, 0.16), chops=4)
+    if shatter:
+        bmesh.ops.translate(whole, vec=Vector((0, 0, -0.05)), verts=whole.verts)
     thick = [0.16, 0.07, 0.2, 0.08, 0.14, 0.07, 0.18, 0.08, 0.2]  # coal, shale, coal ... upward
     edges, z = [], -0.04
     for t in thick:
@@ -765,6 +769,29 @@ def coal_strata(name="coal_strata", out="designs"):
         if coal:
             return "ore.coal" if f.normal.z > -0.3 else "neutral.0"
         return "stone.3" if f.normal.z > -0.3 else "stone.2"
+    if shatter:
+        def choose(f, is_cut, i):  # weathered: dull charcoal seams in pale shale; broken: glossy coal
+            c = f.calc_center_median()
+            coal = is_coal(c.z)
+            if is_cut:
+                return "ore.coal" if coal else "stone.5"
+            if coal:
+                return "neutral.3" if f.normal.z > 0.5 else "neutral.2"
+            return "stone.5" if f.normal.z > 0.5 else "stone.4"
+        top = max(v.co.z for v in whole.verts)
+        plates = []
+        for level in range(5):  # five courses of plates, each offset from the one under it
+            z = (level + 0.5) * top / 5
+            ring = 6 if level < 3 else 5 if level < 4 else 3
+            for k in range(ring):
+                a = k * math.tau / ring + level * 0.55 + rng.uniform(-0.2, 0.2)
+                r = rng.uniform(0.35, 0.8) * (1.0 - 0.12 * level)
+                plates.append(Vector((math.cos(a) * r * squash[0], math.sin(a) * r * squash[1], z)))
+            plates.append(Vector((rng.uniform(-0.1, 0.1), rng.uniform(-0.1, 0.1), z)))
+        shattered(name, rng, whole, plates, choose, stretch=(1, 1, 3.0), out=out,
+                  rubble=("neutral.2", "ore.coal", "neutral.0"), moss_amount=0.6,
+                  rules={"support": "below", "knock": 0, "shatter_at": 0.5})
+        return
     fractured(name, rng, whole, seeds, choose, stretch=(1, 1, 3.0),
               rubble=("neutral.2", "ore.coal", "neutral.0"), out=out)
 
@@ -905,8 +932,8 @@ def iron_rock():
 
 
 def coal_rock():
-    """Coal (Mining 20): coal seams between shale."""
-    coal_strata("coal_rock", out="")
+    """Coal (Mining 20): coal seams between shale, in plates that drop when undercut."""
+    coal_strata("coal_rock", out="", shatter=True)
 
 
 def gold_rock():
@@ -2392,7 +2419,7 @@ def ore_variants():
     os.makedirs(os.path.join(OUT_DIR, "variants"), exist_ok=True)
     for v in range(1, VARIANTS + 1):
         _variant = v
-        for build in (rock, iron_rock):
+        for build in (rock, iron_rock, coal_rock):
             build()
     _variant = 0
 
