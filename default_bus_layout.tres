@@ -1,5 +1,9 @@
 [gd_resource type="AudioBusLayout" format=3 uid="uid://cgpelw034trg4"]
 
+[sub_resource type="AudioEffectHardLimiter" id="AudioEffectHardLimiter_master"]
+resource_name = "HardLimiter"
+ceiling_db = -0.5
+
 [sub_resource type="AudioEffectAmplify" id="AudioEffectAmplify_sfx"]
 resource_name = "Headroom"
 volume_db = -10.0
@@ -24,10 +28,6 @@ wet = 0.1
 [sub_resource type="AudioEffectHardLimiter" id="AudioEffectHardLimiter_sfx"]
 resource_name = "HardLimiter"
 ceiling_db = -1.0
-
-[sub_resource type="AudioEffectHardLimiter" id="AudioEffectHardLimiter_master"]
-resource_name = "HardLimiter"
-ceiling_db = -0.5
 
 [resource]
 bus/0/effect/0/effect = SubResource("AudioEffectHardLimiter_master")

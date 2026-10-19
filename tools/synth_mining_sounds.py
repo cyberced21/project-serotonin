@@ -22,7 +22,7 @@ import os
 
 import numpy as np
 
-from synth_wood_sounds import RATE, bloom, clicks, env, finish, mode, place, secs, shaped, t_axis, write_wav
+from synth_wood_sounds import RATE, bloom, clicks, env, finish, mode, place, punch, secs, shaped, t_axis, tick, write_wav
 
 OUT = os.path.join(os.path.dirname(__file__), "..", "audio", "mining", "sfx")
 
@@ -89,7 +89,7 @@ def stone_knock(rng, n, base, voice, amp=1.0):
 def hit_crack(rng):
     """The point biting into stone: a hard, bright crack, gone in a few milliseconds."""
     n = secs(0.25)
-    out = shaped(rng, n, 1500, 9000, tilt=-1) * env(n, 0.0002, 0.006)
+    out = tick(rng, n, 2000, 5500, 0.001)  # struck, not a hiss of noise
     out += stone_knock(rng, n, rng.uniform(900, 1300), NEUTRAL, 0.6)
     out += clicks(rng, n, np.sort(rng.uniform(0.002, 0.04, 8)), rng.uniform(0.05, 0.2, 8), 2500, 9000)
     return out
@@ -266,6 +266,14 @@ def hit_bloom(rng, voice=NEUTRAL):
     return bloom(rng, body, 2.0, 0.35, notes, low_t=1.7, dry=0.5)
 
 
+def hit_punch(rng, voice=NEUTRAL):
+    """The weight of the blow going into the boulder: a short, low thump dropping in pitch
+    (punch()), tighter than wood's: stone gives nothing back."""
+    n = secs(0.25)
+    f = rng.uniform(78, 88) * voice["pitch"] ** 0.5
+    return punch(n, f * 3.2, f, 0.01, 0.06) + punch(n, f * 6.4, f * 2.0, 0.007, 0.025, 0.3)
+
+
 SOUNDS = [  # (layer, how many, build): the layer names the stacks in audio/mining/ play
     ("hit_crack", 6, hit_crack),
     ("hit_tink", 4, hit_tink),
@@ -281,6 +289,7 @@ SOUNDS = [  # (layer, how many, build): the layer names the stacks in audio/mini
     ("debris_tick", 4, debris_tick),
     ("hit_clink", 5, hit_clink),
     ("hit_bloom", 4, hit_bloom),
+    ("hit_punch", 4, hit_punch),
 ]
 VOICED = [  # (layer, how many, build(rng, voice)): baked again per ore into sfx/<ore>/
     ("hit_tink", 4, hit_tink),
@@ -289,6 +298,7 @@ VOICED = [  # (layer, how many, build(rng, voice)): baked again per ore into sfx
     ("split_crunch", 3, split_crunch),
     ("hit_clink", 4, hit_clink),
     ("hit_bloom", 3, hit_bloom),
+    ("hit_punch", 3, hit_punch),
 ]
 # The stacks (audio/mining/<stack>.tres) that play voiced layers, and the scene property each is.
 VOICED_STACKS = {"pickaxe_hit": "hit_layers", "crack_tip": "crack_layers", "split": "split_layers"}

@@ -8,6 +8,7 @@
 [ext_resource type="AudioStream" path="res://audio/mining/sfx/iron/hit_tink.tres" id="s3"]
 [ext_resource type="AudioStream" path="res://audio/mining/sfx/iron/hit_clink.tres" id="s4"]
 [ext_resource type="AudioStream" path="res://audio/mining/sfx/iron/hit_bloom.tres" id="s5"]
+[ext_resource type="AudioStream" path="res://audio/mining/sfx/iron/hit_punch.tres" id="s6"]
 
 [sub_resource type="Resource" id="Layer_crack"]
 script = ExtResource("2_layer")
@@ -26,7 +27,7 @@ resource_name = "tink"
 [sub_resource type="Resource" id="Layer_thump"]
 script = ExtResource("2_layer")
 stream = ExtResource("s2")
-volume_db = -6.0
+volume_db = -9.0
 pitch_jitter = 0.05
 follows_pitch = false
 pitch = 0.75
@@ -36,7 +37,7 @@ resource_name = "thump"
 script = ExtResource("2_layer")
 stream = ExtResource("s1")
 delay = 0.07
-volume_db = -11.0
+volume_db = -15.0
 pitch_jitter = 0.1
 resource_name = "gravel"
 
@@ -50,11 +51,19 @@ resource_name = "clink"
 [sub_resource type="Resource" id="Layer_bloom"]
 script = ExtResource("2_layer")
 stream = ExtResource("s5")
-volume_db = -6.0
+volume_db = -8.0
 pitch_jitter = 0.05
 follows_pitch = false
 resource_name = "bloom"
 
+[sub_resource type="Resource" id="Layer_punch"]
+script = ExtResource("2_layer")
+stream = ExtResource("s6")
+volume_db = 3.0
+pitch_jitter = 0.04
+follows_pitch = false
+resource_name = "punch"
+
 [resource]
 script = ExtResource("1_layers")
-layers = Array[ExtResource("2_layer")]([SubResource("Layer_crack"), SubResource("Layer_tink"), SubResource("Layer_thump"), SubResource("Layer_gravel"), SubResource("Layer_clink"), SubResource("Layer_bloom")])
+layers = Array[ExtResource("2_layer")]([SubResource("Layer_crack"), SubResource("Layer_tink"), SubResource("Layer_thump"), SubResource("Layer_gravel"), SubResource("Layer_clink"), SubResource("Layer_bloom"), SubResource("Layer_punch")])

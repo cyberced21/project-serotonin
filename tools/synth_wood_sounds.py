@@ -71,10 +71,29 @@ def place(buf, sound, at, gain=1.0):
     buf[i:end] += sound[: end - i] * gain
 
 
+def tick(rng, n, lo, hi, decay):
+    """A clean little click: two resonances somewhere between lo and hi Hz dying over `decay` s.
+    Struck, not hissed: a burst of noise as long reads as static, and a train of them as a
+    crackling radio."""
+    f1, f2 = np.exp(rng.uniform(np.log(lo), np.log(hi), 2))
+    return mode(n, f1, decay, 1.0, rng.uniform(0, 6.28), attack=0.00015) + \
+        mode(n, f2, decay * 0.7, 0.6, rng.uniform(0, 6.28), attack=0.00015)
+
+
+def punch(n, f_from, f_to, sweep, decay, amp=1.0):
+    """The 'umpf' under a heavy blow: a low note that drops from f_from to f_to Hz within
+    `sweep` s and dies over `decay` s, like a kick drum's. It starts on a zero crossing and
+    swells in over a millisecond, so it thumps without a click."""
+    t = t_axis(n)
+    f = f_to + (f_from - f_to) * np.exp(-t / sweep)
+    e = (1.0 - np.exp(-t / 0.0008)) * np.exp(-t / decay)
+    return amp * np.sin(2 * np.pi * np.cumsum(f) / RATE) * e
+
+
 def snap(rng, lo=1200, hi=6000, length=0.006, ring=None):
-    """One tiny crack: a few ms of bright noise, and optionally the splinter ringing after."""
+    """One tiny crack: a clean tick (tick()), and optionally the splinter ringing after."""
     n = secs(length)
-    s = shaped(rng, n, lo, hi) * env(n, 0.0003, length / 4)
+    s = tick(rng, n, lo, hi, length / 5)
     if ring:
         m = secs(ring[1] * 6)
         s = np.concatenate([s, np.zeros(max(m - n, 0))])
@@ -197,7 +216,7 @@ def chop_bloom(rng, voice=NEUTRAL):
 def chop_bite(rng):
     """The edge biting: a short, bright 'tchk', the sharp end of the blow."""
     n = secs(0.2)
-    out = shaped(rng, n, 1400, 7000, tilt=-2) * env(n, 0.0003, 0.007)
+    out = tick(rng, n, 1600, 4500, 0.0012)  # the edge's crack: struck, not a hiss of noise
     out += mode(n, rng.uniform(1050, 1350), 0.018, 0.5, rng.uniform(0, 6.28))
     out += mode(n, rng.uniform(1900, 2400), 0.01, 0.3, rng.uniform(0, 6.28))
     out += clicks(rng, n, np.sort(rng.uniform(0.004, 0.04, 4)), rng.uniform(0.1, 0.25, 4), 1500, 6000)
@@ -296,6 +315,21 @@ def land_slump(rng, voice=NEUTRAL):
     return out
 
 
+def chop_punch(rng, voice=NEUTRAL):
+    """The weight of the blow: the axe's momentum going into the trunk, a low thump dropping in
+    pitch (punch()), with its octave for a little definition on small speakers."""
+    n = secs(0.3)
+    f = rng.uniform(70, 80) * voice["pitch"] ** 0.5  # a thin birch thumps a little higher
+    return punch(n, f * 3.0, f, 0.016, 0.085) + punch(n, f * 6.0, f * 2.0, 0.01, 0.035, 0.3)
+
+
+def land_punch(rng, voice=NEUTRAL):
+    """The trunk hitting the ground, felt more than heard: a long, deep drop in pitch."""
+    n = secs(0.8)
+    f = rng.uniform(42, 48) * voice["pitch"] ** 0.5
+    return punch(n, f * 3.5, f, 0.035, 0.22) + punch(n, f * 7.0, f * 2.0, 0.02, 0.08, 0.25)
+
+
 def land_boom(rng):
     """The ground taking the weight: a deep thump under everything, rolling off through the
     woods for seconds."""
@@ -316,12 +350,16 @@ SOUNDS = [  # (layer, how many, build)
     ("land_slump", 2, land_slump),
     ("land_boom", 1, land_boom),
     ("chop_bloom", 4, chop_bloom),
+    ("chop_punch", 4, chop_punch),
+    ("land_punch", 2, land_punch),
 ]
 VOICED = [  # (layer, how many, build(rng, voice)): baked again per species into sfx/<species>/
     ("chop_thunk", 4, chop_thunk),
     ("trunk_creak", 3, lambda rng, voice:trunk_creak(rng, rng.uniform(0.6, 1.0), voice)),
     ("land_slump", 2, land_slump),
     ("chop_bloom", 3, chop_bloom),
+    ("chop_punch", 3, chop_punch),
+    ("land_punch", 2, land_punch),
 ]
 # The stacks (audio/woodcutting/<stack>.tres) that play voiced layers: each species gets its own
 # copy, audio/woodcutting/<species>/<stack>.tres, with its voiced layers swapped in.

@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://scripts/sound_layer.gd" id="2_layer"]
 [ext_resource type="AudioStream" path="res://audio/woodcutting/sfx/land_boom.tres" id="s0"]
 [ext_resource type="AudioStream" path="res://audio/woodcutting/sfx/pine/land_slump.tres" id="s1"]
+[ext_resource type="AudioStream" path="res://audio/woodcutting/sfx/pine/land_punch.tres" id="s2"]
 
 [sub_resource type="Resource" id="Layer_slump"]
 script = ExtResource("2_layer")
@@ -20,8 +21,15 @@ pitch = 1.0
 follows_pitch = false
 resource_name = "boom"
 
+[sub_resource type="Resource" id="Layer_punch"]
+script = ExtResource("2_layer")
+stream = ExtResource("s2")
+pitch_jitter = 0.04
+follows_pitch = false
+resource_name = "punch"
+
 [resource]
 script = ExtResource("1_layers")
-layers = Array[ExtResource("2_layer")]([SubResource("Layer_slump"), SubResource("Layer_boom")])
+layers = Array[ExtResource("2_layer")]([SubResource("Layer_slump"), SubResource("Layer_boom"), SubResource("Layer_punch")])
 unit_size = 8.0
 max_distance = 80.0

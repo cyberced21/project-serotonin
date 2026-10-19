@@ -5,6 +5,7 @@
 [ext_resource type="AudioStream" path="res://audio/mining/sfx/crack_split.tres" id="s0"]
 [ext_resource type="AudioStream" path="res://audio/mining/sfx/hit_gravel.tres" id="s1"]
 [ext_resource type="AudioStream" path="res://audio/mining/sfx/hit_clink.tres" id="s2"]
+[ext_resource type="AudioStream" path="res://audio/mining/sfx/hit_punch.tres" id="s3"]
 
 [sub_resource type="Resource" id="Layer_split"]
 script = ExtResource("2_layer")
@@ -31,6 +32,14 @@ pitch_jitter = 0.03
 pitch = 1.1
 resource_name = "clink"
 
+[sub_resource type="Resource" id="Layer_punch"]
+script = ExtResource("2_layer")
+stream = ExtResource("s3")
+volume_db = 1.0
+pitch_jitter = 0.04
+follows_pitch = false
+resource_name = "punch"
+
 [resource]
 script = ExtResource("1_layers")
-layers = Array[ExtResource("2_layer")]([SubResource("Layer_split"), SubResource("Layer_trickle"), SubResource("Layer_clink")])
+layers = Array[ExtResource("2_layer")]([SubResource("Layer_split"), SubResource("Layer_trickle"), SubResource("Layer_clink"), SubResource("Layer_punch")])
