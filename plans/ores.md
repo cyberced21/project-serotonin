@@ -1,7 +1,7 @@
 # Ore polish: rocks that break where they're struck
 
-Status: **planned** 2026-10-19 (via /grill-me), branch `ores` (off `graphics`). Prototype on
-copper committed (fdb0042). Next: phase 1.
+Status: phase 1 (copper) **done** 2026-10-19, waiting on the user's playtest; branch `ores` (off `graphics`). Prototype on
+copper committed (fdb0042).
 
 ## Why
 
@@ -33,7 +33,7 @@ break the rock where it's hit.
 
 One commit per phase. Phases 2 onward run straight through after the copper playtest.
 
-1. **Copper, the reference rock.** Merged mesh with the piece mask; exact saves; ore spilling
+1. ✅ **Copper, the reference rock.** Merged mesh with the piece mask; exact saves; ore spilling
    from vein pieces; weathered/fresh shading with glinting ore (shader + baked vertex colour);
    grounding skirt; rebuilt variants. **Stop for the user's playtest:** tune pieces per hit,
    shatter point, collapse feel, sounds.

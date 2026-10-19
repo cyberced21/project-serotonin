@@ -261,6 +261,8 @@ func _ready() -> void:
 	_break_audio_home = break_audio.position
 	_collect_surfaces(visual)
 	_fit_collision()
+	if not _links.is_empty():
+		_ground_rock()
 	chips.color = chip_color
 	burst.color = burst_color
 	hits_left = max_hits
@@ -587,6 +589,13 @@ func _respawn_after(seconds: float) -> void:
 
 func to_dict() -> Dictionary:
 	var d := {"respawn_left": _respawn_timer.time_left} if _respawn_timer else {"hits_left": hits_left}
+	if not _links.is_empty() and not _respawn_timer:  # exactly which pieces are gone
+		var gone := []
+		for i in _pieces.size():
+			if not _pieces[i].visible:
+				gone.append(i)
+		d["gone"] = gone
+		d["spilled"] = _spilled
 	if _carve and _carve.is_started():  # (a felled tree keeps its notch until it regrows: the stump)
 		d["notch"] = _carve.to_dict()
 	return d
@@ -605,6 +614,13 @@ func from_dict(d: Dictionary) -> void:
 		hits_left = clampi(int(d["hits_left"]), 1, max_hits)
 		if _carve and _carve.is_started():
 			_trunk.mesh = _carve.carved()
+		if d.has("gone") and not _links.is_empty():
+			for i in d["gone"]:
+				if int(i) < _pieces.size():
+					_pieces[int(i)].visible = false
+			_spilled = int(d.get("spilled", 0))
+			_queue_refit()
+			return
 		# hide the chunks that would already have broken off
 		var total := chunks.get_child_count()
 		var stress := 1.0 - float(hits_left) / max_hits
@@ -635,6 +651,11 @@ func _reset_visuals() -> void:
 	_clear_seam_crack()
 	_seam_progress.clear()
 	_queue_refit()
+	if not _links.is_empty():
+		_drops_owed = _drop_count()
+		_spilled = 0
+		for k in 5:  # pebbles round its foot from the start
+			_add_rubble(to_global(Vector3(randf_range(-1, 1), 0.3, randf_range(-1, 1))), 1)
 	if _rubble_mm:
 		_rubble_mm.multimesh.visible_instance_count = 0
 	if _carve:
@@ -664,7 +685,8 @@ func _drop_count() -> int:
 
 func _spawn_drops(info: HitInfo) -> void:
 	var toward_player := -info.away()
-	for i in _drop_count():
+	var count := _drop_count() if _links.is_empty() else maxi(_drops_owed - _spilled, 1)
+	for i in count:
 		var spread := Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)) * 1.2
 		var vel := toward_player * randf_range(1.0, 2.0) + spread + Vector3.UP * randf_range(3.0, 4.5)
 		_launch_drop(global_position + Vector3(0, popup_height * 0.5, 0) + toward_player * 0.4, vel, i * 0.04)
@@ -1038,6 +1060,8 @@ func _throw(piece: MeshInstance3D, xform: Transform3D, push: Vector3, speed: flo
 	body.collision_mask = WORLD_LAYER
 	piece.transform = Transform3D(Basis.from_scale(Vector3.ONE * piece_scale), Vector3.ZERO)
 	piece.visible = true
+	if _merged:
+		piece.layers = _merged.layers  # (a stand-in for a piece of the merged mesh: drawn on its own now)
 	piece.set_instance_shader_parameter("flash", 0.0)
 	piece.set_instance_shader_parameter("highlight", 0.0)
 	body.add_child(piece)
@@ -1086,6 +1110,7 @@ var _refit_queued := false
 
 
 func _queue_refit() -> void:
+	_update_piece_mask()  # (now: the stand-ins' visibility has just changed)
 	if fit_collision and not _refit_queued:
 		_refit_queued = true
 		_fit_collision.call_deferred()
@@ -1101,7 +1126,7 @@ func _fit_collision() -> void:
 		var to_visual := visual.global_transform.affine_inverse()
 		for m in visual.find_children("*", "MeshInstance3D", true, false):
 			var mesh := m as MeshInstance3D
-			if not mesh.visible or mesh.mesh == null:
+			if not mesh.visible or mesh.mesh == null or mesh == _merged:
 				continue
 			var xform := to_visual * mesh.global_transform
 			for s in mesh.mesh.get_surface_count():
@@ -1135,8 +1160,14 @@ func _fit_collision() -> void:
 # A rock made of many small pieces (its model has a <name>.pieces.json saying which touch): every
 # hit knocks out the piece struck and a few neighbours, anything left with no chain of pieces
 # down to the ground falls (a collapse: undercut a ledge and it all comes down), and once
-# SHATTER_AT of it is gone the rest breaks apart.
+# SHATTER_AT of it is gone the rest breaks apart. Pieces with a good share of vein spill an ore
+# as they come out; the shatter pays what's left.
+# It's drawn as one mesh (Visual/Pieces, shaders/node_rock.gdshader), the pieces merged with
+# their index in UV2 and a bit mask hiding the broken ones: one draw call however many pieces.
+# The Chunk_* nodes stay as invisible stand-ins (render layers 0), for aiming, the collision
+# hull and the copies thrown when they break off.
 
+const ROCK_MATERIAL := preload("res://materials/node_rock.tres")
 ## The share of the pieces gone at which the rest shatters.
 const SHATTER_AT := 0.35
 ## Neighbours of the struck piece this close to the hit (m) can come out with it.
@@ -1147,29 +1178,166 @@ const PIECE_GROUND := 0.12
 ## Piece (MeshInstance3D) -> the pieces it touches. Empty for any other node.
 var _links := {}
 var _grounded := {}  # pieces resting on the ground -> true
+var _ore_pieces := {}  # pieces carrying ore -> true
+## The pieces in the merged mesh's order (the shader's piece index), and that mesh.
+var _pieces: Array[MeshInstance3D] = []
+var _merged: MeshInstance3D
+## How much ore this rock gives in all (rolled when it grows back), and how much it has spilled.
+var _drops_owed := 0
+var _spilled := 0
+static var _merged_cache := {}  # model path -> ArrayMesh
 
 
 func _load_links() -> void:
 	_links.clear()
 	_grounded.clear()
+	_ore_pieces.clear()
 	var path := model.resource_path.get_basename() + ".pieces.json"
 	if not FileAccess.file_exists(path):
 		return
 	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
-	if not data is Dictionary:
+	if not data is Dictionary or not data.has("links"):
 		return
-	for piece_name: String in data:
+	var links: Dictionary = data["links"]
+	for piece_name: String in links:
 		var piece := chunks.get_node_or_null(piece_name) as MeshInstance3D
 		if piece == null:
 			continue
 		var touching: Array[MeshInstance3D] = []
-		for other: String in data[piece_name]:
+		for other: String in links[piece_name]:
 			var o := chunks.get_node_or_null(other) as MeshInstance3D
 			if o:
 				touching.append(o)
 		_links[piece] = touching
 		if (chunks.transform * piece.transform * piece.get_aabb()).position.y < PIECE_GROUND:
 			_grounded[piece] = true
+	for piece_name: String in data.get("ore", []):
+		var piece := chunks.get_node_or_null(piece_name) as MeshInstance3D
+		if piece:
+			_ore_pieces[piece] = true
+	_merge_pieces()
+
+
+## Builds (or takes from the cache) the one mesh all the pieces are drawn as, and turns the pieces
+## themselves into invisible stand-ins.
+func _merge_pieces() -> void:
+	_pieces.clear()
+	for c in chunks.get_children():
+		if _links.has(c):
+			_pieces.append(c)
+	_pieces.sort_custom(func(a: Node, b: Node) -> bool: return String(a.name) < String(b.name))
+	var key := model.resource_path
+	var mesh: ArrayMesh = _merged_cache.get(key)
+	if mesh == null:
+		var verts := PackedVector3Array()
+		var normals := PackedVector3Array()
+		var uvs := PackedVector2Array()
+		var uv2s := PackedVector2Array()
+		var colours := PackedColorArray()
+		var indices := PackedInt32Array()
+		for i in _pieces.size():
+			var piece := _pieces[i]
+			var xf := piece.transform
+			for s in piece.mesh.get_surface_count():
+				var arrays := piece.mesh.surface_get_arrays(s)
+				var v: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+				var n: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+				var uv: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV] if arrays[Mesh.ARRAY_TEX_UV] else PackedVector2Array()
+				var col: PackedColorArray = arrays[Mesh.ARRAY_COLOR] if arrays[Mesh.ARRAY_COLOR] else PackedColorArray()
+				var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX] else PackedInt32Array(range(v.size()))
+				var base := verts.size()
+				for k in v.size():
+					verts.append(xf * v[k])
+					normals.append((xf.basis * n[k]).normalized())
+					uvs.append(uv[k] if not uv.is_empty() else Vector2.ZERO)
+					uv2s.append(Vector2(i + 1, 0))
+					colours.append(col[k] if not col.is_empty() else Color.WHITE)
+				for k in idx:
+					indices.append(base + k)
+		var arrays := []
+		arrays.resize(Mesh.ARRAY_MAX)
+		arrays[Mesh.ARRAY_VERTEX] = verts
+		arrays[Mesh.ARRAY_NORMAL] = normals
+		arrays[Mesh.ARRAY_TEX_UV] = uvs
+		arrays[Mesh.ARRAY_TEX_UV2] = uv2s
+		arrays[Mesh.ARRAY_COLOR] = colours
+		arrays[Mesh.ARRAY_INDEX] = indices
+		mesh = ArrayMesh.new()
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+		_merged_cache[key] = mesh
+	if _merged == null:
+		_merged = MeshInstance3D.new()
+		_merged.name = "Pieces"
+		visual.add_child(_merged)
+	_merged.mesh = mesh
+	_merged.transform = chunks.transform
+	_merged.material_override = ROCK_MATERIAL
+	for piece in _pieces:
+		piece.layers = 0  # (still there for aiming and the hull; the merged mesh draws it)
+		piece.material_override = ROCK_MATERIAL
+
+
+## Sits the rock in the ground: a patch of trodden dirt projected round its foot (a decal, so it
+## follows the terrain), wider than the rock by this much (m).
+const DIRT_MARGIN := 0.7
+const DIRT_COLOR := Color(0.3, 0.24, 0.18, 0.85)
+static var _dirt_tex: ImageTexture
+
+
+func _ground_rock() -> void:
+	var dirt := Decal.new()
+	dirt.name = "Dirt"
+	dirt.texture_albedo = _dirt_texture()
+	dirt.modulate = DIRT_COLOR
+	var r := _footprint + DIRT_MARGIN
+	dirt.size = Vector3(r * 2.0, 0.9, r * 2.0)
+	dirt.upper_fade = 0.6  # (only a little way up the rock's own foot)
+	dirt.lower_fade = 0.3
+	dirt.normal_fade = 0.4
+	add_child(dirt)
+	dirt.position = Vector3(_shape_centre.x, 0.05, _shape_centre.z)
+	dirt.rotation.y = randf() * TAU
+
+
+## A ragged round blot: opaque in the middle, fraying out to nothing (made once, shared).
+static func _dirt_texture() -> ImageTexture:
+	if _dirt_tex:
+		return _dirt_tex
+	var size := 64
+	var noise := FastNoiseLite.new()
+	noise.frequency = 0.09
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	for y in size:
+		for x in size:
+			var p := Vector2(x, y) / (size - 1) * 2.0 - Vector2.ONE
+			var edge := 0.75 + 0.25 * noise.get_noise_2d(x, y)
+			var a := clampf((edge - p.length()) / 0.35, 0.0, 1.0)
+			var speck := 0.85 + 0.15 * noise.get_noise_2d(x * 3.0 + 100.0, y * 3.0)
+			img.set_pixel(x, y, Color(speck, speck, speck, a * a))
+	_dirt_tex = ImageTexture.create_from_image(img)
+	return _dirt_tex
+
+
+## Hides the broken-off pieces in the merged mesh (24 to a component of pieces_gone).
+func _update_piece_mask() -> void:
+	if _merged == null:
+		return
+	var words := [0, 0, 0, 0]
+	for i in mini(_pieces.size(), 96):
+		if not _pieces[i].visible:
+			words[i / 24] |= 1 << (i % 24)
+	_merged.set_instance_shader_parameter("pieces_gone", Vector4(words[0], words[1], words[2], words[3]))
+
+
+## An ore spilling out of a piece as it comes away, while the rock still owes more than one.
+func _spill_ore(piece: MeshInstance3D, info: HitInfo) -> void:
+	if not _ore_pieces.has(piece) or _spilled >= _drops_owed - 1:
+		return
+	_spilled += 1
+	var toward_player := -info.away()
+	var vel := toward_player * randf_range(1.0, 2.0) + Vector3.UP * randf_range(2.5, 3.5) \
+		+ Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)) * 0.6
+	_launch_drop(_piece_centre(piece), vel, 0.05)
 
 
 ## Knocks out the piece struck and up to `count` of its neighbours near the hit, then drops
@@ -1193,10 +1361,12 @@ func _knock_out(info: HitInfo, count: int) -> int:
 		if hit_fx:
 			HitFx.spawn(hit_fx, get_parent(), _piece_centre(c), info.normal, -info.normal, chip_color, ore_color, 0.8)
 		_pop_chunk(c, _split_push(away, info), debris_speed * 0.6)
+		_spill_ore(c, info)
 	var falling := _unsupported()
 	for c in falling:
 		var away := (global_basis * (to_local(_piece_centre(c)) - _shape_centre)).normalized()
 		_pop_chunk(c, away * 0.3, debris_speed * 0.25)
+		_spill_ore(c, info)
 	var gone := 1.0 - float(_intact_chunks().size()) / _links.size()
 	hits_left = 0 if gone >= SHATTER_AT else maxi(1, ceili((SHATTER_AT - gone) / SHATTER_AT * max_hits))
 	return falling.size()
@@ -1618,8 +1788,8 @@ func _piece_tris(piece: MeshInstance3D) -> Array:
 		var marks: PackedColorArray = arrays[Mesh.ARRAY_COLOR] if arrays[Mesh.ARRAY_COLOR] else PackedColorArray()
 		var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX] else PackedInt32Array(range(verts.size()))
 		for i in range(0, idx.size() - 2, 3):
-			if not marks.is_empty() and marks[idx[i]].r > 0.5:
-				continue  # a cut face
+			if not marks.is_empty() and (marks[idx[i]].a < 0.5 or (marks[idx[i]].r > 0.5 and marks[idx[i]].g < 0.1)):
+				continue  # a cut face (alpha 0 on a weathered rock; red on an older one)
 			var a := verts[idx[i]]
 			var b := verts[idx[i + 1]]
 			var c := verts[idx[i + 2]]

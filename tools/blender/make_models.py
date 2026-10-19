@@ -28,7 +28,7 @@ import sys
 
 import bmesh
 import bpy
-from mathutils import Euler, Matrix, Vector
+from mathutils import Euler, Matrix, Vector, noise
 from mathutils.bvhtree import BVHTree
 
 argv = sys.argv[sys.argv.index("--") + 1:]
@@ -427,13 +427,67 @@ def shatter_seeds(rng, size, squash, centre_z, outer=30, inner=6):
     return seeds
 
 
+## Directions over a hemisphere round +Z (a spiral, denser toward the pole), for baking shade.
+AO_RAYS = [(math.cos(i * 2.39996) * math.sqrt(1 - (0.1 + 0.85 * i / 11) ** 2),
+            math.sin(i * 2.39996) * math.sqrt(1 - (0.1 + 0.85 * i / 11) ** 2),
+            0.1 + 0.85 * i / 11) for i in range(12)]
+
+
+def bake_weathering(bm, cut, bvh, top_z, moss=(0.55, 0.82, 0.42), moss_amount=0.85, reach=0.7):
+    """Weathered outside, fresh inside: writes the "cut_mark" colour (float, linear) of every
+    face corner. Outside faces get a baked shade the rock shader multiplies in: crevices and the
+    foot darker (rays against `bvh`, the whole rock, and the ground at z = 0), the top lighter,
+    worn convex edges lighter, a little mottling, and moss patches low down and on ledges.
+    Cut faces are (1, 1, 1) with alpha 0: the shader shows them clean and fresh, and the game
+    tells them from the outside by that alpha."""
+    layer = bm.loops.layers.float_color.get("cut_mark") or bm.loops.layers.float_color.new("cut_mark")
+    bm.normal_update()
+    shade = {}
+    for v in bm.verts:
+        outside = [f for f in v.link_faces if not f[cut]]
+        if not outside:
+            continue
+        n = sum((f.normal for f in outside), Vector()).normalized()
+        t = n.orthogonal().normalized()
+        b = n.cross(t)
+        o = v.co + n * 0.02
+        occluded = 0
+        for x, y, z in AO_RAYS:
+            d = t * x + b * y + n * z
+            if d.z < 0 and o.z + d.z * reach < 0:  # into the ground
+                occluded += 1
+            elif bvh.ray_cast(o, d, reach)[0] is not None:
+                occluded += 1
+        ao = 1.0 - 0.8 * occluded / len(AO_RAYS)
+        h = max(0.0, min(1.0, v.co.z / top_z))
+        convex, edges = 0.0, 0
+        for e in v.link_edges:
+            if not any(f[cut] for f in e.link_faces):
+                convex -= (e.other_vert(v).co - v.co).normalized().dot(n)
+                edges += 1
+        wear = 1.0 + 0.6 * max(0.0, convex / edges if edges else 0.0)
+        s = ao * (0.6 + 0.4 * h) * wear * (1.0 + 0.14 * noise.noise(v.co * 4.0))
+        s = max(0.0, min(1.0, s))
+        patch = noise.noise(v.co * 2.2 + Vector((7.0, 3.0, 1.0))) * 0.5 + 0.5
+        low = 1.0 - max(0.0, min(1.0, v.co.z / 0.5))
+        mossy = max(0.0, min(1.0, (low * 0.9 + max(0.0, n.z) * 0.45) * patch * 1.7 - 0.45)) * moss_amount
+        shade[v] = tuple(s * (1.0 + (m - 1.0) * mossy) for m in moss) + (1.0,)
+    for f in bm.faces:
+        for loop in f.loops:
+            loop[layer] = (1.0, 1.0, 1.0, 0.0) if f[cut] else shade.get(loop.vert, (1.0, 1.0, 1.0, 1.0))
+
+
 def shattered(name, rng, whole, seeds, choose, rubble=("stone.4", "stone.2", "stone.1"), size=1.0, out=""):
     """Cuts `whole` into Voronoi pieces round `seeds`, all alike (no core): Chunk_NN, plus
-    Rubble_*. The game knocks pieces off where they're struck and drops whatever's left hanging,
-    so it needs to know which pieces touch: models/<out>/<name>.pieces.json maps each piece to
-    its neighbours. choose(face, is_cut, piece) picks each face's swatch."""
+    Rubble_*, weathered by bake_weathering. The game knocks pieces off where they're struck and
+    drops whatever's left hanging, so it needs to know which pieces touch, and which carry ore
+    (they spill some as they come out): models/<out>/<name>.pieces.json, {"links": piece ->
+    its neighbours, "ore": [pieces]}. choose(face, is_cut, piece) picks each face's swatch."""
     names = [f"Chunk_{i:02d}" for i in range(len(seeds))]
     links = {n: set() for n in names}
+    ore_area = {}  # piece -> m² of ore faces
+    bvh = BVHTree.FromBMesh(whole)
+    top_z = max(v.co.z for v in whole.verts)
     for i in range(len(seeds)):
         bm = voronoi_cell(whole, seeds, i)
         cut = bm.faces.layers.int.get("cut")
@@ -445,8 +499,14 @@ def shattered(name, rng, whole, seeds, choose, rubble=("stone.4", "stone.2", "st
             if f[cut] and f[across] > 0 and f.calc_area() > 1e-4:
                 links[names[i]].add(names[f[across] - 1])
                 links[names[f[across] - 1]].add(names[i])
-        paint(bm, lambda f, i=i, cut=cut: choose(f, f[cut] == 1, i))
-        mark_cut(bm, cut)
+
+        def pick(f, i=i, cut=cut):
+            swatch = choose(f, f[cut] == 1, i)
+            if swatch.startswith("ore."):
+                ore_area[names[i]] = ore_area.get(names[i], 0.0) + f.calc_area()
+            return swatch
+        paint(bm, pick)
+        bake_weathering(bm, cut, bvh, top_z)
         centre = sum((v.co for v in bm.verts), Vector()) / len(bm.verts)
         bmesh.ops.translate(bm, vec=-centre, verts=bm.verts)
         make_object(names[i], bm, centre)
@@ -462,8 +522,10 @@ def shattered(name, rng, whole, seeds, choose, rubble=("stone.4", "stone.2", "st
     if _variant:
         path = os.path.join("variants", f"{os.path.basename(path)}_v{_variant}")
     present = {o.name for o in bpy.context.scene.objects}
+    ore = {n for n, a in ore_area.items() if a > 0.04}  # a real share of vein, not a sliver
     with open(os.path.join(OUT_DIR, path + ".pieces.json"), "w") as f:
-        json.dump({n: sorted(l & present) for n, l in links.items() if n in present}, f, indent=1)
+        json.dump({"links": {n: sorted(l & present) for n, l in links.items() if n in present},
+                   "ore": sorted(ore & present)}, f, indent=1)
 
 
 def mirrored(s, n, p):
@@ -500,7 +562,10 @@ def copper_verdigris(name="copper_verdigris", out="designs", shatter=False):
     reset()
     rng = seeded(101)
     squash = (1.2, 1.05, 0.72)
-    whole, cz = boulder_mesh(rng, 1.0, squash=squash, chops=3, lump_amp=(0.15, 0.28))
+    whole, cz = boulder_mesh(rng, 1.0, subdiv=4 if shatter else 3, squash=squash, chops=3, lump_amp=(0.15, 0.28))
+    if shatter:  # sunk into the ground, not sat on it
+        bmesh.ops.translate(whole, vec=Vector((0, 0, -0.06)), verts=whole.verts)
+        cz -= 0.06
     centre = Vector((0, 0, cz))
     veins = [(Vector((1, 0.35, 0.25)).normalized(), centre + Vector((0.15, 0, 0)), 0.07),
              (Vector((-0.3, 1, -0.4)).normalized(), centre + Vector((0, -0.1, 0.1)), 0.06)]
@@ -521,7 +586,8 @@ def copper_verdigris(name="copper_verdigris", out="designs", shatter=False):
             return "ore.copper" if is_cut or f.normal.z > 0.2 else "ore.copper_dark"
         if is_cut:
             return "stone.6"
-        if c.z > crust_z and f.normal.z > 0.2:
+        edge = crust_z + (0.14 * noise.noise(c * 2.5) if shatter else 0.0)  # (a ragged edge, not a line)
+        if c.z > edge and f.normal.z > 0.2:
             return "leaves.6" if f.normal.z > 0.6 else "leaves.5"
         return stone(f)
     if shatter:
@@ -2270,6 +2336,16 @@ def variants():
     _variant = 0
 
 
+def ore_variants():
+    """Just the ore rocks' variants (see variants()), so they can be rebuilt on their own."""
+    global _variant
+    os.makedirs(os.path.join(OUT_DIR, "variants"), exist_ok=True)
+    for v in range(1, VARIANTS + 1):
+        _variant = v
+        rock()
+    _variant = 0
+
+
 # --- ruins: the parkour blocks in the clearing ------------------------------------------------
 # Each fills exactly the box its collision uses (Godot size x, y, z = width, height, depth), centred
 # on the origin, so step / ledge / mantle heights stay what they were with the greybox boxes.
@@ -2377,6 +2453,6 @@ if __name__ == "__main__":  # make_village.py imports the helpers above without 
     for build in builds:
         if not only or build.__name__ in only:
             build()
-    for build in (designs, tree_designs, variants):  # only when asked for by name: not the game's own models
+    for build in (designs, tree_designs, variants, ore_variants):  # only when asked for by name: not the game's own models
         if build.__name__ in only:
             build()

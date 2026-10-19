@@ -42,8 +42,30 @@ uniform vec3 glow_color : source_color = vec3(1.0, 0.74, 0.4);
 // Per-instance glow colour instead of the warm lamp one, used when its alpha is 1 (crystals).
 instance uniform vec4 glow_tint : source_color = vec4(1.0, 1.0, 1.0, 0.0);
 
+#ifdef ROCK
+// A rock of many pieces is drawn as one mesh (ResourceNode merges them): UV2.x is the piece's
+// index + 1 on every vertex (0 = not a piece), and these bits say which have broken off, 24 to a
+// component (a float holds whole numbers that big exactly).
+instance uniform vec4 pieces_gone = vec4(0.0);
+// The baked shade (tools/blender/make_models.py bake_weathering); alpha 0 on fresh cut faces.
+varying vec4 v_shade;
+
+bool piece_gone(int i) {
+	int w = i / 24;
+	float word = w == 0 ? pieces_gone.x : w == 1 ? pieces_gone.y : w == 2 ? pieces_gone.z : pieces_gone.w;
+	return ((uint(word) >> uint(i - w * 24)) & 1u) == 1u;
+}
+#endif
+
 void vertex() {
 	DETAIL_CAPTURE
+#ifdef ROCK
+	v_shade = COLOR;
+	int piece = int(UV2.x + 0.5) - 1;
+	if (piece >= 0 && piece < 96 && piece_gone(piece)) {
+		VERTEX = vec3(0.0);  // every corner on one point: the triangle draws nothing
+	}
+#endif
 #ifdef FOLIAGE
 	v_card = step(0.999, UV2.x);
 	vec3 origin = MODEL_MATRIX[3].xyz;
@@ -85,8 +107,19 @@ void fragment() {
 #else
 	base *= detail_layer < 0 ? DETAIL(UV) : DETAIL_LAYER(detail_layer);
 #endif
+#ifdef ROCK
+	// weathered outside (the baked shade), fresh breaks (alpha 0) clean and a touch brighter
+	float fresh = 1.0 - step(0.5, v_shade.a);
+	// (baked as seen, sRGB: brought into linear like any colour, or the shading barely shows)
+	base *= mix(pow(v_shade.rgb, vec3(2.2)), vec3(fresh_brightness), fresh);
+	float ore = float(int(floor(UV.y * 8.0)) == 1);  // the palette's ore row glints
+	ROUGHNESS = mix(0.95, ore_roughness, ore);
+	METALLIC = ore * ore_metallic;
+	SPECULAR = mix(0.2, 0.6, ore);
+#else
+	ROUGHNESS = 1.0;
+#endif
 	vec3 lit = mix(glow_color, glow_tint.rgb, glow_tint.a);
 	ALBEDO = mix(mix(base, lit, glow * 0.6), vec3(1.0), flash);
-	ROUGHNESS = 1.0;
 	EMISSION = vec3(flash) * 0.6 + highlight_color * (0.08 + rim * 0.5) * highlight + lit * glow * 2.0;
 }
