@@ -15,7 +15,11 @@ extends RefCounted
 ## Pinewood, Twin Peaks, an Island Lake... A kind changes the ground here, and the nodes and scenery
 ## in ProcgenPopulation.
 
-const SIZE := 512                       # pixels = metres (vertex spacing 1)
+## Bump whenever the same seed and settings would build different land: a world made by an older
+## generator says so on its card (Worlds.outdated), since its saved nodes may no longer match.
+const GENERATOR_VERSION := 1
+
+const SIZE := 512                      # pixels = metres (vertex spacing 1)
 const ORIGIN := Vector3(-256, 0, -256)  # world position of pixel (0, 0); on Terrain3D's region grid
 const HUB_CENTER := Vector2.ZERO
 ## How far off the map's centre the hub may sit (m); the ring round it is kept inside the rim.
@@ -243,6 +247,10 @@ func _init(world_seed: int) -> void:
 	_meander.fractal_octaves = 2
 	_rng.seed = sub_seed(&"sites")
 	_kind_rng.seed = sub_seed(&"kinds")
+
+
+static func random_seed() -> int:
+	return randi_range(1, 999_999)
 
 
 ## A seed for one part of the generator, so tuning one part doesn't reshuffle the others.

@@ -88,10 +88,7 @@ func _run() -> void:
 
 
 func _procgen_tour(day_night: Node) -> void:
-	var world_script: GDScript = load("res://scripts/procgen/procgen_world.gd")  # (autoload-dependent)
-	var save := ProjectSettings.globalize_path(world_script.save_path(procgen_seed))
-	var existed := FileAccess.file_exists(save)
-	world_script.enter(self, procgen_seed)
+	root.get_node("Worlds").call("play_scratch", procgen_seed)  # a scratch world: never the player's
 	await _wait(12.0)  # generation takes a few seconds
 	day_night.set("time", 0.4)
 	var p := get_first_node_in_group("player") as Node3D
@@ -103,9 +100,6 @@ func _procgen_tour(day_night: Node) -> void:
 		var fps := await _measure_fps(2.0)
 		await _shot("procgen_%d_%d" % [procgen_seed, i])
 		print("VIEW procgen %d/%d %5.1f fps" % [procgen_seed, i, fps])
-	if not existed:
-		root.get_node("SaveGame").set("path", "user://graphics_tour_save.json")  # don't rewrite it on quit
-		DirAccess.remove_absolute(save)
 
 
 func _wait(seconds: float) -> void:

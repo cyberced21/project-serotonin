@@ -1,15 +1,17 @@
 extends Node
-## Saves registered systems to user://save.json (a procgen world swaps in its own file: use_file()).
+## Saves registered systems to the file of the world being played (Worlds.play() points `path` at
+## it with use_file()). With no world (the menu) `path` is "" and nothing is saved.
 ## A system calls SaveGame.register(key, self) and implements to_dict() -> Dictionary and from_dict(d: Dictionary). Registering applies
 ## any saved data immediately, so it doesn't matter when a system registers (autoload or scene).
 ## Saves on quit, when asked (e.g. level-up), and every AUTOSAVE_INTERVAL if something changed.
 
-const MAIN_PATH := "user://save.json"
+signal saved
+
 const VERSION := 1
 const AUTOSAVE_INTERVAL := 30.0
 
-## The file being saved to: MAIN_PATH, or a procgen world's own (ProcgenWorld.save_path()).
-var path := MAIN_PATH
+## The file being saved to: the current world's save.json, or "" for none.
+var path := ""
 var _data: Dictionary = {}                  # key -> last saved/loaded dict
 var _systems: Dictionary[String, Object] = {}
 var _dirty := false
@@ -17,7 +19,6 @@ var _dirty := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	_load()
 	var timer := Timer.new()
 	timer.wait_time = AUTOSAVE_INTERVAL
 	timer.autostart = true
@@ -48,9 +49,9 @@ func has(key: StringName) -> bool:
 	return _data.has(String(key))
 
 
-## Saves to the current file, then switches to `new_path`: the systems that live on (autoloads)
-## take that file's data, or their defaults if it has none. Systems in the current scene are let
-## go: call this just before changing scenes.
+## Saves to the current file, then switches to `new_path` ("" for none): the systems that live on
+## (autoloads) take that file's data, or their defaults if it has none. Systems in the current scene
+## are let go: call this just before changing scenes.
 func use_file(new_path: String) -> void:
 	if new_path == path:
 		return
@@ -74,6 +75,8 @@ func mark_dirty() -> void:
 
 
 func save() -> void:
+	if path.is_empty():
+		return
 	for key in _systems:
 		var system := _systems[key]
 		if is_instance_valid(system):
@@ -93,11 +96,12 @@ func save() -> void:
 		push_warning("SaveGame: can't move save into place (%s)" % error_string(err))
 		return
 	_dirty = false
+	saved.emit()
 
 
 ## Debug: wipe the save, reset every system to defaults and reload the scene.
 func reset() -> void:
-	if FileAccess.file_exists(path):
+	if not path.is_empty() and FileAccess.file_exists(path):
 		DirAccess.remove_absolute(path)
 	_data.clear()
 	for key in _systems:
@@ -108,7 +112,7 @@ func reset() -> void:
 
 
 func _load() -> void:
-	if not FileAccess.file_exists(path):
+	if path.is_empty() or not FileAccess.file_exists(path):
 		return
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
 	if not (parsed is Dictionary and parsed.get("data") is Dictionary):

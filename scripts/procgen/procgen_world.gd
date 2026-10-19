@@ -2,12 +2,8 @@ class_name ProcgenWorld
 extends Node3D
 ## The root of scenes/procgen.tscn: on load it builds a ProcgenMap from `world_seed`, hands it to
 ## the Terrain3D child, and only then lets the player move, behind a "Generating…" overlay.
-## Each seed saves to its own file (save_path()), with its own character, so nothing here touches
-## the main world's save. Enter with ProcgenWorld.enter(), leave with ProcgenWorld.leave(): the
-## debug menu's Procgen tab, or `--procgen [--seed=N]` on the command line.
+## Worlds.play() sets `settings` and loads this scene; the world's save is its own folder's.
 
-const SCENE := "res://scenes/procgen.tscn"
-const MAIN_SCENE := "res://scenes/main.tscn"
 const Player := preload("res://scripts/player.gd")
 const WATER_SHADER := preload("res://shaders/water.gdshader")
 const PERCH := preload("res://data/fish/perch.tres")
@@ -20,37 +16,22 @@ const LAKE_SCHOOLS: Array[FishSpecies] = [TROUT, TROUT, PERCH, CHAR, CHAR]
 const PIKE_SCHOOLS: Array[FishSpecies] = [PIKE, PIKE, PIKE]
 const PROP := preload("res://scripts/prop.gd")
 
-## The seed the scene builds next time it loads (enter() sets it).
-static var world_seed := 1
+## What the scene builds next time it loads (Worlds.play() sets them): a WorldSettings dictionary,
+## and the world's name for the loading screen.
+static var settings: Dictionary = WorldSettings.defaults()
+static var world_name := ""
+## Whether an older generator made this world's save (the land may differ from what it saw).
+static var regenerated := false
 
 var map: ProcgenMap
+var world_seed: int
 
 @onready var _terrain := $Terrain3D as Terrain3D
 @onready var _player := $Player as Player
 
 
-static func save_path(s: int) -> String:
-	return "user://procgen_%d.json" % s
-
-
-## Switches to seed `s`'s save and (re)loads the procgen scene.
-static func enter(tree: SceneTree, s: int) -> void:
-	world_seed = s
-	SaveGame.use_file(save_path(s))
-	tree.change_scene_to_file(SCENE)
-
-
-## Back to the hand-built world and its save.
-static func leave(tree: SceneTree) -> void:
-	SaveGame.use_file(SaveGame.MAIN_PATH)
-	tree.change_scene_to_file(MAIN_SCENE)
-
-
-static func random_seed() -> int:
-	return randi_range(1, 999_999)
-
-
 func _ready() -> void:
+	world_seed = WorldSettings.normalized(settings)["seed"]
 	add_to_group("procgen_world")
 	Biome.locator = func(_p: Vector3) -> StringName: return &""  # until the map exists
 	_player.process_mode = Node.PROCESS_MODE_DISABLED
@@ -237,9 +218,10 @@ func _build_terrain() -> void:
 
 
 ## A fresh character starts in the hub; a saved one where they left off, but never under the ground.
+## In a world an older generator made, the land may have moved: back to the hub.
 func _place_player() -> void:
 	var p := _player
-	if not SaveGame.has(&"player"):
+	if not SaveGame.has(&"player") or regenerated:
 		var at := map.hub
 		p.teleport(Vector3(at.x, map.height_at(at) + 0.1, at.y), Vector3(at.x, 0, at.y - 10.0))
 		return
