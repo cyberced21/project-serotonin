@@ -17,6 +17,8 @@ const CELL := 32.0
 const SAND_HEIGHT := -0.04
 const SNOW_HEIGHT := 38.0
 
+signal finished
+
 @export var layers: Array[ScatterLayer] = []
 ## World XZ rectangle to fill (x, z, width, depth).
 @export var area := Rect2(-110, -80, 280, 200)
@@ -35,6 +37,12 @@ const SNOW_HEIGHT := 38.0
 var _keep_out: Array[Vector3] = []  # (x, z, radius)
 
 
+## Milliseconds of scattering per frame before it waits for the next (a generated world's loading
+## screen); 0 = all at once. The same scenery either way.
+var frame_budget_ms := 0.0
+var done := false
+
+
 func _ready() -> void:
 	_scatter.call_deferred()  # once the terrain, buildings and props are all in place
 
@@ -43,7 +51,9 @@ func _scatter() -> void:
 	var terrain := get_tree().get_first_node_in_group("terrain") as Terrain3D
 	if terrain == null or terrain.data == null:
 		push_warning("SceneryScatter: no terrain to scatter on")
+		_finish()
 		return
+	var frame_start := Time.get_ticks_usec()
 	_collect_keep_out()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed
@@ -54,6 +64,9 @@ func _scatter() -> void:
 		var cells: Dictionary[Vector2i, Array] = {}
 		var shapes: Array[Transform3D] = []
 		for i in int(area.get_area() / 100.0 * layer.density):
+			if frame_budget_ms > 0.0 and i % 64 == 0 and Time.get_ticks_usec() - frame_start > frame_budget_ms * 1000.0:
+				await get_tree().process_frame
+				frame_start = Time.get_ticks_usec()
 			var centre := Vector2(rng.randf_range(area.position.x, area.end.x), rng.randf_range(area.position.y, area.end.y))
 			for j in rng.randi_range(layer.cluster.x, maxi(layer.cluster.x, layer.cluster.y)):
 				# draw every random number before checking, so a rejected spot doesn't shift the rest
@@ -75,6 +88,12 @@ func _scatter() -> void:
 		_build_cells(layer, mesh, cells)
 		if layer.collide:
 			_build_collision(mesh, shapes, layer.collision_size)
+	_finish()
+
+
+func _finish() -> void:
+	done = true
+	finished.emit()
 
 
 ## A layer's own allowed_ids win (wheat grows on crop squares); otherwise anything not bare.

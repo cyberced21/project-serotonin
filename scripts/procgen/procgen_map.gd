@@ -196,6 +196,12 @@ var river_mask := PackedByteArray()
 ## Places out in the wilds: {type: &"ruins" | &"camp" | &"rare", kind: StringName, name: String,
 ## pos: Vector2, angle: float, height: float (its levelled pad, for ruins and camps)}.
 var landmarks: Array[Dictionary] = []
+## How far generate() has got, 0..1, and which step it's on (STEPS); generate() runs on a worker
+## thread behind the loading screen, which reads these.
+var progress := 0.0
+var step := 0
+const STEPS: Array[String] = ["Shaping the land", "Flattening the village", "Filling the ponds",
+		"Cutting the rivers", "Treading the trails", "Raising the ruins"]
 
 var _hills := FastNoiseLite.new()
 var _swell := FastNoiseLite.new()
@@ -274,12 +280,23 @@ func generate() -> void:
 		for x in SIZE:
 			var i := y * SIZE + x
 			_pixel(world(x, y), i)
+		progress = 0.6 * (y + 1) / SIZE
+	step = 1
 	_stamp_village()
 	_stamp_quarry()
+	progress = 0.65
+	step = 2
 	_place_water()
+	progress = 0.7
+	step = 3
 	_carve_rivers()
+	progress = 0.8
+	step = 4
 	_lay_trails()
+	progress = 0.95
+	step = 5
 	_place_landmarks()
+	progress = 1.0
 
 
 static func world(x: int, y: int) -> Vector2:

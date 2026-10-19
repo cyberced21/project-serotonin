@@ -1,7 +1,8 @@
 extends SceneTree
 ## Screenshots of the menus, on a throwaway save root (never the player's worlds):
 ##   godot --path . --screen 1 --resolution 1280x720 -s res://tools/menu_shots.gd -- --save-root=user://menu_shots [--out=dir] [--only=a,b]
-## Seeds a few worlds, then shoots: main (the main menu), worlds (the Worlds screen).
+## Seeds a few worlds, then shoots the main menu, the Worlds, Controls and Settings screens, the
+## pause menu, the Worlds screen with a picture taken, and a generated world loading and loaded.
 
 const ROOT := "user://menu_shots"
 
@@ -62,6 +63,22 @@ func _run() -> void:
 	current_scene.call("_open", &"worlds")
 	await _wait(1.0)
 	await _shot("worlds_after")
+
+	# a generated world: its loading screen, then in and out again
+	var mossy := ""
+	for m: Dictionary in worlds.call("list"):
+		if m["name"] == "Mossy Hollow":
+			mossy = m["id"]
+	worlds.call("play", mossy)
+	await _wait(1.5)
+	await _shot("loading")
+	_check(get_first_node_in_group("loading_screen") != null, "a generated world shows its loading screen")
+	while get_first_node_in_group("loading_screen") != null:
+		await process_frame
+	await _wait(1.0)
+	await _shot("generated")
+	worlds.call("leave")
+	await _wait(1.0)
 	_remove_tree(ProjectSettings.globalize_path(ROOT))
 	quit()
 

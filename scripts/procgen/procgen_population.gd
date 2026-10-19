@@ -79,7 +79,10 @@ const VARIANTS := 4
 const SCENERY_AREA := Rect2(-185, -185, 370, 370)
 
 
-static func populate(parent: Node3D, map: ProcgenMap) -> void:
+## Every spawner, then every scatter, one at a time, each spread over frames by `budget_ms` (0: all
+## in this frame, as before). `on_progress` gets 0..1 as they finish. Await it when budgeted.
+static func populate(parent: Node3D, map: ProcgenMap, budget_ms := 0.0, on_progress := Callable()) -> void:
+	var spawners: Array[NodeSpawner] = []
 	for i in map.sites.size():
 		var site: Dictionary = map.sites[i]
 		var spec: Dictionary = NODES.get(site["biome"], {}).get(site["tier"], {})
@@ -102,13 +105,27 @@ static func populate(parent: Node3D, map: ProcgenMap) -> void:
 			in_pit = func(p: Vector2) -> bool: return p.distance_to(vc) < ProcgenMap.VILLAGE_RADIUS
 		spawner.accept = func(p: Vector2) -> bool:
 			return map.cells[ProcgenMap.pixel_index(p)] == cell and not in_pit.call(p)
-		parent.add_child(spawner)
-	_quarry_levels(parent, map)
+		spawners.append(spawner)
+	spawners.append_array(_quarry_levels(map))
+	var scatters: Array[SceneryScatter] = []
 	var boxes := _cell_boxes(map)
 	for i in map.sites.size():
 		var box: Rect2 = boxes[i].intersection(SCENERY_AREA)
 		if box.has_area():
-			parent.add_child(_scenery(map, i, box))
+			scatters.append(_scenery(map, i, box))
+	# the nodes first and one spawner at a time (each keeps clear of the ones before it), then
+	# the scenery round them
+	var all: Array[Node3D] = []
+	all.append_array(spawners)
+	all.append_array(scatters)
+	for k in all.size():
+		all[k].set("frame_budget_ms", budget_ms)
+		parent.add_child(all[k])
+		if budget_ms > 0.0:
+			if not all[k].get("done"):
+				await all[k].finished
+			if on_progress.is_valid():
+				on_progress.call(float(k + 1) / all.size())
 
 
 ## `spec` with its kind's weights and count applied (see KIND_NODES).
@@ -158,9 +175,10 @@ static func _spawner(map: ProcgenMap, node_name: String, spec: Dictionary) -> No
 
 ## A spawner per pit level, each a ring between its wall and the next one in (clear of both),
 ## on quarry stone only, so nothing lands on the haul road; crystal on the floor.
-static func _quarry_levels(parent: Node3D, map: ProcgenMap) -> void:
+static func _quarry_levels(map: ProcgenMap) -> Array[NodeSpawner]:
+	var out: Array[NodeSpawner] = []
 	if map.quarry.is_empty():
-		return
+		return out
 	var qc: Vector2 = map.quarry["center"]
 	var walls: Array = map.quarry["walls"]
 	for k in walls.size():
@@ -178,7 +196,8 @@ static func _quarry_levels(parent: Node3D, map: ProcgenMap) -> void:
 		spawner.allowed_ids = ids
 		spawner.hotspot_share = 0.0
 		spawner.path_clearance = 1.0
-		parent.add_child(spawner)
+		out.append(spawner)
+	return out
 
 
 ## Level k of a pit with `levels` levels: the top one is always QUARRY_LEVELS' first and the

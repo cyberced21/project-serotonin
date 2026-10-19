@@ -56,7 +56,7 @@ func _input(event: InputEvent) -> void:
 		else:
 			resume()
 		get_viewport().set_input_as_handled()
-	elif not Worlds.current.is_empty() and not _other_menu_open():
+	elif not Worlds.current.is_empty() and not _other_menu_open() 			and get_tree().get_first_node_in_group("loading_screen") == null:
 		open()
 		get_viewport().set_input_as_handled()
 
