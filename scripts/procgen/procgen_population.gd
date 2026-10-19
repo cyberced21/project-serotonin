@@ -149,8 +149,10 @@ static func _spawner(map: ProcgenMap, node_name: String, spec: Dictionary) -> No
 		entries.append(e)
 	spawner.entries = entries
 	# more (or fewer) nodes by as much as the rich (or lean) one's share changed, so every other
-	# resource keeps its usual number and only that one doubles (or halves)
-	spawner.count = maxi(1, roundi(spawner.count * after / before))
+	# resource keeps its usual number and only that one doubles (or halves); then the world's
+	# resources setting, for every node alike
+	var scale: float = WorldSettings.RESOURCE_SCALE[map.settings["resources"]]
+	spawner.count = maxi(1, roundi(spawner.count * after / before * scale))
 	return spawner
 
 

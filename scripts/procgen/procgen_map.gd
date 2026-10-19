@@ -159,6 +159,8 @@ const TRAIL_SMOOTH := 8.0
 const TRAIL_MAX_HEIGHT := 22.0
 
 var seed := 0
+## The world's settings (WorldSettings.normalized): picked kinds, water, terrain, size...
+var settings: Dictionary = WorldSettings.defaults()
 var heights := PackedFloat32Array()
 var ids := PackedByteArray()
 ## Index into `sites` per pixel, or RIM_CELL.
@@ -210,10 +212,14 @@ var _rng := RandomNumberGenerator.new()
 var _kind_rng := RandomNumberGenerator.new()  # its own, so rolling kinds doesn't move the sites
 var _ramp_top: Array[float] = []   # per quarry wall: angle of its ramp's top end
 var _ramp_span: Array[float] = []  # per quarry wall: angle its ramp covers
+var _relief := 1.0  # biome heights × this (WorldSettings terrain)
 
 
-func _init(world_seed: int) -> void:
+func _init(world_seed: int, world_settings := {}) -> void:
 	seed = world_seed
+	settings = WorldSettings.normalized(world_settings)
+	settings["seed"] = world_seed
+	_relief = WorldSettings.RELIEF[settings["terrain"]]
 	_hills.seed = sub_seed(&"hills")
 	_hills.frequency = 0.009
 	_hills.fractal_octaves = 4
@@ -322,7 +328,8 @@ func _roll_kinds() -> void:
 	kinds.clear()
 	for biome in KINDS:
 		var options: Array = KINDS[biome]
-		kinds[biome] = options[_kind_rng.randi_range(0, options.size() - 1)][0]
+		var rolled: StringName = options[_kind_rng.randi_range(0, options.size() - 1)][0]  # rolled even when
+		kinds[biome] = settings["kinds"].get(biome, rolled)  # picked, so the rolls after it stay the same
 	hub_ramp = HUB_RAMP * (0.55 if kinds[&"clearing"] == &"hollow" else 1.0)
 	quarry_walls.assign(QUARRY_KIND_WALLS[kinds[&"quarry"]])
 	hub = Vector2.from_angle(_kind_rng.randf() * TAU) * _kind_rng.randf_range(HUB_OFFSET.x, HUB_OFFSET.y)
@@ -426,7 +433,7 @@ func _pixel(w: Vector2, i: int) -> void:
 			continue
 		h += _profile(sites[s], w) * weight
 		total += weight
-	h /= total
+	h = h / total * _relief
 	h *= smoothstep(HUB_RADIUS, HUB_RADIUS + hub_ramp, w.distance_to(hub))
 	var rim := _rim(w)
 	h += rim * rim * RIM_HEIGHT + rim * (_ridges.get_noise_2dv(w) * 0.5 + 0.5) * RIM_HEIGHT * 0.35
@@ -658,7 +665,7 @@ func _place_water() -> void:
 					_basin("Marsh%d" % (k + 1), p, _rng.randf_range(4.0, 6.0), _rng.randf_range(0.5, 0.7), false, false)
 			_:
 				_basin("Lake", at, LAKE_RADIUS + 4.0, LAKE_DEPTH, true)
-	for n in POND_COUNT:
+	for n in WorldSettings.PONDS[settings["water"]]:
 		var r := _rng.randf_range(POND_RADIUS.x, POND_RADIUS.y)
 		var best := Vector2.INF
 		var best_score := INF
@@ -737,12 +744,12 @@ func _carve_rivers() -> void:
 	for w in waters:
 		if w["name"] == "Lake":
 			lake = w
-	if lake.is_empty():
+	if lake.is_empty() or settings["water"] == &"dry":
 		return
 	var mouth: Vector2 = lake["center"]
 	var away := (mouth - hub).normalized()
 	var turns := [_rng.randf_range(-0.4, 0.4)]
-	if _rng.randf() < RIVER_SECOND_CHANCE:
+	if _rng.randf() < RIVER_SECOND_CHANCE or settings["water"] == &"wet":
 		turns.append(_rng.randf_range(1.1, 1.7) * (1.0 if _rng.randf() < 0.5 else -1.0))
 	var astar := _river_grid()
 	for turn in turns:

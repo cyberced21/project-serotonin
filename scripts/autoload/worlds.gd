@@ -271,7 +271,7 @@ func _start_from_cmdline(args: PackedStringArray) -> void:
 func _new_meta(world_name: String, settings: Dictionary) -> Dictionary:
 	var now := Time.get_unix_time_from_system()
 	return {
-		"version": META_VERSION, "name": world_name, "kind": "generated", "settings": settings,
+		"version": META_VERSION, "name": world_name, "kind": "generated", "settings": WorldSettings.to_json(settings),
 		"generator": ProcgenMap.GENERATOR_VERSION, "created": now, "last_played": 0.0, "playtime": 0.0,
 	}
 

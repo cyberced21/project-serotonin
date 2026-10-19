@@ -40,7 +40,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	var started := Time.get_ticks_msec()
-	map = ProcgenMap.new(world_seed)
+	map = ProcgenMap.new(world_seed, settings)
 	map.generate()
 	_build_terrain()
 	_build_water()

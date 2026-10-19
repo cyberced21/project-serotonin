@@ -151,4 +151,5 @@ static func world_kind(m: Dictionary) -> String:
 	if m.get("kind") != "generated":
 		return "The hand-built valley"
 	var s := WorldSettings.normalized(m.get("settings", {}))
-	return "Generated · seed %d" % s["seed"]
+	var extra := WorldSettings.summary(s)
+	return "Generated · seed %d%s" % [s["seed"], " · " + extra if extra != "" else ""]
