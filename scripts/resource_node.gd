@@ -611,6 +611,12 @@ func from_dict(d: Dictionary) -> void:
 
 
 func _reset_visuals() -> void:
+	for t: Tween in _loosen_tweens.values():
+		t.kill()
+	_loosen_tweens.clear()
+	for c in _rest:
+		c.transform = _rest[c]
+	_rest.clear()
 	for c in chunks.get_children():
 		c.visible = true
 		if c is VisualInstance3D:
@@ -1173,6 +1179,8 @@ func _grow_crack(info: HitInfo, tip: bool) -> bool:
 				return _seam_advance(info, 1, false)
 			_crack_sound = CRACK_CREAK  # a crack opening
 			_crack_step = _seam_step
+			if _seam_piece and _seam_step < crack_segments:
+				_loosen(_seam_piece, false)
 			return _seam_step >= crack_segments
 		# the bare core: a free crack, below
 	if tip:
@@ -1266,8 +1274,9 @@ func _tip_feedback(info: HitInfo, segment: int) -> void:
 
 ## Below this height (node space) a seam runs along the ground, where a crack can't be seen.
 const SEAM_GROUND := 0.15
-## Decals along a seam are this long at most (m).
-const SEAM_DECAL_STEP := 0.3
+## How far a piece has come away just before it splits off: slid out (m) and tilted (degrees).
+const LOOSEN_GAP := 0.06
+const LOOSEN_TILT := 8.0
 
 ## Each chunk's outline on the surface: MeshInstance3D -> closed loop of points (node space).
 var _seams := {}
@@ -1282,7 +1291,7 @@ var _seam_start := 0.0
 var _seam_reach := Vector2.ZERO
 var _seam_step := 0
 var _seam_tip_points: Array[Vector3] = []
-var _seam_tip_decals: Array[Decal] = []
+var _seam_tip_dust: Array[CPUParticles3D] = []
 ## Pieces cracked part of the way and left for another: piece -> its crack (arc, reach, step...).
 var _seam_progress := {}
 var _face_cache := {}  # mesh -> its triangles, for _piece_struck
@@ -1347,6 +1356,8 @@ func _seam_advance(info: HitInfo, steps: int, tip: bool) -> bool:
 	for i in steps:
 		if _seam_step < crack_segments:
 			_seam_grow()
+	if _seam_step < crack_segments:
+		_loosen(_seam_piece, tip)
 	if tip:
 		_tip_feedback(info, _seam_step)
 	else:
@@ -1360,17 +1371,63 @@ func _seam_grow() -> void:
 	var back := Vector2(_seam_reach.x * _seam_step / n, _seam_reach.x * (_seam_step + 1) / n)
 	var fwd := Vector2(_seam_reach.y * _seam_step / n, _seam_reach.y * (_seam_step + 1) / n)
 	_seam_step += 1
-	_seam_decals(_seam_start - back.y, _seam_start - back.x)
-	_seam_decals(_seam_start + fwd.x, _seam_start + fwd.y)
 	_place_seam_tips()
 
 
-## The tips: each end that still has further to go.
+## The pieces' poses before any loosening (Visual/Chunks space): MeshInstance3D -> Transform3D.
+var _rest := {}
+var _loosen_tweens := {}  # piece -> its jolt Tween
+
+
+## Sets `piece` loose as far as its crack has gone: no crack is drawn; the piece itself comes away
+## from the rock along its seam. It slides out and tilts on the stretch of seam still holding it,
+## so the gap opens widest over the cracked stretch. Each hit jolts it past that and lets it settle
+## back; a tip hit rattles it.
+func _loosen(piece: MeshInstance3D, tip: bool) -> void:
+	if not _rest.has(piece):
+		_rest[piece] = piece.transform
+	var f := float(_seam_step) / crack_segments
+	if _loosen_tweens.has(piece):
+		(_loosen_tweens[piece] as Tween).kill()
+	var target := _loose_pose(piece, f)
+	var t := piece.create_tween()
+	_loosen_tweens[piece] = t
+	if tip:
+		for k in 3:  # a rattle: out past it, back short, smaller each time
+			var a := 1.0 / (k + 1)
+			t.tween_property(piece, "transform", _loose_pose(piece, f + 0.5 * a), 0.035)
+			t.tween_property(piece, "transform", _loose_pose(piece, f - 0.2 * a), 0.035)
+	else:
+		t.tween_property(piece, "transform", _loose_pose(piece, f + 0.35), 0.05).set_ease(Tween.EASE_OUT)
+	t.tween_property(piece, "transform", target, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+## `piece` loosened by `f` (0 at rest, 1 about to come off), in Visual/Chunks space.
+func _loose_pose(piece: MeshInstance3D, f: float) -> Transform3D:
+	var rest: Transform3D = _rest[piece]
+	f = maxf(f, 0.0)
+	var to_node := chunks.transform  # (Visual at rest is the node's own space)
+	var c := to_node * (rest * piece.get_aabb().get_center())
+	var out := (c - _shape_centre).normalized()
+	# the middle of the cracked stretch: that side lifts, the far side stays as the hinge
+	var n := float(crack_segments)
+	var mid := _arc_point(_seam_start + (_seam_reach.y - _seam_reach.x) * _seam_step / n * 0.5)
+	var v := mid - c
+	v -= out * v.dot(out)
+	var turn := Basis.IDENTITY
+	if v.length() > 0.05:
+		turn = Basis(v.cross(out).normalized(), deg_to_rad(LOOSEN_TILT) * f)
+	var pose := Transform3D(turn, c - turn * c + out * LOOSEN_GAP * f) * (to_node * rest)
+	return to_node.affine_inverse() * pose
+
+
+## The tips: each end that still has further to go, trickling dust.
 func _place_seam_tips() -> void:
-	for d in _seam_tip_decals:
+	for d in _seam_tip_dust:
 		if is_instance_valid(d):
-			d.queue_free()
-	_seam_tip_decals.clear()
+			d.emitting = false
+			d.get_tree().create_timer(1.5).timeout.connect(d.queue_free)
+	_seam_tip_dust.clear()
 	_seam_tip_points.clear()
 	if _seam_step >= crack_segments:
 		return
@@ -1380,24 +1437,33 @@ func _place_seam_tips() -> void:
 	for end in [[_seam_start - back, -1.0], [_seam_start + fwd, 1.0]]:
 		var s: float = end[0]
 		var p := _arc_point(s)
-		var along := _arc_point(s + end[1] * 0.05) - p
-		var tip := _tip_decal()
-		tip.cull_mask = _seam_mask()
-		tip.transform = Transform3D(_face_basis(along, _seam_up(p)), p)
-		_seam_tip_decals.append(tip)
+		_seam_tip_dust.append(_tip_dust(p, _seam_up(p)))
 		_seam_tip_points.append(p)
 
 
-## Crack decals along the arc from distance `a` to `b`.
-func _seam_decals(a: float, b: float) -> void:
-	var length := b - a
-	if length < 0.02:
-		return
-	var count := ceili(length / SEAM_DECAL_STEP)
-	for j in count:
-		var p := _arc_point(a + length * j / count)
-		var q := _arc_point(a + length * (j + 1) / count)
-		_crack_decal(p, q, _seam_up((p + q) * 0.5), 0.3, _seam_mask())
+## Grit trickling out of the seam at a tip: a thin, steady spill of the rock's broken stone.
+func _tip_dust(p: Vector3, up: Vector3) -> CPUParticles3D:
+	var dust := chips.duplicate() as CPUParticles3D
+	dust.one_shot = false
+	dust.explosiveness = 0.0
+	dust.amount = 10
+	dust.lifetime = 0.9
+	dust.direction = Vector3(0, 0, 1)
+	dust.spread = 25.0
+	dust.initial_velocity_min = 0.3
+	dust.initial_velocity_max = 0.7
+	dust.scale_amount_min = 0.25
+	dust.scale_amount_max = 0.5
+	dust.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	dust.emission_sphere_radius = 0.04
+	dust.color = chip_color.lightened(0.15)
+	notches.add_child(dust)
+	var side := up.cross(Vector3.UP)
+	if side.length() < 0.1:
+		side = Vector3.RIGHT
+	dust.transform = Transform3D(Basis.looking_at(-up, side.cross(up)), p + up * 0.03)
+	dust.emitting = true
+	return dust
 
 
 ## The surface's normal at a point on a seam, for the decal drawn there: that of the outside face
@@ -1548,10 +1614,10 @@ func _clear_seam_crack(keep := false) -> void:
 				"start": _seam_start, "reach": _seam_reach, "step": _seam_step}
 		else:
 			_seam_progress.erase(_seam_piece)
-	for d in _seam_tip_decals:
+	for d in _seam_tip_dust:
 		if is_instance_valid(d):
 			d.queue_free()
-	_seam_tip_decals.clear()
+	_seam_tip_dust.clear()
 	_seam_tip_points.clear()
 	_seam_piece = null
 	_seam_step = 0
