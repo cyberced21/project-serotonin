@@ -122,18 +122,28 @@ func _place(terrain: Terrain3D, layer: ScatterLayer, p: Vector2, s: float, yaw: 
 
 
 func _collect_keep_out() -> void:
-	_keep_out.clear()
-	for n in get_tree().get_nodes_in_group("gatherable"):
-		_keep((n as Node3D).global_position, node_radius)
-	for p in get_tree().get_nodes_in_group("prop"):
-		_keep((p as Node3D).global_position, maxf((p as Prop).footprint_radius() + 0.5, prop_radius))
-	for b in get_tree().get_nodes_in_group("building"):
-		_keep((b as Node3D).global_position, (b as Building).footprint_radius() + building_margin)
+	_keep_out = keep_out_spots(get_tree(), node_radius, prop_radius, building_margin)
 	for c in clear_spots:
 		_keep_out.append(c)
 	var player := get_tree().get_first_node_in_group("player") as Node3D
 	if player:
 		_keep(player.global_position, spawn_radius)
+
+
+## The circles (x, z, radius) plants keep out of: round gatherable nodes, props and buildings.
+## Also used by GrassField.
+static func keep_out_spots(tree: SceneTree, node_r: float, prop_r: float, margin: float) -> Array[Vector3]:
+	var out: Array[Vector3] = []
+	for n in tree.get_nodes_in_group("gatherable"):
+		var at := (n as Node3D).global_position
+		out.append(Vector3(at.x, at.z, node_r))
+	for p in tree.get_nodes_in_group("prop"):
+		var at := (p as Node3D).global_position
+		out.append(Vector3(at.x, at.z, maxf((p as Prop).footprint_radius() + 0.5, prop_r)))
+	for b in tree.get_nodes_in_group("building"):
+		var at := (b as Node3D).global_position
+		out.append(Vector3(at.x, at.z, (b as Building).footprint_radius() + margin))
+	return out
 
 
 func _keep(at: Vector3, radius: float) -> void:

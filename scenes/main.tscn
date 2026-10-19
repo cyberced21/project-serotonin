@@ -55,6 +55,7 @@
 [ext_resource type="PackedScene" path="res://scenes/pine_tree.tscn" id="51_pine"]
 [ext_resource type="PackedScene" path="res://scenes/coal_rock.tscn" id="52_coal"]
 [ext_resource type="PackedScene" path="res://scenes/gold_rock.tscn" id="53_gold"]
+[ext_resource type="Script" path="res://scripts/grass_field.gd" id="90_grass_field"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
@@ -689,3 +690,6 @@ script = ExtResource("2_hud")
 
 [node name="UpgradePanel" type="CanvasLayer" parent="."]
 script = ExtResource("24_panel")
+
+[node name="GrassField" type="Node3D" parent="."]
+script = ExtResource("90_grass_field")

@@ -76,3 +76,7 @@ wind_strength={
 "type": "float",
 "value": 1.0
 }
+grass_pusher={
+"type": "vec3",
+"value": Vector3(0, -1000, 0)
+}

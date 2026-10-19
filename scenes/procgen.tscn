@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/day_night_sky.gd" id="6_sky"]
 [ext_resource type="Environment" path="res://materials/world_environment.tres" id="7_sky_shader_env"]
 [ext_resource type="Script" path="res://scripts/upgrade_panel.gd" id="8_panel"]
+[ext_resource type="Script" path="res://scripts/grass_field.gd" id="90_grass_field"]
 
 [sub_resource type="Terrain3DMaterial" id="Terrain3DMaterial_lowpoly"]
 shader_override_enabled = true
@@ -47,3 +48,6 @@ script = ExtResource("3_hud")
 
 [node name="UpgradePanel" type="CanvasLayer" parent="."]
 script = ExtResource("8_panel")
+
+[node name="GrassField" type="Node3D" parent="."]
+script = ExtResource("90_grass_field")
