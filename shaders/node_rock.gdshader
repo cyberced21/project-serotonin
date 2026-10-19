@@ -8,6 +8,7 @@ shader_type spatial;
 // How the ore (the palette's ore row) catches the light.
 uniform float ore_roughness = 0.5;
 uniform float ore_metallic = 0.35;
+uniform float ore_glow = 0.15;
 // Fresh breaks against the weathered skin.
 uniform float fresh_brightness = 1.1;
 

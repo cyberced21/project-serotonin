@@ -125,4 +125,7 @@ void fragment() {
 	vec3 lit = mix(glow_color, glow_tint.rgb, glow_tint.a);
 	ALBEDO = mix(mix(base, lit, glow * 0.6), vec3(1.0), flash);
 	EMISSION = vec3(flash) * 0.6 + highlight_color * (0.08 + rim * 0.5) * highlight + lit * glow * 2.0;
+#ifdef ROCK
+	EMISSION += base * float(row == 1) * ore_glow;  // ore still reads down in the shade of a hole
+#endif
 }

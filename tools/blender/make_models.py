@@ -905,11 +905,63 @@ def gold_veined(name="gold_veined", out="designs"):
     fractured(name, rng, whole, seeds, choose, post=post, size=size, rubble=("wood.3", "wood.2", "stone.1"), out=out)
 
 
+def gold_geode_shatter(name="gold_rock", out="", heart="gold"):
+    """Gold, breaking where it's struck: the veined geode as a tough shell of a few big pieces
+    (each takes two hits, unless it's the fault) round a crystal heart of small ones. `heart`
+    "gold" (the game's): solid gold crystal, quartz-rimmed; "quartz" (the other candidate, models/
+    designs/gold_geode_quartz): white quartz studded with gold nuggets, which get lost in the
+    shade of the hole. The thin gold veins outside stay, so it's spotted from a distance."""
+    reset()
+    rng = seeded(109)
+    size = 0.95
+    squash = (1.1, 1.05, 0.8)
+    whole, cz = boulder_mesh(rng, size, subdiv=4, squash=squash, chops=3, lump_amp=(0.15, 0.25), noise=0.06)
+    bmesh.ops.translate(whole, vec=Vector((0, 0, -0.05)), verts=whole.verts)
+    cz -= 0.05
+    centre = Vector((0, 0, cz))
+    veins = [(Vector((0.7, 0.3, 0.65)).normalized(), centre + Vector((0.1, 0, 0)), 0.03),
+             (Vector((-0.5, 0.85, 0.15)).normalized(), centre + Vector((0, 0.15, 0.05)), 0.025),
+             (Vector((0.2, -0.6, 0.8)).normalized(), centre + Vector((-0.2, -0.1, 0.1)), 0.02)]
+    slice_mesh(whole, band_cuts(veins))
+    shell = shell_seeds(rng, size, squash, cz, sides=7, tops=3, out=(0.8, 0.72))[1:]
+    inner = []
+    golden = math.pi * (3.0 - math.sqrt(5.0))
+    for i in range(18):  # the heart: small pieces filling the middle
+        h = -0.6 + 1.5 * (i + 0.5) / 18
+        k = rng.uniform(0.15, 0.42)
+        e = math.asin(max(-1.0, min(1.0, h)))
+        inner.append(centre + Vector((math.cos(e) * math.cos(i * golden) * size * squash[0] * k,
+                                      math.cos(e) * math.sin(i * golden) * size * squash[1] * k,
+                                      math.sin(e) * size * squash[2] * k)))
+    seeds = shell + inner
+    nuggets = {i for i in range(len(shell), len(seeds)) if rng.random() < 0.4}
+    stone = shade_by_normal("wood.3", "wood.2", "wood.1", rng)  # (no random dark faces: a checkerboard)
+
+    def choose(f, is_cut, i):
+        c = f.calc_center_median()
+        if not is_cut:
+            if near_plane(c, veins):
+                return "ore.gold" if f.normal.z > -0.2 else "accent.2"
+            return stone(f)
+        if i < len(shell):  # the shell's breaks: brown stone, quartz where it meets the heart
+            return "neutral.6" if (c - centre).length < 0.5 * size else "wood.2"
+        if heart == "gold":
+            return "neutral.6" if (c - centre).length > 0.46 * size else ("accent.3" if rng.random() < 0.3 else "ore.gold")
+        if i in nuggets:
+            return "ore.gold" if rng.random() < 0.75 else "accent.3"
+        return "neutral.6" if rng.random() < 0.7 else "neutral.5"
+    names = [f"Chunk_{i:02d}" for i in range(len(shell))]
+    shattered(name, rng, whole, seeds, choose, size=size, rubble=("wood.3", "wood.2", "stone.1"), out=out,
+              ore_swatches=("ore.gold",), moss_amount=0.5,
+              rules={"knock": 1, "shatter_at": 0.55, "tough": names})
+
+
 def designs():
     os.makedirs(os.path.join(OUT_DIR, "designs"), exist_ok=True)
     for build in (copper_verdigris, copper_malachite, iron_columns, iron_banded,
                   coal_strata, coal_lump, gold_quartz, gold_geode, gold_veined):
         build()
+    gold_geode_shatter("gold_geode_quartz", out="designs", heart="quartz")
 
 
 def scale_scene(s):
@@ -937,8 +989,8 @@ def coal_rock():
 
 
 def gold_rock():
-    """Gold (Mining 30): the veined geode."""
-    gold_veined("gold_rock", out="")
+    """Gold (Mining 30): the veined geode, a tough shell round a crystal heart."""
+    gold_geode_shatter("gold_rock", out="")
 
 
 def shard(rng, length, radius):
@@ -2419,7 +2471,7 @@ def ore_variants():
     os.makedirs(os.path.join(OUT_DIR, "variants"), exist_ok=True)
     for v in range(1, VARIANTS + 1):
         _variant = v
-        for build in (rock, iron_rock, coal_rock):
+        for build in (rock, iron_rock, coal_rock, gold_rock):
             build()
     _variant = 0
 
