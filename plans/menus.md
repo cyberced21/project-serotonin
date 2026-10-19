@@ -11,7 +11,7 @@ screen, and a New World screen that configures the generator.
 | What a save is | **A list of worlds** (Minecraft-style). Each world has its own character, as today |
 | The hand-built world | **A permanent entry**, "Hearthvale (classic)": can't be deleted, only reset. The old `user://save.json` becomes its save |
 | World settings | **Seed and name, a kind per biome (or Random), resources lean / normal / rich, water dry / normal / wet, terrain gentle / normal / rugged, and world size** |
-| World size | **Small 256 m, Normal 512 m, Large 1024 m.** Bigger means **more biomes**, same biome size. Normal stays exactly today's generator |
+| World size | **Small 384 m (planned 256, see below), Normal 512 m, Large 1024 m.** Bigger means **more biomes**, same biome size. Normal stays exactly today's generator |
 | Large worlds | A third ring of sites repeating biomes (preferring an unused kind), one Hearthvale only, a second quarry if it fits |
 | Small worlds | Clearing, Hearthvale and the inner ring only |
 | Main menu | A **live 3D backdrop** (a small dedicated scene, a slow camera over the clearing), title and buttons on the left; **Continue is the big default** |
@@ -35,19 +35,37 @@ screen, and a New World screen that configures the generator.
 
 ## Phases
 
-1. **Worlds on disk**: a `Worlds` autoload (folders, meta, migration of `save.json` and
+1. **Worlds on disk** ✅: a `Worlds` autoload (folders, meta, migration of `save.json` and
    `procgen_*.json`, the scratch world, `--save-root`, `--classic`, `--world`), the generator version
    stamp, `ProcgenWorld` entering by world instead of by seed.
-2. **Main menu**: `scenes/menu/main_menu.tscn` as the main scene with its backdrop; Continue / Play,
+2. **Main menu** ✅: `scenes/menu/main_menu.tscn` as the main scene with its backdrop; Continue / Play,
    Worlds, Settings (stub), Quit; the Worlds screen (Play, Rename, Delete, Duplicate, Reset classic).
-3. **Pause menu**: Esc pauses; Resume, Settings, Controls, Save & Quit to Menu (toast, thumbnail),
+3. **Pause menu** ✅: Esc pauses; Resume, Settings, Controls, Save & Quit to Menu (toast, thumbnail),
    Quit to Desktop; a Controls screen listing the bindings.
-4. **Settings**: the four tabs; new Ambience and Movement buses with the players routed onto them;
+4. **Settings** ✅: the four tabs; new Ambience and Movement buses with the players routed onto them;
    mouse sensitivity, invert Y, FOV and camera-kick comfort read by the player.
-5. **Generator settings**: `WorldSettings`; the map's constants that the knobs touch become
+5. **Generator settings** ✅: `WorldSettings`; the map's constants that the knobs touch become
    parameters; normal settings build exactly today's heightmap (checked against hashes).
-6. **Background loading**: `ProcgenMap.generate()` on a worker thread, population spread over
+6. **Background loading** ✅: `ProcgenMap.generate()` on a worker thread, population spread over
    frames under a time budget, the loading screen.
-7. **New World screen**: name, seed (reroll), size, knobs, the live preview.
-8. **Small and large worlds**: map size as a parameter, site rings per size, Terrain3D regions.
-9. **Wrap-up**: docs, README, TODO.md, screenshots.
+7. **New World screen** ✅: name, seed (reroll), size, knobs, the live preview.
+8. **Small and large worlds** ✅: map size as a parameter, site rings per size, Terrain3D regions.
+9. **Wrap-up** ✅: docs, README, TODO.md, screenshots.
+
+## How it came out
+
+- **Small worlds are 384 m**, not 256: at 256 the rim would start 44 m from the middle, over the
+  hub, with no room for the quarry pit and the lake. Terrain3D only imports whole 256 m regions,
+  so a small map is padded out to 512 with its own edge.
+- **Large worlds** have 31 sites (two extra rings), a lake per Stillwater and peaks per Frostpeak;
+  still one quarry (a second one needs the quarry to stop being a single stamp). A repeated
+  biome's arrival card shows the first one's kind.
+- **Normal settings are byte-identical** to the generator before this plan (heights, surfaces,
+  cells, waters, rivers, landmarks, kinds for three seeds: `tools/test_generator.gd`).
+- **Loading:** the map on a worker thread, the spawners one after another and the scenery within
+  a 12 ms frame budget, the 3D view off behind the loading screen; the same nodes in the same spots
+  as an all-at-once load (`tools/test_loading.gd`). Scenery placement also got cheaper (water only
+  checked below its surface, keep-out spots in a grid): normal ~5 s headless (was ~8), large ~20.
+- **Tool scripts** (`-s`) get their own worlds folder (`user://tool_worlds`) unless given
+  `--save-root`, after a check script moved the real saves once (restored byte-identical).
+- Open items are in [docs/TODO.md](../docs/TODO.md) under *Menus and worlds*.
