@@ -477,21 +477,29 @@ def bake_weathering(bm, cut, bvh, top_z, moss=(0.55, 0.82, 0.42), moss_amount=0.
             loop[layer] = (1.0, 1.0, 1.0, 0.0) if f[cut] else shade.get(loop.vert, (1.0, 1.0, 1.0, 1.0))
 
 
-def shattered(name, rng, whole, seeds, choose, rubble=("stone.4", "stone.2", "stone.1"), size=1.0, out=""):
+def shattered(name, rng, whole, seeds, choose, rubble=("stone.4", "stone.2", "stone.1"), size=1.0, out="",
+              stretch=None, post=None, ore_swatches=("ore.",), rules=None, moss_amount=0.85, body=None):
     """Cuts `whole` into Voronoi pieces round `seeds`, all alike (no core): Chunk_NN, plus
     Rubble_*, weathered by bake_weathering. The game knocks pieces off where they're struck and
     drops whatever's left hanging, so it needs to know which pieces touch, and which carry ore
     (they spill some as they come out): models/<out>/<name>.pieces.json, {"links": piece ->
-    its neighbours, "ore": [pieces]}. choose(face, is_cut, piece) picks each face's swatch."""
+    its neighbours, "ore": [pieces]}, plus the ore's own breaking `rules` (see ResourceNode:
+    "support" "below" = a piece rests only on pieces under it; "shatter_at"; "knock", extra
+    neighbours a hit takes; "tough", pieces taking two hits; "grounded", pieces held up anyway).
+    choose(face, is_cut, piece) picks each face's swatch; post(piece_mesh, piece, cut_layer)
+    can reshape a piece; `stretch` scales the cells (see stretched_cell); `body`, a bmesh,
+    becomes Body_Core, a part that never breaks (painted and weathered by the caller)."""
     names = [f"Chunk_{i:02d}" for i in range(len(seeds))]
     links = {n: set() for n in names}
     ore_area = {}  # piece -> m² of ore faces
     bvh = BVHTree.FromBMesh(whole)
     top_z = max(v.co.z for v in whole.verts)
     for i in range(len(seeds)):
-        bm = voronoi_cell(whole, seeds, i)
+        bm = stretched_cell(whole, seeds, i, stretch) if stretch else voronoi_cell(whole, seeds, i)
         cut = bm.faces.layers.int.get("cut")
         across = bm.faces.layers.int.get("across")
+        if post and bm.faces:
+            post(bm, i, cut)
         if not bm.faces:
             continue
         bmesh.ops.triangulate(bm, faces=bm.faces[:])
@@ -502,15 +510,17 @@ def shattered(name, rng, whole, seeds, choose, rubble=("stone.4", "stone.2", "st
 
         def pick(f, i=i, cut=cut):
             swatch = choose(f, f[cut] == 1, i)
-            if swatch.startswith("ore."):
+            if swatch.startswith(ore_swatches):
                 ore_area[names[i]] = ore_area.get(names[i], 0.0) + f.calc_area()
             return swatch
         paint(bm, pick)
-        bake_weathering(bm, cut, bvh, top_z)
+        bake_weathering(bm, cut, bvh, top_z, moss_amount=moss_amount)
         centre = sum((v.co for v in bm.verts), Vector()) / len(bm.verts)
         bmesh.ops.translate(bm, vec=-centre, verts=bm.verts)
         make_object(names[i], bm, centre)
     whole.free()
+    if body:
+        make_object("Body_Core", body)
     for i in range(4):
         a = i * math.tau / 4 + rng.uniform(-0.4, 0.4)
         d = rng.uniform(0.2, 0.6) * size
@@ -524,8 +534,11 @@ def shattered(name, rng, whole, seeds, choose, rubble=("stone.4", "stone.2", "st
     present = {o.name for o in bpy.context.scene.objects}
     ore = {n for n, a in ore_area.items() if a > 0.04}  # a real share of vein, not a sliver
     with open(os.path.join(OUT_DIR, path + ".pieces.json"), "w") as f:
-        json.dump({"links": {n: sorted(l & present) for n, l in links.items() if n in present},
-                   "ore": sorted(ore & present)}, f, indent=1)
+        data = {"links": {n: sorted(l & present) for n, l in links.items() if n in present},
+                "ore": sorted(ore & present)}
+        for k, v in (rules or {}).items():
+            data[k] = sorted(set(v) & present) if isinstance(v, (set, list)) else v
+        json.dump(data, f, indent=1)
 
 
 def mirrored(s, n, p):
@@ -619,10 +632,11 @@ def copper_malachite():
     fractured("copper_malachite", rng, whole, seeds, choose, rubble=("leaves.3", "stone.2", "stone.1"))
 
 
-def iron_columns(name="iron_columns", out="designs"):
+def iron_columns(name="iron_columns", out="designs", shatter=False):
     """Iron A: a cluster of dark basalt columns of different heights (upright Voronoi cells of a
     tall prism, each with its own flat top), rust bleeding down from the tops; the faces a break
-    opens glint with iron."""
+    opens glint with iron. With `shatter`, each column is jointed into stacked segments that rest
+    on the one below: knock out a column's foot and the rest of it topples."""
     reset()
     rng = seeded(103)
     size = 1.1
@@ -640,6 +654,42 @@ def iron_columns(name="iron_columns", out="designs"):
         seeds.append(Vector((math.cos(a) * 1.0, math.sin(a) * 0.92, 0.5)))
     tops = [size * 1.55] + [size * rng.uniform(1.05, 1.4) for _ in range(6)] + [size * rng.uniform(0.55, 0.95) for _ in range(5)]
     rust = [size * rng.uniform(0.2, 0.4) for _ in seeds]  # how far rust runs down each one
+    if shatter:
+        columns = seeds
+        tilts = [Vector((rng.uniform(-0.12, 0.12), rng.uniform(-0.12, 0.12), 1)).normalized() for _ in columns]
+        seeds, column_of = [], []
+        for c, (s, top) in enumerate(zip(columns, tops)):
+            joints = max(1, round(top / (0.42 * size)))
+            for k in range(joints):
+                z = (k + 0.5 + rng.uniform(-0.15, 0.15)) * top / joints
+                seeds.append(Vector((s.x, s.y, z)))
+                column_of.append(c)
+        whole.normal_update()
+
+        def post_joint(bm, i, cut):
+            c = column_of[i]
+            chop(bm, Vector((0, 0, tops[c])), tilts[c])
+            slice_mesh(bm, [(Vector((0, 0, tops[c] - rust[c])), Vector((0, 0, 1)))])
+            # a side standing clear of a shorter neighbour column is weathered outside, not a break
+            across = bm.faces.layers.int.get("across")
+            for f in bm.faces:
+                if f[cut] and f[across] > 0 and f.calc_center_median().z > tops[column_of[f[across] - 1]] - 0.03:
+                    f[cut] = 0
+                    f[across] = 0
+
+        def choose_joint(f, is_cut, i):
+            c, centre = column_of[i], f.calc_center_median()
+            if is_cut:
+                return "metal.5" if rng.random() < 0.25 else "metal.3"
+            if f.normal.z > 0.8:
+                return "stone.3"
+            if centre.z > tops[c] - rust[c]:  # rust running down from the top
+                return "wood.3"
+            return "stone.2" if c % 2 else "stone.3"
+        shattered(name, rng, whole, seeds, choose_joint, stretch=(1, 1, 0.02), post=post_joint, size=size,
+                  rubble=("stone.2", "stone.1", "stone.0"), out=out, ore_swatches=("metal.",), moss_amount=0.45,
+                  rules={"support": "below", "knock": 0, "shatter_at": 0.5})
+        return
 
     def post(bm, i, cut):  # a flat (slightly tilted) top at this column's height
         tilt = Vector((rng.uniform(-0.12, 0.12), rng.uniform(-0.12, 0.12), 1)).normalized()
@@ -850,8 +900,8 @@ def rock():
 
 
 def iron_rock():
-    """Iron (Mining 15): basalt columns."""
-    iron_columns("iron_rock", out="")
+    """Iron (Mining 15): basalt columns, jointed so they topple."""
+    iron_columns("iron_rock", out="", shatter=True)
 
 
 def coal_rock():
@@ -2342,7 +2392,8 @@ def ore_variants():
     os.makedirs(os.path.join(OUT_DIR, "variants"), exist_ok=True)
     for v in range(1, VARIANTS + 1):
         _variant = v
-        rock()
+        for build in (rock, iron_rock):
+            build()
     _variant = 0
 
 

@@ -37,7 +37,7 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 ### Ore polish ([plans/ores.md](../plans/ores.md))
 
 - [x] **Copper breaks where it's struck** (phase 1): 36 pieces drawn as one mesh (`node_rock.gdshader` hides broken ones), 2–3 out per hit, unsupported pieces collapse, shatter at 35% gone; ore spills from vein pieces; exact saves; weathered/fresh baked shading with glinting ore; dirt decal and pebbles; variants rebuilt. Spawns in 5–12 ms (was ~50).
-- [ ] **Playtest copper** and tune: pieces per hit (`KNOCK_RADIUS`, `_knock_out`), `SHATTER_AT`, collapse feel, ore spill rate, glint (`ore_roughness` / `ore_metallic`), how dark the dug-out cavity reads.
+- [ ] **Playtest copper** and tune: pieces per hit (`knock` in each `.pieces.json`, `_knock_out`), `SHATTER_AT`, collapse feel, ore spill rate, glint (`ore_roughness` / `ore_metallic`), how dark the dug-out cavity reads.
 - [ ] **Sounds** for knocking pieces out and collapses still reuse the split stack.
 - [ ] **`.pieces.json` in exports:** add `*.json` to the export include filter when an export preset exists.
 - [ ] Iron, coal, gold, crystal, ore pickups, scenery rocks, building stone (phases 2–8).

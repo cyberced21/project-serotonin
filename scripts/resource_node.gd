@@ -1178,8 +1178,6 @@ func _fit_collision() -> void:
 const ROCK_MATERIAL := preload("res://materials/node_rock.tres")
 ## The share of the pieces gone at which the rest shatters.
 const SHATTER_AT := 0.35
-## Neighbours of the struck piece this close to the hit (m) can come out with it.
-const KNOCK_RADIUS := 0.8
 ## A piece reaching this low (node space, m) rests on the ground.
 const PIECE_GROUND := 0.12
 
@@ -1389,7 +1387,7 @@ func _knock_out(info: HitInfo, count: int) -> int:
 		_hits_from_pieces()
 		return 0
 	var at := info.position
-	var reach := FAULT_REACH if fault else KNOCK_RADIUS
+	var reach := FAULT_REACH if fault else INF  # (a plain hit: whichever touching pieces are nearest)
 	var near: Array = (_links[struck] as Array).filter(func(c: MeshInstance3D) -> bool:
 		return c.visible and _piece_centre(c).distance_to(at) < reach)
 	if fault:  # the whole cluster round it, neighbours of neighbours too
