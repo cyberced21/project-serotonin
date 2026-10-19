@@ -28,7 +28,7 @@ func _initialize() -> void:
 		var marks: PackedStringArray = []
 		for l in map.landmarks:
 			marks.append(l["name"])
-		print("seed %d: %d ms, %d trails, %d waters, %d rivers, %s; %s; %s %s" % [s, ms, map.trails.size(), map.waters.size(), map.rivers.size(), ", ".join(marks),
+		print("seed %d: %d ms, %d trails, %d waters, %d rivers, rich in %s, lean on %s, %s; %s; %s %s" % [s, ms, map.trails.size(), map.waters.size(), map.rivers.size(), map.rich, map.lean, ", ".join(marks),
 				", ".join(kinds), path,
 				"" if err == OK else error_string(err)])
 	quit()

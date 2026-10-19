@@ -134,15 +134,23 @@ static func _spawner(map: ProcgenMap, node_name: String, spec: Dictionary) -> No
 	spawner.spacing = spec.get("spacing", 5.0)
 	spawner.min_normal_y = spec.get("min_normal_y", 0.85)
 	var entries: Array[SpawnEntry] = []
+	var before := 0.0  # total weight as given
+	var after := 0.0   # ... and with the seed's rich resource doubled and its lean one halved
 	for pair in spec["entries"]:
 		var e := SpawnEntry.new()
 		e.scene = pair[0]
-		e.weight = pair[1]
-		var probe := (pair[0] as PackedScene).instantiate()  # only to read which model it wears
+		var probe := (pair[0] as PackedScene).instantiate()  # only to read its item and model
+		var wealth := 2.0 if probe.get("item") == map.rich else (0.5 if probe.get("item") == map.lean else 1.0)
+		before += pair[1]
+		e.weight = pair[1] * wealth
+		after += e.weight
 		e.variants = _variants_of(probe.get("model"))
 		probe.free()
 		entries.append(e)
 	spawner.entries = entries
+	# more (or fewer) nodes by as much as the rich (or lean) one's share changed, so every other
+	# resource keeps its usual number and only that one doubles (or halves)
+	spawner.count = maxi(1, roundi(spawner.count * after / before))
 	return spawner
 
 

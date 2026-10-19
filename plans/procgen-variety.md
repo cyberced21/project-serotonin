@@ -50,7 +50,7 @@ from what each biome is like, where things sit, and what turns up between them.
 4. **Landmarks** ✅: ruins (the parkour blocks as a broken tower or wall, a reward on top), rare spots
    (a crystal outcrop, a gold vein, a pike pond, an ancient oak stand, a flower meadow; 1–3 per
    seed) and an abandoned camp or two (cart, hay, log pile, crates).
-5. **Rich and lean seeds**: one resource doubled, one halved; shown in the debug menu's Procgen tab
+5. **Rich and lean seeds** ✅: one resource doubled, one halved; shown in the debug menu's Procgen tab
    and the preview tool's output.
 6. **Wrap-up**: README, TODO, screenshots.
 

@@ -88,6 +88,11 @@ const VILLAGE_PROPS := [  # [model, offset, facing]
 ## A Lakeside Village's pond, behind the fisher's (as in the hand-built village).
 const VILLAGE_POND := {"offset": Vector2(-12, 24), "radius": 7.0, "depth": 0.75}
 
+## Every seed is rich in one resource (twice as much of it) and lean on another (half as much);
+## nothing is ever taken away. The starter wood and copper ore are never the lean one.
+const RICH_ITEMS: Array[StringName] = [&"birch", &"oak", &"pine", &"iron", &"coal", &"gold", &"crystal", &"wheat", &"barley", &"wood", &"ore"]
+const LEAN_ITEMS: Array[StringName] = [&"birch", &"oak", &"pine", &"iron", &"coal", &"gold", &"wheat", &"barley"]
+
 ## The quarry's walls per kind (outermost first): one level below each, the last is the floor.
 const QUARRY_KIND_WALLS := {
 	&"terraced_pit": [32.0, 22.0, 12.0],
@@ -158,6 +163,9 @@ var cells := PackedByteArray()
 var sites: Array[Dictionary] = []
 ## The kind rolled for each biome, biome -> kind id.
 var kinds: Dictionary[StringName, StringName] = {}
+## The resource this seed has twice as much of, and the one it has half as much of (item ids).
+var rich: StringName = &""
+var lean: StringName = &""
 ## Where the hub is, and how wide its ground eases up into the land (a Hollow's rises close).
 var hub := HUB_CENTER
 var hub_ramp := HUB_RAMP
@@ -310,6 +318,12 @@ func _roll_kinds() -> void:
 	hub_ramp = HUB_RAMP * (0.55 if kinds[&"clearing"] == &"hollow" else 1.0)
 	quarry_walls.assign(QUARRY_KIND_WALLS[kinds[&"quarry"]])
 	hub = Vector2.from_angle(_kind_rng.randf() * TAU) * _kind_rng.randf_range(HUB_OFFSET.x, HUB_OFFSET.y)
+	var wealth := RandomNumberGenerator.new()
+	wealth.seed = sub_seed(&"wealth")
+	rich = RICH_ITEMS[wealth.randi_range(0, RICH_ITEMS.size() - 1)]
+	lean = rich
+	while lean == rich:
+		lean = LEAN_ITEMS[wealth.randi_range(0, LEAN_ITEMS.size() - 1)]
 
 
 func _place_sites() -> void:

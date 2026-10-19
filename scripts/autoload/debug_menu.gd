@@ -222,8 +222,16 @@ func _leave_procgen() -> void:
 
 func _refresh_procgen() -> void:
 	var world := _procgen_world()
-	_procgen_status.text = ("In a generated world, seed %d" % ProcgenWorld.world_seed) if world 			else "In the main world"
-	if world and _seed_edit.text.is_empty():
+	if world == null or world.map == null:
+		_procgen_status.text = "In the main world"
+		return
+	var map := world.map
+	var kinds: PackedStringArray = []
+	for biome in map.kinds:
+		kinds.append(map.kind_name(biome))
+	_procgen_status.text = "In a generated world, seed %d\n%s\nRich in %s, lean on %s" % [ProcgenWorld.world_seed,
+			", ".join(kinds), Items.display_name(map.rich), Items.display_name(map.lean)]
+	if _seed_edit.text.is_empty():
 		_seed_edit.text = str(ProcgenWorld.world_seed)
 
 
