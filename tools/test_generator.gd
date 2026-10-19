@@ -76,6 +76,23 @@ func _knobs() -> void:
 				% [mpp, ms, preview.size])
 		_check(preview.preview_image().get_size() == Vector2i(preview.size, preview.size), "its picture is %d px" % preview.size)
 
+	for size in ["small", "large"]:
+		var m := _map({"size": size})
+		var count := {}
+		var inside := true
+		for site in m.sites:
+			count[site["biome"]] = count.get(site["biome"], 0) + 1
+			inside = inside and m._rim(site["pos"]) < 0.3 and m.cells[m.pixel_index(site["pos"])] != ProcgenMap.RIM_CELL
+		_check(count.get(&"hearthvale") == 1 and count.get(&"quarry") == 1 and count.get(&"stillwater", 0) >= 1,
+				"%s: one village, one quarry, a lake (%s)" % [size, count])
+		_check(inside, "%s: every site off the rim" % size)
+		if size == "small":
+			_check(m.sites.size() == 6 and not count.has(&"frostpeak") and m.size == 384, "small: 384 m, six sites, no Frostpeak")
+		else:
+			_check(m.sites.size() > 20 and m.size == 1024, "large: 1024 m, %d sites" % m.sites.size())
+			var lakes := m.waters.filter(func(w: Dictionary) -> bool: return w["lake"]).size()
+			_check(lakes == count[&"stillwater"], "large: a lake per Stillwater (%d)" % lakes)
+
 	var n := WorldSettings.normalized({"seed": 5.0, "size": "huge", "water": "wet", "kinds": {"pinewood": "nope"}})
 	_check(n["seed"] is int and n["size"] == &"normal" and n["water"] == &"wet" and n["kinds"].is_empty(),
 			"normalized: ints, unknown choices back to normal")

@@ -2,7 +2,7 @@ class_name WorldSettings
 extends RefCounted
 ## What a generated world is made from, as a plain dictionary (it lives in the world's world.json):
 ##   seed       the generator's seed
-##   size       &"small" 256 m, &"normal" 512 m, &"large" 1024 m (more biomes, not bigger ones)
+##   size       &"small" 384 m, &"normal" 512 m, &"large" 1024 m (more biomes, not bigger ones)
 ##   kinds      biome -> kind id, for the biomes whose kind is picked (the rest roll per seed)
 ##   resources  &"lean" / &"normal" / &"rich": how many gatherable nodes, overall
 ##   water      &"dry" (only the hub pond and the lake) / &"normal" / &"wet" (more ponds, two rivers)
@@ -10,7 +10,7 @@ extends RefCounted
 ## Everything on "normal" (and no kinds picked) builds exactly what the seed always built.
 
 const SIZES: Array[StringName] = [&"small", &"normal", &"large"]
-const SIZE_METRES := {&"small": 256, &"normal": 512, &"large": 1024}
+const SIZE_METRES := {&"small": 384, &"normal": 512, &"large": 1024}
 const RESOURCES: Array[StringName] = [&"lean", &"normal", &"rich"]
 const WATER: Array[StringName] = [&"dry", &"normal", &"wet"]
 const TERRAIN: Array[StringName] = [&"gentle", &"normal", &"rugged"]

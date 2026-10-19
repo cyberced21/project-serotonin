@@ -37,6 +37,23 @@ const RIM_START := 172.0
 const RIM_HEIGHT := 62.0
 const RIM_WARP := 22.0
 
+## Other sizes (WorldSettings size): a small world is one ring round the hub (no Frostpeak; its
+## coal and gold come from the quarry's levels), a large one the normal rings and two more out
+## to the rim, repeating the biomes with kinds not used yet (one village, one quarry still).
+const SMALL_RING: Array[StringName] = [&"hearthvale", &"pinewood", &"goldmeadow", &"stillwater", &"quarry"]
+const SMALL_RADIUS := Vector2(60.0, 76.0)
+const SMALL_HUB_OFFSET := Vector2(0.0, 16.0)
+const SMALL_QUARRY_DISTANCE := 92.0
+const LARGE_RINGS := [
+	[[&"pinewood", &"goldmeadow", &"stillwater", &"frostpeak", &"pinewood", &"goldmeadow", &"pinewood",
+			&"frostpeak", &"goldmeadow"], Vector2(205.0, 240.0)],
+	[[&"pinewood", &"pinewood", &"pinewood", &"pinewood", &"goldmeadow", &"goldmeadow", &"goldmeadow",
+			&"frostpeak", &"frostpeak", &"frostpeak", &"frostpeak", &"stillwater", &"stillwater"], Vector2(310.0, 360.0)],
+]
+## A large world's landmarks: this many rounds of the normal map's ruins, camps and rare spots.
+const LARGE_LANDMARK_ROUNDS := 3
+const LARGE_POND_SCALE := 3
+
 ## Biome sites: the inner ring's and the outer ring's biomes (each ring is shuffled per seed;
 ## the inner ring gets one more, a random repeat of its own), and how far out each ring sits.
 ## Hearthvale (the village) is always one of them; the extra one repeats a forest or the fields.
@@ -228,6 +245,10 @@ var _kind_rng := RandomNumberGenerator.new()  # its own, so rolling kinds doesn'
 var _ramp_top: Array[float] = []   # per quarry wall: angle of its ramp's top end
 var _ramp_span: Array[float] = []  # per quarry wall: angle its ramp covers
 var _relief := 1.0  # biome heights × this (WorldSettings terrain)
+## With many sites (a large world): per CANDIDATE_CELL square of warped space, the only sites that
+## can be nearest there or blend in, so a pixel doesn't measure the distance to all of them.
+const CANDIDATE_CELL := 32.0
+var _candidates: Dictionary[Vector2i, PackedInt32Array] = {}
 
 
 ## `metres_per_pixel` > 1: a coarser map for a preview (the same land, less detail).
@@ -369,7 +390,10 @@ func _roll_kinds() -> void:
 		kinds[biome] = settings["kinds"].get(biome, rolled)  # picked, so the rolls after it stay the same
 	hub_ramp = HUB_RAMP * (0.55 if kinds[&"clearing"] == &"hollow" else 1.0)
 	quarry_walls.assign(QUARRY_KIND_WALLS[kinds[&"quarry"]])
-	hub = Vector2.from_angle(_kind_rng.randf() * TAU) * _kind_rng.randf_range(HUB_OFFSET.x, HUB_OFFSET.y)
+	var offset := SMALL_HUB_OFFSET if settings["size"] == &"small" else HUB_OFFSET
+	hub = Vector2.from_angle(_kind_rng.randf() * TAU) * _kind_rng.randf_range(offset.x, offset.y)
+	if settings["size"] == &"small":
+		hub_ramp *= 0.6  # the ring sits close: let its ground rise sooner
 	var wealth := RandomNumberGenerator.new()
 	wealth.seed = sub_seed(&"wealth")
 	rich = RICH_ITEMS[wealth.randi_range(0, RICH_ITEMS.size() - 1)]
@@ -380,6 +404,16 @@ func _roll_kinds() -> void:
 
 func _place_sites() -> void:
 	sites = [{"biome": &"clearing", "kind": kinds[&"clearing"], "pos": hub, "tier": 0}]
+	if settings["size"] == &"small":
+		var ring := SMALL_RING.duplicate()
+		_shuffle(ring)
+		_ring(ring, SMALL_RADIUS, 1, _far(SITE_MAX_DISTANCE))
+		for s in sites:
+			if s["biome"] == &"quarry":
+				s["pos"] = (s["pos"] as Vector2).normalized() * SMALL_QUARRY_DISTANCE
+		_place_peaks()
+		_index_candidates()
+		return
 	var inner := INNER_BIOMES.duplicate()
 	while inner.size() < INNER_COUNT:
 		inner.append(INNER_REPEATS[_rng.randi_range(0, INNER_REPEATS.size() - 1)])
@@ -391,25 +425,90 @@ func _place_sites() -> void:
 	for s in sites:
 		if s["biome"] == &"quarry":
 			s["pos"] = (s["pos"] as Vector2).limit_length(QUARRY_MAX_DISTANCE)
+	if settings["size"] == &"large":
+		_large_rings()
 	_place_peaks()
+	_index_candidates()
 
 
-## Frostpeak's summits, by kind: one on the site; two either side of it with a saddle between;
-## or the two ends of a ridge running across the way to the hub.
+## A large world's extra rings, from their own random numbers. Each repeated biome takes a kind
+## no site of it has yet while there is one.
+func _large_rings() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = sub_seed(&"large_rings")
+	var used: Dictionary[StringName, Array] = {}
+	for b in kinds:
+		used[b] = [kinds[b]]
+	for ring in LARGE_RINGS:
+		var biomes: Array = ring[0].duplicate()
+		for i in range(biomes.size() - 1, 0, -1):
+			var j := rng.randi_range(0, i)
+			var t: Variant = biomes[i]
+			biomes[i] = biomes[j]
+			biomes[j] = t
+		var first := sites.size()
+		_ring(biomes, ring[1], 2, _far(SITE_MAX_DISTANCE), rng)
+		for k in range(first, sites.size()):
+			var b: StringName = sites[k]["biome"]
+			var fresh: Array = []
+			for option in KINDS[b]:
+				if not used[b].has(option[0]):
+					fresh.append(option[0])
+			var pool: Array = fresh if not fresh.is_empty() else KINDS[b].map(func(o: Array) -> StringName: return o[0])
+			sites[k]["kind"] = pool[rng.randi_range(0, pool.size() - 1)]
+			used[b].append(sites[k]["kind"])
+
+
+## Each Frostpeak site's summits (site["peaks"]), by its kind: one on the site; two either side of
+## it with a saddle between; or the two ends of a ridge running across the way to the hub.
+## `peaks` keeps the first Frostpeak's.
 func _place_peaks() -> void:
 	peaks.clear()
-	var fi := _site_index(&"frostpeak")
-	if fi < 0:
-		return
-	var at: Vector2 = sites[fi]["pos"]
-	var across := (at - hub).normalized().orthogonal()
-	match kinds[&"frostpeak"]:
-		&"twin_peaks":
-			peaks = [at + across * 26.0, at - across * 26.0]
-		&"ridge":
-			peaks = [at + across * 42.0, at - across * 42.0]
-		_:
-			peaks = [at]
+	for s in sites:
+		if s["biome"] != &"frostpeak":
+			continue
+		var at: Vector2 = s["pos"]
+		var across := (at - hub).normalized().orthogonal()
+		var these: Array[Vector2] = [at]
+		match s["kind"]:
+			&"twin_peaks":
+				these = [at + across * 26.0, at - across * 26.0]
+			&"ridge":
+				these = [at + across * 42.0, at - across * 42.0]
+		s["peaks"] = these
+		if peaks.is_empty():
+			peaks = these
+
+
+## For a world with many sites: which sites each CANDIDATE_CELL square (of warped space) needs.
+## A site is left out only where it can't be nearest and its blend weight is below _pixel's cut-off
+## everywhere in the square, so the result is the same as measuring every site.
+func _index_candidates() -> void:
+	_candidates.clear()
+	if sites.size() <= 12:
+		return  # few enough to measure them all (and the normal map stays exactly as it was)
+	var reach := BIOME_BLEND * log(100.0) / 3.0 + 1.0  # where the weight falls under 0.01, and a margin
+	var lo := origin - Vector2.ONE * (CELL_WARP + CANDIDATE_CELL)
+	var n := int((metres + 2.0 * (CELL_WARP + CANDIDATE_CELL)) / CANDIDATE_CELL) + 1
+	for cy in n:
+		for cx in n:
+			var rect := Rect2(lo + Vector2(cx, cy) * CANDIDATE_CELL, Vector2.ONE * CANDIDATE_CELL)
+			var nearest_far := INF  # no point in the square is further than this from its nearest site
+			for site in sites:
+				nearest_far = minf(nearest_far, _far_corner(rect, site["pos"]))
+			var list := PackedInt32Array()
+			for k in sites.size():
+				var p: Vector2 = sites[k]["pos"]
+				var near := p.distance_to(p.clamp(rect.position, rect.end))
+				if near <= nearest_far + reach:
+					list.append(k)
+			_candidates[Vector2i(cx, cy)] = list
+
+
+static func _far_corner(rect: Rect2, p: Vector2) -> float:
+	var dx := maxf(absf(p.x - rect.position.x), absf(p.x - rect.end.x))
+	var dy := maxf(absf(p.y - rect.position.y), absf(p.y - rect.end.y))
+	return sqrt(dx * dx + dy * dy)
 
 
 func _site_index(biome: StringName) -> int:
@@ -421,15 +520,18 @@ func _site_index(biome: StringName) -> int:
 
 ## Spreads `biomes` round the hub, evenly but jittered, keeping MIN_SITE_GAP between sites
 ## (as far as it can: after a few tries it takes what it has).
-func _ring(biomes: Array, radius: Vector2, tier: int) -> void:
-	var start := _rng.randf() * TAU
-	var step := TAU / biomes.size()
+func _ring(biomes: Array, radius: Vector2, tier: int, max_distance := SITE_MAX_DISTANCE,
+		rng: RandomNumberGenerator = null) -> void:
+	if rng == null:
+		rng = _rng
+	var start := rng.randf() * TAU
+	var angle_step := TAU / biomes.size()
 	for i in biomes.size():
 		var best := Vector2.ZERO
 		var best_gap := -1.0
 		for attempt in 24:
-			var a := start + i * step + _rng.randf_range(-0.3, 0.3) * step
-			var p := (hub + Vector2.from_angle(a) * _rng.randf_range(radius.x, radius.y)).limit_length(SITE_MAX_DISTANCE)
+			var a := start + i * angle_step + rng.randf_range(-0.3, 0.3) * angle_step
+			var p := (hub + Vector2.from_angle(a) * rng.randf_range(radius.x, radius.y)).limit_length(max_distance)
 			var gap := INF
 			for s in sites:
 				gap = minf(gap, p.distance_to(s["pos"]))
@@ -453,6 +555,9 @@ func _shuffle(a: Array) -> void:
 
 func _pixel(w: Vector2, i: int) -> void:
 	var warped := w + Vector2(_warp_x.get_noise_2dv(w), _warp_y.get_noise_2dv(w)) * CELL_WARP
+	if not _candidates.is_empty():
+		_pixel_among(w, warped, i)
+		return
 	var dist := PackedFloat32Array()
 	dist.resize(sites.size())
 	var nearest := 0
@@ -477,6 +582,37 @@ func _pixel(w: Vector2, i: int) -> void:
 	heights[i] = h
 	var biome: StringName = sites[nearest]["biome"]
 	cells[i] = RIM_CELL if rim > 0.5 else nearest
+	ids[i] = BIOME_TEXTURE.get(biome, WorldMap.TEX_DEFAULT) if rim < 0.3 else WorldMap.TEX_DEFAULT
+
+
+## _pixel for a world with many sites: only the sites that matter in this spot's square.
+func _pixel_among(w: Vector2, warped: Vector2, i: int) -> void:
+	var key := Vector2i(((warped - origin + Vector2.ONE * (CELL_WARP + CANDIDATE_CELL)) / CANDIDATE_CELL).floor())
+	var list: PackedInt32Array = _candidates.get(key, PackedInt32Array())
+	if list.is_empty():
+		list = PackedInt32Array(range(sites.size()))
+	var dist := PackedFloat32Array()
+	dist.resize(list.size())
+	var nearest := 0
+	for k in list.size():
+		dist[k] = warped.distance_to(sites[list[k]]["pos"])
+		if dist[k] < dist[nearest]:
+			nearest = k
+	var h := 0.0
+	var total := 0.0
+	for k in list.size():
+		var weight := exp(-(dist[k] - dist[nearest]) * 3.0 / BIOME_BLEND)
+		if weight < 0.01:
+			continue
+		h += _profile(sites[list[k]], w) * weight
+		total += weight
+	h = h / total * _relief
+	h *= smoothstep(HUB_RADIUS, HUB_RADIUS + hub_ramp, w.distance_to(hub))
+	var rim := _rim(w)
+	h += rim * rim * RIM_HEIGHT + rim * (_ridges.get_noise_2dv(w) * 0.5 + 0.5) * RIM_HEIGHT * 0.35
+	heights[i] = h
+	var biome: StringName = sites[list[nearest]]["biome"]
+	cells[i] = RIM_CELL if rim > 0.5 else list[nearest]
 	ids[i] = BIOME_TEXTURE.get(biome, WorldMap.TEX_DEFAULT) if rim < 0.3 else WorldMap.TEX_DEFAULT
 
 
@@ -518,7 +654,7 @@ func _profile(site: Dictionary, w: Vector2) -> float:
 			var rough := 7.0 if kind == &"broken_pit" else 4.0
 			return 8.0 + _rough.get_noise_2dv(w) * rough + hills * 6.0 + bumps
 		&"frostpeak":   # mountains on the site, snowy above the shader's snow line
-			return _mountain(w) + hills * 6.0
+			return _mountain(w, site) + hills * 6.0
 		&"hearthvale":  # round the village's flat: hills for a valley, low ground by a lake
 			if kind == &"lakeside_village":
 				return 0.5 + swell * 2.0 + bumps * 0.3
@@ -528,9 +664,10 @@ func _profile(site: Dictionary, w: Vector2) -> float:
 
 ## Frostpeak's height at `w`: a cone round each summit, or for a Ridge a spine between its two
 ## ends; ridged noise roughens it more the higher up.
-func _mountain(w: Vector2) -> float:
+func _mountain(w: Vector2, site: Dictionary) -> float:
 	var cone := 0.0
-	if kinds.get(&"frostpeak") == &"ridge" and peaks.size() == 2:
+	var peaks: Array[Vector2] = site.get("peaks", [site["pos"]] as Array[Vector2])
+	if site.get("kind") == &"ridge" and peaks.size() == 2:
 		var d := w.distance_to(Geometry2D.get_closest_point_to_segment(w, peaks[0], peaks[1]))
 		cone = pow(1.0 - smoothstep(0.0, 55.0, d), 1.4) * 0.8
 	else:
@@ -680,8 +817,12 @@ func _place_water() -> void:
 	if not village.is_empty() and village["lakeside"]:
 		var vp: Vector2 = village["center"] + (VILLAGE_POND["offset"] as Vector2).rotated(village["angle"])
 		_basin("VillagePond", vp, VILLAGE_POND["radius"], VILLAGE_POND["depth"], false, false, 3.5)
-	var si := _site_index(&"stillwater")
-	if si >= 0:
+	var lake_no := 0
+	for si in sites.size():
+		if sites[si]["biome"] != &"stillwater":
+			continue
+		lake_no += 1
+		var suffix := "" if lake_no == 1 else str(lake_no)  # the first is "Lake": rivers run into it
 		var at: Vector2 = (sites[si]["pos"] as Vector2).move_toward(hub, 10.0)
 		if not quarry.is_empty():  # keep the lake's banks out of the quarry's apron
 			var qc: Vector2 = quarry["center"]
@@ -689,20 +830,21 @@ func _place_water() -> void:
 			if at.distance_to(qc) < need:
 				at = qc + (at - qc).normalized() * need
 		at = at.limit_length(_far(140.0))
-		match kinds[&"stillwater"]:
+		match sites[si]["kind"]:
 			&"island_lake":  # a wider lake, an island in its middle
-				_basin("Lake", at, LAKE_RADIUS + 7.0, LAKE_DEPTH, true)
+				_basin("Lake" + suffix, at, LAKE_RADIUS + 7.0, LAKE_DEPTH, true)
 				_island(at, ISLAND_RADIUS)
 			&"marsh":  # a smaller deep pond for the char, shallow pools scattered round it
-				_basin("Lake", at, LAKE_RADIUS - 4.0, LAKE_DEPTH, true)
+				_basin("Lake" + suffix, at, LAKE_RADIUS - 4.0, LAKE_DEPTH, true)
 				var a0 := _rng.randf() * TAU
 				for k in MARSH_POOLS:
 					var p := at + Vector2.from_angle(a0 + k * TAU / MARSH_POOLS + _rng.randf_range(-0.4, 0.4)) \
 							* _rng.randf_range(20.0, 26.0)
-					_basin("Marsh%d" % (k + 1), p, _rng.randf_range(4.0, 6.0), _rng.randf_range(0.5, 0.7), false, false)
+					_basin("Marsh%s%d" % [suffix, k + 1], p, _rng.randf_range(4.0, 6.0), _rng.randf_range(0.5, 0.7), false, false)
 			_:
-				_basin("Lake", at, LAKE_RADIUS + 4.0, LAKE_DEPTH, true)
-	for n in WorldSettings.PONDS[settings["water"]]:
+				_basin("Lake" + suffix, at, LAKE_RADIUS + 4.0, LAKE_DEPTH, true)
+	var ponds: int = WorldSettings.PONDS[settings["water"]] * (LARGE_POND_SCALE if settings["size"] == &"large" else 1)
+	for n in ponds:
 		var r := _rng.randf_range(POND_RADIUS.x, POND_RADIUS.y)
 		var best := Vector2.INF
 		var best_score := INF
@@ -1064,6 +1206,11 @@ func _place_landmarks() -> void:
 	landmarks.clear()
 	var lrng := RandomNumberGenerator.new()
 	lrng.seed = sub_seed(&"landmarks")
+	for round in LARGE_LANDMARK_ROUNDS if settings["size"] == &"large" else 1:
+		_landmark_round(lrng)
+
+
+func _landmark_round(lrng: RandomNumberGenerator) -> void:
 	var ruins := 1 + int(lrng.randf() < 0.4)
 	for k in ruins:
 		var kind: Array = RUIN_KINDS[lrng.randi_range(0, RUIN_KINDS.size() - 1)]

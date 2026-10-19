@@ -46,6 +46,7 @@ func _ready() -> void:
 	_player.process_mode = Node.PROCESS_MODE_DISABLED
 	var loading := LoadingScreen.new(world_name, Worlds.thumb_path(Worlds.current) if Worlds.current != "" else "")
 	add_child(loading)
+	get_viewport().disable_3d = true  # nothing to see behind the loading screen: no frame time spent drawing it
 	await get_tree().process_frame
 	var started := Time.get_ticks_msec()
 	map = ProcgenMap.new(world_seed, settings)
@@ -56,7 +57,8 @@ func _ready() -> void:
 		await get_tree().process_frame
 	_thread.wait_to_finish()
 	_thread = null
-	print("Procgen: seed %d generated in %d ms" % [world_seed, Time.get_ticks_msec() - started])
+	var times := PackedStringArray(["map %d" % (Time.get_ticks_msec() - started)])
+	var lap := Time.get_ticks_msec()
 	await _build_terrain(func(t: float) -> void:
 		loading.report(SHARE_MAP + t * SHARE_TERRAIN, "Laying the ground"))
 	loading.report(SHARE_MAP + SHARE_TERRAIN, "Filling the water")
@@ -74,14 +76,19 @@ func _ready() -> void:
 	for biome in map.kinds:
 		Biome.kind_names[biome] = map.kind_name(biome)
 	_place_player()
+	times.append("ground, water, village %d" % (Time.get_ticks_msec() - lap))
+	lap = Time.get_ticks_msec()
 	await get_tree().process_frame  # the landmarks' meadows scatter first, as they always have
 	var placed := SHARE_MAP + SHARE_TERRAIN + SHARE_PLACES
 	await ProcgenPopulation.populate(self, map, frame_budget_ms, func(t: float) -> void:
 		loading.report(placed + t * (1.0 - placed) * 0.95, "Growing the forest" if t < 0.6 else "Scattering the meadows"))
+	times.append("nodes and scenery %d" % (Time.get_ticks_msec() - lap))
 	loading.report(1.0, "Almost there")
+	get_viewport().disable_3d = false
 	for i in 3:  # the first frames compile the shaders; keep them behind the loading screen
 		await get_tree().process_frame
-	print("Procgen: seed %d ready in %d ms" % [world_seed, Time.get_ticks_msec() - started])
+	print("Procgen: seed %d (%s) ready in %d ms: %s" % [world_seed, map.settings["size"],
+			Time.get_ticks_msec() - started, ", ".join(times)])
 	_player.process_mode = Node.PROCESS_MODE_INHERIT
 	loading.queue_free()
 
@@ -89,6 +96,7 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	if _thread:  # left while the map was still generating
 		_thread.wait_to_finish()
+	get_viewport().disable_3d = false
 	Biome.locator = Callable()
 	Biome.reset_quarry()
 
@@ -233,8 +241,17 @@ func _build_water() -> void:
 func _build_terrain(on_progress: Callable) -> void:
 	var images: Array[Image] = []
 	images.resize(Terrain3DRegion.TYPE_MAX)
+	var corner := map.origin
 	images[Terrain3DRegion.TYPE_HEIGHT] = map.height_image()
-	_terrain.data.import_images(images, Vector3(map.origin.x, 0.0, map.origin.y), 0.0, 1.0)
+	# Terrain3D only takes whole regions, so a map that doesn't fill them (a small world) is padded
+	# out to them with its own edge: the rim carries on to the regions' end
+	var region := float(_terrain.region_size)
+	var half := ceilf(map.metres * 0.5 / region) * region
+	if half > map.metres * 0.5:
+		corner = Vector2.ONE * -half
+		images[Terrain3DRegion.TYPE_HEIGHT] = _padded(images[Terrain3DRegion.TYPE_HEIGHT], int(half * 2.0),
+				Vector2i(map.origin - corner))
+	_terrain.data.import_images(images, Vector3(corner.x, 0.0, corner.y), 0.0, 1.0)
 	var frame_start := Time.get_ticks_usec()
 	for y in map.size:
 		for x in map.size:
@@ -247,6 +264,16 @@ func _build_terrain(on_progress: Callable) -> void:
 			await get_tree().process_frame
 			frame_start = Time.get_ticks_usec()
 	_terrain.data.update_maps(Terrain3DRegion.TYPE_CONTROL)  # painting at runtime only reaches the GPU here
+
+
+## `img` in the middle of an n × n image at `at`, each pixel round it a copy of the nearest edge pixel.
+static func _padded(img: Image, n: int, at: Vector2i) -> Image:
+	var out := Image.create_empty(n, n, false, img.get_format())
+	var last := img.get_size() - Vector2i.ONE
+	for y in n:
+		for x in n:
+			out.set_pixel(x, y, img.get_pixelv((Vector2i(x, y) - at).clamp(Vector2i.ZERO, last)))
+	return out
 
 
 ## A fresh character starts in the hub; a saved one where they left off, but never under the ground.

@@ -85,7 +85,8 @@ static func populate(parent: Node3D, map: ProcgenMap, budget_ms := 0.0, on_progr
 	var spawners: Array[NodeSpawner] = []
 	for i in map.sites.size():
 		var site: Dictionary = map.sites[i]
-		var spec: Dictionary = NODES.get(site["biome"], {}).get(site["tier"], {})
+		var tiers: Dictionary = NODES.get(site["biome"], {})
+		var spec: Dictionary = tiers.get(site["tier"], tiers.get(2, tiers.get(1, {})))  # a large world's repeats
 		if spec.is_empty():
 			continue
 		spec = _with_kind(spec, site.get("kind", &""))
@@ -118,14 +119,20 @@ static func populate(parent: Node3D, map: ProcgenMap, budget_ms := 0.0, on_progr
 	var all: Array[Node3D] = []
 	all.append_array(spawners)
 	all.append_array(scatters)
+	var slow := PackedStringArray()
 	for k in all.size():
+		var t := Time.get_ticks_msec()
 		all[k].set("frame_budget_ms", budget_ms)
 		parent.add_child(all[k])
 		if budget_ms > 0.0:
 			if not all[k].get("done"):
 				await all[k].finished
+			if Time.get_ticks_msec() - t > 1000:
+				slow.append("%s %d" % [all[k].name, Time.get_ticks_msec() - t])
 			if on_progress.is_valid():
 				on_progress.call(float(k + 1) / all.size())
+	if not slow.is_empty():
+		print("ProcgenPopulation: slow: ", ", ".join(slow))
 
 
 ## `spec` with its kind's weights and count applied (see KIND_NODES).
@@ -234,6 +241,8 @@ static func _scenery(map: ProcgenMap, i: int, box: Rect2) -> SceneryScatter:
 	var scatter := SceneryScatter.new()
 	scatter.name = "Scenery_%d_%s" % [i, biome]
 	scatter.area = box
+	if map.settings["size"] == &"large":  # big cells' boxes overlap a lot: keep to its own cell
+		scatter.accept = func(p: Vector2) -> bool: return map.cells[map.pixel_index(p)] == i
 	scatter.seed = map.sub_seed(StringName(scatter.name))
 	var ground: Array[int] = [WorldMap.TEX_DEFAULT]
 	match biome:

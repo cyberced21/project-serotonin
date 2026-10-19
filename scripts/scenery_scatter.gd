@@ -16,6 +16,8 @@ const CELL := 32.0
 ## Ground lower than this is sand, pond bed or water (keep in sync with the terrain shader's sand_height).
 const SAND_HEIGHT := -0.04
 const SNOW_HEIGHT := 38.0
+## The keep-out spots are filed in squares this size (m).
+const KEEP_OUT_CELL := 16.0
 
 signal finished
 
@@ -35,12 +37,17 @@ signal finished
 @export var edge_ellipse := Vector4.ZERO
 
 var _keep_out: Array[Vector3] = []  # (x, z, radius)
+var _keep_out_grid: Dictionary[Vector2i, Array] = {}
+var _highest_water := -INF
 
 
 ## Milliseconds of scattering per frame before it waits for the next (a generated world's loading
 ## screen); 0 = all at once. The same scenery either way.
 var frame_budget_ms := 0.0
 var done := false
+## Optional func(p: Vector2) -> bool: where scenery may go at all, checked before anything costly
+## (a large generated world: only this scatter's own biome cell).
+var accept := Callable()
 
 
 func _ready() -> void:
@@ -74,7 +81,7 @@ func _scatter() -> void:
 				var p := centre + (off if layer.cluster.y > 1 else Vector2.ZERO)
 				var s := rng.randf_range(layer.scale_range.x, layer.scale_range.y)
 				var yaw := rng.randf() * TAU
-				if _thinned(p, rng):
+				if _thinned(p, rng) or (accept.is_valid() and not accept.call(p)):
 					continue
 				var xform: Variant = _place(terrain, layer, p, s, yaw)
 				if xform == null:
@@ -128,10 +135,10 @@ func _place(terrain: Terrain3D, layer: ScatterLayer, p: Vector2, s: float, yaw: 
 		for o in [Vector3(1, 0, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1), Vector3(0, 0, -1)]:
 			if not _allowed(layer, terrain.data.get_control_base_id(at + o * layer.clearance)):
 				return null
-	if WaterBody.depth_at(get_tree(), at) > 0.0:
+	if h < _highest_water and WaterBody.depth_at(get_tree(), at) > 0.0:  # (no water stands above its surface)
 		return null
-	for k in _keep_out:
-		var r := k.z + layer.clearance
+	for k in _keep_out_grid.get(Vector2i((p / KEEP_OUT_CELL).floor()), []):
+		var r: float = k.z + layer.clearance
 		if (p.x - k.x) * (p.x - k.x) + (p.y - k.y) * (p.y - k.y) < r * r:
 			return null
 	var basis := Basis(Vector3.UP, yaw)
@@ -147,6 +154,25 @@ func _collect_keep_out() -> void:
 	var player := get_tree().get_first_node_in_group("player") as Node3D
 	if player:
 		_keep(player.global_position, spawn_radius)
+	# each spot filed under every KEEP_OUT_CELL square it (plus any layer's clearance) reaches, so a
+	# spot is only checked against the few near it
+	var reach := 0.0
+	for layer in layers:
+		reach = maxf(reach, layer.clearance)
+	_keep_out_grid.clear()
+	for k in _keep_out:
+		var r := k.z + reach
+		var lo := Vector2i((Vector2(k.x - r, k.y - r) / KEEP_OUT_CELL).floor())
+		var hi := Vector2i((Vector2(k.x + r, k.y + r) / KEEP_OUT_CELL).floor())
+		for cy in range(lo.y, hi.y + 1):
+			for cx in range(lo.x, hi.x + 1):
+				var key := Vector2i(cx, cy)
+				if not _keep_out_grid.has(key):
+					_keep_out_grid[key] = []
+				_keep_out_grid[key].append(k)
+	_highest_water = -INF
+	for w in get_tree().get_nodes_in_group("water"):
+		_highest_water = maxf(_highest_water, (w as WaterBody).surface_height)
 
 
 ## The circles (x, z, radius) plants keep out of: round gatherable nodes, props and buildings.
