@@ -33,8 +33,10 @@ const RIM_WARP := 22.0
 
 ## Biome sites: the inner ring's and the outer ring's biomes (each ring is shuffled per seed;
 ## the inner ring gets one more, a random repeat of its own), and how far out each ring sits.
-const INNER_BIOMES: Array[StringName] = [&"pinewood", &"goldmeadow"]
-const INNER_COUNT := 3
+## Hearthvale (the village) is always one of them; the extra one repeats a forest or the fields.
+const INNER_BIOMES: Array[StringName] = [&"pinewood", &"goldmeadow", &"hearthvale"]
+const INNER_REPEATS: Array[StringName] = [&"pinewood", &"goldmeadow"]
+const INNER_COUNT := 4
 const INNER_RADIUS := Vector2(68.0, 92.0)
 const OUTER_BIOMES: Array[StringName] = [&"quarry", &"frostpeak", &"stillwater", &"pinewood"]
 const OUTER_RADIUS := Vector2(128.0, 150.0)
@@ -56,7 +58,36 @@ const KINDS := {
 	&"stillwater": [[&"great_lake", "Great Lake"], [&"marsh", "Marsh"], [&"island_lake", "Island Lake"]],
 	&"quarry": [[&"terraced_pit", "Terraced Pit"], [&"deep_pit", "Deep Pit"], [&"broken_pit", "Broken Pit"]],
 	&"frostpeak": [[&"lone_peak", "Lone Peak"], [&"twin_peaks", "Twin Peaks"], [&"ridge", "The Ridge"]],
+	&"hearthvale": [[&"valley_village", "Valley Village"], [&"lakeside_village", "Lakeside Village"]],
 }
+## Hearthvale: flat ground VILLAGE_RADIUS round the square (easing into the land over VILLAGE_RAMP),
+## a dirt square, and lanes to each door. The layout is the hand-built village's, round its square
+## (building id, offset in metres, facing in radians: its +Z points that way), turned to a random
+## angle per seed.
+const VILLAGE_RADIUS := 34.0
+const VILLAGE_RAMP := 28.0
+const VILLAGE_SQUARE := 7.5
+const VILLAGE_LANE := 1.0
+const VILLAGE_BUILDINGS := [
+	[&"town_hall", Vector2(14, 0), -1.5708],
+	[&"woodcutter", Vector2(-2, -15), 0.0],
+	[&"smithy", Vector2(13, 15), -2.4],
+	[&"fisher", Vector2(-12, 14), 0.0],
+	[&"baker_cottage", Vector2(-14, -13), 1.5708],
+	[&"prospector_cottage", Vector2(6, 23), 3.1416],
+]
+## Each lane stops this far in front of its building.
+const VILLAGE_LANE_STOP := 6.5
+const VILLAGE_PROPS := [  # [model, offset, facing]
+	[&"bench", Vector2(-6.5, -3), 1.5708], [&"bench", Vector2(-6.5, 3.5), 1.5708],
+	[&"lamp_post", Vector2(-5.5, -6.5), 2.4], [&"lamp_post", Vector2(6.5, -5.5), 0.8],
+	[&"lamp_post", Vector2(2, 7.5), -1.6], [&"barrel", Vector2(17.5, 19.5), 0.0],
+	[&"barrel", Vector2(18.2, 18.6), 1.0], [&"crates", Vector2(-15.5, 11.5), 0.5],
+	[&"crates", Vector2(8.5, -8.5), -0.4],
+]
+## A Lakeside Village's pond, behind the fisher's (as in the hand-built village).
+const VILLAGE_POND := {"offset": Vector2(-12, 24), "radius": 7.0, "depth": 0.75}
+
 ## The quarry's walls per kind (outermost first): one level below each, the last is the floor.
 const QUARRY_KIND_WALLS := {
 	&"terraced_pit": [32.0, 22.0, 12.0],
@@ -136,6 +167,9 @@ var peaks: Array[Vector2] = []
 var waters: Array[Dictionary] = []
 ## The quarry pit, if there is one: {center: Vector2, rim_height: float, depth: float, walls: Array[float]}.
 var quarry: Dictionary = {}
+## Hearthvale's village, if there is one: {center: Vector2, height: float, angle: float, lakeside: bool,
+## buildings: [[id, pos: Vector2, facing]], props: [[model, pos, facing]]}, positions in world XZ.
+var village: Dictionary = {}
 ## The trails' centre lines, world XZ, one point a metre, each starting at the hub.
 var trails: Array[PackedVector2Array] = []
 
@@ -204,6 +238,7 @@ func generate() -> void:
 		for x in SIZE:
 			var i := y * SIZE + x
 			_pixel(world(x, y), i)
+	_stamp_village()
 	_stamp_quarry()
 	_place_water()
 	_lay_trails()
@@ -265,7 +300,7 @@ func _place_sites() -> void:
 	sites = [{"biome": &"clearing", "kind": kinds[&"clearing"], "pos": hub, "tier": 0}]
 	var inner := INNER_BIOMES.duplicate()
 	while inner.size() < INNER_COUNT:
-		inner.append(INNER_BIOMES[_rng.randi_range(0, INNER_BIOMES.size() - 1)])
+		inner.append(INNER_REPEATS[_rng.randi_range(0, INNER_REPEATS.size() - 1)])
 	_shuffle(inner)
 	var outer := OUTER_BIOMES.duplicate()
 	_shuffle(outer)
@@ -402,6 +437,10 @@ func _profile(site: Dictionary, w: Vector2) -> float:
 			return 8.0 + _rough.get_noise_2dv(w) * rough + hills * 6.0 + bumps
 		&"frostpeak":   # mountains on the site, snowy above the shader's snow line
 			return _mountain(w) + hills * 6.0
+		&"hearthvale":  # round the village's flat: hills for a valley, low ground by a lake
+			if kind == &"lakeside_village":
+				return 0.5 + swell * 2.0 + bumps * 0.3
+			return 1.0 + hills * 9.0 + bumps * 0.5
 	return hills * 10.0
 
 
@@ -421,6 +460,45 @@ func _mountain(w: Vector2) -> float:
 
 
 # --- stamps -----------------------------------------------------------------------------------
+
+## Flattens Hearthvale's middle for the village, paints its square and lanes, and lays out its
+## buildings and props (see VILLAGE_*). The flat sits at the ground's own height there, kept out
+## of the water and off the hilltops; a Lakeside Village sits just above its pond.
+func _stamp_village() -> void:
+	village = {}
+	var vi := _site_index(&"hearthvale")
+	if vi < 0:
+		return
+	var c: Vector2 = sites[vi]["pos"]
+	var angle := _rng.randf() * TAU
+	var h := clampf(height_at(c), 0.6, 5.0)
+	if kinds.get(&"hearthvale") == &"lakeside_village":
+		h = 0.15  # just above the pond, as in the hand-built village, so the fisher's jetty meets it
+	var turn := func(offset: Vector2) -> Vector2: return c + offset.rotated(angle)
+	village = {"center": c, "height": h, "angle": angle, "lakeside": kinds.get(&"hearthvale") == &"lakeside_village",
+			"buildings": [], "props": []}
+	var lanes: Array = []
+	for b in VILLAGE_BUILDINGS:
+		var at: Vector2 = turn.call(b[1])
+		var facing: float = b[2] - angle  # a +Z facing turns the other way round Y
+		village["buildings"].append([b[0], at, facing])
+		lanes.append([c, at + Vector2(sin(facing), cos(facing)) * VILLAGE_LANE_STOP])
+	for p in VILLAGE_PROPS:
+		village["props"].append([p[0], turn.call(p[1]), p[2] - angle])
+	_for_pixels_near(c, VILLAGE_RADIUS + VILLAGE_RAMP, func(i: int, w: Vector2) -> void:
+		var d := w.distance_to(c) + _shore.get_noise_2dv(w) * 3.0
+		heights[i] = lerpf(h, heights[i], smoothstep(VILLAGE_RADIUS, VILLAGE_RADIUS + VILLAGE_RAMP, d))
+		if d < VILLAGE_RADIUS + 4.0:
+			cells[i] = vi
+		if w.distance_to(c) < VILLAGE_SQUARE:
+			ids[i] = WorldMap.TEX_PATH
+		else:
+			ids[i] = WorldMap.TEX_DEFAULT if d < VILLAGE_RADIUS else ids[i]
+			for lane in lanes:
+				var q := Geometry2D.get_closest_point_to_segment(w, lane[0], lane[1])
+				if w.distance_to(q) < VILLAGE_LANE:
+					ids[i] = WorldMap.TEX_PATH)
+
 
 ## Calls fn(i, w) for every pixel within `radius` of world XZ `at`.
 func _for_pixels_near(at: Vector2, radius: float, fn: Callable) -> void:
@@ -517,6 +595,9 @@ func _place_water() -> void:
 	var a := _rng.randf() * TAU
 	_basin("HubPond", hub + Vector2.from_angle(a) * float(HUB_POND["distance"]),
 			HUB_POND["radius"], HUB_POND["depth"], false)
+	if not village.is_empty() and village["lakeside"]:
+		var vp: Vector2 = village["center"] + (VILLAGE_POND["offset"] as Vector2).rotated(village["angle"])
+		_basin("VillagePond", vp, VILLAGE_POND["radius"], VILLAGE_POND["depth"], false, false, 3.5)
 	var si := _site_index(&"stillwater")
 	if si >= 0:
 		var at: Vector2 = (sites[si]["pos"] as Vector2).move_toward(hub, 10.0)
@@ -561,6 +642,8 @@ func _pond_spot_ok(p: Vector2, r: float) -> bool:
 	var biome := biome_at(p)
 	if biome == &"quarry" or biome == &"frostpeak" or biome == &"":
 		return false
+	if not village.is_empty() and p.distance_to(village["center"]) < VILLAGE_RADIUS + VILLAGE_RAMP + r:
+		return false
 	if not quarry.is_empty() and p.distance_to(quarry["center"]) < quarry_walls[0] + QUARRY_APRON + QUARRY_BLEND + r + 10.0:
 		return false
 	for w in waters:
@@ -570,9 +653,11 @@ func _pond_spot_ok(p: Vector2, r: float) -> bool:
 
 
 ## Carves a basin round `at` down below WATER_LEVEL, the land easing down to the shore over a ramp
-## that's longer the higher the ground stands, and records it in `waters`.
-func _basin(water_name: String, at: Vector2, r: float, depth: float, lake: bool, trail := true) -> void:
-	var ramp := clampf(6.0 + height_at(at) * 2.5, 8.0, 40.0)
+## that's longer the higher the ground stands (or `ramp` m: a dug pond's short bank), and records it
+## in `waters`.
+func _basin(water_name: String, at: Vector2, r: float, depth: float, lake: bool, trail := true, ramp := -1.0) -> void:
+	if ramp < 0.0:
+		ramp = clampf(6.0 + height_at(at) * 2.5, 8.0, 40.0)
 	_for_pixels_near(at, r + ramp + 3.0, func(i: int, w: Vector2) -> void:
 		var pd := w.distance_to(at) + _shore.get_noise_2dv(w) * 2.0
 		var h := heights[i] * smoothstep(r + 2.0, r + ramp, pd)
@@ -630,6 +715,8 @@ func _trail_targets() -> PackedVector2Array:
 	for i in range(1, sites.size()):
 		var p: Vector2 = sites[i]["pos"]
 		match sites[i]["biome"]:
+			&"hearthvale":  # the edge of its square
+				p += (hub - p).normalized() * (VILLAGE_SQUARE + 1.0)
 			&"stillwater":
 				continue  # its site is under the lake, which gets a trail of its own
 			&"quarry":
@@ -768,6 +855,7 @@ const PREVIEW_TINT := {
 	&"clearing": Color(0.45, 0.62, 0.33), &"pinewood": Color(0.20, 0.38, 0.22),
 	&"goldmeadow": Color(0.74, 0.70, 0.36), &"stillwater": Color(0.38, 0.55, 0.52),
 	&"quarry": Color(0.62, 0.58, 0.52), &"frostpeak": Color(0.70, 0.74, 0.80),
+	&"hearthvale": Color(0.62, 0.56, 0.40),
 }
 
 

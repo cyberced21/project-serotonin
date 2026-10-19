@@ -17,6 +17,7 @@ const CHAR := preload("res://data/fish/char.tres")
 ## Schools per water body, as in the hand-built ponds and lake.
 const POND_SCHOOLS: Array[FishSpecies] = [PERCH, PERCH, TROUT, PIKE]
 const LAKE_SCHOOLS: Array[FishSpecies] = [TROUT, TROUT, PERCH, CHAR, CHAR]
+const PROP := preload("res://scripts/prop.gd")
 
 ## The seed the scene builds next time it loads (enter() sets it).
 static var world_seed := 1
@@ -61,6 +62,7 @@ func _ready() -> void:
 	map.generate()
 	_build_terrain()
 	_build_water()
+	_build_village()
 	Biome.locator = func(p: Vector3) -> StringName: return map.biome_at(Vector2(p.x, p.z))
 	if not map.quarry.is_empty():
 		Biome.quarry_rim_height = map.quarry["rim_height"]
@@ -83,6 +85,29 @@ func _exit_tree() -> void:
 
 ## A WaterBody per basin the map carved, built like the hand-made ponds in main.tscn: a box volume,
 ## the water surface, reeds and lily pads (PondDressing) and fish (FishPond).
+## Hearthvale's buildings (each with its villager) and props, where the map laid them out. Their
+## tiers are the Village autoload's, saved with this seed like everything else.
+func _build_village() -> void:
+	if map.village.is_empty():
+		return
+	var root := Node3D.new()
+	root.name = "Village"
+	add_child(root)
+	var y: float = map.village["height"]
+	for b in map.village["buildings"]:
+		var building := (load("res://scenes/village/%s.tscn" % b[0]) as PackedScene).instantiate() as Node3D
+		building.position = Vector3(b[1].x, y, b[1].y)
+		building.rotation.y = b[2]
+		root.add_child(building)
+	for p in map.village["props"]:
+		var prop := StaticBody3D.new()
+		prop.set_script(PROP)
+		prop.set("model", load("res://models/village/props/%s.glb" % p[0]))
+		prop.position = Vector3(p[1].x, y, p[1].y)
+		prop.rotation.y = p[2]
+		root.add_child(prop)
+
+
 func _build_water() -> void:
 	var material := ShaderMaterial.new()
 	material.shader = WATER_SHADER

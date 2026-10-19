@@ -37,6 +37,7 @@ const NODES := {
 	&"frostpeak": {2: {"count": 14, "spacing": 5.5, "entries": [[COAL, 2.0], [GOLD, 1.5], [IRON, 1.0]],
 			"min_normal_y": 0.8}},
 	&"quarry": {2: {"count": 6, "spacing": 5.0, "entries": [[ROCK, 2.0], [IRON, 1.0]]}},  # the apron
+	&"hearthvale": {1: {"count": 9, "spacing": 5.0, "entries": [[TREE, 2.0], [OAK, 1.5], [ROCK, 1.0]]}},  # round the flat
 }
 ## How a biome's kind changes its nodes: weights multiplied per scene, and "count" the number.
 const KIND_NODES := {
@@ -96,6 +97,9 @@ static func populate(parent: Node3D, map: ProcgenMap) -> void:
 			var qc: Vector2 = map.quarry["center"]
 			var walls: Array = map.quarry["walls"]
 			in_pit = func(p: Vector2) -> bool: return p.distance_to(qc) < float(walls[0]) + 1.5
+		if site["biome"] == &"hearthvale" and not map.village.is_empty():  # round the village, not in it
+			var vc: Vector2 = map.village["center"]
+			in_pit = func(p: Vector2) -> bool: return p.distance_to(vc) < ProcgenMap.VILLAGE_RADIUS
 		spawner.accept = func(p: Vector2) -> bool:
 			return map.cells[ProcgenMap.pixel_index(p)] == cell and not in_pit.call(p)
 		parent.add_child(spawner)

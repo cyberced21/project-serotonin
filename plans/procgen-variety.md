@@ -43,7 +43,7 @@ from what each biome is like, where things sit, and what turns up between them.
 1. **Biome kinds and an off-centre hub** ✅: the kind table, rolled per seed; each kind's height
    profile, scenery and node mix; Twin Peaks, Ridge, Marsh, Island Lake and the quarry kinds as
    shapes; the kind on the arrival card; the hub moved off the map's centre.
-2. **Hearthvale**: a village biome on the inner ring. A flattened valley, a square and lanes, the
+2. **Hearthvale** ✅: a village biome on the inner ring. A flattened valley, a square and lanes, the
    six village buildings with their villagers, upgrades saved with the seed, and lamps and benches.
 3. **Rivers**: a channel from the rim down to the lake, carved to the water line, its water built
    in segments, trails fording it.
