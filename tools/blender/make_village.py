@@ -23,10 +23,16 @@ import random
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from make_models import (OUT_DIR, axe_head_shade, blob, box, bmesh, bpy, export, felling_head,  # noqa: E402
+from make_models import (OUT_DIR, axe_head_shade, blob, box, bmesh, bpy, export, felling_head, weather_stonework,  # noqa: E402
                          make_object, paint, prism, reset, Vector)
 
 VILLAGE_DIR = os.path.join(OUT_DIR, "village")
+
+
+def export_building(name):
+    """models/village/<name>.glb, its stonework weathered like the rocks (weather_stonework)."""
+    weather_stonework()
+    export(os.path.join("village", name), loose_edges=True)
 
 
 # --- kit: named, painted pieces ---------------------------------------------------------------
@@ -309,7 +315,7 @@ def woodcutter():
             k.box("Flower", (0.12, 0.16, 0.12), (sx * 2.87, -0.3 + j * 0.3, 1.13), c, jit=0.02)
     k.box("Lantern", (0.16, 0.16, 0.22), (0.95, -2.3, 2.0), ("accent.3", "accent.3", "neutral.1"))
     k.chopping_block((-3.6, -4.5, 0))
-    export(os.path.join("village", "woodcutter"))
+    export_building("woodcutter")
 
 
 # --- smithy -----------------------------------------------------------------------------------
@@ -429,7 +435,7 @@ def smithy():
               (x * 2.82, -2.62, 2.3))
     k.add("SignCrystal", prism(6, 0.07, 0.01, 0.26), ("ore.amethyst", "accent.6", "accent.6"), (3.15, -3.1, 2.15),
           (0, 0.4, 0))
-    export(os.path.join("village", "smithy"))
+    export_building("smithy")
 
 
 # --- fisher's hut -----------------------------------------------------------------------------
@@ -513,7 +519,7 @@ def fisher():
     drying_rack(k, 2.3, 3.8, -0.4)
     k.barrel((-2.5, -1.9, 0), 0.28, 0.7)
     k.barrel((-1.9, -2.2, 0), 0.25, 0.6)
-    export(os.path.join("village", "fisher"))
+    export_building("fisher")
 
 
 # --- town hall --------------------------------------------------------------------------------
@@ -633,7 +639,7 @@ def town_hall():
         k.box("BannerTrim", (0.62, 0.06, 0.12), (sx * 1.75, -3.86, 1.2), "accent.3")
         k.post("LampPost", 0.06, 0, 2.5, sx * 3.0, -5.2, ("metal.1", "metal.1", "metal.0"))
         k.box("Lamp", (0.26, 0.26, 0.32), (sx * 3.0, -5.2, 2.65), ("neutral.1", "accent.3", "neutral.1"))
-    export(os.path.join("village", "town_hall"))
+    export_building("town_hall")
 
 
 # --- cottages (unlocked by the town hall, then upgraded like the houses) ----------------------
@@ -789,7 +795,7 @@ def baker_cottage():
     birch_pile(k, -1.0, 2.25, rows=((4, 0.12), (3, 0.34), (2, 0.56)))
     k.box("Lantern", (0.16, 0.16, 0.22), (0.85, -1.95, 2.0), ("accent.3", "accent.3", "neutral.1"))
     hanging_sign(k, -0.85, -1.83, 2.0, loaf_sign)
-    export(os.path.join("village", "baker_cottage"))
+    export_building("baker_cottage")
 
 
 def prospector_cottage():
@@ -872,7 +878,7 @@ def prospector_cottage():
         k.box("GoldBar", (0.2, 0.1, 0.07), (tx + 0.38 + ox, ty, z), ("ore.gold", "ore.gold", "accent.2"))
     hanging_sign(k, 0.85, -1.83, 2.0, pick_sign)
     k.box("Lantern", (0.16, 0.16, 0.22), (-0.85, -1.95, 2.0), ("accent.3", "accent.3", "neutral.1"))
-    export(os.path.join("village", "prospector_cottage"))
+    export_building("prospector_cottage")
 
 
 def baker_villager():

@@ -433,18 +433,20 @@ AO_RAYS = [(math.cos(i * 2.39996) * math.sqrt(1 - (0.1 + 0.85 * i / 11) ** 2),
             0.1 + 0.85 * i / 11) for i in range(12)]
 
 
-def bake_weathering(bm, cut, bvh, top_z, moss=(0.55, 0.82, 0.42), moss_amount=0.85, reach=0.7):
+def bake_weathering(bm, cut, bvh, top_z, moss=(0.55, 0.82, 0.42), moss_amount=0.85, reach=0.7, ground=0.0,
+                    only=None):
     """Weathered outside, fresh inside: writes the "cut_mark" colour (float, linear) of every
     face corner. Outside faces get a baked shade the rock shader multiplies in: crevices and the
     foot darker (rays against `bvh`, the whole rock, and the ground at z = 0), the top lighter,
     worn convex edges lighter, a little mottling, and moss patches low down and on ledges.
     Cut faces are (1, 1, 1) with alpha 0: the shader shows them clean and fresh, and the game
-    tells them from the outside by that alpha."""
+    tells them from the outside by that alpha. `ground`: the ground's height (None: no ground,
+    for something placed anywhere); `only(face)`: bake just those faces, the rest stay white."""
     layer = bm.loops.layers.float_color.get("cut_mark") or bm.loops.layers.float_color.new("cut_mark")
     bm.normal_update()
     shade = {}
     for v in bm.verts:
-        outside = [f for f in v.link_faces if not f[cut]]
+        outside = [f for f in v.link_faces if not f[cut] and (only is None or only(f))]
         if not outside:
             continue
         n = sum((f.normal for f in outside), Vector()).normalized()
@@ -454,12 +456,12 @@ def bake_weathering(bm, cut, bvh, top_z, moss=(0.55, 0.82, 0.42), moss_amount=0.
         occluded = 0
         for x, y, z in AO_RAYS:
             d = t * x + b * y + n * z
-            if d.z < 0 and o.z + d.z * reach < 0:  # into the ground (half: it's bright open ground)
+            if ground is not None and d.z < 0 and o.z + d.z * reach < ground:  # into the ground (half: it's bright open ground)
                 occluded += 0.5
             elif bvh.ray_cast(o, d, reach)[0] is not None:
                 occluded += 1
         ao = 1.0 - 0.65 * occluded / len(AO_RAYS)
-        h = max(0.0, min(1.0, v.co.z / top_z))
+        h = max(0.0, min(1.0, (v.co.z - (ground or 0.0)) / max(top_z - (ground or 0.0), 0.01)))
         convex, edges = 0.0, 0
         for e in v.link_edges:
             if not any(f[cut] for f in e.link_faces):
@@ -469,12 +471,62 @@ def bake_weathering(bm, cut, bvh, top_z, moss=(0.55, 0.82, 0.42), moss_amount=0.
         s = ao * (0.72 + 0.28 * h) * wear * (1.0 + 0.14 * noise.noise(v.co * 4.0))
         s = max(0.0, min(1.0, s))
         patch = noise.noise(v.co * 2.2 + Vector((7.0, 3.0, 1.0))) * 0.5 + 0.5
-        low = 1.0 - max(0.0, min(1.0, v.co.z / 0.5))
+        low = 1.0 - max(0.0, min(1.0, (v.co.z - (ground or 0.0)) / 0.5))
         mossy = max(0.0, min(1.0, (low * 0.9 + max(0.0, n.z) * 0.45) * patch * 1.7 - 0.45)) * moss_amount
         shade[v] = tuple(s * (1.0 + (m - 1.0) * mossy) for m in moss) + (1.0,)
     for f in bm.faces:
         for loop in f.loops:
-            loop[layer] = (1.0, 1.0, 1.0, 0.0) if f[cut] else shade.get(loop.vert, (1.0, 1.0, 1.0, 1.0))
+            if f[cut]:
+                loop[layer] = (1.0, 1.0, 1.0, 0.0)
+            elif only is not None and not only(f):
+                loop[layer] = (1.0, 1.0, 1.0, 1.0)
+            else:
+                loop[layer] = shade.get(loop.vert, (1.0, 1.0, 1.0, 1.0))
+
+
+def swatch_names():
+    """Palette UV (rounded) -> swatch name, to tell what a painted face is."""
+    return {tuple(round(c, 4) for c in swatch_uv(n)): n for n in SWATCHES}
+
+
+def weather_stonework(ground=0.0, moss_amount=0.5, prefix="stone."):
+    """Weathers the stone of everything built so far, as bake_weathering does a rock: the faces
+    painted a `prefix` swatch get dark joints where blocks meet (rays against the whole scene),
+    worn edges and moss low down and on top; anything else (wood, cloth, metal) stays as it is.
+    Export with loose_edges=True to keep it (the vertex colour). A building's upgrade tiers
+    (objects named T<n>_..., all standing in one place) each cast shade only on themselves."""
+    groups = {}
+    for o in bpy.context.scene.objects:
+        if o.type == "MESH" and len(o.data.polygons):
+            tier = o.name.split("_")[0] if o.name[:1] == "T" and o.name.split("_")[0][1:].isdigit() else ""
+            groups.setdefault(tier, []).append(o)
+    names = swatch_names()
+    for objs in groups.values():
+        _weather_group(objs, names, ground, moss_amount, prefix)
+
+
+def _weather_group(objs, names, ground, moss_amount, prefix):
+    verts, polys = [], []
+    for o in objs:  # the whole group in world space, for the rays
+        base = len(verts)
+        verts += [o.matrix_world @ v.co for v in o.data.vertices]
+        polys += [[base + i for i in p.vertices] for p in o.data.polygons]
+    bvh = BVHTree.FromPolygons(verts, polys)
+    top = max(v.z for v in verts)
+    for o in objs:
+        bm = bmesh.new()
+        bm.from_mesh(o.data)
+        uv = bm.loops.layers.uv.active
+        if uv is None:
+            bm.free()
+            continue
+        bm.transform(o.matrix_world)
+        cut = bm.faces.layers.int.get("cut") or bm.faces.layers.int.new("cut")
+        stony = lambda f: names.get(tuple(round(c, 4) for c in f.loops[0][uv].uv), "").startswith(prefix)
+        bake_weathering(bm, cut, bvh, top, moss_amount=moss_amount, reach=0.5, ground=ground, only=stony)
+        bm.transform(o.matrix_world.inverted())
+        bm.to_mesh(o.data)
+        bm.free()
 
 
 def shattered(name, rng, whole, seeds, choose, rubble=("stone.4", "stone.2", "stone.1"), size=1.0, out="",
@@ -2564,7 +2616,8 @@ def stone_block(name, size, seed, cap=False):
         bm = box((w + 0.12, d + 0.12, 0.14))
         paint(bm, shade_by_normal("stone.5", "stone.4", "stone.2", rng))
         make_object("Cap", bm, (0, 0, h / 2 - 0.07))
-    export(os.path.join("ruins", name))
+    weather_stonework(ground=None, moss_amount=0.7)  # (blocks stand at any height)
+    export(os.path.join("ruins", name), loose_edges=True)
 
 
 def plank_ramp(name, size, seed):

@@ -13,7 +13,6 @@ extends Node3D
 
 signal upgraded(tier: int)
 
-const PALETTE := preload("res://materials/node_palette.tres")
 const TOK_SFX := preload("res://audio/wood_hit.tres")
 const THUD_SFX := preload("res://audio/wood_break.tres")
 const FANFARE_SFX := preload("res://audio/level_up.wav")
@@ -110,7 +109,7 @@ func _build_tiers() -> void:
 				m.remove_child(c)
 			_tiers[t].add_child(m)
 			m.transform = xform
-			m.material_override = PALETTE
+			m.material_override = PaletteMaterial.for_mesh(m.mesh)  # (weathered stonework: the rock material)
 			_homes[m] = xform
 			_mark_night_glow(m)
 			var aabb := m.get_aabb()
