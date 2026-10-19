@@ -9,6 +9,8 @@ Writes, into art/textures/:
                sway shaders (the row a face's UV sits in picks its slice)
   ground.png   terrain slices (grass, dirt, rock, sand, snow, forest floor, path, field) for
                terrain.gdshader
+  leaves.png   leaf-card slices (broadleaf cluster, pine needles), greyscale with alpha cut-outs,
+               for the tree canopies (node_foliage.gdshader)
 Greyscale, mean about 0.5: shaders scale colour by 1 + (d - 0.5) * strength.
 Deterministic: the same code makes the same pixels. Every pattern tiles (noise is made in
 frequency space or with wrapped distances, so it repeats at the edges).
@@ -197,6 +199,66 @@ def field(rng):
     return centre(posterize(norm(a), 6), 0.7)
 
 
+# --- leaf cards ----------------------------------------------------------------------------------
+
+def _leaf_shape(xs, ys, cx, cy, angle, length, width):
+    """Pointed leaf: (inside mask, along 0..1 from stem to tip, across -1..1)."""
+    c, s_ = np.cos(angle), np.sin(angle)
+    dx, dy = xs - cx, ys - cy
+    u = (dx * c + dy * s_) / length          # along the leaf, 0 at the stem
+    v = (-dx * s_ + dy * c) / width          # across
+    half = np.sin(np.clip(u, 0, 1) * np.pi) ** 0.8  # widest in the middle, pointed at both ends
+    inside = (u > 0) & (u < 1) & (np.abs(v) < half)
+    return inside, u, v / np.maximum(half, 1e-6)
+
+
+def broadleaf(rng, size=SIZE):
+    """A cluster of leaves on twigs, filling a rough disc: grey (the palette colours it), alpha 1
+    in the leaves, 0 in the gaps."""
+    ys, xs = np.mgrid[0:size, 0:size].astype(float)
+    grey = np.zeros((size, size))
+    alpha = np.zeros((size, size))
+    c = size / 2
+    for _ in range(70):
+        r = np.sqrt(rng.uniform(0, 1)) * size * 0.36
+        a = rng.uniform(0, 2 * np.pi)
+        cx, cy = c + np.cos(a) * r, c + np.sin(a) * r
+        ang = a + rng.uniform(-0.9, 0.9)           # leaves point out from the middle
+        ln = rng.uniform(16, 26)
+        inside, u, v = _leaf_shape(xs, ys, cx - np.cos(ang) * ln * 0.3, cy - np.sin(ang) * ln * 0.3, ang, ln,
+                                   ln * rng.uniform(0.28, 0.4))
+        tone = rng.uniform(0.55, 1.0)
+        shade = tone * (0.82 + 0.18 * u) * np.where(v > 0, 1.0, 0.86)   # one half lit, one in shade
+        shade = np.where(np.abs(v) < 0.12, shade * 0.75, shade)          # midrib
+        grey = np.where(inside, shade, grey)
+        alpha = np.where(inside, 1.0, alpha)
+    grey = posterize(np.clip(grey, 0, 1), 6)
+    return grey, alpha
+
+
+def needles(rng, size=SIZE):
+    """A spray of pine needles: a few twigs with short dark strokes along both sides."""
+    ys, xs = np.mgrid[0:size, 0:size].astype(float)
+    grey = np.zeros((size, size))
+    alpha = np.zeros((size, size))
+    c = size / 2
+    for _ in range(7):
+        a = rng.uniform(0, 2 * np.pi)
+        x0, y0 = c + rng.uniform(-10, 10), c + rng.uniform(-10, 10)
+        length = rng.uniform(34, 52)
+        for t in np.linspace(0.05, 1.0, 26):
+            px, py = x0 + np.cos(a) * length * t, y0 + np.sin(a) * length * t
+            for side in (-1, 1):
+                na = a + side * rng.uniform(0.6, 1.1)
+                nl = rng.uniform(7, 12) * (1.15 - 0.4 * t)
+                inside, u, v = _leaf_shape(xs, ys, px, py, na, nl, 1.6)
+                tone = rng.uniform(0.5, 1.0) * (0.85 + 0.15 * u)
+                grey = np.where(inside, tone, grey)
+                alpha = np.where(inside, 1.0, alpha)
+    grey = posterize(np.clip(grey, 0, 1), 5)
+    return grey, alpha
+
+
 DETAIL = [stone, ore, wood, leaves, terrain_generic, metal, cloth, neutral]
 GROUND = [grass, dirt, stone, sand, snow, forest_floor, path, field]
 
@@ -207,6 +269,17 @@ def stack(fns, seed):
         rng = np.random.default_rng(seed * 100 + i)
         slices.append(fn(rng))
     return np.vstack(slices)
+
+
+def save_rgba(slices, name):
+    grey = np.vstack([g for g, _ in slices])
+    alpha = np.vstack([a for _, a in slices])
+    g8 = (np.clip(grey, 0, 1) * 255).astype(np.uint8)
+    rgba = np.dstack([g8, g8, g8, (alpha * 255).astype(np.uint8)])
+    img = Image.fromarray(rgba, "RGBA")
+    path_ = os.path.join(OUT, name)
+    img.save(path_)
+    print("wrote", os.path.normpath(path_), img.size)
 
 
 def save(a, name):
@@ -220,6 +293,7 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     save(stack(DETAIL, 1), "detail.png")
     save(stack(GROUND, 2), "ground.png")
+    save_rgba([broadleaf(np.random.default_rng(301)), needles(np.random.default_rng(302))], "leaves.png")
 
 
 if __name__ == "__main__":

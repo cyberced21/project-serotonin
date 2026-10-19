@@ -152,7 +152,7 @@ def smooth_angle(name):
 def auto_smooth(angle):
     """Smooth-shades every mesh in the scene, keeping edges sharper than `angle` degrees hard."""
     for obj in bpy.context.scene.objects:
-        if obj.type == "MESH" and len(obj.data.polygons):
+        if obj.type == "MESH" and len(obj.data.polygons) and not obj.data.has_custom_normals:
             obj.data.shade_smooth()
             obj.data.set_sharp_from_angle(angle=math.radians(angle))
 
@@ -170,6 +170,83 @@ def export(name, loose_edges=False):
     bpy.ops.export_scene.gltf(filepath=path, export_format="GLB", export_yup=True,
                               export_apply=True, export_materials="NONE", use_mesh_edges=loose_edges, **colours)
     print("exported", path)
+
+
+# --- leaf cards -------------------------------------------------------------------------------
+# Valheim-style canopies: a solid, darker inner core with leaf cards round it, small quads that
+# show a cut-out leaf cluster (art/textures/leaves.png, see tools/make_textures.py). A card's
+# palette colour is in the first UV layer like every face; the second layer, "cards", holds the
+# card's own 0..1 coordinates, offset by 1 + the leaves.png slice (CARD_BROADLEAF / CARD_NEEDLES),
+# so faces with u >= 1 there are cards (node_foliage.gdshader cuts them out) and anything else
+# (0, 0) is solid. Normals point out from the clump's centre, so the canopy lights softly as one.
+
+CARD_BROADLEAF = 0
+CARD_NEEDLES = 1
+
+
+def leafy(bm, rng, shades, card_size, density, kind=CARD_BROADLEAF, core=(0.72, 0.72, 0.72), droop=0.0):
+    """Turns a canopy shape into a darker core plus leaf cards spread over its surface.
+    shades: (top, side, bottom, side_alt) swatches; density: cards per m² of the shape's surface;
+    core: how far the shape shrinks (per axis) to become the core; droop: tilts cards downward
+    (pine boughs)."""
+    bm.normal_update()
+    faces = [(f.calc_area(), f.normal.copy(), [v.co.copy() for v in f.verts]) for f in bm.faces]
+    total = sum(a for a, _, _ in faces)
+    top_z = max(v.co.z for v in bm.verts)
+    bottom_z = min(v.co.z for v in bm.verts)
+    for v in bm.verts:
+        v.co = Vector((v.co.x * core[0], v.co.y * core[1], v.co.z * core[2]))
+    uv = bm.loops.layers.uv.verify()
+    for f in bm.faces:
+        f.smooth = True
+        for loop in f.loops:
+            loop[uv].uv = swatch_uv(shades[2])  # the core: the darkest leaves, seen through gaps
+    cards = bm.loops.layers.uv.new("cards")
+    weights = [a for a, _, _ in faces]
+    for _ in range(max(4, round(total * density))):
+        _, n, pts = rng.choices(faces, weights)[0]
+        # a random point on that face (fan triangles from its first corner)
+        i = rng.randrange(1, len(pts) - 1)
+        a, b = rng.random(), rng.random()
+        if a + b > 1:
+            a, b = 1 - a, 1 - b
+        p = pts[0] + (pts[i] - pts[0]) * a + (pts[i + 1] - pts[0]) * b
+        p += n * rng.uniform(-0.05, 0.12) * card_size
+        rnd = Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-1, 1)))
+        facing = (n + rnd * 0.5 + Vector((0, 0, -droop))).normalized()
+        t1 = facing.orthogonal().normalized()
+        t1.rotate(Matrix.Rotation(rng.uniform(0, math.tau), 3, facing))
+        t2 = facing.cross(t1)
+        size = card_size * rng.uniform(0.75, 1.25)
+        corners = [p + (t1 * sx + t2 * sy) * size * 0.5 for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+        face = bm.faces.new([bm.verts.new(c) for c in corners])
+        face.smooth = True
+        h = (p.z - bottom_z) / max(top_z - bottom_z, 1e-6)
+        if h > 0.7:
+            swatch = shades[0]
+        elif h > 0.25:
+            swatch = shades[3] if rng.random() < 0.4 else shades[1]
+        else:
+            swatch = shades[1]
+        for loop, (cu, cv) in zip(face.loops, ((0, 0), (1, 0), (1, 1), (0, 1))):
+            loop[uv].uv = swatch_uv(swatch)
+            loop[cards].uv = (1 + kind + cu * 0.998, cv)
+    return bm
+
+
+def spherical_normals(obj, centre=(0, 0, 0), squash=(1, 1, 1)):
+    """Points every normal of `obj` out from `centre` (object space; an ellipsoid's if squashed),
+    so a leafy clump shades like one soft ball instead of a scatter of flat cards."""
+    mesh = obj.data
+    mesh.shade_smooth()
+    c = Vector(centre)
+    normals = []
+    for loop in mesh.loops:
+        d = mesh.vertices[loop.vertex_index].co - c
+        d = Vector((d.x / squash[0] ** 2, d.y / squash[1] ** 2, d.z / squash[2] ** 2))
+        normals.append(d.normalized() if d.length > 1e-6 else Vector((0, 0, 1)))
+    mesh.normals_split_custom_set(normals)
+    return obj
 
 
 # --- models -----------------------------------------------------------------------------------
@@ -1340,12 +1417,12 @@ PINE_NEEDLES = ("leaves.2", "leaves.1", "leaves.0", "leaves.2")
 
 
 def clumps(rng, spots, leaves, name="Body_Canopy"):
-    """Canopy clumps: (radius, (x, y, z), squash) each, lumpy blobs shaded light on top."""
-    shade = shade_by_normal(leaves[0], leaves[1], leaves[2], rng, side_alt=leaves[3])
+    """Canopy clumps: (radius, (x, y, z), squash) each: lumpy leafy blobs (leaf cards round a
+    dark core, see leafy())."""
     for i, (r, loc, squash) in enumerate(spots):
         bm = blob(r, rng, jitter_amount=0.2, squash=squash)
-        paint(bm, shade)
-        make_object(f"{name}{i}", bm, loc, (0, 0, rng.uniform(0, math.tau)))
+        leafy(bm, rng, leaves, card_size=0.55 + r * 0.45, density=4.5)
+        spherical_normals(make_object(f"{name}{i}", bm, loc, (0, 0, rng.uniform(0, math.tau))), squash=squash)
 
 
 def limbs(rng, pairs, bark, name="Body_Limb"):
@@ -1476,6 +1553,17 @@ def oak_gnarled():
     export(os.path.join("designs", "oak_gnarled"))
 
 
+def needle_cone(rng, r, h, tip=0.05):
+    """One tier of a pine: a cone with a ragged, drooping rim (leafy() needles it)."""
+    bm = prism(9, r, tip, h)
+    for v in bm.verts:  # ragged rim, the points drooping
+        if v.co.z < 0:
+            v.co.z -= rng.uniform(0.05, 0.3)
+            v.co.x *= rng.uniform(0.85, 1.1)
+            v.co.y *= rng.uniform(0.85, 1.1)
+    return bm
+
+
 def pine_classic(name="pine_classic", out="designs"):
     """Pine A (picked: the game's pine): a tall straight trunk with stacked cones of needles,
     their rims drooping and ragged. The lowest rim stays above the chopping band."""
@@ -1483,16 +1571,12 @@ def pine_classic(name="pine_classic", out="designs"):
     rng = seeded(76)
     make_object("Body_Trunk", ringed_trunk(rng, 10, 0.3, 0.1, 5.9, PINE_BARK, flare=0.25, lobes=5,
                                            upper=(2.0, 2.6, 3.4, 4.2, 5.0)))
-    shade = shade_by_normal(PINE_NEEDLES[0], PINE_NEEDLES[1], PINE_NEEDLES[2], rng, side_alt=PINE_NEEDLES[3])
     for i, (r, h, z) in enumerate(((1.9, 1.5, 2.65), (1.6, 1.4, 3.4), (1.25, 1.3, 4.1), (0.9, 1.2, 4.75), (0.5, 1.1, 5.4))):
-        bm = prism(9, r, 0.06, h)
-        for v in bm.verts:  # ragged rim, the points drooping
-            if v.co.z < 0:
-                v.co.z -= rng.uniform(0.05, 0.3)
-                v.co.x *= rng.uniform(0.85, 1.1)
-                v.co.y *= rng.uniform(0.85, 1.1)
-        paint(bm, shade)
-        make_object(f"Body_Canopy{i}", bm, (0, 0, z), (0, 0, rng.uniform(0, math.tau)))
+        bm = needle_cone(rng, r, h, 0.06)
+        leafy(bm, rng, PINE_NEEDLES, card_size=0.75, density=3.6, kind=CARD_NEEDLES, core=(0.8, 0.8, 0.95),
+              droop=0.5)
+        spherical_normals(make_object(f"Body_Canopy{i}", bm, (0, 0, z), (0, 0, rng.uniform(0, math.tau))),
+                          centre=(0, 0, -h * 0.3))
     cut_stump(0.3, 0.28, PINE_BARK, rng)
     export(os.path.join(out, name))
 
@@ -1987,8 +2071,8 @@ def bush(name, seed, blobs, shades):
     rng = seeded(seed)
     for i, (loc, r) in enumerate(blobs):
         bm = blob(r, rng, jitter_amount=0.22, squash=(1.0, 1.0, 0.8))
-        paint(bm, shade_by_normal(shades[0], shades[1], shades[2], rng, side_alt=shades[3]))
-        make_object(f"Blob{i}", bm, loc)
+        leafy(bm, rng, shades, card_size=0.45, density=4.0, core=(0.75, 0.75, 0.75))
+        spherical_normals(make_object(f"Blob{i}", bm, loc), squash=(1.0, 1.0, 0.8))
     merge_all("Bush")
     export(os.path.join("scenery", name))
 
@@ -2020,14 +2104,10 @@ def canopy_pine(name, seed, height, cones, needles):
     paint(bm, shade_by_normal("wood.2", "wood.1", "wood.0", rng, side_alt="wood.2"))
     make_object("Trunk", bm, (0, 0, height / 2))
     for i, (r, h, z) in enumerate(cones):
-        bm = prism(9, r, 0.05, h)
-        for v in bm.verts:  # ragged rim, the points drooping
-            if v.co.z < 0:
-                v.co.z -= rng.uniform(0.05, 0.3)
-                v.co.x *= rng.uniform(0.85, 1.1)
-                v.co.y *= rng.uniform(0.85, 1.1)
-        paint(bm, shade_by_normal(needles[0], needles[1], needles[2], rng, side_alt=needles[3]))
-        make_object(f"Cone{i}", bm, (0, 0, z), (0, 0, rng.uniform(0, math.tau)))
+        bm = needle_cone(rng, r, h)
+        leafy(bm, rng, needles, card_size=0.9, density=2.2, kind=CARD_NEEDLES, core=(0.82, 0.82, 0.95), droop=0.5)
+        spherical_normals(make_object(f"Cone{i}", bm, (0, 0, z), (0, 0, rng.uniform(0, math.tau))),
+                          centre=(0, 0, -h * 0.3))
     merge_all("Pine")
     export(os.path.join("scenery", name))
 
@@ -2044,13 +2124,12 @@ def canopy_birch():
     paint(bm, lambda f: "neutral.1" if abs(f.normal.z) < 0.9 and rng.random() < 0.16
           else ("neutral.7" if rng.random() < 0.6 else "neutral.6"))
     make_object("Trunk", bm, (0, 0, 2.3))
-    leaves = shade_by_normal(*BIRCH_LEAVES[:3], rng, side_alt=BIRCH_LEAVES[3])
     spots = [(0.55, (math.cos(i * 2.2) * 0.4, math.sin(i * 2.2) * 0.4, z)) for i, z in enumerate((2.9, 3.4, 3.85, 4.3))]
     spots.append((0.55, (0.0, 0.0, 4.8)))
     for i, (r, loc) in enumerate(spots):
         bm = blob(r, rng, jitter_amount=0.2, squash=(0.8, 0.8, 1.25))
-        paint(bm, leaves)
-        make_object(f"Canopy{i}", bm, loc)
+        leafy(bm, rng, BIRCH_LEAVES, card_size=0.6, density=2.6)
+        spherical_normals(make_object(f"Canopy{i}", bm, loc), squash=(0.8, 0.8, 1.25))
     merge_all("Birch")
     export(os.path.join("scenery", "canopy_birch"))
 

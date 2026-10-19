@@ -310,7 +310,7 @@ func _apply_model() -> void:
 		m.owner = null
 		get_node(dest).add_child(m)
 		m.transform = xform
-		m.material_override = NODE_PALETTE
+		m.material_override = PaletteMaterial.for_mesh(m.mesh)
 	inst.free()
 	for c in chunks.get_children():
 		var loops: Array = seam_lines.get(String(c.name), [])

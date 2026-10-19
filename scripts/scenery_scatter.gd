@@ -142,7 +142,9 @@ func _keep(at: Vector3, radius: float) -> void:
 
 func _build_cells(layer: ScatterLayer, mesh: Mesh, cells: Dictionary[Vector2i, Array]) -> void:
 	var material := PALETTE as Material
-	if layer.sway > 0.0:
+	if PaletteMaterial.has_cards(mesh):
+		material = PaletteMaterial.FOLIAGE  # leaf cards: their own wind
+	elif layer.sway > 0.0:
 		var sway := ShaderMaterial.new()
 		sway.shader = SWAY
 		sway.set_shader_parameter("palette", PALETTE.get_shader_parameter("palette"))
