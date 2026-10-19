@@ -20,7 +20,6 @@ extends RigidBody3D
 ## Scale of the item's model (models/items/*.glb are roughly hand-sized already).
 @export var model_scale := 0.9
 
-const PALETTE := preload("res://materials/node_palette.tres")
 
 var item: StringName = &"wood"
 var icon: Texture2D
@@ -47,7 +46,7 @@ func _ready() -> void:
 		var first := true
 		for m in _model.find_children("*", "MeshInstance3D", true, false):
 			var mesh := m as MeshInstance3D
-			mesh.material_override = PALETTE
+			mesh.material_override = PaletteMaterial.for_mesh(mesh.mesh)
 			var box := global_transform.affine_inverse() * mesh.global_transform * mesh.get_aabb()
 			bounds = box if first else bounds.merge(box)
 			first = false

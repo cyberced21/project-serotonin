@@ -2189,13 +2189,8 @@ def oak_item():
 
 
 def iron_item():
-    reset()
-    rng = seeded(34)
-    bm = blob(0.14, rng, jitter_amount=0.3, squash=(1.0, 0.9, 0.8))
-    paint(bm, lambda f: ("metal.7" if f.normal.z > 0.5 else ("ore.iron" if f.normal.z > -0.2 else "ore.iron_dark"))
-          if rng.random() < 0.75 else ("stone.2" if f.normal.z > 0.3 else "stone.0"))
-    make_object("Item", bm)
-    export(os.path.join("items", "iron"))
+    """Iron ore: a chunk of basalt column, glinting iron where it broke."""
+    ore_chunk("iron", 34, ("stone.3", "stone.2"), "metal.3", ("metal.6", "ore.iron"), 0.85, size=0.14)
 
 
 def log_item_variant(name, seed, bark, end_grain, radius=0.09):
@@ -2208,31 +2203,40 @@ def log_item_variant(name, seed, bark, end_grain, radius=0.09):
     export(os.path.join("items", name))
 
 
-def ore_item_variant(name, seed, ore, stone, ore_share):
+def ore_chunk(name, seed, skin, fresh, ore, ore_share, size=0.13):
+    """An ore pickup: a chunk knocked out of its rock, flat fresh breaks all round (ore on a
+    share of them, `ore` (lit, shaded) swatches, the rest `fresh` stone) over a weathered underside
+    of the rock's skin (`skin` (lit, shaded)), shaded like the rocks (bake_weathering). The breaks
+    face up, so the ore is what shows lying on the ground and in its icon."""
     reset()
     rng = seeded(seed)
-    bm = blob(0.13, rng, jitter_amount=0.3, squash=(1.0, 0.9, 0.8))
-    paint(bm, lambda f: (ore[0] if f.normal.z > 0.0 else ore[1]) if rng.random() < ore_share
-          else (stone[0] if f.normal.z > 0.3 else stone[1]))
+    bm = blob(size, rng, jitter_amount=0.15, squash=(1.1, 0.95, 0.85), subdiv=2)
+    bmesh.ops.translate(bm, vec=Vector((0, 0, size)), verts=bm.verts)
+    cut = bm.faces.layers.int.new("cut")
+    for k in range(6):  # the breaks: over the top and round the sides, the underside left weathered
+        a = k * math.tau / 5 + rng.uniform(-0.3, 0.3)
+        n = Vector((math.cos(a), math.sin(a), rng.uniform(0.1, 0.9))).normalized() if k < 5 else Vector((0, 0, 1))
+        chop(bm, Vector((0, 0, size)) + n * size * rng.uniform(0.5, 0.72), n, as_cut=True)
+    bmesh.ops.triangulate(bm, faces=bm.faces[:])
+    veins = {f.index for f in bm.faces if f[cut] and rng.random() < ore_share}
+    paint(bm, lambda f: (ore[0] if f.normal.z > -0.3 else ore[1]) if f.index in veins
+          else fresh if f[cut] else (skin[0] if f.normal.z > 0.4 else skin[1]))
+    bake_weathering(bm, cut, BVHTree.FromBMesh(bm), 2 * size, moss_amount=0.3, reach=size)
+    bmesh.ops.translate(bm, vec=Vector((0, 0, -size)), verts=bm.verts)
     make_object("Item", bm)
-    export(os.path.join("items", name))
+    export(os.path.join("items", name), loose_edges=True)
 
 
 def more_items():
     log_item_variant("birch", 35, ("neutral.7", "neutral.5"), "wood.7", 0.08)
     log_item_variant("pine", 36, ("wood.1", "wood.2"), "wood.6", 0.1)
-    ore_item_variant("coal", 37, ("ore.coal", "neutral.1"), ("stone.2", "stone.1"), 0.8)
-    ore_item_variant("gold", 38, ("ore.gold", "accent.2"), ("stone.5", "stone.3"), 0.6)
+    ore_chunk("coal", 37, ("neutral.3", "neutral.2"), "stone.5", ("ore.coal", "ore.coal"), 0.9)
+    ore_chunk("gold", 38, ("wood.3", "wood.2"), "neutral.6", ("ore.gold", "accent.3"), 0.7)
 
 
 def ore_item():
-    reset()
-    rng = seeded(32)
-    bm = blob(0.13, rng, jitter_amount=0.3, squash=(1.0, 0.9, 0.8))
-    paint(bm, lambda f: ("ore.copper" if f.normal.z > 0.0 else "ore.copper_dark") if rng.random() < 0.55
-          else ("stone.4" if f.normal.z > 0.3 else "stone.2"))
-    make_object("Item", bm)
-    export(os.path.join("items", "ore"))
+    """Copper ore: a chunk of the verdigris boulder."""
+    ore_chunk("ore", 32, ("leaves.5", "stone.4"), "stone.6", ("ore.copper", "ore.copper_dark"), 0.7)
 
 
 # --- pond scenery -----------------------------------------------------------------------------
