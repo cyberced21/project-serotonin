@@ -18,6 +18,13 @@ extends Resource
 @export var sun_tint := Color.WHITE
 ## Colour saturation of the whole image (1 = as is).
 @export var saturation := 1.0
+## Volumetric mist (light shafts, haze in the air), times the scene's own.
+@export var mist := 1.0
+@export_group("Grade")
+## Colour grading: tints the darks (shadow_tint) and the brights (highlight_tint) of the whole
+## image, white = as is. Blended with the time of day's grade (see ColorGrade).
+@export var shadow_tint := Color.WHITE
+@export var highlight_tint := Color.WHITE
 @export_group("Sound")
 ## A seamless loop, played while you're here (crossfaded in and out).
 @export var ambience: AudioStream

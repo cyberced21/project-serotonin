@@ -11,3 +11,6 @@ fog_tint = Color(1.04, 0.98, 0.9, 1)
 ambient = 1.05
 sun_tint = Color(1.05, 0.98, 0.9, 1)
 saturation = 1.05
+mist = 0.9
+shadow_tint = Color(0.97, 0.94, 1.0, 1)
+highlight_tint = Color(1.06, 1.0, 0.9, 1)

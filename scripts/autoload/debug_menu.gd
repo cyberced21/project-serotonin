@@ -666,6 +666,7 @@ func _build_graphics() -> Control:
 		&"volumetric_fog": "Volumetric fog and light shafts",
 		&"glow": "Bloom (glow round bright things)",
 		&"fxaa": "FXAA (cheap edge smoothing)",
+		&"light_shadows": "Lamps cast shadows",
 	}
 	for key in checks:
 		var c := _check(checks[key], func(on: bool) -> void: GraphicsSettings.set_value(key, on))

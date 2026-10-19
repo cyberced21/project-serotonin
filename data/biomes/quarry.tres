@@ -12,4 +12,7 @@ fog_tint = Color(1.08, 1.0, 0.88, 1)
 ambient = 0.95
 sun_tint = Color(1.05, 0.98, 0.9, 1)
 saturation = 0.75
+mist = 1.6
+shadow_tint = Color(1.0, 0.96, 0.92, 1)
+highlight_tint = Color(1.06, 1.0, 0.9, 1)
 ambience = ExtResource("2_sound")

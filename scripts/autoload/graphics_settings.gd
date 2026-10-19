@@ -15,17 +15,17 @@ const PRESETS := {
 	&"low": {
 		&"msaa": 0, &"fxaa": true, &"ssao": false, &"ssil": false, &"glow": true,
 		&"volumetric_fog": false, &"shadow_distance": 50.0, &"shadow_splits": 2,
-		&"shadow_size": 2048, &"soft_shadows": 1, &"grass_density": 0.35, &"foliage_distance": 0.6,
+		&"shadow_size": 2048, &"soft_shadows": 1, &"grass_density": 0.35, &"foliage_distance": 0.6, &"light_shadows": false,
 	},
 	&"medium": {
 		&"msaa": 2, &"fxaa": false, &"ssao": true, &"ssil": false, &"glow": true,
 		&"volumetric_fog": true, &"shadow_distance": 90.0, &"shadow_splits": 4,
-		&"shadow_size": 4096, &"soft_shadows": 2, &"grass_density": 0.65, &"foliage_distance": 0.8,
+		&"shadow_size": 4096, &"soft_shadows": 2, &"grass_density": 0.65, &"foliage_distance": 0.8, &"light_shadows": false,
 	},
 	&"high": {
 		&"msaa": 4, &"fxaa": false, &"ssao": true, &"ssil": true, &"glow": true,
 		&"volumetric_fog": true, &"shadow_distance": 140.0, &"shadow_splits": 4,
-		&"shadow_size": 4096, &"soft_shadows": 3, &"grass_density": 1.0, &"foliage_distance": 1.0,
+		&"shadow_size": 4096, &"soft_shadows": 3, &"grass_density": 1.0, &"foliage_distance": 1.0, &"light_shadows": true,
 	},
 }
 const PRESET_ORDER: Array[StringName] = [&"low", &"medium", &"high"]
@@ -79,7 +79,7 @@ func _apply_all() -> void:
 
 
 func _on_node_added(n: Node) -> void:
-	if n is WorldEnvironment or n is DirectionalLight3D:
+	if n is WorldEnvironment or n is DirectionalLight3D or n is OmniLight3D:
 		_apply_to.call_deferred(n)
 
 
@@ -109,6 +109,8 @@ func _apply_to(n: Node) -> void:
 		sun.directional_shadow_mode = (DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 				if int(get_value(&"shadow_splits")) >= 4 else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS)
 		sun.directional_shadow_blend_splits = int(get_value(&"shadow_splits")) >= 4
+	elif n is OmniLight3D and n.is_in_group("night_light"):  # lamps and lanterns
+		(n as OmniLight3D).shadow_enabled = get_value(&"light_shadows")
 
 
 func _load() -> void:

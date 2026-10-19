@@ -1,8 +1,8 @@
 extends Node
 ## Which biome you're in, and what that does: blends the light toward its BiomeMood (DayNightSky
 ## reads fog_density, fog_tint, ambient and sun_tint from here and multiplies the time of day's
-## values by them; saturation is set here), crossfades its ambience loop, and announces it with
-## a title card. The first visit says "Discovered" (saved); later ones get a smaller card, at
+## values by them, and grades the image with its mist and tints; saturation is set here),
+## crossfades its ambience loop, and announces it with a title card. The first visit says "Discovered" (saved); later ones get a smaller card, at
 ## most once a minute per biome. You have to be in a new biome for HOLD seconds before it counts,
 ## so walking along a border doesn't flicker.
 ## Biomes are told apart by where you are (WorldMap's shapes), not by the ground under you, so
@@ -47,6 +47,9 @@ var fog_tint := Color.WHITE
 var ambient := 1.0
 var sun_tint := Color.WHITE
 var saturation := 1.0
+var mist := 1.0
+var shadow_tint := Color.WHITE
+var highlight_tint := Color.WHITE
 
 var _candidate: StringName = &""
 var _candidate_time := 0.0
@@ -143,6 +146,9 @@ func _blend(delta: float, at: Vector3) -> void:
 	ambient = lerpf(ambient, target.ambient if target else 1.0, k)
 	sun_tint = sun_tint.lerp(target.sun_tint if target else Color.WHITE, k)
 	saturation = lerpf(saturation, target.saturation if target else 1.0, k)
+	mist = lerpf(mist, target.mist if target else 1.0, k)
+	shadow_tint = shadow_tint.lerp(target.shadow_tint if target else Color.WHITE, k)
+	highlight_tint = highlight_tint.lerp(target.highlight_tint if target else Color.WHITE, k)
 	var world := get_viewport().find_world_3d()
 	var env := world.environment if world else null
 	if env:

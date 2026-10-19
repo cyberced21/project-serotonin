@@ -19,6 +19,8 @@ const VIEWS := [
 	["stillwater", Vector3(-16, 0, 96), Vector3(-16, 0, 70), 0.55],
 	["hearthvale_dusk", Vector3(100, 0, 52), Vector3(113, 0, 40), 0.84],
 	["clearing_night", Vector3(4, 0, 10), Vector3(0, 0, -20), 0.95],
+	# looking into the low sun through the trees (Vector3.INF: face the sun)
+	["pinewood_dawn", Vector3(10, 0, -120), Vector3.INF, 0.2],
 ]
 
 var out_dir := "res://docs/images/graphics/latest"
@@ -57,9 +59,17 @@ func _run() -> void:
 		if not only.is_empty() and not only.has(v[0]):
 			continue
 		day_night.set("time", v[3])
-		_go(p, v[1], v[2])
+		var look: Vector3 = v[2]
+		if look == Vector3.INF:  # toward the sun, set for this time of day after a frame
+			await process_frame
+			var sun := get_first_node_in_group("sun") as Node3D
+			if sun == null:
+				sun = current_scene.find_child("Sun", true, false) as Node3D
+			var back := sun.global_transform.basis.z
+			look = v[1] + Vector3(back.x, 0.0, back.z).normalized() * 10.0
+		_go(p, v[1], look)
 		await _wait(0.5)
-		_go(p, v[1], v[2])  # again, in case anything moved the player on arrival
+		_go(p, v[1], look)  # again, in case anything moved the player on arrival
 		await _wait(2.5)  # past the biome's 1.5 s hold and its card
 		var fps := await _measure_fps(2.0)
 		await _shot(v[0])

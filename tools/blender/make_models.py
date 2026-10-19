@@ -184,11 +184,12 @@ CARD_BROADLEAF = 0
 CARD_NEEDLES = 1
 
 
-def leafy(bm, rng, shades, card_size, density, kind=CARD_BROADLEAF, core=(0.72, 0.72, 0.72), droop=0.0):
+def leafy(bm, rng, shades, card_size, density, kind=CARD_BROADLEAF, core=(0.72, 0.72, 0.72), droop=0.0,
+          open_bottom=False):
     """Turns a canopy shape into a darker core plus leaf cards spread over its surface.
     shades: (top, side, bottom, side_alt) swatches; density: cards per m² of the shape's surface;
     core: how far the shape shrinks (per axis) to become the core; droop: tilts cards downward
-    (pine boughs)."""
+    (pine boughs); open_bottom: drops the core's flat underside (a pine tier, seen from below)."""
     bm.normal_update()
     faces = [(f.calc_area(), f.normal.copy(), [v.co.copy() for v in f.verts]) for f in bm.faces]
     total = sum(a for a, _, _ in faces)
@@ -203,6 +204,8 @@ def leafy(bm, rng, shades, card_size, density, kind=CARD_BROADLEAF, core=(0.72, 
             loop[uv].uv = swatch_uv(shades[2])  # the core: the darkest leaves, seen through gaps
     cards = bm.loops.layers.uv.new("cards")
     weights = [a for a, _, _ in faces]
+    if open_bottom:
+        bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.normal.z < -0.9], context="FACES_ONLY")
     for _ in range(max(4, round(total * density))):
         _, n, pts = rng.choices(faces, weights)[0]
         # a random point on that face (fan triangles from its first corner)
@@ -1573,8 +1576,8 @@ def pine_classic(name="pine_classic", out="designs"):
                                            upper=(2.0, 2.6, 3.4, 4.2, 5.0)))
     for i, (r, h, z) in enumerate(((1.9, 1.5, 2.65), (1.6, 1.4, 3.4), (1.25, 1.3, 4.1), (0.9, 1.2, 4.75), (0.5, 1.1, 5.4))):
         bm = needle_cone(rng, r, h, 0.06)
-        leafy(bm, rng, PINE_NEEDLES, card_size=0.75, density=3.6, kind=CARD_NEEDLES, core=(0.8, 0.8, 0.95),
-              droop=0.5)
+        leafy(bm, rng, PINE_NEEDLES, card_size=0.8, density=4.2, kind=CARD_NEEDLES, core=(0.72, 0.72, 0.92),
+              droop=0.5, open_bottom=True)
         spherical_normals(make_object(f"Body_Canopy{i}", bm, (0, 0, z), (0, 0, rng.uniform(0, math.tau))),
                           centre=(0, 0, -h * 0.3))
     cut_stump(0.3, 0.28, PINE_BARK, rng)
@@ -2105,7 +2108,8 @@ def canopy_pine(name, seed, height, cones, needles):
     make_object("Trunk", bm, (0, 0, height / 2))
     for i, (r, h, z) in enumerate(cones):
         bm = needle_cone(rng, r, h)
-        leafy(bm, rng, needles, card_size=0.9, density=2.2, kind=CARD_NEEDLES, core=(0.82, 0.82, 0.95), droop=0.5)
+        leafy(bm, rng, needles, card_size=0.95, density=3.2, kind=CARD_NEEDLES, core=(0.72, 0.72, 0.92), droop=0.5,
+              open_bottom=True)
         spherical_normals(make_object(f"Cone{i}", bm, (0, 0, z), (0, 0, rng.uniform(0, math.tau))),
                           centre=(0, 0, -h * 0.3))
     merge_all("Pine")
