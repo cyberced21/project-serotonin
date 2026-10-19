@@ -104,13 +104,13 @@ static func populate(parent: Node3D, map: ProcgenMap, budget_ms := 0.0, on_progr
 			var vc: Vector2 = map.village["center"]
 			in_pit = func(p: Vector2) -> bool: return p.distance_to(vc) < ProcgenMap.VILLAGE_RADIUS
 		spawner.accept = func(p: Vector2) -> bool:
-			return map.cells[ProcgenMap.pixel_index(p)] == cell and not in_pit.call(p)
+			return map.cells[map.pixel_index(p)] == cell and not in_pit.call(p)
 		spawners.append(spawner)
 	spawners.append_array(_quarry_levels(map))
 	var scatters: Array[SceneryScatter] = []
 	var boxes := _cell_boxes(map)
 	for i in map.sites.size():
-		var box: Rect2 = boxes[i].intersection(SCENERY_AREA)
+		var box: Rect2 = boxes[i].intersection(SCENERY_AREA.grow((map.metres - ProcgenMap.SIZE) * 0.5))
 		if box.has_area():
 			scatters.append(_scenery(map, i, box))
 	# the nodes first and one spawner at a time (each keeps clear of the ones before it), then
@@ -213,18 +213,18 @@ static func _cell_boxes(map: ProcgenMap) -> Array[Rect2]:
 	var lo: Array[Vector2i] = []
 	var hi: Array[Vector2i] = []
 	for i in map.sites.size():
-		lo.append(Vector2i(ProcgenMap.SIZE, ProcgenMap.SIZE))
+		lo.append(Vector2i(map.size, map.size))
 		hi.append(Vector2i(-1, -1))
-	for y in ProcgenMap.SIZE:
-		for x in ProcgenMap.SIZE:
-			var c := map.cells[y * ProcgenMap.SIZE + x]
+	for y in map.size:
+		for x in map.size:
+			var c := map.cells[y * map.size + x]
 			if c != ProcgenMap.RIM_CELL:
 				lo[c] = lo[c].min(Vector2i(x, y))
 				hi[c] = hi[c].max(Vector2i(x, y))
 	var out: Array[Rect2] = []
 	for i in map.sites.size():
-		var origin := Vector2(ProcgenMap.ORIGIN.x, ProcgenMap.ORIGIN.z)
-		out.append(Rect2(origin + Vector2(lo[i]), Vector2(hi[i] - lo[i] + Vector2i.ONE)) if hi[i].x >= 0 else Rect2())
+		out.append(Rect2(map.origin + Vector2(lo[i]) * map.step, Vector2(hi[i] - lo[i] + Vector2i.ONE) * map.step)
+				if hi[i].x >= 0 else Rect2())
 	return out
 
 

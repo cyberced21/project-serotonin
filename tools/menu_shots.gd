@@ -39,6 +39,13 @@ func _run() -> void:
 	menu.call("_open", &"controls")
 	await _wait(0.5)
 	await _shot("controls")
+	menu.call("_open", &"new_world")
+	var nw: Control = menu.get("_new_world_screen")
+	(nw.get("_seed") as LineEdit).text = "4821"
+	(nw.get("_name") as LineEdit).text = "Mossy Hollow"
+	nw.call("_changed")
+	await _wait(3.0)
+	await _shot("new_world")
 	var settings: Control = menu.get("_settings")
 	menu.call("_open", &"settings")
 	for tab in 4:

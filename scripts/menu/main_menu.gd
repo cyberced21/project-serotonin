@@ -14,6 +14,7 @@ var _continue_sub: Label
 var _worlds: WorldsScreen
 var _controls: ControlsScreen
 var _settings: SettingsScreen
+var _new_world_screen: NewWorldScreen
 
 
 func _ready() -> void:
@@ -105,7 +106,16 @@ func _build() -> void:
 	_settings.offset_right = -40
 	_settings.offset_top = 40
 	_settings.offset_bottom = -40
-	for screen: Control in [_worlds, _controls, _settings]:
+	_new_world_screen = NewWorldScreen.new()
+	_new_world_screen.anchor_left = 1.0
+	_new_world_screen.anchor_right = 1.0
+	_new_world_screen.anchor_bottom = 1.0
+	_new_world_screen.offset_left = -820
+	_new_world_screen.offset_right = -40
+	_new_world_screen.offset_top = 40
+	_new_world_screen.offset_bottom = -40
+	_new_world_screen.created.connect(_on_created)
+	for screen: Control in [_worlds, _controls, _settings, _new_world_screen]:
 		screen.visible = false
 		screen.closed.connect(_close_screens)
 		_ui.add_child(screen)
@@ -128,10 +138,13 @@ func _on_continue() -> void:
 	Worlds.play(id if not id.is_empty() else Worlds.CLASSIC)
 
 
-## One screen on the right at a time: &"worlds", &"settings" or &"controls".
+## One screen on the right at a time: &"worlds", &"new_world", &"settings" or &"controls".
 func _open(screen: StringName) -> void:
 	if screen == &"worlds":
 		_worlds.refresh()
+	if screen == &"new_world":
+		_new_world_screen.reset()
+	_new_world_screen.visible = screen == &"new_world"
 	_worlds.visible = screen == &"worlds"
 	_controls.visible = screen == &"controls"
 	_settings.visible = screen == &"settings"
@@ -141,12 +154,18 @@ func _close_screens() -> void:
 	_worlds.visible = false
 	_controls.visible = false
 	_settings.visible = false
+	_new_world_screen.visible = false
 	_continue.grab_focus()
 
 
-## Until the New World screen: a world on a random seed, picked in the list.
 func _new_world() -> void:
-	var settings := WorldSettings.defaults()
-	settings["seed"] = ProcgenMap.random_seed()
-	var id := Worlds.create("World %d" % settings["seed"], settings)
+	_open(&"new_world")
+
+
+## A world was made on the New World screen: into it, or back to the list with it picked.
+func _on_created(id: String, play: bool) -> void:
+	if play:
+		Worlds.play(id)
+		return
+	_open(&"worlds")
 	_worlds.refresh(id)

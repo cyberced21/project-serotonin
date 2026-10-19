@@ -64,6 +64,18 @@ func _knobs() -> void:
 	_check(_inner_height(gentle) < hb and hb < _inner_height(rugged), "terrain: gentle < normal < rugged (%.1f, %.1f, %.1f)"
 			% [_inner_height(gentle), hb, _inner_height(rugged)])
 
+	for mpp in [4.0, 2.0]:
+		var started := Time.get_ticks_msec()
+		var preview := ProcgenMap.new(SEEDS[0], {}, mpp)
+		preview.generate()
+		var ms := Time.get_ticks_msec() - started
+		var same_sites := preview.sites.size() == base.sites.size()
+		for k in mini(preview.sites.size(), base.sites.size()):
+			same_sites = same_sites and preview.sites[k]["pos"] == base.sites[k]["pos"]
+		_check(same_sites and preview.kinds == base.kinds, "a %d m/pixel preview has the same sites and kinds (%d ms, %d px)"
+				% [mpp, ms, preview.size])
+		_check(preview.preview_image().get_size() == Vector2i(preview.size, preview.size), "its picture is %d px" % preview.size)
+
 	var n := WorldSettings.normalized({"seed": 5.0, "size": "huge", "water": "wet", "kinds": {"pinewood": "nope"}})
 	_check(n["seed"] is int and n["size"] == &"normal" and n["water"] == &"wet" and n["kinds"].is_empty(),
 			"normalized: ints, unknown choices back to normal")
@@ -78,9 +90,9 @@ func _map(settings: Dictionary) -> ProcgenMap:
 ## The highest ground inside the rim, roughly (every 8th pixel).
 func _inner_height(map: ProcgenMap) -> float:
 	var top := -INF
-	for y in range(0, ProcgenMap.SIZE, 8):
-		for x in range(0, ProcgenMap.SIZE, 8):
-			var i := y * ProcgenMap.SIZE + x
+	for y in range(0, map.size, 8):
+		for x in range(0, map.size, 8):
+			var i := y * map.size + x
 			if map.cells[i] != ProcgenMap.RIM_CELL:
 				top = maxf(top, map.heights[i])
 	return top

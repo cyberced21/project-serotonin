@@ -52,7 +52,7 @@ func _ready() -> void:
 	_thread = Thread.new()
 	_thread.start(map.generate)
 	while _thread.is_alive():
-		loading.report(map.progress * SHARE_MAP, ProcgenMap.STEPS[map.step])
+		loading.report(map.progress * SHARE_MAP, ProcgenMap.STAGES[map.stage])
 		await get_tree().process_frame
 	_thread.wait_to_finish()
 	_thread = null
@@ -234,16 +234,16 @@ func _build_terrain(on_progress: Callable) -> void:
 	var images: Array[Image] = []
 	images.resize(Terrain3DRegion.TYPE_MAX)
 	images[Terrain3DRegion.TYPE_HEIGHT] = map.height_image()
-	_terrain.data.import_images(images, ProcgenMap.ORIGIN, 0.0, 1.0)
+	_terrain.data.import_images(images, Vector3(map.origin.x, 0.0, map.origin.y), 0.0, 1.0)
 	var frame_start := Time.get_ticks_usec()
-	for y in ProcgenMap.SIZE:
-		for x in ProcgenMap.SIZE:
-			var id := map.ids[y * ProcgenMap.SIZE + x]
+	for y in map.size:
+		for x in map.size:
+			var id := map.ids[y * map.size + x]
 			if id != WorldMap.TEX_DEFAULT:
-				var w := ProcgenMap.world(x, y)
+				var w := map.world(x, y)
 				_terrain.data.set_control_base_id(Vector3(w.x, 0, w.y), id)
 		if frame_budget_ms > 0.0 and Time.get_ticks_usec() - frame_start > frame_budget_ms * 1000.0:
-			on_progress.call(float(y + 1) / ProcgenMap.SIZE)
+			on_progress.call(float(y + 1) / map.size)
 			await get_tree().process_frame
 			frame_start = Time.get_ticks_usec()
 	_terrain.data.update_maps(Terrain3DRegion.TYPE_CONTROL)  # painting at runtime only reaches the GPU here
