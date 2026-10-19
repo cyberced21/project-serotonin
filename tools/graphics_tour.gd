@@ -40,6 +40,7 @@ func _initialize() -> void:
 func _run() -> void:
 	# Not use_file(): that saves to the current (real) file first.
 	root.get_node("SaveGame").set("path", "user://graphics_tour_save.json")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://graphics_tour_save.json"))
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)  # real frame rates
 	Engine.max_fps = 0
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(out_dir))
@@ -57,10 +58,12 @@ func _run() -> void:
 			continue
 		day_night.set("time", v[3])
 		_go(p, v[1], v[2])
-		await _wait(3.0)  # past the biome's 1.5 s hold and its card
+		await _wait(0.5)
+		_go(p, v[1], v[2])  # again, in case anything moved the player on arrival
+		await _wait(2.5)  # past the biome's 1.5 s hold and its card
 		var fps := await _measure_fps(2.0)
 		await _shot(v[0])
-		print("VIEW %-16s %5.1f fps" % [v[0], fps])
+		print("VIEW %-16s %5.1f fps   at %s yaw %.2f" % [v[0], fps, p.global_position.snapped(Vector3.ONE * 0.1), p.rotation.y])
 	quit()
 
 

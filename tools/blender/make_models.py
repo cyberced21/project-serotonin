@@ -6,8 +6,10 @@ Run headless from the project folder (Blender 4.2+ / 5.x):
 
 Name builders (e.g. `forest`) to rebuild only those models.
 
-Every model is built from a few primitives with jittered vertices, flat-shaded, and coloured by
+Every model is built from a few primitives with jittered vertices, coloured by
 pointing each face's UVs at a swatch of art/palette.png (looked up by name in palette.json).
+Organic models (rocks, trees, plants, fish) are smooth-shaded at export (see SMOOTH); the rest
+stay flat-shaded.
 Object names follow the ResourceNode convention: Body_*, Chunk_*, Rubble_*.
 
 These are starters to learn from: open a .glb in Blender (File > Import > glTF), tweak, and
@@ -17,6 +19,7 @@ them, so rename yours if you want to keep both.
 Coordinates here are Blender's (Z up, -Y toward the viewer); the glTF exporter converts to
 Godot's Y-up, so Blender +Y becomes Godot -Z (forward).
 """
+import fnmatch
 import json
 import math
 import os
@@ -118,9 +121,48 @@ def prism(segments, r_bottom, r_top, height):
     return bm
 
 
+## Smooth shading (Valheim-style: low-poly, but soft): models matching a pattern (fnmatch, on the
+## name passed to export(), folders included) are smooth-shaded with edges sharper than the angle
+## kept hard, so cut faces, seams and caps stay crisp. Everything else stays flat-shaded (crystals,
+## tools, planks, buildings, props, items).
+SMOOTH = [
+    # ore rocks and boulders: soft outer faces, hard cut faces and seams
+    ("rock", 50), ("iron_rock", 50), ("coal_rock", 50), ("gold_rock", 50),
+    ("designs/copper_*", 50), ("designs/iron_*", 50), ("designs/coal_*", 50), ("designs/gold_*", 50),
+    ("scenery/boulder_*", 50), ("scenery/shore_stone", 50), ("scenery/quarry_rubble", 45),
+    # trees: round trunks and limbs, hard cut ends
+    ("tree", 70), ("oak", 70), ("birch", 70), ("pine", 70), ("designs/tree_*", 70),
+    ("designs/oak_*", 70), ("designs/birch_*", 70), ("designs/pine_*", 70), ("scenery/canopy_*", 70),
+    # fish and plants
+    ("fish/*", 60), ("scenery/bush_*", 60), ("scenery/fern", 60), ("scenery/mushrooms", 60),
+    ("scenery/grass_tuft", 60), ("scenery/flowers_*", 60), ("scenery/reeds", 60),
+    ("scenery/wheat_clump", 60), ("scenery/lily_pad", 60),
+]
+
+
+def smooth_angle(name):
+    """The auto-smooth angle (degrees) for the model `name` (see SMOOTH), or None for flat."""
+    key = name.replace(os.sep, "/")
+    for pattern, angle in SMOOTH:
+        if fnmatch.fnmatchcase(key, pattern):
+            return angle
+    return None
+
+
+def auto_smooth(angle):
+    """Smooth-shades every mesh in the scene, keeping edges sharper than `angle` degrees hard."""
+    for obj in bpy.context.scene.objects:
+        if obj.type == "MESH" and len(obj.data.polygons):
+            obj.data.shade_smooth()
+            obj.data.set_sharp_from_angle(angle=math.radians(angle))
+
+
 def export(name, loose_edges=False):
     """Writes models/<name>.glb. With `loose_edges` (the breakable rocks), also the Seam_* lines and
-    the "cut_mark" vertex colour (see mark_cut)."""
+    the "cut_mark" vertex colour (see mark_cut). Smooth-shades it first if SMOOTH says so."""
+    angle = smooth_angle(name)
+    if angle is not None:
+        auto_smooth(angle)
     if _variant:  # a variant: models/variants/<name>_v<n>.glb, whatever folder the model lives in
         name = os.path.join("variants", f"{os.path.basename(name)}_v{_variant}")
     path = os.path.join(OUT_DIR, name + ".glb")
