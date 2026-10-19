@@ -5,7 +5,7 @@ extends Node
 ## node doesn't need a player per layer.
 
 const VOICES := 12
-const VOICES_3D := 16
+const VOICES_3D := 32  # the gathering sounds ring and boom on for a second or two
 const COMBO_WINDOW_MS := 450
 const COMBO_STEP := 0.06
 const COMBO_MAX := 0.6

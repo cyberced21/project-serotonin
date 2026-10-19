@@ -5,6 +5,7 @@
 [ext_resource type="AudioStream" path="res://audio/woodcutting/sfx/chip_scatter.tres" id="s0"]
 [ext_resource type="AudioStream" path="res://audio/woodcutting/sfx/chop_bite.tres" id="s1"]
 [ext_resource type="AudioStream" path="res://audio/woodcutting/sfx/birch/chop_thunk.tres" id="s2"]
+[ext_resource type="AudioStream" path="res://audio/woodcutting/sfx/birch/chop_bloom.tres" id="s3"]
 
 [sub_resource type="Resource" id="Layer_thunk"]
 script = ExtResource("2_layer")
@@ -29,6 +30,14 @@ volume_db = -15.0
 pitch_jitter = 0.1
 resource_name = "chips"
 
+[sub_resource type="Resource" id="Layer_bloom"]
+script = ExtResource("2_layer")
+stream = ExtResource("s3")
+volume_db = -3.0
+pitch_jitter = 0.05
+follows_pitch = false
+resource_name = "bloom"
+
 [resource]
 script = ExtResource("1_layers")
-layers = Array[ExtResource("2_layer")]([SubResource("Layer_thunk"), SubResource("Layer_bite"), SubResource("Layer_chips")])
+layers = Array[ExtResource("2_layer")]([SubResource("Layer_thunk"), SubResource("Layer_bite"), SubResource("Layer_chips"), SubResource("Layer_bloom")])

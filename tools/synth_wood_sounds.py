@@ -109,6 +109,36 @@ def stick_slip(rng, n, rate_from, rate_to, body, wobble=0.25):
     return out
 
 
+def reverb(rng, clip, length, low_t, high_t, predelay=0.02, taps=6):
+    """The space round a blow, baked in (wet only, about as loud as `clip`): an impulse response
+    of noise dying away, lows lasting `low_t` s (to -60 dB) and highs `high_t` s, so the tail
+    darkens and deepens as it goes: the boom of a forest or a quarry wall rather than a room's
+    hiss. A few early echoes (`taps`, 15-90 ms) are the trunks and rocks close by."""
+    n = secs(length)
+    t = t_axis(n)
+    mid_t = (low_t * high_t) ** 0.5
+    ir = sum(shaped(rng, n, lo, hi) * np.exp(-t * 6.91 / rt) * g
+             for lo, hi, rt, g in ((35, 320, low_t, 1.0), (320, 1800, mid_t, 0.55), (1800, 9000, high_t, 0.25)))
+    ir *= 1.0 - np.exp(-t / 0.012)  # the tail builds up from the echoes rather than jumping in
+    for at in rng.uniform(0.015, 0.09, taps):
+        echo = shaped(rng, secs(0.01), 120, 4000, tilt=-2) * env(secs(0.01), 0.0005, 0.002)
+        place(ir, echo, at, rng.uniform(0.3, 0.7) * np.exp(-at / 0.05))
+    ir = np.concatenate([np.zeros(secs(predelay)), ir])
+    size = len(clip) + len(ir)
+    wet = np.fft.irfft(np.fft.rfft(clip, size) * np.fft.rfft(ir, size), size)
+    return wet * np.sqrt(np.sum(clip ** 2) / (np.sum(wet ** 2) + 1e-12))
+
+
+def bloom(rng, body, length, low_t, high_t, dry=0.6, wet=1.0):
+    """`body` with its tail after it: the dry blow and its space, as one clip, cut where the
+    tail has died 60 dB under the blow (a long silent end only holds a voice)."""
+    out = reverb(rng, body, length, low_t, high_t) * wet
+    out[: len(body)] += body * dry
+    level = np.sqrt(np.convolve(out * out, np.ones(secs(0.02)) / secs(0.02), mode="same"))
+    alive = np.nonzero(level > level.max() * 1e-3)[0]
+    return out[: alive[-1] + 1] if len(alive) else out
+
+
 # --- the sounds ------------------------------------------------------------------------------
 
 # How each species' wood rings next to the starter tree's: its resonances shifted in pitch and
@@ -136,6 +166,19 @@ def chop_thunk(rng, voice=NEUTRAL):
     out += shaped(rng, n, 200, 1800, tilt=-3) * env(n, 0.0008, 0.018) * 0.9  # the knock itself
     out += clicks(rng, n, np.sort(rng.uniform(0.002, 0.03, 6)), rng.uniform(0.08, 0.2, 6), 900, 4000)
     return out
+
+
+def chop_bloom(rng, voice=NEUTRAL):
+    """The trunk booming under the blow and the forest answering: one deep, hollow note (its
+    partials harmonic, so they fuse into a 'thoom' instead of beating into a growl), then a long
+    dark tail."""
+    n = secs(0.7)
+    f = rng.uniform(56, 64) * voice["pitch"]
+    body = np.zeros(n)
+    for ratio, decay, amp in ((1.0, 0.2, 1.0), (2.0, 0.12, 0.55), (3.0, 0.07, 0.3), (5.0, 0.035, 0.12)):
+        body += mode(n, f * ratio, decay * voice["decay"], amp, rng.uniform(0, 6.28), glide=0.03, attack=0.003)
+    body += shaped(rng, n, 40, 450, tilt=-3) * env(n, 0.001, 0.03) * 0.5
+    return bloom(rng, body, 1.8, 1.4 * voice["decay"], 0.4, wet=0.55)
 
 
 def chop_bite(rng):
@@ -238,11 +281,12 @@ def land_slump(rng, voice=NEUTRAL):
 
 
 def land_boom(rng):
-    """The ground taking the weight: a deep thump under everything."""
+    """The ground taking the weight: a deep thump under everything, rolling off through the
+    woods for seconds."""
     n = secs(1.2)
     out = mode(n, 52, 0.32, 1.0, glide=0.25) + mode(n, 78, 0.2, 0.5, glide=0.2)
     out += shaped(rng, n, 30, 220) * env(n, 0.002, 0.12) * 0.5
-    return out
+    return bloom(rng, out, 3.2, 2.8, 0.5, dry=0.8)
 
 
 SOUNDS = [  # (layer, how many, build)
@@ -255,11 +299,13 @@ SOUNDS = [  # (layer, how many, build)
     ("crown_rush", 2, crown_rush),
     ("land_slump", 2, land_slump),
     ("land_boom", 1, land_boom),
+    ("chop_bloom", 4, chop_bloom),
 ]
 VOICED = [  # (layer, how many, build(rng, voice)): baked again per species into sfx/<species>/
     ("chop_thunk", 4, chop_thunk),
-    ("trunk_creak", 3, lambda rng, voice: trunk_creak(rng, rng.uniform(0.6, 1.0), voice)),
+    ("trunk_creak", 3, lambda rng, voice:trunk_creak(rng, rng.uniform(0.6, 1.0), voice)),
     ("land_slump", 2, land_slump),
+    ("chop_bloom", 3, chop_bloom),
 ]
 # The stacks (audio/woodcutting/<stack>.tres) that play voiced layers: each species gets its own
 # copy, audio/woodcutting/<species>/<stack>.tres, with its voiced layers swapped in.

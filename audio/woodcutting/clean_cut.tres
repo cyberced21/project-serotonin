@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://scripts/sound_layer.gd" id="2_layer"]
 [ext_resource type="AudioStream" path="res://audio/woodcutting/sfx/clean_crack.tres" id="s0"]
 [ext_resource type="AudioStream" path="res://audio/woodcutting/sfx/fibre_tear.tres" id="s1"]
+[ext_resource type="AudioStream" path="res://audio/woodcutting/sfx/chop_bloom.tres" id="s2"]
 
 [sub_resource type="Resource" id="Layer_snap"]
 script = ExtResource("2_layer")
@@ -21,6 +22,15 @@ volume_db = -14.0
 pitch_jitter = 0.1
 resource_name = "crackle"
 
+[sub_resource type="Resource" id="Layer_bloom"]
+script = ExtResource("2_layer")
+stream = ExtResource("s2")
+volume_db = -1.0
+pitch_jitter = 0.04
+follows_pitch = false
+pitch = 0.85
+resource_name = "bloom"
+
 [resource]
 script = ExtResource("1_layers")
-layers = Array[ExtResource("2_layer")]([SubResource("Layer_snap"), SubResource("Layer_crackle")])
+layers = Array[ExtResource("2_layer")]([SubResource("Layer_snap"), SubResource("Layer_crackle"), SubResource("Layer_bloom")])

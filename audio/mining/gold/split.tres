@@ -5,6 +5,7 @@
 [ext_resource type="AudioStream" path="res://audio/mining/sfx/hit_crack.tres" id="s0"]
 [ext_resource type="AudioStream" path="res://audio/mining/sfx/gold/split_crunch.tres" id="s1"]
 [ext_resource type="AudioStream" path="res://audio/mining/sfx/split_rubble.tres" id="s2"]
+[ext_resource type="AudioStream" path="res://audio/mining/sfx/gold/hit_bloom.tres" id="s3"]
 
 [sub_resource type="Resource" id="Layer_crunch"]
 script = ExtResource("2_layer")
@@ -29,6 +30,15 @@ volume_db = -3.0
 pitch_jitter = 0.08
 resource_name = "rubble"
 
+[sub_resource type="Resource" id="Layer_bloom"]
+script = ExtResource("2_layer")
+stream = ExtResource("s3")
+volume_db = -1.0
+pitch_jitter = 0.05
+follows_pitch = false
+pitch = 0.8
+resource_name = "bloom"
+
 [resource]
 script = ExtResource("1_layers")
-layers = Array[ExtResource("2_layer")]([SubResource("Layer_crunch"), SubResource("Layer_snap"), SubResource("Layer_rubble")])
+layers = Array[ExtResource("2_layer")]([SubResource("Layer_crunch"), SubResource("Layer_snap"), SubResource("Layer_rubble"), SubResource("Layer_bloom")])
