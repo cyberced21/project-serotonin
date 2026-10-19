@@ -364,8 +364,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		var limit := deg_to_rad(max_pitch_deg)
 		_pitch = clampf(_pitch - motion.relative.y * mouse_sensitivity, -limit, limit)
 		_look_delta += motion.relative
-	elif event.is_action_pressed("ui_cancel"):
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	elif event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		get_viewport().set_input_as_handled()

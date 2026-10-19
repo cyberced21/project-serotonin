@@ -121,7 +121,7 @@ func _process(_delta: float) -> void:
 	var p := _player()
 	if p and p.debug_fly:
 		tags.append("FLY")
-	if get_tree().paused:
+	if get_tree().paused and not PauseMenu.is_open():
 		tags.append("PAUSED")
 	if not is_equal_approx(Engine.time_scale, 1.0):
 		tags.append("TIME ×%s" % Engine.time_scale)

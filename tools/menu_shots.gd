@@ -33,11 +33,36 @@ func _run() -> void:
 	await _wait(4.0)
 	await _shot("main")
 	var menu := current_scene
-	menu.call("_open_worlds")
+	menu.call("_open", &"worlds")
 	await _wait(1.0)
 	await _shot("worlds")
+	menu.call("_open", &"controls")
+	await _wait(0.5)
+	await _shot("controls")
+
+	# into the classic world, pause, Save & Quit: the card gets its picture and the save is written
+	worlds.call("play", "classic")
+	await _wait(6.0)
+	var pause := root.get_node("PauseMenu")
+	pause.call("open")
+	await _wait(0.5)
+	await _shot("pause")
+	_check(root.get_node("SaveGame").get_tree().paused, "the pause menu pauses the tree")
+	await pause.call("_save_and_quit", false)
+	await _wait(3.0)
+	_check(FileAccess.file_exists(worlds.call("thumb_path", "classic")), "Save & Quit took a picture")
+	_check(worlds.call("has_save", "classic"), "Save & Quit wrote the save")
+	_check(float((worlds.call("meta", "classic") as Dictionary)["playtime"]) > 3600.0 * 5.4, "playtime grew")
+	_check(current_scene.scene_file_path == "res://scenes/menu/main_menu.tscn", "back on the main menu")
+	current_scene.call("_open", &"worlds")
+	await _wait(1.0)
+	await _shot("worlds_after")
 	_remove_tree(ProjectSettings.globalize_path(ROOT))
 	quit()
+
+
+func _check(ok: bool, what: String) -> void:
+	print(("ok   " if ok else "FAIL ") + what)
 
 
 ## A played classic world and two generated ones, so the cards have something to show.

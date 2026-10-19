@@ -12,6 +12,7 @@ var _continue: Button
 var _continue_title: Label
 var _continue_sub: Label
 var _worlds: WorldsScreen
+var _controls: ControlsScreen
 
 
 func _ready() -> void:
@@ -75,10 +76,11 @@ func _build() -> void:
 	_continue.add_child(lines)
 	_column.add_child(_continue)
 	_column.add_child(MenuUI.spacer(4))
-	_column.add_child(MenuUI.button("Worlds", _open_worlds, 20))
+	_column.add_child(MenuUI.button("Worlds", _open.bind(&"worlds"), 20))
 	var settings := MenuUI.button("Settings", func() -> void: pass, 20)
 	settings.disabled = true
 	_column.add_child(settings)
+	_column.add_child(MenuUI.button("Controls", _open.bind(&"controls"), 20))
 	_column.add_child(MenuUI.button("Quit", func() -> void: get_tree().quit(), 20))
 
 	_worlds = WorldsScreen.new()
@@ -89,10 +91,17 @@ func _build() -> void:
 	_worlds.offset_right = -40
 	_worlds.offset_top = 40
 	_worlds.offset_bottom = -40
-	_worlds.visible = false
-	_worlds.closed.connect(_close_worlds)
 	_worlds.new_world_requested.connect(_new_world)
-	_ui.add_child(_worlds)
+	_controls = ControlsScreen.new()
+	_controls.anchor_left = 1.0
+	_controls.anchor_right = 1.0
+	_controls.offset_left = -680
+	_controls.offset_right = -40
+	_controls.offset_top = 40
+	for screen: Control in [_worlds, _controls]:
+		screen.visible = false
+		screen.closed.connect(_close_screens)
+		_ui.add_child(screen)
 
 
 ## Continue: the world played last, its name and playtime underneath; Play on a first launch.
@@ -112,13 +121,17 @@ func _on_continue() -> void:
 	Worlds.play(id if not id.is_empty() else Worlds.CLASSIC)
 
 
-func _open_worlds() -> void:
-	_worlds.refresh()
-	_worlds.visible = true
+## One screen on the right at a time: &"worlds" or &"controls".
+func _open(screen: StringName) -> void:
+	if screen == &"worlds":
+		_worlds.refresh()
+	_worlds.visible = screen == &"worlds"
+	_controls.visible = screen == &"controls"
 
 
-func _close_worlds() -> void:
+func _close_screens() -> void:
 	_worlds.visible = false
+	_controls.visible = false
 	_continue.grab_focus()
 
 
