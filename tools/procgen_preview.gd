@@ -25,7 +25,7 @@ func _initialize() -> void:
 		var kinds: PackedStringArray = []
 		for b in map.kinds:
 			kinds.append(map.kind_name(b))
-		print("seed %d: %d ms, %d trails, %d waters, %s, %s %s" % [s, ms, map.trails.size(), map.waters.size(),
+		print("seed %d: %d ms, %d trails, %d waters, %d rivers, %s, %s %s" % [s, ms, map.trails.size(), map.waters.size(), map.rivers.size(),
 				", ".join(kinds), path,
 				"" if err == OK else error_string(err)])
 	quit()

@@ -136,6 +136,8 @@ const STAIR_WIDTH := 6.0
 ## side of its line, and graded: the ground across it is levelled to a smoothed height along it,
 ## easing back to the land over TRAIL_SHOULDER.
 const TRAIL_CELL := 4.0
+## A trail square on a river (its channel and banks) costs this much: trails ford rivers, straight across.
+const RIVER_FORD_COST := 40.0
 const TRAIL_SLOPE_COST := 90.0
 const TRAIL_MAX_SLOPE := 0.5  # steeper squares are impassable
 ## Steepest the graded trail may climb (rise per metre); steeper ground is cut into.
@@ -172,6 +174,11 @@ var quarry: Dictionary = {}
 var village: Dictionary = {}
 ## The trails' centre lines, world XZ, one point a metre, each starting at the hub.
 var trails: Array[PackedVector2Array] = []
+## The rivers: {points: PackedVector2Array (source to mouth, a metre apart), widths: PackedFloat32Array
+## (half the channel's width at each point)}.
+var rivers: Array[Dictionary] = []
+## 1 on a river's channel and banks (trails may ford there), per pixel.
+var river_mask := PackedByteArray()
 
 var _hills := FastNoiseLite.new()
 var _swell := FastNoiseLite.new()
@@ -183,6 +190,7 @@ var _warp_x := FastNoiseLite.new()
 var _warp_y := FastNoiseLite.new()
 var _shore := FastNoiseLite.new()  # ragged pond outlines
 var _rings := FastNoiseLite.new()  # wandering quarry walls
+var _meander := FastNoiseLite.new()  # rivers swinging from side to side
 var _rng := RandomNumberGenerator.new()
 var _kind_rng := RandomNumberGenerator.new()  # its own, so rolling kinds doesn't move the sites
 var _ramp_top: Array[float] = []   # per quarry wall: angle of its ramp's top end
@@ -219,6 +227,9 @@ func _init(world_seed: int) -> void:
 	_shore.frequency = 0.15
 	_rings.seed = sub_seed(&"rings")
 	_rings.frequency = 0.05
+	_meander.seed = sub_seed(&"meander")
+	_meander.frequency = 0.025
+	_meander.fractal_octaves = 2
 	_rng.seed = sub_seed(&"sites")
 	_kind_rng.seed = sub_seed(&"kinds")
 
@@ -241,6 +252,7 @@ func generate() -> void:
 	_stamp_village()
 	_stamp_quarry()
 	_place_water()
+	_carve_rivers()
 	_lay_trails()
 
 
@@ -677,6 +689,111 @@ func _island(at: Vector2, r: float) -> void:
 		var mound := 1.0 - smoothstep(r * 0.4, r, d)
 		heights[i] = maxf(heights[i], lerpf(heights[i], 1.4 + _bumps.get_noise_2dv(w) * 0.4, mound)))
 
+# --- rivers -----------------------------------------------------------------------------------
+
+## A river runs from the mountains of the rim down into the lake: A* over the trail grid that
+## prefers low ground (so it finds the valleys) and keeps clear of the hub, the village and the
+## quarry, then carved down to the water line, its banks rising beside it (a gorge where it cuts
+## through a hill). It widens toward its mouth. Some seeds get a second, from another direction.
+const RIVER_WIDTH := Vector2(1.6, 3.0)  # half the channel's width at the source and at the mouth
+const RIVER_DEPTH := 0.55               # below the water line, mid-channel: wadeable
+const RIVER_BANK := 0.7                 # rise per metre beside the channel
+const RIVER_REACH := 16.0               # how far beside it the banks are shaped
+const RIVER_SECOND_CHANCE := 0.5
+const RIVER_MEANDER := 9.0               # how far (m) it swings to either side of its route
+
+
+func _carve_rivers() -> void:
+	rivers.clear()
+	river_mask.resize(SIZE * SIZE)
+	river_mask.fill(0)
+	var lake := {}
+	for w in waters:
+		if w["name"] == "Lake":
+			lake = w
+	if lake.is_empty():
+		return
+	var mouth: Vector2 = lake["center"]
+	var away := (mouth - hub).normalized()
+	var turns := [_rng.randf_range(-0.4, 0.4)]
+	if _rng.randf() < RIVER_SECOND_CHANCE:
+		turns.append(_rng.randf_range(1.1, 1.7) * (1.0 if _rng.randf() < 0.5 else -1.0))
+	var astar := _river_grid()
+	for turn in turns:
+		var source := mouth
+		var dir := away.rotated(turn)
+		while _rim(source) < 0.2 and source.length() < SIZE * 0.5:
+			source += dir * TRAIL_CELL
+		var cells_path := astar.get_id_path(_trail_cell(source), _trail_cell(mouth))
+		if cells_path.size() < 4:
+			continue
+		var pts := PackedVector2Array()
+		for c in cells_path:
+			pts.append(_trail_world(c))
+		pts = _meandered(_resample(_chaikin(_chaikin(_chaikin(pts))), 1.0), rivers.size())
+		var r: float = lake["radius"]
+		var keep := pts.size()
+		while keep > 2 and pts[keep - 1].distance_to(mouth) < r - 2.0:  # stops where it meets the lake
+			keep -= 1
+		pts = pts.slice(0, keep)
+		var widths := PackedFloat32Array()
+		for k in pts.size():
+			widths.append(lerpf(RIVER_WIDTH.x, RIVER_WIDTH.y, float(k) / maxf(pts.size() - 1, 1)))
+		rivers.append({"points": pts, "widths": widths})
+		_carve_river(pts, widths)
+
+
+func _river_grid() -> AStarGrid2D:
+	var n := int(SIZE / TRAIL_CELL)
+	var astar := AStarGrid2D.new()
+	astar.region = Rect2i(0, 0, n, n)
+	astar.cell_size = Vector2.ONE * TRAIL_CELL
+	astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+	astar.update()
+	for y in n:
+		for x in n:
+			var c := Vector2i(x, y)
+			var w := _trail_world(c)
+			var kept_clear := w.distance_to(hub) < HUB_RADIUS + hub_ramp * 0.6 or _in_pit(w) \
+					or (not quarry.is_empty() and w.distance_to(quarry["center"]) < quarry_walls[0] + QUARRY_APRON + 6.0) \
+					or (not village.is_empty() and w.distance_to(village["center"]) < VILLAGE_RADIUS + 8.0)
+			if kept_clear:
+				astar.set_point_solid(c, true)
+			else:
+				var wander := (_meander.get_noise_2dv(w * 2.0) * 0.5 + 0.5) * 3.0
+				astar.set_point_weight_scale(c, 1.0 + clampf(height_at(w), 0.0, 60.0) * 0.5 + wander)
+	return astar
+
+
+## `pts` pushed side to side by smooth noise along its length, full swing in the middle, none at
+## either end (it still leaves the mountains and meets the lake where its route does).
+func _meandered(pts: PackedVector2Array, salt: int) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	var n := pts.size()
+	for k in n:
+		var along := (pts[mini(k + 3, n - 1)] - pts[maxi(k - 3, 0)]).normalized()
+		var ends := smoothstep(0.0, 25.0, float(k)) * smoothstep(0.0, 25.0, float(n - 1 - k))
+		var swing := _meander.get_noise_2d(float(k), 300.0 * salt) * RIVER_MEANDER * 1.6 * ends
+		out.append(pts[k] + along.orthogonal() * swing)
+	return _resample(_chaikin(out), 1.0)
+
+
+func _carve_river(pts: PackedVector2Array, widths: PackedFloat32Array) -> void:
+	for k in range(0, pts.size(), 2):
+		var at := pts[k]
+		var hw := widths[k]
+		_for_pixels_near(at, hw + RIVER_REACH, func(i: int, w: Vector2) -> void:
+			var d := w.distance_to(at)
+			var bed := WATER_LEVEL + (d - hw) * RIVER_BANK
+			if d < hw:
+				bed = WATER_LEVEL - RIVER_DEPTH * (1.0 - (d / hw) * (d / hw))
+			heights[i] = minf(heights[i], bed)
+			if d < hw + 1.5:
+				ids[i] = WorldMap.TEX_DEFAULT  # the shader's sand and bed
+			if d < hw + 6.0:
+				river_mask[i] = 1)
+
+
 # --- trails -----------------------------------------------------------------------------------
 
 func _lay_trails() -> void:
@@ -753,7 +870,9 @@ func _trail_grid() -> AStarGrid2D:
 			for d in [Vector2(TRAIL_CELL, 0), Vector2(0, TRAIL_CELL), Vector2(-TRAIL_CELL, 0), Vector2(0, -TRAIL_CELL)]:
 				slope = maxf(slope, absf(height_at(w + d) - h) / TRAIL_CELL)
 			var wet := h < WATER_LEVEL + 0.05
-			if wet or slope > TRAIL_MAX_SLOPE or _rim(w) > 0.3 or _in_pit(w):
+			if river_mask[pixel_index(w)] and _rim(w) < 0.3:  # a ford: wade across, but not along
+				astar.set_point_weight_scale(c, RIVER_FORD_COST)
+			elif wet or slope > TRAIL_MAX_SLOPE or _rim(w) > 0.3 or _in_pit(w):
 				astar.set_point_solid(c, true)
 			else:
 				astar.set_point_weight_scale(c, 1.0 + TRAIL_SLOPE_COST * slope * slope)

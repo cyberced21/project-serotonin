@@ -45,7 +45,7 @@ from what each biome is like, where things sit, and what turns up between them.
    shapes; the kind on the arrival card; the hub moved off the map's centre.
 2. **Hearthvale** ✅: a village biome on the inner ring. A flattened valley, a square and lanes, the
    six village buildings with their villagers, upgrades saved with the seed, and lamps and benches.
-3. **Rivers**: a channel from the rim down to the lake, carved to the water line, its water built
+3. **Rivers** ✅: a channel from the rim down to the lake, carved to the water line, its water built
    in segments, trails fording it.
 4. **Landmarks**: ruins (the parkour blocks as a broken tower or wall, a reward on top), rare spots
    (a crystal outcrop, a gold vein, a pike pond, an ancient oak stand, a flower meadow; 1–3 per

@@ -376,8 +376,12 @@ func _rebuild_teleports() -> void:
 	grid = _grid(3)
 	for w in get_tree().get_nodes_in_group("water"):
 		var water := w as Node3D
-		grid.add_child(_button(String(water.name).capitalize(), _teleport.bind(water.global_position,
-				water.global_position + Vector3.FORWARD)))
+		var label := String(water.name).capitalize()
+		if String(water.name).begins_with("Stretch"):  # a procgen river: one button, its first stretch
+			if water.name != &"Stretch1":
+				continue
+			label = String(water.get_parent().name).capitalize()
+		grid.add_child(_button(label, _teleport.bind(water.global_position, water.global_position + Vector3.FORWARD)))
 	_teleport_box.add_child(grid)
 
 	_teleport_box.add_child(_heading("Nearest resource node"))

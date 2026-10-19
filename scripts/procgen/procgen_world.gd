@@ -62,6 +62,7 @@ func _ready() -> void:
 	map.generate()
 	_build_terrain()
 	_build_water()
+	_build_rivers()
 	_build_village()
 	Biome.locator = func(p: Vector3) -> StringName: return map.biome_at(Vector2(p.x, p.z))
 	if not map.quarry.is_empty():
@@ -85,6 +86,68 @@ func _exit_tree() -> void:
 
 ## A WaterBody per basin the map carved, built like the hand-made ponds in main.tscn: a box volume,
 ## the water surface, reeds and lily pads (PondDressing) and fish (FishPond).
+## Each river's water: one surface following its bends (a strip, the water shader works from world
+## position), and a WaterBody every RIVER_SEGMENT metres along it, its box turned along the river,
+## so wading, splashes and footsteps work in it like in a pond.
+const RIVER_SEGMENT := 10
+
+
+func _build_rivers() -> void:
+	var material := ShaderMaterial.new()
+	material.shader = WATER_SHADER
+	for r in map.rivers.size():
+		var pts: PackedVector2Array = map.rivers[r]["points"]
+		var widths: PackedFloat32Array = map.rivers[r]["widths"]
+		var river := Node3D.new()
+		river.name = "River%d" % (r + 1)
+		add_child(river)
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		var y := ProcgenMap.WATER_LEVEL
+		for k in pts.size() - 1:
+			var a := pts[k]
+			var b := pts[k + 1]
+			var na := _across(pts, k) * (widths[k] + 2.0)
+			var nb := _across(pts, k + 1) * (widths[k + 1] + 2.0)
+			var al := Vector3(a.x - na.x, y, a.y - na.y)
+			var ar := Vector3(a.x + na.x, y, a.y + na.y)
+			var bl := Vector3(b.x - nb.x, y, b.y - nb.y)
+			var br := Vector3(b.x + nb.x, y, b.y + nb.y)
+			for v in [al, bl, ar, ar, bl, br]:
+				st.set_normal(Vector3.UP)
+				st.add_vertex(v)
+		var surface := MeshInstance3D.new()
+		surface.name = "Surface"
+		surface.mesh = st.commit()
+		surface.material_override = material
+		surface.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		river.add_child(surface)
+		for k in range(0, pts.size() - 1, RIVER_SEGMENT):
+			var a := pts[k]
+			var b := pts[mini(k + RIVER_SEGMENT, pts.size() - 1)]
+			var body := WaterBody.new()
+			body.name = "Stretch%d" % (k / RIVER_SEGMENT + 1)
+			body.position = Vector3((a.x + b.x) * 0.5, 0.0, (a.y + b.y) * 0.5)
+			body.rotation.y = atan2(b.x - a.x, b.y - a.y)  # its box's length (Z) along the river
+			body.collision_layer = 0
+			body.collision_mask = 0
+			body.surface_height = y
+			var volume := CollisionShape3D.new()
+			volume.name = "Volume"
+			volume.position.y = -1.0
+			var box := BoxShape3D.new()
+			box.size = Vector3(widths[k] * 2.0 + 6.0, 3.0, a.distance_to(b) + 2.0)
+			volume.shape = box
+			body.add_child(volume)
+			river.add_child(body)
+
+
+## The unit vector across the river at point k (to its right, looking downstream).
+static func _across(pts: PackedVector2Array, k: int) -> Vector2:
+	var along := (pts[mini(k + 1, pts.size() - 1)] - pts[maxi(k - 1, 0)]).normalized()
+	return Vector2(-along.y, along.x)
+
+
 ## Hearthvale's buildings (each with its villager) and props, where the map laid them out. Their
 ## tiers are the Village autoload's, saved with this seed like everything else.
 func _build_village() -> void:
