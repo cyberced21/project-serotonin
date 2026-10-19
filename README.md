@@ -19,10 +19,11 @@ whatever you hit.
   - The tool sinks into the node, holds through the hit-stop, then yanks out and tears a chunk loose.
   - During the bite, the tool really sticks in the node until you yank it out, quivering.
   - Each hit is felt: a layered sound (crack, tink, thump, a gravel trickle a beat later), chips that bounce on the ground, a dust puff, sparks, an impact star, a camera kick with a quick narrowing of the view, and pebbles piling up round the rock. Pitch rises as a node weakens.
-- **Mining: rocks made to break apart.**
-  - Rocks are hefty boulders (about 2.4 m) cut into pieces that fit together exactly. Their collision follows the real shape, refitted as pieces come off.
-  - Hit a piece and a crack runs along its seam, both ways from where you struck. Every hit takes it further, and hitting one of its two glowing tips counts double (an extra hit and double XP). When the crack has gone all the way round, exactly that piece splits off and tips away, showing the fresh stone and ore inside.
-  - Leave a piece half-cracked and its crack waits for you. Pieces only ever come off along a crack.
+- **Mining: rocks that break where you hit them.**
+  - Every ore rock is 13 to 36 pieces that fit together exactly, weathered outside and fresh inside. Each hit knocks out the piece you struck and its nearest neighbours, showing bright stone and glinting ore. Collision follows the real shape, refitted as pieces come off.
+  - Pieces rest on each other: knock out what holds one up and everything above it comes down (**Collapse!**). Once enough is gone, the rest shatters.
+  - Every rock has a **fault**, a hairline crack with grit trickling out of it. Find it and hit it and a whole cluster breaks out at once (**Fault!**), then it opens up somewhere else.
+  - Ore spills out of the pieces that carry a vein as you dig; the shatter pays the rest.
   - The pickaxe squares up when you look at a rock, then swings overhead and comes down pick-first on the crosshair.
 - **Woodcutting: trees you notch and fell.**
   - The felling axe swings flat from the side: pulled back to the right, then across, biting level into the trunk at the crosshair.
@@ -32,7 +33,7 @@ whatever you hit.
   - What's left is the cut stump, growth rings and all, until the tree grows back. A half-cut tree keeps its notch through saving and loading.
   - Four trees, each its own look: a round starter tree, a slim white birch dashed with black, a broad oak on buttress roots, and a tall pine of ragged cones. The forest's background trees match them.
 - **Skills:** Woodcutting, Mining, Fishing and Farming, each with XP and levels. Nodes and fish above your level bounce off or dodge.
-  - Every ore has its own look, built for cracking: **copper** is a weathered boulder with a green cap whose seams follow its copper veins, **iron** a cluster of basalt columns bleeding rust, **coal** layered seams of coal and shale that split into slabs, **gold** a dull brown geode, thinly veined, with a quartz rim and a gold core inside, and **crystal** violet crystals that crack round their base and snap off.
+  - Every ore breaks its own way: **copper** is a verdigris-capped boulder that flakes away, its copper veins running through it; **iron** a cluster of basalt columns in jointed segments, so knocking out a column's foot topples it; **coal** courses of plates, dull charcoal in pale shale outside and glossy inside, that drop a layer when undercut; **gold** a brown geode, thinly veined, whose tough shell (two hits a piece) hides a quartz-rimmed gold heart; and **crystal** violet crystals in shards that snap off where struck and bring the rest of the crystal down.
   - Higher-level nodes:
     - Birch (Woodcutting 8) grows west of the clearing.
     - Oak (15) grows around the village, and iron rocks (Mining 15) sit east of the smithy. The village's top tiers ask for them.
@@ -158,7 +159,7 @@ tools/               asset-generation scripts (see below)
 
 Key scripts:
 - **Player and feel:** `player.gd` (movement, per-tool swings, bite), `viewmodel.gd` (held tool), `shake_camera.gd` (shake, impact kick, FOV)
-- **Gathering:** `resource_node.gd` (every tree and rock: hits, cracks along seams, splits, fitted collision, the felling), `trunk_carve.gd` (a tree's notch, carved into the trunk's mesh, and the cut through it), `hit_fx.gd` (chips, dust, sparks, impact star), `pickup.gd`, `items.gd`
+- **Gathering:** `resource_node.gd` (every tree and rock: hits, pieces knocked out where struck, collapses, faults, fitted collision, the felling), `trunk_carve.gd` (a tree's notch, carved into the trunk's mesh, and the cut through it), `hit_fx.gd` (chips, dust, sparks, impact star), `pickup.gd`, `items.gd`
 - **Layered sound:** `sound_layers.gd` / `sound_layer.gd` (a sound built from timed layers), played through `Sfx`
 - **Fishing:** `spear_fishing.gd`, `fish_pond.gd`, `fish_school.gd`, `fish.gd`, `water_body.gd`
 - **Village:** `building.gd` (shows a tier, plays the upgrade), `villager.gd`, `upgrade_panel.gd`, `building_def.gd` / `building_tier.gd`, `prop.gd`
@@ -181,7 +182,8 @@ Most content is generated by scripts, so it's easy to tweak and regenerate. Run 
 | Item icons → `art/icons/*.png` | `blender -b -P tools/blender/render_icons.py -- models art/palette.png art/icons`, then `python tools/outline_icons.py` (name item ids after either to do only those) |
 | Ore design candidates → `models/designs/` (not used by the game; two looks per ore) | `blender -b -P tools/blender/make_models.py -- models art/palette.json designs` |
 | Tree design candidates → `models/designs/` (two looks per tree; the picked ones also build `tree`, `birch`, `oak` and `pine`) | `blender -b -P tools/blender/make_models.py -- models art/palette.json tree_designs` |
-| Model variants for generated worlds → `models/variants/` (4 of each ore rock, choppable tree, bush, boulder and background tree, from shifted seeds) | `blender -b -P tools/blender/make_models.py -- models art/palette.json variants` |
+| Model variants for generated worlds → `models/variants/` (4 of each ore rock, choppable tree, bush, boulder and background tree, from shifted seeds) | `blender -b -P tools/blender/make_models.py -- models art/palette.json variants` (`ore_variants`: just the ore rocks) |
+| Close-ups of an ore rock being mined, a screenshot a hit → `docs/images/ores/<label>/` | `godot --path . -s res://tools/ore_closeup.gd -- --ore=rock [--fault] [--angle=30]` |
 | Mining sound clips → `audio/mining/sfx/` (synthesized, plus a voice per ore in `sfx/<ore>/` and its stacks in `audio/mining/<ore>/`) | `python tools/synth_mining_sounds.py` |
 | Woodcutting sound clips → `audio/woodcutting/sfx/` (synthesized, plus a voice per species in `sfx/<species>/` and its stacks in `audio/woodcutting/<species>/`) | `python tools/synth_wood_sounds.py` |
 | Graphics tour: screenshots of fixed views (or a generated world's) and the frame rate at each, on a throwaway save | `godot --path . -s res://tools/graphics_tour.gd -- --label=NAME [--preset=high] [--only=pond,...] [--procgen=SEED]` (saves to `docs/images/graphics/NAME/`) |

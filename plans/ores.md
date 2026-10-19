@@ -1,7 +1,8 @@
 # Ore polish: rocks that break where they're struck
 
-Status: phase 1 (copper) **done** 2026-10-19, waiting on the user's playtest; branch `ores` (off `graphics`). Prototype on
-copper committed (fdb0042).
+Status: **done** 2026-10-19, all phases committed on branch `ores` (off `graphics`), unpushed.
+Copper was playtested between phases 1 and 2; that playtest added the fault (a sweet spot) and
+found the white-blob bug. Open items are in docs/TODO.md ("Ore polish").
 
 ## Why
 
@@ -37,12 +38,12 @@ One commit per phase. Phases 2 onward run straight through after the copper play
    from vein pieces; weathered/fresh shading with glinting ore (shader + baked vertex colour);
    grounding skirt; rebuilt variants. **Stop for the user's playtest:** tune pieces per hit,
    shatter point, collapse feel, sounds.
-2. **Iron columns.**
-3. **Coal plates.**
-4. **Gold geode** (render two candidates, the user picks).
-5. **Crystal shards.**
-6. **Ore pickups and icons** from each ore's fresh inside.
-7. **Scenery rocks:** boulders, shore stones, quarry rubble.
-8. **Building stone:** village walls, ruins, quarry stonework.
-9. **Wrap-up:** README, docs/TODO.md, graphics tour before/after, load-time check, retire the
+2. ✅ **Iron columns.**
+3. ✅ **Coal plates.**
+4. ✅ **Gold geode** (render two candidates, the user picks).
+5. ✅ **Crystal shards.**
+6. ✅ **Ore pickups and icons** from each ore's fresh inside.
+7. ✅ **Scenery rocks:** boulders, shore stones, quarry rubble.
+8. ✅ **Building stone:** village walls, ruins, quarry stonework.
+9. ✅ **Wrap-up:** README, docs/TODO.md, graphics tour before/after, load-time check, retire the
    seam-crack code if nothing uses it.

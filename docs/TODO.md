@@ -30,17 +30,22 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 - [x] **An ore look each:** copper verdigris, iron basalt columns, coal strata, gold veined geode, crystal snapping off at the base (the other candidates are in `models/designs/`).
 - [x] **Overhead pickaxe swing** with a ready stance (`player.gd` `SWINGS`).
 - [x] **Real mining sounds** from the GDC 2026 bundle (`tools/cut_sounds.py`, `audio/mining/sfx/`).
-- [ ] **Iron's crack is faint** on the dark basalt; a paler rim for it if it reads poorly in play.
+- [x] ~~**Iron's crack is faint**~~ superseded: ores no longer crack along seams (see Ore polish).
 - [ ] **More ways to mine** (ideas, none picked yet): pry a cracked piece off by pulling the mouse back; keystones (take pieces in the right order or the rest collapses into rubble); ore only from the faces a split exposes; triple points where three seams meet crack all three pieces.
-- [ ] **Fewer, bigger pieces** per rock (4–6 instead of 10) if splits come too often.
+- [x] ~~**Fewer, bigger pieces**~~ superseded by the ore polish.
 
 ### Ore polish ([plans/ores.md](../plans/ores.md))
 
 - [x] **Copper breaks where it's struck** (phase 1): 36 pieces drawn as one mesh (`node_rock.gdshader` hides broken ones), 2–3 out per hit, unsupported pieces collapse, shatter at 35% gone; ore spills from vein pieces; exact saves; weathered/fresh baked shading with glinting ore; dirt decal and pebbles; variants rebuilt. Spawns in 5–12 ms (was ~50).
-- [ ] **Playtest copper** and tune: pieces per hit (`knock` in each `.pieces.json`, `_knock_out`), `SHATTER_AT`, collapse feel, ore spill rate, glint (`ore_roughness` / `ore_metallic`), how dark the dug-out cavity reads.
-- [ ] **Sounds** for knocking pieces out and collapses still reuse the split stack.
+- [x] **Copper playtested**; it felt good. Fixed from it: white blobs by the rocks (`pow(shade, 2.2)` gave NaN pixels the glow smeared out; squared now).
+- [x] **The fault:** a hairline crack with trickling grit on every ore rock; hit it and up to six pieces break out (`FAULT_*` in `resource_node.gd`).
+- [x] **Every ore breaks its own way** (phases 2–5), its rules in its `.pieces.json` (`support`, `knock`, `shatter_at`, `tough`, `grounded`): iron columns topple (~7 swings), coal plates drop a layer (~7), gold's tough shell hides a gold heart (~9; the quartz-heart candidate is `models/designs/gold_geode_quartz`), crystal shards snap and bring the crystal down (~8). Swings measured hitting one spot; the fault and collapses cut them.
+- [x] **Ore pickups and icons** are chunks of their rock's fresh inside (phase 6); **scenery rocks** and **building stone** weathered the same way (phases 7–8).
+- [ ] **Playtest the other ores** and tune: swings per ore (`knock`, `shatter_at` in `make_models.py`), how often you find the fault, ore spill rate, glint (`ore_roughness` / `ore_metallic` / `ore_glow`), the dirt patch on quarry sand.
+- [ ] **Sounds** for knocking pieces out, collapses and faults still reuse the split and break sounds.
 - [ ] **`.pieces.json` in exports:** add `*.json` to the export include filter when an export preset exists.
-- [ ] Iron, coal, gold, crystal, ore pickups, scenery rocks, building stone (phases 2–8).
+- [ ] **The seam-crack code** in `resource_node.gd` (and `fractured()`) is now used only by `models/designs/`; drop it if those designs go.
+- [ ] **Icons** don't show the baked shade (Workbench renders palette colour only).
 
 ### Woodcutting overhaul
 
