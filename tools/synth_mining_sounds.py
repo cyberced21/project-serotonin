@@ -233,7 +233,7 @@ def debris_tick(rng):
 
 def hit_clink(rng, voice=NEUTRAL):
     """The pick ringing out after the tink, like a hammer on an anvil: a steel bar's partials
-    (1 : 2.76 : 5.40 : 8.93), the lowest one doubled a few Hz apart so the ring shimmers, the
+    (1 : 2.76 : 5.40 : 8.93), the lowest one doubled a Hz or two apart so the ring swells, the
     ore's own ring under it, then a short bright space. A ringing ore (iron, crystal) sings on;
     coal barely answers."""
     n = secs(1.3)
@@ -243,13 +243,13 @@ def hit_clink(rng, voice=NEUTRAL):
     for ratio, decay, a in ((1.0, 0.22, 1.0), (2.756, 0.12, 0.45), (5.404, 0.06, 0.22), (8.933, 0.03, 0.1)):
         pick.append(f * ratio * rng.uniform(0.995, 1.005))
         out += mode(n, pick[-1], decay * min(voice["ring"], 1.4), a, rng.uniform(0, 6.28))
-    out += mode(n, pick[0] + rng.uniform(4, 7), 0.22, 0.35, rng.uniform(0, 6.28))  # the shimmer
+    out += mode(n, pick[0] + rng.uniform(1.0, 1.8), 0.22 * min(voice["ring"], 1.4), 0.2, rng.uniform(0, 6.28))  # a slow swell, not a flutter
     stone = rng.uniform(2300, 2800) * voice["pitch"]
     for ratio, decay, a in ((1.0, 0.09, 0.6), (2.41, 0.05, 0.3)):  # the ore's own note
         out += mode(n, apart(stone * ratio, pick), decay * voice["decay"], a * voice["ring"] ** 1.5,
                     rng.uniform(0, 6.28))
     out *= 1.0 - np.exp(-t_axis(n) / 0.0015)  # the tink layer has the strike; this is the ring
-    return bloom(rng, out, 0.9, 0.5, 0.9, dry=1.0)
+    return bloom(rng, out, 0.9, 0.45, dry=1.0, wet=float(np.clip(voice["ring"] * 2 - 1, 0, 1)))  # a dull ore: no ring to carry
 
 
 def hit_bloom(rng, voice=NEUTRAL):
@@ -258,10 +258,12 @@ def hit_bloom(rng, voice=NEUTRAL):
     n = secs(0.5)
     f = rng.uniform(62, 72) * voice["pitch"]
     body = np.zeros(n)
-    for ratio, decay, a in ((1.0, 0.1, 1.0), (2.0, 0.06, 0.5), (3.0, 0.035, 0.25)):
+    partials = ((1.0, 0.1, 1.0), (2.0, 0.06, 0.5), (3.0, 0.035, 0.25))
+    for ratio, decay, a in partials:
         body += mode(n, f * ratio, decay * body_decay(voice), a, rng.uniform(0, 6.28), glide=0.05, attack=0.002)
     body += shaped(rng, n, 40, 600, tilt=-3) * env(n, 0.001, 0.025) * 0.6
-    return bloom(rng, body, 2.0, 1.7, 0.35, dry=0.5)
+    notes = [(f * ratio * 0.95, a) for ratio, _, a in partials]  # where the glide leaves them
+    return bloom(rng, body, 2.0, 0.35, notes, low_t=1.7, dry=0.5)
 
 
 SOUNDS = [  # (layer, how many, build): the layer names the stacks in audio/mining/ play

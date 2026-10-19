@@ -109,31 +109,42 @@ def stick_slip(rng, n, rate_from, rate_to, body, wobble=0.25):
     return out
 
 
-def reverb(rng, clip, length, low_t, high_t, predelay=0.02, taps=6):
-    """The space round a blow, baked in (wet only, about as loud as `clip`): an impulse response
-    of noise dying away, lows lasting `low_t` s (to -60 dB) and highs `high_t` s, so the tail
-    darkens and deepens as it goes: the boom of a forest or a quarry wall rather than a room's
-    hiss. A few early echoes (`taps`, 15-90 ms) are the trunks and rocks close by."""
+SPLIT_HZ = 280
+
+
+def reverb(rng, clip, length, high_t, predelay=0.02, taps=6):
+    """The space round a blow, baked in (wet only, about as loud as `clip` above SPLIT_HZ): an
+    impulse response of noise dying away, the highs (lasting `high_t` s to -60 dB) faster than
+    the mids, so the tail darkens as it goes. A few early echoes (`taps`, 15-90 ms) are the trunks
+    and rocks close by. The lows aren't reverberated: a noise tail down there is a band of rumble
+    a couple of hundred Hz wide whose loudness flickers every few ms, heard as grit at the end of
+    a boom. bloom() lets the low notes ring on instead."""
     n = secs(length)
     t = t_axis(n)
-    mid_t = (low_t * high_t) ** 0.5
+    swell = 1.0 - np.exp(-t / 0.012)  # the tail builds up from the echoes rather than jumping in
     ir = sum(shaped(rng, n, lo, hi) * np.exp(-t * 6.91 / rt) * g
-             for lo, hi, rt, g in ((35, 320, low_t, 1.0), (320, 1800, mid_t, 0.55), (1800, 9000, high_t, 0.25)))
-    ir *= 1.0 - np.exp(-t / 0.012)  # the tail builds up from the echoes rather than jumping in
+             for lo, hi, rt, g in ((SPLIT_HZ, 1800, high_t * 1.6, 1.0), (1800, 9000, high_t, 0.45))) * swell
     for at in rng.uniform(0.015, 0.09, taps):
         echo = shaped(rng, secs(0.01), 120, 4000, tilt=-2) * env(secs(0.01), 0.0005, 0.002)
         place(ir, echo, at, rng.uniform(0.3, 0.7) * np.exp(-at / 0.05))
     ir = np.concatenate([np.zeros(secs(predelay)), ir])
     size = len(clip) + len(ir)
-    wet = np.fft.irfft(np.fft.rfft(clip, size) * np.fft.rfft(ir, size), size)
-    return wet * np.sqrt(np.sum(clip ** 2) / (np.sum(wet ** 2) + 1e-12))
+    highs = np.fft.rfft(clip, size) * (1.0 - 1.0 / (1.0 + (np.fft.rfftfreq(size, 1.0 / RATE) / SPLIT_HZ) ** 8))
+    wet = np.fft.irfft(highs * np.fft.rfft(ir, size), size)
+    return wet * np.sqrt(np.sum(np.abs(highs) ** 2) / (np.sum(np.abs(np.fft.rfft(wet)) ** 2) + 1e-12))
 
 
-def bloom(rng, body, length, low_t, high_t, dry=0.6, wet=1.0):
-    """`body` with its tail after it: the dry blow and its space, as one clip, cut where the
-    tail has died 60 dB under the blow (a long silent end only holds a voice)."""
-    out = reverb(rng, body, length, low_t, high_t) * wet
+def bloom(rng, body, length, high_t, notes=(), low_t=1.5, dry=0.6, wet=1.0, hang=0.35):
+    """`body` with its tail after it, as one clip: the dry blow, its space, and its low `notes`
+    ((Hz, amp) pairs, the amps those of the body's own modes) ringing on, swelling in over 40 ms
+    and dying over `low_t` s (to -60 dB): pure tones, so the boom hangs smoothly. Each is a hair
+    off the body's note, so the two drift slowly in and out, the way a boom swims in a space.
+    Cut where it has died 60 dB under the blow (a long silent end only holds a voice)."""
+    out = reverb(rng, body, length, high_t) * wet
     out[: len(body)] += body * dry
+    for freq, amp in notes:
+        out += mode(len(out), freq * rng.uniform(0.996, 1.004), low_t / 6.91, amp * hang, rng.uniform(0, 6.28),
+                    attack=0.04)
     level = np.sqrt(np.convolve(out * out, np.ones(secs(0.02)) / secs(0.02), mode="same"))
     alive = np.nonzero(level > level.max() * 1e-3)[0]
     return out[: alive[-1] + 1] if len(alive) else out
@@ -175,10 +186,12 @@ def chop_bloom(rng, voice=NEUTRAL):
     n = secs(0.7)
     f = rng.uniform(56, 64) * voice["pitch"]
     body = np.zeros(n)
-    for ratio, decay, amp in ((1.0, 0.2, 1.0), (2.0, 0.12, 0.55), (3.0, 0.07, 0.3), (5.0, 0.035, 0.12)):
+    partials = ((1.0, 0.2, 1.0), (2.0, 0.12, 0.55), (3.0, 0.07, 0.3), (5.0, 0.035, 0.12))
+    for ratio, decay, amp in partials:
         body += mode(n, f * ratio, decay * voice["decay"], amp, rng.uniform(0, 6.28), glide=0.03, attack=0.003)
     body += shaped(rng, n, 40, 450, tilt=-3) * env(n, 0.001, 0.03) * 0.5
-    return bloom(rng, body, 1.8, 1.4 * voice["decay"], 0.4, wet=0.55)
+    notes = [(f * ratio * 0.97, amp) for ratio, _, amp in partials[:3]]  # where the glide leaves them
+    return bloom(rng, body, 1.8, 0.4, notes, low_t=1.4 * voice["decay"], wet=0.55)
 
 
 def chop_bite(rng):
@@ -204,19 +217,22 @@ def clean_crack(rng):
 
 
 def chip_scatter(rng):
-    """Chips landing and skittering: small light wooden ticks, bouncing and settling."""
+    """A small handful of chips pattering down onto the forest floor, like dropped gravel: a
+    quick cluster of tiny dull taps that thins out, no tick ringing long enough to have a pitch.
+    (Chips that ring and bounce, each on its own note, sound like plastic bricks.)"""
     n = secs(0.5)
     out = np.zeros(n)
-    for _ in range(rng.integers(3, 5)):  # a few chips, each bouncing a few times
-        at, gain = rng.uniform(0.0, 0.12), rng.uniform(0.5, 1.0)
-        freq = rng.uniform(1700, 3400)
-        gap = rng.uniform(0.07, 0.12)
-        for _ in range(rng.integers(2, 5)):
-            m = secs(0.05)
-            tick = mode(m, freq, 0.012, 1.0, rng.uniform(0, 6.28)) + mode(m, freq * 2.3, 0.006, 0.4)
-            tick += shaped(rng, m, 2000, 8000) * env(m, 0.0002, 0.002) * 0.6
-            place(out, tick, at, gain)
-            at, gain, gap = at + gap, gain * 0.55, gap * 0.6
+    count = rng.integers(26, 40)
+    times = np.sort(rng.gamma(1.6, 0.045, count)) + 0.003  # most land at once, a few straggle in
+    times = times[times < 0.42]
+    gains = rng.lognormal(0.0, 0.5, len(times)) * np.exp(-times / 0.18)
+    for at, g in zip(times, gains):
+        m = secs(0.012)
+        hi = rng.uniform(2500, 4500)  # each a little duller or brighter: dirt, leaves, a twig
+        tap = shaped(rng, m, 350, hi, tilt=-3) * env(m, 0.0004, rng.uniform(0.0008, 0.002))
+        tap += mode(m, rng.uniform(500, 1200), 0.002, 0.25, rng.uniform(0, 6.28), attack=0.0003)
+        place(out, tap, at, g)
+    out += shaped(rng, n, 300, 2500, tilt=-2) * env(n, 0.01, 0.08) * 0.04  # the scatter's hush
     return out
 
 
@@ -286,7 +302,7 @@ def land_boom(rng):
     n = secs(1.2)
     out = mode(n, 52, 0.32, 1.0, glide=0.25) + mode(n, 78, 0.2, 0.5, glide=0.2)
     out += shaped(rng, n, 30, 220) * env(n, 0.002, 0.12) * 0.5
-    return bloom(rng, out, 3.2, 2.8, 0.5, dry=0.8)
+    return bloom(rng, out, 3.2, 0.5, ((52 * 0.75, 1.0), (78 * 0.8, 0.5)), low_t=2.8, dry=0.8)
 
 
 SOUNDS = [  # (layer, how many, build)
