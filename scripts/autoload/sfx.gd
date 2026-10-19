@@ -33,6 +33,7 @@ func _ready() -> void:
 	for i in VOICES_3D:
 		var p := AudioStreamPlayer3D.new()
 		p.attenuation_filter_cutoff_hz = 8000.0  # far-off hits lose their crack
+		p.max_db = 0.0  # no boost up close: the stacks already peak near full scale
 		add_child(p)
 		_players_3d.append(p)
 
