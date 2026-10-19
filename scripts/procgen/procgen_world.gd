@@ -17,6 +17,7 @@ const CHAR := preload("res://data/fish/char.tres")
 ## Schools per water body, as in the hand-built ponds and lake.
 const POND_SCHOOLS: Array[FishSpecies] = [PERCH, PERCH, TROUT, PIKE]
 const LAKE_SCHOOLS: Array[FishSpecies] = [TROUT, TROUT, PERCH, CHAR, CHAR]
+const PIKE_SCHOOLS: Array[FishSpecies] = [PIKE, PIKE, PIKE]
 const PROP := preload("res://scripts/prop.gd")
 
 ## The seed the scene builds next time it loads (enter() sets it).
@@ -64,6 +65,7 @@ func _ready() -> void:
 	_build_water()
 	_build_rivers()
 	_build_village()
+	ProcgenLandmarks.build(self, map)
 	Biome.locator = func(p: Vector3) -> StringName: return map.biome_at(Vector2(p.x, p.z))
 	if not map.quarry.is_empty():
 		Biome.quarry_rim_height = map.quarry["rim_height"]
@@ -203,6 +205,8 @@ func _build_water() -> void:
 		var fish := FishPond.new()
 		fish.name = "Fish"
 		fish.schools = LAKE_SCHOOLS if lake else POND_SCHOOLS
+		if w.get("schools") == &"pike":  # a rare spot: nothing but pike
+			fish.schools = PIKE_SCHOOLS
 		body.add_child(fish)
 		var surface := MeshInstance3D.new()
 		surface.name = "Surface"

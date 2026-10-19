@@ -179,6 +179,9 @@ var trails: Array[PackedVector2Array] = []
 var rivers: Array[Dictionary] = []
 ## 1 on a river's channel and banks (trails may ford there), per pixel.
 var river_mask := PackedByteArray()
+## Places out in the wilds: {type: &"ruins" | &"camp" | &"rare", kind: StringName, name: String,
+## pos: Vector2, angle: float, height: float (its levelled pad, for ruins and camps)}.
+var landmarks: Array[Dictionary] = []
 
 var _hills := FastNoiseLite.new()
 var _swell := FastNoiseLite.new()
@@ -254,6 +257,7 @@ func generate() -> void:
 	_place_water()
 	_carve_rivers()
 	_lay_trails()
+	_place_landmarks()
 
 
 static func world(x: int, y: int) -> Vector2:
@@ -968,6 +972,106 @@ func _grade_and_paint() -> void:
 			ids[i] = WorldMap.TEX_PATH
 
 
+# --- landmarks --------------------------------------------------------------------------------
+
+## Out in the wilds, away from trails, water, the hub, the village and the quarry, and from each
+## other: ruins (one, sometimes two), an abandoned camp (one, sometimes two) and one to three rare
+## spots of different kinds. Ruins and camps stand on a levelled pad. ProcgenWorld builds them.
+const RUIN_KINDS := [[&"broken_tower", "Broken Tower"], [&"old_colonnade", "Old Colonnade"]]
+const RARE_KINDS := [
+	# [kind, name, biomes it may be in (empty = any but Frostpeak and the quarry)]
+	[&"crystal_outcrop", "Crystal Outcrop", [&"frostpeak", &"quarry"]],
+	[&"gold_vein", "Gold Vein", [&"frostpeak", &"quarry", &"pinewood"]],
+	[&"ancient_oaks", "Ancient Oaks", []],
+	[&"pike_pond", "Pike Pond", []],
+	[&"flower_meadow", "Flower Meadow", []],
+]
+const LANDMARK_GAP := 55.0
+const PAD_RADIUS := 8.0
+const PAD_BLEND := 6.0
+## How steep the ground under a landmark may be (rise over PAD_RADIUS).
+const LANDMARK_MAX_RISE := 2.5
+const PIKE_POND := {"radius": 6.0, "depth": 0.95}
+
+
+func _place_landmarks() -> void:
+	landmarks.clear()
+	var lrng := RandomNumberGenerator.new()
+	lrng.seed = sub_seed(&"landmarks")
+	var ruins := 1 + int(lrng.randf() < 0.4)
+	for k in ruins:
+		var kind: Array = RUIN_KINDS[lrng.randi_range(0, RUIN_KINDS.size() - 1)]
+		_add_landmark(lrng, &"ruins", kind[0], kind[1], [], true)
+	var camps := 1 + int(lrng.randf() < 0.5)
+	for k in camps:
+		_add_landmark(lrng, &"camp", &"abandoned_camp", "Abandoned Camp", [], true)
+	var rares := RARE_KINDS.duplicate()
+	for i in range(rares.size() - 1, 0, -1):  # shuffled, then the first one to three
+		var j := lrng.randi_range(0, i)
+		var t: Variant = rares[i]
+		rares[i] = rares[j]
+		rares[j] = t
+	for k in lrng.randi_range(1, 3):
+		_add_landmark(lrng, &"rare", rares[k][0], rares[k][1], rares[k][2], rares[k][0] == &"pike_pond")
+
+
+## Finds a spot for one landmark (in `biomes` if given) and records it; a pad levels the ground.
+func _add_landmark(lrng: RandomNumberGenerator, type: StringName, kind: StringName, title: String,
+		biomes: Array, pad: bool) -> void:
+	for attempt in 400:
+		var p := Vector2(lrng.randf_range(-165.0, 165.0), lrng.randf_range(-165.0, 165.0))
+		var angle := lrng.randf() * TAU
+		if not _landmark_spot_ok(p, biomes):
+			continue
+		var h := height_at(p)
+		var landmark := {"type": type, "kind": kind, "name": title, "pos": p, "angle": angle, "height": h}
+		if kind == &"pike_pond":
+			_basin("PikePond", p, PIKE_POND["radius"], PIKE_POND["depth"], false, false, 6.0)
+			waters[-1]["schools"] = &"pike"
+		elif pad:
+			_level_pad(p, h)
+		landmarks.append(landmark)
+		return
+
+
+func _landmark_spot_ok(p: Vector2, biomes: Array) -> bool:
+	if _rim(p) > 0.0 or p.distance_to(hub) < HUB_RADIUS + hub_ramp + 10.0:
+		return false
+	var biome := biome_at(p)
+	if biomes.is_empty():
+		if biome in [&"frostpeak", &"quarry", &""]:
+			return false
+	elif not biome in biomes:
+		return false
+	if not village.is_empty() and p.distance_to(village["center"]) < VILLAGE_RADIUS + VILLAGE_RAMP + 10.0:
+		return false
+	if not quarry.is_empty() and p.distance_to(quarry["center"]) < quarry_walls[0] + QUARRY_APRON + 8.0:
+		return false
+	for w in waters:
+		if p.distance_to(w["center"]) < float(w["radius"]) + PAD_RADIUS + 12.0:
+			return false
+	for l in landmarks:
+		if p.distance_to(l["pos"]) < LANDMARK_GAP:
+			return false
+	# clear of trails and rivers, and on fairly even ground
+	var h := height_at(p)
+	for k in 12:
+		for r in [PAD_RADIUS * 0.5, PAD_RADIUS + PAD_BLEND]:
+			var q: Vector2 = p + Vector2.from_angle(k * TAU / 12.0) * r
+			var i := pixel_index(q)
+			if ids[i] == WorldMap.TEX_PATH or river_mask[i] or heights[i] < WATER_LEVEL + 0.3:
+				return false
+			if r < PAD_RADIUS and absf(height_at(q) - h) > LANDMARK_MAX_RISE:
+				return false
+	return true
+
+
+func _level_pad(at: Vector2, h: float) -> void:
+	_for_pixels_near(at, PAD_RADIUS + PAD_BLEND, func(i: int, w: Vector2) -> void:
+		var d := w.distance_to(at) + _shore.get_noise_2dv(w) * 1.0
+		heights[i] = lerpf(h, heights[i], smoothstep(PAD_RADIUS, PAD_RADIUS + PAD_BLEND, d)))
+
+
 # --- preview ----------------------------------------------------------------------------------
 
 const PREVIEW_TINT := {
@@ -1005,4 +1109,10 @@ func write_preview(path: String) -> Error:
 		for k in range(-3, 4):
 			img.set_pixelv((p + Vector2i(k, 0)).clamp(Vector2i.ZERO, Vector2i(SIZE - 1, SIZE - 1)), Color.RED)
 			img.set_pixelv((p + Vector2i(0, k)).clamp(Vector2i.ZERO, Vector2i(SIZE - 1, SIZE - 1)), Color.RED)
+	var marks := {&"ruins": Color.MAGENTA, &"camp": Color.ORANGE, &"rare": Color.YELLOW}
+	for l in landmarks:  # a little square each
+		var p := Vector2i((l["pos"] as Vector2) - Vector2(ORIGIN.x, ORIGIN.z))
+		for dy in range(-2, 3):
+			for dx in range(-2, 3):
+				img.set_pixelv((p + Vector2i(dx, dy)).clamp(Vector2i.ZERO, Vector2i(SIZE - 1, SIZE - 1)), marks[l["type"]])
 	return img.save_png(path)

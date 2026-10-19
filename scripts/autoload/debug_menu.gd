@@ -372,6 +372,15 @@ func _rebuild_teleports() -> void:
 			grid.add_child(_button(place, _teleport.bind(spot[0], spot[1])))
 	_teleport_box.add_child(grid)
 
+	var landmarks := get_tree().get_nodes_in_group("landmark")
+	if not landmarks.is_empty():  # a procgen world's ruins, camps and rare spots
+		_teleport_box.add_child(_heading("Landmarks"))
+		grid = _grid(2)
+		for l in landmarks:
+			var at := (l as Node3D).global_position + Vector3(0, 0, 10).rotated(Vector3.UP, (l as Node3D).rotation.y)
+			grid.add_child(_button(l.get_meta("landmark"), _teleport.bind(at, (l as Node3D).global_position)))
+		_teleport_box.add_child(grid)
+
 	_teleport_box.add_child(_heading("Water"))
 	grid = _grid(3)
 	for w in get_tree().get_nodes_in_group("water"):

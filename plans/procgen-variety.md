@@ -47,7 +47,7 @@ from what each biome is like, where things sit, and what turns up between them.
    six village buildings with their villagers, upgrades saved with the seed, and lamps and benches.
 3. **Rivers** ✅: a channel from the rim down to the lake, carved to the water line, its water built
    in segments, trails fording it.
-4. **Landmarks**: ruins (the parkour blocks as a broken tower or wall, a reward on top), rare spots
+4. **Landmarks** ✅: ruins (the parkour blocks as a broken tower or wall, a reward on top), rare spots
    (a crystal outcrop, a gold vein, a pike pond, an ancient oak stand, a flower meadow; 1–3 per
    seed) and an abandoned camp or two (cart, hay, log pile, crates).
 5. **Rich and lean seeds**: one resource doubled, one halved; shown in the debug menu's Procgen tab
