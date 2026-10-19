@@ -17,6 +17,7 @@ const VIEWS := [
 	["quarry", Vector3(-122, 0, -41), Vector3(-175, 0, -15), 0.45],
 	["goldmeadow", Vector3(170, 0, 112), Vector3(194, 0, 139), 0.33],
 	["stillwater", Vector3(-16, 0, 96), Vector3(-16, 0, 70), 0.55],
+	["pond", Vector3(20, 0, 30), Vector3(20, 0, 14), 0.62],
 	["hearthvale_dusk", Vector3(100, 0, 52), Vector3(113, 0, 40), 0.84],
 	["clearing_night", Vector3(4, 0, 10), Vector3(0, 0, -20), 0.95],
 	# looking into the low sun through the trees (Vector3.INF: face the sun)

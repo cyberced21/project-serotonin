@@ -9,7 +9,7 @@ extends Node3D
 const SCENE := "res://scenes/procgen.tscn"
 const MAIN_SCENE := "res://scenes/main.tscn"
 const Player := preload("res://scripts/player.gd")
-const WATER_SHADER := preload("res://shaders/water_lowpoly.gdshader")
+const WATER_SHADER := preload("res://shaders/water.gdshader")
 const PERCH := preload("res://data/fish/perch.tres")
 const TROUT := preload("res://data/fish/trout.tres")
 const PIKE := preload("res://data/fish/pike.tres")
