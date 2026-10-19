@@ -305,7 +305,10 @@ var _equip_dip := 0.0
 
 func _ready() -> void:
 	add_to_group("player")
-	_base_fov = camera.fov
+	for a: Node in [slide_audio, mantle_audio, footsteps]:
+		a.set("bus", &"Movement")
+	_base_fov = Settings.fov()
+	Settings.changed.connect(func() -> void: _base_fov = Settings.fov())
 	_tool_rest = tool_pivot.position
 	_stand_probe.radius = body_shape.radius - 0.01
 	_stand_probe.height = STAND_HEIGHT
@@ -360,9 +363,11 @@ func teleport(to: Vector3, look_at_point := Vector3.INF) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var motion := event as InputEventMouseMotion
-		rotate_y(-motion.relative.x * mouse_sensitivity)
+		var sens := mouse_sensitivity * Settings.sensitivity()
+		rotate_y(-motion.relative.x * sens)
 		var limit := deg_to_rad(max_pitch_deg)
-		_pitch = clampf(_pitch - motion.relative.y * mouse_sensitivity, -limit, limit)
+		var dy := -motion.relative.y if Settings.invert_y() else motion.relative.y
+		_pitch = clampf(_pitch - dy * sens, -limit, limit)
 		_look_delta += motion.relative
 	elif event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -452,6 +457,7 @@ func _build_speed_feel() -> void:
 		loop.loop_begin = 0
 		loop.loop_end = int(loop.get_length() * loop.mix_rate)
 	_wind.stream = wind_sfx
+	_wind.bus = &"Movement"
 	_wind.volume_db = -40.0
 	add_child(_wind)
 	var layer := CanvasLayer.new()
@@ -617,7 +623,7 @@ func _move(delta: float) -> void:
 
 	# a wider view the faster you go
 	var spd_t := clampf((horizontal.length() - walk_speed) / (max_speed - walk_speed), 0.0, 1.0)
-	var kick := spd_t * speed_fov_kick + (slide_fov_kick * 0.5 if _state == State.SLIDE else 0.0) + _fov_punch
+	var kick := (spd_t * speed_fov_kick + (slide_fov_kick * 0.5 if _state == State.SLIDE else 0.0) + _fov_punch) 			* Settings.camera_motion()
 	_fov_punch = move_toward(_fov_punch, 0.0, 40.0 * delta)
 	camera.base_fov = lerpf(camera.base_fov, _base_fov + kick, 1.0 - exp(-10.0 * delta))  # (+ impact kicks)
 

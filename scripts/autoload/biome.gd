@@ -168,6 +168,7 @@ func _make_bed(stream: AudioStream) -> AudioStreamPlayer:
 		wav.loop_begin = 0
 		wav.loop_end = int(wav.get_length() * wav.mix_rate)
 	var bed := AudioStreamPlayer.new()
+	bed.bus = &"Ambience"
 	bed.stream = stream
 	bed.volume_db = -80.0
 	add_child(bed)

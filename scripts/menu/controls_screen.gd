@@ -69,9 +69,11 @@ static func keys_text(actions: String) -> String:
 static func event_text(ev: InputEvent) -> String:
 	if ev is InputEventKey:
 		var k := ev as InputEventKey
-		var code := k.physical_keycode if k.physical_keycode != KEY_NONE else k.keycode
-		if k.physical_keycode != KEY_NONE:
-			code = DisplayServer.keyboard_get_keycode_from_physical(k.physical_keycode)
+		var code := k.keycode
+		if k.physical_keycode != KEY_NONE:  # the key in that spot on this keyboard's layout
+			code = k.physical_keycode
+			if DisplayServer.get_name() != "headless":
+				code = DisplayServer.keyboard_get_keycode_from_physical(k.physical_keycode)
 		return OS.get_keycode_string(code)
 	if ev is InputEventMouseButton:
 		match (ev as InputEventMouseButton).button_index:

@@ -24,9 +24,8 @@ func _run() -> void:
 		push_error("run with -- --save-root=%s" % ROOT)
 		quit(1)
 		return
-	var gfx := root.get_node_or_null("GraphicsSettings")
-	if gfx:
-		gfx.set("persist", false)
+	for autoload in ["GraphicsSettings", "Settings"]:
+		root.get_node(autoload).set("persist", false)  # never write the player's settings.cfg
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(out_dir))
 	_seed_worlds(worlds)
 	change_scene_to_file("res://scenes/menu/main_menu.tscn")
@@ -39,6 +38,12 @@ func _run() -> void:
 	menu.call("_open", &"controls")
 	await _wait(0.5)
 	await _shot("controls")
+	var settings: Control = menu.get("_settings")
+	menu.call("_open", &"settings")
+	for tab in 4:
+		(settings.get("_tabs") as TabContainer).current_tab = tab
+		await _wait(0.3)
+		await _shot("settings_%d" % tab)
 
 	# into the classic world, pause, Save & Quit: the card gets its picture and the save is written
 	worlds.call("play", "classic")

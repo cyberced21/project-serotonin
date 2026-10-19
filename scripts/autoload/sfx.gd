@@ -26,6 +26,7 @@ var _debris_times: Array[int] = []
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	get_tree().node_added.connect(_on_node_added)
 	for i in VOICES:
 		var p := AudioStreamPlayer.new()
 		add_child(p)
@@ -36,7 +37,7 @@ func _ready() -> void:
 		add_child(p)
 		_players_3d.append(p)
 
-func play(stream: AudioStream, pitch := 1.0, volume_db := 0.0, bus := &"Master") -> void:
+func play(stream: AudioStream, pitch := 1.0, volume_db := 0.0, bus := &"Effects") -> void:
 	var p := _players[_next]
 	_next = (_next + 1) % VOICES
 	p.stream = stream
@@ -44,6 +45,14 @@ func play(stream: AudioStream, pitch := 1.0, volume_db := 0.0, bus := &"Master")
 	p.volume_db = volume_db
 	p.bus = bus
 	p.play()
+
+## Players left on Master go to Effects, so the Effects volume reaches every sound effect;
+## ambience and movement sounds pick their own buses (Ambience, Movement), as does a SoundLayers.
+func _on_node_added(n: Node) -> void:
+	if n is AudioStreamPlayer and (n as AudioStreamPlayer).bus == &"Master":
+		(n as AudioStreamPlayer).bus = &"Effects"
+	elif n is AudioStreamPlayer3D and (n as AudioStreamPlayer3D).bus == &"Master":
+		(n as AudioStreamPlayer3D).bus = &"Effects"
 
 func play_pickup() -> void:
 	var now := Time.get_ticks_msec()

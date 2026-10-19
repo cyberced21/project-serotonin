@@ -13,10 +13,13 @@ extends Node
 ##   --world=<id>               any world by its folder name
 ##   --procgen [--seed=N]       the scratch world, a random seed if none is given
 ##   --save-root=<dir>          keep every world under <dir> instead (tests: never the real saves)
+## A `-s` tool script without --save-root gets TOOLS_ROOT, so it can never touch (or migrate) the
+## player's worlds by accident.
 
 signal list_changed
 
 const DEFAULT_ROOT := "user://worlds"
+const TOOLS_ROOT := "user://tool_worlds"
 const CLASSIC := "classic"
 const SCRATCH := "_scratch"
 const META_VERSION := 1
@@ -38,6 +41,9 @@ var _session_start := 0  # ticks (ms) when playtime was last banked
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	var args := OS.get_cmdline_user_args()
+	var engine_args := OS.get_cmdline_args()
+	if engine_args.has("-s") or engine_args.has("--script"):
+		root = TOOLS_ROOT
 	for arg in args:
 		if arg.begins_with("--save-root="):
 			root = arg.trim_prefix("--save-root=")

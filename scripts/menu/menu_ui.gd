@@ -69,6 +69,37 @@ static func button(text: String, on_press: Callable, font_size := 18, big := fal
 	return b
 
 
+## A check box that shows on the dark panels: a bordered square, gold-filled when on.
+static func check_box(text: String, font_size := 17) -> CheckBox:
+	var c := CheckBox.new()
+	c.text = text
+	c.add_theme_font_size_override("font_size", font_size)
+	c.add_theme_icon_override("unchecked", _check_icon(false))
+	c.add_theme_icon_override("checked", _check_icon(true))
+	c.add_theme_icon_override("unchecked_disabled", _check_icon(false))
+	c.add_theme_icon_override("checked_disabled", _check_icon(true))
+	return c
+
+
+static var _check_icons: Dictionary[bool, Texture2D] = {}
+
+
+static func _check_icon(on: bool) -> Texture2D:
+	if _check_icons.has(on):
+		return _check_icons[on]
+	const N := 20
+	var img := Image.create_empty(N, N, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0.35))
+	for i in N:
+		for t in 2:
+			for p in [Vector2i(i, t), Vector2i(i, N - 1 - t), Vector2i(t, i), Vector2i(N - 1 - t, i)]:
+				img.set_pixelv(p, BORDER.lightened(0.2))
+	if on:
+		img.fill_rect(Rect2i(5, 5, N - 10, N - 10), ACCENT)
+	_check_icons[on] = ImageTexture.create_from_image(img)
+	return _check_icons[on]
+
+
 static func line_edit(placeholder: String, font_size := 17) -> LineEdit:
 	var e := LineEdit.new()
 	e.placeholder_text = placeholder

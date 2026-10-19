@@ -133,6 +133,7 @@ func _save() -> void:
 	if not persist:
 		return
 	var cfg := ConfigFile.new()
+	cfg.load(PATH)  # keep the other sections (Settings: display, audio, controls)
 	cfg.set_value(SECTION, "preset", String(preset))
 	for key in values:
 		cfg.set_value(SECTION, String(key), values[key])

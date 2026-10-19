@@ -12,6 +12,7 @@ var _panel: PanelContainer
 var _column: VBoxContainer
 var _world_label: Label
 var _controls: ControlsScreen
+var _settings: SettingsScreen
 var _toast: Label
 var _busy := false
 
@@ -33,8 +34,7 @@ func open() -> void:
 	get_tree().paused = true
 	_world_label.text = Worlds.current_meta.get("name", "")
 	_shade.visible = true
-	_panel.visible = true
-	_controls.visible = false
+	_show_panel()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	(_column.get_child(0) as Button).grab_focus()
 
@@ -51,7 +51,7 @@ func _input(event: InputEvent) -> void:
 	if not event.is_action_pressed("ui_cancel") or _busy:
 		return
 	if is_open():
-		if _controls.visible:
+		if _controls.visible or _settings.visible:
 			_show_panel()
 		else:
 			resume()
@@ -69,6 +69,7 @@ func _other_menu_open() -> bool:
 
 func _show_panel() -> void:
 	_controls.visible = false
+	_settings.visible = false
 	_panel.visible = true
 	(_column.get_child(0) as Button).grab_focus()
 
@@ -76,6 +77,11 @@ func _show_panel() -> void:
 func _show_controls() -> void:
 	_panel.visible = false
 	_controls.visible = true
+
+
+func _show_settings() -> void:
+	_panel.visible = false
+	_settings.visible = true
 
 
 func _save_and_quit(to_desktop: bool) -> void:
@@ -137,6 +143,7 @@ func _hide_all() -> void:
 	_shade.visible = false
 	_panel.visible = false
 	_controls.visible = false
+	_settings.visible = false
 
 
 func _build() -> void:
@@ -162,9 +169,7 @@ func _build() -> void:
 	_column.add_theme_constant_override("separation", 8)
 	box.add_child(_column)
 	_column.add_child(MenuUI.button("Resume", resume, 20))
-	var settings := MenuUI.button("Settings", func() -> void: pass, 20)
-	settings.disabled = true
-	_column.add_child(settings)
+	_column.add_child(MenuUI.button("Settings", _show_settings, 20))
 	_column.add_child(MenuUI.button("Controls", _show_controls, 20))
 	_column.add_child(MenuUI.spacer(4))
 	_column.add_child(MenuUI.button("Save & Quit to Menu", _save_and_quit.bind(false), 20))
@@ -176,6 +181,14 @@ func _build() -> void:
 	_controls.grow_vertical = Control.GROW_DIRECTION_BOTH
 	_controls.closed.connect(_show_panel)
 	_shade.add_child(_controls)
+
+	_settings = SettingsScreen.new()
+	_settings.set_anchors_preset(Control.PRESET_CENTER)
+	_settings.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_settings.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_settings.custom_minimum_size = Vector2(680, 560)
+	_settings.closed.connect(_show_panel)
+	_shade.add_child(_settings)
 
 	_toast = MenuUI.label("", 22, MenuUI.GOOD)
 	_toast.anchor_left = 0.5
