@@ -35,6 +35,9 @@ var locator := Callable()
 ## hand-built Greystone Quarry's unless a procgen world sets its own (see reset_quarry()).
 var quarry_rim_height := WorldMap.QUARRY_RIM_HEIGHT
 var quarry_depth := WorldMap.QUARRY_LEVEL_DROP * WorldMap.QUARRY_WALLS.size()
+## The kind of each biome in a procgen world ("Birch Grove"), shown on its card in place of the
+## mood's subtitle. Empty in the hand-built world.
+var kind_names: Dictionary[StringName, String] = {}
 ## The biome you're in (&"" between them, in the wild hills: plain light, no card).
 var current: StringName = &""
 var discovered: Dictionary[StringName, bool] = {}
@@ -65,10 +68,11 @@ func _ready() -> void:
 	_build_card()
 
 
-## Back to the hand-built world's quarry, for the depth fog.
+## Back to the hand-built world: its quarry (for the depth fog), and no biome kinds.
 func reset_quarry() -> void:
 	quarry_rim_height = WorldMap.QUARRY_RIM_HEIGHT
 	quarry_depth = WorldMap.QUARRY_LEVEL_DROP * WorldMap.QUARRY_WALLS.size()
+	kind_names.clear()
 
 
 func _process(delta: float) -> void:
@@ -119,10 +123,10 @@ func _enter(id: StringName) -> void:
 	if not discovered.has(id):
 		discovered[id] = true
 		SaveGame.mark_dirty()
-		_show_card(MOODS[id], true)
+		_show_card(MOODS[id], true, kind_names.get(id, ""))
 		_last_card[id] = now
 	elif now - _last_card.get(id, -INF) > REPEAT_COOLDOWN:
-		_show_card(MOODS[id], false)
+		_show_card(MOODS[id], false, kind_names.get(id, ""))
 		_last_card[id] = now
 
 
@@ -195,10 +199,11 @@ func _label(font_size: int) -> Label:
 	return label
 
 
-func _show_card(mood: BiomeMood, first: bool) -> void:
+func _show_card(mood: BiomeMood, first: bool, kind := "") -> void:
 	_title.text = mood.display_name
 	_title.add_theme_font_size_override("font_size", 56 if first else 38)
-	_subtitle.text = "Discovered" if first else mood.subtitle
+	var what: String = kind if kind != "" else mood.subtitle
+	_subtitle.text = (what + "  ·  Discovered" if kind != "" else "Discovered") if first else what
 	_subtitle.add_theme_font_size_override("font_size", 24 if first else 18)
 	if first:
 		Sfx.play(FIRST_STING, 0.8, -8.0)

@@ -40,7 +40,7 @@ from what each biome is like, where things sit, and what turns up between them.
 
 ## Phases
 
-1. **Biome kinds and an off-centre hub**: the kind table, rolled per seed; each kind's height
+1. **Biome kinds and an off-centre hub** ✅: the kind table, rolled per seed; each kind's height
    profile, scenery and node mix; Twin Peaks, Ridge, Marsh, Island Lake and the quarry kinds as
    shapes; the kind on the arrival card; the hub moved off the map's centre.
 2. **Hearthvale**: a village biome on the inner ring. A flattened valley, a square and lanes, the

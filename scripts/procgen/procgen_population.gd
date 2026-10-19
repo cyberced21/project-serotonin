@@ -38,11 +38,38 @@ const NODES := {
 			"min_normal_y": 0.8}},
 	&"quarry": {2: {"count": 6, "spacing": 5.0, "entries": [[ROCK, 2.0], [IRON, 1.0]]}},  # the apron
 }
+## How a biome's kind changes its nodes: weights multiplied per scene, and "count" the number.
+const KIND_NODES := {
+	&"birch_grove": {BIRCH: 2.5, PINE: 0.4, TREE: 1.3},
+	&"old_growth": {PINE: 2.2, BIRCH: 0.5, "count": 1.2},
+	&"orchard_downs": {OAK: 3.0, WHEAT: 0.5, BARLEY: 0.5},
+	&"rolling_downs": {BARLEY: 1.6, "count": 0.85},
+	&"marsh": {OAK: 0.5, TREE: 2.0},
+	&"twin_peaks": {GOLD: 1.5, "count": 1.2},
+	&"ridge": {COAL: 1.5, IRON: 1.4},
+	&"broken_pit": {"count": 1.5},
+}
+## How a biome's kind changes its scenery: each layer's density multiplied, by model name.
+const KIND_SCENERY := {
+	&"birch_grove": {"canopy_birch": 5.0, "canopy_pine": 0.3, "canopy_pine_young": 0.6, "fern": 0.7},
+	&"old_growth": {"canopy_pine": 1.4, "canopy_pine_young": 0.4, "fern": 1.5, "mushrooms": 2.0},
+	&"orchard_downs": {"flowers_warm": 3.0, "flowers_cool": 3.0, "wheat_clump": 0.3},
+	&"rolling_downs": {"wheat_clump": 1.8},
+	&"marsh": {"grass_tuft": 1.6, "bush_low": 2.5, "flowers_cool": 2.0},
+	&"hollow": {"boulder_big": 2.0, "bush_round": 1.5},
+	&"broken_pit": {"boulder_big": 6.0, "boulder_flat": 6.0, "quarry_rubble": 2.0},
+}
+## And their size, by model name (Old Growth's trees stand taller).
+const KIND_SCALE := {
+	&"old_growth": {"canopy_pine": 1.3, "canopy_birch": 1.2},
+}
 ## The quarry pit's levels below the rim, from the top down: a count and [scene, weight] pairs.
-## Below the last of them is the floor, where the crystal grows.
+## Below the last level is the floor, where the crystal grows. A pit with fewer levels than this
+## skips the middle ones (see _quarry_level).
 const QUARRY_LEVELS := [
 	{"count": 6, "entries": [[IRON, 2.0], [ROCK, 1.0]]},
-	{"count": 6, "entries": [[COAL, 3.0], [GOLD, 1.5]]},
+	{"count": 5, "entries": [[COAL, 3.0], [IRON, 1.0]]},
+	{"count": 6, "entries": [[COAL, 2.0], [GOLD, 1.5]]},
 ]
 const CRYSTALS := 4
 ## How many baked variants each model may have (tools/blender/make_models.py's VARIANTS).
@@ -57,6 +84,7 @@ static func populate(parent: Node3D, map: ProcgenMap) -> void:
 		var spec: Dictionary = NODES.get(site["biome"], {}).get(site["tier"], {})
 		if spec.is_empty():
 			continue
+		spec = _with_kind(spec, site.get("kind", &""))
 		var cell := i
 		var spawner := _spawner(map, "Nodes_%d_%s" % [i, site["biome"]], spec)
 		var at: Vector2 = site["pos"]
@@ -77,6 +105,20 @@ static func populate(parent: Node3D, map: ProcgenMap) -> void:
 		var box: Rect2 = boxes[i].intersection(SCENERY_AREA)
 		if box.has_area():
 			parent.add_child(_scenery(map, i, box))
+
+
+## `spec` with its kind's weights and count applied (see KIND_NODES).
+static func _with_kind(spec: Dictionary, kind: StringName) -> Dictionary:
+	var mods: Dictionary = KIND_NODES.get(kind, {})
+	if mods.is_empty():
+		return spec
+	var out := spec.duplicate()
+	out["count"] = roundi(spec["count"] * float(mods.get("count", 1.0)))
+	var entries := []
+	for pair in spec["entries"]:
+		entries.append([pair[0], pair[1] * float(mods.get(pair[0], 1.0))])
+	out["entries"] = entries
+	return out
 
 
 static func _spawner(map: ProcgenMap, node_name: String, spec: Dictionary) -> NodeSpawner:
@@ -111,8 +153,9 @@ static func _quarry_levels(parent: Node3D, map: ProcgenMap) -> void:
 		var outer := float(walls[k]) - 1.5
 		var inner := float(walls[k + 1]) + 1.5 if k + 1 < walls.size() else 0.0
 		var spec: Dictionary = {"count": CRYSTALS, "entries": [[CRYSTAL, 1.0]]}  # the floor
-		if k < QUARRY_LEVELS.size():
-			spec = QUARRY_LEVELS[k].duplicate()
+		if k < walls.size() - 1:
+			spec = _quarry_level(k, walls.size() - 1).duplicate()
+		spec = _with_kind(spec, map.kinds.get(&"quarry", &""))
 		spec["spacing"] = 4.5
 		var spawner := _spawner(map, "QuarryLevel%d" % (k + 1), spec)
 		spawner.ring = Vector4(qc.x, qc.y, inner, outer)
@@ -122,6 +165,14 @@ static func _quarry_levels(parent: Node3D, map: ProcgenMap) -> void:
 		spawner.hotspot_share = 0.0
 		spawner.path_clearance = 1.0
 		parent.add_child(spawner)
+
+
+## Level k of a pit with `levels` levels: the top one is always QUARRY_LEVELS' first and the
+## bottom one its last, so a shallower pit skips the middle.
+static func _quarry_level(k: int, levels: int) -> Dictionary:
+	if levels <= 1:
+		return QUARRY_LEVELS[-1]
+	return QUARRY_LEVELS[roundi(float(k) * (QUARRY_LEVELS.size() - 1) / (levels - 1))]
 
 
 ## Each cell's bounding box (world XZ), from the cells map.
@@ -200,9 +251,15 @@ static func _scenery(map: ProcgenMap, i: int, box: Rect2) -> SceneryScatter:
 		_layer("scenery/quarry_rubble", 1.5, [WorldMap.TEX_QUARRY], {"scale_range": Vector2(0.7, 1.6),
 				"min_normal_y": 0.8, "align_to_slope": true, "cast_shadow": false, "visible_distance": 60.0}),
 	]
+	var kind: StringName = map.sites[i].get("kind", &"")
+	var density: Dictionary = KIND_SCENERY.get(kind, {})
+	var size: Dictionary = KIND_SCALE.get(kind, {})
 	var picked: Array[ScatterLayer] = []
 	for l in layers:
 		if l.allowed_ids.any(func(id: int) -> bool: return id in ground):
+			var look := l.model.resource_path.get_file().get_basename()
+			l.density *= float(density.get(look, 1.0))
+			l.scale_range *= float(size.get(look, 1.0))
 			picked.append_array(_with_variants(l))
 	scatter.layers = picked
 	return scatter

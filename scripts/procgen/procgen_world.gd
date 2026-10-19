@@ -65,6 +65,8 @@ func _ready() -> void:
 	if not map.quarry.is_empty():
 		Biome.quarry_rim_height = map.quarry["rim_height"]
 		Biome.quarry_depth = map.quarry["depth"]
+	for biome in map.kinds:
+		Biome.kind_names[biome] = map.kind_name(biome)
 	print("Procgen: seed %d generated in %d ms" % [world_seed, Time.get_ticks_msec() - started])
 	_place_player()
 	ProcgenPopulation.populate(self, map)
@@ -146,7 +148,7 @@ func _build_terrain() -> void:
 func _place_player() -> void:
 	var p := _player
 	if not SaveGame.has(&"player"):
-		var at := ProcgenMap.HUB_CENTER
+		var at := map.hub
 		p.teleport(Vector3(at.x, map.height_at(at) + 0.1, at.y), Vector3(at.x, 0, at.y - 10.0))
 		return
 	var pos := p.global_position

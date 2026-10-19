@@ -4,17 +4,24 @@ extends RefCounted
 ## id per pixel (WorldMap.TEX_*) and which biome cell each pixel is in. Pure data, no nodes, so it
 ## runs headless and can be previewed as an image. ProcgenWorld hands the result to Terrain3D.
 ##
-## Layout: a flat hub at the origin where you spawn (the Clearing), a ring of biome cells round it,
+## Layout: a flat hub where you spawn (the Clearing, a little off the map's centre), a ring of biome cells round it,
 ## and a mountain rim along the edge so you never reach the end of the world. The cells are
 ## Voronoi cells (every spot belongs to the nearest site) on domain-warped coordinates, so their
 ## borders wander. The inner ring (tier 1) holds the gentler biomes, the outer ring (tier 2) the
 ## harder ones. Each biome has its own height profile; neighbours' profiles blend over the border.
 ## Then stamps are pressed in: the quarry's stepped pit in its cell, and water basins (a pond by
 ## the hub, ponds on low ground further out, the deep lake in Stillwater).
+## Every biome is one of a few kinds (KINDS), rolled per seed: a Birch Grove or an Old Growth
+## Pinewood, Twin Peaks, an Island Lake... A kind changes the ground here, and the nodes and scenery
+## in ProcgenPopulation.
 
 const SIZE := 512                       # pixels = metres (vertex spacing 1)
 const ORIGIN := Vector3(-256, 0, -256)  # world position of pixel (0, 0); on Terrain3D's region grid
 const HUB_CENTER := Vector2.ZERO
+## How far off the map's centre the hub may sit (m); the ring round it is kept inside the rim.
+const HUB_OFFSET := Vector2(18.0, 48.0)
+## No site goes further than this from the map's centre (the rim starts at RIM_START).
+const SITE_MAX_DISTANCE := 150.0
 const HUB_RADIUS := 28.0
 ## Metres over which the ground rises out of the hub.
 const HUB_RAMP := 45.0
@@ -40,6 +47,23 @@ const BIOME_TEXTURE := {&"pinewood": WorldMap.TEX_FOREST, &"goldmeadow": WorldMa
 ## In `cells`, a pixel up on the rim (no biome).
 const RIM_CELL := 255
 
+## Each biome's kinds, [id, name on the arrival card]; the seed rolls one per biome.
+const KINDS := {
+	&"clearing": [[&"meadow", "Meadow"], [&"hollow", "Hollow"]],
+	&"pinewood": [[&"pine_forest", "Pine Forest"], [&"birch_grove", "Birch Grove"], [&"old_growth", "Old Growth"]],
+	&"goldmeadow": [[&"grainfields", "Grainfields"], [&"orchard_downs", "Orchard Downs"],
+			[&"rolling_downs", "Rolling Downs"]],
+	&"stillwater": [[&"great_lake", "Great Lake"], [&"marsh", "Marsh"], [&"island_lake", "Island Lake"]],
+	&"quarry": [[&"terraced_pit", "Terraced Pit"], [&"deep_pit", "Deep Pit"], [&"broken_pit", "Broken Pit"]],
+	&"frostpeak": [[&"lone_peak", "Lone Peak"], [&"twin_peaks", "Twin Peaks"], [&"ridge", "The Ridge"]],
+}
+## The quarry's walls per kind (outermost first): one level below each, the last is the floor.
+const QUARRY_KIND_WALLS := {
+	&"terraced_pit": [32.0, 22.0, 12.0],
+	&"deep_pit": [34.0, 26.0, 18.0, 10.0],
+	&"broken_pit": [30.0, 20.0, 11.0],
+}
+
 ## Water: every surface sits at WATER_LEVEL, as in the hand-built world, so the terrain shader's sand
 ## and pond-bed colours and the scatter's "keep off water" (both by height) work unchanged; the
 ## basins are carved down to it. Radius is roughly where the bed rises to the water line, depth
@@ -51,11 +75,14 @@ const POND_RADIUS := Vector2(6.5, 9.0)
 const POND_DEPTH := Vector2(0.75, 0.95)
 const LAKE_RADIUS := 15.0
 const LAKE_DEPTH := 1.35
+const ISLAND_RADIUS := 7.0
+const MARSH_POOLS := 3
 
 ## The quarry pit: walls at these radii (outermost first), each a QUARRY_LEVEL_DROP step down from
 ## the rim, on a flat apron that blends back into the land over QUARRY_BLEND. Built like the
 ## hand-made Greystone Quarry, with three levels instead of five.
 const QUARRY_WALLS: Array[float] = [32.0, 22.0, 12.0]
+## The rim stands at least this high, and always high enough that the floor is 3 m above the water.
 const QUARRY_RIM_HEIGHT := 18.0
 const QUARRY_LEVEL_DROP := 5.0
 const QUARRY_APRON := 8.0
@@ -94,8 +121,17 @@ var heights := PackedFloat32Array()
 var ids := PackedByteArray()
 ## Index into `sites` per pixel, or RIM_CELL.
 var cells := PackedByteArray()
-## The biome cells: {biome: StringName, pos: Vector2, tier: int}. Site 0 is the hub.
+## The biome cells: {biome: StringName, kind: StringName, pos: Vector2, tier: int}. Site 0 is the hub.
 var sites: Array[Dictionary] = []
+## The kind rolled for each biome, biome -> kind id.
+var kinds: Dictionary[StringName, StringName] = {}
+## Where the hub is, and how wide its ground eases up into the land (a Hollow's rises close).
+var hub := HUB_CENTER
+var hub_ramp := HUB_RAMP
+## The quarry's walls, from its kind.
+var quarry_walls: Array[float] = [32.0, 22.0, 12.0]
+## Frostpeak's summits (a Lone Peak has one, Twin Peaks two) and, for a Ridge, the spine's ends.
+var peaks: Array[Vector2] = []
 ## The water bodies: {name: String, center: Vector2, radius: float, depth: float, lake: bool}.
 var waters: Array[Dictionary] = []
 ## The quarry pit, if there is one: {center: Vector2, rim_height: float, depth: float, walls: Array[float]}.
@@ -114,6 +150,7 @@ var _warp_y := FastNoiseLite.new()
 var _shore := FastNoiseLite.new()  # ragged pond outlines
 var _rings := FastNoiseLite.new()  # wandering quarry walls
 var _rng := RandomNumberGenerator.new()
+var _kind_rng := RandomNumberGenerator.new()  # its own, so rolling kinds doesn't move the sites
 var _ramp_top: Array[float] = []   # per quarry wall: angle of its ramp's top end
 var _ramp_span: Array[float] = []  # per quarry wall: angle its ramp covers
 
@@ -149,6 +186,7 @@ func _init(world_seed: int) -> void:
 	_rings.seed = sub_seed(&"rings")
 	_rings.frequency = 0.05
 	_rng.seed = sub_seed(&"sites")
+	_kind_rng.seed = sub_seed(&"kinds")
 
 
 ## A seed for one part of the generator, so tuning one part doesn't reshuffle the others.
@@ -157,6 +195,7 @@ func sub_seed(part: StringName) -> int:
 
 
 func generate() -> void:
+	_roll_kinds()
 	_place_sites()
 	heights.resize(SIZE * SIZE)
 	ids.resize(SIZE * SIZE)
@@ -192,6 +231,14 @@ func height_at(w: Vector2) -> float:
 	return lerpf(top, bottom, fy)
 
 
+## The name of a biome's kind this seed ("Birch Grove"), or "" if it has none.
+func kind_name(biome: StringName) -> String:
+	for k in KINDS.get(biome, []):
+		if k[0] == kinds.get(biome):
+			return k[1]
+	return ""
+
+
 ## The biome at a world XZ position (&"" up on the rim).
 func biome_at(w: Vector2) -> StringName:
 	var c := cells[pixel_index(w)]
@@ -204,8 +251,18 @@ func height_image() -> Image:
 
 # --- sites ------------------------------------------------------------------------------------
 
+func _roll_kinds() -> void:
+	kinds.clear()
+	for biome in KINDS:
+		var options: Array = KINDS[biome]
+		kinds[biome] = options[_kind_rng.randi_range(0, options.size() - 1)][0]
+	hub_ramp = HUB_RAMP * (0.55 if kinds[&"clearing"] == &"hollow" else 1.0)
+	quarry_walls.assign(QUARRY_KIND_WALLS[kinds[&"quarry"]])
+	hub = Vector2.from_angle(_kind_rng.randf() * TAU) * _kind_rng.randf_range(HUB_OFFSET.x, HUB_OFFSET.y)
+
+
 func _place_sites() -> void:
-	sites = [{"biome": &"clearing", "pos": HUB_CENTER, "tier": 0}]
+	sites = [{"biome": &"clearing", "kind": kinds[&"clearing"], "pos": hub, "tier": 0}]
 	var inner := INNER_BIOMES.duplicate()
 	while inner.size() < INNER_COUNT:
 		inner.append(INNER_BIOMES[_rng.randi_range(0, INNER_BIOMES.size() - 1)])
@@ -217,6 +274,25 @@ func _place_sites() -> void:
 	for s in sites:
 		if s["biome"] == &"quarry":
 			s["pos"] = (s["pos"] as Vector2).limit_length(QUARRY_MAX_DISTANCE)
+	_place_peaks()
+
+
+## Frostpeak's summits, by kind: one on the site; two either side of it with a saddle between;
+## or the two ends of a ridge running across the way to the hub.
+func _place_peaks() -> void:
+	peaks.clear()
+	var fi := _site_index(&"frostpeak")
+	if fi < 0:
+		return
+	var at: Vector2 = sites[fi]["pos"]
+	var across := (at - hub).normalized().orthogonal()
+	match kinds[&"frostpeak"]:
+		&"twin_peaks":
+			peaks = [at + across * 26.0, at - across * 26.0]
+		&"ridge":
+			peaks = [at + across * 42.0, at - across * 42.0]
+		_:
+			peaks = [at]
 
 
 func _site_index(biome: StringName) -> int:
@@ -236,7 +312,7 @@ func _ring(biomes: Array, radius: Vector2, tier: int) -> void:
 		var best_gap := -1.0
 		for attempt in 24:
 			var a := start + i * step + _rng.randf_range(-0.3, 0.3) * step
-			var p := HUB_CENTER + Vector2.from_angle(a) * _rng.randf_range(radius.x, radius.y)
+			var p := (hub + Vector2.from_angle(a) * _rng.randf_range(radius.x, radius.y)).limit_length(SITE_MAX_DISTANCE)
 			var gap := INF
 			for s in sites:
 				gap = minf(gap, p.distance_to(s["pos"]))
@@ -245,7 +321,7 @@ func _ring(biomes: Array, radius: Vector2, tier: int) -> void:
 				best_gap = gap
 			if gap >= MIN_SITE_GAP:
 				break
-		sites.append({"biome": biomes[i], "pos": best, "tier": tier})
+		sites.append({"biome": biomes[i], "kind": kinds.get(biomes[i], &""), "pos": best, "tier": tier})
 
 
 func _shuffle(a: Array) -> void:
@@ -278,7 +354,7 @@ func _pixel(w: Vector2, i: int) -> void:
 		h += _profile(sites[s], w) * weight
 		total += weight
 	h /= total
-	h *= smoothstep(HUB_RADIUS, HUB_RADIUS + HUB_RAMP, w.distance_to(HUB_CENTER))
+	h *= smoothstep(HUB_RADIUS, HUB_RADIUS + hub_ramp, w.distance_to(hub))
 	var rim := _rim(w)
 	h += rim * rim * RIM_HEIGHT + rim * (_ridges.get_noise_2dv(w) * 0.5 + 0.5) * RIM_HEIGHT * 0.35
 	heights[i] = h
@@ -299,22 +375,49 @@ func _profile(site: Dictionary, w: Vector2) -> float:
 	var hills := _hills.get_noise_2dv(w) * 0.5 + 0.5
 	var swell := _swell.get_noise_2dv(w) * 0.5 + 0.5
 	var bumps := _bumps.get_noise_2dv(w) * BUMP_HEIGHT
+	var kind: StringName = site.get("kind", &"")
 	match site["biome"]:
-		&"clearing":    # a gentle lawn
+		&"clearing":    # a gentle lawn (a Hollow's hills rise close round it)
 			return 0.5 + swell * 2.0 + bumps * 0.3
-		&"pinewood":    # rolling forested hills
+		&"pinewood":    # forested hills: a Birch Grove's gentle, Old Growth's steep and high
+			match kind:
+				&"birch_grove":
+					return 1.5 + hills * 10.0 + bumps * 0.8
+				&"old_growth":
+					return 3.0 + hills * 26.0 + (_ridges.get_noise_2dv(w) * 0.5 + 0.5) * 5.0 + bumps
 			return 2.0 + hills * 18.0 + bumps
-		&"goldmeadow":  # long, low swells for the fields
+		&"goldmeadow":  # swells for the fields: long and low, steeper on the downs
+			match kind:
+				&"orchard_downs":
+					return 1.5 + swell * 7.0 + bumps * 0.4
+				&"rolling_downs":
+					return 1.0 + swell * 12.0 + hills * 3.0 + bumps * 0.4
 			return 1.0 + swell * 5.0 + bumps * 0.3
-		&"stillwater":  # low, wet ground (the lake comes with the water stamps)
+		&"stillwater":  # low, wet ground (the lake comes with the water stamps; a marsh lies flatter)
+			if kind == &"marsh":
+				return 0.25 + swell * 1.2 + bumps * 0.3
 			return 0.4 + swell * 2.5 + bumps * 0.4
-		&"quarry":      # a broken stone plateau
-			return 8.0 + _rough.get_noise_2dv(w) * 4.0 + hills * 6.0 + bumps
-		&"frostpeak":   # a mountain on the site, snowy above the shader's snow line
-			var d: float = w.distance_to(site["pos"])
-			var cone := pow(1.0 - smoothstep(0.0, 80.0, d), 1.6)
-			return 6.0 + cone * 50.0 + (_ridges.get_noise_2dv(w) * 0.5 + 0.5) * 10.0 * (0.4 + cone) + hills * 6.0
+		&"quarry":      # a broken stone plateau, rougher round a Broken Pit
+			var rough := 7.0 if kind == &"broken_pit" else 4.0
+			return 8.0 + _rough.get_noise_2dv(w) * rough + hills * 6.0 + bumps
+		&"frostpeak":   # mountains on the site, snowy above the shader's snow line
+			return _mountain(w) + hills * 6.0
 	return hills * 10.0
+
+
+## Frostpeak's height at `w`: a cone round each summit, or for a Ridge a spine between its two
+## ends; ridged noise roughens it more the higher up.
+func _mountain(w: Vector2) -> float:
+	var cone := 0.0
+	if kinds.get(&"frostpeak") == &"ridge" and peaks.size() == 2:
+		var d := w.distance_to(Geometry2D.get_closest_point_to_segment(w, peaks[0], peaks[1]))
+		cone = pow(1.0 - smoothstep(0.0, 55.0, d), 1.4) * 0.8
+	else:
+		var tall := 1.0 if peaks.size() == 1 else 0.85
+		for p in peaks:
+			var c := pow(1.0 - smoothstep(0.0, 70.0 if peaks.size() > 1 else 80.0, w.distance_to(p)), 1.6) * tall
+			cone = maxf(cone, c) + minf(cone, c) * 0.25  # the saddle between two summits
+	return 6.0 + cone * 50.0 + (_ridges.get_noise_2dv(w) * 0.5 + 0.5) * 10.0 * (0.4 + cone)
 
 
 # --- stamps -----------------------------------------------------------------------------------
@@ -338,22 +441,22 @@ func _stamp_quarry() -> void:
 	_ramp_top.clear()
 	_ramp_span.clear()
 	var top := _rng.randf() * TAU  # where the haul road comes over the rim
-	for b in QUARRY_WALLS:
+	for b in quarry_walls:
 		var r := b - RAMP_WIDTH * 0.5
 		var span := RAMP_LENGTH / r
 		_ramp_top.append(top)
 		_ramp_span.append(span)
 		top = top - span - RAMP_GAP / r
-	quarry = {"center": c, "rim_height": QUARRY_RIM_HEIGHT, "walls": QUARRY_WALLS,
-			"depth": QUARRY_LEVEL_DROP * QUARRY_WALLS.size()}
-	var flat := QUARRY_WALLS[0] + QUARRY_APRON
+	quarry = {"center": c, "rim_height": _quarry_rim(), "walls": quarry_walls,
+			"depth": QUARRY_LEVEL_DROP * quarry_walls.size()}
+	var flat := quarry_walls[0] + QUARRY_APRON
 	_for_pixels_near(c, flat + QUARRY_BLEND, func(i: int, w: Vector2) -> void:
 		var d := w.distance_to(c) + _rings.get_noise_2dv(w) * 1.5
 		var theta := (w - c).angle()
 		heights[i] = lerpf(_quarry_height(d, theta), heights[i], smoothstep(flat, flat + QUARRY_BLEND, d))
 		if d < flat:
 			cells[i] = qi
-		if d < QUARRY_WALLS[0] + 3.0:
+		if d < quarry_walls[0] + 3.0:
 			ids[i] = WorldMap.TEX_QUARRY
 		if _on_haul_road(d, theta):
 			ids[i] = WorldMap.TEX_PATH)
@@ -361,14 +464,18 @@ func _stamp_quarry() -> void:
 
 func _quarry_height(d: float, theta: float) -> float:
 	var above := 0.0  # how many walls this spot is on the outer (higher) side of
-	for i in QUARRY_WALLS.size():
+	for i in quarry_walls.size():
 		above += _wall_step(i, d, theta)
-	return QUARRY_RIM_HEIGHT - QUARRY_LEVEL_DROP * (QUARRY_WALLS.size() - above)
+	return _quarry_rim() - QUARRY_LEVEL_DROP * (quarry_walls.size() - above)
+
+
+func _quarry_rim() -> float:
+	return maxf(QUARRY_RIM_HEIGHT, QUARRY_LEVEL_DROP * quarry_walls.size() + 3.0)
 
 
 ## 1 on the outer side of wall i, 0 on the inner side; in between on its ramp and stairs.
 func _wall_step(i: int, d: float, theta: float) -> float:
-	var b := QUARRY_WALLS[i]
+	var b := quarry_walls[i]
 	var s := _sharp(d - b)
 	if d > b - RAMP_WIDTH and d <= b:
 		var t := _ramp_t(i, theta)
@@ -398,8 +505,8 @@ func _stair_angles(i: int) -> Array[float]:
 
 
 func _on_haul_road(d: float, theta: float) -> bool:
-	for i in QUARRY_WALLS.size():
-		var b := QUARRY_WALLS[i]
+	for i in quarry_walls.size():
+		var b := quarry_walls[i]
 		if d > b - RAMP_WIDTH and d <= b and _ramp_t(i, theta) >= 0.0:
 			return true
 	return false
@@ -408,17 +515,30 @@ func _on_haul_road(d: float, theta: float) -> bool:
 func _place_water() -> void:
 	waters.clear()
 	var a := _rng.randf() * TAU
-	_basin("HubPond", HUB_CENTER + Vector2.from_angle(a) * float(HUB_POND["distance"]),
+	_basin("HubPond", hub + Vector2.from_angle(a) * float(HUB_POND["distance"]),
 			HUB_POND["radius"], HUB_POND["depth"], false)
 	var si := _site_index(&"stillwater")
 	if si >= 0:
-		var at: Vector2 = (sites[si]["pos"] as Vector2).move_toward(HUB_CENTER, 10.0)
+		var at: Vector2 = (sites[si]["pos"] as Vector2).move_toward(hub, 10.0)
 		if not quarry.is_empty():  # keep the lake's banks out of the quarry's apron
 			var qc: Vector2 = quarry["center"]
-			var need := QUARRY_WALLS[0] + QUARRY_APRON + QUARRY_BLEND + LAKE_RADIUS + 10.0
+			var need := quarry_walls[0] + QUARRY_APRON + QUARRY_BLEND + LAKE_RADIUS + 10.0
 			if at.distance_to(qc) < need:
 				at = qc + (at - qc).normalized() * need
-		_basin("Lake", at.limit_length(140.0), LAKE_RADIUS, LAKE_DEPTH, true)
+		at = at.limit_length(140.0)
+		match kinds[&"stillwater"]:
+			&"island_lake":  # a wider lake, an island in its middle
+				_basin("Lake", at, LAKE_RADIUS + 7.0, LAKE_DEPTH, true)
+				_island(at, ISLAND_RADIUS)
+			&"marsh":  # a smaller deep pond for the char, shallow pools scattered round it
+				_basin("Lake", at, LAKE_RADIUS - 4.0, LAKE_DEPTH, true)
+				var a0 := _rng.randf() * TAU
+				for k in MARSH_POOLS:
+					var p := at + Vector2.from_angle(a0 + k * TAU / MARSH_POOLS + _rng.randf_range(-0.4, 0.4)) \
+							* _rng.randf_range(20.0, 26.0)
+					_basin("Marsh%d" % (k + 1), p, _rng.randf_range(4.0, 6.0), _rng.randf_range(0.5, 0.7), false, false)
+			_:
+				_basin("Lake", at, LAKE_RADIUS + 4.0, LAKE_DEPTH, true)
 	for n in POND_COUNT:
 		var r := _rng.randf_range(POND_RADIUS.x, POND_RADIUS.y)
 		var best := Vector2.INF
@@ -436,12 +556,12 @@ func _place_water() -> void:
 
 
 func _pond_spot_ok(p: Vector2, r: float) -> bool:
-	if p.distance_to(HUB_CENTER) < HUB_RADIUS + HUB_RAMP or p.length() > 150.0 or _rim(p) > 0.0:
+	if p.distance_to(hub) < HUB_RADIUS + hub_ramp or p.length() > 150.0 or _rim(p) > 0.0:
 		return false
 	var biome := biome_at(p)
 	if biome == &"quarry" or biome == &"frostpeak" or biome == &"":
 		return false
-	if not quarry.is_empty() and p.distance_to(quarry["center"]) < QUARRY_WALLS[0] + QUARRY_APRON + QUARRY_BLEND + r + 10.0:
+	if not quarry.is_empty() and p.distance_to(quarry["center"]) < quarry_walls[0] + QUARRY_APRON + QUARRY_BLEND + r + 10.0:
 		return false
 	for w in waters:
 		if p.distance_to(w["center"]) < float(w["radius"]) + r + 30.0:
@@ -451,7 +571,7 @@ func _pond_spot_ok(p: Vector2, r: float) -> bool:
 
 ## Carves a basin round `at` down below WATER_LEVEL, the land easing down to the shore over a ramp
 ## that's longer the higher the ground stands, and records it in `waters`.
-func _basin(water_name: String, at: Vector2, r: float, depth: float, lake: bool) -> void:
+func _basin(water_name: String, at: Vector2, r: float, depth: float, lake: bool, trail := true) -> void:
 	var ramp := clampf(6.0 + height_at(at) * 2.5, 8.0, 40.0)
 	_for_pixels_near(at, r + ramp + 3.0, func(i: int, w: Vector2) -> void:
 		var pd := w.distance_to(at) + _shore.get_noise_2dv(w) * 2.0
@@ -462,26 +582,37 @@ func _basin(water_name: String, at: Vector2, r: float, depth: float, lake: bool)
 		heights[i] = h
 		if pd < r + 3.0:
 			ids[i] = WorldMap.TEX_DEFAULT)  # the shader's sand and bed, not forest floor or field
-	waters.append({"name": water_name, "center": at, "radius": r, "depth": depth, "lake": lake})
+	waters.append({"name": water_name, "center": at, "radius": r, "depth": depth, "lake": lake, "trail": trail})
 
+
+## Raises an island out of the water round `at`: a low grassy mound, ragged at the shore.
+func _island(at: Vector2, r: float) -> void:
+	_for_pixels_near(at, r + 3.0, func(i: int, w: Vector2) -> void:
+		var d := w.distance_to(at) + _shore.get_noise_2dv(w) * 1.5
+		var mound := 1.0 - smoothstep(r * 0.4, r, d)
+		heights[i] = maxf(heights[i], lerpf(heights[i], 1.4 + _bumps.get_noise_2dv(w) * 0.4, mound)))
 
 # --- trails -----------------------------------------------------------------------------------
 
 func _lay_trails() -> void:
 	trails.clear()
 	var astar := _trail_grid()
-	var start := _trail_cell(HUB_CENTER)
+	var start := _trail_cell(hub)
 	astar.set_point_solid(start, false)
 	for t in _trail_targets():
 		# a target on ground a trail can't reach (steep, wet) moves back toward the hub until it can
+		# a target a trail can't reach (steep, wet or walled in) moves back toward the hub until it can
 		var target := t
-		var goal := _trail_cell(target)
-		for k in 40:
+		var cells_path: Array[Vector2i] = []
+		for k in 60:
+			var goal := _trail_cell(target)
 			if not astar.is_point_solid(goal):
+				cells_path = astar.get_id_path(start, goal)
+				if cells_path.size() >= 2:
+					break
+			if target.distance_to(hub) < HUB_RADIUS:
 				break
-			target = target.move_toward(HUB_CENTER, TRAIL_CELL)
-			goal = _trail_cell(target)
-		var cells_path := astar.get_id_path(start, goal)
+			target = target.move_toward(hub, TRAIL_CELL)
 		if cells_path.size() < 2:
 			continue
 		var pts := PackedVector2Array()
@@ -502,17 +633,17 @@ func _trail_targets() -> PackedVector2Array:
 			&"stillwater":
 				continue  # its site is under the lake, which gets a trail of its own
 			&"quarry":
-				var b := QUARRY_WALLS[0]
+				var b := quarry_walls[0]
 				p += Vector2.from_angle(_ramp_top[0]) * (b + 2.0) if not _ramp_top.is_empty() else Vector2.ZERO
 			&"frostpeak":
-				while height_at(p) > TRAIL_MAX_HEIGHT and p.distance_to(HUB_CENTER) > 4.0:
-					p = p.move_toward(HUB_CENTER, 2.0)
+				while height_at(p) > TRAIL_MAX_HEIGHT and p.distance_to(hub) > 4.0:
+					p = p.move_toward(hub, 2.0)
 		out.append(p)
 	for w in waters:
 		var c: Vector2 = w["center"]
-		if c.distance_to(HUB_CENTER) < HUB_RADIUS + 10.0:
-			continue  # the hub's own pond is in sight of the spawn
-		out.append(c + (HUB_CENTER - c).normalized() * (float(w["radius"]) + 3.0))
+		if c.distance_to(hub) < HUB_RADIUS + 10.0 or not w.get("trail", true):
+			continue  # the hub's own pond is in sight of the spawn; a marsh's pools are by its lake
+		out.append(c + (hub - c).normalized() * (float(w["radius"]) + 3.0))
 	return out
 
 
@@ -543,7 +674,7 @@ func _trail_grid() -> AStarGrid2D:
 
 
 func _in_pit(w: Vector2) -> bool:
-	return not quarry.is_empty() and w.distance_to(quarry["center"]) < QUARRY_WALLS[0] + 1.0
+	return not quarry.is_empty() and w.distance_to(quarry["center"]) < quarry_walls[0] + 1.0
 
 
 func _trail_cell(w: Vector2) -> Vector2i:
@@ -622,7 +753,7 @@ func _grade_and_paint() -> void:
 					best[i] = [d, graded])
 	for i in best:
 		var w := world(i % SIZE, i / SIZE)
-		if heights[i] < WATER_LEVEL + 0.1 or _in_pit(w) or w.distance_to(HUB_CENTER) < HUB_RADIUS:
+		if heights[i] < WATER_LEVEL + 0.1 or _in_pit(w) or w.distance_to(hub) < HUB_RADIUS:
 			continue
 		var d: float = best[i][0]
 		var t := 1.0 - smoothstep(TRAIL_HALF_WIDTH, reach, d)
