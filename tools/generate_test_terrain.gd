@@ -48,7 +48,7 @@ const LAKE_PATH := [Vector2(-3, 16), Vector2(-6, 32), Vector2(-11, 48), Vector2(
 const VILLAGE_CENTER := Vector2(100, 40)  # the middle of the village square
 const VILLAGE_RADIUS := 36.0
 const VILLAGE_RAMP := 30.0
-## Control-map texture id that marks the path (see shaders/terrain_lowpoly.gdshader, footsteps.gd).
+## Control-map texture id that marks the path (see shaders/terrain.gdshader, footsteps.gd).
 const PATH_TEXTURE := WorldMap.TEX_PATH
 ## The path from the clearing over the pass into the village square.
 const PATH := [Vector2(22, -2), Vector2(42, 6), Vector2(62, 20), Vector2(80, 34), Vector2(100, 40)]

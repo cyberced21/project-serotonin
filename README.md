@@ -208,6 +208,6 @@ Models colour their faces by pointing UVs at palette swatches. To hand-edit a mo
 
 ## Credits
 
-- [Terrain3D](https://github.com/TokisanGames/Terrain3D) by Cory Petkovsek, Roope Palmroos and contributors (MIT). `shaders/terrain_lowpoly.gdshader` builds on its example shader.
+- [Terrain3D](https://github.com/TokisanGames/Terrain3D) by Cory Petkovsek, Roope Palmroos and contributors (MIT). `shaders/terrain.gdshader` builds on its example shader.
 - Models made with [Blender](https://www.blender.org/). The game is built with [Godot](https://godotengine.org/).
 - Mining sounds cut from the [Sonniss GDC 2026 Game Audio Bundle](https://sonniss.com/gameaudiogdc) (royalty free, no attribution required). Per-clip sources: `audio/mining/sfx/SOURCES.md`. The woodcutting sounds are synthesized (`audio/woodcutting/sfx/SOURCES.md`).

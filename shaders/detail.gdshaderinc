@@ -9,7 +9,7 @@
 // (Macros, since shader functions can't touch varyings.)
 
 // Global (Project Settings > Shader Globals), so every material gets it without wiring.
-global uniform sampler2DArray detail_tex : filter_nearest_mipmap, repeat_enable;
+global uniform sampler2DArray detail_tex : filter_nearest_mipmap_anisotropic, repeat_enable;
 // Texture repeats per metre (128 px a tile: 0.5 = 64 texels a metre).
 uniform float detail_scale = 0.5;
 // Overall strength; each palette row also has its own (DETAIL_ROW_STRENGTH).

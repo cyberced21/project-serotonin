@@ -17,7 +17,7 @@ const SOUNDS := {
 const SPLASH := preload("res://audio/movement/splash.tres")
 ## Water shallower than this (m) still sounds like the ground under it.
 const WET_DEPTH := 0.06
-## Fallbacks matching the defaults in shaders/terrain_lowpoly.gdshader, used when the terrain
+## Fallbacks matching the defaults in shaders/terrain.gdshader, used when the terrain
 ## material doesn't override them.
 ## What the painted surfaces (WorldMap.TEX_*) sound like on walkable ground: dirt paths, the
 ## gravel road and quarry stone crunch; forest floor, meadow and crops are grassy.

@@ -57,3 +57,8 @@ detail_tex={
 "type": "sampler2DArray",
 "value": "res://art/textures/detail.png"
 }
+
+ground_tex={
+"type": "sampler2DArray",
+"value": "res://art/textures/ground.png"
+}

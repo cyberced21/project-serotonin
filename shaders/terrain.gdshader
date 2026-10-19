@@ -1,13 +1,13 @@
-// Low-poly terrain shader for Project Serotonin.
+// Terrain shader for Project Serotonin: smooth, textured ground (Valheim-style).
 // Based on Terrain3D's extras/shaders/minimum.gdshader (MIT, © 2023-2026 Cory Petkovsek,
 // Roope Palmroos, and Contributors) — the vertex / geomorph code below is theirs, unchanged.
 //
-// The look: every triangle is flat-shaded (faceted normals) and gets ONE flat colour picked
-// from a small palette by its slope and height — grass on flats, dirt on slopes, rock on
-// cliffs, sand low down, snow up high, and dirt paths where the control map marks them.
-// A little per-cell tint variation breaks up big areas.
-// Terrain3D's Color tool still works: painted colour multiplies the palette colour.
-// Vertex spacing (on the Terrain3D node) sets how big the facets are.
+// The look: smooth normals from the heightmap; each vertex is covered by one surface (grass on
+// flats, dirt on slopes, rock on cliffs, sand low down, snow up high, and the biome surfaces and
+// paths the control map marks), coloured from the palette below and textured with a chunky,
+// nearest-filtered slice of art/textures/ground.png (global `ground_tex`, made by
+// tools/make_textures.py). Neighbouring surfaces meet in ragged, height-blended borders.
+// Terrain3D's Color tool still works: painted colour multiplies the surface colour.
 
 shader_type spatial;
 render_mode blend_mix,depth_draw_opaque,cull_back,diffuse_lambert,specular_disabled,skip_vertex_transform;
@@ -43,7 +43,6 @@ uniform highp sampler2DArray _height_maps : repeat_disable;
 uniform highp sampler2DArray _control_maps : repeat_disable;
 uniform highp sampler2DArray _color_maps : source_color, filter_nearest, repeat_disable;
 //uniform highp sampler2DArray _texture_array_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
-//uniform highp sampler2DArray _texture_array_normal : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
 
 // Public Uniforms
 group_uniforms palette;
@@ -96,6 +95,32 @@ uniform float patch_size = 7.0;
 uniform float variation : hint_range(0.0, 0.3) = 0.035;
 group_uniforms;
 
+group_uniforms texture;
+// Ground texture repeats per metre (128 px a tile: 0.3 = about 38 texels a metre).
+uniform float ground_scale = 0.3;
+// How much the texture lightens and darkens the colour (0 = flat colour).
+uniform float texture_strength : hint_range(0.0, 1.0) = 0.75;
+// Colour the darkest texels shift toward (times the surface colour); the lightest go the other way.
+uniform vec3 shadow_tint = vec3(0.70, 0.76, 0.86);
+// How sharply neighbouring surfaces' textures cut into each other.
+uniform float blend_sharpness = 4.0;
+// How far slope borders wander with the texture.
+uniform float edge_jitter = 0.1;
+// Large light/dark patches against visible tiling, 0 = none.
+uniform float macro_variation : hint_range(0.0, 0.5) = 0.14;
+group_uniforms;
+
+global uniform sampler2DArray ground_tex : filter_nearest_mipmap_anisotropic, repeat_enable;
+
+// ground_tex slices (tools/make_textures.py GROUND)
+const float LAYER_GRASS = 0.0;
+const float LAYER_DIRT = 1.0;
+const float LAYER_ROCK = 2.0;
+const float LAYER_SAND = 3.0;
+const float LAYER_SNOW = 4.0;
+const float LAYER_FOREST = 5.0;
+const float LAYER_PATH = 6.0;
+const float LAYER_FIELD = 7.0;
 // Varyings & Types
 // Some are required for editor functions
 varying float v_vertex_xz_dist;
@@ -187,63 +212,130 @@ float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
 
+// Smooth value noise, 0..1.
+float vnoise(vec2 p) {
+	vec2 i = floor(p);
+	vec2 f = fract(p);
+	f = f * f * (3.0 - 2.0 * f);
+	return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+			mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+
+float height_at(vec2 cell) {
+	ivec3 c = get_index_coord(cell, FRAGMENT_PASS);
+	return c.z >= 0 ? texelFetch(_height_maps, c, 0).r : 0.0;
+}
+
+// Bilinear height between the four vertices round `uv` (vertex units).
+float height_smooth(vec2 uv) {
+	vec2 b = floor(uv);
+	vec2 f = uv - b;
+	return mix(mix(height_at(b), height_at(b + vec2(1.0, 0.0)), f.x),
+			mix(height_at(b + vec2(0.0, 1.0)), height_at(b + vec2(1.0, 1.0)), f.x), f.y);
+}
+
+float ground(vec2 world_xz, float layer) {
+	return texture(ground_tex, vec3(world_xz * ground_scale, layer)).r;
+}
+
+// What one terrain vertex is covered with, for the slope at this pixel: its colour, and the
+// ground_tex slice to texture it with (LAYER_*).
+void surface_at(vec2 cell, float slope, float wy, out vec3 col, out float layer) {
+	ivec3 c = get_index_coord(cell, FRAGMENT_PASS);
+	float h = c.z >= 0 ? texelFetch(_height_maps, c, 0).r : 0.0;
+	// two grasses in soft patches a few metres across
+	vec2 world = cell * _vertex_spacing;
+	float pick = smoothstep(0.42, 0.58, vnoise(world / patch_size));
+	col = mix(grass_color, grass_color_2, pick);
+	layer = LAYER_GRASS;
+	if (h < sand_height) { col = sand_color; layer = LAYER_SAND; }
+	if (h < bed_height) { col = bed_color; layer = LAYER_DIRT; }
+	if (slope < dirt_slope) { col = dirt_color; layer = LAYER_DIRT; }
+	if (slope < rock_slope) { col = rock_color; layer = LAYER_ROCK; }
+	if (h > snow_height && slope >= rock_slope) { col = snow_color; layer = LAYER_SNOW; }
+
+	if (c.z >= 0) {
+		// Surfaces by texture id (base id = bits 27-31 of the control map). Paths and roads only
+		// on walkable ground; the biomes swap the grass and dirt for their own.
+		uint control = floatBitsToUint(texelFetch(_control_maps, c, 0)).r;
+		int id = int(control >> 27u & 0x1Fu);
+		bool level = slope >= dirt_slope;
+		if (id == path_texture && slope >= rock_slope) {
+			col = path_color; layer = LAYER_PATH;
+		} else if (id == road_texture && slope >= rock_slope) {
+			col = road_color; layer = LAYER_PATH;
+		} else if (id == forest_texture && slope >= rock_slope) {
+			bool litter = !level || vnoise(world / (patch_size * 0.5) + 17.0) < 0.22;
+			col = litter ? needle_color : mix(forest_color, forest_color_2, pick);
+			layer = LAYER_FOREST;
+		} else if (id == field_texture && slope >= rock_slope) {
+			col = level ? mix(field_color, field_color_2, pick) : dirt_color;
+			layer = level ? LAYER_GRASS : LAYER_DIRT;
+		} else if (id == crop_texture && slope >= rock_slope) {
+			col = mix(crop_color, crop_color_2, step(0.5, hash(cell)));
+			layer = LAYER_FIELD;
+		} else if (id == quarry_texture) {
+			// strata: banded by the pixel's own height, so a wall shows stripes
+			float band = mod(floor(wy / quarry_band), 2.0);
+			col = level ? quarry_color : mix(quarry_rock, quarry_rock_2, band);
+			layer = level ? LAYER_PATH : LAYER_ROCK;
+		}
+		// Painted colour from Terrain3D's Color tool (white = unpainted).
+		col *= texelFetch(_color_maps, c, 0).rgb;
+	}
+	col *= 1.0 + (hash(cell) - 0.5) * 2.0 * variation;
+}
+
 void fragment() {
 	// Terrain3D injects editor code (brush preview, region grid…) that expects these names.
 	vec2 uv = UV;
 	vec3 base_ddx = dFdxCoarse(v_vertex);
 	vec3 base_ddy = dFdyCoarse(v_vertex);
-
-	// Faceted normal: the true plane of this triangle, constant across it.
 	vec3 w_vertex = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	vec3 w_normal = normalize(cross(dFdyCoarse(w_vertex), dFdxCoarse(w_vertex)));
+
+	// Smooth normal from the heightmap (central differences of the bilinear height).
+	float hl = height_smooth(uv - vec2(1.0, 0.0));
+	float hr = height_smooth(uv + vec2(1.0, 0.0));
+	float hd = height_smooth(uv - vec2(0.0, 1.0));
+	float hu = height_smooth(uv + vec2(0.0, 1.0));
+	vec3 w_normal = normalize(vec3(hl - hr, 2.0 * _vertex_spacing, hd - hu));
 	NORMAL = mat3(VIEW_MATRIX) * w_normal;
 	TANGENT = normalize(cross(NORMAL, VIEW_MATRIX[2].xyz));
 	BINORMAL = normalize(cross(NORMAL, TANGENT));
 
-	// One colour per facet from slope + height. Banding uses the facet's centre-ish height
-	// (snapped to the cell) so a facet never gets split between two colours.
-	vec2 cell = floor(UV);
-	float slope = w_normal.y;
-	float h = texelFetch(_height_maps, get_index_coord(cell, FRAGMENT_PASS), 0).r;
-	// two grasses in irregular patches a few metres across (not per cell — that reads as a quilt)
-	vec2 patch = floor((cell + vec2(hash(floor(cell / patch_size)) * patch_size)) / patch_size);
-	vec3 albedo = mix(grass_color, grass_color_2, step(0.55, hash(patch)));
-	albedo = h < sand_height ? sand_color : albedo;
-	albedo = h < bed_height ? bed_color : albedo;
-	albedo = slope < dirt_slope ? dirt_color : albedo;
-	albedo = slope < rock_slope ? rock_color : albedo;
-	albedo = h > snow_height && slope >= rock_slope ? snow_color : albedo;
+	// Rock projected from three sides, so cliffs aren't smeared.
+	vec3 tw = pow(abs(w_normal), vec3(6.0));
+	tw /= tw.x + tw.y + tw.z;
+	float rock_t = ground(w_vertex.zy, LAYER_ROCK) * tw.x + ground(w_vertex.xz, LAYER_ROCK) * tw.y
+			+ ground(w_vertex.xy, LAYER_ROCK) * tw.z;
 
-	ivec3 c = get_index_coord(cell, FRAGMENT_PASS);
-	if (c.z >= 0) {
-		// Surfaces by texture id (base id = bits 27-31 of the control map). Paths and roads only
-		// on walkable ground; the biomes swap the grass and dirt colours for their own.
-		uint control = floatBitsToUint(texelFetch(_control_maps, c, 0)).r;
-		int id = int(control >> 27u & 0x1Fu);
-		bool level = slope >= dirt_slope;
-		float pick = step(0.55, hash(patch));
-		if (id == path_texture && slope >= rock_slope) {
-			albedo = path_color;
-		} else if (id == road_texture && slope >= rock_slope) {
-			albedo = road_color;
-		} else if (id == forest_texture && slope >= rock_slope) {
-			albedo = level && hash(patch + 17.0) > 0.18 ? mix(forest_color, forest_color_2, pick) : needle_color;
-		} else if (id == field_texture && slope >= rock_slope) {
-			albedo = level ? mix(field_color, field_color_2, pick) : dirt_color;
-		} else if (id == crop_texture && slope >= rock_slope) {
-			albedo = mix(crop_color, crop_color_2, step(0.5, hash(cell)));
-		} else if (id == quarry_texture) {
-			// strata: banded by the fragment's own height, so a wall shows stripes across its facets
-			float band = mod(floor(w_vertex.y / quarry_band), 2.0);
-			albedo = level ? quarry_color : mix(quarry_rock, quarry_rock_2, band);
-		}
-	}
-	albedo *= 1.0 + (hash(cell) - 0.5) * 2.0 * variation;
+	// Ragged borders: the slope bands and surface edges wander with the texture.
+	float jitter = ground(w_vertex.xz * 0.37, LAYER_DIRT) - 0.5;
+	float slope = w_normal.y + jitter * edge_jitter;
 
-	// Painted colour from Terrain3D's Color tool (white = unpainted).
-	if (c.z >= 0) {
-		albedo *= texelFetch(_color_maps, c, 0).rgb;
+	// Blend the four surrounding vertices' surfaces, each weighted by how far up its own texture
+	// pokes (height blending): crisp, painterly borders instead of a soft fade.
+	vec2 b = floor(uv);
+	vec2 f = uv - b;
+	vec3 albedo = vec3(0.0);
+	float total = 0.0;
+	for (int i = 0; i < 4; i++) {
+		vec2 o = vec2(float(i & 1), float(i >> 1));
+		vec3 col;
+		float layer;
+		surface_at(b + o, slope, w_vertex.y, col, layer);
+		float t = layer == LAYER_ROCK ? rock_t : ground(w_vertex.xz, layer);
+		vec2 bw = mix(1.0 - f, f, o);
+		float w = pow(bw.x * bw.y * (0.25 + t), blend_sharpness);
+		// dark texels shift cool, light ones warm, around the surface's own colour
+		float k = clamp(0.5 + (t - 0.5) * 2.0 * texture_strength, 0.0, 1.0);
+		albedo += col * mix(shadow_tint, vec3(2.0) - shadow_tint, k) * w;
+		total += w;
 	}
+	albedo /= max(total, 1e-5);
+
+	// Big, slow light and dark patches so the tiling doesn't show from afar.
+	albedo *= 1.0 + (vnoise(w_vertex.xz / 28.0) - 0.5) * macro_variation;
 
 	ALBEDO = albedo;
 	ROUGHNESS = 1.0;

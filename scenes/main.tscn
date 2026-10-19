@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://cayt1hrplt7q2" path="res://scripts/hud.gd" id="2_hud"]
 [ext_resource type="PackedScene" path="res://scenes/tree.tscn" id="3_tree"]
 [ext_resource type="PackedScene" path="res://scenes/rock.tscn" id="4_rock"]
-[ext_resource type="Shader" path="res://shaders/terrain_lowpoly.gdshader" id="5_terrain_shader"]
+[ext_resource type="Shader" path="res://shaders/terrain.gdshader" id="5_terrain_shader"]
 [ext_resource type="Terrain3DAssets" path="res://materials/terrain_assets.tres" id="6_terrain_assets"]
 [ext_resource type="Script" path="res://scripts/water_body.gd" id="7_water"]
 [ext_resource type="Shader" path="res://shaders/water_lowpoly.gdshader" id="8_water_shader"]
