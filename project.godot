@@ -57,17 +57,14 @@ detail_tex={
 "type": "sampler2DArray",
 "value": "res://art/textures/detail.png"
 }
-
 ground_tex={
 "type": "sampler2DArray",
 "value": "res://art/textures/ground.png"
 }
-
 leaf_tex={
 "type": "sampler2DArray",
 "value": "res://art/textures/leaves.png"
 }
-
 wind_direction={
 "type": "vec2",
 "value": Vector2(0.8, 0.6)
