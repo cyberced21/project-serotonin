@@ -246,6 +246,7 @@ const TOOL_HEADS := {&"axe": Vector3(0, 0.5, -0.18), &"pickaxe": Vector3(0, 0.38
 @onready var tool_pivot: Node3D = %ToolPivot
 @onready var tools: Dictionary[StringName, Node3D] = {&"axe": %Axe, &"pickaxe": %Pickaxe, &"spear": %Spear, &"sickle": %Sickle}
 @onready var spearfishing: SpearFishing = $SpearFishing
+@onready var rodfishing: RodFishing = $RodFishing
 @onready var dot: Control = $Reticle/Dot
 @onready var hover_label: Label = $Reticle/Hover
 @onready var audio: AudioStreamPlayer = $Audio
@@ -326,6 +327,7 @@ func _ready() -> void:
 	_use_tool_model(tools[&"axe"], axe_model)
 	_use_tool_model(tools[&"spear"], spear_model)
 	_use_tool_model(tools[&"sickle"], sickle_model)
+	tools[&"rod"] = rodfishing.rod  # (built by RodFishing, on its own grip like the spear)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	SaveGame.register(&"player", self)
 
@@ -501,7 +503,9 @@ func _physics_process(delta: float) -> void:
 
 	_cooldown -= delta
 	_update_target()
-	if _talk_target:
+	if rodfishing.is_busy():
+		pass  # the rod has the buttons (RodFishing reads them itself)
+	elif _talk_target:
 		if Input.is_action_just_pressed("interact") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED \
 				and not _swinging and not _panel_just_closed():
 			_talk_target.interact()
@@ -511,6 +515,8 @@ func _physics_process(delta: float) -> void:
 			_swing(_target.tool_type)
 		elif spearfishing.can_thrust():
 			spearfishing.thrust()
+		elif rodfishing.can_cast() and Input.is_action_just_pressed("gather"):
+			rodfishing.start_cast()
 
 
 func _move(delta: float) -> void:
@@ -561,7 +567,7 @@ func _move(delta: float) -> void:
 	if _state == State.WALLRUN and _jump_buffer > 0.0:
 		horizontal = _wall_jump(horizontal)
 		jumped = true
-	elif _jump_buffer > 0.0 and _coyote > 0.0 and not _swinging and _can_stand():
+	elif _jump_buffer > 0.0 and _coyote > 0.0 and not _swinging and _can_stand() and not rodfishing.is_fighting():
 		var spd := horizontal.length()
 		if _state == State.SLIDE:
 			spd += slide_jump_boost  # slide cancel: keep the slide's speed, plus a kick
@@ -590,6 +596,7 @@ func _move(delta: float) -> void:
 	speed *= move_slow_while_swinging if _swinging else 1.0
 	speed *= wading
 	speed *= 1.0 + Village.stat(&"run_speed")  # Rosa's bread
+	speed *= rodfishing.move_scale()  # a fish on: rooted to a shuffle
 
 	match _state:
 		State.SLIDE:
@@ -944,6 +951,12 @@ func _node_under_crosshair(hit: Dictionary) -> ResourceNode:
 
 
 func _update_target() -> void:
+	if rodfishing.is_busy():  # the rod stays in hand until the float's back (or the fish is)
+		_clear_targets()
+		_equip(&"rod")
+		dot.scale = Vector2.ONE
+		hover_label.text = ""
+		return
 	# one ray out to the further reach: villagers can be talked to a bit further than you can swing
 	var hit := _aim(maxf(reach, interact_reach))
 	var talk := hit.get("collider") as Villager
@@ -966,8 +979,14 @@ func _update_target() -> void:
 			_target.set_highlighted(true)
 	if _target or _talk_target:
 		spearfishing.clear_target()
+		rodfishing.clear_target()
 	elif not _swinging:  # mid-thrust, SpearFishing re-aims on its own impact frame
 		spearfishing.update_target()
+		# water beyond the spear's reach: the rod's
+		if spearfishing.can_thrust():
+			rodfishing.clear_target()
+		else:
+			rodfishing.update_target()
 
 	# bring out the right tool for whatever you're looking at
 	if not _swinging:
@@ -975,9 +994,12 @@ func _update_target() -> void:
 			_equip(_target.tool_type)
 		elif spearfishing.can_thrust():
 			_equip(&"spear")
+		elif rodfishing.can_cast():
+			_equip(&"rod")
 
 	var fish := spearfishing.fish_target
-	dot.scale = Vector2.ONE * (1.75 if _target or fish or _talk_target else (1.3 if spearfishing.can_thrust() else 1.0))
+	var water := spearfishing.can_thrust() or rodfishing.can_cast()
+	dot.scale = Vector2.ONE * (1.75 if _target or fish or _talk_target else (1.3 if water else 1.0))
 	if _talk_target:
 		hover_label.text = _talk_target.prompt() if not _panel_open() else ""
 		hover_label.modulate = Color.WHITE
@@ -989,6 +1011,16 @@ func _update_target() -> void:
 		hover_label.modulate = DEFLECT_COLOR
 	else:
 		hover_label.text = ""
+
+
+func _clear_targets() -> void:
+	if is_instance_valid(_target):
+		_target.set_highlighted(false)
+	if is_instance_valid(_talk_target):
+		_talk_target.set_highlighted(false)
+	_target = null
+	_talk_target = null
+	spearfishing.clear_target()
 
 
 ## The crosshair ray stops at the first thing it touches, so a post or pole in front of a

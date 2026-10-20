@@ -11,6 +11,10 @@ extends Node3D
 ## Hunters (a lurker whose species `hunts` another): every so often the pike leaves its cover,
 ## stalks the nearest school of its prey, lunges when it's close — the school scatters, and
 ## sometimes one is eaten — then glides back to cover. Spooking the pike calls the hunt off.
+## Station-holders (grayling, FishSpecies.holds_station): each fish keeps its own spot in the
+## current, facing upstream into WaterBody.flow, darting back to it after a scare.
+## A fish a FishingLure has engaged (Fish.lure) is steered by the lure, not the school; one that
+## got off the line comes back with adopt().
 
 enum Hunt { LURK, STALK, LUNGE, RETURN }
 const SPLASH := preload("res://audio/movement/splash.tres")
@@ -52,6 +56,10 @@ func _spawn_fish(at: Vector3) -> Fish:
 	f.name = "%s%d" % [species.id, fish.size()]
 	add_child(f)
 	f.setup(species, self)
+	if species.holds_station:  # spread out over the stretch, each on its own spot
+		var spot := FishPond.random_point(water, species.min_depth + 0.05)
+		at = spot if spot != Vector3.INF else at
+		f.station = at
 	f.global_position = _clamp_to_water(at, f)
 	f.velocity = Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)).normalized() * species.cruise_speed
 	f.reset_physics_interpolation()
@@ -72,6 +80,9 @@ func disturb(pos: Vector3, loudness: float) -> void:
 	if not spooked:
 		return
 	_alert = species.calm_down
+	for f in fish:
+		if f.lure != null:  # it was nosing a float: it's gone
+			f.lure.fish_spooked(f)
 	for f in fish:  # the whole school bolts once any of it is spooked
 		var away := f.global_position - pos
 		away.y = 0.0
@@ -83,11 +94,21 @@ func disturb(pos: Vector3, loudness: float) -> void:
 		f.flee_time = randf_range(0.4, 0.8)
 
 
-## Removes a fish (caught) and starts regrowing the school.
+## Removes a fish (caught, or on the line) and starts regrowing the school.
 func remove_fish(f: Fish) -> void:
 	fish.erase(f)
 	if _regrow_timer <= 0.0:
 		_regrow_timer = randf_range(15.0, 25.0)
+
+
+## A fish that got off the line swims back into its school, bolting.
+func adopt(f: Fish) -> void:
+	f.lure = null
+	if not fish.has(f):
+		fish.append(f)
+	f.state = Fish.State.FLEE
+	f.flee_time = randf_range(0.6, 1.0)
+	_alert = species.calm_down
 
 
 func _physics_process(delta: float) -> void:
@@ -101,17 +122,26 @@ func _physics_process(delta: float) -> void:
 
 	var center := Vector3.ZERO
 	var heading := Vector3.ZERO
+	var free := 0
 	for f in fish:
-		center += f.global_position
-		heading += f.velocity
-	center /= fish.size()
+		if f.lure == null:
+			center += f.global_position
+			heading += f.velocity
+			free += 1
+	if free == 0:
+		return
+	center /= free
 
 	for f in fish:
-		_steer(f, center, heading, delta)
+		if f.lure == null:  # (a lure steers the fish it has)
+			_steer(f, center, heading, delta)
 
 
 func _steer(f: Fish, center: Vector3, heading: Vector3, delta: float) -> void:
 	var pos := f.global_position
+	if species.holds_station and f.state != Fish.State.FLEE:
+		_hold_station(f, delta)
+		return
 	if f.state == Fish.State.FLEE:
 		f.flee_time -= delta
 		f.velocity = f.velocity.move_toward(f.velocity.normalized() * species.cruise_speed * 2.0, 4.0 * delta)
@@ -168,10 +198,32 @@ func _steer(f: Fish, center: Vector3, heading: Vector3, delta: float) -> void:
 
 	f.global_position = _clamp_to_water(pos + f.velocity * delta, f)
 	if f.velocity.length_squared() > 0.0004:
-		f.global_basis = f.global_basis.slerp(Basis.looking_at(f.velocity.normalized(), Vector3.UP), clampf(10.0 * delta, 0.0, 1.0))
+		f.global_basis = f.global_basis.orthonormalized().slerp(Basis.looking_at(f.velocity.normalized(), Vector3.UP), clampf(10.0 * delta, 0.0, 1.0))
 	var still := species.lurker and _alert <= 0.0 and _hunt == Hunt.LURK
 	var swim := 0.05 if still else clampf(f.velocity.length() / species.flee_speed, 0.15, 1.0)
 	f.set_swim(swim)
+
+
+## Grayling in the current: back to its spot (quickly if it was chased off), nose upstream, fins
+## working to hold there.
+func _hold_station(f: Fish, delta: float) -> void:
+	f.state = Fish.State.ALERT if _alert > 0.0 else Fish.State.CALM
+	var pos := f.global_position
+	if f.station == Vector3.INF:
+		f.station = pos
+	var to := f.station - pos
+	to.y = 0.0
+	var speed := species.cruise_speed * (3.0 if to.length() > 0.6 else 1.0)
+	f.velocity = to.limit_length(1.0) * speed
+	f.global_position = _clamp_to_water(pos + f.velocity * delta, f)
+	var upstream := -water.flow
+	upstream.y = 0.0
+	if to.length() > 0.6 or upstream.length_squared() < 0.0001:
+		upstream = to if to.length_squared() > 0.0001 else -f.global_basis.z
+	upstream.y = 0.0
+	if upstream.length_squared() > 0.0001:
+		f.global_basis = f.global_basis.orthonormalized().slerp(Basis.looking_at(upstream.normalized(), Vector3.UP), clampf(4.0 * delta, 0.0, 1.0))
+	f.set_swim(0.35)
 
 
 ## Keeps a position in the water column: between bed and surface at the fish's preferred depth.

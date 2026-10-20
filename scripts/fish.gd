@@ -18,6 +18,11 @@ var velocity := Vector3.ZERO
 var depth_pref := 0.5
 var flee_time := 0.0
 var length := 0.3
+## A FishingLure that has this fish's attention (approaching, nibbling, on the line): it steers the
+## fish then, not the school.
+var lure: Node = null
+## Station-holding species (grayling): the spot in the current this fish keeps to.
+var station := Vector3.INF
 
 var _surfaces: Array[GeometryInstance3D] = []
 var _flash_tween: Tween

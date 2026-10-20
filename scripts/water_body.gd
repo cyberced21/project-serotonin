@@ -9,6 +9,9 @@ extends Area3D
 ## World height of the water surface. Keep the Surface mesh and terrain (WATER_LEVEL in
 ## tools/generate_test_terrain.gd) in sync with this.
 @export var surface_height := -0.15
+## The current (m/s, world space, downstream): rivers carry a float down it and station-holding
+## fish face up into it. Zero for ponds and lakes.
+@export var flow := Vector3.ZERO
 
 @onready var _box: CollisionShape3D = $Volume
 
