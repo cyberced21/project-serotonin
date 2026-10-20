@@ -2,25 +2,15 @@
 
 [ext_resource type="Script" path="res://scripts/sound_layers.gd" id="1_layers"]
 [ext_resource type="Script" path="res://scripts/sound_layer.gd" id="2_layer"]
-[ext_resource type="AudioStream" path="res://audio/woodcutting/sfx/clean_crack.tres" id="s0"]
-[ext_resource type="AudioStream" path="res://audio/woodcutting/sfx/fibre_tear.tres" id="s1"]
+[ext_resource type="AudioStream" path="res://audio/gathering/wood/clean_cut.tres" id="s0"]
 
-[sub_resource type="Resource" id="Layer_snap"]
+[sub_resource type="Resource" id="Layer_0"]
 script = ExtResource("2_layer")
 stream = ExtResource("s0")
-volume_db = -3.0
-pitch_jitter = 0.06
-pitch = 1.0
-resource_name = "snap"
-
-[sub_resource type="Resource" id="Layer_crackle"]
-script = ExtResource("2_layer")
-stream = ExtResource("s1")
-delay = 0.03
-volume_db = -14.0
-pitch_jitter = 0.1
-resource_name = "crackle"
+volume_db = 1.0
+pitch_jitter = 0.04
+resource_name = "clean_cut"
 
 [resource]
 script = ExtResource("1_layers")
-layers = Array[ExtResource("2_layer")]([SubResource("Layer_snap"), SubResource("Layer_crackle")])
+layers = Array[ExtResource("2_layer")]([SubResource("Layer_0")])

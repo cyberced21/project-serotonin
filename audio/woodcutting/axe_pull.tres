@@ -2,24 +2,15 @@
 
 [ext_resource type="Script" path="res://scripts/sound_layers.gd" id="1_layers"]
 [ext_resource type="Script" path="res://scripts/sound_layer.gd" id="2_layer"]
-[ext_resource type="AudioStream" path="res://audio/woodcutting/sfx/chip_scatter.tres" id="s0"]
-[ext_resource type="AudioStream" path="res://audio/woodcutting/sfx/chop_bite.tres" id="s1"]
+[ext_resource type="AudioStream" path="res://audio/gathering/wood/pull.tres" id="s0"]
 
-[sub_resource type="Resource" id="Layer_knock"]
-script = ExtResource("2_layer")
-stream = ExtResource("s1")
-volume_db = -12.0
-pitch_jitter = 0.1
-pitch = 1.25
-resource_name = "knock"
-
-[sub_resource type="Resource" id="Layer_chips"]
+[sub_resource type="Resource" id="Layer_0"]
 script = ExtResource("2_layer")
 stream = ExtResource("s0")
-volume_db = -8.0
-pitch_jitter = 0.1
-resource_name = "chips"
+volume_db = -6.0
+pitch_jitter = 0.06
+resource_name = "pull"
 
 [resource]
 script = ExtResource("1_layers")
-layers = Array[ExtResource("2_layer")]([SubResource("Layer_knock"), SubResource("Layer_chips")])
+layers = Array[ExtResource("2_layer")]([SubResource("Layer_0")])
