@@ -1,0 +1,562 @@
+"""Synthesizes every gathering sound, woodcutting and mining (needs numpy):
+
+    python tools/synth_gathering.py
+
+Writes the clips to audio/gathering/<wood|stone>/[<voice>/]<sound>_NN.wav, an
+AudioStreamRandomizer per sound beside them, and the layer stacks the scenes play
+(audio/woodcutting/*.tres, audio/mining/*.tres, and each species' and ore's own copies in
+audio/woodcutting/<species>/ and audio/mining/<ore>/).
+
+Each event is one finished clip, mixed here, rather than layers summed in the game: an axe
+blow is one sound with its bite, its body, its chips and the space round it already balanced.
+
+How a sound is made (impact()): an object is a resonating body, dozens of resonances
+(modes) spread over the spectrum with the levels and decay times measured off real wood and
+stone strikes (see TARGETS), and a strike is a contact force: a short pulse whose length sets
+how hard the meeting is (steel on stone is a fraction of a millisecond, a trunk on the ground
+several). Everything else that happens in the blow, the crush of fibres, grit crumbling, chips
+landing, goes through a body too, so it sounds like wood or stone and never like hiss. Then a
+little outdoor space: a few early echoes off the ground and the trees, and a short, quiet,
+dark tail.
+"""
+import os
+import wave
+
+import numpy as np
+
+RATE = 48000
+ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+OUT = os.path.join(ROOT, "audio", "gathering")
+LOUDNESS = -16.0  # dBFS, every clip's loudest 50 ms; the stacks set the mix from there
+CEILING = -3.0  # dBFS, every clip's peaks (limit())
+
+# The levels (dB per octave, relative) and how quickly each part of the spectrum dies that the
+# bodies are built to, measured off real recordings of wooden and metal impacts: wood carries
+# its strike at 250-1000 Hz and is quiet past 4 kHz; its mids fall 20 dB in 50-90 ms, its lows in
+# 150-250. Stone is brighter (1-2 kHz) and deader still. Everything is short. (The levels are the
+# body's; the contact pulse rolls the highs off on top, so wood's look brighter here than it ends.)
+WOOD_LEVELS = ((60, -16), (125, -6), (250, 2), (500, 0), (1000, -1), (2000, -1), (4000, -4), (8000, -14))
+STONE_LEVELS = ((60, -24), (125, -14), (250, -7), (500, -2), (1000, 0), (2000, -1), (4000, -5), (8000, -14))
+TWIG_LEVELS = ((500, -14), (1000, -4), (2000, 0), (4000, -4), (8000, -16))
+PEBBLE_LEVELS = ((1000, -10), (2000, -2), (4000, 0), (8000, -10))
+
+# Each species' wood and each ore's stone next to the plain ones: `pitch` moves the body's
+# resonances, `damp` how quickly they die (more = deader), `bright` tilts the spectrum
+# (dB per octave above 1 kHz), `ring` is how long the pick rings off it, `crumble` how much grit
+# a blow knocks loose. A thin birch is high, bright and quick; an oak low, dense and long.
+# Iron's basalt is hard and rings; coal is soft, dull and crumbly; gold's quartz rings bright;
+# crystal chimes.
+SPECIES = {
+    "birch": {"pitch": 1.22, "damp": 1.2, "bright": 1.5},
+    "oak": {"pitch": 0.8, "damp": 0.85, "bright": -1.5},
+    "pine": {"pitch": 0.93, "damp": 0.95, "bright": 0.0},
+}
+ORES = {
+    "iron": {"pitch": 1.1, "damp": 0.85, "bright": 0.5, "ring": 1.5, "crumble": 0.6, "chime": 0.0},
+    "coal": {"pitch": 0.8, "damp": 1.4, "bright": -2.5, "ring": 0.45, "crumble": 1.8, "chime": 0.0},
+    "gold": {"pitch": 1.05, "damp": 0.95, "bright": 1.0, "ring": 1.25, "crumble": 0.8, "chime": 0.35},
+    "crystal": {"pitch": 1.3, "damp": 0.7, "bright": 2.0, "ring": 1.6, "crumble": 0.4, "chime": 1.0},
+}
+PLAIN_WOOD = {"pitch": 1.0, "damp": 1.0, "bright": 0.0}
+PLAIN_STONE = {"pitch": 1.0, "damp": 1.0, "bright": 0.0, "ring": 1.0, "crumble": 1.0, "chime": 0.0}
+
+
+def secs(s):
+    return int(round(s * RATE))
+
+
+def t_axis(n):
+    return np.arange(n) / RATE
+
+
+# --- bodies and strikes ------------------------------------------------------------------------
+
+def body(rng, lo, hi, count, tau200, levels, damp_exp=0.5, bright=0.0, spread=3.0):
+    """A resonating body: `count` modes spread evenly (per octave) from lo to hi Hz, as
+    (freq, decay, amp). A mode at 200 Hz dies over `tau200` s (to 1/e), higher ones faster
+    ((f/200)^-damp_exp). Amplitudes put each octave's energy at `levels` ((Hz, dB) points),
+    tilted by `bright` dB per octave above 1 kHz, give or take `spread` dB per mode."""
+    f = np.sort(np.exp(rng.uniform(np.log(lo), np.log(hi), count)))
+    tau = tau200 * (f / 200.0) ** -damp_exp * rng.uniform(0.8, 1.25, count)
+    lf, ldb = np.log([p[0] for p in levels]), np.array([p[1] for p in levels], float)
+    db = np.interp(np.log(f), lf, ldb) + bright * np.maximum(np.log2(f / 1000.0), 0) + rng.normal(0, spread, count)
+    amp = 10 ** (db / 20) / np.sqrt(tau)  # energy per mode ~ amp^2 * tau: this sets energy, not peak
+    return list(zip(f, tau, amp * rng.choice([-1.0, 1.0], count)))
+
+
+def ring_of(modes, n):
+    """A body's response to one sharp tap: every mode ringing down at once."""
+    t = t_axis(n)
+    out = np.zeros(n)
+    for f, tau, a in modes:
+        if f < RATE / 2.2:
+            out += a * np.exp(-t / tau) * np.sin(2 * np.pi * f * t)
+    return out
+
+
+def pulse(length):
+    """A contact force: half a sine `length` s long. A hard, quick meeting (steel on stone) is a
+    fraction of a millisecond and bright; a soft or heavy one is longer and duller."""
+    n = max(secs(length), 2)
+    return np.sin(np.pi * (np.arange(n) + 0.5) / n)
+
+
+def grains(rng, n, times, gains, length=(0.00008, 0.0002)):
+    """Tiny contacts at `times` (s): crumbling, crushing, chips and grit landing."""
+    out = np.zeros(n)
+    for at, g in zip(times, gains):
+        p = pulse(rng.uniform(*length)) * g * rng.choice([-1.0, 1.0])
+        i = secs(at)
+        if i < n:
+            out[i:i + len(p)] += p[: n - i]
+    return out
+
+
+def strike(force, modes, n):
+    """`force` (a contact signal) driving a body: the body's tap response convolved with it."""
+    size = len(force) + n
+    out = np.fft.irfft(np.fft.rfft(force, size) * np.fft.rfft(ring_of(modes, n), size), size)
+    return out[:n]
+
+
+def stick_slip(rng, n, rate_from, rate_to, wobble=0.3, contact=0.0004):
+    """Friction grabbing and letting go at a rate sliding from rate_from to rate_to Hz, unevenly
+    (an even rate is heard as a buzz): the contact signal of a creak or a scrape."""
+    times, t, total = [], 0.0, n / RATE
+    while t < total:
+        times.append(t)
+        rate = rate_from + (rate_to - rate_from) * t / total
+        t += 1.0 / max(rate * (1.0 + rng.uniform(-wobble, wobble)), 1.0)
+    return grains(rng, n, times, rng.uniform(0.5, 1.0, len(times)), (contact * 0.7, contact * 1.3))
+
+
+def env(n, attack, hold, release):
+    t = t_axis(n)
+    e = np.clip(t / max(attack, 1e-6), 0, 1)
+    return e * np.exp(-np.maximum(t - attack - hold, 0) / max(release, 1e-6))
+
+
+def at(buf, sound, when, gain=1.0):
+    i = secs(when)
+    if i < len(buf):
+        end = min(len(buf), i + len(sound))
+        buf[i:end] += sound[: end - i] * gain
+
+
+def lowpass_noise(rng, n, lo, hi):
+    """Noise kept between lo and hi Hz with steep edges, for air and leaves only."""
+    s = np.fft.rfft(rng.standard_normal(n))
+    f = np.fft.rfftfreq(n, 1.0 / RATE)
+    g = 1.0 / (1.0 + (lo / np.maximum(f, 1.0)) ** 6) / (1.0 + (f / hi) ** 8)
+    out = np.fft.irfft(s * g, n)
+    return out / (np.abs(out).max() + 1e-9)
+
+
+def space(rng, x, size=1.0, wet=0.12):
+    """The clip outdoors: an echo off the ground right after it, a few off trees or rocks
+    further off, darker the later they come, and a short, quiet, dark diffuse tail (above
+    200 Hz only: a low noise tail rumbles and flickers). `size` stretches it (a falling tree
+    is heard over a wider space), `wet` sets the tail."""
+    n = len(x) + secs(0.7 * size)
+    out = np.zeros(n)
+    out[: len(x)] += x
+    spec_len = len(x) + secs(0.7 * size)
+    f = np.fft.rfftfreq(spec_len, 1.0 / RATE)
+    X = np.fft.rfft(x, spec_len)
+    for delay, gain, cutoff in ((0.006, 0.35, 5000), (0.031 * size, 0.18, 3000), (0.052 * size, 0.12, 2200),
+                                (0.083 * size, 0.08, 1600)):
+        d = delay * rng.uniform(0.85, 1.15)
+        echo = np.fft.irfft(X * np.exp(-2j * np.pi * f * d) / (1 + (f / cutoff) ** 4), spec_len)
+        out[:spec_len] += echo[:n] * gain * rng.uniform(0.8, 1.2)
+    m = secs(0.6 * size)
+    t = t_axis(m)
+    ir = np.zeros(m)
+    for lo, hi, rt in ((200, 1500, 0.55 * size), (1500, 6000, 0.3 * size)):
+        ir += lowpass_noise(rng, m, lo, hi) * np.exp(-t * 6.91 / rt) * (1.0 - np.exp(-t / 0.01))
+    ir[: secs(0.02)] = 0  # the early echoes cover the first moments
+    tail = np.fft.irfft(np.fft.rfft(x, n) * np.fft.rfft(ir, n), n)
+    tail *= np.sqrt(np.sum(x ** 2) / (np.sum(tail ** 2) + 1e-12)) * wet
+    return out + tail
+
+
+# --- finishing --------------------------------------------------------------------------------
+
+def loudness(x, window=0.05):
+    k = min(secs(window), len(x))
+    return np.sqrt(np.convolve(x * x, np.ones(k) / k, mode="valid")).max()
+
+
+def limit(x, ceiling_db=CEILING, ahead=0.0015, release=0.04):
+    """Peaks held under the ceiling by turning the sound down smoothly round them (never by
+    bending samples, which crackles)."""
+    ceiling = 10 ** (ceiling_db / 20)
+    need = np.minimum(1.0, ceiling / np.maximum(np.abs(x), 1e-9))
+    if need.min() >= 1.0:
+        return x
+    w = max(secs(ahead), 1)
+    gain = np.lib.stride_tricks.sliding_window_view(np.concatenate([np.ones(w), need, np.ones(w)]), 2 * w + 1).min(axis=1)
+    i = np.arange(len(gain)) / secs(release)
+    gain = 1.0 - np.exp(np.maximum.accumulate(np.log(np.maximum(1.0 - gain, 1e-12)) + i) - i)
+    gain = np.convolve(gain, np.ones(w) / w, mode="same")
+    return x * np.minimum(gain, need)
+
+
+def finish(x, tail_db=-60.0):
+    """Cut once it has died `tail_db` under its peak, fade the ends, bring it to LOUDNESS, keep
+    its peaks under CEILING."""
+    x = x - np.mean(x[: secs(0.002)]) if len(x) > secs(0.01) else x
+    k = secs(0.02)
+    lev = np.sqrt(np.convolve(x * x, np.ones(k) / k, mode="same"))
+    alive = np.nonzero(lev > lev.max() * 10 ** (tail_db / 20))[0]
+    x = x[: alive[-1] + 1] if len(alive) else x
+    fade_in, fade_out = min(secs(0.0005), len(x) // 4), min(secs(0.04), len(x) // 3)
+    x[:fade_in] *= np.linspace(0, 1, fade_in)
+    x[len(x) - fade_out:] *= np.linspace(1, 0, fade_out) ** 2
+    x *= 10 ** (LOUDNESS / 20) / max(loudness(x), 1e-9)
+    return limit(x)
+
+
+# --- woodcutting ------------------------------------------------------------------------------
+
+def trunk(rng, v, lo=130.0, hi=7000.0, count=56, tau=0.075):
+    """A standing trunk's body."""
+    return body(rng, lo * v["pitch"], hi, count, tau / v["damp"], WOOD_LEVELS, 0.5, v["bright"])
+
+
+def twigs(rng):
+    return body(rng, 900, 9000, 24, 0.012, TWIG_LEVELS, 0.4)
+
+
+def chop(rng, v=PLAIN_WOOD):
+    """An axe blow: the edge meets the trunk (a short, firm contact), sinks a few ms further in
+    (a second, softer push: the 'chunk'), fibres crush along the edge; the trunk's body
+    answers with a hollow 'thock'. A faint ring off the axe head, a few chips landing."""
+    n = secs(0.6)
+    modes = trunk(rng, v)
+    weight = [(f * v["pitch"], tau / v["damp"], a) for f, tau, a in
+              ((rng.uniform(92, 108), 0.05, 6.0), (rng.uniform(150, 175), 0.045, 4.0))]  # the log's mass
+    force = np.zeros(secs(0.03))
+    at(force, pulse(rng.uniform(0.0002, 0.0003)), 0.0)  # a sharp edge: a quick, bright meeting
+    at(force, pulse(rng.uniform(0.0008, 0.0012)), rng.uniform(0.0015, 0.0025), rng.uniform(0.35, 0.45))
+    crush = np.sort(rng.uniform(0.0, 0.012, rng.integers(10, 18)))
+    force += grains(rng, len(force), crush, rng.uniform(0.05, 0.2, len(crush)) * np.exp(-crush / 0.006))
+    out = strike(force, modes + weight, n)
+    head = [(rng.uniform(2900, 3300), 0.02, 1.0), (rng.uniform(4300, 4800), 0.012, 0.6)]
+    out += strike(pulse(0.0004), head, n) * 0.03
+    chips = 0.03 + np.sort(rng.gamma(1.5, 0.04, rng.integers(5, 10)))
+    out += strike(grains(rng, n, chips, rng.uniform(0.2, 1.0, len(chips)) * np.exp(-chips / 0.1)), twigs(rng), n) * 0.12
+    return space(rng, out)
+
+
+def clean_cut(rng, v=PLAIN_WOOD):
+    """The blow that goes clean through: a harder chop, and the last fibres snapping in a quick
+    run after it."""
+    n = secs(0.8)
+    out = np.zeros(n)
+    modes = trunk(rng, v, tau=0.065)
+    force = np.zeros(secs(0.03))
+    at(force, pulse(0.0003), 0.0)
+    at(force, pulse(0.001), 0.002, 0.5)
+    out += strike(force, modes, n)
+    snaps = 0.012 + np.cumsum(rng.exponential(0.008, rng.integers(14, 22)))
+    snaps = snaps[snaps < 0.2]
+    out += strike(grains(rng, n, snaps, np.linspace(0.9, 0.2, len(snaps)) * rng.uniform(0.5, 1.0, len(snaps)),
+                         (0.0001, 0.0003)), trunk(rng, v, lo=400, count=40, tau=0.03), n) * 0.5
+    return space(rng, out)
+
+
+def pull(rng, v=PLAIN_WOOD):
+    """The axe worked loose: the head grinding in the cut for a moment, a creak, a last tick."""
+    n = secs(rng.uniform(0.18, 0.26))
+    grip = stick_slip(rng, n, rng.uniform(55, 70), rng.uniform(110, 150), contact=0.0005)
+    grip *= env(n, n / RATE * 0.3, 0.0, n / RATE * 0.35)
+    out = strike(grip, trunk(rng, v, lo=300, count=40, tau=0.03), n + secs(0.15))
+    at(out, strike(pulse(0.0004), trunk(rng, v, lo=500, count=30, tau=0.02), secs(0.12)), n / RATE * 0.9, 0.5)
+    return space(rng, out, wet=0.08)
+
+
+def creak(rng, v=PLAIN_WOOD):
+    """The trunk straining as the cut opens: wood grinding on wood in slow, uneven grabs."""
+    length = rng.uniform(0.6, 1.0)
+    n = secs(length)
+    grabs = stick_slip(rng, n, rng.uniform(16, 22), rng.uniform(30, 44), wobble=0.35, contact=0.0012)
+    grabs *= env(n, length * 0.3, length * 0.25, length * 0.2)
+    modes = body(rng, 140 * v["pitch"], 2500, 36, 0.05 / v["damp"], WOOD_LEVELS, 0.6, v["bright"] - 2)
+    return space(rng, strike(grabs, modes, n + secs(0.15)), 1.1)
+
+
+def fall(rng, v=PLAIN_WOOD):
+    """The crown sweeping down: leaves and twigs rushing through the air, swelling as it falls
+    faster, twigs snapping on the way."""
+    n = secs(2.2)
+    t = t_axis(n)
+    swell = np.clip(t / 1.6, 0, 1) ** 2.4 * np.clip((2.15 - t) / 0.12, 0, 1)
+    flutter = np.convolve(np.repeat(rng.uniform(0.45, 1.0, n // secs(0.03) + 1), secs(0.03))[:n],
+                          np.ones(secs(0.02)) / secs(0.02), mode="same")
+    air = lowpass_noise(rng, n, 250, 1400) * 0.8 + lowpass_noise(rng, n, 1200, 4200) * 0.35 * flutter
+    out = air * swell * 0.25
+    snaps = np.sort(rng.uniform(0.5, 2.0, 14))
+    out += strike(grains(rng, n, snaps, rng.uniform(0.2, 0.7, 14) * np.interp(snaps, [0, 2.2], [0.3, 1.0])),
+                  twigs(rng), n) * 0.5
+    return space(rng, out, 1.4)
+
+
+def land(rng, v=PLAIN_WOOD):
+    """The trunk landing: a heavy wooden thud and the ground taking it, a bounce or two, and the
+    crown crashing down round it in a burst of breaking twigs."""
+    n = secs(1.4)
+    modes = body(rng, 55 * v["pitch"], 3000, 48, 0.12 / v["damp"], WOOD_LEVELS, 0.55, v["bright"] - 1)
+    ground = [(rng.uniform(48, 56), 0.07, 3.0), (rng.uniform(78, 90), 0.05, 2.0)]
+    force = np.zeros(n)
+    for when, g in ((0.0, 1.0), (rng.uniform(0.17, 0.21), 0.4), (rng.uniform(0.31, 0.36), 0.15)):
+        at(force, pulse(rng.uniform(0.003, 0.005)), when, g)
+        at(force, pulse(0.0005), when, g * 0.35)  # the bark and branches meeting the ground first: the crack in it
+    out = strike(force, modes + ground, n)
+    crash = np.sort(rng.gamma(1.4, 0.08, rng.integers(60, 90)))
+    crash = crash[crash < 0.9]
+    out += strike(grains(rng, n, crash, rng.uniform(0.2, 1.0, len(crash)) * np.exp(-crash / 0.3), (0.0001, 0.0004)),
+                  twigs(rng), n) * 0.9
+    leaves = lowpass_noise(rng, n, 400, 3500) * env(n, 0.01, 0.05, 0.18) * 0.05
+    return space(rng, out + leaves, 1.5, 0.16)
+
+
+# --- mining -----------------------------------------------------------------------------------
+
+def stone(rng, v, lo=260.0, hi=10000.0, count=64, tau=0.036):
+    """A boulder's face: dense, stiff, lossy."""
+    return body(rng, lo * v["pitch"], hi, count, tau / v["damp"], STONE_LEVELS, 0.5, v["bright"])
+
+
+def pebbles(rng):
+    return body(rng, 1500, 10000, 20, 0.008, PEBBLE_LEVELS, 0.4)
+
+
+def pick_ring(rng, v, n):
+    """The pick's steel ringing off the rock: a bar's partials (1 : 2.76 : 5.40), the clink.
+    How long it rings is the rock's: a hard ore lets it sing, coal smothers it. Crystal and
+    gold add their own glassy chime."""
+    f0 = rng.uniform(1900, 2250)
+    tau = 0.055 * v["ring"]
+    modes = [(f0, tau, 1.0), (f0 * 2.756, tau * 0.55, 0.5), (f0 * 5.404, tau * 0.3, 0.22)]
+    if v["chime"] > 0:
+        base = rng.uniform(2600, 3000)
+        modes += [(base * r, 0.16 * v["chime"] + 0.05, 0.5 * v["chime"]) for r in (1.0, 1.5, 2.25)]
+    return strike(pulse(0.00025), modes, n)
+
+
+def mine(rng, v=PLAIN_STONE):
+    """A pickaxe blow: the point meets the stone hard (a contact a fraction of a millisecond
+    long), the rock under it crumbles in a quick spray of tiny contacts, the boulder answers
+    with a short, dense knock, the steel clinks, grit patters down."""
+    n = secs(0.7)
+    force = np.zeros(secs(0.03))
+    at(force, pulse(rng.uniform(0.00012, 0.0002)), 0.0)
+    crumb = np.sort(rng.uniform(0.0003, 0.012, int(rng.integers(10, 18) * v["crumble"]) + 2))
+    force += grains(rng, len(force), crumb, rng.uniform(0.1, 0.35, len(crumb)) * np.exp(-crumb / 0.005))
+    mass = [(rng.uniform(110, 130) * v["pitch"], 0.035 / v["damp"], 6.0), (rng.uniform(190, 220) * v["pitch"], 0.028 / v["damp"], 4.0)]
+    out = strike(force, stone(rng, v) + mass, n)
+    out += pick_ring(rng, v, n) * 0.11
+    grit = 0.035 + np.sort(rng.gamma(1.4, 0.05, int(rng.integers(6, 12) * v["crumble"]) + 1))
+    out += strike(grains(rng, n, grit, rng.uniform(0.2, 1.0, len(grit)) * np.exp(-grit / 0.12)), pebbles(rng), n) * 0.1
+    return space(rng, out)
+
+
+def crack(rng, v=PLAIN_STONE):
+    """A crack running through the stone: snaps coming faster as it races along, and the fresh
+    faces ringing a moment."""
+    length = rng.uniform(0.22, 0.38)
+    n = secs(length + 0.25)
+    gaps = np.geomspace(0.035, 0.005, rng.integers(9, 15))
+    times = np.cumsum(gaps)
+    times = times[times < length]
+    snaps = grains(rng, n, times, np.linspace(0.35, 1.0, len(times)) * rng.uniform(0.6, 1.0, len(times)),
+                   (0.0001, 0.00025))
+    out = strike(snaps, stone(rng, v, lo=600, count=48, tau=0.025), n)
+    out += strike(snaps, [(rng.uniform(2600, 3200) * v["pitch"], 0.02 * v["ring"], 1.0)], n) * 0.12
+    return space(rng, out, wet=0.1)
+
+
+def split(rng, v=PLAIN_STONE):
+    """A piece breaking away: the boulder's heavy knock, a grinding crunch as it parts, and the
+    chunk tumbling to the ground in a few knocks."""
+    n = secs(1.1)
+    force = np.zeros(secs(0.08))
+    at(force, pulse(0.0006), 0.0)
+    crunch = np.sort(rng.gamma(1.5, 0.012, int(rng.integers(30, 45) * v["crumble"]) + 4))
+    crunch = crunch[crunch < 0.075]
+    force += grains(rng, len(force), crunch, rng.uniform(0.1, 0.5, len(crunch)) * np.exp(-crunch / 0.03), (0.0001, 0.0004))
+    mass = [(rng.uniform(72, 84) * v["pitch"], 0.05 / v["damp"], 2.5), (rng.uniform(118, 135) * v["pitch"], 0.04 / v["damp"], 1.8),
+            (rng.uniform(190, 215) * v["pitch"], 0.03 / v["damp"], 1.2)]
+    out = strike(force, stone(rng, v, lo=180, tau=0.045) + mass, n)
+    when, gain = rng.uniform(0.16, 0.22), 0.45
+    for _ in range(rng.integers(2, 4)):
+        knock = strike(pulse(rng.uniform(0.0008, 0.0015)), stone(rng, v, lo=300, count=40, tau=0.03), secs(0.25))
+        at(out, knock, when, gain)
+        when += rng.uniform(0.1, 0.18)
+        gain *= rng.uniform(0.4, 0.6)
+    return space(rng, out, 1.1)
+
+
+def scrape(rng, v=PLAIN_STONE):
+    """The point dragged out of the rock: steel grinding on stone, catching unevenly."""
+    n = secs(rng.uniform(0.16, 0.24))
+    grip = stick_slip(rng, n, rng.uniform(90, 130), rng.uniform(160, 240), wobble=0.4, contact=0.00025)
+    grip *= env(n, 0.01, n / RATE * 0.3, n / RATE * 0.3)
+    out = strike(grip, stone(rng, v, lo=700, count=40, tau=0.02), n + secs(0.1))
+    out += strike(grip, [(rng.uniform(1900, 2250), 0.015, 1.0)], n + secs(0.1)) * 0.05
+    return space(rng, out, wet=0.08)
+
+
+def pebble(rng, v=PLAIN_STONE):
+    """One chip landing on stone: a tiny, bright, dead tick."""
+    n = secs(0.08)
+    return strike(pulse(rng.uniform(0.0001, 0.0002)), pebbles(rng), n)
+
+
+def whoosh(rng, v=None):
+    """The tool coming down: air rushing past it, its pitch rising to the fastest moment and
+    falling. Air is the one sound here that's noise; kept below 2.5 kHz, it's a 'whum', not a
+    hiss."""
+    n = secs(rng.uniform(0.24, 0.32))
+    win, hop = secs(0.02), secs(0.01)
+    out = np.zeros(n + win)
+    f = np.fft.rfftfreq(win, 1.0 / RATE)
+    peak = rng.uniform(550, 800)
+    centres = np.interp(np.linspace(0, 1, n // hop + 1), [0, 0.6, 1], [220, peak, 260])
+    for k, start in enumerate(range(0, n, hop)):
+        g = np.exp(-0.5 * (np.log2(np.maximum(f, 1.0) / centres[k]) / 0.55) ** 2) / (1 + (f / 2500) ** 6)
+        out[start:start + win] += np.fft.irfft(np.fft.rfft(rng.standard_normal(win)) * g, win) * np.hanning(win)
+    out = out[:n]
+    t = np.linspace(0, 1, n)
+    return out * np.sin(np.pi * t ** 0.8) ** 2
+
+
+def rustle(rng, v=None):
+    """Raising the tool: sleeves and the leather grip, soft."""
+    n = secs(rng.uniform(0.3, 0.4))
+    t = np.linspace(0, 1, n)
+    cloth = lowpass_noise(rng, n, 300, 2200) * (0.6 + 0.4 * np.abs(np.sin(2 * np.pi * rng.uniform(5, 8) * t * n / RATE)))
+    out = cloth * np.sin(np.pi * t) ** 1.5 * 0.3
+    leather = body(rng, 300, 2500, 16, 0.02, ((300, 0), (1000, -4), (2500, -12)), 0.5)
+    out += strike(stick_slip(rng, n, 25, 40, contact=0.0015) * env(n, 0.08, 0.05, 0.06), leather, n) * 0.4
+    return out
+
+
+# --- the sets and their stacks -----------------------------------------------------------------
+
+# (sound, variants, build): a clip set per sound, baked plain and, for VOICED ones, per voice.
+WOOD = [("chop", 8, chop), ("clean_cut", 4, clean_cut), ("pull", 4, pull), ("creak", 4, creak),
+        ("fall", 2, fall), ("land", 3, land)]
+STONE = [("mine", 8, mine), ("crack", 5, crack), ("split", 4, split), ("scrape", 4, scrape),
+         ("pebble", 6, pebble), ("whoosh", 6, whoosh), ("rustle", 4, rustle)]
+WOOD_VOICED = ("chop", "creak", "land")
+STONE_VOICED = ("mine", "crack", "split")
+
+# Each stack: (file under audio/, its layers, the voiced folder it gets per species or ore or
+# None). A layer: (group/sound, volume dB, pitch jitter, follows the caller's pitch, delay s).
+# bus / unit_size / max_distance as before.
+STACKS = {
+    "woodcutting/axe_hit": ([("wood/chop", 0.0, 0.04, True, 0.0)], "voiced", {}),
+    "woodcutting/clean_cut": ([("wood/clean_cut", 1.0, 0.04, True, 0.0)], None, {}),
+    "woodcutting/axe_pull": ([("wood/pull", -6.0, 0.06, True, 0.0)], None, {}),
+    "woodcutting/trunk_creak": ([("wood/creak", -3.0, 0.05, True, 0.0)], "voiced", {"unit_size": 5.0, "max_distance": 45.0}),
+    "woodcutting/tree_fall": ([("wood/fall", -2.0, 0.04, True, 0.0)], None, {"unit_size": 8.0, "max_distance": 70.0}),
+    "woodcutting/tree_land": ([("wood/land", 2.0, 0.04, True, 0.0)], "voiced", {"unit_size": 8.0, "max_distance": 80.0}),
+    "mining/pickaxe_hit": ([("stone/mine", 0.0, 0.04, True, 0.0)], "voiced", {}),
+    "mining/crack_tip": ([("stone/crack", 2.0, 0.04, True, 0.0)], "voiced", {}),
+    "mining/split": ([("stone/split", 2.0, 0.04, True, 0.0)], "voiced", {}),
+    "mining/pickaxe_pull": ([("stone/scrape", -8.0, 0.06, True, 0.0)], None, {}),
+    "mining/debris_stone": ([("stone/pebble", -2.0, 0.12, True, 0.0)], None,
+                            {"bus": "Debris", "unit_size": 2.5, "max_distance": 30.0}),
+    "mining/pickaxe_swing": ([("stone/whoosh", -6.0, 0.06, True, 0.0)], None, {}),
+    "mining/pickaxe_windup": ([("stone/rustle", -10.0, 0.06, True, 0.0)], None, {}),
+}
+
+
+def write_wav(path, x):
+    with wave.open(path, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(RATE)
+        w.writeframes((np.clip(x, -1, 1) * 32767).astype("<i2").tobytes())
+
+
+def write_randomizer(folder, sound, count):
+    res = "res://" + os.path.relpath(folder, ROOT).replace(os.sep, "/")
+    lines = ['[gd_resource type="AudioStreamRandomizer" format=3]', ""]
+    lines += [f'[ext_resource type="AudioStream" path="{res}/{sound}_{i + 1:02d}.wav" id="{i + 1}"]' for i in range(count)]
+    lines += ["", "[resource]", "playback_mode = 0", "random_pitch = 1.0", "random_volume_offset_db = 0.5",
+              f"streams_count = {count}"]
+    for i in range(count):
+        lines += [f'stream_{i}/stream = ExtResource("{i + 1}")', f"stream_{i}/weight = 1.0"]
+    with open(os.path.join(folder, sound + ".tres"), "w", newline="\n") as f:
+        f.write("\n".join(lines) + "\n")
+
+
+def bake(group, sounds, voice, voice_name, seed):
+    folder = os.path.join(OUT, group, voice_name) if voice_name else os.path.join(OUT, group)
+    os.makedirs(folder, exist_ok=True)
+    keep = set()
+    for k, (sound, count, build) in enumerate(sounds):
+        rng = np.random.default_rng(seed * 100 + k)  # each sound its own stream: one changing leaves the rest
+        for i in range(count):
+            name = f"{sound}_{i + 1:02d}.wav"
+            write_wav(os.path.join(folder, name), finish(build(rng, voice) if voice else build(rng)))
+            keep |= {name, name + ".import"}
+        write_randomizer(folder, sound, count)
+        keep.add(sound + ".tres")
+        print(f"{group}/{voice_name + '/' if voice_name else ''}{sound} x{count}")
+    for old in os.listdir(folder):  # clips a smaller set no longer makes
+        if os.path.isfile(os.path.join(folder, old)) and old not in keep:
+            os.remove(os.path.join(folder, old))
+
+
+def write_stack(path, layers, settings, voice_name=None):
+    lines = ['[gd_resource type="Resource" script_class="SoundLayers" format=3]', "",
+             '[ext_resource type="Script" path="res://scripts/sound_layers.gd" id="1_layers"]',
+             '[ext_resource type="Script" path="res://scripts/sound_layer.gd" id="2_layer"]']
+    for i, (stream, *_rest) in enumerate(layers):
+        group, sound = stream.split("/")
+        res = f"res://audio/gathering/{group}/" + (f"{voice_name}/" if voice_name else "") + f"{sound}.tres"
+        lines.append(f'[ext_resource type="AudioStream" path="{res}" id="s{i}"]')
+    for i, (stream, volume, jitter, follows, delay) in enumerate(layers):
+        lines += ["", f'[sub_resource type="Resource" id="Layer_{i}"]', 'script = ExtResource("2_layer")',
+                  f'stream = ExtResource("s{i}")']
+        if delay:
+            lines.append(f"delay = {delay}")
+        if volume:
+            lines.append(f"volume_db = {volume}")
+        lines.append(f"pitch_jitter = {jitter}")
+        if not follows:
+            lines.append("follows_pitch = false")
+        lines.append(f'resource_name = "{stream.split("/")[1]}"')
+    lines += ["", "[resource]", 'script = ExtResource("1_layers")',
+              'layers = Array[ExtResource("2_layer")]([' + ", ".join(f'SubResource("Layer_{i}")' for i in range(len(layers))) + "])"]
+    if "bus" in settings:
+        lines.append(f'bus = &"{settings["bus"]}"')
+    for key in ("unit_size", "max_distance"):
+        if key in settings:
+            lines.append(f"{key} = {settings[key]}")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", newline="\n") as f:
+        f.write("\n".join(lines) + "\n")
+
+
+def main():
+    bake("wood", WOOD, None, None, 1)
+    bake("stone", STONE, None, None, 2)
+    for k, (name, voice) in enumerate(SPECIES.items()):
+        bake("wood", [s for s in WOOD if s[0] in WOOD_VOICED], voice, name, 10 + k)
+    for k, (name, voice) in enumerate(ORES.items()):
+        bake("stone", [s for s in STONE if s[0] in STONE_VOICED], voice, name, 20 + k)
+    for stack, (layers, voiced, settings) in STACKS.items():
+        write_stack(os.path.join(ROOT, "audio", stack + ".tres"), layers, settings)
+        if voiced:
+            area, name = stack.split("/")
+            for voice_name in (SPECIES if area == "woodcutting" else ORES):
+                write_stack(os.path.join(ROOT, "audio", area, voice_name, name + ".tres"), layers, settings, voice_name)
+    print("stacks written")
+
+
+if __name__ == "__main__":
+    main()

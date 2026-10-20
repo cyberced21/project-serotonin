@@ -18,7 +18,10 @@ func _walk(dir: String) -> void:
 		if not file.ends_with(".tres"):
 			continue
 		var res := load(dir.path_join(file))
-		if res is SoundLayers:
+		if res == null:
+			_bad += 1
+			printerr("%s: doesn't load" % dir.path_join(file))
+		elif res is SoundLayers:
 			_stacks += 1
 			for layer in (res as SoundLayers).layers:
 				if layer == null or layer.stream == null:

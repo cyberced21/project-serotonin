@@ -1,12 +1,12 @@
 """Renders a short listening preview of the gathering sounds (needs numpy), so they can be judged
 by ear without playing:
 
-    python tools/render_sound_preview.py OUT.wav [--dry]
+    python tools/render_sound_preview.py OUT.wav
 
 Plays the layer stacks the way ResourceNode does: four axe blows on an oak, the clean cut and the
 trunk landing; then three pickaxe blows on iron, a blow on a crack tip and one that splits a
-piece off; then the same on crystal. `--dry` leaves out the reverberant layers (bloom, clink) and
-is roughly how it sounded before them. The in-game SFX bus adds a little more room on top.
+piece off; then the same on crystal. (The game's SFX bus compresses it a little on top: for exactly
+what the game puts out, see tools/record_sfx_chain.gd.)
 """
 import os
 import re
@@ -17,7 +17,6 @@ import numpy as np
 
 RATE = 48000
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-WET_LAYERS = ("bloom", "clink")
 rng = np.random.default_rng(3)
 
 
@@ -31,13 +30,11 @@ def randomizer(path):
     return clips, float((re.search(r"random_volume_offset_db = ([\d.]+)", text) or [0, 0])[1])
 
 
-def stack(path, dry):
+def stack(path):
     text = open(os.path.join(ROOT, path)).read()
     streams = {i: p for p, i in re.findall(r'path="([^"]+\.tres)" id="([^"]+)"', text)}
     layers = []
     for block in re.split(r"\n\[sub_resource", text)[1:]:
-        if dry and re.search(rf'resource_name = "({"|".join(WET_LAYERS)})"', block):
-            continue
         get = lambda key, d: float((re.search(rf"^{key} = ([-\d.]+)", block, re.M) or [0, d])[1])
         clips, offset = randomizer(streams[re.search(r'stream = ExtResource\("([^"]+)"\)', block)[1]])
         layers.append({"clips": clips, "offset": offset, "delay": get("delay", 0.0), "volume": get("volume_db", 0.0),
@@ -57,16 +54,16 @@ def play(out, layers, at, gain_db=0.0, pitch=1.0):
 
 
 def main():
-    path, dry = sys.argv[1], "--dry" in sys.argv[2:]
+    path = sys.argv[1]
     out = np.zeros(RATE * 22)
-    wood = {k: stack(f"audio/woodcutting/{d}{k}.tres", dry)
+    wood = {k: stack(f"audio/woodcutting/{d}{k}.tres")
             for k, d in (("axe_hit", "oak/"), ("clean_cut", ""), ("tree_land", "oak/"))}
     for i in range(4):
         play(out, wood["axe_hit"], 0.5 + 0.9 * i, pitch=1.0 + 0.03 * i)
     play(out, wood["clean_cut"], 4.1)
     play(out, wood["tree_land"], 6.0)
     for k, ore in enumerate(("iron", "crystal")):
-        hit, tip, split = (stack(f"audio/mining/{ore}/{s}.tres", dry) for s in ("pickaxe_hit", "crack_tip", "split"))
+        hit, tip, split = (stack(f"audio/mining/{ore}/{s}.tres") for s in ("pickaxe_hit", "crack_tip", "split"))
         t0 = 10.0 + 6.0 * k
         for i in range(3):
             play(out, hit, t0 + 0.85 * i, pitch=1.0 + 0.05 * i)
@@ -80,7 +77,7 @@ def main():
         w.setsampwidth(2)
         w.setframerate(RATE)
         w.writeframes((out * 32767).astype("<i2").tobytes())
-    print(path, "dry" if dry else "with the reverberant layers")
+    print(path)
 
 
 if __name__ == "__main__":
