@@ -283,7 +283,7 @@ def gsine(n, freq, tau, amp, phase, drop, over):
     return amp * np.sin(2 * np.pi * np.cumsum(f) / RATE + phase) * np.exp(-t / tau) * (1.0 - np.exp(-t / 0.0001))
 
 
-def chop(rng, v=PLAIN_WOOD, tone=1.15, crack=3.0, wedge=1.0, weight=1.0, length=0.75, snap=1.8, sink=1.5):
+def chop(rng, v=PLAIN_WOOD, tone=1.05, crack=3.0, wedge=1.15, weight=1.3, length=0.75, snap=1.8, sink=2.1):
     """An axe biting deep into a dense log, one solid blow and nothing after it:
     - the edge's crack: a couple of ms of noise and the steel's tick (dense wood doesn't
       splinter, so it's a 'tchak', not a crackle);
@@ -296,7 +296,8 @@ def chop(rng, v=PLAIN_WOOD, tone=1.15, crack=3.0, wedge=1.0, weight=1.0, length=
     Almost dry. `tone` moves the log's pitch, `length` how long it rings, `crack`, `wedge` and
     `weight` scale those parts, `snap` stretches the crack (longer, brighter), `sink` how deep
     and long the blade drives in (0: it stops dead). The defaults are the takes picked by ear
-    (C of the deep-bite round, then C of the crack round) with the sink added, as asked."""
+    (C of the deep-bite round, then C of the crack round), with the sink set between the sink
+    round's C and D, which were judged about equal."""
     n = secs(0.4)
     p, d, b = v["pitch"], v["damp"], 10 ** (v["bright"] / 20)
     out = burst(rng, n, 1800, 7000 + 2000 * (snap - 1.0), 0.0012 * snap, 0.8 * crack * b)
