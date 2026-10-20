@@ -19,6 +19,8 @@ const DEFS := {
 	&"trout": {"name": "Trout"},
 	&"pike": {"name": "Pike"},
 	&"char": {"name": "Arctic char"},
+	&"grayling": {"name": "Grayling"},
+	&"salmon": {"name": "Salmon"},
 }
 
 static var _icons: Dictionary[StringName, Texture2D] = {}
