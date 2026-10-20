@@ -265,7 +265,7 @@ def twigs(rng):
     return body(rng, 900, 9000, 24, 0.012, TWIG_LEVELS, 0.4)
 
 
-def chop(rng, v=PLAIN_WOOD, tone=1.0, crack=1.0, wedge=1.0, weight=1.0, length=1.0):
+def chop(rng, v=PLAIN_WOOD, tone=1.15, crack=3.0, wedge=1.0, weight=1.0, length=0.75, snap=1.0):
     """An axe biting deep into a dense log, one solid blow and nothing after it:
     - the edge's crack: a millisecond of noise and the steel's tick, not too bright (dense wood
       doesn't splinter);
@@ -275,11 +275,14 @@ def chop(rng, v=PLAIN_WOOD, tone=1.0, crack=1.0, wedge=1.0, weight=1.0, length=1
       one under it), over in ~40 ms;
     - the weight: a low thump dropping to ~95 Hz.
     Almost dry. `tone` moves the log's pitch, `length` how long it rings, `crack`, `wedge` and
-    `weight` scale those parts (the takes to compare)."""
+    `weight` scale those parts, `snap` stretches the crack (a longer, brighter 'tchak'). The
+    defaults are the take picked by ear (C of the deep-bite round) with its crack made more
+    pronounced, as asked."""
     n = secs(0.4)
     p, d, b = v["pitch"], v["damp"], 10 ** (v["bright"] / 20)
-    out = burst(rng, n, 1800, 7000, 0.0012, 0.8 * crack * b)
-    out += dsine(n, rng.uniform(2300, 2700), 0.003, 0.3 * crack * b)
+    out = burst(rng, n, 1800, 7000 + 2000 * (snap - 1.0), 0.0012 * snap, 0.8 * crack * b)
+    out += dsine(n, rng.uniform(2300, 2700), 0.003 * snap, 0.3 * crack * b)
+    out += dsine(n, rng.uniform(3600, 4100), 0.002 * snap, 0.15 * crack * b)  # the steel's edge ringing a hair
     out += burst(rng, n, 250, 1600, 0.006, 0.9 * wedge)
     f1 = rng.uniform(290, 330) * p * tone
     for ratio, tau, amp in ((1.0, 0.022, 1.0), (1.93, 0.013, 0.5), (3.3, 0.007, 0.28)):
