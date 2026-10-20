@@ -32,7 +32,8 @@ telegraphed move) → land (grab on the flash).
   salmon are for the procgen worlds (and future costs once the main world has a river).
 - **Windows sized for human reactions** (~200 ms to see and click), not the bots': the strike
   window is 600 ms (perch) down to 400 ms (pike, salmon), not ~250 → ~120 ms (doubled from 300 →
-  200 ms after the first hand playtest, 2026-10-20: too hard). What makes the
+  200 ms after the first hand playtest, 2026-10-20: too hard; under-levelled, the strike window
+  shrinks to 0.6× at most, and a strike up to 120 ms early after the tap-tap still hooks). What makes the
   harder fish harder is rhythm you have to *anticipate*: the take comes a steady beat after the
   tap-tap, a headshake counts in on its own beat (creak, tremble, jerk, jerk...), and the jump's
   splash lands as the bulge peaks. Bows and jerks: ±160 / ±100 ms round the cue.

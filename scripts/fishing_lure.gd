@@ -21,6 +21,10 @@ const COOLDOWN := 1.5
 ## How far below the float the fish holds while it tells (m).
 const UNDER := 0.16
 const FLOAT_SCALE := 1.8
+## A strike this long (s) before the take, after the tap-tap, still hooks: you read the beat.
+const EARLY_GRACE := 0.12
+## Being under-levelled shrinks the strike window no further than this (the fight stays harsh).
+const MIN_STRIKE_SCALE := 0.6
 
 var water: WaterBody
 var bite := Bite.NONE
@@ -73,6 +77,13 @@ func strike() -> StringName:
 	match bite:
 		Bite.TAKE:
 			bite = Bite.NONE  # the fish is RodFishing's now; no more drawing fish in
+			fish = null
+			remove_from_group("lure")
+			return &"hooked"
+		Bite.TELLS when _take_due_in() <= EARLY_GRACE:  # right on the beat, a hair early
+			take_age = 0.0
+			take_window = fish.species.strike_window * _window_scale(fish.species)
+			bite = Bite.NONE
 			fish = null
 			remove_from_group("lure")
 			return &"hooked"
@@ -255,7 +266,14 @@ func _play_tells(delta: float) -> void:
 
 func _window_scale(s: FishSpecies) -> float:
 	var level: int = get_tree().root.get_node("Skills").level(&"fishing")
-	return FishFight.level_scales(level, s.required_level).x
+	return maxf(FishFight.level_scales(level, s.required_level).x, MIN_STRIKE_SCALE)
+
+
+## Seconds until the take, once only the take is left to come (after the tap-tap); INF before.
+func _take_due_in() -> float:
+	if _tell_i != _tells.size() - 1 or _tell_i == 0 or _tells[_tell_i - 1]["kind"] != &"tap":
+		return INF
+	return _tells[_tell_i]["t"] - _t
 
 
 ## Pushes the fish up into the float for a tell (it mouths it).
