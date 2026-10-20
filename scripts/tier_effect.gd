@@ -6,8 +6,10 @@ extends Resource
 ##   double_hit_chance   chance a tool hit counts twice (ResourceNode.hit)
 ##   hit_power           extra hits every tool hit counts for, fractions carried over (ResourceNode.hit)
 ##   extra_logs          extra drops from trees (ResourceNode)
-##   fish_calm           fraction off every fish's scare radius (FishSchool.disturb)
+##   fish_calm           fraction off every fish's scare radius (FishSchool.disturb); on the rod, fish
+##                       notice the float from further and nibble less (FishingLure)
 ##   bonus_fish_chance   chance a speared fish counts twice (SpearFishing)
+##   line_notches        extra line notches on the rod: mistakes a fight can take (RodFishing)
 ##   run_speed           fraction faster walking and sprinting (Player)
 ##   extra_ore           extra drops from rocks and veins (ResourceNode)
 ##   rock_regrow         fraction off the respawn time of rocks and veins (ResourceNode)

@@ -1,16 +1,16 @@
 # Project Serotonin
 
 A first-person, low-poly gathering game made in **Godot 4.7**, with a Valheim-style look. Chop trees, mine rocks, cut
-grain and spearfish in shallow ponds, across a forest, a quarry, farmland and a village, joined
+grain, spearfish in shallow ponds and rod-fish the lake and rivers, across a forest, a quarry, farmland and a village, joined
 by a ring road built for fast movement. The game is about how gathering *feels*: impact-frame hits,
 hit-stop, screen shake, positional audio, chunks flying off nodes, and a tool that bites into
 whatever you hit.
 
 ![The clearing](docs/images/clearing.png)
 
-| Mining | Woodcutting | Spearfishing | The pond |
-|---|---|---|---|
-| ![Mining](docs/images/mining.png) | ![Woodcutting](docs/images/woodcutting.png) | ![Spearfishing](docs/images/spearfishing.png) | ![Pond](docs/images/pond.png) |
+| Mining | Woodcutting | Spearfishing | Rod fishing | The pond |
+|---|---|---|---|---|
+| ![Mining](docs/images/mining.png) | ![Woodcutting](docs/images/woodcutting.png) | ![Spearfishing](docs/images/spearfishing.png) | ![Rod fishing](docs/images/rodfishing.png) | ![Pond](docs/images/pond.png) |
 
 ## Features
 
@@ -44,6 +44,13 @@ whatever you hit.
   - Ponds in the clearing and the village, and a deeper lake to the south where Arctic char (Fishing 30) keep to the middle.
   - Wade into the pond and stalk wary schools of perch, trout and pike. The pike hunts too: watch it stalk the perch and lunge. Crouch to stay quiet: splashing and misses scatter them.
   - Every fish along the thrust gets skewered, and multi-catches escalate the feedback and XP ("Double!", "Triple!").
+- **Rod fishing: reflexes and timing, not balancing a bar.** Aim at water beyond the spear's reach and the rod comes out; it stays in hand until the float is back. Every beat is read from the world (the float, the rod, the water, the sound), never a button prompt.
+  - **Cast:** hold to swing the rod back, release on the forward stroke's whip. On it, the float lands on your aim point with a soft *plip*; off it, it scatters and sploshes, spooking fish nearby. Cast right on top of a school and it bolts anyway: lead the fish.
+  - **Bite:** a real fish from the water notices the float, leaves its school and swims over. It nibbles (little twitches: fake-outs), taps twice, then takes: the float dunks with a *bloop*. Strike in that short window; strike on a nibble and it's gone. Each species has its own rhythm (trout nibble fast, pike sit still under it and slam it with no warning).
+  - **Fight:** the fish pulls (hold to reel it in), runs (the line hisses: let go), shakes its head (the rod tip jerks on a beat: click on each jerk) and jumps (the water bulges, then a splash: bow with RMB). Each wrong or late answer costs one of three line notches; lose them all and it snaps. You're rooted while it's on, and the rod tugs your aim toward the fish. A pike may take a small fish off your line, and then you're fighting the pike.
+  - **Land:** at your feet it flashes side-on on a rhythm: click on a flash to swing it out. **Clean** (no notch lost) and **Perfect** (clean, a perfect cast and an early strike) pay extra XP, and every fish rolls a size ("Salmon, 7.4 kg").
+  - The rod owns deep and far water: **Arctic char** in the middle of the lake, and in generated worlds' rivers **grayling** (Fishing 15) holding station in the current (cast upstream and let the float drift down to them) and **salmon** (Fishing 40) in the deep pools at the bends. Pond fish bite it too. Under-levelled fish still bite, but every window is far tighter: skill can beat level.
+  - Optional prompt assist (a small hint per move), off by default: debug menu, Player tab.
 - **Biomes.** Each has its own ground colour, light, fog and ambience, and a title card when you arrive (the first visit says *Discovered*, and it's saved). Night still falls in all of them.
   - **The Pinewood** (north): a dense forest of about 100 pines and birches you can chop, among several hundred scenery trees you can bump into and wall-run off. A dirt trail runs from the clearing past three open glades to the ring road. Ferns, mushrooms, birdsong.
   - **Greystone Quarry** (west, past the peak): a five-level pit about 25 m deep.
@@ -119,7 +126,8 @@ whatever you hit.
 | Sprint / air dash (in the air) | Shift |
 | Jump / mantle (jump at a ledge while moving forward) / wall run (jump alongside a wall at speed) | Space |
 | Crouch / slide (crouch while running fast, or land holding it) | Ctrl or C |
-| Gather (axe, pickaxe or sickle: whichever fits what you aim at) / spear (hold) | Left mouse or E |
+| Gather (axe, pickaxe or sickle: whichever fits what you aim at) / spear (hold) / rod: cast (hold, release on the whip), strike, reel (hold), click a headshake's jerks, land | Left mouse or E |
+| Rod: bow when a hooked fish jumps | Right mouse or Q |
 | Talk to a villager | E |
 | Free the mouse | Esc (click to recapture) |
 | Debug menu: items, skill levels, building tiers, time of day and speed, pause, teleports (buildings, biomes, ponds, nodes), fly mode, a live readout (with the biome), save wipe, generated worlds (enter a seed, a new random one, back to the main world), graphics presets and effects | F1 (debug builds) |
@@ -161,7 +169,7 @@ Key scripts:
 - **Player and feel:** `player.gd` (movement, per-tool swings, bite), `viewmodel.gd` (held tool), `shake_camera.gd` (shake, impact kick, FOV)
 - **Gathering:** `resource_node.gd` (every tree and rock: hits, pieces knocked out where struck, collapses, faults, fitted collision, the felling), `trunk_carve.gd` (a tree's notch, carved into the trunk's mesh, and the cut through it), `hit_fx.gd` (chips, dust, sparks, impact star), `pickup.gd`, `items.gd`
 - **Layered sound:** `sound_layers.gd` / `sound_layer.gd` (a sound built from timed layers), played through `Sfx`
-- **Fishing:** `spear_fishing.gd`, `fish_pond.gd`, `fish_school.gd`, `fish.gd`, `water_body.gd`
+- **Fishing:** `spear_fishing.gd`, `rod_fishing.gd` (the rod: cast, bite, fight, land), `fishing_lure.gd` (the float), `rod_cast.gd`, `fish_fight.gd`, `fish_bite.gd` (pure timing logic), `fish_pond.gd`, `fish_school.gd`, `fish.gd`, `water_body.gd`
 - **Village:** `building.gd` (shows a tier, plays the upgrade), `villager.gd`, `upgrade_panel.gd`, `building_def.gd` / `building_tier.gd`, `prop.gd`
 - **World:** `world_map.gd` (where the biomes, roads and landmarks are, shared with the terrain generator), `day_night_sky.gd`, `footsteps.gd`, `pond_dressing.gd`, `scenery_scatter.gd` + `scatter_layer.gd`, `node_spawner.gd` + `spawn_entry.gd` (seeded gatherable nodes with stable save ids), `windmill.gd`
 - **Looks:** `grass_field.gd` (the grass round the player), `color_grade.gd` (the colour-grading table), `palette_material.gd` (plain or leaf-card material per mesh). Plan and decisions: [plans/graphics.md](plans/graphics.md)
@@ -193,6 +201,9 @@ Most content is generated by scripts, so it's easy to tweak and regenerate. Run 
 | Record gathering sounds through the real buses (SFX's effects, then Master) and report how hard the effects squash each one | `godot --headless --path . -s res://tools/record_sfx_chain.gd -- [--out=user://sfx_chain]` |
 | Check every sound stack under `audio/` loads, with no missing clips | `godot --headless --path . -s res://tools/check_sound_stacks.gd` |
 | Placeholder sounds (footsteps, slide, wind, mantle, splash, spear) | `python tools/synth_movement_sounds.py` (needs numpy) |
+| Rod fishing's sounds (cast whip, plip, nibble, bloop, reel, creak, hiss, jump, snap, ...) → `audio/fishing/` | `python tools/synth_fishing.py` (needs numpy) |
+| Rod fishing's timing logic: bots play whole fights for every species (an answering one must land them all cleanly, a lazy one must snap) | `godot --headless --path . -s res://tools/test_fishing.gd` |
+| Rod fishing end to end in the real game: a bot casts, waits for a bite, strikes, fights and lands, saving screenshots to `user://fishing_playtest/` (throwaway save) | `godot --path . --screen 1 -s res://tools/fishing_playtest.gd -- [--casts=3] [--level=30] [--procgen=SEED]` |
 | Placeholder biome ambience (forest, field, quarry) | `python tools/synth_ambience.py` (needs numpy) |
 | Terrain: the original layout plus the biomes and roads (**overwrites** `terrain_data/`) | `godot --headless --path . -s res://tools/generate_test_terrain.gd` (add `-- --preview=map.png` for a top-down check). It keeps the ground under hand-placed nodes as it was and reports any that moved. |
 
@@ -210,7 +221,7 @@ hand-edit a model, import the `.glb` in Blender, edit it, and export it back as 
 - **A new rock that cracks:** inherit `scenes/rock.tscn` (cracks, fitted collision, the layered sounds and hit effects are already on) and build its model with `fractured()` in `make_models.py`, like the ore rocks. That gives each `Chunk_X` a `Seam_X` line (its outline, which the crack follows) and marks the cut faces in a `cut_mark` vertex colour. Set `chip_color` to the rock's stone (cracks are drawn in it) and `ore_color` to its ore. `seam_crack_on_piece_only` keeps a crack off what surrounds the piece (the crystal rock uses it).
 - **A new layered sound:** make a `SoundLayers` `.tres` (see `audio/mining/`) with a `SoundLayer` per layer (stream, delay, volume, pitch, jitter), and play it with `Sfx.play_at()` or `Sfx.play_layers()`.
 - **A new item:** add a row to `Items.DEFS` (`scripts/items.gd`) and an entry to `ICONS` in `tools/blender/render_icons.py`.
-- **A new fish:** add a model to the Blender script and a `FishSpecies` `.tres` in `data/fish/`, then list it in the pond's `Fish` node (`FishPond.schools`).
+- **A new fish:** add a model to the Blender script and a `FishSpecies` `.tres` in `data/fish/`, then list it in the pond's `Fish` node (`FishPond.schools`). Its *Rod*, *Fight* and *Size* groups set how it bites and fights; run `tools/test_fishing.gd` after (it checks a good player can land it).
 - **A new skill:** add a row to `Skills.SKILLS` (`scripts/autoload/skills.gd`).
 - **A new village building:**
   1. Add a function to `tools/blender/make_village.py` that builds each tier's pieces with a `Kit("T1", ...)`, `Kit("T2", ...)` and so on.
@@ -224,6 +235,7 @@ hand-edit a model, import the `.glb` in Blender, edit it, and export it back as 
 - [docs/blender-guide.md](docs/blender-guide.md): remodel the rock by hand in Blender (a first modelling project).
 - [docs/village-design.md](docs/village-design.md): the village design decisions.
 - [docs/3d-research-notes.md](docs/3d-research-notes.md): design decisions and research notes from the 3D conversion and the fishing design.
+- [plans/fishing.md](plans/fishing.md): the rod fishing design (decisions R1–R11) and how it's built.
 
 ## Credits
 

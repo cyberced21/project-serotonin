@@ -14,10 +14,16 @@ const PERCH := preload("res://data/fish/perch.tres")
 const TROUT := preload("res://data/fish/trout.tres")
 const PIKE := preload("res://data/fish/pike.tres")
 const CHAR := preload("res://data/fish/char.tres")
+const GRAYLING := preload("res://data/fish/grayling.tres")
+const SALMON := preload("res://data/fish/salmon.tres")
 ## Schools per water body, as in the hand-built ponds and lake.
 const POND_SCHOOLS: Array[FishSpecies] = [PERCH, PERCH, TROUT, PIKE]
 const LAKE_SCHOOLS: Array[FishSpecies] = [TROUT, TROUT, PERCH, CHAR, CHAR]
 const PIKE_SCHOOLS: Array[FishSpecies] = [PIKE, PIKE, PIKE]
+## Rivers: grayling holding station in every RIVER_GRAYLING-th stretch, a salmon in each pool.
+const RIVER_GRAYLING := 3
+## How fast the current runs (m/s): it carries a float down to the grayling.
+const RIVER_FLOW := 0.45
 const PROP := preload("res://scripts/prop.gd")
 
 ## The seed the scene builds next time it loads (enter() sets it).
@@ -90,7 +96,9 @@ func _exit_tree() -> void:
 ## the water surface, reeds and lily pads (PondDressing) and fish (FishPond).
 ## Each river's water: one surface following its bends (a strip, the water shader works from world
 ## position), and a WaterBody every RIVER_SEGMENT metres along it, its box turned along the river,
-## so wading, splashes and footsteps work in it like in a pond.
+## so wading, splashes and footsteps work in it like in a pond. Each stretch has the current
+## (WaterBody.flow, downstream) and some hold fish: grayling every few stretches, a salmon where a
+## pool was scoured out at a bend.
 const RIVER_SEGMENT := 10
 
 
@@ -124,6 +132,7 @@ func _build_rivers() -> void:
 		surface.material_override = material
 		surface.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		river.add_child(surface)
+		var pools: PackedInt32Array = map.rivers[r].get("pools", PackedInt32Array())
 		for k in range(0, pts.size() - 1, RIVER_SEGMENT):
 			var a := pts[k]
 			var b := pts[mini(k + RIVER_SEGMENT, pts.size() - 1)]
@@ -134,6 +143,8 @@ func _build_rivers() -> void:
 			body.collision_layer = 0
 			body.collision_mask = 0
 			body.surface_height = y
+			var down := (b - a).normalized()
+			body.flow = Vector3(down.x, 0.0, down.y) * RIVER_FLOW
 			var volume := CollisionShape3D.new()
 			volume.name = "Volume"
 			volume.position.y = -1.0
@@ -141,6 +152,17 @@ func _build_rivers() -> void:
 			box.size = Vector3(widths[k] * 2.0 + 6.0, 3.0, a.distance_to(b) + 2.0)
 			volume.shape = box
 			body.add_child(volume)
+			var schools: Array[FishSpecies] = []
+			for p in pools:
+				if p >= k and p < k + RIVER_SEGMENT:
+					schools.append(SALMON)
+			if (k / RIVER_SEGMENT) % RIVER_GRAYLING == 1:
+				schools.append(GRAYLING)
+			if not schools.is_empty():
+				var fish := FishPond.new()
+				fish.name = "Fish"
+				fish.schools = schools
+				body.add_child(fish)
 			river.add_child(body)
 
 

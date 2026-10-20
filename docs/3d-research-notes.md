@@ -139,3 +139,5 @@ Tick items off as you go. Decisions already made are listed at the bottom for re
 | F10 | Icons | Item icons rendered from the 3D models in Blender (wood and ore too). |
 
 **Later:** pike as a predator that scatters perch schools; swimming; real-model pickups — tracked in [TODO.md](TODO.md).
+
+**Rod fishing** (2026-10-19) came after as a second way to fish, built around reflexes and timing rather than keeping a bar balanced: its decisions (R1–R11) are in [plans/fishing.md](../plans/fishing.md).

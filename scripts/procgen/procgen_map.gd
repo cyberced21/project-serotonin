@@ -183,7 +183,8 @@ var village: Dictionary = {}
 ## The trails' centre lines, world XZ, one point a metre, each starting at the hub.
 var trails: Array[PackedVector2Array] = []
 ## The rivers: {points: PackedVector2Array (source to mouth, a metre apart), widths: PackedFloat32Array
-## (half the channel's width at each point)}.
+## (half the channel's width at each point), pools: PackedInt32Array (indices into points: deep
+## pools scoured out at the sharpest bends, where salmon lie)}.
 var rivers: Array[Dictionary] = []
 ## 1 on a river's channel and banks (trails may ford there), per pixel.
 var river_mask := PackedByteArray()
@@ -719,6 +720,9 @@ const RIVER_BANK := 0.7                 # rise per metre beside the channel
 const RIVER_REACH := 16.0               # how far beside it the banks are shaped
 const RIVER_SECOND_CHANCE := 0.5
 const RIVER_MEANDER := 9.0               # how far (m) it swings to either side of its route
+const RIVER_POOLS := 2                   # deep pools per river, at its sharpest bends
+const POOL_DEPTH := 1.15                 # below the water line, at a pool's middle
+const POOL_SPACING := 30                 # points (m) at least between two pools, and from either end
 
 
 func _carve_rivers() -> void:
@@ -757,8 +761,11 @@ func _carve_rivers() -> void:
 		var widths := PackedFloat32Array()
 		for k in pts.size():
 			widths.append(lerpf(RIVER_WIDTH.x, RIVER_WIDTH.y, float(k) / maxf(pts.size() - 1, 1)))
-		rivers.append({"points": pts, "widths": widths})
+		var pools := _pool_points(pts)
+		rivers.append({"points": pts, "widths": widths, "pools": pools})
 		_carve_river(pts, widths)
+		for k in pools:
+			_carve_pool(pts[k], widths[k])
 
 
 func _river_grid() -> AStarGrid2D:
@@ -794,6 +801,38 @@ func _meandered(pts: PackedVector2Array, salt: int) -> PackedVector2Array:
 		var swing := _meander.get_noise_2d(float(k), 300.0 * salt) * RIVER_MEANDER * 1.6 * ends
 		out.append(pts[k] + along.orthogonal() * swing)
 	return _resample(_chaikin(out), 1.0)
+
+
+## The sharpest bends (by how much the river turns over 12 m), at least POOL_SPACING apart and
+## clear of either end. Pure geometry, no random numbers, so it doesn't shift anything else a seed
+## makes.
+func _pool_points(pts: PackedVector2Array) -> PackedInt32Array:
+	var bends: Array[Vector2] = []  # (turn, index)
+	for k in range(POOL_SPACING, pts.size() - POOL_SPACING):
+		var a := (pts[k] - pts[k - 6]).normalized()
+		var b := (pts[k + 6] - pts[k]).normalized()
+		bends.append(Vector2(absf(a.angle_to(b)), k))
+	bends.sort_custom(func(p: Vector2, q: Vector2) -> bool: return p.x > q.x)
+	var out := PackedInt32Array()
+	for bend in bends:
+		if out.size() >= RIVER_POOLS or bend.x < 0.15:
+			break
+		var k := int(bend.y)
+		var clear := true
+		for o in out:
+			if absi(o - k) < POOL_SPACING:
+				clear = false
+		if clear:
+			out.append(k)
+	return out
+
+
+## A bowl scoured deeper than the channel round a bend.
+func _carve_pool(at: Vector2, half_width: float) -> void:
+	var r := half_width + 0.8
+	_for_pixels_near(at, r, func(i: int, w: Vector2) -> void:
+		var d := w.distance_to(at) / r
+		heights[i] = minf(heights[i], WATER_LEVEL - POOL_DEPTH * (1.0 - d * d)))
 
 
 func _carve_river(pts: PackedVector2Array, widths: PackedFloat32Array) -> void:

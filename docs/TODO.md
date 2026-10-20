@@ -12,6 +12,12 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 - [ ] **Save fish?** — ponds currently start full on every load (deliberate); revisit if it feels exploitable.
 - [x] **A lake:** south of the clearing, up a second path. It's 1.35 m deep in the middle, with trout, perch and Arctic char (Fishing 30, keeps to deep water via `FishSpecies.min_depth`).
 - [ ] **A stream** feeding the pond. Needs flowing water that isn't a flat `WaterBody` surface.
+- [x] **Rod fishing:** cast, bite, fight, land, all timing (plans/fishing.md). Grayling and salmon in generated worlds' rivers (pools at bends, a current that carries the float).
+- [ ] **Play the rod by hand** — the bots land everything (tools/test_fishing.gd, tools/fishing_playtest.gd), but the windows, telegraph lengths and fight lengths (perch ~7 s .. salmon ~25 s for a 9 m fight) need tuning by feel: `data/fish/*.tres` *Rod* / *Fight* groups.
+- [ ] **Listen to the rod's sounds** (`tools/synth_fishing.py`): every cue is synthesized and unheard; the cast whip, nibble vs. tap vs. bloop, and the run's hiss carry the gameplay, so they have to be told apart by ear.
+- [ ] **A river in the main world** so grayling and salmon can go into upgrade costs (they're only in generated worlds; the fisher's tier 3 asks for char, the rod-only fish the main world has).
+- [ ] **Bait / lures** (attract certain species: spinner for pike, fly for grayling) and a personal-best log of fish sizes.
+- [ ] **Rod in the Settings screen** — prompt assist lives in the debug menu's Player tab (and settings.cfg `[gameplay]`) until `menus` lands.
 
 ## Gathering
 
@@ -126,7 +132,7 @@ Plans and decisions: [plans/procgen.md](../plans/procgen.md), [plans/procgen-var
 - [x] Phases 0–9: detail textures, smooth textured terrain, smooth shading, leaf-card trees, dense grass, mist / grading / darker nights / firelight, water and sky, presets.
 - [ ] **Playtest the look in motion:** grass parting and swaying, leaf flutter, the shake and fall of a leaf-card tree, felled-tree chips and leaf drops, lamp flicker. Only stills were checked.
 - [ ] **Night darkness:** nights are much darker now; tune `DayNightSky`'s night ambient (0.32) and moonlight (0.24) by eye.
-- [ ] **README gameplay shots** (mining, woodcutting, spearfishing, pond) still show the old look; retake them.
+- [ ] **README gameplay shots** (mining, woodcutting, spearfishing, pond) still show the old look; retake them. (The rod fishing shot is a playtest bot's, from a generated world's river.)
 - [ ] **Ghost outlines on leaf-card trees** (trees above your level) outline whole card quads, not the leaves.
 - [ ] **Old grass tufts** (`grass_tuft` ScatterLayer) now sit among the dense grass; keep them as accents or drop them.
 - [ ] **Buildings, props and villagers** got the detail overlay only; real per-model textures (re-UV) would be the next step up close.

@@ -2138,11 +2138,82 @@ def spear():
     export("spear")
 
 
+def _section(name, segments, r_bottom, r_top, length, base_y, shades, rng):
+    """A rod section along +Y (Godot -Z) whose origin is its base, so RodFishing can bend the rod
+    by turning each section about its own base."""
+    bm = prism(segments, r_bottom, r_top, length)
+    bmesh.ops.translate(bm, verts=bm.verts, vec=(0, 0, length / 2))
+    paint(bm, shade_by_normal(*shades, rng))
+    return make_object(name, bm, (0, base_y, 0), (-math.pi / 2, 0, 0))
+
+
+def rod():
+    """Fishing rod pointing forward (+Y, Godot -Z) from the grip at the origin: a cork handle and
+    reel, then three bendable sections (Butt, Mid, Tip, each with its origin at its base) with line
+    guides, 1.8 m long. RodFishing finds the sections by name and finds the tip end at Tip's +1 length
+    (ROD_TIP_LENGTH there)."""
+    reset()
+    rng = seeded(6)
+    # handle: cork grip from just behind the hand, a dark reel seat ahead of it
+    bm = prism(8, 0.019, 0.017, 0.36)
+    paint(bm, shade_by_normal("wood.7", "wood.6", "wood.5", rng, side_alt="wood.6"))
+    make_object("Cork", bm, (0, 0.05, 0), (-math.pi / 2, 0, 0))
+    bm = prism(8, 0.016, 0.016, 0.07)
+    paint(bm, lambda f: "metal.1")
+    make_object("Seat", bm, (0, -0.18, 0), (-math.pi / 2, 0, 0))
+    # the reel: a drum hanging under the seat on a short foot, its handle sticking out to the right
+    bm = prism(10, 0.042, 0.042, 0.03)
+    paint(bm, shade_by_normal("metal.5", "metal.3", "metal.2", rng, side_alt="metal.4"))
+    make_object("Reel", bm, (0, -0.18, -0.06), (0, math.pi / 2, 0))
+    bm = box((0.012, 0.02, 0.04))
+    paint(bm, lambda f: "metal.2")
+    make_object("ReelFoot", bm, (0, -0.18, -0.03))
+    bm = box((0.05, 0.008, 0.008))
+    paint(bm, lambda f: "metal.1")
+    make_object("ReelArm", bm, (0.04, -0.18, -0.06))
+    bm = box((0.012, 0.012, 0.03))
+    paint(bm, lambda f: "wood.2")
+    make_object("ReelKnob", bm, (0.065, -0.18, -0.045))
+    block_hand("y", grip=0.0)
+    # the blank, in three sections, thinning to the tip
+    blank = ("wood.2", "wood.1", "wood.0")
+    _section("Butt", 6, 0.013, 0.01, 0.6, 0.23, blank, rng)
+    _section("Mid", 6, 0.01, 0.006, 0.55, 0.83, blank, rng)
+    _section("Tip", 5, 0.006, 0.0025, 0.45, 1.38, blank, rng)
+    for i, y in enumerate((0.55, 0.95, 1.25, 1.55, 1.8)):  # line guides: little rings under the blank
+        bm = prism(6, 0.009 - i * 0.001, 0.009 - i * 0.001, 0.004)
+        paint(bm, lambda f: "metal.5")
+        make_object(f"Guide{i}", bm, (0, y, -0.012), (0, 0, 0))
+    export("rod")
+
+
+def fishing_float():
+    """The float: a red-capped body with a white belly and a thin antenna, its origin at the
+    waterline (the belly sits under the surface)."""
+    reset()
+    rng = seeded(7)
+    bm = bmesh.new()
+    bmesh.ops.create_uvsphere(bm, u_segments=8, v_segments=6, radius=0.5)
+    for v in bm.verts:
+        v.co.x *= 0.045
+        v.co.y *= 0.045
+        v.co.z *= 0.09 if v.co.z > 0 else 0.07
+    paint(bm, lambda f: "accent.1" if f.calc_center_median().z > 0.005 else "neutral.6")
+    make_object("Body", bm)
+    bm = prism(5, 0.005, 0.003, 0.08)
+    paint(bm, lambda f: "accent.3")
+    make_object("Antenna", bm, (0, 0, 0.07))
+    bm = prism(6, 0.006, 0.006, 0.006)
+    paint(bm, lambda f: "neutral.1")
+    make_object("Ring", bm, (0, 0, 0.004))
+    export("fishing_float")
+
+
 # --- fish -------------------------------------------------------------------------------------
 # One mesh per fish ("Fish"), head toward +Y (Godot -Z, forward), origin at the body centre, so
 # the swim shader can wiggle it by distance along the body. Length in metres.
 
-def fish_mesh(length, width, height, tail_taper=0.85, snout=1.0):
+def fish_mesh(length, width, height, tail_taper=0.85, snout=1.0, dorsal=1.0):
     bm = bmesh.new()
     bmesh.ops.create_uvsphere(bm, u_segments=8, v_segments=6, radius=0.5)
     half = length / 2.0
@@ -2159,7 +2230,8 @@ def fish_mesh(length, width, height, tail_taper=0.85, snout=1.0):
             (0.0, -half - length * 0.16, 0.0), (0.0, -half - length * 0.22, -height * 0.42)]
     fin_tri(bm, tail[0], tail[1], tail[2])
     fin_tri(bm, tail[0], tail[2], tail[3])
-    fin_tri(bm, (0.0, length * 0.12, height * 0.42), (0.0, -length * 0.12, height * 0.68),
+    # dorsal: `dorsal` > 1 stretches it into a sail (grayling), forward and up
+    fin_tri(bm, (0.0, length * 0.12 * dorsal, height * 0.42), (0.0, -length * 0.12, height * (0.42 + 0.26 * dorsal)),
             (0.0, -length * 0.2, height * 0.38))
     return bm
 
@@ -2189,9 +2261,9 @@ def fish_painter(back, side, belly, fin, rng, bars=None, stripe=None, spots=None
     return choose
 
 
-def fish(name, length, width, height, painter, tail_taper=0.85, snout=1.0):
+def fish(name, length, width, height, painter, tail_taper=0.85, snout=1.0, dorsal=1.0):
     reset()
-    bm = fish_mesh(length, width, height, tail_taper, snout)
+    bm = fish_mesh(length, width, height, tail_taper, snout, dorsal)
     paint(bm, painter)
     make_object("Fish", bm)
     export(os.path.join("fish", name))
@@ -2220,6 +2292,20 @@ def arctic_char():
     rng = seeded(24)
     fish("char", 0.44, 0.09, 0.11, fish_painter("metal.1", "metal.3", "accent.2", "accent.1", rng,
                                                spots="neutral.6", length=0.44), tail_taper=0.8, snout=0.85)
+
+
+def grayling():
+    """River fish: slate-silver with dark flecks and the tall violet sail of a dorsal fin."""
+    rng = seeded(25)
+    fish("grayling", 0.36, 0.075, 0.1, fish_painter("metal.2", "metal.4", "metal.6", "accent.6", rng,
+                                                    spots="metal.1", length=0.36), tail_taper=0.82, dorsal=2.0)
+
+
+def salmon():
+    """The big river fish: a long silver body, a blue-grey back speckled black, a hooked snout."""
+    rng = seeded(26)
+    fish("salmon", 0.82, 0.13, 0.17, fish_painter("metal.2", "metal.6", "neutral.6", "metal.3", rng,
+                                                  spots="neutral.1", length=0.82), tail_taper=0.75, snout=0.8)
 
 
 # --- item models (for icons, later maybe for pickups) -----------------------------------------
@@ -2676,7 +2762,8 @@ if __name__ == "__main__":  # make_village.py imports the helpers above without 
     os.makedirs(os.path.join(OUT_DIR, "road"), exist_ok=True)
     builds = (rock, iron_rock, tree, oak, pickaxe, axe, spear, perch, trout, pike, log_item, ore_item,
               oak_item, iron_item, reeds, lily_pad, lily_flower, shore_stone, scenery, ruins,
-              coal_rock, gold_rock, birch, pine, more_items, arctic_char, forest, quarry, farming, road)
+              coal_rock, gold_rock, birch, pine, more_items, arctic_char, forest, quarry, farming, road,
+              rod, fishing_float, grayling, salmon)
     only = argv[2:]  # optional: names of the builders to run (e.g. `forest`), instead of all of them
     for build in builds:
         if not only or build.__name__ in only:

@@ -15,6 +15,7 @@
 [ext_resource type="Script" path="res://scripts/sound_layers.gd" id="13_layers"]
 [ext_resource type="Resource" path="res://audio/mining/pickaxe_swing.tres" id="14_pick_swing"]
 [ext_resource type="Resource" path="res://audio/mining/pickaxe_windup.tres" id="15_pick_windup"]
+[ext_resource type="Script" path="res://scripts/rod_fishing.gd" id="16_rodfishing"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.35
@@ -195,6 +196,9 @@ visible = false
 
 [node name="SpearFishing" type="Node" parent="."]
 script = ExtResource("11_spearfishing")
+
+[node name="RodFishing" type="Node" parent="."]
+script = ExtResource("16_rodfishing")
 
 [node name="Reticle" type="CanvasLayer" parent="."]
 layer = 2
