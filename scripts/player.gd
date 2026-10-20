@@ -3,7 +3,8 @@ extends CharacterBody3D
 ## Ctrl / C to crouch (slide while sprinting), jump at a ledge while moving forward to mantle,
 ## Shift in the air to dash, jump alongside a wall at speed to wall-run (jump again to kick off),
 ## hold E / left-click to gather whatever the crosshair is on. E on a villager talks to them
-## instead (left-click never swings at villagers).
+## instead (left-click never swings at villagers). Water within reach brings out the spear
+## (SpearFishing); water further out, the rod (RodFishing), which has the buttons while it's out.
 ## Esc frees the mouse; clicking the game captures it again.
 ## Mouse-look runs in _unhandled_input (raw events), so it stays smooth during hit-stop.
 ## Physics interpolation is on for the body; the eye (Head) is placed every rendered frame from the

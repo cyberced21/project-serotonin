@@ -30,6 +30,15 @@ telegraphed move) → land (grab on the flash).
   lake but no river. So grayling and salmon can't be in the fisher's upgrade costs without locking
   the main world's progress; the rod-only fish in the costs is **char** (main lake). Grayling and
   salmon are for the procgen worlds (and future costs once the main world has a river).
+- **Windows sized for human reactions** (~200 ms to see and click), not the bots': the strike
+  window is 300 ms (perch) down to 200 ms (pike, salmon), not ~250 → ~120 ms. What makes the
+  harder fish harder is rhythm you have to *anticipate*: the take comes a steady beat after the
+  tap-tap, a headshake counts in on its own beat (creak, tremble, jerk, jerk...), and the jump's
+  splash lands as the bulge peaks. Bows and jerks: ±160 / ±100 ms round the cue.
+- **Fight length** comes from net progress per move (pulls reel in, runs give back only 30% of
+  their speed): a 9 m fight takes a good player ~7 s for perch, 14–20 s for trout, grayling,
+  pike and char, ~25 s for salmon (tools/test_fishing.gd prints it).
+- **The float is drawn 1.8× life size** so its twitches read at 10 m.
 - **No settings menu on `main`** (it's on the unmerged `menus` branch): the prompt-assist toggle
   lives in `user://settings.cfg` (`[gameplay] fishing_prompts`) and the debug menu's Player tab;
   move it into the Settings screen when `menus` lands.
@@ -73,3 +82,10 @@ telegraphed move) → land (grab on the flash).
 
 All tuning numbers are exports on `FishSpecies` (`data/fish/*.tres`) or `RodFishing`, so they can
 be tuned by feel.
+
+## Status (2026-10-19)
+
+All six phases built on `fishing`. Verified by bots only: `tools/test_fishing.gd` (every species
+landed cleanly by an answering bot, always snapped by a lazy one) and `tools/fishing_playtest.gd`
+in the real game (lake: 5/5 landed, trout and char; a generated world's river: grayling via the
+drift, salmon from the pools). **Not yet played by hand or listened to**: see docs/TODO.md.
