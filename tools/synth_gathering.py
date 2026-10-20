@@ -231,10 +231,20 @@ def limit(x, ceiling_db=CEILING, ahead=0.0015, release=0.04):
     return x * np.minimum(gain, need)
 
 
+def highpass(x, cutoff=20.0):
+    """Everything under `cutoff` Hz taken out, the offset (DC) above all. A struck body's thump
+    leaves a net push in the waveform; left in, it rides under the whole clip, eats headroom,
+    and the fade at the end turns it into a thump of its own."""
+    size = len(x) + secs(0.2)
+    f = np.fft.rfftfreq(size, 1.0 / RATE)
+    g = f ** 4 / (f ** 4 + cutoff ** 4)
+    return np.fft.irfft(np.fft.rfft(x, size) * g, size)[: len(x)]
+
+
 def finish(x, tail_db=-60.0):
-    """Cut once it has died `tail_db` under its peak, fade the ends, bring it to LOUDNESS, keep
-    its peaks under CEILING."""
-    x = x - np.mean(x[: secs(0.002)]) if len(x) > secs(0.01) else x
+    """Offset and rumble out (highpass()), cut once it has died `tail_db` under its peak, fade
+    the ends, bring it to LOUDNESS, keep its peaks under CEILING."""
+    x = highpass(x)
     k = secs(0.02)
     lev = np.sqrt(np.convolve(x * x, np.ones(k) / k, mode="same"))
     alive = np.nonzero(lev > lev.max() * 10 ** (tail_db / 20))[0]
@@ -265,36 +275,51 @@ def twigs(rng):
     return body(rng, 900, 9000, 24, 0.012, TWIG_LEVELS, 0.4)
 
 
-def chop(rng, v=PLAIN_WOOD, tone=1.15, crack=3.0, wedge=1.0, weight=1.0, length=0.75, snap=1.0):
+def gsine(n, freq, tau, amp, phase, drop, over):
+    """A resonance whose pitch sinks by `drop` (a share) over `over` s as it rings: a body
+    being loaded as something drives into it."""
+    t = t_axis(n)
+    f = freq * (1.0 - drop * (1.0 - np.exp(-t / over)))
+    return amp * np.sin(2 * np.pi * np.cumsum(f) / RATE + phase) * np.exp(-t / tau) * (1.0 - np.exp(-t / 0.0001))
+
+
+def chop(rng, v=PLAIN_WOOD, tone=1.15, crack=3.0, wedge=1.0, weight=1.0, length=0.75, snap=1.8, sink=1.5):
     """An axe biting deep into a dense log, one solid blow and nothing after it:
-    - the edge's crack: a millisecond of noise and the steel's tick, not too bright (dense wood
-      doesn't splinter);
-    - the wedge: the blade driving in, a low, compressed 'chunk' of noise under 1.6 kHz, gone in
-      a few ms;
-    - the log: a dense, heavily damped body (its note around 300 Hz on a plain trunk, a lower
-      one under it), over in ~40 ms;
+    - the edge's crack: a couple of ms of noise and the steel's tick (dense wood doesn't
+      splinter, so it's a 'tchak', not a crackle);
+    - the sink: the blade driving on into the wood for 10-25 ms after the crack: the wedge's
+      'chunk' sliding lower as it slows, the fibres packing under the edge (a dense, dull crunch
+      inside the blow), a second, lower push from the follow-through ~8 ms on;
+    - the log: a dense, heavily damped body (its note around 330 Hz on a plain trunk, bending a
+      little down as the blade loads it, a lower one under it), over in ~40 ms;
     - the weight: a low thump dropping to ~95 Hz.
     Almost dry. `tone` moves the log's pitch, `length` how long it rings, `crack`, `wedge` and
-    `weight` scale those parts, `snap` stretches the crack (a longer, brighter 'tchak'). The
-    defaults are the take picked by ear (C of the deep-bite round) with its crack made more
-    pronounced, as asked."""
+    `weight` scale those parts, `snap` stretches the crack (longer, brighter), `sink` how deep
+    and long the blade drives in (0: it stops dead). The defaults are the takes picked by ear
+    (C of the deep-bite round, then C of the crack round) with the sink added, as asked."""
     n = secs(0.4)
     p, d, b = v["pitch"], v["damp"], 10 ** (v["bright"] / 20)
     out = burst(rng, n, 1800, 7000 + 2000 * (snap - 1.0), 0.0012 * snap, 0.8 * crack * b)
     out += dsine(n, rng.uniform(2300, 2700), 0.003 * snap, 0.3 * crack * b)
     out += dsine(n, rng.uniform(3600, 4100), 0.002 * snap, 0.15 * crack * b)  # the steel's edge ringing a hair
     out += burst(rng, n, 250, 1600, 0.006, 0.9 * wedge)
+    if sink > 0:
+        drive = burst(rng, n, 100, 500, 0.018 * sink, 1.0 * wedge * sink)  # the chunk going on, lower, as it slows
+        at(out, drive * (1.0 - np.exp(-t_axis(n) / 0.004)), 0.004)
+        out += splinters(rng, n, int(rng.integers(8, 12) * sink) + 1, 0.025 * sink, 200, 700, 0.15 * sink, 0.003)
+        at(out, punch(secs(0.15), 160 * p, 75 * p, 0.008, 0.04, 0.7 * sink * weight), 0.01 * rng.uniform(0.9, 1.15))
     f1 = rng.uniform(290, 330) * p * tone
+    drop = 0.1 * sink
     for ratio, tau, amp in ((1.0, 0.022, 1.0), (1.93, 0.013, 0.5), (3.3, 0.007, 0.28)):
-        out += dsine(n, f1 * ratio * rng.uniform(0.99, 1.01), tau * length / d, amp, rng.uniform(0, 0.4))
-    out += dsine(n, f1 * 0.55, 0.03 * length / d, 0.55)  # the log's mass, under its note
+        out += gsine(n, f1 * ratio * rng.uniform(0.99, 1.01), tau * length / d, amp, rng.uniform(0, 0.4), drop, 0.02)
+    out += gsine(n, f1 * 0.55, 0.03 * length / d, 0.55, 0.0, drop, 0.02)  # the log's mass, under its note
     out += punch(n, 230 * p, 95 * p, 0.007, 0.04 * length, 0.75 * weight)
     return space(rng, out, 0.6, 0.04)
 
 
 def clean_cut(rng, v=PLAIN_WOOD):
-    """The blow that goes clean through: a harder, heavier bite."""
-    return chop(rng, v, tone=0.95, crack=1.3, wedge=1.2, weight=1.3, length=1.15)
+    """The blow that goes clean through: a harder, heavier bite that sinks further."""
+    return chop(rng, v, tone=0.95, crack=3.3, wedge=1.2, weight=1.3, length=1.15, sink=1.4)
 
 
 def pull(rng, v=PLAIN_WOOD):
@@ -500,7 +525,7 @@ STONE_VOICED = ("mine", "crack", "split")
 # bus / unit_size / max_distance as before.
 STACKS = {
     "woodcutting/axe_hit": ([("wood/chop", 3.0, 0.04, True, 0.0)], "voiced", {}),
-    "woodcutting/clean_cut": ([("wood/clean_cut", 4.0, 0.04, True, 0.0)], None, {}),
+    "woodcutting/clean_cut": ([("wood/clean_cut", 1.0, 0.04, True, 0.0)], None, {}),
     "woodcutting/axe_pull": ([("wood/pull", -6.0, 0.06, True, 0.0)], None, {}),
     "woodcutting/trunk_creak": ([("wood/creak", -3.0, 0.05, True, 0.0)], "voiced", {"unit_size": 5.0, "max_distance": 45.0}),
     "woodcutting/tree_fall": ([("wood/fall", -2.0, 0.04, True, 0.0)], None, {"unit_size": 8.0, "max_distance": 70.0}),
