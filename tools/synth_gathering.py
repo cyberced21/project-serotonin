@@ -265,21 +265,22 @@ def twigs(rng):
     return body(rng, 900, 9000, 24, 0.012, TWIG_LEVELS, 0.4)
 
 
-def chop(rng, v=PLAIN_WOOD, tone=1.0, crack=1.0, weight=1.0):
+def chop(rng, v=PLAIN_WOOD, tone=1.25, crack=1.0, weight=1.0, length=0.65):
     """An axe blow, crisp and clear: the edge's crack (a millisecond of bright noise and the
-    steel's tick), the trunk's clear wooden 'tok' (a few tuned resonances, a woodblock's, gone
-    in a few tens of ms), a quick low thump for the weight of it, a short crackle of fibres
-    splitting, a couple of chips. Almost dry. `tone` moves the tok's pitch, `crack` and
-    `weight` scale those parts (the variants to compare)."""
+    steel's tick), the trunk's clear wooden 'tok' (a few tuned resonances, a woodblock's, around
+    520-560 Hz on a plain trunk), a quick low thump for the weight of it, a short crackle of
+    fibres splitting, a couple of chips. Almost dry, and short: the bite is over in ~30 ms.
+    `tone` moves the tok's pitch, `length` scales how long the tok, the thump and the crackle
+    last, `crack` and `weight` scale those parts (the variants to compare)."""
     n = secs(0.45)
     p, d, b = v["pitch"], v["damp"], 10 ** (v["bright"] / 20)
     out = burst(rng, n, 2200, 9000, 0.0018, 1.3 * crack * b)
     out += dsine(n, rng.uniform(2700, 3100), 0.004, 0.45 * crack * b) + dsine(n, rng.uniform(4300, 4900), 0.0025, 0.3 * crack * b)
     f1 = rng.uniform(410, 450) * p * tone
     for ratio, tau, amp in ((1.0, 0.022, 0.8), (2.31, 0.012, 0.42), (4.07, 0.006, 0.25)):
-        out += dsine(n, f1 * ratio * rng.uniform(0.99, 1.01), tau / d, amp, rng.uniform(0, 0.4))
-    out += punch(n, 260 * p, 115 * p, 0.007, 0.03, 0.4 * weight)
-    out += splinters(rng, n, rng.integers(26, 38), 0.045, 1800, 6000, 0.32 * crack * b, 0.001)
+        out += dsine(n, f1 * ratio * rng.uniform(0.99, 1.01), tau * length / d, amp, rng.uniform(0, 0.4))
+    out += punch(n, 280 * p, 125 * p, 0.006, 0.03 * length, 0.4 * weight)
+    out += splinters(rng, n, rng.integers(26, 38), 0.045 * length, 1800, 6000, 0.32 * crack * b, 0.001)
     chips = np.sort(rng.uniform(0.07, 0.22, rng.integers(2, 4)))
     for when in chips:
         at(out, dsine(secs(0.02), rng.uniform(2000, 3600), 0.003, 0.05), when)
@@ -289,7 +290,7 @@ def chop(rng, v=PLAIN_WOOD, tone=1.0, crack=1.0, weight=1.0):
 def clean_cut(rng, v=PLAIN_WOOD):
     """The blow that goes clean through: a harder chop, and the last fibres snapping in a quick,
     bright run after it."""
-    out = chop(rng, v, tone=0.92, crack=1.3, weight=1.2)
+    out = chop(rng, v, tone=1.15, crack=1.3, weight=1.2, length=0.8)
     run = splinters(rng, secs(0.3), rng.integers(16, 24), 0.18, 1800, 6000, 0.5, 0.0012)
     at(out, run, 0.01)
     return out
@@ -374,7 +375,7 @@ def pick_ring(rng, v, n):
     return strike(pulse(0.00025), modes, n)
 
 
-def mine(rng, v=PLAIN_STONE, ring=1.0, echoes=1.0, clink=1.0):
+def mine(rng, v=PLAIN_STONE, ring=1.6, echoes=1.6, clink=1.0):
     """A pickaxe blow, metally and clinky: the stone's tick as the point bites (a burst of
     crack and a short knock), the steel ringing out over it (a bar's partials, the lead of the
     sound), a short thump for weight, a little grit, and the rock face throwing it back
@@ -412,7 +413,7 @@ def crack(rng, v=PLAIN_STONE):
         snap += dsine(secs(0.03), rng.uniform(1600, 2600) * v["pitch"], 0.004, g * 0.4, rng.uniform(0, 6.28))
         at(out, snap, when)
     out += dsine(n, rng.uniform(2800, 3300) * v["pitch"], 0.05 * v["ring"], 0.12)
-    return echo(rng, out, 0.8)
+    return echo(rng, out, 1.3)
 
 
 def split(rng, v=PLAIN_STONE):
@@ -435,7 +436,7 @@ def split(rng, v=PLAIN_STONE):
         at(out, knock, when)
         when += rng.uniform(0.1, 0.17)
         g *= rng.uniform(0.4, 0.6)
-    return echo(rng, out, 0.9, 1.1)
+    return echo(rng, out, 1.4, 1.1)
 
 
 def scrape(rng, v=PLAIN_STONE):

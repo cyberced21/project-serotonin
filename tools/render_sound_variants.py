@@ -3,8 +3,8 @@ compared by ear and the closest one picked (needs numpy):
 
     python tools/render_sound_variants.py [out_dir]
 
-Writes chop_A/B/C.wav and mine_A/B/C.wav (default docs/sound_preview/compare/). A is what
-synth_gathering.py bakes for the game; B and C lean each sound one way and the other.
+Writes chop_A..D.wav and mine.wav (default docs/sound_preview/compare/). chop_A and mine are
+what synth_gathering.py bakes for the game; the other chops lean it different ways.
 """
 import functools
 import os
@@ -15,12 +15,11 @@ import numpy as np
 import synth_gathering as G
 
 VARIANTS = {
-    "chop_A": functools.partial(G.chop),
-    "chop_B": functools.partial(G.chop, tone=0.75, crack=0.8, weight=1.6),  # deeper, chunkier
-    "chop_C": functools.partial(G.chop, tone=1.3, crack=1.4, weight=0.7),  # higher, snappier
-    "mine_A": functools.partial(G.mine),
-    "mine_B": functools.partial(G.mine, ring=1.6, echoes=1.6),  # rings longer, more echo
-    "mine_C": functools.partial(G.mine, clink=1.25, ring=0.7, echoes=0.5),  # higher, tighter, drier
+    "chop_A": functools.partial(G.chop),  # short, a little higher: what the game plays
+    "chop_B": functools.partial(G.chop, tone=1.45, length=0.55),  # higher and shorter still
+    "chop_C": functools.partial(G.chop, length=0.55, crack=1.35, weight=0.7),  # the bite sharper, less thump
+    "chop_D": functools.partial(G.chop, tone=1.12, length=0.8, weight=1.25),  # a touch lower, more body
+    "mine": functools.partial(G.mine),  # the one picked (B of the last round): what the game plays
 }
 
 
