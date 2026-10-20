@@ -153,30 +153,60 @@ def lowpass_noise(rng, n, lo, hi):
 
 
 def space(rng, x, size=1.0, wet=0.12):
-    """The clip outdoors: an echo off the ground right after it, a few off trees or rocks
-    further off, darker the later they come, and a short, quiet, dark diffuse tail (above
-    200 Hz only: a low noise tail rumbles and flickers). `size` stretches it (a falling tree
-    is heard over a wider space), `wet` sets the tail."""
-    n = len(x) + secs(0.7 * size)
-    out = np.zeros(n)
-    out[: len(x)] += x
-    spec_len = len(x) + secs(0.7 * size)
-    f = np.fft.rfftfreq(spec_len, 1.0 / RATE)
-    X = np.fft.rfft(x, spec_len)
-    for delay, gain, cutoff in ((0.006, 0.35, 5000), (0.031 * size, 0.18, 3000), (0.052 * size, 0.12, 2200),
-                                (0.083 * size, 0.08, 1600)):
-        d = delay * rng.uniform(0.85, 1.15)
-        echo = np.fft.irfft(X * np.exp(-2j * np.pi * f * d) / (1 + (f / cutoff) ** 4), spec_len)
-        out[:spec_len] += echo[:n] * gain * rng.uniform(0.8, 1.2)
+    """The clip outdoors: a short, quiet, diffuse tail after it, darker as it goes (above 300 Hz
+    only: a low noise tail rumbles and flickers). No single early echoes: one arriving a few ms
+    after the sound fuses with it and notches its spectrum, and that's heard as hollow.
+    `size` stretches the tail, `wet` sets its level."""
     m = secs(0.6 * size)
+    n = len(x) + m
     t = t_axis(m)
     ir = np.zeros(m)
-    for lo, hi, rt in ((200, 1500, 0.55 * size), (1500, 6000, 0.3 * size)):
-        ir += lowpass_noise(rng, m, lo, hi) * np.exp(-t * 6.91 / rt) * (1.0 - np.exp(-t / 0.01))
-    ir[: secs(0.02)] = 0  # the early echoes cover the first moments
+    for lo, hi, rt in ((300, 1500, 0.5 * size), (1500, 6000, 0.28 * size)):
+        ir += lowpass_noise(rng, m, lo, hi) * np.exp(-t * 6.91 / rt) * (1.0 - np.exp(-t / 0.015))
     tail = np.fft.irfft(np.fft.rfft(x, n) * np.fft.rfft(ir, n), n)
     tail *= np.sqrt(np.sum(x ** 2) / (np.sum(tail ** 2) + 1e-12)) * wet
-    return out + tail
+    out = tail
+    out[: len(x)] += x
+    return out
+
+
+def echo(rng, x, amount=1.0, size=1.0):
+    """A rock face throwing the blow back: two slapbacks far enough behind it (about 0.12 and
+    0.26 s) to be heard as echoes rather than colour, each darker and a little smeared, and a
+    short tail after them. `amount` scales the echoes, `size` how far off the wall is."""
+    n = len(x) + secs(0.9 * size)
+    out = np.zeros(n)
+    out[: len(x)] += x
+    f = np.fft.rfftfreq(n, 1.0 / RATE)
+    X = np.fft.rfft(x, n)
+    smear = np.fft.rfft(np.hanning(secs(0.004)) / np.hanning(secs(0.004)).sum(), n)
+    for delay, gain, cutoff in ((0.12, 0.32, 4000), (0.26, 0.16, 2600)):
+        d = delay * size * rng.uniform(0.92, 1.08)
+        out += np.fft.irfft(X * smear * np.exp(-2j * np.pi * f * d) / (1 + (f / cutoff) ** 4), n) * gain * amount
+    return space(rng, out, size * 1.2, 0.1)
+
+
+def dsine(n, freq, tau, amp=1.0, phase=0.0):
+    """One clean resonance: a sine dying over `tau` s, eased in over 0.1 ms so it doesn't click."""
+    t = t_axis(n)
+    return amp * np.sin(2 * np.pi * freq * t + phase) * np.exp(-t / tau) * (1.0 - np.exp(-t / 0.0001))
+
+
+def burst(rng, n, lo, hi, decay, amp=1.0):
+    """The crack of a hard meeting: a burst of bright noise only a millisecond or two long. That
+    short, it's heard as crispness, not hiss."""
+    t = t_axis(n)
+    return amp * lowpass_noise(rng, n, lo, hi) * np.exp(-t / decay) * (1.0 - np.exp(-t / 0.00008))
+
+
+def splinters(rng, n, count, span, lo, hi, gain, tau=0.0008):
+    """A quick crackle of fibres or grit giving way: `count` tiny clean ticks over `span` s,
+    thinning out."""
+    out = np.zeros(n)
+    for when in np.sort(rng.uniform(0.001, span, count)):
+        g = gain * rng.uniform(0.3, 1.0) * np.exp(-when / (span * 0.4))
+        at(out, dsine(secs(0.01), np.exp(rng.uniform(np.log(lo), np.log(hi))), tau, g, rng.uniform(0, 6.28)), when)
+    return out
 
 
 # --- finishing --------------------------------------------------------------------------------
@@ -216,6 +246,14 @@ def finish(x, tail_db=-60.0):
     return limit(x)
 
 
+def punch(n, f_from, f_to, sweep, decay, amp=1.0):
+    """Weight under a blow: a low note dropping from f_from to f_to Hz within `sweep` s, dying
+    over `decay` s, like a kick drum's; it starts on a zero crossing so it thumps without a click."""
+    t = t_axis(n)
+    f = f_to + (f_from - f_to) * np.exp(-t / sweep)
+    return amp * np.sin(2 * np.pi * np.cumsum(f) / RATE) * (1.0 - np.exp(-t / 0.0006)) * np.exp(-t / decay)
+
+
 # --- woodcutting ------------------------------------------------------------------------------
 
 def trunk(rng, v, lo=130.0, hi=7000.0, count=56, tau=0.075):
@@ -227,42 +265,34 @@ def twigs(rng):
     return body(rng, 900, 9000, 24, 0.012, TWIG_LEVELS, 0.4)
 
 
-def chop(rng, v=PLAIN_WOOD):
-    """An axe blow: the edge meets the trunk (a short, firm contact), sinks a few ms further in
-    (a second, softer push: the 'chunk'), fibres crush along the edge; the trunk's body
-    answers with a hollow 'thock'. A faint ring off the axe head, a few chips landing."""
-    n = secs(0.6)
-    modes = trunk(rng, v)
-    weight = [(f * v["pitch"], tau / v["damp"], a) for f, tau, a in
-              ((rng.uniform(92, 108), 0.05, 6.0), (rng.uniform(150, 175), 0.045, 4.0))]  # the log's mass
-    force = np.zeros(secs(0.03))
-    at(force, pulse(rng.uniform(0.0002, 0.0003)), 0.0)  # a sharp edge: a quick, bright meeting
-    at(force, pulse(rng.uniform(0.0008, 0.0012)), rng.uniform(0.0015, 0.0025), rng.uniform(0.35, 0.45))
-    crush = np.sort(rng.uniform(0.0, 0.012, rng.integers(10, 18)))
-    force += grains(rng, len(force), crush, rng.uniform(0.05, 0.2, len(crush)) * np.exp(-crush / 0.006))
-    out = strike(force, modes + weight, n)
-    head = [(rng.uniform(2900, 3300), 0.02, 1.0), (rng.uniform(4300, 4800), 0.012, 0.6)]
-    out += strike(pulse(0.0004), head, n) * 0.03
-    chips = 0.03 + np.sort(rng.gamma(1.5, 0.04, rng.integers(5, 10)))
-    out += strike(grains(rng, n, chips, rng.uniform(0.2, 1.0, len(chips)) * np.exp(-chips / 0.1)), twigs(rng), n) * 0.12
-    return space(rng, out)
+def chop(rng, v=PLAIN_WOOD, tone=1.0, crack=1.0, weight=1.0):
+    """An axe blow, crisp and clear: the edge's crack (a millisecond of bright noise and the
+    steel's tick), the trunk's clear wooden 'tok' (a few tuned resonances, a woodblock's, gone
+    in a few tens of ms), a quick low thump for the weight of it, a short crackle of fibres
+    splitting, a couple of chips. Almost dry. `tone` moves the tok's pitch, `crack` and
+    `weight` scale those parts (the variants to compare)."""
+    n = secs(0.45)
+    p, d, b = v["pitch"], v["damp"], 10 ** (v["bright"] / 20)
+    out = burst(rng, n, 2200, 9000, 0.0018, 1.3 * crack * b)
+    out += dsine(n, rng.uniform(2700, 3100), 0.004, 0.45 * crack * b) + dsine(n, rng.uniform(4300, 4900), 0.0025, 0.3 * crack * b)
+    f1 = rng.uniform(410, 450) * p * tone
+    for ratio, tau, amp in ((1.0, 0.022, 0.8), (2.31, 0.012, 0.42), (4.07, 0.006, 0.25)):
+        out += dsine(n, f1 * ratio * rng.uniform(0.99, 1.01), tau / d, amp, rng.uniform(0, 0.4))
+    out += punch(n, 260 * p, 115 * p, 0.007, 0.03, 0.4 * weight)
+    out += splinters(rng, n, rng.integers(26, 38), 0.045, 1800, 6000, 0.32 * crack * b, 0.001)
+    chips = np.sort(rng.uniform(0.07, 0.22, rng.integers(2, 4)))
+    for when in chips:
+        at(out, dsine(secs(0.02), rng.uniform(2000, 3600), 0.003, 0.05), when)
+    return space(rng, out, 0.7, 0.05)
 
 
 def clean_cut(rng, v=PLAIN_WOOD):
-    """The blow that goes clean through: a harder chop, and the last fibres snapping in a quick
-    run after it."""
-    n = secs(0.8)
-    out = np.zeros(n)
-    modes = trunk(rng, v, tau=0.065)
-    force = np.zeros(secs(0.03))
-    at(force, pulse(0.0003), 0.0)
-    at(force, pulse(0.001), 0.002, 0.5)
-    out += strike(force, modes, n)
-    snaps = 0.012 + np.cumsum(rng.exponential(0.008, rng.integers(14, 22)))
-    snaps = snaps[snaps < 0.2]
-    out += strike(grains(rng, n, snaps, np.linspace(0.9, 0.2, len(snaps)) * rng.uniform(0.5, 1.0, len(snaps)),
-                         (0.0001, 0.0003)), trunk(rng, v, lo=400, count=40, tau=0.03), n) * 0.5
-    return space(rng, out)
+    """The blow that goes clean through: a harder chop, and the last fibres snapping in a quick,
+    bright run after it."""
+    out = chop(rng, v, tone=0.92, crack=1.3, weight=1.2)
+    run = splinters(rng, secs(0.3), rng.integers(16, 24), 0.18, 1800, 6000, 0.5, 0.0012)
+    at(out, run, 0.01)
+    return out
 
 
 def pull(rng, v=PLAIN_WOOD):
@@ -344,57 +374,68 @@ def pick_ring(rng, v, n):
     return strike(pulse(0.00025), modes, n)
 
 
-def mine(rng, v=PLAIN_STONE):
-    """A pickaxe blow: the point meets the stone hard (a contact a fraction of a millisecond
-    long), the rock under it crumbles in a quick spray of tiny contacts, the boulder answers
-    with a short, dense knock, the steel clinks, grit patters down."""
-    n = secs(0.7)
-    force = np.zeros(secs(0.03))
-    at(force, pulse(rng.uniform(0.00012, 0.0002)), 0.0)
-    crumb = np.sort(rng.uniform(0.0003, 0.012, int(rng.integers(10, 18) * v["crumble"]) + 2))
-    force += grains(rng, len(force), crumb, rng.uniform(0.1, 0.35, len(crumb)) * np.exp(-crumb / 0.005))
-    mass = [(rng.uniform(110, 130) * v["pitch"], 0.035 / v["damp"], 6.0), (rng.uniform(190, 220) * v["pitch"], 0.028 / v["damp"], 4.0)]
-    out = strike(force, stone(rng, v) + mass, n)
-    out += pick_ring(rng, v, n) * 0.11
-    grit = 0.035 + np.sort(rng.gamma(1.4, 0.05, int(rng.integers(6, 12) * v["crumble"]) + 1))
-    out += strike(grains(rng, n, grit, rng.uniform(0.2, 1.0, len(grit)) * np.exp(-grit / 0.12)), pebbles(rng), n) * 0.1
-    return space(rng, out)
+def mine(rng, v=PLAIN_STONE, ring=1.0, echoes=1.0, clink=1.0):
+    """A pickaxe blow, metally and clinky: the stone's tick as the point bites (a burst of
+    crack and a short knock), the steel ringing out over it (a bar's partials, the lead of the
+    sound), a short thump for weight, a little grit, and the rock face throwing it back
+    (echo()). `ring` stretches the ring, `echoes` scales the echo, `clink` moves its pitch."""
+    n = secs(1.0)
+    p = v["pitch"]
+    out = burst(rng, n, 2000, 8000, 0.0009, 0.6)
+    out += dsine(n, rng.uniform(1150, 1450) * p, 0.009 / v["damp"], 0.4) + \
+        dsine(n, rng.uniform(1900, 2300) * p, 0.005 / v["damp"], 0.22) +         dsine(n, rng.uniform(640, 780) * p, 0.012 / v["damp"], 0.35)  # the boulder's own knock
+    f0 = rng.uniform(2350, 2650) * clink * (1.0 + 0.15 * (p - 1.0))
+    tau = 0.13 * v["ring"] * ring
+    for r, k, amp in ((1.0, 1.0, 0.8), (1.47, 0.65, 0.3), (2.76, 0.45, 0.4), (5.40, 0.2, 0.16)):
+        out += dsine(n, f0 * r * rng.uniform(0.997, 1.003), tau * k, amp, rng.uniform(0, 0.5))
+    if v["chime"] > 0:  # gold's and crystal's own glassy notes ringing with it
+        base = rng.uniform(3300, 3700)
+        for r in (1.0, 1.33, 1.78):
+            out += dsine(n, base * r, (0.12 + 0.25 * v["chime"]) * ring, 0.25 * v["chime"], rng.uniform(0, 6.28))
+    out += punch(n, 300 * p, 130 * p, 0.006, 0.026, 0.65)
+    out += splinters(rng, n, int(rng.integers(5, 9) * v["crumble"]) + 1, 0.2, 2500, 7000, 0.06, 0.002)
+    return echo(rng, out, echoes)
 
 
 def crack(rng, v=PLAIN_STONE):
-    """A crack running through the stone: snaps coming faster as it races along, and the fresh
-    faces ringing a moment."""
-    length = rng.uniform(0.22, 0.38)
-    n = secs(length + 0.25)
-    gaps = np.geomspace(0.035, 0.005, rng.integers(9, 15))
-    times = np.cumsum(gaps)
-    times = times[times < length]
-    snaps = grains(rng, n, times, np.linspace(0.35, 1.0, len(times)) * rng.uniform(0.6, 1.0, len(times)),
-                   (0.0001, 0.00025))
-    out = strike(snaps, stone(rng, v, lo=600, count=48, tau=0.025), n)
-    out += strike(snaps, [(rng.uniform(2600, 3200) * v["pitch"], 0.02 * v["ring"], 1.0)], n) * 0.12
-    return space(rng, out, wet=0.1)
+    """A crack running through the stone: snaps coming faster as it races along, each with a
+    little ring off the fresh faces, echoing."""
+    length = rng.uniform(0.22, 0.36)
+    n = secs(length + 0.3)
+    out = np.zeros(n)
+    gaps = np.geomspace(0.035, 0.005, rng.integers(9, 14))
+    for k, when in enumerate(np.cumsum(gaps)):
+        if when > length:
+            break
+        g = (0.4 + 0.6 * k / len(gaps)) * rng.uniform(0.7, 1.0)
+        snap = burst(rng, secs(0.03), 2200, 8000, 0.0006, g * 0.6)
+        snap += dsine(secs(0.03), rng.uniform(1600, 2600) * v["pitch"], 0.004, g * 0.4, rng.uniform(0, 6.28))
+        at(out, snap, when)
+    out += dsine(n, rng.uniform(2800, 3300) * v["pitch"], 0.05 * v["ring"], 0.12)
+    return echo(rng, out, 0.8)
 
 
 def split(rng, v=PLAIN_STONE):
-    """A piece breaking away: the boulder's heavy knock, a grinding crunch as it parts, and the
-    chunk tumbling to the ground in a few knocks."""
-    n = secs(1.1)
-    force = np.zeros(secs(0.08))
-    at(force, pulse(0.0006), 0.0)
-    crunch = np.sort(rng.gamma(1.5, 0.012, int(rng.integers(30, 45) * v["crumble"]) + 4))
-    crunch = crunch[crunch < 0.075]
-    force += grains(rng, len(force), crunch, rng.uniform(0.1, 0.5, len(crunch)) * np.exp(-crunch / 0.03), (0.0001, 0.0004))
-    mass = [(rng.uniform(72, 84) * v["pitch"], 0.05 / v["damp"], 2.5), (rng.uniform(118, 135) * v["pitch"], 0.04 / v["damp"], 1.8),
-            (rng.uniform(190, 215) * v["pitch"], 0.03 / v["damp"], 1.2)]
-    out = strike(force, stone(rng, v, lo=180, tau=0.045) + mass, n)
-    when, gain = rng.uniform(0.16, 0.22), 0.45
+    """A piece breaking away: a heavy crack and knock, a grinding crunch as it parts, the pick's
+    ring, the chunk tumbling down in a few knocks, all echoing off the rock."""
+    n = secs(1.0)
+    p = v["pitch"]
+    out = burst(rng, n, 1500, 7000, 0.0016, 0.7)
+    out += punch(n, 220 * p, 85 * p, 0.01, 0.05, 1.0)
+    for f, tau, amp in ((rng.uniform(380, 460), 0.025, 0.6), (rng.uniform(900, 1100), 0.014, 0.4)):
+        out += dsine(n, f * p, tau / v["damp"], amp)
+    out += splinters(rng, n, int(rng.integers(30, 45) * v["crumble"]) + 6, 0.07, 1200, 6000, 0.3, 0.0012)
+    f0 = rng.uniform(2350, 2650)
+    for r, k, amp in ((1.0, 1.0, 0.35), (2.76, 0.45, 0.18)):
+        out += dsine(n, f0 * r, 0.1 * v["ring"] * k, amp)
+    when, g = rng.uniform(0.16, 0.22), 0.5
     for _ in range(rng.integers(2, 4)):
-        knock = strike(pulse(rng.uniform(0.0008, 0.0015)), stone(rng, v, lo=300, count=40, tau=0.03), secs(0.25))
-        at(out, knock, when, gain)
-        when += rng.uniform(0.1, 0.18)
-        gain *= rng.uniform(0.4, 0.6)
-    return space(rng, out, 1.1)
+        knock = burst(rng, secs(0.1), 1000, 5000, 0.001, g * 0.5)
+        knock += dsine(secs(0.1), rng.uniform(600, 900) * p, 0.012, g) + punch(secs(0.1), 200 * p, 110 * p, 0.005, 0.02, g * 0.6)
+        at(out, knock, when)
+        when += rng.uniform(0.1, 0.17)
+        g *= rng.uniform(0.4, 0.6)
+    return echo(rng, out, 0.9, 1.1)
 
 
 def scrape(rng, v=PLAIN_STONE):
