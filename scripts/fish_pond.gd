@@ -39,7 +39,7 @@ func _add_school(species: FishSpecies) -> void:
 	school.name = "%sSchool" % String(species.id).capitalize()
 	add_child(school)
 	# lurkers hide by a reed clump at the edge of the shallows; schools start in open water
-	var at := _lurk_spot() if species.lurker else random_point(water, maxf(0.5, species.min_depth + 0.1))
+	var at := _lurk_spot(species) if species.lurker else random_point(water, maxf(0.5, species.min_depth + 0.1))
 	if at == Vector3.INF:
 		at = water.global_position
 	school.setup(species, water, at)
@@ -67,8 +67,11 @@ func _process(delta: float) -> void:
 					break
 
 
-## Just off a reed clump, toward open water, where it's deep enough to swim (pike cover).
-func _lurk_spot() -> Vector3:
+## Just off a reed clump, toward open water, where it's deep enough to swim (pike cover). Deep
+## lurkers (salmon) and water without reeds (a river): anywhere deep enough for it.
+func _lurk_spot(species: FishSpecies) -> Vector3:
+	if species.min_depth > 0.5:
+		return random_point(water, species.min_depth)
 	var dressing := water.get_node_or_null("Dressing") as PondDressing
 	if dressing and not dressing.reed_spots.is_empty():
 		var spot: Vector3 = dressing.reed_spots.pick_random()
