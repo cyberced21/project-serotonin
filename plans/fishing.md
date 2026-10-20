@@ -31,7 +31,8 @@ telegraphed move) → land (grab on the flash).
   the main world's progress; the rod-only fish in the costs is **char** (main lake). Grayling and
   salmon are for the procgen worlds (and future costs once the main world has a river).
 - **Windows sized for human reactions** (~200 ms to see and click), not the bots': the strike
-  window is 300 ms (perch) down to 200 ms (pike, salmon), not ~250 → ~120 ms. What makes the
+  window is 600 ms (perch) down to 400 ms (pike, salmon), not ~250 → ~120 ms (doubled from 300 →
+  200 ms after the first hand playtest, 2026-10-20: too hard). What makes the
   harder fish harder is rhythm you have to *anticipate*: the take comes a steady beat after the
   tap-tap, a headshake counts in on its own beat (creak, tremble, jerk, jerk...), and the jump's
   splash lands as the bulge peaks. Bows and jerks: ±160 / ±100 ms round the cue.
