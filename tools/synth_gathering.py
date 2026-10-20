@@ -265,35 +265,33 @@ def twigs(rng):
     return body(rng, 900, 9000, 24, 0.012, TWIG_LEVELS, 0.4)
 
 
-def chop(rng, v=PLAIN_WOOD, tone=1.25, crack=1.0, weight=1.0, length=0.65):
-    """An axe blow, crisp and clear: the edge's crack (a millisecond of bright noise and the
-    steel's tick), the trunk's clear wooden 'tok' (a few tuned resonances, a woodblock's, around
-    520-560 Hz on a plain trunk), a quick low thump for the weight of it, a short crackle of
-    fibres splitting, a couple of chips. Almost dry, and short: the bite is over in ~30 ms.
-    `tone` moves the tok's pitch, `length` scales how long the tok, the thump and the crackle
-    last, `crack` and `weight` scale those parts (the variants to compare)."""
-    n = secs(0.45)
+def chop(rng, v=PLAIN_WOOD, tone=1.0, crack=1.0, wedge=1.0, weight=1.0, length=1.0):
+    """An axe biting deep into a dense log, one solid blow and nothing after it:
+    - the edge's crack: a millisecond of noise and the steel's tick, not too bright (dense wood
+      doesn't splinter);
+    - the wedge: the blade driving in, a low, compressed 'chunk' of noise under 1.6 kHz, gone in
+      a few ms;
+    - the log: a dense, heavily damped body (its note around 300 Hz on a plain trunk, a lower
+      one under it), over in ~40 ms;
+    - the weight: a low thump dropping to ~95 Hz.
+    Almost dry. `tone` moves the log's pitch, `length` how long it rings, `crack`, `wedge` and
+    `weight` scale those parts (the takes to compare)."""
+    n = secs(0.4)
     p, d, b = v["pitch"], v["damp"], 10 ** (v["bright"] / 20)
-    out = burst(rng, n, 2200, 9000, 0.0018, 1.3 * crack * b)
-    out += dsine(n, rng.uniform(2700, 3100), 0.004, 0.45 * crack * b) + dsine(n, rng.uniform(4300, 4900), 0.0025, 0.3 * crack * b)
-    f1 = rng.uniform(410, 450) * p * tone
-    for ratio, tau, amp in ((1.0, 0.022, 0.8), (2.31, 0.012, 0.42), (4.07, 0.006, 0.25)):
+    out = burst(rng, n, 1800, 7000, 0.0012, 0.8 * crack * b)
+    out += dsine(n, rng.uniform(2300, 2700), 0.003, 0.3 * crack * b)
+    out += burst(rng, n, 250, 1600, 0.006, 0.9 * wedge)
+    f1 = rng.uniform(290, 330) * p * tone
+    for ratio, tau, amp in ((1.0, 0.022, 1.0), (1.93, 0.013, 0.5), (3.3, 0.007, 0.28)):
         out += dsine(n, f1 * ratio * rng.uniform(0.99, 1.01), tau * length / d, amp, rng.uniform(0, 0.4))
-    out += punch(n, 280 * p, 125 * p, 0.006, 0.03 * length, 0.4 * weight)
-    out += splinters(rng, n, rng.integers(26, 38), 0.045 * length, 1800, 6000, 0.32 * crack * b, 0.001)
-    chips = np.sort(rng.uniform(0.07, 0.22, rng.integers(2, 4)))
-    for when in chips:
-        at(out, dsine(secs(0.02), rng.uniform(2000, 3600), 0.003, 0.05), when)
-    return space(rng, out, 0.7, 0.05)
+    out += dsine(n, f1 * 0.55, 0.03 * length / d, 0.55)  # the log's mass, under its note
+    out += punch(n, 230 * p, 95 * p, 0.007, 0.04 * length, 0.75 * weight)
+    return space(rng, out, 0.6, 0.04)
 
 
 def clean_cut(rng, v=PLAIN_WOOD):
-    """The blow that goes clean through: a harder chop, and the last fibres snapping in a quick,
-    bright run after it."""
-    out = chop(rng, v, tone=1.15, crack=1.3, weight=1.2, length=0.8)
-    run = splinters(rng, secs(0.3), rng.integers(16, 24), 0.18, 1800, 6000, 0.5, 0.0012)
-    at(out, run, 0.01)
-    return out
+    """The blow that goes clean through: a harder, heavier bite."""
+    return chop(rng, v, tone=0.95, crack=1.3, wedge=1.2, weight=1.3, length=1.15)
 
 
 def pull(rng, v=PLAIN_WOOD):
@@ -498,8 +496,8 @@ STONE_VOICED = ("mine", "crack", "split")
 # None). A layer: (group/sound, volume dB, pitch jitter, follows the caller's pitch, delay s).
 # bus / unit_size / max_distance as before.
 STACKS = {
-    "woodcutting/axe_hit": ([("wood/chop", 0.0, 0.04, True, 0.0)], "voiced", {}),
-    "woodcutting/clean_cut": ([("wood/clean_cut", 1.0, 0.04, True, 0.0)], None, {}),
+    "woodcutting/axe_hit": ([("wood/chop", 3.0, 0.04, True, 0.0)], "voiced", {}),
+    "woodcutting/clean_cut": ([("wood/clean_cut", 4.0, 0.04, True, 0.0)], None, {}),
     "woodcutting/axe_pull": ([("wood/pull", -6.0, 0.06, True, 0.0)], None, {}),
     "woodcutting/trunk_creak": ([("wood/creak", -3.0, 0.05, True, 0.0)], "voiced", {"unit_size": 5.0, "max_distance": 45.0}),
     "woodcutting/tree_fall": ([("wood/fall", -2.0, 0.04, True, 0.0)], None, {"unit_size": 8.0, "max_distance": 70.0}),

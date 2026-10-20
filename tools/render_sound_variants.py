@@ -15,10 +15,10 @@ import numpy as np
 import synth_gathering as G
 
 VARIANTS = {
-    "chop_A": functools.partial(G.chop),  # short, a little higher: what the game plays
-    "chop_B": functools.partial(G.chop, tone=1.45, length=0.55),  # higher and shorter still
-    "chop_C": functools.partial(G.chop, length=0.55, crack=1.35, weight=0.7),  # the bite sharper, less thump
-    "chop_D": functools.partial(G.chop, tone=1.12, length=0.8, weight=1.25),  # a touch lower, more body
+    "chop_A": functools.partial(G.chop),  # a deep bite into a dense log: what the game plays
+    "chop_B": functools.partial(G.chop, tone=0.8, weight=1.4, length=1.2),  # deeper and heavier
+    "chop_C": functools.partial(G.chop, tone=1.15, crack=1.4, length=0.75),  # harder and tighter
+    "chop_D": functools.partial(G.chop, wedge=1.8, crack=0.7),  # more of the blade driving in
     "mine": functools.partial(G.mine),  # the one picked (B of the last round): what the game plays
 }
 
