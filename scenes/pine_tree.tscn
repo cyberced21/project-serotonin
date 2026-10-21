@@ -10,6 +10,7 @@
 size = Vector3(0.75, 5.9, 0.75)
 
 [node name="PineTree" instance=ExtResource("1_base")]
+tool_tier = 2
 item = &"pine"
 max_hits = 9
 respawn_time = 40.0

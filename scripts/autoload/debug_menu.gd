@@ -34,6 +34,7 @@ var _tag: Label
 var _pinned: Label
 var _item_labels: Dictionary[StringName, Label] = {}
 var _skill_labels: Dictionary[StringName, Label] = {}
+var _tool_labels: Dictionary[StringName, Label] = {}
 var _village_box: VBoxContainer
 var _perks: Label
 var _time_slider: HSlider
@@ -64,6 +65,7 @@ func _ready() -> void:
 	_panel.visible = false
 	Inventory.changed.connect(func(_i: StringName, _c: int) -> void: _refresh_items())
 	Skills.xp_gained.connect(func(_s: StringName, _a: int, _t: int) -> void: _refresh_skills())
+	Tools.changed.connect(func(_t: StringName, _tier: int) -> void: _refresh_skills())
 	Village.tier_changed.connect(func(_id: StringName, _t: int) -> void: _refresh_village())
 	_start_from_cmdline.call_deferred()
 
@@ -313,6 +315,8 @@ func _refresh_skills() -> void:
 	for s in _skill_labels:
 		var lvl := Skills.level(s)
 		_skill_labels[s].text = "%s  %d  (%d XP)" % [Skills.display_name(s), lvl, Skills.xp.get(s, 0)]
+	for t in _tool_labels:
+		_tool_labels[t].text = "%s  (tier %d)" % [Tools.display_name(t, Tools.tier(t)), Tools.tier(t)]
 
 
 func _refresh_village() -> void:
@@ -543,6 +547,17 @@ func _build_skills() -> Control:
 		line.add_child(_button("+1", func() -> void: Skills.set_level(s, Skills.level(s) + 1)))
 		line.add_child(_button("+5", func() -> void: Skills.set_level(s, Skills.level(s) + 5)))
 		line.add_child(_button("+500 XP", func() -> void: Skills.add_xp(s, 500)))
+		box.add_child(line)
+	box.add_child(HSeparator.new())
+	box.add_child(_heading("Tools"))
+	for t in Tools.LADDER:
+		var label := _label(16)
+		box.add_child(label)
+		_tool_labels[t] = label
+		var line := HBoxContainer.new()
+		line.add_child(_button("−1", func() -> void: Tools.set_tier(t, Tools.tier(t) - 1)))
+		line.add_child(_button("+1", func() -> void: Tools.set_tier(t, Tools.tier(t) + 1)))
+		line.add_child(_button("Best", func() -> void: Tools.set_tier(t, Tools.max_tier(t))))
 		box.add_child(line)
 	return box
 

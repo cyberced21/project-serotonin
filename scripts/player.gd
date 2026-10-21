@@ -1005,7 +1005,7 @@ func _update_target() -> void:
 		hover_label.text = _talk_target.prompt() if not _panel_open() else ""
 		hover_label.modulate = Color.WHITE
 	elif _target and not _target.can_gather():
-		hover_label.text = "%s %d" % [Skills.display_name(_target.skill), _target.required_level]
+		hover_label.text = _target.needs_text()
 		hover_label.modulate = DEFLECT_COLOR
 	elif fish and not fish.can_catch():
 		hover_label.text = "%s %d" % [Skills.display_name(&"fishing"), fish.species.required_level]

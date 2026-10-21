@@ -57,6 +57,9 @@ const CRACKING_LAYER := 1 << 10
 ## Leave empty to use the item's icon from art/icons/ (see Items).
 @export var item_icon: Texture2D
 @export var tool_type: StringName = &"axe"
+## The tool tier that bites this node (Tools.LADDER: 0 stone, 1 copper, 2 iron, 3 crystal).
+## Below it, hits bounce off.
+@export_range(0, 3) var tool_tier := 0
 @export_range(1, 20) var max_hits := 5
 @export_range(0, 10) var drops_min := 2
 @export_range(0, 10) var drops_max := 4
@@ -383,16 +386,21 @@ func is_available() -> bool:
 	return hits_left > 0
 
 
-## False when the player's skill level is too low — hits will bounce off.
+## False when the player's tool is too weak for this node — hits will bounce off.
 func can_gather() -> bool:
-	return Skills.level(skill) >= required_level
+	return Tools.can_work(tool_type, tool_tier)
+
+
+## "Needs Iron pick": shown on a deflect and when the crosshair is on a node you can't work yet.
+func needs_text() -> String:
+	return "Needs %s" % Tools.display_name(tool_type, tool_tier)
 
 
 ## Called by the player while the crosshair is on this node.
 func set_highlighted(on: bool) -> void:
 	for s in _surfaces:
 		s.set_instance_shader_parameter("highlight", 1.0 if on else 0.0)
-	if on and _weak and not _weak.visible and can_gather():  # levelled up since it was hidden
+	if on and _weak and not _weak.visible and can_gather():  # got a better tool since it was hidden
 		_place_weak_point()
 
 
@@ -500,12 +508,12 @@ func _hit_sounds(info: HitInfo, pitch: float, double: bool, split: bool) -> void
 	_crack_sound = 0
 
 
-## Under-levelled: the tool bounces off — clank, small nudge, no damage, no XP.
+## Too weak a tool: it bounces off — clank, small nudge, no damage, no XP.
 func _deflect(info: HitInfo) -> void:
 	_play(audio, DEFLECT_SFX, 1.8)
 	_nudge(info.away())
 	Juice.shake(0.5)
-	PopupText.spawn(get_parent(), _popup_pos(), "%s %d" % [Skills.display_name(skill), required_level], DEFLECT_COLOR)
+	PopupText.spawn(get_parent(), _popup_pos(), needs_text(), DEFLECT_COLOR)
 
 
 func _award_xp(amount: int, big := false) -> void:

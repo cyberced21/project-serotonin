@@ -97,4 +97,13 @@ the reveal (for testing), but it plays in full by default.
    tint, swing sounds and sparks.
 6. **Fresh-start save version (T10), README, TODO.**
 
-Then one of the two level designs on top.
+Then [levels.md](levels.md) on top.
+
+## Status
+
+- **Phase 1 done** (branch `tools`, 2026-10-20): the `Tools` autoload (owned tier per tool type,
+  saved under `tools`), `tool_tier` on every node scene, `can_gather()` checks the tool, "Needs
+  Iron pick" on a deflect and on the crosshair, tool rows in the debug menu (F1 → Skills).
+  The hard level gate is gone; until phase 2 there's no under-level penalty either. Until
+  phase 3 the only way to a better tool is the debug menu, so an existing save drops to stone
+  tools (phase 6 starts fresh anyway).
