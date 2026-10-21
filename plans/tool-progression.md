@@ -137,3 +137,11 @@ Then [levels.md](levels.md) on top.
   a big star, a boom, 0.16 s hit-stop and shake 7. 13 sounds in `audio/forge/` from
   `tools/synth_forge.py`; `tools/forge_playtest.gd` screenshots each beat. **Bot-verified and
   screenshotted only; not watched or heard live.**
+- **Phase 5 done** (2026-10-20): `make_models.py tool_tiers` → `models/tools/<tool>_<tier>.glb`
+  (4 picks, 4 axes, 2 sickles: stone chipped and cord-lashed, copper, iron, crystal violet on a gold
+  collar); `render_icons.py` → `art/icons/tool_<tool>_<tier>.png`, shown in the Forge tab. The
+  held tool and the reveal use your tier's model (`Player.tool_model`), swapped on forging. Per
+  tier: sparks ×0.6 / 1 / 1.4 / 1.8 (stone → crystal), white-hot for iron and violet for crystal
+  (`ResourceNode.SPARK_TINTS`); a ring under every biting hit (copper dull, iron bright, crystal
+  glassy; `ring_*` in synth_forge.py); the swing's whoosh pitched 1.06 → 0.91, heavier per tier.
+  Screenshotted (crystal pick in hand, Forge tab icons); **sounds not heard**.

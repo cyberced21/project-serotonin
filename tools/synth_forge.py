@@ -17,6 +17,9 @@ there's nothing to randomize. The blows come as blow_1..3, each heavier than the
   bell       iron and above: the town hall's bell, once
   beam       crystal: a rising shimmer as the beam goes up
   shockwave  the first swing with a new tool: a deep boom with a ring
+  ring_copper, ring_iron, ring_crystal
+             the tool itself ringing on a biting hit, layered quietly under the hit: copper a
+             warm dull tone, iron a bright clang, crystal a glassy chime
 """
 import os
 import wave
@@ -225,13 +228,29 @@ def shockwave(rng):
     return boom + blast + ring
 
 
+def ring(f0, partials, decay, click):
+    def make(rng):
+        n = secs(decay * 2.5)
+        t = times(n)
+        x = np.zeros(n)
+        for ratio, g, d in partials:
+            x += g * np.sin(2 * np.pi * f0 * ratio * rng.uniform(0.997, 1.003) * t + rng.uniform(0, 6.28)) * env(n, 0.001, decay * d)
+        x += band(rng.standard_normal(n), 3000, 11000) * env(n, 0.0, 0.003) * click
+        return x
+    return make
+
+
 SOUNDS = {
     "flare": flare, "drone": drone, "blow_1": blow(0), "blow_2": blow(1), "blow_3": blow(2),
     "hiss": hiss, "reveal": reveal, "settle": settle, "glint": glint, "thunder": thunder,
     "bell": bell, "beam": beam, "shockwave": shockwave,
+    "ring_copper": ring(520, ((1.0, 1.0, 1.0), (2.4, 0.4, 0.5), (4.1, 0.15, 0.3)), 0.28, 0.5),
+    "ring_iron": ring(1180, ((1.0, 1.0, 1.0), (2.76, 0.6, 0.6), (5.4, 0.3, 0.35)), 0.45, 0.8),
+    "ring_crystal": ring(1560, ((1.0, 1.0, 1.0), (2.0, 0.5, 0.9), (3.01, 0.35, 0.8), (4.2, 0.2, 0.6)), 0.7, 0.3),
 }
 ## Quieter cues are written quieter, so the game's volumes stay simple (peak per sound).
-PEAKS = {"drone": 0.45, "glint": 0.4, "reveal": 0.6, "beam": 0.5}
+PEAKS = {"drone": 0.45, "glint": 0.4, "reveal": 0.6, "beam": 0.5, "ring_copper": 0.5, "ring_iron": 0.5,
+         "ring_crystal": 0.5}
 
 
 def write_wav(path, x, peak=0.7):

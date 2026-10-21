@@ -1134,11 +1134,13 @@ func _swing(tool: StringName) -> void:
 	var smooth: bool = pose.get("smooth", false)
 	var ease := Tween.EASE_IN_OUT if smooth else Tween.EASE_OUT
 	var windup: float = windup_time / pace * pose.get("windup_scale", 1.0)
-	Sfx.play_layers(tool_windup_layers.get(tool))
+	# a heavier tool swings lower: stone a touch light and quick, crystal deep
+	var heft := 1.06 - 0.05 * Tools.tier(tool) if Tools.LADDER.has(tool) else 1.0
+	Sfx.play_layers(tool_windup_layers.get(tool), heft)
 	if tool_swing_layers.has(tool):  # the swoosh swells into the hit: start it so it ends there
 		var strike_len := strike_time / pace
 		get_tree().create_timer(maxf(windup + strike_len - SWOOSH_LEAD, 0.0)).timeout.connect(
-			Sfx.play_layers.bind(tool_swing_layers[tool]))
+			Sfx.play_layers.bind(tool_swing_layers[tool], heft))
 	var t := create_tween().set_parallel()
 	t.tween_property(tool_pivot, axis, SICKLE_WINDUP if sideways else pose["windup"], windup).set_trans(Tween.TRANS_SINE).set_ease(ease)
 	t.tween_property(tool_pivot, "position", _tool_rest + pose["lift"], windup).set_trans(Tween.TRANS_SINE).set_ease(ease)

@@ -217,8 +217,12 @@ func _refresh_forge() -> void:
 	for tool in Tools.LADDER:
 		var t := Tools.tier(tool)
 		var recipe := Tools.next_recipe(tool)
+		var head := HBoxContainer.new()  # the tool's icon (the next one, or yours once it's the best)
+		head.add_theme_constant_override("separation", 8)
+		_forge_box.add_child(head)
+		head.add_child(_icon(StringName("tool_%s_%d" % [tool, mini(t + 1, Tools.max_tier(tool))]), 30.0))
 		var title := _label(19)
-		_forge_box.add_child(title)
+		head.add_child(title)
 		if recipe.is_empty():
 			title.text = "%s: the finest there is" % Tools.display_name(tool, t)
 			title.add_theme_color_override("font_color", HAVE_COLOR)

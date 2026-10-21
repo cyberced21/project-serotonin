@@ -27,6 +27,12 @@ const GHOST_OUTLINE_STENCIL := preload("res://shaders/ghost_outline_stencil.gdsh
 const GHOST_MASK_STENCIL := preload("res://shaders/ghost_mask_stencil.gdshader")
 const DEFLECT_SFX := preload("res://audio/stone_hit.tres")
 const DEFLECT_COLOR := Color("ff8a7a")
+## The tool's ring per tier above stone (_tool_ring), from tools/synth_forge.py.
+const TOOL_RINGS: Array[AudioStream] = [preload("res://audio/forge/ring_copper.wav"),
+	preload("res://audio/forge/ring_iron.wav"), preload("res://audio/forge/ring_crystal.wav")]
+## The sparks' colour per tool tier: stone and copper the usual hot orange (blank), iron white-hot,
+## crystal violet.
+const SPARK_TINTS: Array[Color] = [Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(1.0, 0.95, 0.82), Color(0.82, 0.6, 1.0)]
 ## A pause longer than this between hits ends a streak (Village stat streak_double).
 const STREAK_GAP_MSEC := 3000
 ## The skill rating popup on an under-levelled hit that barely bit.
@@ -242,6 +248,7 @@ var last_impact := 1.0
 var _crack_sound := 0  # CRACK_* : what this hit's crack did, for _hit_sounds
 var _crack_step := 0  # ... and how far along it is (each step a little higher)
 var _cut := 0.0  # the fraction of a hit (under-levelled) carried over to the next one
+var _ring: AudioStreamPlayer3D  # the tool's ring (_tool_ring), made on first use
 var _streak := 0  # biting hits in a row on this node (the Crystal Forge's streak_double)
 var _last_hit_msec := -100000
 var _surfaces: Array[GeometryInstance3D] = []
@@ -480,6 +487,8 @@ func hit(info: HitInfo) -> bool:
 	_flash()
 	_nudge(info.away() * (1.6 if double else 1.0))
 	_hit_effects(info, 2.0 if fresh else 1.5 if tip or _clean else 1.0)
+	if bit:
+		_tool_ring(info)
 	if fresh:
 		ForgeCutscene.first_swing(get_parent(), info.position, info.normal, ForgeCutscene.tier_color(Tools.tier(tool_type)))
 	Juice.shake(shake_hit + stress * 1.5 + (1.5 if double else 0.0))
@@ -559,6 +568,23 @@ func _deflect(info: HitInfo) -> void:
 	_nudge(info.away())
 	Juice.shake(0.5)
 	PopupText.spawn(get_parent(), _popup_pos(), needs_text(), DEFLECT_COLOR)
+
+
+## The tool's own ring under a biting hit: copper dull, iron bright, crystal a glassy chime.
+func _tool_ring(info: HitInfo) -> void:
+	var tier := Tools.tier(tool_type) if Tools.LADDER.has(tool_type) else 0
+	if tier < 1 or tier > TOOL_RINGS.size():
+		return
+	if _ring == null:
+		_ring = AudioStreamPlayer3D.new()
+		_ring.bus = &"SFX"
+		_ring.unit_size = 4.0
+		add_child(_ring)
+	_ring.global_position = info.position
+	_ring.stream = TOOL_RINGS[tier - 1]
+	_ring.volume_db = -10.0
+	_ring.pitch_scale = randf_range(0.95, 1.05)
+	_ring.play()
 
 
 func _award_xp(amount: int, big := false) -> void:
@@ -2457,9 +2483,12 @@ func _hit_effects(info: HitInfo, strength: float) -> void:
 		_chips_at(info)
 		return
 	var swing := (info.position - info.from).normalized()
-	var sparks := roundi(spark_amount * (2.0 if strength > 1.2 else 1.0))
+	# a better tool throws more sparks, and iron and crystal throw them in their own colour
+	var tier := Tools.tier(tool_type) if Tools.LADDER.has(tool_type) else 1
+	var sparks := roundi(spark_amount * (2.0 if strength > 1.2 else 1.0) * (0.6 + 0.4 * tier))
 	var second := ore_color if cracks else bark_color if _carve else Color(0, 0, 0, 0)
-	HitFx.spawn(hit_fx, get_parent(), info.position, info.normal, swing, chip_color, second, strength, sparks)
+	HitFx.spawn(hit_fx, get_parent(), info.position, info.normal, swing, chip_color, second, strength, sparks,
+		SPARK_TINTS[tier] if tier < SPARK_TINTS.size() else Color(0, 0, 0, 0))
 	HitFx.star(get_parent(), info.position + info.normal * 0.08, STAR_TIP if strength > 1.2 else STAR_HIT, 0.8 * strength)
 	_add_rubble(info.position, 1 if strength <= 1.0 else 2)
 
