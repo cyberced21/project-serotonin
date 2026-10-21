@@ -68,6 +68,18 @@ Plan and decisions: `plans/woodcutting-overhaul.md`.
 - [ ] **The notch on birch** shows less (pale cut wood on white bark); a darker cut colour for it if it reads poorly.
 - [ ] **Bucking the fallen trunk into logs** with more swings (left out of this overhaul).
 
+## Tools and levels ([plans/tool-progression.md](../plans/tool-progression.md))
+
+- [x] **Tools gate, levels are soft:** `Tools` autoload, `tool_tier` on every node, under-level penalty and XP bonus (`Skills.UNDER_*`), the spear's gate soft too.
+- [x] **Greta forges:** Forge tab, `Tools.RECIPES`, smithy-tier cap, +1 hit power per tier above a node, the Crystal Forge's streak double hit.
+- [x] **The forge moment** (`ForgeCutscene`), per-tier escalation, the first-swing shockwave; tier models, icons, sparks, rings and swing pitch.
+- [x] **Fresh start:** save version 2; older saves renamed aside (`*.pre-tools.bak`).
+- [ ] **Play it by hand.** Everything is bot-tested and screenshotted only: the gate and the under-level penalty (is the 40% floor, reached 10 levels under, too forgiving?), the recipe quantities (`Tools.RECIPES`, first guesses), and the cutscene's pacing (8.6 s; ~9.3 s real with the blows' hit-stops).
+- [ ] **Listen to the forge and tool sounds** (`tools/synth_forge.py`): flare, drone, the three blows, hiss, reveal swell, thunder, bell, beam, shockwave, and the copper / iron / crystal rings. All unheard.
+- [ ] **Greta's hammer pose** in the cutscene is the arm only (her work animation's hammer stays in her hand); a real hammer swing and the blank in her tongs would sell it more.
+- [ ] **`SaveGame.register` and freed nodes:** registering a save id whose previous owner was freed errors ("Trying to assign invalid previously freed instance", the typed `old` in `register`). Seen only in a test that reused ids; would bite a scene reload that re-registers.
+- [ ] **Levels: per-level perks and talent choices** — the next plan, [plans/levels.md](../plans/levels.md).
+
 ## Village
 
 Design notes are in [village-design.md](village-design.md).

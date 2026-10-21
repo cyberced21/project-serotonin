@@ -5,7 +5,8 @@ soft: they say *how well* you gather, never *whether* you can. What a level-up *
 (chosen 2026-10-20 after exploring [levels-milestones.md](levels-milestones.md) and
 [levels-talents.md](levels-talents.md)).
 
-Status: **designed** (grilled 2026-10-20, every open question decided; not started). No branch yet.
+Status: **built** on branch `tools` (2026-10-20), all six phases; bot-tested and screenshotted,
+not yet played or heard by hand (see docs/TODO.md).
 
 ## Decisions (grilled 2026-10-20)
 
@@ -145,3 +146,10 @@ Then [levels.md](levels.md) on top.
   (`ResourceNode.SPARK_TINTS`); a ring under every biting hit (copper dull, iron bright, crystal
   glassy; `ring_*` in synth_forge.py); the swing's whoosh pitched 1.06 → 0.91, heavier per tier.
   Screenshotted (crystal pick in hand, Forge tab icons); **sounds not heard**.
+- **Phase 6 done** (2026-10-20): save `VERSION` 2 with `FRESH_START_BELOW` = 2. An older save
+  (main or a generated world's) isn't loaded: it's renamed to `<file>.pre-tools.bak` (then
+  `.pre-tools.2.bak` ...) and the game starts fresh. A tool script (`-s`) never touches an old
+  save: it switches to `user://tool_run_save.json` (tested on throwaway files; the real save was
+  untouched). README (skills and tools, Greta's Forge, the forge moment, saving, debug menu,
+  autoloads, adding a tool tier) and docs/TODO.md (a Tools and levels section) updated.
+  **All six phases done**; next: [levels.md](levels.md).

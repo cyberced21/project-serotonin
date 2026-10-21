@@ -3,9 +3,15 @@ extends Node
 ## A system calls SaveGame.register(key, self) and implements to_dict() -> Dictionary and from_dict(d: Dictionary). Registering applies
 ## any saved data immediately, so it doesn't matter when a system registers (autoload or scene).
 ## Saves on quit, when asked (e.g. level-up), and every AUTOSAVE_INTERVAL if something changed.
+## A save from before FRESH_START_BELOW isn't loaded: it's renamed aside (never deleted) and the
+## game starts fresh (tool progression changed what a save means: plans/tool-progression.md T10).
 
 const MAIN_PATH := "user://save.json"
-const VERSION := 1
+const VERSION := 2
+## Saves older than this are set aside instead of loaded (version 2: tool progression).
+const FRESH_START_BELOW := 2
+## Where a tool script (-s) saves instead, if the real file is one it mustn't touch.
+const TOOL_RUN_PATH := "user://tool_run_save.json"
 const AUTOSAVE_INTERVAL := 30.0
 
 ## The file being saved to: MAIN_PATH, or a procgen world's own (ProcgenWorld.save_path()).
@@ -13,6 +19,8 @@ var path := MAIN_PATH
 var _data: Dictionary = {}                  # key -> last saved/loaded dict
 var _systems: Dictionary[String, Object] = {}
 var _dirty := false
+## Tests only: let a tool script (-s) set an old save aside, on a file of its own.
+var _tool_may_set_aside := false
 
 
 func _ready() -> void:
@@ -114,9 +122,33 @@ func _load() -> void:
 	if not (parsed is Dictionary and parsed.get("data") is Dictionary):
 		push_warning("SaveGame: %s is corrupt, starting fresh" % path)
 		return
-	if int(parsed.get("version", 0)) > VERSION:
+	var version := int(parsed.get("version", 0))
+	if version > VERSION:
 		push_warning("SaveGame: save is from a newer version (%s)" % parsed.get("version"))
+	if version < FRESH_START_BELOW:
+		_set_aside()
+		return
 	_data = parsed["data"]
+
+
+## The save at `path` is from before the fresh start: rename it aside (.pre-tools.bak, numbered if
+## that's taken) and start with nothing. A tool script (-s) never touches the player's files: it
+## switches to TOOL_RUN_PATH instead.
+func _set_aside() -> void:
+	if get_tree().get_script() != null and not _tool_may_set_aside:
+		push_warning("SaveGame: %s is an old save; a tool run leaves it alone and uses %s" % [path, TOOL_RUN_PATH])
+		path = TOOL_RUN_PATH
+		return
+	var aside := path + ".pre-tools.bak"
+	var n := 2
+	while FileAccess.file_exists(aside):
+		aside = "%s.pre-tools.%d.bak" % [path, n]
+		n += 1
+	var err := DirAccess.rename_absolute(path, aside)
+	if err != OK:
+		push_warning("SaveGame: can't set %s aside (%s); starting fresh in memory" % [path, error_string(err)])
+		return
+	push_warning("SaveGame: %s is from before tool progression; set aside as %s, starting fresh" % [path, aside])
 
 
 func _notification(what: int) -> void:
