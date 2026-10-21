@@ -27,6 +27,8 @@ const GHOST_OUTLINE_STENCIL := preload("res://shaders/ghost_outline_stencil.gdsh
 const GHOST_MASK_STENCIL := preload("res://shaders/ghost_mask_stencil.gdshader")
 const DEFLECT_SFX := preload("res://audio/stone_hit.tres")
 const DEFLECT_COLOR := Color("ff8a7a")
+## The skill rating popup on an under-levelled hit that barely bit.
+const UNDER_COLOR := Color("ffc27a")
 const SHARP_COLOR := Color("ffd27a")
 ## The impact star's tint: a plain hit, a crack tip (and splits).
 const STAR_HIT := Color(1.0, 0.97, 0.9)
@@ -75,6 +77,8 @@ const CRACKING_LAYER := 1 << 10
 @export_group("Skill")
 ## Skill id from Skills.SKILLS (e.g. woodcutting, mining).
 @export var skill: StringName = &"woodcutting"
+## How hard the node is: below this level you still gather, but with less power per hit and
+## tighter clean-cut / crack-tip / weak-point windows (Skills.UNDER_*), and more XP when it breaks.
 @export_range(1, 50) var required_level := 1
 @export_range(0, 100) var xp_per_hit := 5
 @export_range(0, 500) var xp_on_break := 15
@@ -396,6 +400,26 @@ func needs_text() -> String:
 	return "Needs %s" % Tools.display_name(tool_type, tool_tier)
 
 
+## Your skill is below the node's rating: it can be gathered, just slowly.
+func is_under_levelled() -> bool:
+	return Skills.levels_under(skill, required_level) > 0
+
+
+## "Mining 15": the node's rating, shown when you're under it.
+func under_text() -> String:
+	return "%s %d" % [Skills.display_name(skill), required_level]
+
+
+## Hit power left after the under-level penalty (1.0 at or above the rating).
+func _power_scale() -> float:
+	return Skills.under_scale(skill, required_level, Skills.UNDER_POWER_PER_LEVEL, Skills.UNDER_POWER_FLOOR)
+
+
+## How wide the technique windows are after the under-level penalty (1.0 at or above the rating).
+func _window_scale() -> float:
+	return Skills.under_scale(skill, required_level, Skills.UNDER_WINDOW_PER_LEVEL, Skills.UNDER_WINDOW_FLOOR)
+
+
 ## Called by the player while the crosshair is on this node.
 func set_highlighted(on: bool) -> void:
 	for s in _surfaces:
@@ -416,15 +440,17 @@ func hit(info: HitInfo) -> bool:
 	# the smithy's sharper tools: sometimes a hit counts twice, and crystal edges cut deeper every
 	# time (the fraction carries over, so +0.5 means every other hit counts twice); the weak point
 	# always adds more
-	_cut += 1.0 + Village.stat(&"hit_power")
+	_cut += (1.0 + Village.stat(&"hit_power")) * _power_scale()  # under-levelled: less bite
 	var cuts := int(_cut)
 	_cut -= cuts
-	var double := randf() < Village.stat(&"double_hit_chance") or cuts > 1
+	var double := cuts > 0 and (randf() < Village.stat(&"double_hit_chance") or cuts > 1)
 	var weak := _is_weak_hit(info)
 	var tip := cracks and _is_tip_hit(info)
 	_clean = _carve != null and _is_clean_cut(info)
 	hits_left = maxi(hits_left - cuts - (1 if double and cuts == 1 else 0) - (weak_point_extra_hits if weak else 0)
 		- (crack_tip_extra_hits if tip else 0) - (clean_cut_extra_hits if _clean else 0), 0)
+	# under-levelled, a plain hit can fall short of a whole cut: it marks the node but takes nothing
+	var bit := hits_left < before
 	if weak:
 		_weak_hit_feedback(info)
 	if _carve:
@@ -432,7 +458,7 @@ func hit(info: HitInfo) -> bool:
 		_tree_reacts(info, 1.0 - float(hits_left) / max_hits)
 	SaveGame.mark_dirty()
 	var collapsed := 0
-	if not _links.is_empty():
+	if not _links.is_empty() and bit:
 		collapsed = _knock_out(info, 2 if double else 1)  # (sets hits_left)
 	var stress := 1.0 - float(hits_left) / max_hits  # 0 -> 1 as it depletes
 
@@ -447,6 +473,8 @@ func hit(info: HitInfo) -> bool:
 		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.35, 0), "Sharp!", SHARP_COLOR, 9)
 	if _clean:
 		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.6, 0), "Clean cut!", clean_cut_color, 10)
+	elif not bit:  # under-levelled, and this one didn't bite: say why
+		PopupText.spawn(get_parent(), _popup_pos(), under_text(), UNDER_COLOR, 7)
 	_award_xp(xp_per_hit * (2 if double else 1) * (2 if weak or tip or _clean else 1))
 
 	var split := hits_left > 0 and cracks and _links.is_empty() and _grow_crack(info, tip)
@@ -531,7 +559,7 @@ func _popup_pos() -> Vector3:
 
 func _break(info: HitInfo) -> void:
 	_clear_fault()
-	_award_xp(xp_on_break, true)
+	_award_xp(roundi(xp_on_break * (1.0 + (Skills.UNDER_XP_BONUS if is_under_levelled() else 0.0))), true)
 	if _carve and clean_layers:  # the hinge giving way: a deep snap of the last fibres
 		Sfx.play_at(clean_layers, info.position, 0.6, 3.0)
 	else:
@@ -972,7 +1000,7 @@ func _is_clean_cut(info: HitInfo) -> bool:
 	if deep < full * clean_cut_after:
 		return false
 	var mouth := _trunk.global_transform * (_carve.bite_point(dir) + dir.normalized() * deep * 0.5)
-	return _aimed_near(info, mouth, clean_cut_radius)
+	return _aimed_near(info, mouth, clean_cut_radius * _window_scale())
 
 
 ## A wood chip flying out of the notch as the axe comes free: a flat wedge of cut wood, a big
@@ -1557,7 +1585,7 @@ var _crack_tip: Decal
 
 func _is_tip_hit(info: HitInfo) -> bool:
 	for p in crack_tips():
-		if _aimed_near(info, p, crack_tip_radius):
+		if _aimed_near(info, p, crack_tip_radius * _window_scale()):
 			return true
 	return false
 
@@ -2285,7 +2313,7 @@ func _place_weak_point() -> void:
 func _is_weak_hit(info: HitInfo) -> bool:
 	if _weak == null or not _weak.visible:
 		return false
-	return _aimed_near(info, _weak.global_position, weak_point_radius)
+	return _aimed_near(info, _weak.global_position, weak_point_radius * _window_scale())
 
 
 ## Whether the swing's line passes within `radius` of `point`.

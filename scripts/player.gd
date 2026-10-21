@@ -233,6 +233,8 @@ enum State { NORMAL, SLIDE, MANTLE, WALLRUN }
 ## Slide scrape pitch per surface (see footsteps.gd): sand is dull, rock is sharp.
 const SLIDE_PITCH := {&"grass": 1.1, &"dirt": 0.9, &"rock": 1.3, &"sand": 0.75, &"snow": 1.0}
 const DEFLECT_COLOR := Color("ff8a7a")
+## The crosshair label on something you can gather, but are under-levelled for.
+const UNDER_COLOR := Color("ffc27a")
 const TOOL_MATERIAL := preload("res://materials/node_palette.tres")
 const SPEED_LINES := preload("res://shaders/speed_lines.gdshader")
 ## Where each tool's cutting edge is, in its model's space (tools/blender/make_models.py): the
@@ -1007,9 +1009,12 @@ func _update_target() -> void:
 	elif _target and not _target.can_gather():
 		hover_label.text = _target.needs_text()
 		hover_label.modulate = DEFLECT_COLOR
-	elif fish and not fish.can_catch():
+	elif _target and _target.is_under_levelled():
+		hover_label.text = _target.under_text()
+		hover_label.modulate = UNDER_COLOR
+	elif fish and fish.is_under_levelled():
 		hover_label.text = "%s %d" % [Skills.display_name(&"fishing"), fish.species.required_level]
-		hover_label.modulate = DEFLECT_COLOR
+		hover_label.modulate = UNDER_COLOR
 	else:
 		hover_label.text = ""
 

@@ -107,3 +107,11 @@ Then [levels.md](levels.md) on top.
   The hard level gate is gone; until phase 2 there's no under-level penalty either. Until
   phase 3 the only way to a better tool is the debug menu, so an existing save drops to stone
   tools (phase 6 starts fresh anyway).
+- **Phase 2 done** (2026-10-20): `required_level` is now a node's rating. Under it, hit power
+  drops 6% per level (floor 40%, reached 10 levels under) and the clean-cut, crack-tip and
+  weak-point windows shrink 4% per level (floor 50%); a hit that falls short of a whole cut
+  takes nothing (rocks of pieces keep theirs) and pops the rating ("Mining 15") in amber, which
+  the crosshair also shows. Breaking an under-levelled node gives +25% XP (`Skills.UNDER_*`).
+  Headless: barley 4 → 10 swings, iron 9 → 22, oak 7 → 18 at the floor. The spear's hard gate
+  went soft too: an under-levelled fish is taken with 10% less chance per level (floor 10%) and
+  gives +50% XP, like the rod.

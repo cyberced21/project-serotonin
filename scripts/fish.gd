@@ -84,5 +84,12 @@ func flash() -> void:
 			s.set_instance_shader_parameter("flash", v), 0.8, 0.0, 0.12)
 
 
-func can_catch() -> bool:
-	return Skills.level(&"fishing") >= species.required_level
+## Under-levelled for this species: the spear only sometimes takes it (it usually dodges).
+func is_under_levelled() -> bool:
+	return Skills.levels_under(&"fishing", species.required_level) > 0
+
+
+## The chance a spear thrust through this fish takes it: certain at or above its level, 10% less
+## per level under, never below 10%.
+func catch_chance() -> float:
+	return Skills.under_scale(&"fishing", species.required_level, 0.1, 0.1)

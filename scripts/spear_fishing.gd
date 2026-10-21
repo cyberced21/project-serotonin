@@ -6,8 +6,8 @@ extends Node
 ##
 ## A strike: wind-up -> thrust -> on the impact frame a thin capsule is swept from where the
 ## spear enters the water, along your aim. Every fish inside is skewered (multi-spears are
-## physical: line up a school). Fish you're under-levelled for dodge. Caught fish appear on the
-## held spear, wriggling; the hit escalates with each extra fish (hit-stop, shake, rising pitch,
+## physical: line up a school). Fish you're under-levelled for usually dodge. Caught fish appear
+## on the held spear, wriggling; the hit escalates with each extra fish (hit-stop, shake, rising pitch,
 ## "Double!"); on the yank they flip off into the inventory. Misses splash and scatter fish.
 
 const WORLD_MASK := 1
@@ -162,9 +162,9 @@ func thrust() -> void:
 		var dir := -(player.camera as Camera3D).global_basis.z
 		var hits := _skewer(entry, dir)
 		var caught: Array[Fish] = []
-		caught.assign(hits.filter(func(f: Fish) -> bool: return f.can_catch()))
 		var dodgers: Array[Fish] = []
-		dodgers.assign(hits.filter(func(f: Fish) -> bool: return not f.can_catch()))
+		for f in hits:  # under-levelled fish usually dodge
+			(caught if randf() < f.catch_chance() else dodgers).append(f)
 		_splash(entry, 1.0 if caught.is_empty() else 0.7)
 		if not dodgers.is_empty() and caught.is_empty():
 			var sp := dodgers[0].species
@@ -240,9 +240,9 @@ func _put_on_spear(caught: Array[Fish]) -> void:
 ## Escalating feedback + XP for n fish on one thrust.
 func _impact(species: Array[FishSpecies], at: Vector3) -> void:
 	var n := species.size()
-	var xp := 0
+	var xp := 0.0
 	for s in species:
-		xp += s.xp
+		xp += s.xp * (1.5 if Skills.levels_under(&"fishing", s.required_level) > 0 else 1.0)  # (reaching up pays)
 	xp = roundi(xp * (1.0 + multi_xp_bonus * (n - 1)))
 	var gained := Skills.add_xp(&"fishing", xp)
 	Juice.hitstop(0.05 + 0.03 * (n - 1))
