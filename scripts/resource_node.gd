@@ -27,6 +27,8 @@ const GHOST_OUTLINE_STENCIL := preload("res://shaders/ghost_outline_stencil.gdsh
 const GHOST_MASK_STENCIL := preload("res://shaders/ghost_mask_stencil.gdshader")
 const DEFLECT_SFX := preload("res://audio/stone_hit.tres")
 const DEFLECT_COLOR := Color("ff8a7a")
+## A pause longer than this between hits ends a streak (Village stat streak_double).
+const STREAK_GAP_MSEC := 3000
 ## The skill rating popup on an under-levelled hit that barely bit.
 const UNDER_COLOR := Color("ffc27a")
 const SHARP_COLOR := Color("ffd27a")
@@ -239,7 +241,9 @@ var hits_left := 0
 var last_impact := 1.0
 var _crack_sound := 0  # CRACK_* : what this hit's crack did, for _hit_sounds
 var _crack_step := 0  # ... and how far along it is (each step a little higher)
-var _cut := 0.0  # hit_power's fraction of a hit, carried over to the next one
+var _cut := 0.0  # the fraction of a hit (under-levelled) carried over to the next one
+var _streak := 0  # biting hits in a row on this node (the Crystal Forge's streak_double)
+var _last_hit_msec := -100000
 var _surfaces: Array[GeometryInstance3D] = []
 var _flash_tween: Tween
 var _nudge_tween: Tween
@@ -437,17 +441,25 @@ func hit(info: HitInfo) -> bool:
 		_deflect(info)
 		return false
 	var before := hits_left
-	# the smithy's sharper tools: sometimes a hit counts twice, and crystal edges cut deeper every
-	# time (the fraction carries over, so +0.5 means every other hit counts twice); the weak point
-	# always adds more
-	_cut += (1.0 + Village.stat(&"hit_power")) * _power_scale()  # under-levelled: less bite
+	# a better tool than the node needs bites deeper (+1 cut per tier above); under-levelled, every
+	# hit bites less (the fraction carries over to the next hit)
+	_cut += (1.0 + Tools.tiers_above(tool_type, tool_tier)) * _power_scale()
 	var cuts := int(_cut)
 	_cut -= cuts
-	var double := cuts > 0 and (randf() < Village.stat(&"double_hit_chance") or cuts > 1)
+	# the smithy's sharper tools: sometimes a hit counts twice; at the Crystal Forge, so does every
+	# Nth biting hit in a row on this node. The weak point, crack tips and clean cuts add more.
+	var now := Time.get_ticks_msec()
+	if cuts == 0 or now - _last_hit_msec > STREAK_GAP_MSEC:
+		_streak = 0
+	_streak += 1 if cuts > 0 else 0
+	_last_hit_msec = now
+	var every := int(Village.stat(&"streak_double"))
+	var streak_hit := every > 0 and _streak > 0 and _streak % every == 0
+	var double := cuts > 0 and (streak_hit or randf() < Village.stat(&"double_hit_chance"))
 	var weak := _is_weak_hit(info)
 	var tip := cracks and _is_tip_hit(info)
 	_clean = _carve != null and _is_clean_cut(info)
-	hits_left = maxi(hits_left - cuts - (1 if double and cuts == 1 else 0) - (weak_point_extra_hits if weak else 0)
+	hits_left = maxi(hits_left - cuts - (1 if double else 0) - (weak_point_extra_hits if weak else 0)
 		- (crack_tip_extra_hits if tip else 0) - (clean_cut_extra_hits if _clean else 0), 0)
 	# under-levelled, a plain hit can fall short of a whole cut: it marks the node but takes nothing
 	var bit := hits_left < before
@@ -459,7 +471,7 @@ func hit(info: HitInfo) -> bool:
 	SaveGame.mark_dirty()
 	var collapsed := 0
 	if not _links.is_empty() and bit:
-		collapsed = _knock_out(info, 2 if double else 1)  # (sets hits_left)
+		collapsed = _knock_out(info, maxi(cuts, 1) + (1 if double else 0))  # (sets hits_left)
 	var stress := 1.0 - float(hits_left) / max_hits  # 0 -> 1 as it depletes
 
 	var pitch := 1.0 + stress * stress_pitch - (0.12 if double else 0.0)

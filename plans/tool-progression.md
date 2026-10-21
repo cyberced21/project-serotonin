@@ -115,3 +115,12 @@ Then [levels.md](levels.md) on top.
   Headless: barley 4 → 10 swings, iron 9 → 22, oak 7 → 18 at the floor. The spear's hard gate
   went soft too: an under-levelled fish is taken with 10% less chance per level (floor 10%) and
   gives +50% XP, like the rod.
+- **Phase 3 done** (2026-10-20): Greta's panel has **Upgrade / Forge** tabs (only hers). Forge
+  lists the next pick, axe and sickle with cost and what it opens, or "Needs the Smithy first"
+  when her tier is too low (`Tools.RECIPES`; tool tier t needs smithy tier t + 1). Forging
+  spends, hands over the tool, closes the panel and pops its name (the cutscene is phase 4).
+  A tool hits +1 per tier above the node (copper rock: 5.8 → 4.0 → 3.3 → 3.0 swings, stone
+  → crystal pick). The Crystal Forge's `hit_power` became `streak_double` = 3: every 3rd
+  biting hit in a row on a node counts twice (a 3 s pause ends the streak); pine with an iron
+  axe 6.7 → 5.9 swings. The tool's extra power doesn't trigger "Sharp!": only the smithy's
+  chance and the streak do.

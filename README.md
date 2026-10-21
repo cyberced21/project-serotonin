@@ -81,7 +81,7 @@ whatever you hit.
   - Every building has three tiers (the smithy has a fourth, the Crystal Forge, which needs town hall tier 3). The town hall's tier caps the houses, so raising it opens the next round.
   - The village grows: raising the town hall brings new neighbours, whose cottages build themselves (Rosa the baker at tier 2, Edda the prospector at tier 3). Their cottages upgrade too: Rosa's into a bakery and bakehouse, Edda's into an assay shed and office.
   - Every tier above the first gives a perk, shown in the panel:
-    - Smithy: sharper tools, so a hit can count twice. At the Crystal Forge, every other hit also cuts twice as deep.
+    - Smithy: sharper tools, so a hit can count twice. At the Crystal Forge, every 3rd hit in a row counts twice too.
     - Woodcutter: extra logs from every tree.
     - Fisher: calmer fish, then a chance of a bonus fish.
     - Town hall: bonus XP in every skill.

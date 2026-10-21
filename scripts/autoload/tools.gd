@@ -11,6 +11,25 @@ const LADDER := {
 	&"axe": ["Stone axe", "Copper axe", "Iron axe", "Crystal axe"],
 	&"sickle": ["Stone sickle", "Copper sickle"],
 }
+## What Greta needs to forge each tier above the first (index = tier - 1), and what it opens.
+## Each is made from what the tier below can gather. Tier t needs the smithy at tier t + 1.
+const RECIPES := {
+	&"pickaxe": [
+		{"cost": {&"ore": 15, &"wood": 10}, "opens": "Opens iron and coal"},
+		{"cost": {&"iron": 15, &"coal": 10, &"oak": 10}, "opens": "Opens gold and crystal"},
+		{"cost": {&"crystal": 8, &"gold": 8, &"pine": 10}, "opens": "The finest pick: hits hardest"},
+	],
+	&"axe": [
+		{"cost": {&"ore": 12, &"birch": 10}, "opens": "Opens oak"},
+		{"cost": {&"iron": 12, &"coal": 8}, "opens": "Opens pine"},
+		{"cost": {&"crystal": 6, &"gold": 6, &"pine": 12}, "opens": "The finest axe: hits hardest"},
+	],
+	&"sickle": [
+		{"cost": {&"ore": 8, &"wood": 8}, "opens": "Opens barley"},
+	],
+}
+## The building whose tier caps the tools Greta can forge.
+const SMITHY := &"smithy"
 
 var tiers: Dictionary[StringName, int] = {}
 
@@ -30,6 +49,42 @@ func max_tier(tool: StringName) -> int:
 ## True if the tool you own of this type bites a node of tier `needed`. Untiered tools always do.
 func can_work(tool: StringName, needed: int) -> bool:
 	return not LADDER.has(tool) or tier(tool) >= needed
+
+
+## How many tiers your tool is above a node of tier `needed` (each one is +1 hit power).
+func tiers_above(tool: StringName, needed: int) -> int:
+	return maxi(tier(tool) - needed, 0) if LADDER.has(tool) else 0
+
+
+## The next tier's recipe ({cost, opens}), or {} once the best is forged.
+func next_recipe(tool: StringName) -> Dictionary:
+	var t := tier(tool) + 1
+	if not RECIPES.has(tool) or t > max_tier(tool):
+		return {}
+	return RECIPES[tool][t - 1]
+
+
+## The smithy tier Greta needs to forge `tool` at tier `t`.
+func smithy_needed(t: int) -> int:
+	return t + 1
+
+
+## The forge is hot enough for the next tier (the smithy's own tier allows it).
+func forge_unlocked(tool: StringName) -> bool:
+	return Village.tier(SMITHY) >= smithy_needed(tier(tool) + 1)
+
+
+func can_forge(tool: StringName) -> bool:
+	var r := next_recipe(tool)
+	return not r.is_empty() and forge_unlocked(tool) and Inventory.has_all(r["cost"])
+
+
+## Pays for and hands over the next tier of `tool`. False (and nothing spent) if it can't.
+func forge(tool: StringName) -> bool:
+	if not can_forge(tool) or not Inventory.spend(next_recipe(tool)["cost"]):
+		return false
+	set_tier(tool, tier(tool) + 1)
+	return true
 
 
 ## "Iron pick": the name of `tool` at tier `t`.
