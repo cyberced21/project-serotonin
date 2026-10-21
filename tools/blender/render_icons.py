@@ -43,6 +43,10 @@ ICONS = {
     "grayling": ("fish/grayling.glb", (1.0, 0.25, 0.45)),
     "salmon": ("fish/salmon.glb", (1.0, 0.25, 0.45)),
 }
+# The forged tools (Greta's Forge tab): tool_<type>_<tier>, seen side-on with the head up.
+for _tool, _tiers in (("pickaxe", 4), ("axe", 4), ("sickle", 2)):
+    for _t in range(_tiers):
+        ICONS[f"tool_{_tool}_{_t}"] = (f"tools/{_tool}_{_t}.glb", (1.0, -0.35, 0.3))
 
 
 def palette_material():

@@ -329,10 +329,12 @@ func _ready() -> void:
 	head.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	$Viewmodel.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	_build_speed_feel()
-	_use_tool_model(tools[&"pickaxe"], pickaxe_model)
-	_use_tool_model(tools[&"axe"], axe_model)
+	for t in [&"pickaxe", &"axe", &"sickle"]:
+		_use_tool_model(tools[t], tool_model(t))
 	_use_tool_model(tools[&"spear"], spear_model)
-	_use_tool_model(tools[&"sickle"], sickle_model)
+	Tools.changed.connect(func(t: StringName, _tier: int) -> void:  # a newly forged one
+		if tools.has(t):
+			_use_tool_model(tools[t], tool_model(t)))
 	tools[&"rod"] = rodfishing.rod  # (built by RodFishing, on its own grip like the spear)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	SaveGame.register(&"player", self)
@@ -935,6 +937,15 @@ func _mantle(land: Vector3) -> void:
 
 ## Swaps a tool's greybox meshes for a model. Viewmodel meshes must be on render layer 2 (only
 ## the viewmodel camera sees it) and cast no shadows into the world.
+## The model of the `tool` you own: its tier's (models/tools/<tool>_<tier>.glb, from
+## make_models.py tool_tiers), else the plain one.
+func tool_model(tool: StringName) -> PackedScene:
+	var path := "res://models/tools/%s_%d.glb" % [tool, Tools.tier(tool)]
+	if ResourceLoader.exists(path):
+		return load(path) as PackedScene
+	return get("%s_model" % tool) as PackedScene
+
+
 func _use_tool_model(slot: Node3D, model: PackedScene) -> void:
 	if model == null:
 		return

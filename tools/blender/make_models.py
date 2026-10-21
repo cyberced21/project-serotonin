@@ -2115,6 +2115,136 @@ def axe():
     export("axe")
 
 
+# --- tool tiers -------------------------------------------------------------------------------
+# The forged tools (scripts/autoload/tools.gd LADDER): stone, copper, iron, crystal picks and axes,
+# stone and copper sickles, in models/tools/<tool>_<tier>.glb. The same shapes as the pickaxe, axe
+# and sickle above with the metal swatches swapped per tier, and a few changes of shape: stone is
+# chipped and lashed on with cord, crystal has faceted crystal spikes on a gold collar.
+
+TOOL_TIER_SWATCHES = [
+    {"metal.0": "stone.2", "metal.1": "stone.3", "metal.2": "stone.3", "metal.3": "stone.4",
+     "metal.4": "stone.5", "metal.5": "stone.5", "metal.6": "stone.6", "metal.7": "stone.7"},
+    {"metal.0": "ore.copper_dark", "metal.1": "ore.copper_dark", "metal.2": "ore.copper_dark",
+     "metal.3": "ore.copper_dark", "metal.4": "ore.copper", "metal.5": "ore.copper", "metal.6": "ore.copper",
+     "metal.7": "ore.gold"},
+    {},  # iron: the metal as it is
+    {"metal.0": "accent.6", "metal.1": "accent.6", "metal.2": "accent.6", "metal.3": "ore.amethyst",
+     "metal.4": "ore.amethyst", "metal.5": "ore.amethyst", "metal.6": "accent.7", "metal.7": "neutral.6"},
+]
+
+
+def tiered(tier, choose):
+    """`choose` (a face -> swatch name) with the metal swapped for `tier`'s."""
+    swap = TOOL_TIER_SWATCHES[tier]
+    return lambda f: swap.get(choose(f), choose(f))
+
+
+def lashing(z, width, rng):
+    """Cord bound round a stone head: a couple of pale wraps."""
+    for i, dz in enumerate((-0.022, 0.022)):
+        bm = box((width, width * 1.15, 0.016))
+        paint(bm, lambda f: "wood.7" if f.normal.z > 0.5 else "wood.6")
+        make_object(f"Lashing{i}", bm, (0, 0, z + dz))
+
+
+def pickaxe_tier(tier):
+    reset()
+    rng = seeded(3)
+    bm = box((0.038, 0.038, 0.5))
+    paint(bm, shade_by_normal("wood.6", "wood.4", "wood.3", rng, side_alt="wood.5"))
+    make_object("Handle", bm, (0, 0, 0.21))
+    if tier == 0:
+        lashing(0.42, 0.07, rng)
+    else:
+        bm = box((0.06, 0.075, 0.075))
+        collar = shade_by_normal("ore.gold", "ore.gold", "wood.7", rng) if tier == 3 else shade_by_normal("metal.4", "metal.3", "metal.2", rng)
+        paint(bm, tiered(tier, collar))
+        make_object("Collar", bm, (0, 0, 0.42))
+    for side in (1, -1):
+        if tier == 0:  # a blunt chipped wedge
+            bm = prism(5, 0.058, 0.022, 0.19)
+            jitter(bm, 0.12, rng)
+            length = 0.115
+        elif tier == 3:  # a long faceted crystal
+            bm = prism(6, 0.034, 0.002, 0.28)
+            length = 0.15
+        else:
+            bm = prism(4, 0.032, 0.006, 0.24)
+            length = 0.14
+        paint(bm, tiered(tier, shade_by_normal("metal.6", "metal.4", "metal.3", rng, side_alt="metal.5")))
+        make_object(f"Spike{'Front' if side > 0 else 'Back'}", bm, (0, side * length, 0.405),
+                    (-side * math.radians(90 + 10), 0, 0))
+    block_hand("z")
+    export(f"tools/pickaxe_{tier}")
+
+
+def axe_tier(tier):
+    reset()
+    rng = seeded(4)
+    bm = prism(4, 0.024, 0.02, AXE_HANDLE)
+    for v in bm.verts:
+        if v.co.z < -AXE_HANDLE / 2 + 0.01:
+            v.co.x *= 1.35
+            v.co.y *= 1.5
+    bmesh.ops.rotate(bm, verts=bm.verts, matrix=Matrix.Rotation(math.pi / 4, 3, "Z"))
+    paint(bm, shade_by_normal("wood.6", "wood.4", "wood.3", rng, side_alt="wood.5"))
+    make_object("Handle", bm, (0, 0, AXE_HEAD_Z + 0.04 - AXE_HANDLE / 2))
+    head = felling_head()
+    if tier == 0:  # knapped stone: thicker, rougher
+        for v in head.verts:
+            v.co.x *= 1.6
+        jitter(head, 0.05, rng)
+    paint(head, tiered(tier, axe_head_shade))
+    make_object("Head", head, (0, 0, AXE_HEAD_Z))
+    if tier == 0:
+        lashing(AXE_HEAD_Z, 0.06, rng)
+    elif tier == 3:  # a gold band round the eye
+        bm = box((0.056, 0.082, 0.02))
+        paint(bm, lambda f: "ore.gold")
+        make_object("Band", bm, (0, -0.012, AXE_HEAD_Z + 0.046))
+    block_hand("z")
+    export(f"tools/axe_{tier}")
+
+
+def sickle_tier(tier):
+    reset()
+    rng = seeded(80)
+    bm = box((0.036, 0.036, 0.26))
+    paint(bm, shade_by_normal("wood.6", "wood.4", "wood.3", rng, side_alt="wood.5"))
+    make_object("Handle", bm, (0, 0, 0.13))
+    if tier == 0:
+        lashing(0.27, 0.05, rng)
+    else:
+        bm = box((0.05, 0.05, 0.035))
+        paint(bm, tiered(tier, lambda f: "metal.2"))
+        make_object("Ferrule", bm, (0, 0, 0.27))
+    centre, r = (0.0, 0.13, 0.29), 0.13
+    steps = 8
+    for i in range(steps):
+        a0 = math.pi + i * (math.pi * 1.05) / steps
+        a1 = math.pi + (i + 1) * (math.pi * 1.05) / steps
+        p0 = (centre[1] + math.cos(a0) * r, centre[2] - math.sin(a0) * r)
+        p1 = (centre[1] + math.cos(a1) * r, centre[2] - math.sin(a1) * r)
+        length = math.dist(p0, p1) + 0.008
+        width = 0.03 * (1.0 - i / steps * 0.7)
+        bm = box((0.02 if tier == 0 else 0.012, length, width * (1.2 if tier == 0 else 1.0)))
+        paint(bm, tiered(tier, lambda f: "metal.7" if f.normal.z < -0.5 else ("metal.5" if abs(f.normal.x) > 0.5 else "metal.4")))
+        angle = math.atan2(p1[1] - p0[1], p1[0] - p0[0])
+        make_object(f"Blade{i}", bm, (0, (p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2), (angle, 0, 0))
+    block_hand("z", grip=0.12)
+    export(f"tools/sickle_{tier}")
+
+
+def tool_tiers():
+    """Every tier of the forged tools, into models/tools/."""
+    os.makedirs(os.path.join(OUT_DIR, "tools"), exist_ok=True)
+    for tier in range(4):
+        pickaxe_tier(tier)
+        axe_tier(tier)
+    for tier in range(2):
+        sickle_tier(tier)
+
+
 def spear():
     """Fishing spear pointing forward (+Y, Godot -Z) from the grip at the origin: wooden shaft,
     a dark binding wrap, and a barbed metal tip at about 1.2 m."""
@@ -2763,7 +2893,7 @@ if __name__ == "__main__":  # make_village.py imports the helpers above without 
     builds = (rock, iron_rock, tree, oak, pickaxe, axe, spear, perch, trout, pike, log_item, ore_item,
               oak_item, iron_item, reeds, lily_pad, lily_flower, shore_stone, scenery, ruins,
               coal_rock, gold_rock, birch, pine, more_items, arctic_char, forest, quarry, farming, road,
-              rod, fishing_float, grayling, salmon)
+              rod, fishing_float, grayling, salmon, tool_tiers)
     only = argv[2:]  # optional: names of the builders to run (e.g. `forest`), instead of all of them
     for build in builds:
         if not only or build.__name__ in only:

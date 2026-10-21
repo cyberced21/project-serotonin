@@ -421,7 +421,7 @@ func _set_vignette(v: float) -> void:
 
 ## The tool's model (the player's), lit by the palette like the held one.
 func _tool_model() -> Node3D:
-	var scene := _player.get("%s_model" % tool) as PackedScene
+	var scene := _player.call("tool_model", tool) as PackedScene
 	if scene == null:
 		return null
 	var inst := scene.instantiate() as Node3D
