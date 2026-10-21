@@ -289,6 +289,9 @@ var _equipped: StringName = &""
 
 # the eye (see _process)
 var _pitch := 0.0
+## A cutscene (ForgeCutscene) has the camera: no looking, moving, swinging or talking, and the
+## held tool is put away (set_cutscene).
+var cutscene := false
 var _roll := 0.0  # slide roll
 var _lean := 0.0  # strafe lean
 var _eye := STAND_EYE
@@ -363,6 +366,8 @@ func teleport(to: Vector3, look_at_point := Vector3.INF) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if cutscene:
+		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var motion := event as InputEventMouseMotion
 		rotate_y(-motion.relative.x * mouse_sensitivity)
@@ -497,6 +502,10 @@ func _fly(delta: float) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if cutscene:  # rooted: just bleed off any speed
+		velocity = velocity.move_toward(Vector3(0.0, velocity.y, 0.0), 30.0 * delta)
+		move_and_slide()
+		return
 	if debug_fly:
 		_fly(delta)
 		return
@@ -1044,6 +1053,33 @@ func _villager_behind_clutter() -> Villager:
 		if space.intersect_ray(look).is_empty():
 			return v
 	return null
+
+
+## Turns the view to look at `point` over `duration` seconds (a cutscene's camera move).
+func face_point(point: Vector3, duration: float) -> Tween:
+	var d := point - camera.global_position
+	var yaw := atan2(-d.x, -d.z)
+	var pitch := clampf(atan2(d.y, Vector2(d.x, d.z).length()), -deg_to_rad(max_pitch_deg), deg_to_rad(max_pitch_deg))
+	var from_yaw := rotation.y
+	var to_yaw := from_yaw + wrapf(yaw - from_yaw, -PI, PI)
+	var t := create_tween().set_parallel().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	t.tween_property(self, "rotation:y", to_yaw, duration)
+	t.tween_property(self, "_pitch", pitch, duration)
+	return t
+
+
+## A cutscene takes (or gives back) the camera and the hands.
+func set_cutscene(on: bool) -> void:
+	cutscene = on
+	$Viewmodel.visible = not on  # (every held thing: tools, the spear, the rod)
+	$Reticle.visible = not on
+
+
+## Brings `tool` into the hands now (a cutscene handing over a new one).
+func equip_now(tool: StringName) -> void:
+	$Viewmodel.visible = true
+	_equipped = &""  # (so the new one rises in from below even if it's the same type)
+	_equip(tool)
 
 
 func _panel_open() -> bool:

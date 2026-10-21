@@ -32,6 +32,9 @@ const RECIPES := {
 const SMITHY := &"smithy"
 
 var tiers: Dictionary[StringName, int] = {}
+## Tools just forged whose first biting hit hasn't landed yet (it gets an oversized impact).
+## Not saved: the moment is right after the forge.
+var fresh: Dictionary[StringName, bool] = {}
 
 
 func _ready() -> void:
@@ -84,7 +87,13 @@ func forge(tool: StringName) -> bool:
 	if not can_forge(tool) or not Inventory.spend(next_recipe(tool)["cost"]):
 		return false
 	set_tier(tool, tier(tool) + 1)
+	fresh[tool] = true
 	return true
+
+
+## True once, on the first biting hit with a freshly forged `tool`.
+func take_fresh(tool: StringName) -> bool:
+	return fresh.erase(tool)
 
 
 ## "Iron pick": the name of `tool` at tier `t`.

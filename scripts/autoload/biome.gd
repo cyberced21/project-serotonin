@@ -56,6 +56,8 @@ var _candidate_time := 0.0
 var _sample := 0.0
 var _last_card: Dictionary[StringName, float] = {}
 var _beds: Dictionary[StringName, AudioStreamPlayer] = {}
+## 0..1: how loud the ambience plays (a cutscene ducks it to hush the world).
+var ambience_duck := 1.0
 var _card: Control
 var _title: Label
 var _subtitle: Label
@@ -156,7 +158,7 @@ func _blend(delta: float, at: Vector3) -> void:
 		env.adjustment_saturation = saturation
 	for id in _beds:
 		var bed := _beds[id]
-		var full := db_to_linear((MOODS[id] as BiomeMood).ambience_db)
+		var full := db_to_linear((MOODS[id] as BiomeMood).ambience_db) * ambience_duck
 		var level := lerpf(db_to_linear(bed.volume_db), full if id == current else 0.0, k)
 		bed.volume_db = linear_to_db(maxf(level, 0.0001))
 
@@ -203,6 +205,13 @@ func _label(font_size: int) -> Label:
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_card.add_child(label)
 	return label
+
+
+## Takes the title card off screen now (a cutscene starting).
+func hide_card() -> void:
+	if _card_tween:
+		_card_tween.kill()
+	_card.modulate.a = 0.0
 
 
 func _show_card(mood: BiomeMood, first: bool, kind := "") -> void:

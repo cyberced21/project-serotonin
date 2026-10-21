@@ -463,6 +463,7 @@ func hit(info: HitInfo) -> bool:
 		- (crack_tip_extra_hits if tip else 0) - (clean_cut_extra_hits if _clean else 0), 0)
 	# under-levelled, a plain hit can fall short of a whole cut: it marks the node but takes nothing
 	var bit := hits_left < before
+	var fresh := bit and Tools.take_fresh(tool_type)  # the first bite of a just-forged tool
 	if weak:
 		_weak_hit_feedback(info)
 	if _carve:
@@ -478,7 +479,9 @@ func hit(info: HitInfo) -> bool:
 	_crack_sound = 0  # (set by the crack code below; the sounds are played together at the end)
 	_flash()
 	_nudge(info.away() * (1.6 if double else 1.0))
-	_hit_effects(info, 1.5 if tip or _clean else 1.0)
+	_hit_effects(info, 2.0 if fresh else 1.5 if tip or _clean else 1.0)
+	if fresh:
+		ForgeCutscene.first_swing(get_parent(), info.position, info.normal, ForgeCutscene.tier_color(Tools.tier(tool_type)))
 	Juice.shake(shake_hit + stress * 1.5 + (1.5 if double else 0.0))
 	Juice.hitstop(hitstop_hit + (0.035 if double else 0.0))
 	if double:
@@ -495,6 +498,8 @@ func hit(info: HitInfo) -> bool:
 	if collapsed > 0 and hits_left > 0:
 		_collapse_feedback(info, collapsed)
 	last_impact = 2.5 if hits_left == 0 else 2.0 if split or collapsed > 0 else 1.5 if tip or weak or double or _clean else 1.0
+	if fresh:
+		last_impact = 3.0
 	_hit_sounds(info, pitch, double, split)
 	if _clean and hits_left > 0:  # a sharper crack on top of the thunk
 		if clean_layers:

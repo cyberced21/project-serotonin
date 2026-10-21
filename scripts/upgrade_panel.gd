@@ -6,7 +6,8 @@ extends CanvasLayer
 ## Frees the mouse while open. Closes on E, Esc, clicking outside it, or walking away.
 ## Upgrading closes it so you can watch the building go up.
 ## Greta's panel has a second tab, Forge: the next pick, axe and sickle (Tools.RECIPES), each with
-## its cost and what it opens, greyed out until the smithy's tier allows it.
+## its cost and what it opens, greyed out until the smithy's tier allows it. Forging plays the
+## forge moment (ForgeCutscene).
 
 const OPEN_SFX := preload("res://audio/pickup.tres")
 const WIDTH := 460.0
@@ -128,6 +129,7 @@ func _refresh() -> void:
 	_tab_forge.button_pressed = _forging
 	_upgrade_box.visible = not _forging
 	_forge_box.visible = _forging
+	_panel.offset_top = -300 if _forging else -170  # (the forge list is taller: keep it on screen)
 	if _forging:
 		_refresh_forge()
 	var tier_now := Village.tier(def.id)
@@ -167,72 +169,92 @@ func _refresh() -> void:
 
 
 ## One row per item in `cost`: its icon, then have / need (green once there's enough).
-func _add_costs(grid: GridContainer, cost: Dictionary, font_size := 20) -> void:
-	var ids := cost.keys()
-	ids.sort_custom(func(a: StringName, b: StringName) -> bool: return Items.order(a) < Items.order(b))
-	for item in ids:
+func _add_costs(grid: GridContainer, cost: Dictionary) -> void:
+	for item in _sorted(cost):
 		var need: int = cost[item]
 		var have := Inventory.count(item)
-		var icon := TextureRect.new()
-		icon.texture = Items.icon(item)
-		icon.custom_minimum_size = Vector2(ICON_SIZE, ICON_SIZE) * font_size / 20.0
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.tooltip_text = Items.display_name(item)
-		grid.add_child(icon)
-		var label := _label(font_size)
+		grid.add_child(_icon(item, ICON_SIZE))
+		var label := _label(20)
 		label.text = "%d / %d  %s" % [mini(have, need), need, Items.display_name(item)]
 		label.add_theme_color_override("font_color", HAVE_COLOR if have >= need else NEED_COLOR)
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		grid.add_child(label)
 
 
+## The same on one line, compact (the Forge tab): icon, have/need, icon, have/need ...
+func _add_cost_row(row: HBoxContainer, cost: Dictionary) -> void:
+	for item in _sorted(cost):
+		var need: int = cost[item]
+		var have := Inventory.count(item)
+		row.add_child(_icon(item, 26.0))
+		var label := _label(16)
+		label.text = "%d/%d" % [mini(have, need), need]
+		label.add_theme_color_override("font_color", HAVE_COLOR if have >= need else NEED_COLOR)
+		row.add_child(label)
+
+
+func _sorted(cost: Dictionary) -> Array:
+	var ids := cost.keys()
+	ids.sort_custom(func(a: StringName, b: StringName) -> bool: return Items.order(a) < Items.order(b))
+	return ids
+
+
+func _icon(item: StringName, size: float) -> TextureRect:
+	var icon := TextureRect.new()
+	icon.texture = Items.icon(item)
+	icon.custom_minimum_size = Vector2(size, size)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.tooltip_text = Items.display_name(item)
+	return icon
+
+
 ## The Forge tab: for each tiered tool, the next one Greta can make (or that you have the best).
 func _refresh_forge() -> void:
 	for c in _forge_box.get_children():
 		c.queue_free()
+	# per tool: the next one and what it opens, then its costs in a row with the Forge button
 	for tool in Tools.LADDER:
 		var t := Tools.tier(tool)
-		var have := _label(15)
-		have.text = "%s  ·  yours: %s" % [String(tool).capitalize(), Tools.display_name(tool, t)]
-		have.modulate = DIM
-		_forge_box.add_child(have)
 		var recipe := Tools.next_recipe(tool)
+		var title := _label(19)
+		_forge_box.add_child(title)
 		if recipe.is_empty():
-			var best := _label(19)
-			best.text = "The finest there is."
-			best.add_theme_color_override("font_color", HAVE_COLOR)
-			_forge_box.add_child(best)
+			title.text = "%s: the finest there is" % Tools.display_name(tool, t)
+			title.add_theme_color_override("font_color", HAVE_COLOR)
+			_forge_box.add_child(HSeparator.new())
+			continue
+		title.text = "%s  ·  %s" % [Tools.display_name(tool, t + 1), recipe["opens"]]
+		title.add_theme_color_override("font_color", ACCENT)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		_forge_box.add_child(row)
+		if Tools.forge_unlocked(tool):
+			_add_cost_row(row, recipe["cost"])
+			var button := _make_button("Forge")
+			button.custom_minimum_size = Vector2(96, 34)
+			button.size_flags_horizontal = Control.SIZE_SHRINK_END | Control.SIZE_EXPAND
+			button.add_theme_font_size_override("font_size", 17)
+			button.disabled = not Tools.can_forge(tool)
+			button.tooltip_text = "Forge the %s (yours: %s)" % [Tools.display_name(tool, t + 1), Tools.display_name(tool, t)]
+			button.pressed.connect(_on_forge_pressed.bind(tool))
+			row.add_child(button)
 		else:
-			var title := _label(21)
-			title.text = "%s  ·  %s" % [Tools.display_name(tool, t + 1), recipe["opens"]]
-			title.add_theme_color_override("font_color", ACCENT)
-			_forge_box.add_child(title)
-			if Tools.forge_unlocked(tool):
-				var grid := _grid()
-				_add_costs(grid, recipe["cost"], 17)
-				_forge_box.add_child(grid)
-				var button := _make_button("Forge the %s" % Tools.display_name(tool, t + 1))
-				button.disabled = not Tools.can_forge(tool)
-				button.pressed.connect(_on_forge_pressed.bind(tool))
-				_forge_box.add_child(button)
-			else:
-				var needs := Village.get_def(Tools.SMITHY).get_tier(Tools.smithy_needed(t + 1))
-				var locked := _label(16)
-				locked.text = "Needs the %s first." % (needs.name if needs else "next smithy")
-				locked.add_theme_color_override("font_color", NEED_COLOR)
-				_forge_box.add_child(locked)
+			var needs := Village.get_def(Tools.SMITHY).get_tier(Tools.smithy_needed(t + 1))
+			var locked := _label(16)
+			locked.text = "Needs the %s first" % (needs.name if needs else "next smithy")
+			locked.add_theme_color_override("font_color", NEED_COLOR)
+			row.add_child(locked)
 		_forge_box.add_child(HSeparator.new())
 
 
 func _on_forge_pressed(tool: StringName) -> void:
 	if villager == null:
 		return
-	var at := villager.global_position + Vector3(0, 2.3, 0)
-	var parent := villager.get_parent()
+	var greta := villager
 	if Tools.forge(tool):
 		close()
-		PopupText.spawn(parent, at, Tools.display_name(tool, Tools.tier(tool)) + "!", ACCENT, 14)
+		ForgeCutscene.play(greta, tool)  # Greta makes it, then hands it over
 
 
 func _show_tab(forge: bool) -> void:

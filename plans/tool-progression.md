@@ -124,3 +124,16 @@ Then [levels.md](levels.md) on top.
   biting hit in a row on a node counts twice (a 3 s pause ends the streak); pine with an iron
   axe 6.7 → 5.9 swings. The tool's extra power doesn't trigger "Sharp!": only the smithy's
   chance and the streak do.
+- **Phase 4 done** (2026-10-20): `ForgeCutscene` (scripts/forge_cutscene.gd), started by the
+  Forge button. About 8.6 s of game time (≈9.3 s real: the blows' hit-stops), a timeline of beats
+  so E skips straight to the reveal (≈6 s). The player is rooted with the view turned to the anvil
+  (`Player.set_cutscene`, `face_point`); held tools, reticle, HUD and the biome card are hidden;
+  ambience ducks (`Biome.ambience_duck`); a radial darkening over the view; Greta is posed by
+  script (`Villager.scripted`, `script_pose`). Beats as planned; the reveal turns the view level
+  and shows the tool's model 0.75 m ahead in a spot of the tier's colour with its name and what it
+  opens. Iron adds thunder and the bell; crystal darkens the screen violet, raises a violet beam
+  **out of the anvil** (the hearth is behind you), rings the bell twice and makes every villager
+  cheer. The first biting hit with the new tool (`Tools.fresh`, not saved) gets a shockwave ring,
+  a big star, a boom, 0.16 s hit-stop and shake 7. 13 sounds in `audio/forge/` from
+  `tools/synth_forge.py`; `tools/forge_playtest.gd` screenshots each beat. **Bot-verified and
+  screenshotted only; not watched or heard live.**
