@@ -126,18 +126,11 @@ vec3 theme_dress(vec3 c, float skin, out float wet) {
 		return c;
 	}
 	vec3 dressed = c;
-	// colour: hue turned round the grey axis, then saturation and value
-	float angle = theme_b.x * 6.2831853;
-	vec3 k = vec3(0.57735);
-	float cs = cos(angle);
-	dressed = dressed * cs + cross(k, dressed) * sin(angle) + k * dot(k, dressed) * (1.0 - cs);
-	float luma = dot(dressed, vec3(0.299, 0.587, 0.114));
-	dressed = max(mix(vec3(luma), dressed, theme_b.z) * theme_b.y, vec3(0.0));
 	float up = v_world_normal.y;
 	float n = theme_noise(v_world * 2.3) * 0.65 + theme_noise(v_world * 7.1) * 0.35;
 	// wet: the foot darkens and shines
-	wet = theme_cover(1.0 - smoothstep(0.0, 0.7, v_rise) * 0.85 + (n - 0.5) * 0.25, theme_a.z);
-	dressed *= 1.0 - 0.45 * wet;
+	wet = theme_cover(1.0 - smoothstep(0.0, 1.6, v_rise) * 0.8 + (n - 0.5) * 0.25, theme_a.z);
+	dressed = mix(dressed, dressed * vec3(0.42, 0.46, 0.4), wet);  // dark, a touch of algae
 	// moss: tops and hollows, broken up by the noise
 	float moss = theme_cover((up * 0.5 + 0.5) * 0.55 + n * 0.45, theme_a.x);
 	dressed = mix(dressed, moss_color * (0.75 + 0.5 * n), moss * 0.9);
@@ -145,6 +138,14 @@ vec3 theme_dress(vec3 c, float skin, out float wet) {
 	float dust = theme_cover((up * 0.5 + 0.5) * 0.5 + n * 0.5, theme_a.w);
 	dressed = mix(dressed, dust_color * (0.85 + 0.3 * n), dust * 0.75);
 	dressed = mix(dressed, vec3(dot(dressed, vec3(0.333))), theme_a.w * 0.25);
+	// colour (after the moss and dust, so they take the place's cast too): hue turned round the
+	// grey axis, then saturation and value
+	float angle = theme_b.x * 6.2831853;
+	vec3 k = vec3(0.57735);
+	float cs = cos(angle);
+	dressed = dressed * cs + cross(k, dressed) * sin(angle) + k * dot(k, dressed) * (1.0 - cs);
+	float luma = dot(dressed, vec3(0.299, 0.587, 0.114));
+	dressed = max(mix(vec3(luma), dressed, theme_b.z) * theme_b.y, vec3(0.0));
 	// snow: on whatever faces up
 	float snow = theme_cover(smoothstep(0.3, 0.95, up) * 0.8 + n * 0.2, theme_a.y);
 	dressed = mix(dressed, snow_color * (0.92 + 0.08 * n), snow);
