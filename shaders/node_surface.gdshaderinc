@@ -43,9 +43,11 @@ uniform vec3 glow_color : source_color = vec3(1.0, 0.74, 0.4);
 instance uniform vec4 glow_tint : source_color = vec4(1.0, 1.0, 1.0, 0.0);
 
 // The place's dressing (NodeTheme, set per node): theme_a = (moss, snow, wet, dust), each 0..1;
-// theme_b = (hue shift in turns, value, saturation, vein glint). The defaults leave the model as made.
+// theme_b = (hue shift in turns, value, saturation, vein glint); theme_c, the leaves instead of
+// theme_b's colour = (autumn 0..1, value, saturation, unused). The defaults leave the model as made.
 instance uniform vec4 theme_a = vec4(0.0);
 instance uniform vec4 theme_b = vec4(0.0, 1.0, 1.0, 1.0);
+instance uniform vec4 theme_c = vec4(0.0, 1.0, 1.0, 0.0);
 uniform vec3 moss_color : source_color = vec3(0.2, 0.32, 0.1);
 uniform vec3 snow_color : source_color = vec3(0.9, 0.94, 1.0);
 uniform vec3 dust_color : source_color = vec3(0.8, 0.74, 0.64);
@@ -118,9 +120,10 @@ float theme_cover(float field, float amount) {
 	return amount <= 0.001 ? 0.0 : smoothstep(edge, edge + 0.12, field);
 }
 
-// `c` dressed by the place, as much as `skin` (0 = keep as made: ore, fresh breaks, cut wood).
+// `c` dressed by the place, as much as `skin` (0 = keep as made: ore, fresh breaks, cut wood);
+// `leaf` (0..1) takes the leaves' colour (theme_c) instead of the bark and stone's (theme_b).
 // `wet` comes back for the roughness.
-vec3 theme_dress(vec3 c, float skin, out float wet) {
+vec3 theme_dress(vec3 c, float skin, float leaf, out float wet) {
 	wet = 0.0;
 	if (skin <= 0.0) {
 		return c;
@@ -140,12 +143,16 @@ vec3 theme_dress(vec3 c, float skin, out float wet) {
 	dressed = mix(dressed, vec3(dot(dressed, vec3(0.333))), theme_a.w * 0.25);
 	// colour (after the moss and dust, so they take the place's cast too): hue turned round the
 	// grey axis, then saturation and value
-	float angle = theme_b.x * 6.2831853;
+	float angle = theme_b.x * (1.0 - leaf) * 6.2831853;
 	vec3 k = vec3(0.57735);
 	float cs = cos(angle);
 	dressed = dressed * cs + cross(k, dressed) * sin(angle) + k * dot(k, dressed) * (1.0 - cs);
 	float luma = dot(dressed, vec3(0.299, 0.587, 0.114));
-	dressed = max(mix(vec3(luma), dressed, theme_b.z) * theme_b.y, vec3(0.0));
+	vec2 sat_value = mix(theme_b.zy, theme_c.zy, leaf);
+	dressed = max(mix(vec3(luma), dressed, sat_value.x) * sat_value.y, vec3(0.0));
+	// autumn: patches of the canopy turned gold
+	float autumn = theme_cover(theme_noise(v_world * 0.9 + 7.0), theme_c.x) * leaf;
+	dressed = mix(dressed, luma * vec3(1.75, 1.2, 0.4), autumn);
 	// snow: on whatever faces up
 	float snow = theme_cover(smoothstep(0.3, 0.95, up) * 0.8 + n * 0.2, theme_a.y);
 	dressed = mix(dressed, snow_color * (0.92 + 0.08 * n), snow);
@@ -190,14 +197,18 @@ void fragment() {
 	int row = int(floor(UV.y * 8.0));
 	float ore = float(row == 1 || row == 5);  // the palette's ore and metal rows glint
 	float wet;
-	base = theme_dress(base, (1.0 - fresh) * (1.0 - ore), wet);  // the skin, never the ore or a break
+	base = theme_dress(base, (1.0 - fresh) * (1.0 - ore), 0.0, wet);  // the skin, never the ore or a break
 	base *= mix(1.0, theme_b.w, ore);
 	ROUGHNESS = mix(mix(0.95, 0.4, wet), ore_roughness, ore);
 	METALLIC = ore * ore_metallic * theme_b.w;
 	SPECULAR = mix(mix(0.2, 0.45, wet), 0.5, ore);
 #else
+	// the palette's leaves row takes the leaves' colour; cut wood (the pale wood swatches the axe's
+	// notch and the end grain use, see TrunkCarve) stays as made
+	int row = int(floor(UV.y * 8.0));
+	float cut_wood = float(row == 2 && UV.x >= 0.625);
 	float wet;
-	base = theme_dress(base, 1.0, wet);
+	base = theme_dress(base, 1.0 - cut_wood, float(row == 3), wet);
 	ROUGHNESS = mix(1.0, 0.5, wet);
 #endif
 	vec3 lit = mix(glow_color, glow_tint.rgb, glow_tint.a);

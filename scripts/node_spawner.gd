@@ -99,9 +99,7 @@ func _spawn() -> void:
 			if v > 0:
 				node.model = entry.variants[v - 1]
 		if theme:
-			var look := theme.look(cluster, hash([seed, node.save_id]))
-			node.theme_a = look[0]
-			node.theme_b = look[1]
+			node.look = theme.look(cluster, hash([seed, node.save_id]))
 		node.name = String(node.save_id)
 		node.position = to_local(ground as Vector3) - Vector3.UP * sink
 		node.rotation.y = yaw

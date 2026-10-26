@@ -1846,12 +1846,15 @@ def tree_round(name="tree_round", out="designs"):
     a little root flare."""
     reset()
     rng = seeded(70)
-    make_object("Body_Trunk", ringed_trunk(rng, 12, 0.24, 0.15, 2.9, STARTER_BARK, flare=0.3, lean=(0.12, 0.05)))
-    ends = fan(3, 0.95, 3.5, rng, 0.4)
-    limbs(rng, [((0.1, 0.03, 2.5), e, 0.09, 0.04) for e in ends], STARTER_BARK)
-    spots = [(0.8, e, (1, 1, 0.8)) for e in ends]
-    spots += [(0.95, (0.1, 0.0, 3.85), (1, 1, 0.8)), (0.6, (0.5, -0.4, 4.2), (1, 1, 0.85)),
-              (0.55, (-0.45, 0.35, 4.15), (1, 1, 0.85))]
+    r = recipe(70, tall=(-0.3, 0.0, 0.45), spread=(0.8, 0.95, 1.2), bushy=(0.85, 1.0, 1.18), lean=(0.3, 1.0, 2.2))
+    up = r.tall  # (everything above the trunk's foot moves up with it)
+    make_object("Body_Trunk", ringed_trunk(rng, 12, 0.24, 0.15, 2.9 + up, STARTER_BARK, flare=0.3,
+                                           lean=(0.12 * r.lean, 0.05 * r.lean)))
+    ends = fan(3, r.spread, 3.5 + up, rng, 0.4)
+    limbs(rng, [((0.1, 0.03, 2.5 + up), e, 0.09, 0.04) for e in ends], STARTER_BARK)
+    spots = [(0.8 * r.bushy, e, (1, 1, 0.8)) for e in ends]
+    spots += [(0.95 * r.bushy, (0.1, 0.0, 3.85 + up), (1, 1, 0.8)), (0.6 * r.bushy, (0.5, -0.4, 4.2 + up), (1, 1, 0.85)),
+              (0.55 * r.bushy, (-0.45, 0.35, 4.15 + up), (1, 1, 0.85))]
     clumps(rng, spots, STARTER_LEAVES)
     cut_stump(0.24, 0.22, STARTER_BARK, rng)
     export(os.path.join(out, name))
@@ -1878,18 +1881,23 @@ def birch_airy(name="birch_airy", out="designs"):
     and small upright clumps hung along its upper half."""
     reset()
     rng = seeded(72)
-    make_object("Body_Trunk", ringed_trunk(rng, 10, 0.17, 0.09, 4.3, BIRCH_BARK, flare=0.15, lobes=4,
-                                           lean=(0.3, -0.1), marks=("neutral.1", 0.16), upper=(2.0, 2.6, 3.2, 3.8)))
+    r = recipe(72, tall=(0.85, 1.0, 1.18), lean=(0.3, 1.0, 1.8), bushy=(0.85, 1.0, 1.18), reach=(0.8, 1.0, 1.3))
+    top = 4.3 * r.tall
+    lean = (0.3 * r.lean, -0.1 * r.lean)
+    make_object("Body_Trunk", ringed_trunk(rng, 10, 0.17, 0.09, top, BIRCH_BARK, flare=0.15, lobes=4,
+                                           lean=lean, marks=("neutral.1", 0.16),
+                                           upper=tuple(z for z in (2.0, 2.6, 3.2, 3.8, 4.4) if z < top - 0.4)))
     spots = []
     pairs = []
     for i, z in enumerate((2.4, 2.9, 3.35, 3.8)):
+        z = 1.45 + (z - 1.45) * (top - 1.45) / (4.3 - 1.45)
         a = i * 2.2 + rng.uniform(-0.3, 0.3)
-        bend = ((z - 1.45) / (4.3 - 1.45)) ** 2
-        base = (0.3 * bend, -0.1 * bend, z)
-        tip = (base[0] + math.cos(a) * 0.4, base[1] + math.sin(a) * 0.4, z + 0.4)
+        bend = ((z - 1.45) / (top - 1.45)) ** 2
+        base = (lean[0] * bend, lean[1] * bend, z)
+        tip = (base[0] + math.cos(a) * 0.4 * r.reach, base[1] + math.sin(a) * 0.4 * r.reach, z + 0.4)
         pairs.append((base, tip, 0.05, 0.025))
-        spots.append((0.52, tip, (0.8, 0.8, 1.25)))
-    spots.append((0.5, (0.32, -0.1, 4.55), (0.85, 0.85, 1.3)))
+        spots.append((0.52 * r.bushy, tip, (0.8, 0.8, 1.25)))
+    spots.append((0.5 * r.bushy, (0.32 * r.lean, lean[1], top + 0.25), (0.85, 0.85, 1.3)))
     limbs(rng, pairs, BIRCH_BARK)
     clumps(rng, spots, BIRCH_LEAVES)
     cut_stump(0.17, 0.16, BIRCH_BARK, rng)
@@ -1918,11 +1926,13 @@ def oak_spreading(name="oak_spreading", out="designs"):
     reaching out wide, a broad crown of heavy clumps."""
     reset()
     rng = seeded(74)
-    make_object("Body_Trunk", ringed_trunk(rng, 12, 0.36, 0.26, 2.4, OAK_BARK, flare=0.5, lobes=6, lean=(0.08, 0.0)))
-    ends = fan(4, 1.6, 3.0, rng, 0.5)
-    limbs(rng, [((0, 0, 2.1), e, 0.16, 0.07) for e in ends], OAK_BARK)
-    spots = [(1.0, (e[0], e[1], e[2] + 0.2), (1.15, 1.15, 0.65)) for e in ends]
-    spots += [(1.25, (0.05, 0.0, 3.55), (1.15, 1.15, 0.65))]
+    r = recipe(74, tall=(-0.2, 0.0, 0.4), spread=(1.3, 1.6, 1.95), bushy=(0.88, 1.0, 1.15), limbs=(3, 4, 5))
+    up = r.tall
+    make_object("Body_Trunk", ringed_trunk(rng, 12, 0.36, 0.26, 2.4 + up, OAK_BARK, flare=0.5, lobes=6, lean=(0.08, 0.0)))
+    ends = fan(r.limbs, r.spread, 3.0 + up, rng, 0.5)
+    limbs(rng, [((0, 0, 2.1 + up), e, 0.16, 0.07) for e in ends], OAK_BARK)
+    spots = [(1.0 * r.bushy, (e[0], e[1], e[2] + 0.2), (1.15, 1.15, 0.65)) for e in ends]
+    spots += [(1.25 * r.bushy, (0.05, 0.0, 3.55 + up), (1.15, 1.15, 0.65))]
     clumps(rng, spots, OAK_LEAVES)
     cut_stump(0.36, 0.33, OAK_BARK, rng)
     export(os.path.join(out, name))
@@ -1964,9 +1974,12 @@ def pine_classic(name="pine_classic", out="designs"):
     their rims drooping and ragged. The lowest rim stays above the chopping band."""
     reset()
     rng = seeded(76)
-    make_object("Body_Trunk", ringed_trunk(rng, 10, 0.3, 0.1, 5.9, PINE_BARK, flare=0.25, lobes=5,
-                                           upper=(2.0, 2.6, 3.4, 4.2, 5.0)))
+    shape = recipe(76, tall=(0.85, 1.0, 1.2), wide=(0.82, 1.0, 1.15))
+    lift = lambda z: 2.65 + (z - 2.65) * shape.tall  # (the lowest rim stays put, above the chopping band)
+    make_object("Body_Trunk", ringed_trunk(rng, 10, 0.3, 0.1, lift(5.9), PINE_BARK, flare=0.25, lobes=5,
+                                           upper=(2.0, 2.6) + tuple(lift(z) for z in (3.4, 4.2, 5.0))))
     for i, (r, h, z) in enumerate(((1.9, 1.5, 2.65), (1.6, 1.4, 3.4), (1.25, 1.3, 4.1), (0.9, 1.2, 4.75), (0.5, 1.1, 5.4))):
+        r, h, z = r * shape.wide, h * shape.tall, lift(z)
         bm = needle_cone(rng, r, h, 0.06)
         leafy(bm, rng, PINE_NEEDLES, card_size=0.8, density=4.2, kind=CARD_NEEDLES, core=(0.72, 0.72, 0.92),
               droop=0.5, open_bottom=True)

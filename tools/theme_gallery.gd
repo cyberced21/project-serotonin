@@ -87,8 +87,7 @@ func _run() -> void:
 				node.set("model", load("res://models/variants/%s_v%d.glb" % [_model_name(node), LOOK_ORDER[i]]))
 			if theme:
 				var look := theme.look(hash(["sib", r] if i < copies / 2 else ["own", r, c]), hash([r, c]))
-				node.set("theme_a", look[0])
-				node.set("theme_b", look[1])
+				node.set("look", look)
 			var at := centre + Vector3(c * gap - width * 0.5, 0.0, r * gap * 1.4 - depth * 0.5)
 			at.y = terrain.data.get_height(at) - 0.1
 			node.position = at
