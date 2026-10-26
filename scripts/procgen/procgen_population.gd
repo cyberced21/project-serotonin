@@ -74,7 +74,7 @@ const QUARRY_LEVELS := [
 ]
 const CRYSTALS := 4
 ## How many baked variants each model may have (tools/blender/make_models.py's VARIANTS).
-const VARIANTS := 4
+const VARIANTS := 8
 ## Scenery fills this square (the valley inside the rim).
 const SCENERY_AREA := Rect2(-185, -185, 370, 370)
 

@@ -4,17 +4,15 @@ extends Resource
 ## range the node's look is drawn from (data/themes/, one per biome kind; see plans/themed-nodes.md).
 ## Only the dressing: what makes copper read as copper (its ore, its break, a tree's cut wood) is
 ## the model's and never changes.
-## Nodes close together share a cluster (a CLUSTER_SIZE square of the world): its draw sets where
-## in each range they sit, and each node strays from it by `jitter`, so neighbours look like
-## siblings. All of it comes from the seed and the node's position, so nothing needs saving.
+## Nodes close together share a cluster (NodeSpawner.cluster_at): its draw sets where in each
+## range they sit, and each node strays from it by `jitter`, so neighbours look like siblings.
+## All of it comes from the seed and the node's position, so nothing needs saving.
 ## The look goes to the node shaders as two instance uniforms (node_surface.gdshaderinc):
 ## theme_a = (moss, snow, wet, dust) and theme_b = (hue shift, value, saturation, vein).
 
 ## The look of a node no theme dresses: the model as made.
 const PLAIN_A := Vector4.ZERO
 const PLAIN_B := Vector4(0.0, 1.0, 1.0, 1.0)
-## Nodes in the same square this size (m) are one cluster.
-const CLUSTER_SIZE := 14.0
 
 ## The name shown in tools and the debug menu ("Pine Forest moss").
 @export var title := ""
@@ -39,13 +37,6 @@ const CLUSTER_SIZE := 14.0
 @export_group("Clusters")
 ## How far a node strays from its cluster's draw, as a share of each range (0 = identical siblings).
 @export_range(0.0, 1.0) var jitter := 0.25
-
-
-## The look of a node at world XZ `p`, for a spawner seeded `seed`, as [theme_a, theme_b].
-## `salt` tells nodes in one cluster apart (their save id).
-func look_at(seed: int, p: Vector2, salt: int) -> Array[Vector4]:
-	var cell := Vector2i((p / CLUSTER_SIZE).floor())
-	return look(hash([seed, cell.x, cell.y]), hash([seed, salt]))
 
 
 ## The look drawn for cluster seed `cluster`, node seed `node`, as [theme_a, theme_b].

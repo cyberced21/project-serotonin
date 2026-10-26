@@ -11,6 +11,8 @@ extends SceneTree
 ##   --copies=N     of each node per row (default 4)
 ##   --gap=M        between nodes (default 3.2)
 ##   --view=DEG     how steeply the camera looks down (default 28)
+##   --looks        each node in all its looks instead (the model, then the variants), grouped by
+##                  shape family: 0 4 8 | 1 5 | 2 6 | 3 7
 ##   --hit=N        strike every node N times first, to show the fresh insides against the dressing
 ##   --label=NAME   file name under docs/images/themes/ (default "gallery")
 ## The game is played on a throwaway save, so the real one is never touched.
@@ -21,6 +23,9 @@ var copies := 4
 var gap := 3.2
 var view := 28.0
 var hits := 0
+var looks := false
+## --looks: the model (0) and its variants, family by family (NodeSpawner.FAMILIES).
+const LOOK_ORDER: Array[int] = [0, 4, 8, 1, 5, 2, 6, 3, 7]
 var label := "gallery"
 
 
@@ -35,7 +40,10 @@ func _initialize() -> void:
 			"gap": gap = v.to_float()
 			"view": view = v.to_float()
 			"hit": hits = v.to_int()
+			"looks": looks = true
 			"label": label = v
+	if looks:
+		copies = LOOK_ORDER.size()
 	if themes.is_empty():
 		themes = ["plain"]
 		for f in DirAccess.get_files_at("res://data/themes"):
@@ -75,6 +83,8 @@ func _run() -> void:
 			var node := scene.instantiate() as Node3D
 			node.set("save_id", StringName("gallery_%d_%d" % [r, c]))
 			var i := c % copies
+			if looks and LOOK_ORDER[i] > 0:
+				node.set("model", load("res://models/variants/%s_v%d.glb" % [_model_name(node), LOOK_ORDER[i]]))
 			if theme:
 				var look := theme.look(hash(["sib", r] if i < copies / 2 else ["own", r, c]), hash([r, c]))
 				node.set("theme_a", look[0])
@@ -110,6 +120,11 @@ func _run() -> void:
 	print("SAVED docs/images/themes/%s.png" % label)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://theme_gallery_save.json"))
 	quit()
+
+
+## The file name of the model a node scene wears (models/<name>.glb).
+func _model_name(node: Node) -> String:
+	return (node.get("model") as PackedScene).resource_path.get_file().get_basename()
 
 
 ## The flattest open spot near `from` with room for a gallery of radius `r`.
