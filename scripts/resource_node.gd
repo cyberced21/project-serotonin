@@ -252,6 +252,9 @@ var _ring: AudioStreamPlayer3D  # the tool's ring (_tool_ring), made on first us
 var _streak := 0  # biting hits in a row on this node (the Crystal Forge's streak_double)
 var _last_hit_msec := -100000
 var _surfaces: Array[GeometryInstance3D] = []
+## The place's dressing (NodeTheme.look()): set by the spawner before the node enters the tree.
+var theme_a := NodeTheme.PLAIN_A
+var theme_b := NodeTheme.PLAIN_B
 var _flash_tween: Tween
 var _nudge_tween: Tween
 var _burst_home := Vector3.ZERO
@@ -278,6 +281,7 @@ func _ready() -> void:
 	_burst_home = burst.position
 	_break_audio_home = break_audio.position
 	_collect_surfaces(visual)
+	_dress(self)
 	_fit_collision()
 	if not _links.is_empty():
 		_ground_rock()
@@ -2595,6 +2599,16 @@ func _collect_surfaces(n: Node) -> void:
 		if c is GeometryInstance3D:
 			_surfaces.append(c)
 		_collect_surfaces(c)
+
+
+## Dresses every mesh under `n` with this node's theme (the pieces and parts that fly off or fall
+## keep it: they're the same meshes, or copies of them).
+func _dress(n: Node) -> void:
+	if theme_a == NodeTheme.PLAIN_A and theme_b == NodeTheme.PLAIN_B:
+		return
+	for g in n.find_children("*", "GeometryInstance3D", true, false):
+		if g is MeshInstance3D:
+			NodeTheme.dress(g, theme_a, theme_b)
 
 
 func _play(player: AudioStreamPlayer3D, stream: AudioStream, pitch := 1.0) -> void:

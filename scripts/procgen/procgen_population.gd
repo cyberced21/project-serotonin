@@ -88,6 +88,7 @@ static func populate(parent: Node3D, map: ProcgenMap) -> void:
 		spec = _with_kind(spec, site.get("kind", &""))
 		var cell := i
 		var spawner := _spawner(map, "Nodes_%d_%s" % [i, site["biome"]], spec)
+		spawner.theme = theme_for(site["biome"], site.get("kind", &""))
 		var at: Vector2 = site["pos"]
 		spawner.area = Rect2(at - Vector2.ONE * 110.0, Vector2.ONE * 220.0)
 		spawner.hotspots = PackedVector3Array([Vector3(at.x, at.y, 30.0)])
@@ -109,6 +110,16 @@ static func populate(parent: Node3D, map: ProcgenMap) -> void:
 		var box: Rect2 = boxes[i].intersection(SCENERY_AREA)
 		if box.has_area():
 			parent.add_child(_scenery(map, i, box))
+
+
+## How a biome kind dresses its nodes (data/themes/<kind>.tres), else its biome
+## (data/themes/<biome>.tres), else nothing.
+static func theme_for(biome: StringName, kind: StringName) -> NodeTheme:
+	for id in [kind, biome]:
+		var path := "res://data/themes/%s.tres" % id
+		if not String(id).is_empty() and ResourceLoader.exists(path):
+			return load(path)
+	return null
 
 
 ## `spec` with its kind's weights and count applied (see KIND_NODES).
@@ -170,6 +181,7 @@ static func _quarry_levels(parent: Node3D, map: ProcgenMap) -> void:
 		spec = _with_kind(spec, map.kinds.get(&"quarry", &""))
 		spec["spacing"] = 4.5
 		var spawner := _spawner(map, "QuarryLevel%d" % (k + 1), spec)
+		spawner.theme = theme_for(&"quarry", map.kinds.get(&"quarry", &""))
 		spawner.ring = Vector4(qc.x, qc.y, inner, outer)
 		spawner.area = Rect2(qc - Vector2.ONE * outer, Vector2.ONE * outer * 2.0)
 		var ids: Array[int] = [WorldMap.TEX_QUARRY]

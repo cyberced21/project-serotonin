@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="NodeTheme" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/node_theme.gd" id="1_theme"]
+
+[resource]
+script = ExtResource("1_theme")
+title = "Frostpeak snow"
+moss = Vector2(0.0, 0.12)
+snow = Vector2(0.35, 0.7)
+hue = Vector2(0.02, 0.05)
+value = Vector2(0.72, 0.88)
+saturation = Vector2(0.55, 0.8)
+vein = Vector2(1.0, 1.15)

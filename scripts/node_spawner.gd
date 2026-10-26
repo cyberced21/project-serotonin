@@ -31,6 +31,8 @@ const MAX_TRIES_PER_NODE := 40
 @export_range(0.0, 1.0) var min_normal_y := 0.8
 ## How far each node's base sinks into the ground, so it doesn't float on slopes.
 @export var sink := 0.15
+## How the place dresses its nodes (moss, snow…); none = as made.
+@export var theme: NodeTheme
 @export_group("Hotspots")
 ## Spots the nodes crowd around, (x, z, radius): glades, the trail.
 @export var hotspots := PackedVector3Array()
@@ -91,6 +93,10 @@ func _spawn() -> void:
 			var v := hash(node.save_id) % (entry.variants.size() + 1)
 			if v > 0:
 				node.model = entry.variants[v - 1]
+		if theme:
+			var look := theme.look_at(seed, p, hash(node.save_id))
+			node.theme_a = look[0]
+			node.theme_b = look[1]
 		node.name = String(node.save_id)
 		node.position = to_local(ground as Vector3) - Vector3.UP * sink
 		node.rotation.y = yaw
