@@ -21,13 +21,13 @@ text = "Calmer fish: they spook from 25% closer"
 script = ExtResource("4_effect")
 stat = &"bonus_fish_chance"
 value = 0.25
-text = "25% chance a speared fish counts twice"
+text = "25% chance a fish counts twice"
 
 [sub_resource type="Resource" id="Effect_3_2"]
 script = ExtResource("4_effect")
 stat = &"strike_window"
 value = 0.25
-text = "Sharper eyes: 25% longer to pull when a fish takes the float"
+text = "Sharper eyes: 25% longer to pull on the rod, 25% wider spear thrusts"
 
 [sub_resource type="Resource" id="Tier_1"]
 script = ExtResource("2_tier")

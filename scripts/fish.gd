@@ -115,7 +115,6 @@ func is_under_levelled() -> bool:
 	return Skills.levels_under(&"fishing", species.required_level) > 0
 
 
-## The chance a spear thrust through this fish takes it: certain at or above its level, 10% less
-## per level under, never below 10%.
+## The chance a spear thrust through it, or a pull on time, takes it (FishBite.catch_chance).
 func catch_chance() -> float:
-	return Skills.under_scale(&"fishing", species.required_level, 0.1, 0.1)
+	return FishBite.catch_chance(Skills.level(&"fishing"), species.required_level)

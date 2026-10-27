@@ -15,7 +15,8 @@ extends Node
 ##    slaps down on the bank beside you and flops about. Walk up to it to pick it up. Its size was
 ##    there all along (FishSize): bigger pays more XP, and a Big one counts 2, a Huge one 3. A
 ##    perfect cast plus a quick pull is "Perfect!" (+50% XP).
-## Under-levelled fish still bite, but the window is far tighter (FishBite.window_scale).
+## Under-levelled fish still bite, but the hook may slip as you pull: the same chance a spear's
+## fish dodges (FishBite.catch_chance).
 
 enum State { IDLE, BACKCAST, FLIGHT, WAITING, RETRIEVE, YANK, DONE }
 
@@ -43,6 +44,9 @@ const LAND_DISTANCE := 2.6
 ## The nearest water it casts to (m, flat from your feet).
 @export var min_distance := 2.0
 @export var range_per_10_levels := 1.0
+## What each rod tier above the willow pole adds (Tools): cast range (m) and strike window.
+@export var range_per_tier := 1.5
+@export var window_per_tier := 0.08
 
 @export_group("Cast timing")
 ## Seconds swinging back, then forward; the sweet spot is this far into the forward stroke.
@@ -151,7 +155,7 @@ func update_target() -> void:
 
 
 func _range() -> float:
-	return cast_range + range_per_10_levels * floorf(Skills.level(&"fishing") / 10.0)
+	return cast_range + range_per_10_levels * floorf(Skills.level(&"fishing") / 10.0) + range_per_tier * Tools.tier(&"rod")
 
 
 ## Pressed with the rod out and water in range: start the back-cast.
@@ -266,7 +270,7 @@ func _splash_down() -> void:
 	lure.add_to_group("lure")
 	lure.land(_land_water, at)
 	lure.calm = Village.stat(&"fish_calm")
-	lure.window_bonus = Village.stat(&"strike_window")
+	lure.window_bonus = Village.stat(&"strike_window") + window_per_tier * Tools.tier(&"rod")
 	lure.tell.connect(_on_tell)
 	var q: int = _verdict["quality"]
 	var sounds := {RodCast.Quality.PERFECT: "plip", RodCast.Quality.GOOD: "plop", RodCast.Quality.BAD: "splosh"}
@@ -332,16 +336,19 @@ func _strike() -> void:
 	_kick(-0.35)  # the rod jerks back
 	Sfx.play(load("res://audio/fishing/jerk.tres"), 1.0, -4.0)
 	if result == &"hooked" and is_instance_valid(on):
-		if on.tool_can_take(&"rod"):
-			_yank(on, lure.strike_timing())
+		if not on.tool_can_take(&"rod"):
+			_tear_free(on, on.needs_text(&"rod"), Color("ff8a7a"))
+		elif randf() >= on.catch_chance():  # under its level: the hook slips
+			_tear_free(on, "%s %d" % [Skills.display_name(&"fishing"), on.species.required_level], Color("ffc27a"))
 		else:
-			_tear_free(on)
+			_yank(on, lure.strike_timing())
 	else:
 		_retrieve()
 
 
-## Too weak a rod for this fish: the hook tears out as you pull, and it bolts ("Needs Iron-reel rod").
-func _tear_free(f: Fish) -> void:
+## The hook tears out as you pull and the fish bolts: too weak a rod for it ("Needs Iron-reel
+## rod"), or you're under its level ("Fishing 30").
+func _tear_free(f: Fish, why: String, color: Color) -> void:
 	var at := _surface(f.global_position)
 	f.lure = null
 	f.state = Fish.State.FLEE
@@ -353,7 +360,7 @@ func _tear_free(f: Fish) -> void:
 	_ripple(at, 2.0)
 	Juice.shake(1.2)
 	_kick(-0.5)
-	PopupText.spawn(player.get_parent(), at + Vector3.UP * 0.5, f.needs_text(&"rod"), MISS_COLOR.lerp(Color("ff8a7a"), 0.8), 7)
+	PopupText.spawn(player.get_parent(), at + Vector3.UP * 0.5, why, color, 7)
 	_retrieve()
 
 

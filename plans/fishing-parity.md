@@ -20,7 +20,7 @@ specialize.
 | P5 | Size in the water | **Each fish has its size from the moment it spawns**: big ones are visibly bigger in the school (model scale ~0.8x–1.35x), so you can pick your target. The size gives the weight popup ("Trout, 1.4 kg") and +0–50% XP **for both tools**. |
 | P6 | Big fish count extra | On pickup, a fish past a size threshold is worth more than one: **Big** (~12%) counts **2**, **Huge** (top ~4%) counts **3**, with a popup. Both tools. |
 | P7 | Tiers gate species | **Like the axe and pickaxe**: four spears and four rods, each opening the same fish at the same tier (so neither tool gets a species first). The Fishing level stops gating (soft difficulty only, like mining since tools landed). Each tier also gets a little stronger. |
-| P8 | Under-levelled | One rule for both tools: below a species' rating, each tool's success drops by about the same amount for the same gap (spear: dodge chance; rod: window). Bench-checked (P3). |
+| P8 | Under-levelled | One rule, one number for both tools (`FishBite.catch_chance`): below a species' rating, 10% less per level (never under 10%) that the fish is really yours. The spear's fish dodges; the rod's hook slips as you pull ("Fishing 30"). The rod's window no longer shrinks under level; it still widens above it. |
 | P9 | Village perks | Every fisher's hut perk helps both tools. *Bonus fish* (today spear-only) counts for the rod too; *Sharper eyes* (today rod-only) also widens the spear's skewer. |
 | P10 | Talents | The levels plan's *Angler* vs *Spearman* track is where you specialize (it stays one rod perk and one spear perk per milestone). Its rod perks that assumed the old fight are rewritten (below). Built later, with the levels work. |
 

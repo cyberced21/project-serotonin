@@ -6,13 +6,17 @@ const TAP_GAP := 0.14
 const TAKE_AFTER_TAPS := Vector2(0.3, 0.36)
 
 
-## How much wider (or tighter) the strike window is for your level against the fish's: +10% per
-## 10 levels above, shrinking sharply below (5 under: about 0.72; 15 or more under: 0.2).
+## How much wider the strike window is for your level against the fish's: +10% per 10 levels
+## above. Below its level the window stays as it is: catch_chance is the penalty there.
 static func window_scale(level: int, required: int) -> float:
-	var gap := level - required
-	if gap >= 0:
-		return 1.0 + 0.1 * floorf(gap / 10.0)
-	return clampf(1.0 + 0.055 * gap, 0.2, 1.0)
+	return 1.0 + 0.1 * floorf(maxi(level - required, 0) / 10.0)
+
+
+## The chance a fish you've got (speared, or pulled on time) is really yours: certain at or
+## above its level, 10% less per level under, never below 10%. The same for both tools: under,
+## the spear's fish dodges and the rod's hook slips.
+static func catch_chance(level: int, required: int) -> float:
+	return maxf(1.0 - 0.1 * maxi(required - level, 0), 0.1)
 
 
 ## [{t (s after it arrives under the float), kind}], ending on the take: nibbles (fake-outs), the

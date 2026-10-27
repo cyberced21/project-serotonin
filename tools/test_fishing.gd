@@ -42,10 +42,11 @@ func _test_cast() -> void:
 
 func _test_scales() -> void:
 	_check(FishBite.window_scale(30, 30) == 1.0, "at level: no change")
-	_check(is_equal_approx(FishBite.window_scale(50, 30), 1.2), "20 above: +20%")
-	var five := FishBite.window_scale(25, 30)
-	_check(five > 0.65 and five < 0.8, "5 under: hard but possible (%.2f)" % five)
-	_check(FishBite.window_scale(10, 30) <= 0.21, "20 under: near-impossible")
+	_check(is_equal_approx(FishBite.window_scale(50, 30), 1.2), "20 above: +20%%")
+	_check(FishBite.window_scale(10, 30) == 1.0, "under: the window doesn't shrink")
+	_check(FishBite.catch_chance(30, 30) == 1.0, "at level: always yours")
+	_check(is_equal_approx(FishBite.catch_chance(25, 30), 0.5), "5 under: half the time")
+	_check(is_equal_approx(FishBite.catch_chance(1, 30), 0.1), "far under: one in ten")
 
 
 func _test_sizes() -> void:
@@ -67,8 +68,7 @@ func _test_sizes() -> void:
 
 func _test_window(s: FishSpecies) -> void:
 	_check(s.strike_window >= MIN_WINDOW, "%s: %.2f s to pull at its level (want %.2f+)" % [s.id, s.strike_window, MIN_WINDOW])
-	print("  %s: %.0f ms to pull at its level, %.0f ms five under" % [s.id, s.strike_window * 1000.0,
-		s.strike_window * FishBite.window_scale(s.required_level - 5, s.required_level) * 1000.0])
+	print("  %s: %.0f ms to pull at its level" % [s.id, s.strike_window * 1000.0])
 
 
 func _test_tells(s: FishSpecies) -> void:

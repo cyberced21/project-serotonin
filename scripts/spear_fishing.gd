@@ -27,6 +27,9 @@ const DODGE_COLOR := Color("ff8a7a")
 @export var skewer_radius := 0.06
 ## Skewer length grows by this fraction every 10 Fishing levels.
 @export var reach_bonus_per_10_levels := 0.1
+## What each spear tier above the stick adds (Tools): reach (m) and skewer length (fraction).
+@export var reach_per_tier := 0.15
+@export var length_per_tier := 0.1
 ## Extra XP per additional fish on the same thrust (0.5 = +50% each).
 @export var multi_xp_bonus := 0.5
 
@@ -76,7 +79,7 @@ func update_target() -> void:
 	for node in get_tree().get_nodes_in_group("water"):
 		var wb := node as WaterBody
 		var t := (wb.surface_height - from.y) / dir.y
-		if t <= 0.0 or t > reach:
+		if t <= 0.0 or t > _reach():
 			continue
 		var p := from + dir * t
 		var flat := Vector2(p.x - player.global_position.x, p.z - player.global_position.z).length()
@@ -101,9 +104,13 @@ func _set_fish_target(f: Fish) -> void:
 		f.set_highlighted(true)
 
 
+func _reach() -> float:
+	return reach + reach_per_tier * Tools.tier(&"spear")
+
+
 func _length() -> float:
 	var level: int = Skills.level(&"fishing")
-	return skewer_length * (1.0 + reach_bonus_per_10_levels * floorf(level / 10.0))
+	return skewer_length * (1.0 + reach_bonus_per_10_levels * floorf(level / 10.0) + length_per_tier * Tools.tier(&"spear"))
 
 
 ## The first fish along the spear line from the surface point, if any.
@@ -119,7 +126,7 @@ func _fish_along(p: Vector3, dir: Vector3) -> Fish:
 func _skewer(entry: Vector3, dir: Vector3) -> Array[Fish]:
 	var length := _length()
 	var capsule := CapsuleShape3D.new()
-	capsule.radius = skewer_radius
+	capsule.radius = skewer_radius * (1.0 + Village.stat(&"strike_window"))  # the hut's sharper eyes
 	capsule.height = length
 	var y := dir.normalized()
 	var x := y.cross(Vector3.UP).normalized() if absf(y.y) < 0.99 else Vector3.RIGHT
