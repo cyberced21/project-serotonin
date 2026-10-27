@@ -42,6 +42,19 @@ uniform vec3 glow_color : source_color = vec3(1.0, 0.74, 0.4);
 // Per-instance glow colour instead of the warm lamp one, used when its alpha is 1 (crystals).
 instance uniform vec4 glow_tint : source_color = vec4(1.0, 1.0, 1.0, 0.0);
 
+// The place's dressing (NodeTheme, set per node): theme_a = (moss, snow, wet, dust), each 0..1;
+// theme_b = (hue shift in turns, value, saturation, vein glint); theme_c, the leaves instead of
+// theme_b's colour = (autumn 0..1, value, saturation, shimmer: a rare look's glints, 0..1). The defaults leave the model as made.
+instance uniform vec4 theme_a = vec4(0.0);
+instance uniform vec4 theme_b = vec4(0.0, 1.0, 1.0, 1.0);
+instance uniform vec4 theme_c = vec4(0.0, 1.0, 1.0, 0.0);
+uniform vec3 moss_color : source_color = vec3(0.2, 0.32, 0.1);
+uniform vec3 snow_color : source_color = vec3(0.9, 0.94, 1.0);
+uniform vec3 dust_color : source_color = vec3(0.8, 0.74, 0.64);
+varying vec3 v_world;         // world position and normal, for the dressing
+varying vec3 v_world_normal;
+varying float v_rise;         // height above the node's origin (m)
+
 #ifdef ROCK
 // A rock of many pieces is drawn as one mesh (ResourceNode merges them): UV2.x is the piece's
 // index + 1 on every vertex (0 = not a piece), and these bits say which have broken off, 24 to a
@@ -78,6 +91,73 @@ void vertex() {
 	vec3 flap = vec3(sin(t), sin(t * 1.3 + 1.1) * 0.6, cos(t * 0.9)) * flutter * v_card * gust;
 	VERTEX += (vec3(lean.x, 0.0, lean.y) + flap) * wind_strength;
 #endif
+	v_world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	v_world_normal = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
+	v_rise = v_world.y - MODEL_MATRIX[3].y;
+}
+
+float theme_hash(vec3 p) {
+	p = fract(p * 0.3183099 + 0.1);
+	p *= 17.0;
+	return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+}
+
+// Smooth value noise, 0..1.
+float theme_noise(vec3 x) {
+	vec3 i = floor(x);
+	vec3 f = fract(x);
+	f = f * f * (3.0 - 2.0 * f);
+	return mix(mix(mix(theme_hash(i), theme_hash(i + vec3(1, 0, 0)), f.x),
+			mix(theme_hash(i + vec3(0, 1, 0)), theme_hash(i + vec3(1, 1, 0)), f.x), f.y),
+			mix(mix(theme_hash(i + vec3(0, 0, 1)), theme_hash(i + vec3(1, 0, 1)), f.x),
+			mix(theme_hash(i + vec3(0, 1, 1)), theme_hash(i + vec3(1, 1, 1)), f.x), f.y), f.z);
+}
+
+// How much of a field (0..1) an amount (0..1) covers: none at 0, the highest parts first, and at
+// most about half of it (the stone always shows through).
+float theme_cover(float field, float amount) {
+	float edge = 1.0 - amount * 0.55;
+	return amount <= 0.001 ? 0.0 : smoothstep(edge, edge + 0.12, field);
+}
+
+// `c` dressed by the place, as much as `skin` (0 = keep as made: ore, fresh breaks, cut wood);
+// `leaf` (0..1) takes the leaves' colour (theme_c) instead of the bark and stone's (theme_b).
+// `wet` comes back for the roughness.
+vec3 theme_dress(vec3 c, float skin, float leaf, out float wet) {
+	wet = 0.0;
+	if (skin <= 0.0) {
+		return c;
+	}
+	vec3 dressed = c;
+	float up = v_world_normal.y;
+	float n = theme_noise(v_world * 2.3) * 0.65 + theme_noise(v_world * 7.1) * 0.35;
+	// wet: the foot darkens and shines
+	wet = theme_cover(1.0 - smoothstep(0.0, 1.6, v_rise) * 0.8 + (n - 0.5) * 0.25, theme_a.z);
+	dressed = mix(dressed, dressed * vec3(0.42, 0.46, 0.4), wet);  // dark, a touch of algae
+	// moss: tops and hollows, broken up by the noise
+	float moss = theme_cover((up * 0.5 + 0.5) * 0.55 + n * 0.45, theme_a.x);
+	dressed = mix(dressed, moss_color * (0.75 + 0.5 * n), moss * 0.9);
+	// dust: pale, over the tops, and a little everywhere
+	float dust = theme_cover((up * 0.5 + 0.5) * 0.5 + n * 0.5, theme_a.w);
+	dressed = mix(dressed, dust_color * (0.85 + 0.3 * n), dust * 0.75);
+	dressed = mix(dressed, vec3(dot(dressed, vec3(0.333))), theme_a.w * 0.25);
+	// colour (after the moss and dust, so they take the place's cast too): hue turned round the
+	// grey axis, then saturation and value
+	float angle = theme_b.x * (1.0 - leaf) * 6.2831853;
+	vec3 k = vec3(0.57735);
+	float cs = cos(angle);
+	dressed = dressed * cs + cross(k, dressed) * sin(angle) + k * dot(k, dressed) * (1.0 - cs);
+	float luma = dot(dressed, vec3(0.299, 0.587, 0.114));
+	vec2 sat_value = mix(theme_b.zy, theme_c.zy, leaf);
+	dressed = max(mix(vec3(luma), dressed, sat_value.x) * sat_value.y, vec3(0.0));
+	// autumn: patches of the canopy turned gold
+	float autumn = theme_cover(theme_noise(v_world * 0.9 + 7.0), theme_c.x) * leaf;
+	dressed = mix(dressed, luma * vec3(1.75, 1.2, 0.4), autumn);
+	// snow: on whatever faces up
+	float snow = theme_cover(smoothstep(0.3, 0.95, up) * 0.8 + n * 0.2, theme_a.y);
+	dressed = mix(dressed, snow_color * (0.92 + 0.08 * n), snow);
+	wet *= 1.0 - snow;
+	return mix(c, dressed, skin);
 }
 
 void fragment() {
@@ -116,16 +196,28 @@ void fragment() {
 	base *= mix(v_shade.rgb * v_shade.rgb, vec3(fresh_brightness), fresh);
 	int row = int(floor(UV.y * 8.0));
 	float ore = float(row == 1 || row == 5);  // the palette's ore and metal rows glint
-	ROUGHNESS = mix(0.95, ore_roughness, ore);
-	METALLIC = ore * ore_metallic;
-	SPECULAR = mix(0.2, 0.5, ore);
+	float wet;
+	base = theme_dress(base, (1.0 - fresh) * (1.0 - ore), 0.0, wet);  // the skin, never the ore or a break
+	base *= mix(1.0, theme_b.w, ore);
+	ROUGHNESS = mix(mix(0.95, 0.4, wet), ore_roughness, ore);
+	METALLIC = ore * ore_metallic * theme_b.w;
+	SPECULAR = mix(mix(0.2, 0.45, wet), 0.5, ore);
 #else
-	ROUGHNESS = 1.0;
+	// the palette's leaves row takes the leaves' colour; cut wood (the pale wood swatches the axe's
+	// notch and the end grain use, see TrunkCarve) stays as made
+	int row = int(floor(UV.y * 8.0));
+	float cut_wood = float(row == 2 && UV.x >= 0.625);
+	float wet;
+	base = theme_dress(base, 1.0 - cut_wood, float(row == 3), wet);
+	ROUGHNESS = mix(1.0, 0.5, wet);
 #endif
 	vec3 lit = mix(glow_color, glow_tint.rgb, glow_tint.a);
 	ALBEDO = mix(mix(base, lit, glow * 0.6), vec3(1.0), flash);
 	EMISSION = vec3(flash) * 0.6 + highlight_color * (0.08 + rim * 0.5) * highlight + lit * glow * 2.0;
+	// shimmer: a rare look's (NodeTheme) slow glints, so it's spotted from a way off
+	float glint = smoothstep(0.78, 0.95, theme_noise(v_world * 5.0 + vec3(0.0, TIME * 0.6, 0.0)));
+	EMISSION += base * glint * theme_c.w * 2.5;
 #ifdef ROCK
-	EMISSION += base * float(row == 1) * ore_glow;  // ore still reads down in the shade of a hole
+	EMISSION += base * float(row == 1) * ore_glow * theme_b.w;  // ore still reads down in the shade of a hole
 #endif
 }

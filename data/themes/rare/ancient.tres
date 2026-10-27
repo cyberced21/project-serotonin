@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="NodeTheme" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/node_theme.gd" id="1_theme"]
+
+[resource]
+script = ExtResource("1_theme")
+title = "Ancient moss"
+moss = Vector2(1.0, 1.0)
+wet = Vector2(0.2, 0.4)
+value = Vector2(0.6, 0.7)
+leaf_value = Vector2(0.65, 0.75)
+bonus_drops = 1
+xp_scale = 1.5
+jitter = 0.1
+shimmer = Vector2(0.5, 0.6)

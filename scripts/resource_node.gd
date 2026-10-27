@@ -252,6 +252,10 @@ var _ring: AudioStreamPlayer3D  # the tool's ring (_tool_ring), made on first us
 var _streak := 0  # biting hits in a row on this node (the Crystal Forge's streak_double)
 var _last_hit_msec := -100000
 var _surfaces: Array[GeometryInstance3D] = []
+## The place's dressing (NodeTheme.look()): set by the spawner before the node enters the tree.
+var look: Array[Vector4] = []
+## A rare look (ProcgenMap.rares), if this is the one: its bonus drops and XP.
+var rare: NodeTheme
 var _flash_tween: Tween
 var _nudge_tween: Tween
 var _burst_home := Vector3.ZERO
@@ -278,6 +282,7 @@ func _ready() -> void:
 	_burst_home = burst.position
 	_break_audio_home = break_audio.position
 	_collect_surfaces(visual)
+	_dress(self)
 	_fit_collision()
 	if not _links.is_empty():
 		_ground_rock()
@@ -590,6 +595,8 @@ func _tool_ring(info: HitInfo) -> void:
 func _award_xp(amount: int, big := false) -> void:
 	if amount <= 0:
 		return
+	if rare:
+		amount = roundi(amount * rare.xp_scale)
 	var gained := Skills.add_xp(skill, amount)
 	if gained > 0:
 		PopupText.spawn(get_parent(), _popup_pos() + Vector3(randf_range(-0.2, 0.2), 0.25 if big else 0.0, 0.0),
@@ -603,6 +610,9 @@ func _popup_pos() -> Vector3:
 func _break(info: HitInfo) -> void:
 	_clear_fault()
 	_award_xp(roundi(xp_on_break * (1.0 + (Skills.UNDER_XP_BONUS if is_under_levelled() else 0.0))), true)
+	if rare:
+		PopupText.spawn(get_parent(), _popup_pos() + Vector3.UP * 0.55, "Rare find: %s!" % rare.title,
+			Color(1.0, 0.85, 0.45), 9, 0.15)
 	if _carve and clean_layers:  # the hinge giving way: a deep snap of the last fibres
 		Sfx.play_at(clean_layers, info.position, 0.6, 3.0)
 	else:
@@ -764,6 +774,8 @@ func _drop_count() -> int:
 		extra = int(Village.stat(&"extra_logs"))  # the woodcutter's lodge
 	elif skill == &"mining":
 		extra = int(Village.stat(&"extra_ore"))  # Edda's assay shed
+	if rare:
+		extra += rare.bonus_drops
 	return randi_range(drops_min, maxi(drops_min, drops_max)) + extra
 
 
@@ -1069,6 +1081,7 @@ func _make_stump(mesh: Mesh) -> void:
 	_stump.material_override = NODE_PALETTE
 	rubble.add_child(_stump)
 	_stump.transform = rubble.transform.affine_inverse() * _trunk_rest
+	_dress(_stump)
 	_limit_drawing(rubble)
 
 
@@ -2595,6 +2608,17 @@ func _collect_surfaces(n: Node) -> void:
 		if c is GeometryInstance3D:
 			_surfaces.append(c)
 		_collect_surfaces(c)
+
+
+## Dresses every mesh under `n` with this node's theme (the pieces and parts that fly off or fall
+## keep it: they're the same meshes, or copies of them).
+func _dress(n: Node) -> void:
+	if look.is_empty():
+		return
+	if n is MeshInstance3D:
+		NodeTheme.dress(n, look)
+	for g in n.find_children("*", "MeshInstance3D", true, false):
+		NodeTheme.dress(g, look)
 
 
 func _play(player: AudioStreamPlayer3D, stream: AudioStream, pitch := 1.0) -> void:

@@ -25,6 +25,7 @@ import math
 import os
 import random
 import sys
+import types
 
 import bmesh
 import bpy
@@ -34,9 +35,16 @@ from mathutils.bvhtree import BVHTree
 argv = sys.argv[sys.argv.index("--") + 1:]
 OUT_DIR = argv[0]
 SWATCHES = json.load(open(argv[1]))["swatches"]
-## How many variants of each model the `variants` builder makes (see variants()).
-VARIANTS = 4
+## How many variants the `variants` builder makes of each ore rock and choppable tree, and of the
+## scenery (see variants()).
+VARIANTS = 8
+SCENERY_VARIANTS = 4
+## The variants are spread over this many shape families (see recipe()): the model and variants
+## 4 and 8 are family 0, as designed; variants 1 and 5 family 1, and so on. A procgen cluster
+## takes its nodes from one family, so neighbours share their proportions.
+FAMILIES = 4
 _variant = 0  # 0 = the model itself; 1..VARIANTS while variants() is baking
+_size = 1.0  # the whole model scaled by this on export (a recipe's "size")
 
 
 
@@ -49,7 +57,25 @@ def seeded(seed):
     return random.Random(seed + 7919 * _variant)
 
 
+def recipe(seed, **ranges):
+    """The shape of the model being built, by its family (see FAMILIES): each `ranges` entry is
+    (low, as designed, high); family 0 takes the designed value, the others a draw between low and
+    high that every variant in the family shares (its own seed, so the model's rng is untouched).
+    A "size" entry also scales the whole model on export. Returns the values as attributes."""
+    global _size
+    family = _variant % FAMILIES
+    rng = random.Random(seed * 131 + family * 7907)
+    out = types.SimpleNamespace()
+    for k, (lo, made, hi) in ranges.items():
+        v = made if family == 0 else rng.uniform(lo, hi)
+        setattr(out, k, round(v) if isinstance(made, int) else v)
+    _size = getattr(out, "size", 1.0)
+    return out
+
+
 def reset():
+    global _size
+    _size = 1.0
     bpy.ops.wm.read_factory_settings(use_empty=True)
 
 
@@ -163,6 +189,8 @@ def export(name, loose_edges=False):
     angle = smooth_angle(name)
     if angle is not None:
         auto_smooth(angle)
+    if _size != 1.0:
+        scale_scene(_size)
     if _variant:  # a variant: models/variants/<name>_v<n>.glb, whatever folder the model lives in
         name = os.path.join("variants", f"{os.path.basename(name)}_v{_variant}")
     path = os.path.join(OUT_DIR, name + ".glb")
@@ -632,15 +660,18 @@ def copper_verdigris(name="copper_verdigris", out="designs", shatter=False):
     the veins: every split opens up a bright sheet of copper."""
     reset()
     rng = seeded(101)
-    squash = (1.2, 1.05, 0.72)
-    whole, cz = boulder_mesh(rng, 1.0, subdiv=4 if shatter else 3, squash=squash, chops=3, lump_amp=(0.15, 0.28))
+    r = recipe(101, wide=(1.05, 1.2, 1.38), deep=(0.92, 1.05, 1.15), tall=(0.58, 0.72, 0.88),
+               lumpy=(0.75, 1.0, 1.35), chops=(2, 3, 5), size=(0.9, 1.0, 1.15))
+    squash = (r.wide, r.deep, r.tall)
+    whole, cz = boulder_mesh(rng, 1.0, subdiv=4 if shatter else 3, squash=squash, chops=r.chops,
+                             lump_amp=(0.15 * r.lumpy, 0.28 * r.lumpy))
     if shatter:  # sunk into the ground, not sat on it
         bmesh.ops.translate(whole, vec=Vector((0, 0, -0.06)), verts=whole.verts)
         cz -= 0.06
     centre = Vector((0, 0, cz))
     veins = [(Vector((1, 0.35, 0.25)).normalized(), centre + Vector((0.15, 0, 0)), 0.07),
              (Vector((-0.3, 1, -0.4)).normalized(), centre + Vector((0, -0.1, 0.1)), 0.06)]
-    crust_z = cz + 0.38  # verdigris above this, where rain and weather get at it
+    crust_z = cz + 0.38 * r.tall / 0.72  # verdigris above this, where rain and weather get at it
     slice_mesh(whole, band_cuts(veins) + [(Vector((0, 0, crust_z)), Vector((0, 0, 1)))])
     seeds = [Vector((0, 0, cz * 0.7))]
     for n, p, _ in veins:  # pairs either side of each vein
@@ -697,20 +728,22 @@ def iron_columns(name="iron_columns", out="designs", shatter=False):
     on the one below: knock out a column's foot and the rest of it topples."""
     reset()
     rng = seeded(103)
+    r = recipe(103, tall=(0.8, 1.0, 1.25), spread=(0.88, 1.0, 1.15), size=(0.9, 1.0, 1.12))
     size = 1.1
-    whole = prism(9, 1.15 * size, 1.05 * size, 2.0 * size)
-    bmesh.ops.translate(whole, vec=Vector((0, 0, 1.0 * size - 0.04)), verts=whole.verts)
+    whole = prism(9, 1.15 * size, 1.05 * size, 2.0 * size * r.tall)
+    bmesh.ops.translate(whole, vec=Vector((0, 0, 1.0 * size * r.tall - 0.04)), verts=whole.verts)
     for v in whole.verts:
-        v.co.x *= 1.05 + rng.uniform(-0.04, 0.04)
-        v.co.y *= 0.95 + rng.uniform(-0.04, 0.04)
+        v.co.x *= (1.05 + rng.uniform(-0.04, 0.04)) * r.spread
+        v.co.y *= (0.95 + rng.uniform(-0.04, 0.04)) * r.spread
     seeds = [Vector((0, 0, 0.5))]
     for k in range(6):  # a ring round the middle column ...
         a = k * math.tau / 6 + rng.uniform(-0.15, 0.15)
-        seeds.append(Vector((math.cos(a) * 0.52, math.sin(a) * 0.48, 0.5)))
+        seeds.append(Vector((math.cos(a) * 0.52, math.sin(a) * 0.48, 0.5)) * Vector((r.spread, r.spread, 1)))
     for k in range(5):  # ... and an outer one
         a = k * math.tau / 5 + 0.3 + rng.uniform(-0.2, 0.2)
-        seeds.append(Vector((math.cos(a) * 1.0, math.sin(a) * 0.92, 0.5)))
+        seeds.append(Vector((math.cos(a) * 1.0, math.sin(a) * 0.92, 0.5)) * Vector((r.spread, r.spread, 1)))
     tops = [size * 1.55] + [size * rng.uniform(1.05, 1.4) for _ in range(6)] + [size * rng.uniform(0.55, 0.95) for _ in range(5)]
+    tops = [t * r.tall for t in tops]
     rust = [size * rng.uniform(0.2, 0.4) for _ in seeds]  # how far rust runs down each one
     if shatter:
         columns = seeds
@@ -797,9 +830,11 @@ def coal_strata(name="coal_strata", out="designs", shatter=False):
     rest on the ones beneath: undercut it and a whole layer drops."""
     reset()
     rng = seeded(105)
-    squash = (1.35, 1.1, 0.6)
+    r = recipe(105, wide=(1.2, 1.35, 1.55), deep=(0.95, 1.1, 1.22), tall=(0.5, 0.6, 0.72),
+               lumpy=(0.7, 1.0, 1.4), chops=(3, 4, 6), size=(0.9, 1.0, 1.12))
+    squash = (r.wide, r.deep, r.tall)
     whole, cz = boulder_mesh(rng, 1.0, subdiv=4 if shatter else 3, squash=squash, lumps=4,
-                             lump_amp=(0.08, 0.16), chops=4)
+                             lump_amp=(0.08 * r.lumpy, 0.16 * r.lumpy), chops=r.chops)
     if shatter:
         bmesh.ops.translate(whole, vec=Vector((0, 0, -0.05)), verts=whole.verts)
     thick = [0.16, 0.07, 0.2, 0.08, 0.14, 0.07, 0.18, 0.08, 0.2]  # coal, shale, coal ... upward
@@ -971,9 +1006,12 @@ def gold_geode_shatter(name="gold_rock", out="", heart="gold"):
     shade of the hole. The thin gold veins outside stay, so it's spotted from a distance."""
     reset()
     rng = seeded(109)
+    r = recipe(109, wide=(1.0, 1.1, 1.25), tall=(0.68, 0.8, 0.92), lumpy=(0.75, 1.0, 1.3), chops=(2, 3, 5),
+               size=(0.88, 1.0, 1.1))
     size = 0.95
-    squash = (1.1, 1.05, 0.8)
-    whole, cz = boulder_mesh(rng, size, subdiv=4, squash=squash, chops=3, lump_amp=(0.15, 0.25), noise=0.06)
+    squash = (r.wide, 1.05, r.tall)
+    whole, cz = boulder_mesh(rng, size, subdiv=4, squash=squash, chops=r.chops,
+                             lump_amp=(0.15 * r.lumpy, 0.25 * r.lumpy), noise=0.06)
     bmesh.ops.translate(whole, vec=Vector((0, 0, -0.05)), verts=whole.verts)
     cz -= 0.05
     centre = Vector((0, 0, cz))
@@ -1081,7 +1119,8 @@ def crystal_rock():
     left while it grows back. The stone is weathered; the crystals clean and glassy."""
     reset()
     rng = seeded(15)
-    bm = blob(0.5, rng, squash=(1.15, 1.0, 0.5))
+    r = recipe(15, long=(0.82, 1.0, 1.22), lean=(0.65, 1.0, 1.35), base=(0.4, 0.5, 0.62), size=(0.9, 1.0, 1.1))
+    bm = blob(0.5, rng, squash=(1.15, 1.0, r.base))
     paint(bm, shade_by_normal("stone.3", "stone.2", "stone.1", rng))
     stone = bm.copy()  # where the crystals come out of it (world space)
     bmesh.ops.translate(stone, vec=Vector((0, 0, 0.18)), verts=stone.verts)
@@ -1095,6 +1134,7 @@ def crystal_rock():
         (0.9, 0.13, 0.5, 3.6), (0.6, 0.1, 0.75, 5.0),
     ]
     for i, (length, radius, tilt, a) in enumerate(shards):
+        length, tilt = length * r.long, min(tilt * r.lean, 0.95)
         base = (math.cos(a) * 0.16 * (i > 0), math.sin(a) * 0.16 * (i > 0), 0.3)
         axis = Vector((math.sin(tilt) * math.cos(a), math.sin(tilt) * math.sin(a), math.cos(tilt)))
         hit = surface.ray_cast(Vector(base), axis)  # from inside the stone, out along the crystal
@@ -1806,12 +1846,15 @@ def tree_round(name="tree_round", out="designs"):
     a little root flare."""
     reset()
     rng = seeded(70)
-    make_object("Body_Trunk", ringed_trunk(rng, 12, 0.24, 0.15, 2.9, STARTER_BARK, flare=0.3, lean=(0.12, 0.05)))
-    ends = fan(3, 0.95, 3.5, rng, 0.4)
-    limbs(rng, [((0.1, 0.03, 2.5), e, 0.09, 0.04) for e in ends], STARTER_BARK)
-    spots = [(0.8, e, (1, 1, 0.8)) for e in ends]
-    spots += [(0.95, (0.1, 0.0, 3.85), (1, 1, 0.8)), (0.6, (0.5, -0.4, 4.2), (1, 1, 0.85)),
-              (0.55, (-0.45, 0.35, 4.15), (1, 1, 0.85))]
+    r = recipe(70, tall=(-0.3, 0.0, 0.45), spread=(0.8, 0.95, 1.2), bushy=(0.85, 1.0, 1.18), lean=(0.3, 1.0, 2.2))
+    up = r.tall  # (everything above the trunk's foot moves up with it)
+    make_object("Body_Trunk", ringed_trunk(rng, 12, 0.24, 0.15, 2.9 + up, STARTER_BARK, flare=0.3,
+                                           lean=(0.12 * r.lean, 0.05 * r.lean)))
+    ends = fan(3, r.spread, 3.5 + up, rng, 0.4)
+    limbs(rng, [((0.1, 0.03, 2.5 + up), e, 0.09, 0.04) for e in ends], STARTER_BARK)
+    spots = [(0.8 * r.bushy, e, (1, 1, 0.8)) for e in ends]
+    spots += [(0.95 * r.bushy, (0.1, 0.0, 3.85 + up), (1, 1, 0.8)), (0.6 * r.bushy, (0.5, -0.4, 4.2 + up), (1, 1, 0.85)),
+              (0.55 * r.bushy, (-0.45, 0.35, 4.15 + up), (1, 1, 0.85))]
     clumps(rng, spots, STARTER_LEAVES)
     cut_stump(0.24, 0.22, STARTER_BARK, rng)
     export(os.path.join(out, name))
@@ -1838,18 +1881,23 @@ def birch_airy(name="birch_airy", out="designs"):
     and small upright clumps hung along its upper half."""
     reset()
     rng = seeded(72)
-    make_object("Body_Trunk", ringed_trunk(rng, 10, 0.17, 0.09, 4.3, BIRCH_BARK, flare=0.15, lobes=4,
-                                           lean=(0.3, -0.1), marks=("neutral.1", 0.16), upper=(2.0, 2.6, 3.2, 3.8)))
+    r = recipe(72, tall=(0.85, 1.0, 1.18), lean=(0.3, 1.0, 1.8), bushy=(0.85, 1.0, 1.18), reach=(0.8, 1.0, 1.3))
+    top = 4.3 * r.tall
+    lean = (0.3 * r.lean, -0.1 * r.lean)
+    make_object("Body_Trunk", ringed_trunk(rng, 10, 0.17, 0.09, top, BIRCH_BARK, flare=0.15, lobes=4,
+                                           lean=lean, marks=("neutral.1", 0.16),
+                                           upper=tuple(z for z in (2.0, 2.6, 3.2, 3.8, 4.4) if z < top - 0.4)))
     spots = []
     pairs = []
     for i, z in enumerate((2.4, 2.9, 3.35, 3.8)):
+        z = 1.45 + (z - 1.45) * (top - 1.45) / (4.3 - 1.45)
         a = i * 2.2 + rng.uniform(-0.3, 0.3)
-        bend = ((z - 1.45) / (4.3 - 1.45)) ** 2
-        base = (0.3 * bend, -0.1 * bend, z)
-        tip = (base[0] + math.cos(a) * 0.4, base[1] + math.sin(a) * 0.4, z + 0.4)
+        bend = ((z - 1.45) / (top - 1.45)) ** 2
+        base = (lean[0] * bend, lean[1] * bend, z)
+        tip = (base[0] + math.cos(a) * 0.4 * r.reach, base[1] + math.sin(a) * 0.4 * r.reach, z + 0.4)
         pairs.append((base, tip, 0.05, 0.025))
-        spots.append((0.52, tip, (0.8, 0.8, 1.25)))
-    spots.append((0.5, (0.32, -0.1, 4.55), (0.85, 0.85, 1.3)))
+        spots.append((0.52 * r.bushy, tip, (0.8, 0.8, 1.25)))
+    spots.append((0.5 * r.bushy, (0.32 * r.lean, lean[1], top + 0.25), (0.85, 0.85, 1.3)))
     limbs(rng, pairs, BIRCH_BARK)
     clumps(rng, spots, BIRCH_LEAVES)
     cut_stump(0.17, 0.16, BIRCH_BARK, rng)
@@ -1878,11 +1926,13 @@ def oak_spreading(name="oak_spreading", out="designs"):
     reaching out wide, a broad crown of heavy clumps."""
     reset()
     rng = seeded(74)
-    make_object("Body_Trunk", ringed_trunk(rng, 12, 0.36, 0.26, 2.4, OAK_BARK, flare=0.5, lobes=6, lean=(0.08, 0.0)))
-    ends = fan(4, 1.6, 3.0, rng, 0.5)
-    limbs(rng, [((0, 0, 2.1), e, 0.16, 0.07) for e in ends], OAK_BARK)
-    spots = [(1.0, (e[0], e[1], e[2] + 0.2), (1.15, 1.15, 0.65)) for e in ends]
-    spots += [(1.25, (0.05, 0.0, 3.55), (1.15, 1.15, 0.65))]
+    r = recipe(74, tall=(-0.2, 0.0, 0.4), spread=(1.3, 1.6, 1.95), bushy=(0.88, 1.0, 1.15), limbs=(3, 4, 5))
+    up = r.tall
+    make_object("Body_Trunk", ringed_trunk(rng, 12, 0.36, 0.26, 2.4 + up, OAK_BARK, flare=0.5, lobes=6, lean=(0.08, 0.0)))
+    ends = fan(r.limbs, r.spread, 3.0 + up, rng, 0.5)
+    limbs(rng, [((0, 0, 2.1 + up), e, 0.16, 0.07) for e in ends], OAK_BARK)
+    spots = [(1.0 * r.bushy, (e[0], e[1], e[2] + 0.2), (1.15, 1.15, 0.65)) for e in ends]
+    spots += [(1.25 * r.bushy, (0.05, 0.0, 3.55 + up), (1.15, 1.15, 0.65))]
     clumps(rng, spots, OAK_LEAVES)
     cut_stump(0.36, 0.33, OAK_BARK, rng)
     export(os.path.join(out, name))
@@ -1924,9 +1974,12 @@ def pine_classic(name="pine_classic", out="designs"):
     their rims drooping and ragged. The lowest rim stays above the chopping band."""
     reset()
     rng = seeded(76)
-    make_object("Body_Trunk", ringed_trunk(rng, 10, 0.3, 0.1, 5.9, PINE_BARK, flare=0.25, lobes=5,
-                                           upper=(2.0, 2.6, 3.4, 4.2, 5.0)))
+    shape = recipe(76, tall=(0.85, 1.0, 1.2), wide=(0.82, 1.0, 1.15))
+    lift = lambda z: 2.65 + (z - 2.65) * shape.tall  # (the lowest rim stays put, above the chopping band)
+    make_object("Body_Trunk", ringed_trunk(rng, 10, 0.3, 0.1, lift(5.9), PINE_BARK, flare=0.25, lobes=5,
+                                           upper=(2.0, 2.6) + tuple(lift(z) for z in (3.4, 4.2, 5.0))))
     for i, (r, h, z) in enumerate(((1.9, 1.5, 2.65), (1.6, 1.4, 3.4), (1.25, 1.3, 4.1), (0.9, 1.2, 4.75), (0.5, 1.1, 5.4))):
+        r, h, z = r * shape.wide, h * shape.tall, lift(z)
         bm = needle_cone(rng, r, h, 0.06)
         leafy(bm, rng, PINE_NEEDLES, card_size=0.8, density=4.2, kind=CARD_NEEDLES, core=(0.72, 0.72, 0.92),
               droop=0.5, open_bottom=True)
@@ -2765,26 +2818,31 @@ def canopies():
 
 
 def variants():
-    """VARIANTS more of every model a procgen world picks from (models/variants/<name>_v<n>.glb):
-    the ore rocks, the choppable trees, bushes, boulders and background trees. Each is its model
-    built again from a shifted seed: the same design, every piece and crack its own."""
-    global _variant
-    os.makedirs(os.path.join(OUT_DIR, "variants"), exist_ok=True)
-    for v in range(1, VARIANTS + 1):
-        _variant = v
-        for build in (rock, iron_rock, coal_rock, gold_rock, crystal_rock, tree, birch, oak, pine,
-                      big_scenery, canopies):
-            build()
-    _variant = 0
+    """More of every model a procgen world picks from (models/variants/<name>_v<n>.glb): VARIANTS
+    of the ore rocks and choppable trees, spread over the shape families (see recipe()), and
+    SCENERY_VARIANTS of the bushes, boulders and background trees. Each is its model built again
+    from a shifted seed: the same design, every piece and crack its own."""
+    ore_variants()
+    tree_variants()
+    bake_variants((big_scenery, canopies), SCENERY_VARIANTS)
 
 
 def ore_variants():
     """Just the ore rocks' variants (see variants()), so they can be rebuilt on their own."""
+    bake_variants((rock, iron_rock, coal_rock, gold_rock, crystal_rock), VARIANTS)
+
+
+def tree_variants():
+    """Just the choppable trees' variants (see variants())."""
+    bake_variants((tree, birch, oak, pine), VARIANTS)
+
+
+def bake_variants(builds, count):
     global _variant
     os.makedirs(os.path.join(OUT_DIR, "variants"), exist_ok=True)
-    for v in range(1, VARIANTS + 1):
+    for v in range(1, count + 1):
         _variant = v
-        for build in (rock, iron_rock, coal_rock, gold_rock, crystal_rock):
+        for build in builds:
             build()
     _variant = 0
 
@@ -2898,6 +2956,6 @@ if __name__ == "__main__":  # make_village.py imports the helpers above without 
     for build in builds:
         if not only or build.__name__ in only:
             build()
-    for build in (designs, tree_designs, variants, ore_variants):  # only when asked for by name: not the game's own models
+    for build in (designs, tree_designs, variants, ore_variants, tree_variants):  # only when asked for by name: not the game's own models
         if build.__name__ in only:
             build()

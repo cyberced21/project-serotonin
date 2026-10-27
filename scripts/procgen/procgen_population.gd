@@ -74,12 +74,13 @@ const QUARRY_LEVELS := [
 ]
 const CRYSTALS := 4
 ## How many baked variants each model may have (tools/blender/make_models.py's VARIANTS).
-const VARIANTS := 4
+const VARIANTS := 8
 ## Scenery fills this square (the valley inside the rim).
 const SCENERY_AREA := Rect2(-185, -185, 370, 370)
 
 
 static func populate(parent: Node3D, map: ProcgenMap) -> void:
+	var spawners := {}  # site -> its spawner
 	for i in map.sites.size():
 		var site: Dictionary = map.sites[i]
 		var spec: Dictionary = NODES.get(site["biome"], {}).get(site["tier"], {})
@@ -88,6 +89,7 @@ static func populate(parent: Node3D, map: ProcgenMap) -> void:
 		spec = _with_kind(spec, site.get("kind", &""))
 		var cell := i
 		var spawner := _spawner(map, "Nodes_%d_%s" % [i, site["biome"]], spec)
+		spawner.theme = theme_for(site["biome"], site.get("kind", &""))
 		var at: Vector2 = site["pos"]
 		spawner.area = Rect2(at - Vector2.ONE * 110.0, Vector2.ONE * 220.0)
 		spawner.hotspots = PackedVector3Array([Vector3(at.x, at.y, 30.0)])
@@ -103,12 +105,40 @@ static func populate(parent: Node3D, map: ProcgenMap) -> void:
 		spawner.accept = func(p: Vector2) -> bool:
 			return map.cells[ProcgenMap.pixel_index(p)] == cell and not in_pit.call(p)
 		parent.add_child(spawner)
+		spawners[i] = spawner
+	_place_rares(map, spawners)
 	_quarry_levels(parent, map)
 	var boxes := _cell_boxes(map)
 	for i in map.sites.size():
 		var box: Rect2 = boxes[i].intersection(SCENERY_AREA)
 		if box.has_area():
 			parent.add_child(_scenery(map, i, box))
+
+
+## Hands each of the seed's rare looks (ProcgenMap.rares) to its site's spawner, or, for a site
+## with no nodes, the nearest site's that has some.
+static func _place_rares(map: ProcgenMap, spawners: Dictionary) -> void:
+	for r: Dictionary in map.rares:
+		var at: Vector2 = map.sites[r["site"]]["pos"]
+		var best: NodeSpawner = null
+		var best_d := INF
+		for i in spawners:
+			var d: float = (map.sites[i]["pos"] as Vector2).distance_to(at)
+			if d < best_d and (spawners[i] as NodeSpawner).rare == null:
+				best_d = d
+				best = spawners[i]
+		if best:
+			best.rare = load("res://data/themes/rare/%s.tres" % r["theme"])
+
+
+## How a biome kind dresses its nodes (data/themes/<kind>.tres), else its biome
+## (data/themes/<biome>.tres), else nothing.
+static func theme_for(biome: StringName, kind: StringName) -> NodeTheme:
+	for id in [kind, biome]:
+		var path := "res://data/themes/%s.tres" % id
+		if not String(id).is_empty() and ResourceLoader.exists(path):
+			return load(path)
+	return null
 
 
 ## `spec` with its kind's weights and count applied (see KIND_NODES).
@@ -170,6 +200,7 @@ static func _quarry_levels(parent: Node3D, map: ProcgenMap) -> void:
 		spec = _with_kind(spec, map.kinds.get(&"quarry", &""))
 		spec["spacing"] = 4.5
 		var spawner := _spawner(map, "QuarryLevel%d" % (k + 1), spec)
+		spawner.theme = theme_for(&"quarry", map.kinds.get(&"quarry", &""))
 		spawner.ring = Vector4(qc.x, qc.y, inner, outer)
 		spawner.area = Rect2(qc - Vector2.ONE * outer, Vector2.ONE * outer * 2.0)
 		var ids: Array[int] = [WorldMap.TEX_QUARRY]
@@ -214,6 +245,7 @@ static func _scenery(map: ProcgenMap, i: int, box: Rect2) -> SceneryScatter:
 	scatter.name = "Scenery_%d_%s" % [i, biome]
 	scatter.area = box
 	scatter.seed = map.sub_seed(StringName(scatter.name))
+	scatter.theme = theme_for(biome, map.sites[i].get("kind", &""))
 	var ground: Array[int] = [WorldMap.TEX_DEFAULT]
 	match biome:
 		&"pinewood":

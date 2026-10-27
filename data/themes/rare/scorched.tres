@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="NodeTheme" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/node_theme.gd" id="1_theme"]
+
+[resource]
+script = ExtResource("1_theme")
+title = "Lightning-scorched"
+dust = Vector2(0.0, 0.15)
+value = Vector2(0.25, 0.32)
+saturation = Vector2(0.1, 0.2)
+autumn = Vector2(0.3, 0.5)
+leaf_value = Vector2(0.4, 0.5)
+leaf_saturation = Vector2(0.3, 0.4)
+bonus_drops = 1
+xp_scale = 1.5
+jitter = 0.1
+shimmer = Vector2(0.5, 0.6)

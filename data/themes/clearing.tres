@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="NodeTheme" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/node_theme.gd" id="1_theme"]
+
+[resource]
+script = ExtResource("1_theme")
+title = "Clearing grass-moss"
+moss = Vector2(0.15, 0.4)
+wet = Vector2(0.0, 0.1)
+value = Vector2(0.95, 1.05)

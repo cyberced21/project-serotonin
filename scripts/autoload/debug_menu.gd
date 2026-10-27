@@ -236,8 +236,12 @@ func _refresh_procgen() -> void:
 	var kinds: PackedStringArray = []
 	for biome in map.kinds:
 		kinds.append(map.kind_name(biome))
-	_procgen_status.text = "In a generated world, seed %d\n%s\nRich in %s, lean on %s" % [ProcgenWorld.world_seed,
-			", ".join(kinds), Items.display_name(map.rich), Items.display_name(map.lean)]
+	var rares: PackedStringArray = []
+	for r: Dictionary in map.rares:
+		var theme := load("res://data/themes/rare/%s.tres" % r["theme"]) as NodeTheme
+		rares.append("%s (%s)" % [theme.title, String(map.sites[r["site"]]["biome"]).capitalize()])
+	_procgen_status.text = "In a generated world, seed %d\n%s\nRich in %s, lean on %s\nRare: %s" % [ProcgenWorld.world_seed,
+			", ".join(kinds), Items.display_name(map.rich), Items.display_name(map.lean), ", ".join(rares)]
 	if _seed_edit.text.is_empty():
 		_seed_edit.text = str(ProcgenWorld.world_seed)
 

@@ -121,6 +121,12 @@ Plans and decisions: [plans/procgen.md](../plans/procgen.md), [plans/procgen-var
 - [ ] **Walk the new pieces:** climb both ruins to their reward, wade a river and its fords, check the Lakeside Village's fisher meets the pond, see each kind's ground in person.
 - [ ] **The ring road / time trial in generated worlds:** still left out (hand-placed with baked heights).
 - [ ] **Hand-sculpting a seed:** a seed you like could be baked to `terrain_data`-style files and edited.
+- [x] **Themed nodes** ([plans/themed-nodes.md](../plans/themed-nodes.md), branch `themes`): a theme per biome kind dressing rocks, trees and scenery; shape families; rare looks.
+- [ ] **Themed nodes, playtest:** walk a few seeds and judge each theme in person (only screenshots so far: `docs/images/themes/`). Wet (Stillwater, Marsh) is the faintest; the trees' dressing is gentler than the rocks'.
+- [ ] **Themed nodes, saves:** which variant a node wears now goes by its cluster's shape family, so a half-mined rock in a procgen save made before this may come back as a different variant (its saved pieces then point at the wrong ones). Fresh seeds are fine.
+- [ ] **Themed nodes, load time:** about +0.5–0.75 s a seed (7.5 → 8.25 s windowed, ±1 s run to run); not the doubled variants. Probably the heavier node shader's first compile; check with a profiler.
+- [ ] **Themed nodes, the hand-built world:** its spawners and scenery have no theme (`NodeSpawner.theme`, `SceneryScatter.theme`); the biome scenes could each take one.
+- [ ] **Themed nodes, not done:** Old Growth trees taller or gnarlier by theme (only the background canopies grow, via `KIND_SCALE`); no trees grow on Frostpeak, so snow on crowns only shows on the rare Frost-touched one.
 - [ ] **Merge or drop:** the branch carries the wood and mining voicing and the camera fix (already on `main`); the procgen world itself only touches the debug menu, `SaveGame.use_file`, `Biome.locator` and `NodeSpawner.accept` / `SpawnEntry.variants`.
 
 ## Movement
