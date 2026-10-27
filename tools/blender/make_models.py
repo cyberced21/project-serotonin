@@ -2680,8 +2680,8 @@ def axe():
 
 
 # --- tool tiers -------------------------------------------------------------------------------
-# The forged tools (scripts/autoload/tools.gd LADDER): stone, copper, iron, crystal picks and axes,
-# stone and copper sickles, in models/tools/<tool>_<tier>.glb. The same shapes as the pickaxe, axe
+# The forged tools (scripts/autoload/tools.gd LADDER): stone, copper, iron, crystal picks, axes,
+# spears and rods, stone and copper sickles, in models/tools/<tool>_<tier>.glb. The same shapes as the pickaxe, axe
 # and sickle above with the metal swatches swapped per tier, and a few changes of shape: stone is
 # chipped and lashed on with cord, crystal has faceted crystal spikes on a gold collar.
 
@@ -2799,12 +2799,113 @@ def sickle_tier(tier):
     export(f"tools/sickle_{tier}")
 
 
+def spear_tier(tier):
+    """The fishing spears, laid out like spear() (pointing +Y from the grip): a sharpened stick
+    with a fire-hardened point (stone tier), then copper, iron and crystal heads, each a little
+    longer, the crystal one faceted on a gold collar. A touch more shaft per tier: more reach."""
+    reset()
+    rng = seeded(5)
+    length = 1.4 + 0.05 * tier
+    wood = ("wood.5", "wood.4", "wood.3") if tier == 0 else ("wood.6", "wood.4", "wood.3")
+    bm = prism(6, 0.02 if tier == 0 else 0.022, 0.017 if tier == 0 else 0.02, length)
+    if tier == 0:
+        jitter(bm, 0.08, rng)
+    paint(bm, shade_by_normal(*wood, rng, side_alt="wood.5"))
+    end = length - 0.27  # the shaft runs from -0.27 along Y
+    make_object("Shaft", bm, (0, end - length / 2, 0), (-math.pi / 2, 0, 0))
+    if tier == 0:  # whittled to a point and charred
+        bm = prism(6, 0.019, 0.001, 0.14)
+        paint(bm, lambda f: "wood.1")
+        make_object("Tip", bm, (0, end + 0.07, 0), (-math.pi / 2, 0, 0))
+        lashing_y = end - 0.15
+        bm = prism(6, 0.024, 0.024, 0.05)
+        paint(bm, lambda f: "wood.7")
+        make_object("Wrap", bm, (0, lashing_y, 0), (-math.pi / 2, 0, 0))
+        block_hand("y", grip=0.42)
+        export("tools/spear_0")
+        return
+    # the binding (gold on crystal), then the head
+    bm = prism(6, 0.027, 0.027, 0.08)
+    paint(bm, lambda f: "ore.gold" if tier == 3 else "wood.1")
+    make_object("Wrap", bm, (0, end - 0.06, 0), (-math.pi / 2, 0, 0))
+    head = 0.2 + 0.03 * tier
+    if tier == 3:
+        bm = prism(6, 0.034, 0.002, head)
+    else:
+        bm = prism(4, 0.03, 0.002, head)
+    paint(bm, tiered(tier, shade_by_normal("metal.7", "metal.5", "metal.4", rng, side_alt="metal.6")))
+    make_object("Tip", bm, (0, end + head / 2, 0), (-math.pi / 2, 0, math.pi / 4))
+    for side in (1, -1):  # barbs angled back from the tip, longer on the better heads
+        bm = prism(3, 0.012, 0.001, 0.07 + 0.012 * tier)
+        paint(bm, tiered(tier, lambda f: "metal.5"))
+        make_object(f"Barb{'L' if side > 0 else 'R'}", bm, (side * 0.03, end + head * 0.45, 0),
+                    (-math.pi / 2 - math.radians(150), 0, side * math.radians(25)))
+    block_hand("y", grip=0.42)
+    export(f"tools/spear_{tier}")
+
+
+def rod_tier(tier):
+    """The fishing rods, built like rod() (three bendable sections RodFishing finds by name):
+    a plain willow pole with the line tied to its tip (stone tier), then cork-handled rods whose
+    reel, seat and guides are copper, iron, then amethyst on gold."""
+    reset()
+    rng = seeded(6)
+    if tier == 0:
+        blank = ("wood.5", "wood.4", "wood.3")
+        bm = prism(6, 0.02, 0.017, 0.36)
+        jitter(bm, 0.06, rng)
+        paint(bm, shade_by_normal(*blank, rng))
+        make_object("Grip", bm, (0, 0.05, 0), (-math.pi / 2, 0, 0))
+        block_hand("y", grip=0.0)
+        _section("Butt", 6, 0.016, 0.012, 0.6, 0.23, blank, rng)
+        _section("Mid", 6, 0.012, 0.007, 0.55, 0.83, blank, rng)
+        _section("Tip", 5, 0.007, 0.003, 0.45, 1.38, blank, rng)
+        bm = prism(6, 0.006, 0.006, 0.02)  # the line's knot at the tip
+        paint(bm, lambda f: "neutral.6")
+        make_object("Guide0", bm, (0, 1.8, 0), (-math.pi / 2, 0, 0))
+        export("tools/rod_0")
+        return
+    metal = lambda a, b, c: tiered(tier, shade_by_normal(a, b, c, rng))
+    bm = prism(8, 0.019, 0.017, 0.36)
+    paint(bm, shade_by_normal("wood.7", "wood.6", "wood.5", rng, side_alt="wood.6"))
+    make_object("Cork", bm, (0, 0.05, 0), (-math.pi / 2, 0, 0))
+    bm = prism(8, 0.016, 0.016, 0.07)
+    paint(bm, (lambda f: "ore.gold") if tier == 3 else tiered(tier, lambda f: "metal.2"))
+    make_object("Seat", bm, (0, -0.18, 0), (-math.pi / 2, 0, 0))
+    bm = prism(10, 0.04 + 0.004 * tier, 0.04 + 0.004 * tier, 0.03)
+    paint(bm, metal("metal.5", "metal.3", "metal.2"))
+    make_object("Reel", bm, (0, -0.18, -0.06), (0, math.pi / 2, 0))
+    bm = box((0.012, 0.02, 0.04))
+    paint(bm, tiered(tier, lambda f: "metal.2"))
+    make_object("ReelFoot", bm, (0, -0.18, -0.03))
+    bm = box((0.05, 0.008, 0.008))
+    paint(bm, tiered(tier, lambda f: "metal.1"))
+    make_object("ReelArm", bm, (0.04, -0.18, -0.06))
+    bm = box((0.012, 0.012, 0.03))
+    paint(bm, lambda f: "wood.2")
+    make_object("ReelKnob", bm, (0.065, -0.18, -0.045))
+    block_hand("y", grip=0.0)
+    blank = ("wood.3", "wood.2", "wood.1") if tier == 1 else ("wood.2", "wood.1", "wood.0")
+    if tier == 3:
+        blank = ("neutral.2", "neutral.1", "neutral.0")
+    _section("Butt", 6, 0.013, 0.01, 0.6, 0.23, blank, rng)
+    _section("Mid", 6, 0.01, 0.006, 0.55, 0.83, blank, rng)
+    _section("Tip", 5, 0.006, 0.0025, 0.45, 1.38, blank, rng)
+    for i, y in enumerate((0.55, 0.95, 1.25, 1.55, 1.8)):
+        bm = prism(6, 0.009 - i * 0.001, 0.009 - i * 0.001, 0.004)
+        paint(bm, (lambda f: "ore.gold") if tier == 3 else tiered(tier, lambda f: "metal.5"))
+        make_object(f"Guide{i}", bm, (0, y, -0.012), (0, 0, 0))
+    export(f"tools/rod_{tier}")
+
+
 def tool_tiers():
     """Every tier of the forged tools, into models/tools/."""
     os.makedirs(os.path.join(OUT_DIR, "tools"), exist_ok=True)
     for tier in range(4):
         pickaxe_tier(tier)
         axe_tier(tier)
+        spear_tier(tier)
+        rod_tier(tier)
     for tier in range(2):
         sickle_tier(tier)
 

@@ -101,6 +101,9 @@ func _ready() -> void:
 	_vm_cam = player.get_node("Viewmodel/SubViewport/Camera3D")
 	_build_rod()
 	_build_line()
+	Tools.changed.connect(func(t: StringName, _tier: int) -> void:
+		if t == &"rod":
+			_load_rod_model())
 
 
 # --- the player asks ------------------------------------------------------------------------
@@ -529,7 +532,16 @@ func _build_rod() -> void:
 	_rod_pivot = Node3D.new()
 	_rod_pivot.name = "Pivot"
 	rod.add_child(_rod_pivot)
-	var model := ROD_MODEL.instantiate() as Node3D
+	_load_rod_model()
+
+
+## The rod you own (models/tools/rod_<tier>.glb, else the plain one), rigged to bend.
+func _load_rod_model() -> void:
+	for n in _rod_pivot.get_children():
+		n.free()
+	var path := "res://models/tools/rod_%d.glb" % Tools.tier(&"rod")
+	var scene: PackedScene = load(path) if ResourceLoader.exists(path) else ROD_MODEL
+	var model := scene.instantiate() as Node3D
 	_rod_pivot.add_child(model)
 	for m in model.find_children("*", "MeshInstance3D", true, false):
 		var mesh := m as MeshInstance3D

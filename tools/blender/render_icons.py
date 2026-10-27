@@ -16,7 +16,7 @@ import os
 import sys
 
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 argv = sys.argv[sys.argv.index("--") + 1:]
 MODELS, PALETTE, OUT = argv[0], argv[1], argv[2]
@@ -47,6 +47,11 @@ ICONS = {
 for _tool, _tiers in (("pickaxe", 4), ("axe", 4), ("sickle", 2)):
     for _t in range(_tiers):
         ICONS[f"tool_{_tool}_{_t}"] = (f"tools/{_tool}_{_t}.glb", (1.0, -0.35, 0.3))
+# The spear and rod lie along +Y and are long and thin: tilted 45 degrees so they cross the icon
+# corner to corner, without the hand (a third value: the tilt).
+for _tool in ("spear", "rod"):
+    for _t in range(4):
+        ICONS[f"tool_{_tool}_{_t}"] = (f"tools/{_tool}_{_t}.glb", (1.0, 0.0, 0.0), 45.0)
 
 
 def palette_material():
@@ -80,11 +85,19 @@ def setup_scene():
     return scene
 
 
-def render(item_id, model, view):
+def render(item_id, model, view, tilt=0.0):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     scene = setup_scene()
     bpy.ops.import_scene.gltf(filepath=os.path.join(MODELS, model))
     mat = palette_material()
+    if tilt:
+        for o in [o for o in scene.objects if o.name.startswith("Hand")]:
+            bpy.data.objects.remove(o)
+        turn = Matrix.Rotation(math.radians(tilt), 4, "X")
+        for o in scene.objects:
+            if o.parent is None:
+                o.matrix_world = turn @ o.matrix_world
+        bpy.context.view_layer.update()
     meshes = [o for o in scene.objects if o.type == "MESH"]
     for o in meshes:
         o.data.materials.clear()
@@ -107,7 +120,7 @@ def render(item_id, model, view):
     # frame what the camera actually sees: the corners' spread across its right / up axes
     right, up = rot @ Vector((1, 0, 0)), rot @ Vector((0, 1, 0))
     spread = max(max(c.dot(axis) for c in corners) - min(c.dot(axis) for c in corners) for axis in (right, up))
-    cam_data.ortho_scale = spread * 1.12  # a little room for the outline
+    cam_data.ortho_scale = spread * (1.25 if tilt else 1.12)  # a little room for the outline (more corner to corner)
     mid = sum(corners, Vector()) / len(corners)
     cam.location += right * (mid - center).dot(right) + up * (mid - center).dot(up)
     scene.camera = cam
@@ -118,6 +131,6 @@ def render(item_id, model, view):
 
 
 os.makedirs(OUT, exist_ok=True)
-for item_id, (model, view) in ICONS.items():
+for item_id, entry in ICONS.items():
     if not ONLY or item_id in ONLY:
-        render(item_id, model, view)
+        render(item_id, *entry)
