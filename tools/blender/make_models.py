@@ -1955,7 +1955,7 @@ CARVE_RING_STEP = 0.05
 
 
 def ringed_trunk(rng, sides, r_bottom, r_top, height, bark, wobble=0.035, flare=0.0, lobes=5,
-                 lean=(0.0, 0.0), marks=None, upper=(2.0, 2.6)):
+                 lean=(0.0, 0.0), marks=None, upper=(2.0, 2.6), furrows=0.0):
     """A tapered trunk standing on the origin, built as rings: sparse up the trunk and dense
     through the chopping band (CARVE_BAND), every ring level so the notch can find them. Each
     column of the bark wobbles in or out a little as a whole, and is shaded as one strip.
@@ -1965,7 +1965,8 @@ def ringed_trunk(rng, sides, r_bottom, r_top, height, bark, wobble=0.035, flare=
     birch's black lenticels); upper: ring heights above the band (more rings bend more smoothly).
     Nothing runs ruler-straight: rings above the band come every few tens of centimetres, the bark
     swells and dips in wandering lumps (smooth noise round and up the trunk), the taper eases, and
-    above the band the trunk sways gently from side to side on top of its lean."""
+    above the band the trunk sways gently from side to side on top of its lean. furrows: the bark's
+    ridges (every other column stands out by this share of the radius, more in some places)."""
     zs = [0.0, 0.12, 0.25] if flare else [0.0, 0.25]
     z = CARVE_BAND[0]
     while z <= CARVE_BAND[1] + 1e-6:
@@ -1998,7 +1999,8 @@ def ringed_trunk(rng, sides, r_bottom, r_top, height, bark, wobble=0.035, flare=
             a = i * math.tau / sides
             foot = flare * max(1.0 - z / 0.5, 0.0) ** 2 * (0.4 + 1.2 * lobe_of[i])
             lump = 1.0 + wobble * 1.5 / max(r_bottom, 0.1) * noise.noise(Vector((math.cos(a), math.sin(a), z * 1.1)) * 1.4 + off)
-            k = r * wobble_of[i] * lump * (1.0 + foot)
+            ridge = furrows * (1.0 if i % 2 else -1.0) * (0.7 + 0.3 * noise.noise(Vector((a, z * 0.8, 5.0)) + off))
+            k = r * wobble_of[i] * lump * (1.0 + foot) * (1.0 + ridge)
             ring.append(bm.verts.new((math.cos(a) * k + ox, math.sin(a) * k + oy, z)))
         rings.append(ring)
     for lo, hi in zip(rings, rings[1:]):
@@ -2110,6 +2112,73 @@ def limbs(rng, pairs, bark, name="Body_Limb"):
         make_object(f"{name}{i}", limb(a, b, r0, r1, rng, bark))
 
 
+def fork(rng, branches, reach, r0, count=(2, 3), rise=0.3):
+    """Twigs forking from each branch's end, so the crown hangs off a branching frame instead of
+    sitting on a few sticks: `branches` are (from, end) points; each end puts out `count` (low,
+    high) twigs fanning round the way its branch was heading and a little up, about `reach` metres
+    long and `r0` thick where they fork. Returns (twig pairs for limbs(), twig tips)."""
+    pairs, tips = [], []
+    for base, end in branches:
+        end = Vector(end)
+        d = end - Vector(base)
+        d.z = 0.0
+        d = d.normalized() if d.length > 1e-4 else Vector((1, 0, 0))
+        n = rng.randint(*count)
+        for k in range(n):
+            a = (k - (n - 1) / 2) * 0.9 + rng.uniform(-0.25, 0.25)
+            way = Matrix.Rotation(a, 3, "Z") @ d + Vector((0, 0, rise + rng.uniform(-0.15, 0.2)))
+            tip = end + way.normalized() * reach * rng.uniform(0.75, 1.2)
+            pairs.append((tuple(end), tuple(tip), r0, r0 * 0.4))
+            tips.append(tuple(tip))
+    return pairs, tips
+
+
+def add_roots(trunk, rng, count, r_base, reach, bark):
+    """Surface roots, part of the trunk's own mesh (so they stay with the stump when it's felled):
+    `count` of them arching out of the flare and down into the ground, `reach` metres out. Kept
+    under the chopping band, whose rings the notch reads."""
+    mesh = bpy.data.meshes.new("roots")
+    for i in range(count):
+        a = i * math.tau / count + rng.uniform(-0.35, 0.35)
+        out = Vector((math.cos(a), math.sin(a), 0.0))
+        far = r_base + reach * rng.uniform(0.7, 1.2)
+        bm = limb(out * r_base * 0.4 + Vector((0, 0, 0.25)), out * far + Vector((0, 0, -0.12)),
+                  r_base * 0.42, r_base * 0.1, rng, bark, segments=4, arch=0.12)
+        for v in bm.verts:
+            v.co.z = min(v.co.z, CARVE_BAND[0] - 0.08)
+        bm.to_mesh(mesh)
+        bm.free()
+        trunk.from_mesh(mesh)
+    bpy.data.meshes.remove(mesh)
+    return trunk
+
+
+def join_parts(prefix, name, groups=1):
+    """Joins the objects named `prefix`* into `groups` objects (named `name`, or `name`0, 1 ...
+    when more than one), by which way round the tree they sit: fewer meshes to draw, while the
+    canopy still shakes in a few separate parts on a hit."""
+    objs = sorted((o for o in bpy.context.scene.objects if o.type == "MESH" and o.name.startswith(prefix)),
+                  key=lambda o: o.name)
+    if not objs:
+        return
+    bpy.context.view_layer.update()
+    buckets = [[] for _ in range(groups)]
+    for o in objs:
+        c = o.matrix_world @ (sum((v.co for v in o.data.vertices), Vector()) / max(len(o.data.vertices), 1))
+        buckets[int((math.atan2(c.y, c.x) / math.tau + 0.5) * groups) % groups].append(o)
+    k = 0
+    for bucket in buckets:
+        if not bucket:
+            continue
+        bpy.ops.object.select_all(action="DESELECT")
+        for o in bucket:
+            o.select_set(True)
+        bpy.context.view_layer.objects.active = bucket[0]
+        bpy.ops.object.join()
+        bucket[0].name = f"{name}{k}" if groups > 1 else name
+        k += 1
+
+
 def fan(n, radius, z, rng, start=0.0, jit=0.25):
     """n points round a circle (radius, at height z), a little uneven."""
     return [(math.cos(start + i * math.tau / n + rng.uniform(-jit, jit)) * radius,
@@ -2161,15 +2230,21 @@ def tree_round(name="tree_round", out_dir="designs"):
     r = recipe(70, tall=(-0.3, 0.0, 0.45), spread=(0.8, 0.95, 1.2), bushy=(0.85, 1.0, 1.18), lean=(0.3, 1.0, 2.2))
     up = r.tall  # (everything above the trunk's foot moves up with it)
     out, rise, girth = TREE_SIZE["tree"]
-    make_object("Body_Trunk", ringed_trunk(rng, 12, 0.24 * girth, 0.15 * girth, lifted(rise)(2.9 + up), STARTER_BARK,
-                                           flare=0.3, lean=(0.12 * r.lean * out, 0.05 * r.lean * out)))
+    trunk = ringed_trunk(rng, 12, 0.24 * girth, 0.15 * girth, lifted(rise)(2.9 + up), STARTER_BARK,
+                         flare=0.3, lean=(0.12 * r.lean * out, 0.05 * r.lean * out), furrows=0.03)
+    make_object("Body_Trunk", add_roots(trunk, rng, 3, 0.24 * girth, 0.55, STARTER_BARK))
+    base = (0.1, 0.03, 2.5 + up)
     ends = fan(3, r.spread, 3.5 + up, rng, 0.4)
-    limbs(rng, [((0.1, 0.03, 2.5 + up), e, 0.09, 0.04) for e in ends], STARTER_BARK)
-    spots = [(0.8 * r.bushy, e, (1, 1, 0.8)) for e in ends]
-    spots += [(0.95 * r.bushy, (0.1, 0.0, 3.85 + up), (1, 1, 0.8)), (0.6 * r.bushy, (0.5, -0.4, 4.2 + up), (1, 1, 0.85)),
-              (0.55 * r.bushy, (-0.45, 0.35, 4.15 + up), (1, 1, 0.85))]
+    twigs, tips = fork(rng, [(base, e) for e in ends], 0.5, 0.045)
+    limbs(rng, [(base, e, 0.09, 0.04) for e in ends] + twigs, STARTER_BARK)
+    spots = [(0.62 * r.bushy, e, (1, 1, 0.8)) for e in ends]
+    spots += [(0.45 * r.bushy * rng.uniform(0.8, 1.15), t, (1, 1, 0.85)) for t in tips]
+    spots += [(0.8 * r.bushy, (0.1, 0.0, 3.95 + up), (1, 1, 0.8)), (0.5 * r.bushy, (0.5, -0.4, 4.3 + up), (1, 1, 0.85)),
+              (0.45 * r.bushy, (-0.45, 0.35, 4.25 + up), (1, 1, 0.85))]
     clumps(rng, spots, STARTER_LEAVES)
     grow_crown(out, rise)
+    join_parts("Body_Limb", "Body_Limbs")
+    join_parts("Body_Canopy", "Body_Canopy", 3)
     cut_stump(0.24 * girth, 0.22 * girth, STARTER_BARK, rng)
     export(os.path.join(out_dir, name))
 
@@ -2199,9 +2274,9 @@ def birch_airy(name="birch_airy", out_dir="designs"):
     top = 4.3 * r.tall
     lean = (0.3 * r.lean, -0.1 * r.lean)
     out, rise, girth = TREE_SIZE["birch"]
-    make_object("Body_Trunk", ringed_trunk(rng, 10, 0.17 * girth, 0.09 * girth, lifted(rise)(top), BIRCH_BARK,
-                                           flare=0.15, lobes=4, lean=(lean[0] * out, lean[1] * out),
-                                           marks=("neutral.1", 0.16)))
+    trunk = ringed_trunk(rng, 10, 0.17 * girth, 0.09 * girth, lifted(rise)(top), BIRCH_BARK,
+                         flare=0.15, lobes=4, lean=(lean[0] * out, lean[1] * out), marks=("neutral.1", 0.16))
+    make_object("Body_Trunk", add_roots(trunk, rng, 3, 0.17 * girth, 0.3, ("neutral.4", "neutral.5", "neutral.4", "neutral.6")))
     spots = []
     pairs = []
     for i, z in enumerate((2.3, 2.6, 2.9, 3.2, 3.5, 3.8)):  # (a tall birch: more of them)
@@ -2211,11 +2286,16 @@ def birch_airy(name="birch_airy", out_dir="designs"):
         base = (lean[0] * bend, lean[1] * bend, z)
         tip = (base[0] + math.cos(a) * 0.4 * r.reach, base[1] + math.sin(a) * 0.4 * r.reach, z + 0.4)
         pairs.append((base, tip, 0.05, 0.025))
-        spots.append((0.52 * r.bushy, tip, (0.8, 0.8, 1.25)))
+        spots.append((0.42 * r.bushy, tip, (0.8, 0.8, 1.25)))
+        twigs, tips = fork(rng, [(base, tip)], 0.3, 0.025, count=(1, 2), rise=0.6)
+        pairs += twigs
+        spots += [(0.32 * r.bushy, t, (0.8, 0.8, 1.3)) for t in tips]
     spots.append((0.5 * r.bushy, (0.32 * r.lean, lean[1], top + 0.25), (0.85, 0.85, 1.3)))
     limbs(rng, pairs, BIRCH_BARK)
     clumps(rng, spots, BIRCH_LEAVES)
     grow_crown(out, rise)
+    join_parts("Body_Limb", "Body_Limbs")
+    join_parts("Body_Canopy", "Body_Canopy", 3)
     cut_stump(0.17 * girth, 0.16 * girth, BIRCH_BARK, rng)
     export(os.path.join(out_dir, name))
 
@@ -2245,16 +2325,25 @@ def oak_spreading(name="oak_spreading", out_dir="designs"):
     r = recipe(74, tall=(-0.2, 0.0, 0.4), spread=(1.3, 1.6, 1.95), bushy=(0.88, 1.0, 1.15), limbs=(3, 4, 5))
     up = r.tall
     out, rise, girth = TREE_SIZE["oak"]
-    make_object("Body_Trunk", ringed_trunk(rng, 12, 0.36 * girth, 0.26 * girth, lifted(rise)(2.4 + up), OAK_BARK,
-                                           flare=0.5, lobes=6, lean=(0.08 * out, 0.0)))
+    trunk = ringed_trunk(rng, 12, 0.36 * girth, 0.26 * girth, lifted(rise)(2.4 + up), OAK_BARK,
+                         flare=0.5, lobes=6, lean=(0.08 * out, 0.0), furrows=0.05)
+    make_object("Body_Trunk", add_roots(trunk, rng, 5, 0.36 * girth, 0.7, OAK_BARK))
+    base = (0, 0, 2.1 + up)
     ends = fan(r.limbs, r.spread, 3.0 + up, rng, 0.5)
-    limbs(rng, [((0, 0, 2.1 + up), e, 0.16, 0.07) for e in ends], OAK_BARK)
-    spots = [(1.0 * r.bushy, (e[0], e[1], e[2] + 0.2), (1.15, 1.15, 0.65)) for e in ends]
-    spots += [(1.25 * r.bushy, (0.05, 0.0, 3.55 + up), (1.15, 1.15, 0.65))]
+    twigs, tips = fork(rng, [(base, e) for e in ends], 0.75, 0.07, rise=0.5)
+    limbs(rng, [(base, e, 0.16, 0.07) for e in ends] + twigs, OAK_BARK)
+    spots = [(0.8 * r.bushy, (e[0], e[1], e[2] + 0.2), (1.15, 1.15, 0.75)) for e in ends]
+    spots += [(0.62 * r.bushy * rng.uniform(0.8, 1.15), t, (1.15, 1.15, 0.8)) for t in tips]
+    # a domed crown, not a flat table: a ring of clumps above the limbs and one on top
+    spots += [(0.85 * r.bushy, (x * 0.45, y * 0.45, 3.95 + up), (1.1, 1.1, 0.85))
+              for x, y, _ in fan(r.limbs, r.spread, 0.0, rng, 0.5 + math.pi / r.limbs)]
+    spots += [(1.0 * r.bushy, (0.05, 0.0, 4.25 + up), (1.1, 1.1, 0.8))]
     # (grown this big, the crown wants filling in between the limbs' clumps)
     spots += [(0.75 * r.bushy, (e[0] * 0.55, e[1] * 0.55, e[2] + 0.45), (1.1, 1.1, 0.7)) for e in fan(r.limbs, r.spread, 3.0 + up, rng, 0.5 + math.pi / r.limbs)]
     clumps(rng, spots, OAK_LEAVES)
     grow_crown(out, rise)
+    join_parts("Body_Limb", "Body_Limbs")
+    join_parts("Body_Canopy", "Body_Canopy", 3)
     cut_stump(0.36 * girth, 0.33 * girth, OAK_BARK, rng)
     export(os.path.join(out_dir, name))
 
@@ -2280,13 +2369,36 @@ def oak_gnarled():
 
 
 def needle_cone(rng, r, h, tip=0.05):
-    """One tier of a pine: a cone with a ragged, drooping rim (leafy() needles it)."""
-    bm = prism(9, r, tip, h)
-    for v in bm.verts:  # ragged rim, the points drooping
-        if v.co.z < 0:
-            v.co.z -= rng.uniform(0.05, 0.3)
-            v.co.x *= rng.uniform(0.85, 1.1)
-            v.co.y *= rng.uniform(0.85, 1.1)
+    """One tier of a pine (leafy() needles it), centred on the origin: not a smooth cone but a
+    whorl of boughs: its rim lobed into bough tips that droop and stick out unevenly, its sides
+    sagging (a hollow profile) up to the leader."""
+    sides = 14
+    off = Vector((rng.uniform(-50, 50), rng.uniform(-50, 50), rng.uniform(-50, 50)))
+    lobe = [1.0 + 0.25 * noise.noise(Vector((math.cos(i * math.tau / sides), math.sin(i * math.tau / sides), 0.0)) * 1.7 + off)
+            + (0.14 if i % 2 else -0.1) for i in range(sides)]
+    bm = bmesh.new()
+    rings = []
+    for t in (0.0, 0.3, 0.62):
+        rr = r * (1.0 - t) ** 1.35 + tip
+        ring = []
+        for i in range(sides):
+            a = i * math.tau / sides
+            k = rr * (1.0 + (lobe[i] - 1.0) * (1.0 - t))
+            z = -h / 2 + h * t
+            if t == 0.0:  # bough tips droop, some further
+                k *= rng.uniform(0.9, 1.08)
+                z -= rng.uniform(0.05, 0.3) * (1.6 if i % 2 else 0.8)
+            ring.append(bm.verts.new((math.cos(a) * k, math.sin(a) * k, z)))
+        rings.append(ring)
+    apex = bm.verts.new((0, 0, h / 2))
+    for lo, hi in zip(rings, rings[1:]):
+        for i in range(sides):
+            j = (i + 1) % sides
+            bm.faces.new((lo[i], lo[j], hi[j], hi[i]))
+    for i in range(sides):
+        bm.faces.new((rings[-1][i], rings[-1][(i + 1) % sides], apex))
+    bm.faces.new(list(reversed(rings[0])))
+    bm.normal_update()
     return bm
 
 
@@ -2298,8 +2410,9 @@ def pine_classic(name="pine_classic", out_dir="designs"):
     shape = recipe(76, tall=(0.85, 1.0, 1.2), wide=(0.82, 1.0, 1.15))
     lift = lambda z: 2.65 + (z - 2.65) * shape.tall  # (the lowest rim stays put, above the chopping band)
     out, rise, girth = TREE_SIZE["pine"]
-    make_object("Body_Trunk", ringed_trunk(rng, 10, 0.3 * girth, 0.1 * girth, lifted(rise)(lift(5.9)), PINE_BARK,
-                                           flare=0.25, lobes=5))
+    trunk = ringed_trunk(rng, 10, 0.3 * girth, 0.1 * girth, lifted(rise)(lift(5.9)), PINE_BARK,
+                         flare=0.25, lobes=5, furrows=0.04)
+    make_object("Body_Trunk", add_roots(trunk, rng, 4, 0.3 * girth, 0.55, PINE_BARK))
     for i, (r, h, z) in enumerate(((1.9, 1.5, 2.65), (1.6, 1.4, 3.4), (1.25, 1.3, 4.1), (0.9, 1.2, 4.75), (0.5, 1.1, 5.4))):
         r, h, z = r * shape.wide, h * shape.tall, lift(z)
         bm = needle_cone(rng, r, h, 0.06)
@@ -2308,6 +2421,7 @@ def pine_classic(name="pine_classic", out_dir="designs"):
         spherical_normals(make_object(f"Body_Canopy{i}", bm, (0, 0, z), (0, 0, rng.uniform(0, math.tau))),
                           centre=(0, 0, -h * 0.3))
     grow_crown(out, rise)
+    join_parts("Body_Canopy", "Body_Canopy", 3)
     cut_stump(0.3 * girth, 0.28 * girth, PINE_BARK, rng)
     export(os.path.join(out_dir, name))
 
