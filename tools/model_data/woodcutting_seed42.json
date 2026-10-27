@@ -1,0 +1,866 @@
+{
+	"seed": 42,
+	"trees": [
+		{
+			"height": 7.43,
+			"save_id": "nodes_0_clearing_001",
+			"scene": "res://scenes/tree.tscn",
+			"x": -44.64,
+			"z": -22.91
+		},
+		{
+			"height": 7.43,
+			"save_id": "nodes_0_clearing_003",
+			"scene": "res://scenes/tree.tscn",
+			"x": -10.28,
+			"z": -29.78
+		},
+		{
+			"height": 6.9,
+			"save_id": "nodes_0_clearing_004",
+			"scene": "res://scenes/tree.tscn",
+			"x": -27.89,
+			"z": -30.06
+		},
+		{
+			"height": 6.87,
+			"save_id": "nodes_0_clearing_005",
+			"scene": "res://scenes/tree.tscn",
+			"x": -3.41,
+			"z": -3.58
+		},
+		{
+			"height": 6.47,
+			"save_id": "nodes_0_clearing_007",
+			"scene": "res://scenes/tree.tscn",
+			"x": -36.0,
+			"z": -28.02
+		},
+		{
+			"height": 6.87,
+			"save_id": "nodes_0_clearing_008",
+			"scene": "res://scenes/tree.tscn",
+			"x": -36.18,
+			"z": -16.54
+		},
+		{
+			"height": 6.71,
+			"save_id": "nodes_0_clearing_009",
+			"scene": "res://scenes/tree.tscn",
+			"x": -18.01,
+			"z": 0.53
+		},
+		{
+			"height": 6.47,
+			"save_id": "nodes_0_clearing_010",
+			"scene": "res://scenes/tree.tscn",
+			"x": -49.87,
+			"z": -30.8
+		},
+		{
+			"height": 6.9,
+			"save_id": "nodes_1_hearthvale_000",
+			"scene": "res://scenes/tree.tscn",
+			"x": 94.5,
+			"z": -3.76
+		},
+		{
+			"height": 9.44,
+			"save_id": "nodes_1_hearthvale_001",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": 79.76,
+			"z": 72.95
+		},
+		{
+			"height": 9.49,
+			"save_id": "nodes_1_hearthvale_003",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": 48.6,
+			"z": -51.2
+		},
+		{
+			"height": 7.52,
+			"save_id": "nodes_1_hearthvale_004",
+			"scene": "res://scenes/tree.tscn",
+			"x": 64.55,
+			"z": -63.06
+		},
+		{
+			"height": 6.71,
+			"save_id": "nodes_1_hearthvale_005",
+			"scene": "res://scenes/tree.tscn",
+			"x": 72.95,
+			"z": 22.76
+		},
+		{
+			"height": 6.42,
+			"save_id": "nodes_1_hearthvale_006",
+			"scene": "res://scenes/tree.tscn",
+			"x": 68.7,
+			"z": 53.62
+		},
+		{
+			"height": 6.42,
+			"save_id": "nodes_1_hearthvale_008",
+			"scene": "res://scenes/tree.tscn",
+			"x": 67.42,
+			"z": 27.63
+		},
+		{
+			"height": 11.4,
+			"save_id": "nodes_2_pinewood_000",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -126.09,
+			"z": 127.52
+		},
+		{
+			"height": 10.59,
+			"save_id": "nodes_2_pinewood_001",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -70.12,
+			"z": 51.49
+		},
+		{
+			"height": 6.42,
+			"save_id": "nodes_2_pinewood_002",
+			"scene": "res://scenes/tree.tscn",
+			"x": -55.94,
+			"z": 76.43
+		},
+		{
+			"height": 12.0,
+			"save_id": "nodes_2_pinewood_003",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -143.98,
+			"z": 143.96
+		},
+		{
+			"height": 11.25,
+			"save_id": "nodes_2_pinewood_004",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -59.54,
+			"z": 27.91
+		},
+		{
+			"height": 12.0,
+			"save_id": "nodes_2_pinewood_005",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -59.28,
+			"z": 34.57
+		},
+		{
+			"height": 8.89,
+			"save_id": "nodes_2_pinewood_006",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": -41.79,
+			"z": 44.34
+		},
+		{
+			"height": 7.43,
+			"save_id": "nodes_2_pinewood_007",
+			"scene": "res://scenes/tree.tscn",
+			"x": -23.4,
+			"z": 56.64
+		},
+		{
+			"height": 7.44,
+			"save_id": "nodes_2_pinewood_008",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": -68.35,
+			"z": 65.41
+		},
+		{
+			"height": 6.9,
+			"save_id": "nodes_2_pinewood_009",
+			"scene": "res://scenes/tree.tscn",
+			"x": -40.24,
+			"z": 55.61
+		},
+		{
+			"height": 6.47,
+			"save_id": "nodes_2_pinewood_010",
+			"scene": "res://scenes/tree.tscn",
+			"x": -71.54,
+			"z": 62.01
+		},
+		{
+			"height": 6.87,
+			"save_id": "nodes_2_pinewood_011",
+			"scene": "res://scenes/tree.tscn",
+			"x": -34.18,
+			"z": 72.06
+		},
+		{
+			"height": 6.35,
+			"save_id": "nodes_2_pinewood_012",
+			"scene": "res://scenes/tree.tscn",
+			"x": -47.69,
+			"z": 20.58
+		},
+		{
+			"height": 8.7,
+			"save_id": "nodes_2_pinewood_013",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": -59.8,
+			"z": 96.37
+		},
+		{
+			"height": 7.39,
+			"save_id": "nodes_2_pinewood_014",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": -31.13,
+			"z": 66.06
+		},
+		{
+			"height": 8.93,
+			"save_id": "nodes_2_pinewood_015",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": -43.22,
+			"z": 90.33
+		},
+		{
+			"height": 10.59,
+			"save_id": "nodes_2_pinewood_016",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -22.7,
+			"z": 67.07
+		},
+		{
+			"height": 10.95,
+			"save_id": "nodes_2_pinewood_017",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -36.02,
+			"z": 35.43
+		},
+		{
+			"height": 8.81,
+			"save_id": "nodes_2_pinewood_018",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": -60.1,
+			"z": 21.94
+		},
+		{
+			"height": 10.81,
+			"save_id": "nodes_2_pinewood_019",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -28.83,
+			"z": 44.35
+		},
+		{
+			"height": 8.93,
+			"save_id": "nodes_2_pinewood_020",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": -44.61,
+			"z": 59.6
+		},
+		{
+			"height": 7.43,
+			"save_id": "nodes_2_pinewood_021",
+			"scene": "res://scenes/tree.tscn",
+			"x": 10.65,
+			"z": 33.41
+		},
+		{
+			"height": 11.4,
+			"save_id": "nodes_2_pinewood_022",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -82.69,
+			"z": 114.12
+		},
+		{
+			"height": 7.39,
+			"save_id": "nodes_2_pinewood_023",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": -10.95,
+			"z": 68.1
+		},
+		{
+			"height": 10.95,
+			"save_id": "nodes_2_pinewood_024",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -32.44,
+			"z": 58.77
+		},
+		{
+			"height": 7.43,
+			"save_id": "nodes_2_pinewood_025",
+			"scene": "res://scenes/tree.tscn",
+			"x": -75.98,
+			"z": 46.56
+		},
+		{
+			"height": 7.39,
+			"save_id": "nodes_3_pinewood_000",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": -104.73,
+			"z": -36.64
+		},
+		{
+			"height": 8.89,
+			"save_id": "nodes_3_pinewood_001",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": -199.87,
+			"z": -74.91
+		},
+		{
+			"height": 6.87,
+			"save_id": "nodes_3_pinewood_002",
+			"scene": "res://scenes/tree.tscn",
+			"x": -96.96,
+			"z": -64.64
+		},
+		{
+			"height": 11.4,
+			"save_id": "nodes_3_pinewood_003",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -135.05,
+			"z": -117.78
+		},
+		{
+			"height": 6.47,
+			"save_id": "nodes_3_pinewood_004",
+			"scene": "res://scenes/tree.tscn",
+			"x": -92.69,
+			"z": -27.7
+		},
+		{
+			"height": 10.95,
+			"save_id": "nodes_3_pinewood_005",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -99.1,
+			"z": -29.75
+		},
+		{
+			"height": 8.81,
+			"save_id": "nodes_3_pinewood_006",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": -124.45,
+			"z": -62.81
+		},
+		{
+			"height": 8.7,
+			"save_id": "nodes_3_pinewood_007",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": -135.42,
+			"z": -147.25
+		},
+		{
+			"height": 6.87,
+			"save_id": "nodes_3_pinewood_008",
+			"scene": "res://scenes/tree.tscn",
+			"x": -132.59,
+			"z": -38.64
+		},
+		{
+			"height": 8.7,
+			"save_id": "nodes_3_pinewood_009",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": -124.11,
+			"z": -42.53
+		},
+		{
+			"height": 10.95,
+			"save_id": "nodes_3_pinewood_010",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -96.52,
+			"z": -42.38
+		},
+		{
+			"height": 8.89,
+			"save_id": "nodes_3_pinewood_011",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": -69.2,
+			"z": -110.4
+		},
+		{
+			"height": 6.42,
+			"save_id": "nodes_3_pinewood_012",
+			"scene": "res://scenes/tree.tscn",
+			"x": -156.73,
+			"z": -59.67
+		},
+		{
+			"height": 8.81,
+			"save_id": "nodes_3_pinewood_013",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": -139.6,
+			"z": -143.85
+		},
+		{
+			"height": 8.7,
+			"save_id": "nodes_3_pinewood_014",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": -135.14,
+			"z": -49.97
+		},
+		{
+			"height": 6.35,
+			"save_id": "nodes_3_pinewood_015",
+			"scene": "res://scenes/tree.tscn",
+			"x": -111.28,
+			"z": -53.9
+		},
+		{
+			"height": 6.42,
+			"save_id": "nodes_3_pinewood_016",
+			"scene": "res://scenes/tree.tscn",
+			"x": -198.77,
+			"z": -88.53
+		},
+		{
+			"height": 7.43,
+			"save_id": "nodes_3_pinewood_017",
+			"scene": "res://scenes/tree.tscn",
+			"x": -85.65,
+			"z": -53.83
+		},
+		{
+			"height": 6.42,
+			"save_id": "nodes_3_pinewood_018",
+			"scene": "res://scenes/tree.tscn",
+			"x": -124.7,
+			"z": -55.35
+		},
+		{
+			"height": 7.43,
+			"save_id": "nodes_3_pinewood_019",
+			"scene": "res://scenes/tree.tscn",
+			"x": -187.86,
+			"z": -79.24
+		},
+		{
+			"height": 6.35,
+			"save_id": "nodes_3_pinewood_020",
+			"scene": "res://scenes/tree.tscn",
+			"x": -176.09,
+			"z": -96.0
+		},
+		{
+			"height": 10.95,
+			"save_id": "nodes_3_pinewood_021",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -98.23,
+			"z": -72.79
+		},
+		{
+			"height": 7.39,
+			"save_id": "nodes_3_pinewood_022",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": -194.38,
+			"z": -89.88
+		},
+		{
+			"height": 8.7,
+			"save_id": "nodes_3_pinewood_023",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": -126.1,
+			"z": -68.38
+		},
+		{
+			"height": 7.43,
+			"save_id": "nodes_3_pinewood_024",
+			"scene": "res://scenes/tree.tscn",
+			"x": -142.43,
+			"z": -38.96
+		},
+		{
+			"height": 6.42,
+			"save_id": "nodes_3_pinewood_025",
+			"scene": "res://scenes/tree.tscn",
+			"x": -115.11,
+			"z": -46.03
+		},
+		{
+			"height": 9.29,
+			"save_id": "nodes_4_goldmeadow_000",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": -5.16,
+			"z": -76.48
+		},
+		{
+			"height": 9.57,
+			"save_id": "nodes_4_goldmeadow_001",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": 11.81,
+			"z": -58.91
+		},
+		{
+			"height": 9.49,
+			"save_id": "nodes_4_goldmeadow_005",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": 34.97,
+			"z": -97.84
+		},
+		{
+			"height": 9.44,
+			"save_id": "nodes_4_goldmeadow_006",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": -15.89,
+			"z": -64.77
+		},
+		{
+			"height": 9.57,
+			"save_id": "nodes_4_goldmeadow_007",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": -3.26,
+			"z": -84.45
+		},
+		{
+			"height": 9.57,
+			"save_id": "nodes_4_goldmeadow_010",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": -21.56,
+			"z": -81.76
+		},
+		{
+			"height": 9.21,
+			"save_id": "nodes_4_goldmeadow_011",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": 10.69,
+			"z": -70.87
+		},
+		{
+			"height": 9.18,
+			"save_id": "nodes_4_goldmeadow_012",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": 7.44,
+			"z": -75.46
+		},
+		{
+			"height": 9.29,
+			"save_id": "nodes_4_goldmeadow_013",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": -43.45,
+			"z": -75.33
+		},
+		{
+			"height": 9.49,
+			"save_id": "nodes_4_goldmeadow_015",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": -18.56,
+			"z": -89.36
+		},
+		{
+			"height": 9.57,
+			"save_id": "nodes_4_goldmeadow_016",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": 33.26,
+			"z": -83.12
+		},
+		{
+			"height": 9.57,
+			"save_id": "nodes_4_goldmeadow_017",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": 19.55,
+			"z": -67.78
+		},
+		{
+			"height": 9.18,
+			"save_id": "nodes_4_goldmeadow_018",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": 6.83,
+			"z": -95.78
+		},
+		{
+			"height": 9.29,
+			"save_id": "nodes_4_goldmeadow_019",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": -25.95,
+			"z": -102.84
+		},
+		{
+			"height": 9.44,
+			"save_id": "nodes_4_goldmeadow_020",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": 52.64,
+			"z": -114.78
+		},
+		{
+			"height": 10.81,
+			"save_id": "nodes_5_pinewood_000",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -2.06,
+			"z": 150.11
+		},
+		{
+			"height": 10.95,
+			"save_id": "nodes_5_pinewood_001",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": 4.31,
+			"z": 164.69
+		},
+		{
+			"height": 10.59,
+			"save_id": "nodes_5_pinewood_002",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": 50.66,
+			"z": 175.25
+		},
+		{
+			"height": 10.81,
+			"save_id": "nodes_5_pinewood_003",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": 22.36,
+			"z": 139.96
+		},
+		{
+			"height": 12.0,
+			"save_id": "nodes_5_pinewood_004",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": 35.13,
+			"z": 124.27
+		},
+		{
+			"height": 10.95,
+			"save_id": "nodes_5_pinewood_005",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": 87.87,
+			"z": 185.63
+		},
+		{
+			"height": 7.39,
+			"save_id": "nodes_5_pinewood_006",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": 31.99,
+			"z": 105.09
+		},
+		{
+			"height": 10.95,
+			"save_id": "nodes_5_pinewood_007",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": 23.46,
+			"z": 100.95
+		},
+		{
+			"height": 11.52,
+			"save_id": "nodes_5_pinewood_008",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": 18.48,
+			"z": 125.0
+		},
+		{
+			"height": 11.25,
+			"save_id": "nodes_5_pinewood_009",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -9.65,
+			"z": 109.31
+		},
+		{
+			"height": 11.4,
+			"save_id": "nodes_5_pinewood_010",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": 37.56,
+			"z": 115.2
+		},
+		{
+			"height": 12.0,
+			"save_id": "nodes_5_pinewood_011",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": 8.42,
+			"z": 148.1
+		},
+		{
+			"height": 10.37,
+			"save_id": "nodes_5_pinewood_012",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": 10.04,
+			"z": 139.2
+		},
+		{
+			"height": 10.81,
+			"save_id": "nodes_5_pinewood_013",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -82.07,
+			"z": 169.15
+		},
+		{
+			"height": 11.25,
+			"save_id": "nodes_5_pinewood_014",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -6.13,
+			"z": 100.97
+		},
+		{
+			"height": 10.59,
+			"save_id": "nodes_5_pinewood_015",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": 99.76,
+			"z": 138.45
+		},
+		{
+			"height": 10.81,
+			"save_id": "nodes_5_pinewood_016",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": 65.11,
+			"z": 88.86
+		},
+		{
+			"height": 12.0,
+			"save_id": "nodes_5_pinewood_017",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": 49.17,
+			"z": 79.32
+		},
+		{
+			"height": 11.4,
+			"save_id": "nodes_5_pinewood_018",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -13.13,
+			"z": 124.29
+		},
+		{
+			"height": 10.59,
+			"save_id": "nodes_5_pinewood_019",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -15.15,
+			"z": 130.79
+		},
+		{
+			"height": 11.52,
+			"save_id": "nodes_5_pinewood_020",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -18.41,
+			"z": 170.18
+		},
+		{
+			"height": 11.4,
+			"save_id": "nodes_5_pinewood_021",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -8.31,
+			"z": 119.96
+		},
+		{
+			"height": 12.0,
+			"save_id": "nodes_5_pinewood_022",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": 31.62,
+			"z": 120.22
+		},
+		{
+			"height": 10.81,
+			"save_id": "nodes_5_pinewood_023",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -81.1,
+			"z": 181.97
+		},
+		{
+			"height": 9.97,
+			"save_id": "nodes_5_pinewood_024",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": -5.76,
+			"z": 128.65
+		},
+		{
+			"height": 10.37,
+			"save_id": "nodes_5_pinewood_025",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": 25.71,
+			"z": 88.66
+		},
+		{
+			"height": 7.39,
+			"save_id": "nodes_5_pinewood_026",
+			"scene": "res://scenes/birch_tree.tscn",
+			"x": 18.82,
+			"z": 99.28
+		},
+		{
+			"height": 9.97,
+			"save_id": "nodes_5_pinewood_027",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": 4.87,
+			"z": 136.44
+		},
+		{
+			"height": 11.52,
+			"save_id": "nodes_5_pinewood_028",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": 7.66,
+			"z": 112.84
+		},
+		{
+			"height": 11.4,
+			"save_id": "nodes_5_pinewood_029",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": 2.07,
+			"z": 141.5
+		},
+		{
+			"height": 10.95,
+			"save_id": "nodes_5_pinewood_030",
+			"scene": "res://scenes/pine_tree.tscn",
+			"x": 32.2,
+			"z": 110.28
+		},
+		{
+			"height": 9.15,
+			"save_id": "nodes_8_stillwater_000",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": 115.56,
+			"z": -11.55
+		},
+		{
+			"height": 6.71,
+			"save_id": "nodes_8_stillwater_001",
+			"scene": "res://scenes/tree.tscn",
+			"x": 139.83,
+			"z": 0.45
+		},
+		{
+			"height": 6.6,
+			"save_id": "nodes_8_stillwater_002",
+			"scene": "res://scenes/tree.tscn",
+			"x": 101.21,
+			"z": 28.12
+		},
+		{
+			"height": 9.57,
+			"save_id": "nodes_8_stillwater_003",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": 109.51,
+			"z": 30.5
+		},
+		{
+			"height": 6.71,
+			"save_id": "nodes_8_stillwater_004",
+			"scene": "res://scenes/tree.tscn",
+			"x": 139.64,
+			"z": -71.57
+		},
+		{
+			"height": 6.35,
+			"save_id": "nodes_8_stillwater_005",
+			"scene": "res://scenes/tree.tscn",
+			"x": 126.07,
+			"z": 95.52
+		},
+		{
+			"height": 7.52,
+			"save_id": "nodes_8_stillwater_006",
+			"scene": "res://scenes/tree.tscn",
+			"x": 184.2,
+			"z": 29.52
+		},
+		{
+			"height": 6.35,
+			"save_id": "nodes_8_stillwater_010",
+			"scene": "res://scenes/tree.tscn",
+			"x": 178.63,
+			"z": -12.37
+		},
+		{
+			"height": 9.21,
+			"save_id": "nodes_8_stillwater_011",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": 164.2,
+			"z": -12.63
+		},
+		{
+			"height": 9.18,
+			"save_id": "nodes_8_stillwater_012",
+			"scene": "res://scenes/oak_tree.tscn",
+			"x": 152.8,
+			"z": -95.18
+		}
+	]
+}

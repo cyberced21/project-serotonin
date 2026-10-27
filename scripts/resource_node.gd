@@ -40,6 +40,32 @@ const STREAK_GAP_MSEC := 3000
 ## The skill rating popup on an under-levelled hit that barely bit.
 const UNDER_COLOR := Color("ffc27a")
 const SHARP_COLOR := Color("ffd27a")
+## Woodcutting talents (plans/levels.md, Feller vs Forester): their popups, and their numbers.
+const TALENT_COLOR := Color("ffe9a8")
+## Chain cut: the most extra hits a run of clean cuts reaches.
+const CHAIN_MAX := 3
+## Back cut: a hit opposite a notch this deep (share of a full notch, as for a clean cut), with
+## this side under half as deep, counts this many times.
+const BACK_CUT_AFTER := 0.25
+const BACK_CUT_TIMES := 3
+## Power swing: a full charge counts as this many hits, or this many on a clean cut.
+const POWER_HITS := 3
+const POWER_CLEAN_HITS := 5
+## Heartwood: the knot shows after this many biting hits; hitting it takes this many extra.
+const KNOT_AFTER := 3
+const KNOT_EXTRA := 3
+const KNOT_RADIUS := 0.16
+const KNOT_COLOR := Color("ffb347")
+## Dominoes: a falling trunk takes this share of the max hits off each tree it lands on.
+const CRUSH_SHARE := 0.6
+## Grove keeper: your felled trees regrow this much faster.
+const GROVE_REGROW := 2.0
+## Old growth: one tree in this many (by its save id) is ancient; it takes this many times the
+## hits and drops this many times the logs, plus a trophy log.
+const OLD_GROWTH_ONE_IN := 30
+const OLD_GROWTH_TOUGH := 3.0
+const OLD_GROWTH_DROPS := 4
+const OLD_GROWTH_SHIMMER := 0.8
 ## The impact star's tint: a plain hit, a crack tip (and splits).
 const STAR_HIT := Color(1.0, 0.97, 0.9)
 const STAR_TIP := Color(1.0, 0.78, 0.42)
@@ -320,6 +346,11 @@ func _ready() -> void:
 	_limit_drawing(self)
 	if glow_at_night:
 		_setup_glow()
+	if skill == &"woodcutting":
+		_refresh_old_growth()
+		Skills.talents.changed.connect(func(s: StringName) -> void:
+			if s == &"woodcutting":
+				_refresh_old_growth())
 
 
 ## Moves the model's meshes into Visual/Body, Visual/Chunks and Rubble by name prefix, replacing
@@ -473,7 +504,8 @@ func hit(info: HitInfo) -> bool:
 	var before := hits_left
 	# a better tool than the node needs bites deeper (+1 cut per tier above); under-levelled, every
 	# hit bites less (the fraction carries over to the next hit)
-	_cut += (1.0 + Tools.tiers_above(tool_type, tool_tier)) * _power_scale()
+	_cut += (1.0 + Tools.tiers_above(tool_type, tool_tier)) * _power_scale() \
+		/ (OLD_GROWTH_TOUGH if _old_growth_active() else 1.0)
 	var cuts := int(_cut)
 	_cut -= cuts
 	# the smithy's sharper tools: sometimes a hit counts twice; at the Crystal Forge, so does every
@@ -489,10 +521,14 @@ func hit(info: HitInfo) -> bool:
 	var weak := _is_weak_hit(info)
 	var tip := cracks and _is_tip_hit(info)
 	_clean = _carve != null and _is_clean_cut(info)
+	var talent := _woodcutting_talents(info, cuts) if skill == &"woodcutting" else {}
 	hits_left = maxi(hits_left - cuts - (1 if double else 0) - (weak_point_extra_hits if weak else 0)
-		- (crack_tip_extra_hits if tip else 0) - (clean_cut_extra_hits if _clean else 0), 0)
+		- (crack_tip_extra_hits if tip else 0) - (clean_cut_extra_hits if _clean else 0)
+		- talent.get("extra", 0), 0)
 	# under-levelled, a plain hit can fall short of a whole cut: it marks the node but takes nothing
 	var bit := hits_left < before
+	if bit and skill == &"woodcutting" and hits_left > 0:
+		_after_bite()
 	var fresh := bit and Tools.take_fresh(tool_type)  # the first bite of a just-forged tool
 	if weak:
 		_weak_hit_feedback(info)
@@ -518,6 +554,8 @@ func hit(info: HitInfo) -> bool:
 	Juice.hitstop(hitstop_hit + (0.035 if double else 0.0))
 	if double:
 		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.35, 0), "Sharp!", SHARP_COLOR, 9)
+	if talent.has("say"):
+		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.95, 0), talent["say"], TALENT_COLOR, 10)
 	if _clean:
 		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.6, 0), "Clean cut!", clean_cut_color, 10)
 	elif not bit:  # under-levelled, and this one didn't bite: say why
@@ -646,7 +684,7 @@ func _break(info: HitInfo) -> void:
 		var hinge := PackedVector3Array()
 		if _carve and _carve.is_started():
 			var parts := _carve.split()
-			fall = _fall_direction(info)
+			fall = _talent_fall(_fall_direction(info))
 			hinge = _carve.hinge_points(HINGE_FIBRES)
 			_make_stump(parts["stump"])
 			_splinter(_stump, hinge, fall, 1.0)
@@ -657,7 +695,10 @@ func _break(info: HitInfo) -> void:
 		_spawn_drops(info)
 	depleted.emit(self)
 	SaveGame.mark_dirty()
-	_respawn_after(_regrow_time())
+	var regrow := _regrow_time()
+	if skill == &"woodcutting":
+		regrow = _felled_by_talents(regrow)
+	_respawn_after(regrow)
 
 
 ## The depleted look (rubble / stump, no collision) without any of the break effects.
@@ -689,6 +730,8 @@ func _respawn_after(seconds: float) -> void:
 	hits_left = max_hits
 	_reset_visuals()
 	_place_weak_point()
+	if skill == &"woodcutting":
+		_regrown()
 	visual.scale = Vector3.ONE * 0.4
 	create_tween().tween_property(visual, "scale", Vector3.ONE, 0.35) \
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -702,6 +745,8 @@ func _respawn_after(seconds: float) -> void:
 
 func to_dict() -> Dictionary:
 	var d := {"respawn_left": _respawn_timer.time_left} if _respawn_timer else {"hits_left": hits_left}
+	if _fine_grained or _fine_next:  # Grove keeper: fine-grained, or growing back so
+		d["fine"] = true
 	if not _links.is_empty() and not _respawn_timer:  # exactly which pieces are gone
 		var gone := []
 		for i in _pieces.size():
@@ -717,6 +762,8 @@ func to_dict() -> Dictionary:
 func from_dict(d: Dictionary) -> void:
 	if _carve and d.has("notch"):
 		_carve.from_dict(d["notch"])
+	_fine_next = d.get("fine", false) and d.has("respawn_left")
+	_fine_grained = d.get("fine", false) and not d.has("respawn_left")
 	if d.has("respawn_left"):
 		hits_left = 0
 		_show_depleted()
@@ -799,7 +846,12 @@ func _drop_count() -> int:
 		extra = int(Village.stat(&"extra_ore"))  # Edda's assay shed
 	if rare:
 		extra += rare.bonus_drops
-	return randi_range(drops_min, maxi(drops_min, drops_max)) + extra
+	var count := randi_range(drops_min, maxi(drops_min, drops_max)) + extra
+	if _fine_cut:  # Grove keeper: the first clean cut on a fine-grained tree
+		count *= 2
+	if _old_growth_active():
+		count *= OLD_GROWTH_DROPS
+	return count
 
 
 func _spawn_drops(info: HitInfo) -> void:
@@ -811,11 +863,11 @@ func _spawn_drops(info: HitInfo) -> void:
 		_launch_drop(global_position + Vector3(0, popup_height * 0.5, 0) + toward_player * 0.4, vel, i * 0.04)
 
 
-func _launch_drop(from: Vector3, velocity: Vector3, delay: float) -> void:
+func _launch_drop(from: Vector3, velocity: Vector3, delay: float, what: StringName = &"") -> void:
 	var p := PICKUP_SCENE.instantiate()
-	p.item = item
+	p.item = what if what != &"" else item
 	p.skill = skill
-	p.icon = item_icon if item_icon else Items.icon(item)
+	p.icon = item_icon if item_icon and p.item == item else Items.icon(p.item)
 	get_parent().add_child(p)
 	p.launch(from, velocity, delay)
 
@@ -912,11 +964,15 @@ func _topple(info: HitInfo, away: Vector3, log_mesh: Mesh = null, fibres := Pack
 	if log_mesh:
 		_landing_debris(felled, height, away)
 
-	# logs spill out along the trunk
-	for i in _drop_count():
+	# logs spill out along the trunk (and a heartwood or trophy log, if the talents found one)
+	var count := _drop_count()
+	for i in count + _bonus_items.size():
 		var along := felled.global_transform * Vector3(0, randf_range(0.25, 0.85) * height, 0)
 		var vel := Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)) * 1.5 + Vector3.UP * randf_range(2.5, 4.0)
-		_launch_drop(along + Vector3.UP * 0.3, vel, i * 0.05)
+		_launch_drop(along + Vector3.UP * 0.3, vel, i * 0.05, _bonus_items[i - count] if i >= count else item)
+	_bonus_items.clear()
+	if skill == &"woodcutting" and Skills.talents.has(&"dominoes"):
+		_crush_along(felled, height, away)
 
 	# settle, then sink into the ground and disappear
 	await get_tree().create_timer(FELLED_LINGER).timeout
@@ -2512,6 +2568,213 @@ static func _crack_dot(img: Image, cx: float, y: int, radius: float, color: Colo
 		var a := color.a * cover
 		if a > img.get_pixel(px, y).a:
 			img.set_pixel(px, y, Color(color, a))
+
+
+# --- woodcutting talents ----------------------------------------------------------------------
+# plans/levels.md: Feller (chain cut, dominoes, power swing, momentum) vs Forester (back cut,
+# heartwood, grove keeper, old growth). Each asks Skills.talents.has() at the moment it matters.
+
+var _chain := 0  # Chain cut: clean cuts in a row on this tree
+var _bites := 0  # biting hits on this tree since it grew (Heartwood's knot comes after a few)
+var _knot: MeshInstance3D  # Heartwood: the glowing knot, while it shows
+var _knot_done := false  # ... once per tree
+var _bonus_items: Array[StringName] = []  # heartwood / trophy logs to drop with the logs
+var _fine_grained := false  # Grove keeper: regrown fine-grained (the first clean cut doubles drops)
+var _fine_next := false  # ... and growing back that way
+var _fine_cut := false  # ... that first clean cut has landed: this tree drops double
+var _old_growth_shimmer := {}  # surface -> its theme_c before the old-growth shimmer
+
+
+## This hit's woodcutting talents: {"extra": hits on top, "say": a popup}. Also sets up the drops
+## (heartwood, fine grain) and Chain cut's run.
+func _woodcutting_talents(info: HitInfo, cuts: int) -> Dictionary:
+	var t := Skills.talents
+	var extra := 0
+	var say := PackedStringArray()
+	if cuts <= 0:
+		return {}
+	if t.has(&"chain_cut"):
+		_chain = _chain + 1 if _clean else 0
+		if _chain >= 2:
+			extra += mini(_chain - 1, CHAIN_MAX)
+			say.append("Chain ×%d" % _chain)
+	if t.has(&"back_cut") and _is_back_cut(info):
+		extra += cuts * (BACK_CUT_TIMES - 1)
+		say.append("Back cut!")
+	if info.power and t.has(&"power_swing"):
+		var normal := cuts + (clean_cut_extra_hits if _clean else 0)
+		extra += maxi((POWER_CLEAN_HITS if _clean else POWER_HITS) - normal, 0)
+		say.append("Power!")
+	if _knot and _knot.visible and _aimed_near(info, _knot.global_position, KNOT_RADIUS * _window_scale()):
+		extra += KNOT_EXTRA
+		_bonus_items.append(&"heartwood")
+		_knot.visible = false
+		say.append("Heartwood!")
+	if _fine_grained and _clean and not _fine_cut:
+		_fine_cut = true
+		say.append("Fine grain!")
+	return {"extra": extra, "say": "  ".join(say)} if not say.is_empty() else {"extra": extra}
+
+
+## A swing from the far side of a well-started notch (Back cut): this side's barely touched.
+func _is_back_cut(info: HitInfo) -> bool:
+	if _carve == null or not _carve.is_started():
+		return false
+	var dir := _trunk.global_transform.affine_inverse().basis * (info.from - info.position)
+	dir.y = 0.0
+	var full := _carve.radius_at(_carve.ring, -dir) * notch_depth
+	var opposite := _carve.depth_toward(-dir)
+	return opposite >= full * BACK_CUT_AFTER and _carve.depth_toward(dir) < opposite * 0.5
+
+
+## Where the notch faces (world, horizontal): the deepest way into the trunk.
+func _notch_dir() -> Vector3:
+	var best := Vector3.ZERO
+	var deepest := -1.0
+	for i in TrunkCarve.BINS:
+		var dir := Vector3(sin(i * TAU / TrunkCarve.BINS), 0.0, cos(i * TAU / TrunkCarve.BINS))
+		var d := _carve.depth_toward(dir)
+		if d > deepest:
+			deepest = d
+			best = dir
+	var world := _trunk.global_transform.basis * best
+	world.y = 0.0
+	return world.normalized()
+
+
+## Back cut and Dominoes fell a tree the way a feller would: toward its notch (with Back cut,
+## that's away from you, the back cut's on your side). Otherwise `usual` (sideways, clear of you).
+func _talent_fall(usual: Vector3) -> Vector3:
+	var t := Skills.talents
+	if t.has(&"dominoes") or t.has(&"back_cut"):
+		var n := _notch_dir()
+		if n.length_squared() > 0.5:
+			return n
+	return usual
+
+
+## After a biting hit: Heartwood's knot shows once the tree's taken a few.
+func _after_bite() -> void:
+	_bites += 1
+	if _bites == KNOT_AFTER and not _knot_done and Skills.talents.has(&"heartwood") and _trunk:
+		_knot_done = true
+		_show_knot()
+
+
+## The knot: a warm glow on the trunk, somewhere round the side you're facing.
+func _show_knot() -> void:
+	if _knot == null:
+		_knot = MeshInstance3D.new()
+		_knot.name = "HeartwoodKnot"
+		var orb := SphereMesh.new()
+		orb.radius = 0.07
+		orb.height = 0.1
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.albedo_color = KNOT_COLOR
+		orb.material = mat
+		_knot.mesh = orb
+		_knot.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(_knot)
+		var pulse := _knot.create_tween().set_loops()
+		pulse.tween_property(_knot, "scale", Vector3.ONE * 1.3, 0.5).set_trans(Tween.TRANS_SINE)
+		pulse.tween_property(_knot, "scale", Vector3.ONE * 0.85, 0.5).set_trans(Tween.TRANS_SINE)
+	var player := get_tree().get_first_node_in_group("player") as Node3D
+	var toward := (player.global_position - global_position) if player else Vector3.FORWARD
+	toward.y = 0.0
+	var dir := toward.normalized().rotated(Vector3.UP, randf_range(-1.0, 1.0))
+	var local := _trunk.global_transform.affine_inverse().basis * dir
+	local.y = 0.0
+	var y := (_carve.ring if _carve and _carve.is_started() else 1.0) + randf_range(0.35, 0.8)
+	var r := (_carve.radius_at(y, local) if _carve else 0.25) + 0.02
+	_knot.global_position = _trunk.global_transform * (Vector3(0, y, 0) + local.normalized() * r)
+	_knot.visible = true
+	PopupText.spawn(get_parent(), _knot.global_position + Vector3.UP * 0.3, "A knot!", KNOT_COLOR, 8)
+
+
+## When the tree's down: Momentum's count, Grove keeper's quick and fine regrowth, Old growth's
+## trophy. Returns how long until it grows back.
+func _felled_by_talents(regrow: float) -> float:
+	var t := Skills.talents
+	if _old_growth_active():
+		_bonus_items.append(&"trophy_log")
+	var player := get_tree().get_first_node_in_group("player")
+	if player and player.has_method("note_felled"):
+		player.note_felled()
+	if _knot:
+		_knot.visible = false
+	if t.has(&"grove_keeper"):
+		_fine_next = true
+		return regrow / GROVE_REGROW
+	return regrow
+
+
+## Grown back: a fresh tree (and fine-grained if Grove keeper felled it).
+func _regrown() -> void:
+	_chain = 0
+	_bites = 0
+	_knot_done = false
+	_fine_cut = false
+	_fine_grained = _fine_next
+	_fine_next = false
+	_bonus_items.clear()
+	_refresh_old_growth()
+	if _fine_grained:
+		PopupText.spawn(get_parent(), _popup_pos(), "Fine-grained", TALENT_COLOR, 7)
+
+
+## Dominoes: the felled trunk lands hard on the trees along it.
+func _crush_along(felled: Node3D, height: float, fall: Vector3) -> void:
+	var base := felled.global_position
+	var tip := felled.global_transform * Vector3(0, height, 0)
+	for n in get_tree().get_nodes_in_group("gatherable"):
+		var other := n as ResourceNode
+		if other == null or other == self or other.skill != &"woodcutting" or not other.is_available():
+			continue
+		var p := other.global_position
+		var on := Geometry3D.get_closest_point_to_segment(Vector3(p.x, base.y, p.z), base, tip)
+		if Vector2(on.x - p.x, on.z - p.z).length() < 0.9:
+			other.crush(fall, on)
+
+
+## Hit by a falling trunk (Dominoes): a big chunk of its hits gone, and it falls the same way if
+## that was the last of them.
+func crush(fall: Vector3, at: Vector3) -> void:
+	if hits_left <= 0 or not can_gather():
+		return
+	hits_left = maxi(hits_left - ceili(max_hits * CRUSH_SHARE), 0)
+	_nudge(fall * 2.0)
+	_tree_reacts(HitInfo.new(at, -fall, self, at - fall * 2.0), 1.0 - float(hits_left) / max_hits)
+	PopupText.spawn(get_parent(), _popup_pos(), "Dominoes!", TALENT_COLOR, 9)
+	_award_xp(xp_per_hit * 2)
+	SaveGame.mark_dirty()
+	if hits_left == 0:
+		_break(HitInfo.new(global_position + Vector3.UP, -fall, self, global_position + Vector3.UP - fall * 2.0))
+
+
+## An ancient tree (Old growth): one in OLD_GROWTH_ONE_IN, fixed by its save id. Only those with
+## the talent can see it, and only for them is it one.
+func _old_growth_active() -> bool:
+	return skill == &"woodcutting" and not save_id.is_empty() \
+		and absi(hash(String(save_id))) % OLD_GROWTH_ONE_IN == 0 and Skills.talents.has(&"old_growth")
+
+
+## The old-growth shimmer on (talent owned) or back off.
+func _refresh_old_growth() -> void:
+	var on := _old_growth_active()
+	for s in _surfaces:
+		if not is_instance_valid(s):
+			continue
+		if on:
+			if not _old_growth_shimmer.has(s):
+				var c: Variant = s.get_instance_shader_parameter("theme_c")
+				_old_growth_shimmer[s] = c if c is Vector4 else Vector4(0, 1, 1, 0)
+			var was: Vector4 = _old_growth_shimmer[s]
+			s.set_instance_shader_parameter("theme_c", Vector4(was.x, was.y, was.z, maxf(was.w, OLD_GROWTH_SHIMMER)))
+		elif _old_growth_shimmer.has(s):
+			s.set_instance_shader_parameter("theme_c", _old_growth_shimmer[s])
+	if not on:
+		_old_growth_shimmer.clear()
 
 
 # --- weak point -----------------------------------------------------------------------------

@@ -153,6 +153,15 @@ extends CharacterBody3D
 @export var recover_time := 0.16
 @export var swing_cooldown := 0.12
 @export var move_slow_while_swinging := 0.3
+## Power swing (a woodcutting talent): hold this long on a tree for a full charge; you move this
+## much slower while charging. A tap still swings as usual.
+@export var power_charge_time := 1.0
+@export var move_slow_while_charging := 0.4
+## Momentum (a woodcutting talent): each tree felled within this many seconds of the last makes
+## the axe this much faster, up to this many times.
+@export var momentum_window := 10.0
+@export var momentum_step := 0.15
+@export var momentum_max := 3
 
 @export_group("Bite")
 ## How far the tool sinks into the node on impact (m, viewmodel space).
@@ -287,6 +296,9 @@ var _swap_hint := ""
 var _swap_shown := 0.0
 var _swinging := false
 var _cooldown := 0.0
+var _charge := -1.0  # Power swing: seconds held on a tree, -1 when not charging
+var _momentum := 0  # Momentum: trees felled in a quick run (each makes the axe faster)
+var _since_felled := INF  # seconds since the last tree came down
 var _tool_rest := Vector3.ZERO
 var _buzz := 0.0  # current quiver size (rad), see _impact_feel
 var _buzz_us := 0
@@ -527,6 +539,10 @@ func _physics_process(delta: float) -> void:
 
 	_cooldown -= delta
 	_swap_shown -= delta
+	_since_felled += delta
+	if _since_felled > momentum_window:
+		_momentum = 0
+	_update_charge(delta)
 	if Input.is_action_just_pressed("swap_fishing") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED 			and not rodfishing.is_busy() and not _swinging:
 		Tools.swap_fishing_style()
 		_swap_shown = 1.0
@@ -540,7 +556,9 @@ func _physics_process(delta: float) -> void:
 			_talk_target.interact()
 	elif Input.is_action_pressed("gather") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED \
 			and is_on_floor() and _state == State.NORMAL and not _swinging and _cooldown <= 0.0:
-		if _target:
+		if _target and _target.skill == &"woodcutting" and Skills.talents.has(&"power_swing"):
+			_charge = 0.0 if _charge < 0.0 else _charge + delta  # Power swing: hold, then let go
+		elif _target:
 			_swing(_target.tool_type)
 		elif spearfishing.can_thrust():
 			spearfishing.thrust()
@@ -623,6 +641,7 @@ func _move(delta: float) -> void:
 	var sprinting := Input.is_action_pressed("sprint") and input.y < 0.0 and not _swinging and not crouched
 	var speed := crouch_speed if crouched else (sprint_speed if sprinting else walk_speed)
 	speed *= move_slow_while_swinging if _swinging else 1.0
+	speed *= move_slow_while_charging if _charge >= 0.0 else 1.0
 	speed *= wading
 	speed *= 1.0 + Village.stat(&"run_speed")  # Rosa's bread
 
@@ -982,9 +1001,40 @@ func _aim(length := reach) -> Dictionary:
 	return get_world_3d().direct_space_state.intersect_ray(query)
 
 
-## Mid-action: a swing or thrust under way, or the rod out (TalentCards waits for this to end).
+## Mid-action: a swing or thrust under way, a charge held, or the rod out (TalentCards waits for
+## this to end).
 func is_busy() -> bool:
-	return _swinging or rodfishing.is_busy()
+	return _swinging or _charge >= 0.0 or rodfishing.is_busy()
+
+
+## A tree came down (ResourceNode): Momentum counts a quick run of them.
+func note_felled() -> void:
+	if Skills.talents.has(&"momentum"):
+		if _since_felled <= momentum_window:
+			_momentum = mini(_momentum + 1, momentum_max)
+			PopupText.spawn(get_parent(), global_position + Vector3.UP * 2.2, "Momentum ×%d" % _momentum,
+				ResourceNode.TALENT_COLOR, 9)
+	_since_felled = 0.0
+
+
+## Power swing: while gather is held on a tree the axe draws back; let go to swing, full power
+## once it's been held power_charge_time. Looking away or losing the tree drops the charge.
+func _update_charge(delta: float) -> void:
+	if _charge < 0.0:
+		return
+	var held := Input.is_action_pressed("gather") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+	if _target == null or _target.skill != &"woodcutting" or _swinging:
+		_charge = -1.0
+		return
+	var pose := _swing_pose(&"axe")
+	var t := clampf(_charge / power_charge_time, 0.0, 1.0)
+	var drawn: float = lerpf(pose.get("ready", pose.get("rest", 0.0)), pose.get("windup", 0.0) * 1.25, t)
+	tool_pivot.rotation.x = lerpf(tool_pivot.rotation.x, drawn, 1.0 - exp(-10.0 * delta))
+	if held:
+		return  # (_physics_process counts it up)
+	var full := _charge >= power_charge_time
+	_charge = -1.0
+	_swing(&"axe", full)
 
 
 func _node_under_crosshair(hit: Dictionary) -> ResourceNode:
@@ -1197,7 +1247,7 @@ func _equip(tool: StringName) -> void:
 		create_tween().tween_property(self, "_equip_dip", 0.0, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
-func _swing(tool: StringName) -> void:
+func _swing(tool: StringName, power := false) -> void:
 	_swinging = true
 	_equip(tool)
 	var pose := _swing_pose(tool)
@@ -1207,6 +1257,8 @@ func _swing(tool: StringName) -> void:
 	var sideways := tool == &"sickle"
 	var axis := "rotation:z" if sideways else "rotation:x"
 	var pace: float = SICKLE_SPEED if sideways else pose["pace"]
+	if tool == &"axe":
+		pace *= 1.0 + momentum_step * _momentum  # Momentum
 	var smooth: bool = pose.get("smooth", false)
 	var ease := Tween.EASE_IN_OUT if smooth else Tween.EASE_OUT
 	var windup: float = windup_time / pace * pose.get("windup_scale", 1.0)
@@ -1241,6 +1293,7 @@ func _swing(tool: StringName) -> void:
 	var node := _node_under_crosshair(hit)
 	if node:
 		var info := HitInfo.new(hit["position"], hit["normal"], node, camera.global_position)
+		info.power = power
 		if node.hit(info):
 			_impact_feel(info, node.last_impact if "last_impact" in node else 1.0)
 			await _bite(tool, info)

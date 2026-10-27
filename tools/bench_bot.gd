@@ -76,18 +76,26 @@ func charge(seconds: float) -> void:
 
 # --- gathering ----------------------------------------------------------------------------------
 
-## The nearest node of `skill` you can gather at your level and tools, or null.
+## The nearest node of `skill` you can gather at your level and tools, or null. An old-growth
+## tree you can see (the talent) is worth a walk: it counts as a quarter as far.
 func nearest_node(skill: StringName):
 	var best = null
+	var best_d := INF
 	for n in tree.get_nodes_in_group("gatherable"):
 		if n.get("skill") != skill or not n.call("is_available") or not n.call("can_gather") or n.call("is_under_levelled"):
 			continue
-		if best == null or flat(n.global_position, player.global_position) < flat(best.global_position, player.global_position):
+		var d := flat(n.global_position, player.global_position)
+		if skill == &"woodcutting" and n.call("_old_growth_active"):
+			d *= 0.25
+		if d < best_d:
+			best_d = d
 			best = n
 	return best
 
 
-## Walks to the nearest node of `skill` and works it until it's gone (or NODE_TIMEOUT).
+## Walks to the nearest node of `skill` and works it until it's gone (or NODE_TIMEOUT). With
+## woodcutting talents it plays them as a player would: Power swing charges every swing, Back cut
+## walks round to the far side once the notch is started.
 func gather_try(skill: StringName) -> void:
 	var node = nearest_node(skill)
 	if node == null:
@@ -95,17 +103,44 @@ func gather_try(skill: StringName) -> void:
 		await wait_game(2.0)
 		return
 	await _stand_by(node)
+	var talents = tree.root.get_node("Skills").get("talents")
+	var power: bool = skill == &"woodcutting" and talents.call("has", &"power_swing")
+	var back: bool = skill == &"woodcutting" and talents.call("has", &"back_cut")
+	var went_round := false
 	var t := 0.0
 	while t < NODE_TIMEOUT and is_instance_valid(node) and node.call("is_available"):
-		look_at(_aim_point(node))
-		set_held("gather", true)
 		var c0 := clock
-		await step()
+		if back and not went_round and int(node.get("_bites")) >= 3:
+			went_round = true
+			await _stand_by(node, true)
+		look_at(_aim_point(node))
+		if power:
+			await _power_swing(node)
+		else:
+			set_held("gather", true)
+			await step()
 		t += clock - c0
 	set_held("gather", false)
 	if t >= NODE_TIMEOUT:
 		why("gather: gave up on %s" % node.name)
 	await wait_game(1.0)  # the drops land and fly over
+
+
+## Power swing: hold until it's fully charged (tracking the aim), let go, wait out the swing.
+func _power_swing(node) -> void:
+	press("gather")
+	var held := 0.0
+	while held < float(player.get("power_charge_time")) + 0.1 and is_instance_valid(node) and node.call("is_available"):
+		look_at(_aim_point(node))
+		var c0 := clock
+		await step()
+		held += clock - c0
+	release("gather")
+	await step()
+	while player.get("_swinging"):
+		if is_instance_valid(node):
+			look_at(_aim_point(node))
+		await step()
 
 
 ## Where a skilled player aims at `node` for this swing.
@@ -114,6 +149,9 @@ func _aim_point(node) -> Vector3:
 	var center: Vector3 = node.global_position
 	match node.get("skill"):
 		&"woodcutting":
+			var knot = node.get("_knot")
+			if knot != null and knot.visible:  # Heartwood's knot: hit it
+				return knot.global_position
 			var trunk = node.get("_trunk")
 			var carve = node.get("_carve")
 			if trunk != null and carve != null and carve.call("is_started"):
@@ -135,12 +173,15 @@ func _aim_point(node) -> Vector3:
 	return center + Vector3.UP * 0.4  # a sheaf
 
 
-## Teleports to STAND_OFF from `node` on the side you're coming from, charging the walk.
-func _stand_by(node) -> void:
+## Teleports to STAND_OFF from `node` on the side you're coming from (or the far side, for a back
+## cut), charging the walk.
+func _stand_by(node, far_side := false) -> void:
 	var c: Vector3 = node.global_position
 	var from := Vector3(player.global_position.x - c.x, 0, player.global_position.z - c.z)
 	if from.length() < 0.1:
 		from = Vector3.FORWARD
+	if far_side:
+		from = -from
 	var at := c + from.normalized() * STAND_OFF
 	var q := PhysicsRayQueryParameters3D.create(at + Vector3.UP * 30.0, at + Vector3.DOWN * 30.0, 1)
 	q.exclude = [player.get_rid()]

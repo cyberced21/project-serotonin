@@ -9,6 +9,8 @@ var normal: Vector3
 var collider: Object
 ## Where the swing came from (the player's eye).
 var from: Vector3
+## A fully charged swing (the Power swing talent).
+var power := false
 
 
 func _init(p_position: Vector3, p_normal: Vector3, p_collider: Object, p_from: Vector3) -> void:

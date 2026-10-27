@@ -182,6 +182,23 @@ boost by choosing who to visit. Each is the villager's trade flavour, never a ta
    30 (plans/fishing-parity.md); level 10 needs a look.
    Also fixed: walks the bot skips by teleporting are now really charged to the clock (the
    fishing bench's next steps used to swallow them, so the rod's walks were free).
-4. **Woodcutting talents** end to end, then played by hand before the rest.
+4. **Woodcutting talents** end to end, then played by hand before the rest. **Built, not
+   balanced** (2026-10-27): all eight in `ResourceNode` ("woodcutting talents" section) and
+   `player.gd` (Power swing's charge, Momentum); heartwood and trophy logs are items (icons are
+   tinted log icons for now). `tools/woodcutting_talents_playtest.gd` checks each one headless.
+   **The talent model** (`tools/talent_model.gd`): woodcutting worked out in code on a measured
+   world's trees (`tools/model_data/`), every number read from the game; all milestones in a
+   few seconds, no noise. It plays the best trees for the level with the axe that just opens
+   them (the bench used the best axe, which fells everything in 1-2 swings and flattens every
+   talent). First findings (60 game min, a bot that never misses):
+   | Lv | Pair | Result |
+   |---|---|---|
+   | 10 | Chain cut / Back cut | +0% / -10%: 5-hit trees fall before a chain starts; walking round costs more than the triple gives |
+   | 20 | Dominoes / Heartwood | +0% / +282%: oaks stand 12-16 m apart (nothing to fall on); a knot on every tree is a stream of heartwood, not a jackpot |
+   | 30 | Power swing / Grove keeper | -9% / +120%: a 1 s charge for 3 hits loses to 6 quick swings; double-speed regrowth plus double logs on every regrown tree |
+   | 40 | Momentum / Old growth | -4% / +0%: chopping isn't the limit (walking and regrowth are); no ancient pine near the start |
+   Woodcutting is **limited by walking and regrowth**, not swing speed: trees take 3-6 s to fell
+   and regrow in 15-40 s. Speed talents have little to win; yield talents dominate. Needs
+   design decisions before tuning (see the session of 2026-10-27).
 5. **Mining**, then **Fishing**, then **Farming** talents.
 6. **Flourishes, rare-item uses, README, TODO.**
