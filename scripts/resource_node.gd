@@ -156,6 +156,9 @@ const CRACKING_LAYER := 1 << 10
 ## Flakes of bark peel off round the notch's rim as it grows, in this colour (chips are chip_color,
 ## the cut wood).
 @export var bark_color := Color("5f4029")
+## How thick the trunk's bark is (m): a hit strips a blaze of it before the axe cuts into the wood
+## beneath (see TrunkCarve), and the slabs that fly off are this thick.
+@export var bark_thickness := 0.025
 ## Every hit shakes the canopy (m it swings out at first) and shakes a few leaves loose.
 @export var canopy_shake := 0.08
 @export_range(0, 32) var leaves_per_hit := 6
@@ -389,7 +392,7 @@ func _setup_carve() -> void:
 	if _trunk == null or not _trunk.mesh is ArrayMesh:
 		push_warning("%s: carve_notch needs a Body_Trunk mesh" % name)
 		return
-	_carve = TrunkCarve.new(_trunk.mesh, notch_band)
+	_carve = TrunkCarve.new(_trunk.mesh, notch_band, bark_thickness)
 	_trunk_rest = global_transform.affine_inverse() * _trunk.global_transform
 	for m in _trunk.get_parent().get_children():
 		if m is MeshInstance3D and m != _trunk:
@@ -1019,23 +1022,39 @@ func _carve_hit(info: HitInfo, cuts: int) -> void:
 	var dir := to_trunk.basis * (info.from - info.position)
 	dir.y = 0.0
 	var y := (to_trunk * info.position).y
+	var stripped := _blaze_area()
 	_carve.hit(y, dir, notch_depth * cuts / max_hits)
 	_trunk.mesh = _carve.carved()
 	info.position = _trunk.global_transform * _carve.bite_point(dir)
 	info.normal = (_trunk.global_basis * dir).normalized()
-	for i in cuts:
-		_peel_bark(dir)
+	# the bark that came away flies off in slabs, more the more of it went; then a flake or two
+	# off the rim per hit as the notch grows
+	var slabs := clampi(roundi((_blaze_area() - stripped) * 40.0), 0, 6)
+	for i in slabs + cuts:
+		_peel_bark(dir, i < slabs)
 
 
-## A flake of bark breaking off the rim of the notch, a little to one side of `dir` (trunk space).
-func _peel_bark(dir: Vector3) -> void:
-	var side := dir.normalized().rotated(Vector3.UP, randf_range(-0.6, 0.6))
+## How much bark the blaze has stripped so far (m of height, summed round the trunk's bins).
+func _blaze_area() -> float:
+	var total := 0.0
+	for b in _carve.blaze:
+		total += b
+	return total / TrunkCarve.BINS
+
+
+## A flake of bark breaking off the rim of the notch, a little to one side of `dir` (trunk space);
+## with `slab`, a bigger piece of the bark the hit stripped, from anywhere on the blaze.
+func _peel_bark(dir: Vector3, slab := false) -> void:
+	var side := dir.normalized().rotated(Vector3.UP, randf_range(-0.9, 0.9) if slab else randf_range(-0.6, 0.6))
 	var deep := _carve.depth_toward(side)
-	var y := _carve.ring + randf_range(-0.04, deep / TrunkCarve.SLOPE_UP + 0.06)
+	var reach := _carve.blaze_toward(side)
+	var y := _carve.ring + (randf_range(-reach, reach) if slab else randf_range(-0.04, deep / TrunkCarve.SLOPE_UP + 0.06))
 	var at := Vector3(0.0, y, 0.0) + side * _carve.radius_at(_carve.ring, side)
 	var flake := MeshInstance3D.new()
 	var box := BoxMesh.new()
-	box.size = Vector3(randf_range(0.06, 0.11), randf_range(0.07, 0.13), 0.018)
+	box.size = Vector3(randf_range(0.06, 0.11), randf_range(0.07, 0.13), maxf(bark_thickness * 0.8, 0.012))
+	if slab:
+		box.size = Vector3(randf_range(0.09, 0.17), randf_range(0.1, 0.2), maxf(bark_thickness, 0.012))
 	flake.mesh = box
 	flake.material_override = NODE_SURFACE
 	flake.set_instance_shader_parameter("albedo", bark_color.darkened(randf_range(0.0, 0.2)))

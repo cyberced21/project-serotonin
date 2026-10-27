@@ -24,6 +24,7 @@ hit_layers = ExtResource("v_axe_hit")
 creak_layers = ExtResource("v_trunk_creak")
 land_layers = ExtResource("v_tree_land")
 bark_color = Color(0.31, 0.2, 0.133, 1)
+bark_thickness = 0.035
 popup_height = 2.4
 
 [node name="CollisionShape3D" parent="." index="0"]
