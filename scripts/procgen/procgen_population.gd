@@ -4,7 +4,8 @@ extends RefCounted
 ## - a NodeSpawner per biome cell, kept to its own cell, with that biome's trees, rocks or grain;
 ##   the inner ring gets the gentler mix, the outer ring the harder one (birch near the hub, pine
 ##   far out; copper and iron by the hub, coal and gold on Frostpeak's foothills);
-## - in the quarry pit, one spawner per level, harder ore the deeper you go, crystal on the floor;
+## - in the quarry pit, ore walls along every wall (OreWallPlacer: richer the deeper you go), and
+##   crystal on the floor;
 ## - a SceneryScatter per biome cell, over just that cell's bounding box and with just its biome's
 ##   layers (so no layer samples ground it can't grow on): grass, flowers, bushes and boulders on
 ##   open ground, canopies and ferns on forest floor, meadow grass on the field, rubble in the
@@ -27,17 +28,17 @@ const BARLEY := preload("res://scenes/barley_sheaf.tscn")
 
 ## Per biome and tier (0 hub, 1 inner ring, 2 outer ring): how many nodes, and [scene, weight] pairs.
 const NODES := {
-	&"clearing": {0: {"count": 12, "spacing": 5.0, "entries": [[TREE, 3.0], [ROCK, 2.0]]}},
+	&"clearing": {0: {"count": 12, "spacing": 6.0, "entries": [[TREE, 3.0], [ROCK, 2.0]]}},
 	&"pinewood": {
 		1: {"count": 22, "spacing": 4.5, "entries": [[BIRCH, 3.0], [TREE, 1.5], [PINE, 0.3]]},
 		2: {"count": 26, "spacing": 4.5, "entries": [[PINE, 3.0], [BIRCH, 1.0]]},
 	},
 	&"goldmeadow": {1: {"count": 24, "spacing": 4.0, "entries": [[WHEAT, 3.0], [BARLEY, 1.5], [OAK, 1.2]]}},
-	&"stillwater": {2: {"count": 12, "spacing": 5.0, "entries": [[OAK, 2.0], [TREE, 1.0], [IRON, 1.0]]}},
+	&"stillwater": {2: {"count": 12, "spacing": 7.0, "entries": [[OAK, 2.0], [TREE, 1.0], [IRON, 1.0]]}},
 	&"frostpeak": {2: {"count": 14, "spacing": 5.5, "entries": [[COAL, 2.0], [GOLD, 1.5], [IRON, 1.0]],
 			"min_normal_y": 0.8}},
 	&"quarry": {2: {"count": 6, "spacing": 5.0, "entries": [[ROCK, 2.0], [IRON, 1.0]]}},  # the apron
-	&"hearthvale": {1: {"count": 9, "spacing": 5.0, "entries": [[TREE, 2.0], [OAK, 1.5], [ROCK, 1.0]]}},  # round the flat
+	&"hearthvale": {1: {"count": 9, "spacing": 6.5, "entries": [[TREE, 2.0], [OAK, 1.5], [ROCK, 1.0]]}},  # round the flat
 }
 ## How a biome's kind changes its nodes: weights multiplied per scene, and "count" the number.
 const KIND_NODES := {
@@ -64,14 +65,7 @@ const KIND_SCENERY := {
 const KIND_SCALE := {
 	&"old_growth": {"canopy_pine": 1.3, "canopy_birch": 1.2},
 }
-## The quarry pit's levels below the rim, from the top down: a count and [scene, weight] pairs.
-## Below the last level is the floor, where the crystal grows. A pit with fewer levels than this
-## skips the middle ones (see _quarry_level).
-const QUARRY_LEVELS := [
-	{"count": 6, "entries": [[IRON, 2.0], [ROCK, 1.0]]},
-	{"count": 5, "entries": [[COAL, 3.0], [IRON, 1.0]]},
-	{"count": 6, "entries": [[COAL, 2.0], [GOLD, 1.5]]},
-]
+## Crystals on the quarry's floor (its levels have ore walls instead: _quarry_levels).
 const CRYSTALS := 4
 ## How many baked variants each model may have (tools/blender/make_models.py's VARIANTS).
 const VARIANTS := 8
@@ -184,38 +178,35 @@ static func _spawner(map: ProcgenMap, node_name: String, spec: Dictionary) -> No
 	return spawner
 
 
-## A spawner per pit level, each a ring between its wall and the next one in (clear of both),
-## on quarry stone only, so nothing lands on the haul road; crystal on the floor.
+## The pit's walls lined with ore wall (OreWallPlacer, as in Greystone Quarry), and a spawner of
+## crystal on the floor, on quarry stone only, clear of the innermost wall's blocks of rock.
 static func _quarry_levels(parent: Node3D, map: ProcgenMap) -> void:
 	if map.quarry.is_empty():
 		return
 	var qc: Vector2 = map.quarry["center"]
 	var walls: Array = map.quarry["walls"]
-	for k in walls.size():
-		var outer := float(walls[k]) - 1.5
-		var inner := float(walls[k + 1]) + 1.5 if k + 1 < walls.size() else 0.0
-		var spec: Dictionary = {"count": CRYSTALS, "entries": [[CRYSTAL, 1.0]]}  # the floor
-		if k < walls.size() - 1:
-			spec = _quarry_level(k, walls.size() - 1).duplicate()
-		spec = _with_kind(spec, map.kinds.get(&"quarry", &""))
-		spec["spacing"] = 4.5
-		var spawner := _spawner(map, "QuarryLevel%d" % (k + 1), spec)
-		spawner.theme = theme_for(&"quarry", map.kinds.get(&"quarry", &""))
-		spawner.ring = Vector4(qc.x, qc.y, inner, outer)
-		spawner.area = Rect2(qc - Vector2.ONE * outer, Vector2.ONE * outer * 2.0)
-		var ids: Array[int] = [WorldMap.TEX_QUARRY]
-		spawner.allowed_ids = ids
-		spawner.hotspot_share = 0.0
-		spawner.path_clearance = 1.0
-		parent.add_child(spawner)
-
-
-## Level k of a pit with `levels` levels: the top one is always QUARRY_LEVELS' first and the
-## bottom one its last, so a shallower pit skips the middle.
-static func _quarry_level(k: int, levels: int) -> Dictionary:
-	if levels <= 1:
-		return QUARRY_LEVELS[-1]
-	return QUARRY_LEVELS[roundi(float(k) * (QUARRY_LEVELS.size() - 1) / (levels - 1))]
+	var placer := OreWallPlacer.new()
+	placer.name = "QuarryWalls"
+	placer.center = qc
+	for w in walls:
+		placer.walls.append(float(w))
+	placer.level_drop = ProcgenMap.QUARRY_LEVEL_DROP
+	placer.save_prefix = "quarry_wall"
+	placer.seed = map.seed
+	parent.add_child(placer)
+	var last := float(walls[-1])
+	var outer := last - (OreWall.DEPTH + OreWallPlacer.BACK_GAP if last >= placer.min_radius else 0.0) - 1.5
+	var spec := _with_kind({"count": CRYSTALS, "entries": [[CRYSTAL, 1.0]]}, map.kinds.get(&"quarry", &""))
+	spec["spacing"] = 4.5
+	var spawner := _spawner(map, "QuarryFloor", spec)
+	spawner.theme = theme_for(&"quarry", map.kinds.get(&"quarry", &""))
+	spawner.ring = Vector4(qc.x, qc.y, 0.0, outer)
+	spawner.area = Rect2(qc - Vector2.ONE * outer, Vector2.ONE * outer * 2.0)
+	var ids: Array[int] = [WorldMap.TEX_QUARRY]
+	spawner.allowed_ids = ids
+	spawner.hotspot_share = 0.0
+	spawner.path_clearance = 1.0
+	parent.add_child(spawner)
 
 
 ## Each cell's bounding box (world XZ), from the cells map.
@@ -274,11 +265,11 @@ static func _scenery(map: ProcgenMap, i: int, box: Rect2) -> SceneryScatter:
 		_layer("scenery/boulder_flat", 0.1, [d], {"scale_range": Vector2(0.7, 1.5), "min_normal_y": 0.5,
 				"align_to_slope": true, "collide": true, "clearance": 1.5}),
 		# forest floor, as in the Pinewood
-		_layer("scenery/canopy_pine", 2.0, [forest], {"scale_range": Vector2(0.85, 1.35), "min_normal_y": 0.75,
+		_layer("scenery/canopy_pine", 2.0, [forest], {"scale_range": Vector2(1.45, 2.2), "min_normal_y": 0.75,
 				"sway": 0.05, "collide": true, "collision_size": Vector3(0.5, 4, 0.5), "clearance": 1.0}),
-		_layer("scenery/canopy_pine_young", 0.9, [forest], {"scale_range": Vector2(0.8, 1.25), "min_normal_y": 0.75,
+		_layer("scenery/canopy_pine_young", 0.9, [forest], {"scale_range": Vector2(1.2, 1.8), "min_normal_y": 0.75,
 				"sway": 0.08, "collide": true, "collision_size": Vector3(0.35, 2.5, 0.35), "clearance": 0.8}),
-		_layer("scenery/canopy_birch", 0.4, [forest], {"scale_range": Vector2(0.85, 1.2), "min_normal_y": 0.75,
+		_layer("scenery/canopy_birch", 0.4, [forest], {"scale_range": Vector2(1.45, 2.0), "min_normal_y": 0.75,
 				"sway": 0.08, "collide": true, "collision_size": Vector3(0.3, 4, 0.3), "clearance": 1.0}),
 		_layer("scenery/fern", 2.5, [forest], {"scale_range": Vector2(0.7, 1.4), "cluster": Vector2i(2, 5),
 				"cluster_radius": 1.6, "min_normal_y": 0.75, "sway": 0.4, "cast_shadow": false, "visible_distance": 60.0}),

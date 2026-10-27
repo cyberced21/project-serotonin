@@ -44,14 +44,34 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 
 - [x] **Copper breaks where it's struck** (phase 1): 36 pieces drawn as one mesh (`node_rock.gdshader` hides broken ones), 2–3 out per hit, unsupported pieces collapse, shatter at 35% gone; ore spills from vein pieces; exact saves; weathered/fresh baked shading with glinting ore; dirt decal and pebbles; variants rebuilt. Spawns in 5–12 ms (was ~50).
 - [x] **Copper playtested**; it felt good. Fixed from it: white blobs by the rocks (`pow(shade, 2.2)` gave NaN pixels the glow smeared out; squared now).
-- [x] **The fault:** a hairline crack with trickling grit on every ore rock; hit it and up to six pieces break out (`FAULT_*` in `resource_node.gd`).
+- [x] **The fault:** one piece of every ore rock worked loose, standing a few cm proud and tipped out, a dark crack round it (`fault_shadow` darkens the gap's fresh walls), settling with a pinch of grit every few seconds; hit it and up to six pieces break out (`FAULT_*` in `resource_node.gd`). Replaced a crack decal and a steady trickle of dust.
+- [ ] **The fault, unplayed:** whether it's easy enough to spot in play (stills only), and whether the settle wants a quiet tick sound.
 - [x] **Every ore breaks its own way** (phases 2–5), its rules in its `.pieces.json` (`support`, `knock`, `shatter_at`, `tough`, `grounded`): iron columns topple (~7 swings), coal plates drop a layer (~7), gold's tough shell hides a gold heart (~9; the quartz-heart candidate is `models/designs/gold_geode_quartz`), crystal shards snap and bring the crystal down (~8). Swings measured hitting one spot; the fault and collapses cut them.
 - [x] **Ore pickups and icons** are chunks of their rock's fresh inside (phase 6); **scenery rocks** and **building stone** weathered the same way (phases 7–8).
+- [x] **Iron remade** (`iron_limonite` in `make_models.py`; the columns stay in `models/designs/`): a lumpy, pitted rust-red boulder with glinting hematite patches, breaking open steel-grey with red streaks under a brown rind. Rust is baked into the shade (`bake_weathering`'s `tint`): the palette has no rust swatch. Pickup and icon to match.
+- [ ] **Iron, not yet measured or played:** swings to break it now (it no longer topples: `knock` 0, `shatter_at` 0.5, like copper), and how it sits next to the other ores in a real world.
 - [ ] **Playtest the other ores** and tune: swings per ore (`knock`, `shatter_at` in `make_models.py`), how often you find the fault, ore spill rate, glint (`ore_roughness` / `ore_metallic` / `ore_glow`), the dirt patch on quarry sand.
 - [ ] **Sounds** for knocking pieces out, collapses and faults still reuse the split and break sounds.
 - [ ] **`.pieces.json` in exports:** add `*.json` to the export include filter when an export preset exists.
 - [ ] **The seam-crack code** in `resource_node.gd` (and `fractured()`) is now used only by `models/designs/`; drop it if those designs go.
 - [ ] **Icons** don't show the baked shade (Workbench renders palette colour only).
+
+### Ore walls ([plans/ore-walls.md](../plans/ore-walls.md))
+
+- [x] **Panels dug piece by piece** (`OreWall`, `make_models.py` `ore_walls`): 3 x 4 m, 4 m deep, eight layers of ~70 Voronoi pieces; the piece struck is the one with the nearest seed; dug stays dug (saved per panel).
+- [x] **Veins** threaded through each panel from its seed (`node_surface.gdshaderinc` WALL), richer with depth and further down the pit; a vein piece needs its ore's pick, drops 1 ore and its XP.
+- [x] **Runs** (`OreWallRun`): pillars between panels, a cap rock over them, bedrock behind; dug in, a panel is a roofed alcove, lit from within as it deepens.
+- [x] **Loose slabs** (two a layer): struck, or undercut, the whole slab comes down (synthesized `slab` sound). Stragglers crumble once 85% of a layer is gone.
+- [x] **Placed** round Greystone's five rings (161 panels, in place of the terrace ore rocks) and a generated world's pit (`OreWallPlacer`).
+- [ ] **Playtest:** everything is bot-verified only (screenshots, headless tests). Swings per layer (~30 with a crystal pick, untried with a stone one), slab frequency, vein amount (one vein, sometimes two, ~12–25 vein pieces a layer), whether the alcove light looks like light or like a lamp.
+- [ ] **No stone item:** the plan had stone pieces drop stone 1 in 4, but the game has no stone item or use for one; they give XP only.
+- [ ] **Iron veins read almost white** (the palette's `ore.iron` is pale silver), and **coal veins on the weathered face read like black cracks**.
+- [ ] **Lone panels** (a run of one, between a ramp and stairs) look like a stray cube.
+- [ ] **Props keep their stretch of wall bare** (ladders, scaffolds); the scaffolds could move onto the caps.
+- [ ] **Panel save ids follow the terrain:** a panel is keyed by its ring, run and place in the run, so regenerating Greystone's terrain (or changing the placer) can hand dug progress to a different panel.
+- [ ] **The cap top sits ~5 cm under the level above** (the terrain shows through near the back); fine so far.
+- [ ] **Debug menu:** no teleport to a wall or reset of dug walls yet.
+- [ ] **Tunnels:** an alcove's back opening into a drift (the plan's "later").
 
 ### Woodcutting overhaul
 
@@ -63,6 +83,9 @@ Plan and decisions: `plans/woodcutting-overhaul.md`.
 - [x] **Felling from the notch:** the trunk splits there, hangs on the hinge, falls sideways to the swinger toward the clear side, and leaves the cut stump with growth rings.
 - [x] **New trees** picked from rendered candidates (`tree_designs`): round starter, airy birch, spreading oak, classic pine; the scenery forest matches.
 - [x] **Feel:** wood chips and dust, bark peeling, canopy shake and leaves, sway and creak late in the chop.
+- [x] **More feel:** wedge-shaped chips in twos and threes, a pile of chips building up round the foot (`lingering_rubble`) until it regrows, torn hinge fibres on the stump and the log's end, "Timber!", earth and leaves kicked up along the trunk where it lands and twigs snapping off.
+- [x] **Felled crowns no longer prop the tree up:** a carved tree's crown collides at `FELLED_CROWN_SCALE`, its log at its own size (the art pass's big crowns caught hillsides and stood the trunk back up); it also counts as landed once it comes to rest on its crown.
+- [ ] **Playtest the new chop feel** (bot-verified only: gallery stills, not seen in motion or played).
 - [x] **Wood sounds, synthesized** (`tools/synth_wood_sounds.py`; the GDC bundle's stand-ins sounded wrong): thunk, bite, chips, snap, creak, fibres tearing, crown rushing, landing.
 - [ ] **Tune the synthesized wood sounds by ear** in play (each sound is one function in the script; the stacks' levels are in `audio/woodcutting/*.tres`).
 - [ ] **The notch on birch** shows less (pale cut wood on white bark); a darker cut colour for it if it reads poorly.

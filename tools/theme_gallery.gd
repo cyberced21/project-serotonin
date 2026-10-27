@@ -14,6 +14,9 @@ extends SceneTree
 ##   --looks        each node in all its looks instead (the model, then the variants), grouped by
 ##                  shape family: 0 4 8 | 1 5 | 2 6 | 3 7
 ##   --hit=N        strike every node N times first, to show the fresh insides against the dressing
+##   --tier=N       the pickaxe's and axe's tier (default 3, the best: everything breaks fast)
+##   --fault=M      a close-up of the first node's fault from M metres out (an ore rock's)
+##   --settle=S     seconds between the last hit and the shot (default 2.5; a felled tree is gone by 5)
 ##   --label=NAME   file name under docs/images/themes/ (default "gallery")
 ## The game is played on a throwaway save, so the real one is never touched.
 
@@ -27,6 +30,9 @@ var looks := false
 ## --looks: the model (0) and its variants, family by family (NodeSpawner.FAMILIES).
 const LOOK_ORDER: Array[int] = [0, 4, 8, 1, 5, 2, 6, 3, 7]
 var label := "gallery"
+var settle := 2.5
+var tier := 3
+var fault_view := 0.0
 
 
 func _initialize() -> void:
@@ -42,6 +48,9 @@ func _initialize() -> void:
 			"hit": hits = v.to_int()
 			"looks": looks = true
 			"label": label = v
+			"settle": settle = v.to_float()
+			"tier": tier = v.to_int()
+			"fault": fault_view = v.to_float()
 	if looks:
 		copies = LOOK_ORDER.size()
 	if themes.is_empty():
@@ -64,8 +73,8 @@ func _run() -> void:
 	root.get_node("DayNight").set("time", 0.42)
 	root.get_node("Skills").call("set_level", &"mining", 50)
 	root.get_node("Skills").call("set_level", &"woodcutting", 50)
-	root.get_node("Tools").call("set_tier", &"pickaxe", 3)
-	root.get_node("Tools").call("set_tier", &"axe", 3)
+	root.get_node("Tools").call("set_tier", &"pickaxe", tier)
+	root.get_node("Tools").call("set_tier", &"axe", tier)
 	var terrain := get_first_node_in_group("terrain") as Terrain3D
 	var player := get_first_node_in_group("player") as Node3D
 	var cols := nodes.size() * copies
@@ -95,6 +104,8 @@ func _run() -> void:
 			current_scene.add_child(node)
 			made.append(node)
 		print("ROW %d %s  %s" % [r, themes[r], theme.title if theme else "as made"])
+	for grass in current_scene.find_children("*", "GrassField", true, false):
+		grass.call("_setup")  # clear of the new nodes, as round the world's own
 	player.call("teleport", centre + Vector3(0, 0, depth * 0.5 + 30.0), centre)
 	await _wait(1.0)
 	for k in hits:
@@ -113,8 +124,14 @@ func _run() -> void:
 	var tilt := deg_to_rad(view)
 	cam.global_position = centre + Vector3(0, sin(tilt) * back + 0.8, depth * 0.5 + cos(tilt) * back)
 	cam.look_at(centre + Vector3(0, 0.6, depth * 0.1))
+	if fault_view > 0.0 and not made.is_empty():  # close on the first node's fault instead
+		var node := made[0]
+		var at := node.to_global(node.get("_fault_point"))
+		var out := (at - node.to_global(node.get("_shape_centre"))) * Vector3(1, 0, 1)
+		cam.global_position = at + out.normalized() * fault_view + Vector3.UP * fault_view * 0.35
+		cam.look_at(at)
 	cam.current = true
-	await _wait(2.5)
+	await _wait(settle)
 	await _shot("res://docs/images/themes/%s.png" % label)
 	print("SAVED docs/images/themes/%s.png" % label)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://theme_gallery_save.json"))

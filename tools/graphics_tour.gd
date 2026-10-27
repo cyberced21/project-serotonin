@@ -17,6 +17,7 @@ const VIEWS := [
 	["clearing", Vector3(4, 0, 10), Vector3(0, 0, -20), 0.42],
 	["pinewood", Vector3(35, 0, -104), Vector3(18, 0, -124), 0.38],
 	["quarry", Vector3(-122, 0, -41), Vector3(-175, 0, -15), 0.45],
+	["quarry_walls", Vector3(-175, 0, 22.5), Vector3(-189, 0, 31), 0.45],  # along level 2's ore wall
 	["goldmeadow", Vector3(170, 0, 112), Vector3(194, 0, 139), 0.33],
 	["stillwater", Vector3(-16, 0, 96), Vector3(-16, 0, 70), 0.55],
 	["pond", Vector3(20, 0, 30), Vector3(20, 0, 14), 0.62],

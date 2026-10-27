@@ -986,6 +986,8 @@ func _update_target() -> void:
 	var node: ResourceNode = null
 	if talk == null and not hit.is_empty() and camera.global_position.distance_to(hit["position"]) <= reach:
 		node = _node_under_crosshair(hit)
+		if node is OreWall:  # (it lights, and gates, the one piece the crosshair is on)
+			(node as OreWall).aim_at(hit["position"], hit["normal"])
 	if talk == null and node == null:
 		talk = _villager_behind_clutter()
 	if talk != _talk_target:

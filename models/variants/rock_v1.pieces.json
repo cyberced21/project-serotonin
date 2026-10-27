@@ -5,7 +5,8 @@
    "Chunk_05",
    "Chunk_08",
    "Chunk_13",
-   "Chunk_30"
+   "Chunk_30",
+   "Chunk_35"
   ],
   "Chunk_01": [
    "Chunk_04",
@@ -15,7 +16,8 @@
    "Chunk_17",
    "Chunk_22",
    "Chunk_32",
-   "Chunk_33"
+   "Chunk_33",
+   "Chunk_34"
   ],
   "Chunk_02": [
    "Chunk_05",
@@ -23,9 +25,6 @@
    "Chunk_10",
    "Chunk_15",
    "Chunk_23",
-   "Chunk_30",
-   "Chunk_32",
-   "Chunk_33",
    "Chunk_34",
    "Chunk_35"
   ],
@@ -35,8 +34,7 @@
    "Chunk_08",
    "Chunk_11",
    "Chunk_16",
-   "Chunk_19",
-   "Chunk_24",
+   "Chunk_21",
    "Chunk_30",
    "Chunk_31",
    "Chunk_32"
@@ -47,8 +45,8 @@
    "Chunk_09",
    "Chunk_12",
    "Chunk_17",
-   "Chunk_32",
-   "Chunk_33"
+   "Chunk_33",
+   "Chunk_34"
   ],
   "Chunk_05": [
    "Chunk_00",
@@ -56,7 +54,6 @@
    "Chunk_10",
    "Chunk_13",
    "Chunk_18",
-   "Chunk_30",
    "Chunk_35"
   ],
   "Chunk_06": [
@@ -64,8 +61,9 @@
    "Chunk_03",
    "Chunk_11",
    "Chunk_14",
-   "Chunk_27",
-   "Chunk_32"
+   "Chunk_19",
+   "Chunk_32",
+   "Chunk_33"
   ],
   "Chunk_07": [
    "Chunk_02",
@@ -73,7 +71,6 @@
    "Chunk_12",
    "Chunk_15",
    "Chunk_20",
-   "Chunk_32",
    "Chunk_33",
    "Chunk_34"
   ],
@@ -88,12 +85,15 @@
   "Chunk_09": [
    "Chunk_01",
    "Chunk_04",
+   "Chunk_14",
    "Chunk_17",
-   "Chunk_22"
+   "Chunk_22",
+   "Chunk_33"
   ],
   "Chunk_10": [
    "Chunk_02",
    "Chunk_05",
+   "Chunk_13",
    "Chunk_15",
    "Chunk_18",
    "Chunk_23",
@@ -103,6 +103,7 @@
    "Chunk_03",
    "Chunk_06",
    "Chunk_14",
+   "Chunk_16",
    "Chunk_19",
    "Chunk_27",
    "Chunk_31",
@@ -121,18 +122,23 @@
    "Chunk_00",
    "Chunk_05",
    "Chunk_08",
+   "Chunk_10",
    "Chunk_18",
    "Chunk_21",
-   "Chunk_30"
+   "Chunk_26",
+   "Chunk_30",
+   "Chunk_35"
   ],
   "Chunk_14": [
    "Chunk_01",
    "Chunk_06",
+   "Chunk_09",
    "Chunk_11",
    "Chunk_19",
    "Chunk_22",
    "Chunk_27",
-   "Chunk_32"
+   "Chunk_32",
+   "Chunk_33"
   ],
   "Chunk_15": [
    "Chunk_02",
@@ -147,9 +153,10 @@
   "Chunk_16": [
    "Chunk_03",
    "Chunk_08",
+   "Chunk_11",
+   "Chunk_19",
    "Chunk_21",
    "Chunk_24",
-   "Chunk_29",
    "Chunk_30",
    "Chunk_31"
   ],
@@ -158,25 +165,25 @@
    "Chunk_04",
    "Chunk_09",
    "Chunk_12",
+   "Chunk_20",
    "Chunk_22",
    "Chunk_25",
-   "Chunk_32",
    "Chunk_33"
   ],
   "Chunk_18": [
    "Chunk_05",
    "Chunk_10",
    "Chunk_13",
-   "Chunk_21",
    "Chunk_23",
    "Chunk_26",
    "Chunk_30",
    "Chunk_35"
   ],
   "Chunk_19": [
-   "Chunk_03",
+   "Chunk_06",
    "Chunk_11",
    "Chunk_14",
+   "Chunk_16",
    "Chunk_24",
    "Chunk_27",
    "Chunk_31"
@@ -185,15 +192,18 @@
    "Chunk_07",
    "Chunk_12",
    "Chunk_15",
+   "Chunk_17",
    "Chunk_25",
    "Chunk_28",
+   "Chunk_33",
    "Chunk_34"
   ],
   "Chunk_21": [
+   "Chunk_03",
    "Chunk_08",
    "Chunk_13",
    "Chunk_16",
-   "Chunk_18",
+   "Chunk_24",
    "Chunk_26",
    "Chunk_29",
    "Chunk_30"
@@ -205,7 +215,6 @@
    "Chunk_17",
    "Chunk_25",
    "Chunk_27",
-   "Chunk_32",
    "Chunk_33"
   ],
   "Chunk_23": [
@@ -215,13 +224,13 @@
    "Chunk_18",
    "Chunk_26",
    "Chunk_28",
-   "Chunk_34",
+   "Chunk_29",
    "Chunk_35"
   ],
   "Chunk_24": [
-   "Chunk_03",
    "Chunk_16",
    "Chunk_19",
+   "Chunk_21",
    "Chunk_27",
    "Chunk_29",
    "Chunk_30",
@@ -238,6 +247,7 @@
    "Chunk_34"
   ],
   "Chunk_26": [
+   "Chunk_13",
    "Chunk_18",
    "Chunk_21",
    "Chunk_23",
@@ -247,7 +257,6 @@
    "Chunk_35"
   ],
   "Chunk_27": [
-   "Chunk_06",
    "Chunk_11",
    "Chunk_14",
    "Chunk_19",
@@ -259,7 +268,7 @@
    "Chunk_31",
    "Chunk_32",
    "Chunk_33",
-   "Chunk_35"
+   "Chunk_34"
   ],
   "Chunk_28": [
    "Chunk_15",
@@ -274,21 +283,20 @@
    "Chunk_35"
   ],
   "Chunk_29": [
-   "Chunk_16",
    "Chunk_21",
+   "Chunk_23",
    "Chunk_24",
    "Chunk_26",
    "Chunk_27",
    "Chunk_28",
    "Chunk_30",
    "Chunk_31",
+   "Chunk_34",
    "Chunk_35"
   ],
   "Chunk_30": [
    "Chunk_00",
-   "Chunk_02",
    "Chunk_03",
-   "Chunk_05",
    "Chunk_08",
    "Chunk_13",
    "Chunk_16",
@@ -298,6 +306,8 @@
    "Chunk_26",
    "Chunk_29",
    "Chunk_31",
+   "Chunk_32",
+   "Chunk_34",
    "Chunk_35"
   ],
   "Chunk_31": [
@@ -310,61 +320,47 @@
    "Chunk_29",
    "Chunk_30",
    "Chunk_32",
-   "Chunk_33",
-   "Chunk_35"
+   "Chunk_34"
   ],
   "Chunk_32": [
    "Chunk_01",
-   "Chunk_02",
    "Chunk_03",
-   "Chunk_04",
    "Chunk_06",
-   "Chunk_07",
    "Chunk_11",
    "Chunk_14",
-   "Chunk_17",
-   "Chunk_22",
    "Chunk_27",
+   "Chunk_30",
    "Chunk_31",
    "Chunk_33",
+   "Chunk_34",
    "Chunk_35"
   ],
   "Chunk_33": [
    "Chunk_01",
-   "Chunk_02",
    "Chunk_04",
+   "Chunk_06",
    "Chunk_07",
+   "Chunk_09",
    "Chunk_12",
+   "Chunk_14",
    "Chunk_17",
+   "Chunk_20",
    "Chunk_22",
    "Chunk_25",
    "Chunk_27",
    "Chunk_28",
-   "Chunk_31",
    "Chunk_32",
-   "Chunk_34",
-   "Chunk_35"
+   "Chunk_34"
   ],
   "Chunk_34": [
+   "Chunk_01",
    "Chunk_02",
+   "Chunk_04",
    "Chunk_07",
    "Chunk_12",
    "Chunk_15",
    "Chunk_20",
-   "Chunk_23",
    "Chunk_25",
-   "Chunk_28",
-   "Chunk_33",
-   "Chunk_35"
-  ],
-  "Chunk_35": [
-   "Chunk_02",
-   "Chunk_05",
-   "Chunk_10",
-   "Chunk_15",
-   "Chunk_18",
-   "Chunk_23",
-   "Chunk_26",
    "Chunk_27",
    "Chunk_28",
    "Chunk_29",
@@ -372,36 +368,43 @@
    "Chunk_31",
    "Chunk_32",
    "Chunk_33",
+   "Chunk_35"
+  ],
+  "Chunk_35": [
+   "Chunk_00",
+   "Chunk_02",
+   "Chunk_05",
+   "Chunk_10",
+   "Chunk_13",
+   "Chunk_15",
+   "Chunk_18",
+   "Chunk_23",
+   "Chunk_26",
+   "Chunk_28",
+   "Chunk_29",
+   "Chunk_30",
+   "Chunk_32",
    "Chunk_34"
   ]
  },
  "ore": [
-  "Chunk_00",
-  "Chunk_02",
   "Chunk_03",
-  "Chunk_05",
-  "Chunk_06",
-  "Chunk_07",
+  "Chunk_04",
   "Chunk_08",
   "Chunk_10",
-  "Chunk_11",
   "Chunk_12",
   "Chunk_14",
+  "Chunk_15",
   "Chunk_16",
   "Chunk_17",
   "Chunk_21",
+  "Chunk_22",
   "Chunk_23",
-  "Chunk_24",
   "Chunk_25",
   "Chunk_26",
   "Chunk_27",
-  "Chunk_28",
   "Chunk_29",
   "Chunk_30",
-  "Chunk_31",
-  "Chunk_32",
-  "Chunk_33",
-  "Chunk_34",
-  "Chunk_35"
+  "Chunk_33"
  ]
 }

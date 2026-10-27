@@ -140,6 +140,11 @@ static func keep_out_spots(tree: SceneTree, node_r: float, prop_r: float, margin
 	for n in tree.get_nodes_in_group("gatherable"):
 		var at := (n as Node3D).global_position
 		out.append(Vector3(at.x, at.z, node_r))
+	# round an ore wall's block of rock (its middle is OreWall.DEPTH / 2 behind the face; not named:
+	# OreWall needs the autoloads, which a tool script compiling this wouldn't have yet)
+	for w in tree.get_nodes_in_group("ore_wall"):
+		var at := (w as Node3D).global_transform * Vector3(0, 0, -2.0)
+		out.append(Vector3(at.x, at.z, 3.2 + margin))
 	for p in tree.get_nodes_in_group("prop"):
 		var at := (p as Node3D).global_position
 		out.append(Vector3(at.x, at.z, maxf((p as Prop).footprint_radius() + 0.5, prop_r)))

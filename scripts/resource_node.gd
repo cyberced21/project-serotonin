@@ -21,6 +21,8 @@ const NODE_PALETTE := preload("res://materials/node_palette.tres")
 ## Object-name prefixes in a model (.glb) and where those meshes go.
 const MODEL_PARTS := {"body_": "Visual/Body", "chunk_": "Visual/Chunks", "rubble_": "Rubble"}
 const NOTCH_COLOR := Color(0.08, 0.06, 0.05, 0.85)
+## How far up a tree's trunk the soil and moss at its foot reach (m; see _dress).
+const TRUNK_FOOT := 0.45
 const GHOST_OUTLINE := preload("res://shaders/ghost_outline.gdshader")
 const GHOST_MASK := preload("res://shaders/ghost_mask.gdshader")
 const GHOST_OUTLINE_STENCIL := preload("res://shaders/ghost_outline_stencil.gdshader")
@@ -46,9 +48,20 @@ const WORLD_LAYER := 1
 const DEBRIS_LAYER := 1 << 3
 const DEBRIS_LIFETIME := 1.6
 ## The felled piece counts as landed once it leans past this (dot of its up axis with world up).
+## ... or once it comes to rest past this, held up on its crown.
 const LANDED_TILT := 0.35
+const RESTING_TILT := 0.8
 const FELLED_LINGER := 2.5
+## The felled piece's collision boxes, as a share of each part's size: a carved tree's crown
+## (FELLED_CROWN_SCALE) much smaller than a plain topple's.
 const FELLED_SHAPE_SCALE := 0.6
+const FELLED_CROWN_SCALE := 0.35
+## A felled tree: the torn fibres left standing on the stump (and off the log's end), the puffs of
+## earth and leaves along it where it lands (share of its height), and the twigs that snap off.
+const HINGE_FIBRES := 14
+const LANDING_PUFFS: Array[float] = [0.2, 0.45, 0.7, 0.9]
+const LANDING_TWIGS := 6
+const LANDING_EARTH := Color(0.42, 0.34, 0.25)
 ## A piece split off along a crack moves at this times debris_speed (gently: it's big).
 const SPLIT_SPEED := 0.7
 ## How much quieter the plain hit plays under a crack tip splitting, and under a piece splitting
@@ -108,7 +121,8 @@ const CRACKING_LAYER := 1 << 10
 @export var hit_fx: PackedScene
 ## Sparks off the tool per hit (doubled on a crack tip). Harder rock, more sparks.
 @export_range(0, 32) var spark_amount := 0
-## Pebbles that pile up around the base as it's worn down, until it grows back (0 = none).
+## Pebbles (a tree: wood chips) that pile up around the base as it's worn down, until it grows
+## back (0 = none).
 @export_range(0, 64) var lingering_rubble := 0
 
 @export_group("Audio")
@@ -154,6 +168,9 @@ const CRACKING_LAYER := 1 << 10
 ## Flakes of bark peel off round the notch's rim as it grows, in this colour (chips are chip_color,
 ## the cut wood).
 @export var bark_color := Color("5f4029")
+## How thick the trunk's bark is (m): a hit strips a blaze of it before the axe cuts into the wood
+## beneath (see TrunkCarve), and the slabs that fly off are this thick.
+@export var bark_thickness := 0.025
 ## Every hit shakes the canopy (m it swings out at first) and shakes a few leaves loose.
 @export var canopy_shake := 0.08
 @export_range(0, 32) var leaves_per_hit := 6
@@ -387,7 +404,7 @@ func _setup_carve() -> void:
 	if _trunk == null or not _trunk.mesh is ArrayMesh:
 		push_warning("%s: carve_notch needs a Body_Trunk mesh" % name)
 		return
-	_carve = TrunkCarve.new(_trunk.mesh, notch_band)
+	_carve = TrunkCarve.new(_trunk.mesh, notch_band, bark_thickness)
 	_trunk_rest = global_transform.affine_inverse() * _trunk.global_transform
 	for m in _trunk.get_parent().get_children():
 		if m is MeshInstance3D and m != _trunk:
@@ -624,11 +641,16 @@ func _break(info: HitInfo) -> void:
 	Juice.hitstop(hitstop_break)
 	if topple:
 		var log_mesh: Mesh = null
+		var fall := info.away()
+		var hinge := PackedVector3Array()
 		if _carve and _carve.is_started():
 			var parts := _carve.split()
+			fall = _fall_direction(info)
+			hinge = _carve.hinge_points(HINGE_FIBRES)
 			_make_stump(parts["stump"])
+			_splinter(_stump, hinge, fall, 1.0)
 			log_mesh = parts["log"]
-		_topple(info, log_mesh)  # not awaited: the fall plays out while the respawn timer runs
+		_topple(info, fall, log_mesh, hinge)  # not awaited: the fall plays out while the respawn timer runs
 	else:
 		burst.restart()
 		_spawn_drops(info)
@@ -741,6 +763,8 @@ func _reset_visuals() -> void:
 	_clear_seam_crack()
 	_seam_progress.clear()
 	_queue_refit()
+	if _rubble_mm:
+		_rubble_mm.multimesh.visible_instance_count = 0
 	if not _links.is_empty():
 		_drops_owed = _drop_count()
 		_spilled = 0
@@ -750,8 +774,6 @@ func _reset_visuals() -> void:
 		_place_fault.call_deferred()  # (after a saved rock's missing pieces are hidden)
 		for k in 5:  # pebbles round its foot from the start
 			_add_rubble(to_global(Vector3(randf_range(-1, 1), 0.3, randf_range(-1, 1))), 1)
-	if _rubble_mm:
-		_rubble_mm.multimesh.visible_instance_count = 0
 	if _carve:
 		_carve.reset()
 		_trunk.mesh = _carve.original
@@ -801,9 +823,8 @@ func _launch_drop(from: Vector3, velocity: Vector3, delay: float) -> void:
 ## Copies Visual/Body into one rigid body standing where the tree was and tips it away from
 ## the player. Gravity does the rest; when it has fallen over: thud, leaf burst, logs along the trunk.
 ## With `log_mesh` (a carved tree), that's the trunk from the notch up: it hinges over at the notch
-## and falls sideways to the player.
-func _topple(info: HitInfo, log_mesh: Mesh = null) -> void:
-	var away := info.away() if log_mesh == null else _fall_direction(info)
+## and falls `away` (sideways to the player), the torn `fibres` (trunk space) hanging off its end.
+func _topple(info: HitInfo, away: Vector3, log_mesh: Mesh = null, fibres := PackedVector3Array()) -> void:
 	var hinge := 0.0 if log_mesh == null else (_trunk_rest * Vector3(0.0, _carve.ring, 0.0)).y
 	var felled := RigidBody3D.new()
 	felled.collision_layer = DEBRIS_LAYER
@@ -816,30 +837,29 @@ func _topple(info: HitInfo, log_mesh: Mesh = null) -> void:
 		if not mesh is MeshInstance3D:
 			continue
 		var piece := mesh.duplicate() as MeshInstance3D
-		if mesh == _trunk and log_mesh:
+		var is_log := mesh == _trunk and log_mesh != null
+		if is_log:
 			piece.mesh = log_mesh
+			_splinter(piece, fibres, away, -1.0)
 		piece.set_instance_shader_parameter("flash", 0.0)
 		piece.set_instance_shader_parameter("highlight", 0.0)
 		felled.add_child(piece)
-		var aabb: AABB = mesh.get_aabb()
+		var aabb: AABB = piece.get_aabb()  # (the log's: not down through the stump and roots)
 		var shape := CollisionShape3D.new()
 		shape.shape = BoxShape3D.new()
-		# shrunk, so a wide canopy lands softly instead of see-sawing the base up into the air
-		(shape.shape as BoxShape3D).size = aabb.size * FELLED_SHAPE_SCALE
+		# shrunk, so a wide canopy lands softly instead of see-sawing the base up into the air; a
+		# carved tree's crown much more (its boughs give as it comes down, so the log lies nearly
+		# flat: a big crown's boxes caught a hillside and stood the tree back up), the log itself not
+		var shrink := 1.0 if is_log else FELLED_CROWN_SCALE if log_mesh else FELLED_SHAPE_SCALE
+		(shape.shape as BoxShape3D).size = aabb.size * shrink
 		shape.transform = mesh.transform * Transform3D(Basis.IDENTITY, aabb.get_center())
 		felled.add_child(shape)
 		height = maxf(height, mesh.position.y + aabb.end.y)
-	# the node's own collision shape (the trunk) at full size; a carved tree's from the notch up
-	var trunk := CollisionShape3D.new()
-	trunk.shape = collision.shape
-	trunk.transform = collision.transform
-	if log_mesh and collision.shape is BoxShape3D:
-		var box := collision.shape.duplicate() as BoxShape3D
-		var top := collision.position.y + box.size.y * 0.5
-		box.size.y = maxf(top - hinge, 0.2)
-		trunk.shape = box
-		trunk.position.y = (top + hinge) * 0.5
-	felled.add_child(trunk)
+	if log_mesh == null:  # the node's own collision shape (the trunk) at full size
+		var trunk := CollisionShape3D.new()
+		trunk.shape = collision.shape
+		trunk.transform = collision.transform
+		felled.add_child(trunk)
 	# top-heavy on purpose (canopy), so once it starts leaning it keeps going
 	felled.center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
 	felled.center_of_mass = Vector3(0, height * 0.65, 0)
@@ -847,6 +867,8 @@ func _topple(info: HitInfo, log_mesh: Mesh = null) -> void:
 	get_parent().add_child(felled)
 	felled.global_transform = global_transform.orthonormalized()
 	felled.reset_physics_interpolation()
+	if log_mesh:
+		PopupText.spawn(get_parent(), _popup_pos() + Vector3.UP * 0.9, "Timber!", Skills.color(skill), 12)
 	if log_mesh and fell_pause > 0.0:
 		await _lean_on_hinge(felled, away, hinge)
 		if not is_instance_valid(felled):
@@ -858,11 +880,15 @@ func _topple(info: HitInfo, log_mesh: Mesh = null) -> void:
 	felled.angular_velocity = spin
 	felled.linear_velocity = spin.cross(Vector3.UP * (felled.center_of_mass.y - hinge))
 
-	# wait for it to lean over far enough (or give up after a few seconds)
+	# wait for it to lean over far enough, or come to rest well over (its crown on a rise), or give
+	# up after a few seconds
 	var start := Time.get_ticks_msec()
 	while is_instance_valid(felled) and felled.global_basis.y.dot(Vector3.UP) > LANDED_TILT \
 			and Time.get_ticks_msec() - start < 4000:
 		await get_tree().physics_frame
+		if is_instance_valid(felled) and felled.global_basis.y.dot(Vector3.UP) < RESTING_TILT \
+				and felled.angular_velocity.length() < 0.15:
+			break
 	if not is_instance_valid(felled):
 		return
 
@@ -881,6 +907,8 @@ func _topple(info: HitInfo, log_mesh: Mesh = null) -> void:
 	if player:
 		falloff = clampf(1.0 - player.global_position.distance_to(top) / 20.0, 0.0, 1.0)
 	Juice.shake(shake_land * falloff)
+	if log_mesh:
+		_landing_debris(felled, height, away)
 
 	# logs spill out along the trunk
 	for i in _drop_count():
@@ -897,6 +925,50 @@ func _topple(info: HitInfo, log_mesh: Mesh = null) -> void:
 	t.tween_property(felled, "global_position", felled.global_position + Vector3.DOWN * 1.2, 1.0) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	t.tween_callback(felled.queue_free)
+
+
+## Where the felled tree hits the ground: earth, bark and leaves kicked up along its length, and
+## snapped-off twigs flung out of the crown.
+func _landing_debris(felled: RigidBody3D, height: float, away: Vector3) -> void:
+	if hit_fx:
+		for along in LANDING_PUFFS:
+			var at := felled.global_transform * Vector3(0.0, along * height, 0.0)
+			HitFx.spawn(hit_fx, get_parent(), at, Vector3.UP, away, LANDING_EARTH, burst_color, 2.0)
+	for i in LANDING_TWIGS:
+		var twig := MeshInstance3D.new()
+		var stick := BoxMesh.new()
+		stick.size = Vector3(0.025, 0.025, randf_range(0.18, 0.38))
+		twig.mesh = stick
+		twig.material_override = NODE_SURFACE
+		twig.set_instance_shader_parameter("albedo", bark_color.lightened(randf_range(0.0, 0.15)))
+		var at := felled.global_transform * Vector3(randf_range(-0.6, 0.6), randf_range(0.6, 0.95) * height, randf_range(-0.6, 0.6))
+		var rot := Basis.from_euler(Vector3(randf(), randf(), randf()) * TAU)
+		var out := Vector3(randf_range(-1, 1), 0.0, randf_range(-1, 1)) + away * 0.5
+		_throw(twig, Transform3D(rot, at + Vector3.UP * 0.3), out, debris_speed * randf_range(0.7, 1.2))
+
+
+## Torn fibres standing out of a cut face: thin pointed slivers at `points` (`at` space, which is
+## the trunk mesh's), leaning toward `lean` (world), up out of the stump (`up` 1) or down off the
+## end of the log (-1).
+func _splinter(at: MeshInstance3D, points: PackedVector3Array, lean: Vector3, up: float) -> void:
+	var local_lean := (_trunk.global_basis.inverse() * lean).normalized()  # (stump and log sit as the trunk did)
+	for p in points:
+		var sliver := MeshInstance3D.new()
+		var prism := PrismMesh.new()
+		var tall := randf_range(0.03, 0.13) if up > 0.0 else randf_range(0.02, 0.08)
+		prism.size = Vector3(randf_range(0.04, 0.09), tall, randf_range(0.012, 0.022))
+		prism.left_to_right = randf()  # (a torn point anywhere along its top, not always the middle)
+		sliver.mesh = prism
+		sliver.material_override = NODE_SURFACE
+		sliver.set_instance_shader_parameter("albedo", chip_color.darkened(randf_range(-0.05, 0.15)))
+		sliver.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		# stood on the face, tipped toward the fall (the fibres went with the trunk), face-on to it
+		var tip := Vector3.UP.cross(local_lean).normalized() * up
+		var basis := Basis(tip, randf_range(0.25, 0.75)) * Basis(Vector3.UP, atan2(-tip.z, tip.x) + randf_range(-0.5, 0.5))
+		if up < 0.0:
+			basis = basis * Basis(Vector3.RIGHT, PI)
+		sliver.transform = Transform3D(basis, p + basis.y * tall * 0.45)
+		at.add_child(sliver)
 
 
 ## The cut tree holds for a moment, creaking over a few degrees on the hinge, before it goes.
@@ -1017,23 +1089,39 @@ func _carve_hit(info: HitInfo, cuts: int) -> void:
 	var dir := to_trunk.basis * (info.from - info.position)
 	dir.y = 0.0
 	var y := (to_trunk * info.position).y
+	var stripped := _blaze_area()
 	_carve.hit(y, dir, notch_depth * cuts / max_hits)
 	_trunk.mesh = _carve.carved()
 	info.position = _trunk.global_transform * _carve.bite_point(dir)
 	info.normal = (_trunk.global_basis * dir).normalized()
-	for i in cuts:
-		_peel_bark(dir)
+	# the bark that came away flies off in slabs, more the more of it went; then a flake or two
+	# off the rim per hit as the notch grows
+	var slabs := clampi(roundi((_blaze_area() - stripped) * 40.0), 0, 6)
+	for i in slabs + cuts:
+		_peel_bark(dir, i < slabs)
 
 
-## A flake of bark breaking off the rim of the notch, a little to one side of `dir` (trunk space).
-func _peel_bark(dir: Vector3) -> void:
-	var side := dir.normalized().rotated(Vector3.UP, randf_range(-0.6, 0.6))
+## How much bark the blaze has stripped so far (m of height, summed round the trunk's bins).
+func _blaze_area() -> float:
+	var total := 0.0
+	for b in _carve.blaze:
+		total += b
+	return total / TrunkCarve.BINS
+
+
+## A flake of bark breaking off the rim of the notch, a little to one side of `dir` (trunk space);
+## with `slab`, a bigger piece of the bark the hit stripped, from anywhere on the blaze.
+func _peel_bark(dir: Vector3, slab := false) -> void:
+	var side := dir.normalized().rotated(Vector3.UP, randf_range(-0.9, 0.9) if slab else randf_range(-0.6, 0.6))
 	var deep := _carve.depth_toward(side)
-	var y := _carve.ring + randf_range(-0.04, deep / TrunkCarve.SLOPE_UP + 0.06)
+	var reach := _carve.blaze_toward(side)
+	var y := _carve.ring + (randf_range(-reach, reach) if slab else randf_range(-0.04, deep / TrunkCarve.SLOPE_UP + 0.06))
 	var at := Vector3(0.0, y, 0.0) + side * _carve.radius_at(_carve.ring, side)
 	var flake := MeshInstance3D.new()
 	var box := BoxMesh.new()
-	box.size = Vector3(randf_range(0.06, 0.11), randf_range(0.07, 0.13), 0.018)
+	box.size = Vector3(randf_range(0.06, 0.11), randf_range(0.07, 0.13), maxf(bark_thickness * 0.8, 0.012))
+	if slab:
+		box.size = Vector3(randf_range(0.09, 0.17), randf_range(0.1, 0.2), maxf(bark_thickness, 0.012))
 	flake.mesh = box
 	flake.material_override = NODE_SURFACE
 	flake.set_instance_shader_parameter("albedo", bark_color.darkened(randf_range(0.0, 0.2)))
@@ -1058,17 +1146,30 @@ func _is_clean_cut(info: HitInfo) -> bool:
 	return _aimed_near(info, mouth, clean_cut_radius * _window_scale())
 
 
-## A wood chip flying out of the notch as the axe comes free: a flat wedge of cut wood, a big
-## one off a clean cut.
+## A wood chip flying out of the notch as the axe comes free: a flat wedge of cut wood, thick along
+## one edge where the axe split it off, a big one off a clean cut; and a couple of small ones with it.
 func _throw_chip(info: HitInfo, push: Vector3, big: bool) -> void:
-	var chip := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = Vector3(0.11, 0.025, 0.07) * (1.8 if big else 1.0)
-	chip.mesh = box
-	chip.material_override = NODE_SURFACE
-	chip.set_instance_shader_parameter("albedo", chip_color)
-	var rot := Basis.from_euler(Vector3(randf_range(-0.4, 0.4), randf() * TAU, randf_range(-0.4, 0.4)))
-	_throw(chip, Transform3D(rot, info.position + info.normal * 0.06), push, debris_speed * (1.0 if big else 0.8))
+	for i in 1 + randi_range(1, 2):
+		var chip := MeshInstance3D.new()
+		chip.mesh = _chip_mesh(big and i == 0, i > 0)
+		chip.material_override = NODE_SURFACE
+		chip.set_instance_shader_parameter("albedo", chip_color.darkened(randf_range(-0.06, 0.12)))
+		var rot := Basis.from_euler(Vector3(randf_range(-0.4, 0.4), randf() * TAU, randf_range(-0.4, 0.4)))
+		var spray := push.rotated(Vector3.UP, randf_range(-0.5, 0.5)) if i > 0 else push
+		_throw(chip, Transform3D(rot, info.position + info.normal * 0.06), spray,
+			debris_speed * (1.0 if big else 0.8) * (randf_range(0.7, 1.1) if i > 0 else 1.0))
+
+
+## A chip's wedge (PrismMesh with its ridge at one edge), in a few sizes, made once each.
+static var _chip_meshes := {}
+static func _chip_mesh(big: bool, small: bool) -> Mesh:
+	var key := 2 if big else 0 if small else 1
+	if not _chip_meshes.has(key):
+		var wedge := PrismMesh.new()
+		wedge.left_to_right = 0.0
+		wedge.size = Vector3(0.11, 0.03, 0.07) * [0.55, 1.0, 1.8][key]
+		_chip_meshes[key] = wedge
+	return _chip_meshes[key]
 
 
 ## The bottom of the carved trunk stays standing while the tree regrows.
@@ -1226,7 +1327,7 @@ func _fit_collision() -> void:
 		var to_visual := visual.global_transform.affine_inverse()
 		for m in visual.find_children("*", "MeshInstance3D", true, false):
 			var mesh := m as MeshInstance3D
-			if not mesh.visible or mesh.mesh == null or mesh == _merged:
+			if not mesh.visible or mesh.mesh == null or mesh == _merged or mesh == _loose:
 				continue
 			var xform := to_visual * mesh.global_transform
 			for s in mesh.mesh.get_surface_count():
@@ -1448,7 +1549,7 @@ func _update_piece_mask() -> void:
 		return
 	var words := [0, 0, 0, 0]
 	for i in mini(_pieces.size(), 96):
-		if not _pieces[i].visible:
+		if not _pieces[i].visible or (_loose and _pieces[i] == _fault_piece):  # (the loose one is drawn on its own)
 			words[i / 24] |= 1 << (i % 24)
 	_merged.set_instance_shader_parameter("pieces_gone", Vector4(words[0], words[1], words[2], words[3]))
 
@@ -1544,16 +1645,25 @@ func _unsupported() -> Array[MeshInstance3D]:
 	return out
 
 
-## The fault: one spot on an ore rock where it's ready to give, a hairline crack with grit
-## trickling out of it. Find it and hit it and a whole cluster breaks out (FAULT_BREAK pieces,
-## tough ones too) with a deep crunch; then it opens up somewhere else a moment later.
+## The fault: one piece of an ore rock that has worked loose. It stands a few cm proud of the rest,
+## tipped out at the top, so a dark gap opens round it; every few seconds it settles with a tick
+## and lets a pinch of grit fall. Find it and hit it and a whole cluster breaks out (FAULT_BREAK
+## pieces, tough ones too) with a deep crunch; then another piece works loose a moment later.
 const FAULT_RADIUS := 0.35
 const FAULT_REACH := 1.1
 const FAULT_BREAK := 6
 const FAULT_DELAY := 0.8
+## How far the loose piece stands out (m, at least: a big one up to 1.8 times it), how far it tips out at the top (radians), how long it
+## takes to work loose, and how often it settles (s, between).
+const FAULT_GAP := 0.045
+const FAULT_TIP := 0.07
+const FAULT_LOOSEN := 0.7
+const FAULT_SETTLE := Vector2(2.5, 5.0)
 var _fault_piece: MeshInstance3D
 var _fault_point := Vector3.ZERO  # node space
 var _fault_marks: Array[Node] = []
+var _loose: MeshInstance3D  # the fault piece, drawn on its own where it has worked loose
+var _loose_rest := Transform3D.IDENTITY  # ... and where that is (chunks space)
 
 
 func _place_fault() -> void:
@@ -1578,17 +1688,103 @@ func _place_fault() -> void:
 	var spot: Array = spots.pick_random()
 	_fault_piece = spot[0]
 	_fault_point = spot[1]
-	var n: Vector3 = spot[2]
-	var side := n.cross(Vector3.UP)
-	side = (side if side.length() > 0.1 else Vector3.RIGHT).normalized().rotated(n, randf_range(-0.7, 0.7))
-	var crack := _crack_decal(_fault_point - side * 0.3, _fault_point + side * 0.3, n, 0.3)
-	if crack:
-		_fault_marks.append(crack)
-	var dust := _tip_dust(_fault_point, n)
-	dust.amount = 16
-	dust.lifetime = 1.2
-	dust.scale_amount_max = 0.7
-	_fault_marks.append(dust)
+	_work_loose(_fault_piece)
+
+
+## The fault piece works loose: drawn on its own (hidden in the merged mesh), it eases out along
+## its outside a few cm and tips out at the top, opening a shadowed gap round its outline.
+func _work_loose(piece: MeshInstance3D) -> void:
+	if _merged == null:
+		return
+	var tris := _piece_tris(piece)
+	var normals: PackedVector3Array = tris[1]
+	var out := Vector3.ZERO
+	for n in normals:
+		out += n
+	out = piece.transform.basis * out
+	out = (out if out.length() > 0.01 else piece.position - _shape_centre).normalized()
+	out = (out * Vector3(1.0, 0.3, 1.0)).normalized()  # (out from the rock, not up: it would float)
+	_loose = piece.duplicate() as MeshInstance3D
+	_loose.name = "Loose"
+	_loose.layers = _merged.layers
+	_loose.visibility_range_end = _merged.visibility_range_end
+	_loose.visibility_range_end_margin = _merged.visibility_range_end_margin
+	_loose.visibility_range_fade_mode = _merged.visibility_range_fade_mode
+	for p in ["flash", "highlight"]:
+		_loose.set_instance_shader_parameter(p, 0.0)
+	visual.add_child(_loose)  # (not among the Chunks: everything that walks the pieces would meet it)
+	_loose.transform = chunks.transform * piece.transform
+	_dress(_loose)
+	_surfaces.append(_loose)
+	_update_piece_mask()
+	# the walls of the gap in shadow (node_surface.gdshaderinc), on the rock and the piece alike
+	var across := piece.get_aabb().get_longest_axis_size()
+	var shadow := Vector4(0, 0, 0, across * 0.85)
+	var centre := chunks.global_transform * piece.position
+	shadow.x = centre.x
+	shadow.y = centre.y
+	shadow.z = centre.z
+	for g in [_merged, _loose]:
+		g.set_instance_shader_parameter("fault_shadow", shadow)
+	# out (further for a bigger piece), and tipped about its foot: a horizontal axis along the
+	# rock's face, under the piece
+	var axis := out.cross(Vector3.UP).normalized()
+	var foot := piece.position - Vector3.UP * piece.get_aabb().size.y * 0.4
+	var tip := Transform3D(Basis(axis, -FAULT_TIP), foot) * Transform3D(Basis.IDENTITY, -foot)
+	var gap := clampf(across * 0.08, FAULT_GAP, FAULT_GAP * 1.8)
+	_loose_rest = chunks.transform * Transform3D(Basis.IDENTITY, out * gap) * tip * piece.transform
+	var loose := _loose
+	var start := loose.transform
+	var rest := _loose_rest
+	var ease := loose.create_tween()
+	ease.tween_method(func(t: float) -> void: loose.transform = start.interpolate_with(rest, t),
+		0.0, 1.0, FAULT_LOOSEN).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	ease.tween_callback(_fault_grit.bind(8))
+	_settle_later(loose)
+
+
+## Every so often the loose piece settles: a tiny drop and shiver, and a pinch of grit falls.
+func _settle_later(loose: MeshInstance3D) -> void:
+	var rest := _loose_rest
+	var t := loose.create_tween()  # (all of them go with the piece)
+	t.tween_interval(randf_range(FAULT_SETTLE.x, FAULT_SETTLE.y))
+	t.tween_callback(func() -> void:
+		if loose != _loose:
+			return  # (cleared in the meantime: it's on its way out)
+		var jolt := loose.create_tween()
+		var down := Transform3D(Basis.IDENTITY, Vector3(randf_range(-1, 1) * 0.004, -0.006, randf_range(-1, 1) * 0.004)) * rest
+		jolt.tween_property(loose, "transform", down, 0.05)
+		jolt.tween_property(loose, "transform", rest, 0.25).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+		_fault_grit(randi_range(3, 6))
+		_settle_later(loose))
+
+
+## A pinch of the rock's grit falling out of the gap under the loose piece.
+func _fault_grit(count: int) -> void:
+	if _loose == null:
+		return
+	var grit := chips.duplicate() as CPUParticles3D
+	grit.one_shot = true
+	grit.explosiveness = 0.5
+	grit.amount = count
+	grit.lifetime = 1.0
+	grit.direction = Vector3.DOWN
+	grit.spread = 35.0
+	grit.initial_velocity_min = 0.1
+	grit.initial_velocity_max = 0.5
+	grit.scale_amount_min = 0.2
+	grit.scale_amount_max = 0.45
+	grit.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	grit.emission_sphere_radius = 0.06
+	grit.color = chip_color.lightened(0.1)
+	notches.add_child(grit)
+	var under := _fault_point - Vector3.UP * 0.12
+	grit.transform = Transform3D(Basis.IDENTITY, under)
+	grit.emitting = true
+	_fault_marks.append(grit)
+	grit.finished.connect(func() -> void:
+		_fault_marks.erase(grit)
+		grit.queue_free())
 
 
 func _clear_fault() -> void:
@@ -1596,7 +1792,14 @@ func _clear_fault() -> void:
 		if is_instance_valid(m):
 			m.queue_free()
 	_fault_marks.clear()
+	if _loose:
+		_surfaces.erase(_loose)
+		_loose.queue_free()
+		_loose = null
+	if _merged:
+		_merged.set_instance_shader_parameter("fault_shadow", Vector4.ZERO)
 	_fault_piece = null
+	_update_piece_mask()
 
 
 func _fault_feedback(info: HitInfo) -> void:
@@ -2503,24 +2706,34 @@ func _hit_effects(info: HitInfo, strength: float) -> void:
 	HitFx.spawn(hit_fx, get_parent(), info.position, info.normal, swing, chip_color, second, strength, sparks,
 		SPARK_TINTS[tier] if tier < SPARK_TINTS.size() else Color(0, 0, 0, 0))
 	HitFx.star(get_parent(), info.position + info.normal * 0.08, STAR_TIP if strength > 1.2 else STAR_HIT, 0.8 * strength)
-	_add_rubble(info.position, 1 if strength <= 1.0 else 2)
+	if _carve:  # the chips settle round the foot once they've come down
+		create_tween().tween_callback(_add_rubble.bind(info.position, 2 if strength <= 1.0 else 4)).set_delay(CHIPS_SETTLE)
+	else:
+		_add_rubble(info.position, 1 if strength <= 1.0 else 2)
 
 
 # --- lingering rubble -----------------------------------------------------------------------
 
 var _rubble_mm: MultiMeshInstance3D
+## A tree's chips join the pile round its foot this long after the hit (s), as they come down.
+const CHIPS_SETTLE := 0.45
 
 
 func _build_rubble() -> void:
 	if lingering_rubble <= 0:
 		return
-	var pebble := SphereMesh.new()  # 6 x 3 = a low-poly lump
-	pebble.radius = 0.06
-	pebble.height = 0.08
-	pebble.radial_segments = 6
-	pebble.rings = 3
+	var pebble: PrimitiveMesh
+	if carve_notch:  # a tree: wood chips round its foot
+		pebble = (_chip_mesh(false, false) as PrismMesh).duplicate()
+	else:
+		pebble = SphereMesh.new()  # 6 x 3 = a low-poly lump
+		pebble.radius = 0.06
+		pebble.height = 0.08
+		pebble.radial_segments = 6
+		pebble.rings = 3
 	var mat := StandardMaterial3D.new()
 	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = carve_notch  # (the chips match the ones in the air, not washed out)
 	mat.roughness = 1.0
 	pebble.material = mat
 	var mm := MultiMesh.new()
@@ -2553,14 +2766,19 @@ func _add_rubble(near: Vector3, count: int) -> void:
 		if n >= mm.instance_count:
 			return
 		var p := side.normalized().rotated(Vector3.UP, randf_range(-0.9, 0.9)) * (footprint + randf_range(0.0, 0.45))
+		if carve_notch:  # chips fly further than pebbles drop, and scatter wider
+			p = side.normalized().rotated(Vector3.UP, randf_range(-1.2, 1.2)) * (footprint * 0.6 + randf_range(0.0, 0.8))
 		var query := PhysicsRayQueryParameters3D.create(to_global(p + Vector3.UP * 1.5), to_global(p + Vector3.DOWN * 1.5), WORLD_LAYER, [get_rid()])
 		var ground := space.intersect_ray(query)
 		if ground:
 			p = to_local(ground["position"])
 		var s := randf_range(0.5, 1.6)
 		var basis := Basis.from_euler(Vector3(randf(), randf(), randf()) * TAU).scaled(Vector3(s, s * 0.6, s))
+		if carve_notch:  # lying flat-ish, every way round
+			s = randf_range(0.5, 1.3)
+			basis = Basis.from_euler(Vector3(randf_range(-0.35, 0.35), randf() * TAU, randf_range(-0.35, 0.35))).scaled(Vector3.ONE * s)
 		mm.set_instance_transform(n, Transform3D(basis, p + Vector3.UP * 0.02 * s))
-		var tint := ore_color if cracks and randf() < 0.25 else chip_color
+		var tint := ore_color if cracks and randf() < 0.25 else bark_color.lightened(0.25) if carve_notch and randf() < 0.2 else chip_color
 		mm.set_instance_color(n, tint.darkened(randf_range(0.0, 0.3)))
 		mm.visible_instance_count = n + 1
 
@@ -2613,6 +2831,9 @@ func _collect_surfaces(n: Node) -> void:
 ## Dresses every mesh under `n` with this node's theme (the pieces and parts that fly off or fall
 ## keep it: they're the same meshes, or copies of them).
 func _dress(n: Node) -> void:
+	if carve_notch:  # a tree: soil and moss up the foot of its trunk (node_surface.gdshaderinc)
+		for g in ([n] if n is MeshInstance3D else []) + n.find_children("*", "MeshInstance3D", true, false):
+			(g as MeshInstance3D).set_instance_shader_parameter("foot", TRUNK_FOOT)
 	if look.is_empty():
 		return
 	if n is MeshInstance3D:

@@ -156,6 +156,7 @@ SMOOTH = [
     ("rock", 50), ("iron_rock", 50), ("coal_rock", 50), ("gold_rock", 50),
     ("designs/copper_*", 50), ("designs/iron_*", 50), ("designs/coal_*", 50), ("designs/gold_*", 50),
     ("scenery/boulder_*", 50), ("scenery/shore_stone", 50), ("scenery/quarry_rubble", 45),
+    ("walls/*", 50),
     # trees: round trunks and limbs, hard cut ends
     ("tree", 70), ("oak", 70), ("birch", 70), ("pine", 70), ("designs/tree_*", 70),
     ("designs/oak_*", 70), ("designs/birch_*", 70), ("designs/pine_*", 70), ("scenery/canopy_*", 70),
@@ -357,6 +358,68 @@ def stretched_cell(src, seeds, index, stretch):
     return cell
 
 
+# --- organic shaping ----------------------------------------------------------------------------
+# Little in nature is ruler-straight: a rock's flat faces have rounded shoulders, its veins and
+# strata wander, the breaks between its pieces bow a little, and a branch arches.
+
+## How far a slice (see slice_mesh) wanders from its plane (m), and how tight the wander is (per m).
+WAVE = (0.1, 1.4)
+UP = Vector((0, 0, 1))
+
+
+def fbm(p, octaves=2):
+    """Smooth noise about 0 (about -1..1) at point `p`, a couple of octaves."""
+    total, amp = 0.0, 1.0
+    for _ in range(octaves):
+        total += noise.noise(p) * amp
+        p = p * 2.03
+        amp *= 0.5
+    return total / 1.5
+
+
+def wave(c, n):
+    """How far the wavy sheet of a slice with normal `n` sits from its plane at `c` (see WAVE).
+    Parallel slices wander together, like folded strata."""
+    return WAVE[0] * noise.noise(c * WAVE[1] + n * 5.3)
+
+
+def soft_chop(bm, point, normal, soft):
+    """Flattens the mesh on the `normal` side of the plane, as chop() cuts it, but with a rounded
+    shoulder `soft` metres wide instead of a sharp edge: the vertices past the plane are pressed
+    onto it, easing in (a smooth minimum). A weathered facet, not a saw cut."""
+    n = normal.normalized()
+    for v in bm.verts:
+        d = (v.co - point).dot(n)
+        h = max(soft - abs(d), 0.0) / soft
+        v.co += n * (min(d, 0.0) - h * h * soft * 0.25 - d)
+
+
+def smooth_blob(radius, rng, lumpy=0.22, squash=(1, 1, 0.75), subdiv=2):
+    """blob(), lumpy rather than jagged: the surface swells and dips with smooth noise instead of
+    every corner jittering on its own."""
+    bm = bmesh.new()
+    bmesh.ops.create_icosphere(bm, subdivisions=subdiv, radius=radius)
+    off = Vector((rng.uniform(-50, 50), rng.uniform(-50, 50), rng.uniform(-50, 50)))
+    for v in bm.verts:
+        v.co *= 1.0 + lumpy * fbm(v.co.normalized() * 1.6 + off)
+        v.co = Vector((v.co.x * squash[0], v.co.y * squash[1], v.co.z * squash[2]))
+    return bm
+
+
+def warp(bm, amount, offset, scale=1.3):
+    """Bends the whole mesh with a smooth field (the same everywhere for the same `offset`), so the
+    pieces of one rock, warped alike, still fit together while their flat breaks bow."""
+    for v in bm.verts:
+        v.co += noise.noise_vector(v.co * scale + offset) * amount
+
+
+def split_long_edges(bm, longest):
+    """Adds vertices along edges longer than `longest` (m), so a warp can bend them. Decided by
+    length alone, so two pieces sharing an edge split it alike."""
+    for e in [e for e in bm.edges if e.calc_length() > longest]:
+        bmesh.ops.bisect_edges(bm, edges=[e], cuts=int(e.calc_length() / longest))
+
+
 def chop(bm, point, normal, as_cut=False):
     """Cuts away everything on the `normal` side of the plane and caps the hole: as outside
     surface, or with `as_cut` as a cut face. (Set either way: a filled face copies the "cut" mark
@@ -373,22 +436,24 @@ def chop(bm, point, normal, as_cut=False):
 
 def boulder_mesh(rng, size=1.0, subdiv=3, squash=(1.2, 1.05, 0.7), lumps=6, lump_amp=(0.12, 0.24),
                  chops=5, chop_depth=(0.78, 0.88), noise=0.05):
-    """rock()'s boulder, with the knobs exposed: an icosphere squashed, lumped, chopped flat in a
-    few places and sat on the ground. Returns (mesh, centre height)."""
+    """rock()'s boulder, with the knobs exposed: an icosphere squashed, lumped, flattened in a few
+    places (rounded facets, see soft_chop) and sat on the ground. `noise` swells and dips the
+    surface smoothly. Returns (mesh, centre height)."""
     radius, centre_z = size, size * squash[2] * 0.72
     whole = bmesh.new()
     bmesh.ops.create_icosphere(whole, subdivisions=subdiv, radius=radius)
     bumps = [(Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-0.3, 1))).normalized(),
               rng.uniform(*lump_amp)) for _ in range(lumps)]
+    off = Vector((rng.uniform(-50, 50), rng.uniform(-50, 50), rng.uniform(-50, 50)))
     for v in whole.verts:
         d = v.co.normalized()
-        v.co *= 1.0 + sum(amp * max(0.0, d.dot(l)) ** 2 for l, amp in bumps) + rng.uniform(-noise, noise)
+        v.co *= 1.0 + sum(amp * max(0.0, d.dot(l)) ** 2 for l, amp in bumps) + noise * 1.6 * fbm(d * 1.8 + off)
         v.co = Vector((v.co.x * squash[0], v.co.y * squash[1], v.co.z * squash[2] + centre_z))
     for _ in range(chops):
         a = rng.uniform(0, math.tau)
         n = Vector((math.cos(a), math.sin(a), rng.uniform(-0.1, 0.9))).normalized()
-        chop(whole, Vector((n.x * radius * squash[0], n.y * radius * squash[1],
-                            centre_z + n.z * radius * squash[2])) * rng.uniform(*chop_depth), n)
+        soft_chop(whole, Vector((n.x * radius * squash[0], n.y * radius * squash[1],
+                                 centre_z + n.z * radius * squash[2])) * rng.uniform(*chop_depth), n, 0.22 * size)
     chop(whole, Vector((0, 0, -0.04 * size)), Vector((0, 0, -1)))  # the base
     bmesh.ops.triangulate(whole, faces=whole.faces[:])
     return whole, centre_z
@@ -461,15 +526,23 @@ AO_RAYS = [(math.cos(i * 2.39996) * math.sqrt(1 - (0.1 + 0.85 * i / 11) ** 2),
             0.1 + 0.85 * i / 11) for i in range(12)]
 
 
+## What the ground leaves on a rock's foot (multiplied in, like the moss): earthy and warm, so the
+## rock comes up out of the soil instead of standing on it.
+SOIL = (0.86, 0.72, 0.55)
+
+
 def bake_weathering(bm, cut, bvh, top_z, moss=(0.55, 0.82, 0.42), moss_amount=0.85, reach=0.7, ground=0.0,
-                    only=None):
+                    only=None, soil=0.0, tint=None):
     """Weathered outside, fresh inside: writes the "cut_mark" colour (float, linear) of every
     face corner. Outside faces get a baked shade the rock shader multiplies in: crevices and the
     foot darker (rays against `bvh`, the whole rock, and the ground at z = 0), the top lighter,
     worn convex edges lighter, a little mottling, and moss patches low down and on ledges.
     Cut faces are (1, 1, 1) with alpha 0: the shader shows them clean and fresh, and the game
     tells them from the outside by that alpha. `ground`: the ground's height (None: no ground,
-    for something placed anywhere); `only(face)`: bake just those faces, the rest stay white."""
+    for something placed anywhere); `only(face)`: bake just those faces, the rest stay white;
+    `soil`: how much of a ragged band of SOIL the foot wears (0..1); `tint(face, point)`: a colour
+    (r, g, b, each 0..1) the outside is multiplied by besides, face by face (staining the skin a
+    colour the palette hasn't got: iron's rust)."""
     layer = bm.loops.layers.float_color.get("cut_mark") or bm.loops.layers.float_color.new("cut_mark")
     bm.normal_update()
     shade = {}
@@ -501,7 +574,9 @@ def bake_weathering(bm, cut, bvh, top_z, moss=(0.55, 0.82, 0.42), moss_amount=0.
         patch = noise.noise(v.co * 2.2 + Vector((7.0, 3.0, 1.0))) * 0.5 + 0.5
         low = 1.0 - max(0.0, min(1.0, (v.co.z - (ground or 0.0)) / 0.5))
         mossy = max(0.0, min(1.0, (low * 0.9 + max(0.0, n.z) * 0.45) * patch * 1.7 - 0.45)) * moss_amount
-        shade[v] = tuple(s * (1.0 + (m - 1.0) * mossy) for m in moss) + (1.0,)
+        foot = (v.co.z - (ground or 0.0)) / 0.3 + noise.noise(v.co * 3.1 + Vector((2.0, 9.0, 4.0))) * 0.45
+        dirty = max(0.0, min(1.0, 1.0 - foot)) * soil * (1.0 - mossy * 0.5)
+        shade[v] = tuple(s * (1.0 + (m - 1.0) * mossy) * (1.0 + (d - 1.0) * dirty) for m, d in zip(moss, SOIL)) + (1.0,)
     for f in bm.faces:
         for loop in f.loops:
             if f[cut]:
@@ -509,7 +584,10 @@ def bake_weathering(bm, cut, bvh, top_z, moss=(0.55, 0.82, 0.42), moss_amount=0.
             elif only is not None and not only(f):
                 loop[layer] = (1.0, 1.0, 1.0, 1.0)
             else:
-                loop[layer] = shade.get(loop.vert, (1.0, 1.0, 1.0, 1.0))
+                s = shade.get(loop.vert, (1.0, 1.0, 1.0, 1.0))
+                if tint:
+                    s = tuple(a * b for a, b in zip(s, tint(f, loop.vert.co))) + (s[3],)
+                loop[layer] = s
 
 
 def swatch_names():
@@ -558,7 +636,8 @@ def _weather_group(objs, names, ground, moss_amount, prefix):
 
 
 def shattered(name, rng, whole, seeds, choose, rubble=("stone.4", "stone.2", "stone.1"), size=1.0, out="",
-              stretch=None, post=None, ore_swatches=("ore.",), rules=None, moss_amount=0.85, body=None):
+              stretch=None, post=None, ore_swatches=("ore.",), rules=None, moss_amount=0.85, body=None, bend=0.06,
+              tint=None):
     """Cuts `whole` into Voronoi pieces round `seeds`, all alike (no core): Chunk_NN, plus
     Rubble_*, weathered by bake_weathering. The game knocks pieces off where they're struck and
     drops whatever's left hanging, so it needs to know which pieces touch, and which carry ore
@@ -568,12 +647,19 @@ def shattered(name, rng, whole, seeds, choose, rubble=("stone.4", "stone.2", "st
     neighbours a hit takes; "tough", pieces taking two hits; "grounded", pieces held up anyway).
     choose(face, is_cut, piece) picks each face's swatch; post(piece_mesh, piece, cut_layer)
     can reshape a piece; `stretch` scales the cells (see stretched_cell); `body`, a bmesh,
-    becomes Body_Core, a part that never breaks (painted and weathered by the caller)."""
+    becomes Body_Core, a part that never breaks (painted and weathered by the caller); `bend`, how
+    far (m, per metre of `size`) the warp bows the pieces; `tint`, see bake_weathering."""
     names = [f"Chunk_{i:02d}" for i in range(len(seeds))]
     links = {n: set() for n in names}
     ore_area = {}  # piece -> m² of ore faces
-    bvh = BVHTree.FromBMesh(whole)
-    top_z = max(v.co.z for v in whole.verts)
+    # every piece is bent by the same field afterwards (see warp), so its flat breaks bow and the
+    # outline wanders; the shade is baked against the rock as bent
+    field = Vector((rng.uniform(-50, 50), rng.uniform(-50, 50), rng.uniform(-50, 50)))
+    bent = whole.copy()
+    warp(bent, bend * size, field)
+    bvh = BVHTree.FromBMesh(bent)
+    top_z = max(v.co.z for v in bent.verts)
+    bent.free()
     for i in range(len(seeds)):
         bm = stretched_cell(whole, seeds, i, stretch) if stretch else voronoi_cell(whole, seeds, i)
         cut = bm.faces.layers.int.get("cut")
@@ -582,6 +668,7 @@ def shattered(name, rng, whole, seeds, choose, rubble=("stone.4", "stone.2", "st
             post(bm, i, cut)
         if not bm.faces:
             continue
+        split_long_edges(bm, 0.15 * size)
         bmesh.ops.triangulate(bm, faces=bm.faces[:])
         for f in bm.faces:
             if f[cut] and f[across] > 0 and f.calc_area() > 1e-4:
@@ -593,18 +680,20 @@ def shattered(name, rng, whole, seeds, choose, rubble=("stone.4", "stone.2", "st
             if swatch.startswith(ore_swatches):
                 ore_area[names[i]] = ore_area.get(names[i], 0.0) + f.calc_area()
             return swatch
-        paint(bm, pick)
-        bake_weathering(bm, cut, bvh, top_z, moss_amount=moss_amount)
+        paint(bm, pick)  # (before the warp: the veins are where they were sliced)
+        warp(bm, bend * size, field)
+        bake_weathering(bm, cut, bvh, top_z, moss_amount=moss_amount, soil=1.0, tint=tint)
         centre = sum((v.co for v in bm.verts), Vector()) / len(bm.verts)
         bmesh.ops.translate(bm, vec=-centre, verts=bm.verts)
         make_object(names[i], bm, centre)
     whole.free()
     if body:
+        warp(body, bend * size, field)
         make_object("Body_Core", body)
     for i in range(4):
         a = i * math.tau / 4 + rng.uniform(-0.4, 0.4)
         d = rng.uniform(0.2, 0.6) * size
-        bm = blob(rng.uniform(0.3, 0.45) * size, rng, jitter_amount=0.3, squash=(1.2, 1.0, 0.4), subdiv=1)
+        bm = smooth_blob(rng.uniform(0.3, 0.45) * size, rng, lumpy=0.3, squash=(1.2, 1.0, 0.4), subdiv=1)
         paint(bm, shade_by_normal(*rubble, rng))
         make_object(f"Rubble_{i}", bm, (math.cos(a) * d, math.sin(a) * d, 0.08 * size), (0, 0, rng.uniform(0, math.tau)))
     export_pieces(os.path.join(out, name) if out else name, links,
@@ -633,20 +722,108 @@ def mirrored(s, n, p):
 
 
 def near_plane(c, planes):
-    """Whether a point is inside any of the bands (normal, point, half-width)."""
-    return any(abs((c - p).dot(n)) < w for n, p, w in planes)
+    """Whether a point is inside any of the bands (normal, point, half-width), as they wander (see
+    wave)."""
+    return any(abs((c - p).dot(n) - wave(c, n)) < w for n, p, w in planes)
 
 
 def slice_mesh(bm, cuts):
     """Cuts the mesh's faces along each plane (point, normal) without removing anything, so a band
-    or vein painted by face position gets crisp straight edges instead of ragged triangles."""
+    or vein painted by face position gets crisp edges instead of ragged triangles. The cut follows
+    the plane's wavy sheet (see wave): the mesh is pushed so the sheet lies flat, cut, and put back."""
     for p, n in cuts:
+        before = {v: v.co.copy() for v in bm.verts}
+        for v in bm.verts:
+            v.co -= n * wave(v.co, n)
         bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=p, plane_no=n)
+        for v in bm.verts:
+            if v in before:
+                v.co = before[v]
+            else:  # a new vertex on the cut: find where it came from (a few steps converge)
+                w = v.co.copy()
+                x = w.copy()
+                for _ in range(4):
+                    x = w + n * wave(x, n)
+                v.co = x
 
 
 def band_cuts(bands):
     """Both edges of every band (normal, point, half-width), for slice_mesh."""
     return [(p + n * w * side, n) for n, p, w in bands for side in (-1, 1)]
+
+
+def ore_lenses(rng, bm, centre, count, width, reach):
+    """Ore the way it shows in a real boulder: `count` short lenses (normal, middle, half-width,
+    reach), instead of bands round the rock. Each is middled on the surface of `bm`, spread round
+    the rock from `centre` so every side shows one, and stands across the surface so it breaks it
+    as a streak; `width` (low, high) at its fattest, `reach` (low, high) metres out before it
+    tapers to a point."""
+    lenses = []
+    golden = math.pi * (3.0 - math.sqrt(5.0))
+    for i in range(count):
+        h = 0.75 - 0.9 * (i + 0.5) / count  # (the upper part and the sides, not underneath)
+        a = i * golden + rng.uniform(-0.3, 0.3)
+        out = Vector((math.cos(a) * math.sqrt(1 - h * h), math.sin(a) * math.sqrt(1 - h * h), h))
+        p = max((v.co for v in bm.verts), key=lambda co: (co - centre).normalized().dot(out))
+        n = out.orthogonal().normalized()
+        n.rotate(Matrix.Rotation(rng.uniform(0, math.tau), 3, out))
+        lenses.append((n, p - out * 0.05, rng.uniform(*width), rng.uniform(*reach)))
+    return lenses
+
+
+def lens_ratio(c, lenses, stretch=1.0):
+    """How deep in an ore lens (see ore_lenses) a point is: its distance from the lens's wavy
+    middle over the lens's width there, under 1 = inside. A lens is fattest in its middle, tapers
+    to a point at its reach (`stretch` times it), and swells and narrows along the way."""
+    best = math.inf
+    for k, (n, p, w, reach) in enumerate(lenses):
+        d = c - p
+        across = d.dot(n)
+        t = (d - n * across).length / (reach * stretch)
+        if t >= 1.0:
+            continue
+        swell = 0.7 + 0.5 * noise.noise(c * 2.6 + Vector((k * 7.0, 3.0, 1.0)))
+        best = min(best, abs(across - wave(c, n)) / max(w * (1.0 - t * t) * swell, 1e-4))
+    return best
+
+
+def snap_to_outline(bm, field, level, lo, hi):
+    """Moves each vertex whose `field` value is between `lo` and `hi` onto the nearest point along
+    its edges where the field crosses `level`, so faces painted by which side of `level` they're on
+    meet in a smooth outline instead of a zigzag of triangles."""
+    value = {v: field(v.co) for v in bm.verts}
+    moves = {}
+    for v, r in value.items():
+        if not lo <= r <= hi:
+            continue
+        best = None
+        for e in v.link_edges:
+            u = e.other_vert(v)
+            ru = value[u]
+            if ru != math.inf and (r - level) * (ru - level) < 0:
+                t = (level - r) / (ru - r)
+                if best is None or t < best[0]:
+                    best = (t, v.co.lerp(u.co, t))
+        if best is not None and best[0] < 0.6:
+            moves[v] = best[1]
+    for v, co in moves.items():
+        v.co = co
+
+
+def snap_lenses(bm, lenses):
+    """The outlines of the lenses and of their hearts (half their width) made smooth (see
+    snap_to_outline)."""
+    snap_to_outline(bm, lambda c: lens_ratio(c, lenses), 1.0, 0.75, 2.0)
+    snap_to_outline(bm, lambda c: lens_ratio(c, lenses), 0.5, 0.0, 0.75)
+
+
+def refine_near(bm, near, cuts=2):
+    """Divides the faces `near(face)` picks `cuts` + 1 ways each side, so colour painted face by
+    face there (ore) follows a curve instead of stepping in big triangles."""
+    edges = {e for f in bm.faces if near(f) for e in f.edges}
+    if edges:
+        bmesh.ops.subdivide_edges(bm, edges=list(edges), cuts=cuts, use_grid_fill=True)
+        bmesh.ops.triangulate(bm, faces=bm.faces[:])
 
 
 def layer_cuts(normal, spacing, lo, hi):
@@ -672,9 +849,15 @@ def copper_verdigris(name="copper_verdigris", out="designs", shatter=False):
     veins = [(Vector((1, 0.35, 0.25)).normalized(), centre + Vector((0.15, 0, 0)), 0.07),
              (Vector((-0.3, 1, -0.4)).normalized(), centre + Vector((0, -0.1, 0.1)), 0.06)]
     crust_z = cz + 0.38 * r.tall / 0.72  # verdigris above this, where rain and weather get at it
-    slice_mesh(whole, band_cuts(veins) + [(Vector((0, 0, crust_z)), Vector((0, 0, 1)))])
+    if shatter:  # ore in lenses, not bands round the rock
+        veins = ore_lenses(rng, whole, centre, 5, (0.05, 0.08), (0.35, 0.55))
+        refine_near(whole, lambda f: lens_ratio(f.calc_center_median(), veins, 1.2) < 3.5, cuts=3)
+        snap_lenses(whole, veins)
+        slice_mesh(whole, [(Vector((0, 0, crust_z)), Vector((0, 0, 1)))])
+    else:
+        slice_mesh(whole, band_cuts(veins) + [(Vector((0, 0, crust_z)), Vector((0, 0, 1)))])
     seeds = [Vector((0, 0, cz * 0.7))]
-    for n, p, _ in veins:  # pairs either side of each vein
+    for n, p, *_ in veins:  # pairs either side of each vein
         for a in (0.6, 2.2):
             s = centre + Vector((math.cos(a) * 0.75, math.sin(a) * 0.65, rng.uniform(-0.05, 0.2)))
             s += n * (0.28 - (s - p).dot(n))  # a fixed distance on one side ...
@@ -684,7 +867,15 @@ def copper_verdigris(name="copper_verdigris", out="designs", shatter=False):
 
     def choose(f, is_cut, i):
         c = f.calc_center_median()
-        if near_plane(c, veins):
+        if shatter:  # lenses of copper weathered dark, green staining round them
+            v = lens_ratio(c, veins, 1.6 if is_cut else 1.0)  # (a break opens a wider sheet of copper)
+            if v < 1.0:
+                return "ore.copper" if is_cut or (v < 0.5 and f.normal.z > 0.2) else "ore.copper_dark"
+            if is_cut:
+                return "stone.6"
+            if v < 2.8 and noise.noise(c * 6.0 + Vector((3.0, 1.0, 2.0))) > -0.2:
+                return "leaves.5"
+        elif near_plane(c, veins):
             return "ore.copper" if is_cut or f.normal.z > 0.2 else "ore.copper_dark"
         if is_cut:
             return "stone.6"
@@ -725,7 +916,8 @@ def iron_columns(name="iron_columns", out="designs", shatter=False):
     """Iron A: a cluster of dark basalt columns of different heights (upright Voronoi cells of a
     tall prism, each with its own flat top), rust bleeding down from the tops; the faces a break
     opens glint with iron. With `shatter`, each column is jointed into stacked segments that rest
-    on the one below: knock out a column's foot and the rest of it topples."""
+    on the one below: knock out a column's foot and the rest of it topples; and the columns are
+    weathered: tops worn round, rust in streaks, set a little out of line."""
     reset()
     rng = seeded(103)
     r = recipe(103, tall=(0.8, 1.0, 1.25), spread=(0.88, 1.0, 1.15), size=(0.9, 1.0, 1.12))
@@ -735,17 +927,29 @@ def iron_columns(name="iron_columns", out="designs", shatter=False):
     for v in whole.verts:
         v.co.x *= (1.05 + rng.uniform(-0.04, 0.04)) * r.spread
         v.co.y *= (0.95 + rng.uniform(-0.04, 0.04)) * r.spread
+    # finely divided, so the columns can swell and lean (the warp in shattered()) instead of
+    # standing as ruled prisms
+    bmesh.ops.subdivide_edges(whole, edges=whole.edges[:], cuts=8, use_grid_fill=True)
+    bmesh.ops.triangulate(whole, faces=whole.faces[:])
+    off = Vector((rng.uniform(-50, 50), rng.uniform(-50, 50), 0.0))
+    for v in whole.verts:
+        k = 1.0 + 0.06 * fbm(Vector((v.co.x, v.co.y, v.co.z * 0.8)) * 1.2 + off)
+        v.co.x *= k
+        v.co.y *= k
     seeds = [Vector((0, 0, 0.5))]
     for k in range(6):  # a ring round the middle column ...
         a = k * math.tau / 6 + rng.uniform(-0.15, 0.15)
-        seeds.append(Vector((math.cos(a) * 0.52, math.sin(a) * 0.48, 0.5)) * Vector((r.spread, r.spread, 1)))
+        k = rng.uniform(0.9, 1.12) if shatter else 1.0  # (not quite a ring: out of line)
+        seeds.append(Vector((math.cos(a) * 0.52 * k, math.sin(a) * 0.48 * k, 0.5)) * Vector((r.spread, r.spread, 1)))
     for k in range(5):  # ... and an outer one
         a = k * math.tau / 5 + 0.3 + rng.uniform(-0.2, 0.2)
-        seeds.append(Vector((math.cos(a) * 1.0, math.sin(a) * 0.92, 0.5)) * Vector((r.spread, r.spread, 1)))
+        k = rng.uniform(0.9, 1.08) if shatter else 1.0
+        seeds.append(Vector((math.cos(a) * 1.0 * k, math.sin(a) * 0.92 * k, 0.5)) * Vector((r.spread, r.spread, 1)))
     tops = [size * 1.55] + [size * rng.uniform(1.05, 1.4) for _ in range(6)] + [size * rng.uniform(0.55, 0.95) for _ in range(5)]
     tops = [t * r.tall for t in tops]
     rust = [size * rng.uniform(0.2, 0.4) for _ in seeds]  # how far rust runs down each one
     if shatter:
+        rust = [x * 1.4 for x in rust]  # (in streaks: further, but not all the way round)
         columns = seeds
         tilts = [Vector((rng.uniform(-0.12, 0.12), rng.uniform(-0.12, 0.12), 1)).normalized() for _ in columns]
         seeds, column_of = [], []
@@ -757,14 +961,46 @@ def iron_columns(name="iron_columns", out="designs", shatter=False):
                 column_of.append(c)
         whole.normal_update()
 
+        def dome(c, p):
+            """How far column c's worn top drops below its flat (tilted) top at p: more out
+            toward its edges, and unevenly."""
+            d2 = (p.x - columns[c].x) ** 2 + (p.y - columns[c].y) ** 2
+            return 0.9 * d2 + 0.03 * noise.noise(Vector((p.x * 4.0, p.y * 4.0, c * 1.7)))
+
+        def top_at(c, p):
+            t = tilts[c]
+            return tops[c] - (p.x * t.x + p.y * t.y) / t.z - dome(c, p)
+
+        def domed_top(bm, c, cut):
+            """Cuts the column off at its top, worn round (dome) rather than flat: the mesh is
+            raised so the dome lies flat, cut, lowered again, and the cap pushed up into a dome."""
+            for v in bm.verts:
+                v.co.z += dome(c, v.co)
+            res = bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:],
+                                         plane_co=Vector((0, 0, tops[c])), plane_no=tilts[c], clear_outer=True)
+            for v in bm.verts:
+                v.co.z -= dome(c, v.co)
+            edges = [e for e in res["geom_cut"] if isinstance(e, bmesh.types.BMEdge) and e.is_boundary]
+            if not edges:
+                return
+            caps = bmesh.ops.holes_fill(bm, edges=edges, sides=0)["faces"]
+            for f in caps:
+                f[cut] = 0
+            for _ in range(2):  # points inside the cap to round it
+                res = bmesh.ops.poke(bm, faces=caps)
+                for v in res["verts"]:
+                    v.co.z = top_at(c, v.co)
+                caps = res["faces"]
+
         def post_joint(bm, i, cut):
             c = column_of[i]
-            chop(bm, Vector((0, 0, tops[c])), tilts[c])
+            domed_top(bm, c, cut)
             slice_mesh(bm, [(Vector((0, 0, tops[c] - rust[c])), Vector((0, 0, 1)))])
             # a side standing clear of a shorter neighbour column is weathered outside, not a break
             across = bm.faces.layers.int.get("across")
             for f in bm.faces:
-                if f[cut] and f[across] > 0 and f.calc_center_median().z > tops[column_of[f[across] - 1]] - 0.03:
+                centre = f.calc_center_median()
+                if f[cut] and f[across] > 0 and centre.z > top_at(column_of[f[across] - 1], centre) - 0.03:
                     f[cut] = 0
                     f[across] = 0
 
@@ -774,12 +1010,14 @@ def iron_columns(name="iron_columns", out="designs", shatter=False):
                 return "metal.5" if rng.random() < 0.25 else "metal.3"
             if f.normal.z > 0.8:
                 return "stone.3"
-            if centre.z > tops[c] - rust[c]:  # rust running down from the top
-                return "wood.3"
+            # rust running down from the top, in streaks
+            streak = noise.noise(Vector((centre.x * 5.0, centre.y * 5.0, c * 2.1)))
+            if centre.z - wave(centre, UP) > tops[c] - rust[c] * (0.55 + 0.45 * streak):
+                return "wood.3" if streak > -0.1 else "wood.2"
             return "stone.2" if c % 2 else "stone.3"
         shattered(name, rng, whole, seeds, choose_joint, stretch=(1, 1, 0.02), post=post_joint, size=size,
                   rubble=("stone.2", "stone.1", "stone.0"), out=out, ore_swatches=("metal.",), moss_amount=0.45,
-                  rules={"support": "below", "knock": 0, "shatter_at": 0.5})
+                  rules={"support": "below", "knock": 0, "shatter_at": 0.5}, bend=0.17)
         return
 
     def post(bm, i, cut):  # a flat (slightly tilted) top at this column's height
@@ -793,7 +1031,7 @@ def iron_columns(name="iron_columns", out="designs", shatter=False):
             return "metal.5" if rng.random() < 0.25 else "metal.3"
         if f.normal.z > 0.8:
             return "stone.3"
-        if c.z > tops[i] - rust[i]:  # rust running down from the top
+        if c.z - wave(c, UP) > tops[i] - rust[i]:  # rust running down from the top
             return "wood.3" if i % 3 else "accent.0"
         return "stone.1" if i % 2 else "stone.2"
     fractured(name, rng, whole, seeds, choose, stretch=(1, 1, 0.02), post=post, size=size,
@@ -822,6 +1060,73 @@ def iron_banded():
         return "accent.0" if band == 0 else "metal.2"
     fractured("iron_banded", rng, whole, seeds, choose, stretch=(1, 1, 1.6), size=size,
               rubble=("accent.0", "metal.2", "stone.1"))
+
+
+def iron_limonite(name="iron_limonite", out="designs"):
+    """Iron C (the pick): a lumpy, knobbly, pitted boulder of weathered iron ore, rust red-brown
+    all over with patches of dark steel-grey hematite that catch the light, and ochre flecks; it
+    breaks open steel-grey and glinting, streaked blood-red, under a brown rind. Breaks where
+    struck. Rust isn't in the palette: the skin is painted pale brown and stained rust through the
+    baked shade (bake_weathering's tint), the hematite is the metal row (it glints)."""
+    reset()
+    rng = seeded(105)
+    r = recipe(105, wide=(1.0, 1.12, 1.3), deep=(0.9, 1.0, 1.1), tall=(0.62, 0.76, 0.9),
+               lumpy=(0.85, 1.0, 1.3), chops=(2, 4, 6), size=(1.0, 1.1, 1.22))
+    squash = (r.wide, r.deep, r.tall)
+    whole, cz = boulder_mesh(rng, 1.0, subdiv=4, squash=squash, lumps=11, chops=r.chops,
+                             lump_amp=(0.16 * r.lumpy, 0.32 * r.lumpy), noise=0.1)
+    bmesh.ops.translate(whole, vec=Vector((0, 0, -0.06)), verts=whole.verts)  # sunk into the ground
+    cz -= 0.06
+    centre = Vector((0, 0, cz))
+    # knobbly and pitted: knobs swelling out, pockets eaten in between them (the base stays put)
+    off = Vector((rng.uniform(-50, 50), rng.uniform(-50, 50), rng.uniform(-50, 50)))
+    knob = lambda c: fbm(c * 2.6 + off)
+    whole.normal_update()
+    moves = {}
+    for v in whole.verts:
+        pit = max(0.0, noise.noise(v.co * 3.0 + off * 0.7) - 0.15) / 0.85
+        moves[v] = v.normal * (0.28 * knob(v.co) - 0.3 * pit * pit) * max(0.0, min(1.0, v.co.z / 0.25))
+    for v, d in moves.items():
+        v.co += d
+    # the hematite: small patches on the knobs, where a field runs high, their outlines smoothed
+    hem_off = Vector((rng.uniform(-50, 50), rng.uniform(-50, 50), rng.uniform(-50, 50)))
+    hematite = lambda c: fbm(c * 2.2 + hem_off) + 0.5 * knob(c)
+    HEM = 0.3
+    HEMATITE = (0.58, 0.46, 0.47)
+    snap_to_outline(whole, hematite, HEM, HEM - 0.15, HEM + 0.15)
+
+    def choose(f, is_cut, i):
+        c = f.calc_center_median()
+        if is_cut:  # a brown rind, then dark steel-grey iron, glinting, streaked blood-red
+            if (c - centre).length > 0.72 * max(squash[0], squash[1]) or c.z > cz + 0.8 * squash[2]:
+                return "wood.2" if noise.noise(c * 6.0) > 0 else "wood.3"
+            streak = noise.noise(Vector((c.x * 2.0, c.y * 2.0, c.z * 6.0)) + off)
+            if streak > 0.42:
+                return "accent.0"
+            if streak > 0.25:
+                return "wood.1"
+            if noise.noise(c * 9.0 + off) > 0.45:
+                return "ore.iron_dark"
+            return "metal.3" if streak < -0.3 else "neutral.3"
+        if hematite(c) > HEM:  # (the ore row: it glints; darkened warm by the tint)
+            return "ore.iron_dark"
+        return "wood.5"
+
+    def tint(f, co):
+        """Rust, in a slow mottle from deep red-brown to orange, ochre-yellow here and there; the
+        hematite dark red-grey, the rust round it darkening into it."""
+        h = hematite(f.calc_center_median())
+        if h > HEM:
+            return HEMATITE
+        k = 0.5 + 0.5 * fbm(co * 2.2 + off * 0.3)
+        rust = tuple(a + (b - a) * k for a, b in zip((0.74, 0.38, 0.28), (1.0, 0.6, 0.4)))
+        ochre = max(0.0, min(1.0, (noise.noise(co * 4.5 + off * 1.3) - 0.35) * 3.0))
+        rust = tuple(a + (b - a) * ochre for a, b in zip(rust, (1.0, 0.86, 0.5)))
+        near = max(0.0, 1.0 - (HEM - h) / 0.12)  # (a soft edge, not a hole cut in the rust)
+        return tuple(a + (b - a) * near * 0.7 for a, b in zip(rust, (0.55, 0.32, 0.26)))
+    shattered(name, rng, whole, shatter_seeds(rng, 1.0, squash, cz), choose,
+              rubble=("wood.3", "wood.2", "metal.1"), out=out, ore_swatches=("metal.", "ore.iron"),
+              moss_amount=0.3, rules={"knock": 0, "shatter_at": 0.5}, tint=tint)
 
 
 def coal_strata(name="coal_strata", out="designs", shatter=False):
@@ -854,7 +1159,7 @@ def coal_strata(name="coal_strata", out="designs", shatter=False):
 
     def choose(f, is_cut, i):
         c = f.calc_center_median()
-        coal = is_coal(c.z)
+        coal = is_coal(c.z - wave(c, UP))
         if is_cut:
             return ("neutral.2" if rng.random() < 0.25 else "ore.coal") if coal else "stone.4"
         if f.normal.z > 0.75:
@@ -865,7 +1170,7 @@ def coal_strata(name="coal_strata", out="designs", shatter=False):
     if shatter:
         def choose(f, is_cut, i):  # weathered: dull charcoal seams in pale shale; broken: glossy coal
             c = f.calc_center_median()
-            coal = is_coal(c.z)
+            coal = is_coal(c.z - wave(c, UP))
             if is_cut:
                 return "ore.coal" if coal else "stone.5"
             if coal:
@@ -1015,10 +1320,9 @@ def gold_geode_shatter(name="gold_rock", out="", heart="gold"):
     bmesh.ops.translate(whole, vec=Vector((0, 0, -0.05)), verts=whole.verts)
     cz -= 0.05
     centre = Vector((0, 0, cz))
-    veins = [(Vector((0.7, 0.3, 0.65)).normalized(), centre + Vector((0.1, 0, 0)), 0.03),
-             (Vector((-0.5, 0.85, 0.15)).normalized(), centre + Vector((0, 0.15, 0.05)), 0.025),
-             (Vector((0.2, -0.6, 0.8)).normalized(), centre + Vector((-0.2, -0.1, 0.1)), 0.02)]
-    slice_mesh(whole, band_cuts(veins))
+    veins = ore_lenses(rng, whole, centre, 6, (0.035, 0.055), (0.28, 0.45))  # quartz lenses
+    refine_near(whole, lambda f: lens_ratio(f.calc_center_median(), veins, 1.2) < 3.5, cuts=3)
+    snap_lenses(whole, veins)
     shell = shell_seeds(rng, size, squash, cz, sides=7, tops=3, out=(0.8, 0.72))[1:]
     inner = []
     golden = math.pi * (3.0 - math.sqrt(5.0))
@@ -1035,9 +1339,13 @@ def gold_geode_shatter(name="gold_rock", out="", heart="gold"):
 
     def choose(f, is_cut, i):
         c = f.calc_center_median()
-        if not is_cut:
-            if near_plane(c, veins):
-                return "ore.gold" if f.normal.z > -0.2 else "accent.2"
+        if not is_cut:  # quartz veins that swell and pinch out, gold in their hearts, flecks round them
+            v = lens_ratio(c, veins)
+            if v < 1.0:
+                gold = v < 0.5 and f.normal.z > -0.2 and noise.noise(c * 9.0) > -0.25
+                return "ore.gold" if gold else "neutral.6"
+            if v < 3.0 and rng.random() < 0.06:
+                return "ore.gold"
             return stone(f)
         if i < len(shell):  # the shell's breaks: brown stone, quartz where it meets the heart
             return "neutral.6" if (c - centre).length < 0.5 * size else "wood.2"
@@ -1054,7 +1362,7 @@ def gold_geode_shatter(name="gold_rock", out="", heart="gold"):
 
 def designs():
     os.makedirs(os.path.join(OUT_DIR, "designs"), exist_ok=True)
-    for build in (copper_verdigris, copper_malachite, iron_columns, iron_banded,
+    for build in (copper_verdigris, copper_malachite, iron_columns, iron_banded, iron_limonite,
                   coal_strata, coal_lump, gold_quartz, gold_geode, gold_veined):
         build()
     gold_geode_shatter("gold_geode_quartz", out="designs", heart="quartz")
@@ -1075,8 +1383,8 @@ def rock():
 
 
 def iron_rock():
-    """Iron (Mining 15): basalt columns, jointed so they topple."""
-    iron_columns("iron_rock", out="", shatter=True)
+    """Iron (Mining 15): the rusty, pitted limonite boulder, breaking where it's struck."""
+    iron_limonite("iron_rock", out="")
 
 
 def coal_rock():
@@ -1261,12 +1569,13 @@ def crane():
     export(os.path.join("quarry", "crane"))
 
 
-def weathered(bm, at=(0, 0, 0), moss_amount=0.6):
+def weathered(bm, at=(0, 0, 0), moss_amount=0.6, soil=0.0):
     """A whole stone (no breaks) weathered like the ore rocks (bake_weathering), moved to `at`
-    first so its foot sits in the ground the bake darkens against."""
+    first so its foot sits in the ground the bake darkens against (and, with `soil`, dirties)."""
     bmesh.ops.translate(bm, vec=Vector(at), verts=bm.verts)
     cut = bm.faces.layers.int.get("cut") or bm.faces.layers.int.new("cut")
-    bake_weathering(bm, cut, BVHTree.FromBMesh(bm), max(v.co.z for v in bm.verts), moss_amount=moss_amount)
+    bake_weathering(bm, cut, BVHTree.FromBMesh(bm), max(v.co.z for v in bm.verts), moss_amount=moss_amount,
+                    soil=soil)
     return bm
 
 
@@ -1720,35 +2029,53 @@ CARVE_RING_STEP = 0.05
 
 
 def ringed_trunk(rng, sides, r_bottom, r_top, height, bark, wobble=0.035, flare=0.0, lobes=5,
-                 lean=(0.0, 0.0), marks=None, upper=(2.0, 2.6)):
+                 lean=(0.0, 0.0), marks=None, upper=(2.0, 2.6), furrows=0.0):
     """A tapered trunk standing on the origin, built as rings: sparse up the trunk and dense
     through the chopping band (CARVE_BAND), every ring level so the notch can find them. Each
     column of the bark wobbles in or out a little as a whole, and is shaded as one strip.
     flare: roots spreading at the foot (extra radius at the ground, as a share, in `lobes` lobes);
     lean: how far the top drifts sideways (m), bending only above the chopping band, so the notch
     still cuts a straight column; marks: (swatch, share) bark marks dashed across the strips (the
-    birch's black lenticels); upper: ring heights above the band (more rings bend more smoothly)."""
+    birch's black lenticels); upper: ring heights above the band (more rings bend more smoothly).
+    Nothing runs ruler-straight: rings above the band come every few tens of centimetres, the bark
+    swells and dips in wandering lumps (smooth noise round and up the trunk), the taper eases, and
+    above the band the trunk sways gently from side to side on top of its lean. furrows: the bark's
+    ridges (every other column stands out by this share of the radius, more in some places)."""
     zs = [0.0, 0.12, 0.25] if flare else [0.0, 0.25]
     z = CARVE_BAND[0]
     while z <= CARVE_BAND[1] + 1e-6:
         zs.append(round(z, 4))
         z += CARVE_RING_STEP
-    zs += [z for z in upper if z < height - 0.3] + [height]
-    wobble_of = [1.0 + rng.uniform(-wobble, wobble) / max(r_bottom, 0.1) for _ in range(sides)]
+    above = {z for z in upper if z < height - 0.3}
+    k = 1
+    while CARVE_BAND[1] + 0.3 * k < height - 0.2:
+        above.add(round(CARVE_BAND[1] + 0.3 * k, 4))
+        k += 1
+    for z in sorted(above):
+        if z - zs[-1] > 0.12:
+            zs.append(z)
+    zs.append(height)
+    wobble_of = [1.0 + rng.uniform(-wobble, wobble) * 0.5 / max(r_bottom, 0.1) for _ in range(sides)]
     strip = [bark[1] if rng.random() < 0.6 else bark[3] for _ in range(sides)]
     lobe_of = [max(math.cos(lobes * i * math.tau / sides + rng.uniform(-0.4, 0.4)), 0.0) for i in range(sides)] \
         if flare else [0.0] * sides
+    off = Vector((rng.uniform(-50, 50), rng.uniform(-50, 50), rng.uniform(-50, 50)))
+    sway = min(0.6 * r_top, 0.1)
     bm = bmesh.new()
     rings = []
     for z in zs:
-        r = r_bottom + (r_top - r_bottom) * z / height
+        r = r_bottom + (r_top - r_bottom) * (z / height) ** 0.85
         bend = max(z - CARVE_BAND[1], 0.0) / max(height - CARVE_BAND[1], 0.01)
-        ox, oy = lean[0] * bend * bend, lean[1] * bend * bend
+        ox = lean[0] * bend * bend + sway * bend * noise.noise(Vector((z * 0.6, 0.0, 0.0)) + off)
+        oy = lean[1] * bend * bend + sway * bend * noise.noise(Vector((0.0, z * 0.6, 3.0)) + off)
         ring = []
         for i in range(sides):
+            a = i * math.tau / sides
             foot = flare * max(1.0 - z / 0.5, 0.0) ** 2 * (0.4 + 1.2 * lobe_of[i])
-            k = r * wobble_of[i] * (1.0 + foot)
-            ring.append(bm.verts.new((math.cos(i * math.tau / sides) * k + ox, math.sin(i * math.tau / sides) * k + oy, z)))
+            lump = 1.0 + wobble * 1.5 / max(r_bottom, 0.1) * noise.noise(Vector((math.cos(a), math.sin(a), z * 1.1)) * 1.4 + off)
+            ridge = furrows * (1.0 if i % 2 else -1.0) * (0.7 + 0.3 * noise.noise(Vector((a, z * 0.8, 5.0)) + off))
+            k = r * wobble_of[i] * lump * (1.0 + foot) * (1.0 + ridge)
+            ring.append(bm.verts.new((math.cos(a) * k + ox, math.sin(a) * k + oy, z)))
         rings.append(ring)
     for lo, hi in zip(rings, rings[1:]):
         for i in range(sides):
@@ -1775,16 +2102,49 @@ def ringed_trunk(rng, sides, r_bottom, r_top, height, bark, wobble=0.035, flare=
     return bm
 
 
-def limb(a, b, r0, r1, rng, bark, sides=5):
-    """A tapered branch from point a to point b, as a bmesh in place (not centred)."""
+def limb(a, b, r0, r1, rng, bark, sides=6, segments=5, arch=0.14):
+    """A tapered branch from point a to point b, as a bmesh in place (not centred). It arches
+    rather than running straight: it bows up off the line between its ends by about `arch` of its
+    length (a little sideways too), its taper eases, and each joint kinks a touch."""
     a, b = Vector(a), Vector(b)
     d = b - a
+    length = d.length
+    side = d.cross(UP)
+    side = side.normalized() if side.length > 1e-4 else Vector((1, 0, 0))
+    up = side.cross(d).normalized()
+    if up.z < 0:
+        up = -up
+    bow = arch * length * rng.uniform(0.6, 1.3)
+    swing = arch * length * rng.uniform(-0.5, 0.5)
+    points = []
+    for k in range(segments + 1):
+        t = k / segments
+        p = a + d * t + (up * bow + side * swing) * math.sin(math.pi * t)
+        if 0 < k < segments:
+            p += Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-1, 1))) * 0.02 * length
+        points.append(p)
     bm = bmesh.new()
-    bmesh.ops.create_cone(bm, cap_ends=True, segments=sides, radius1=r0, radius2=r1, depth=d.length)
-    bmesh.ops.rotate(bm, verts=bm.verts, matrix=Vector((0, 0, 1)).rotation_difference(d.normalized()).to_matrix())
-    bmesh.ops.translate(bm, verts=bm.verts, vec=(a + b) / 2)
-    jitter_in_place(bm, 0.01, rng)
-    paint(bm, lambda f: bark[1] if rng.random() < 0.6 else bark[3])
+    rings = []
+    normal = None
+    for k, p in enumerate(points):
+        tangent = (points[min(k + 1, segments)] - points[max(k - 1, 0)]).normalized()
+        # carried along from ring to ring, so the tube doesn't twist
+        if normal is None:
+            normal = tangent.orthogonal()
+        normal = (normal - tangent * normal.dot(tangent)).normalized()
+        binormal = tangent.cross(normal)
+        r = r0 + (r1 - r0) * (k / segments) ** 0.8
+        rings.append([bm.verts.new(p + (normal * math.cos(i * math.tau / sides) + binormal * math.sin(i * math.tau / sides)) * r)
+                      for i in range(sides)])
+    strip = [bark[1] if rng.random() < 0.6 else bark[3] for _ in range(sides)]
+    column = {}
+    for lo, hi in zip(rings, rings[1:]):
+        for i in range(sides):
+            j = (i + 1) % sides
+            column[bm.faces.new((lo[i], lo[j], hi[j], hi[i]))] = i
+    bm.faces.new(list(reversed(rings[0])))
+    bm.faces.new(rings[-1])
+    paint(bm, lambda f: strip[column[f]] if f in column else bark[1])
     return bm
 
 
@@ -1826,11 +2186,106 @@ def limbs(rng, pairs, bark, name="Body_Limb"):
         make_object(f"{name}{i}", limb(a, b, r0, r1, rng, bark))
 
 
+def fork(rng, branches, reach, r0, count=(2, 3), rise=0.3):
+    """Twigs forking from each branch's end, so the crown hangs off a branching frame instead of
+    sitting on a few sticks: `branches` are (from, end) points; each end puts out `count` (low,
+    high) twigs fanning round the way its branch was heading and a little up, about `reach` metres
+    long and `r0` thick where they fork. Returns (twig pairs for limbs(), twig tips)."""
+    pairs, tips = [], []
+    for base, end in branches:
+        end = Vector(end)
+        d = end - Vector(base)
+        d.z = 0.0
+        d = d.normalized() if d.length > 1e-4 else Vector((1, 0, 0))
+        n = rng.randint(*count)
+        for k in range(n):
+            a = (k - (n - 1) / 2) * 0.9 + rng.uniform(-0.25, 0.25)
+            way = Matrix.Rotation(a, 3, "Z") @ d + Vector((0, 0, rise + rng.uniform(-0.15, 0.2)))
+            tip = end + way.normalized() * reach * rng.uniform(0.75, 1.2)
+            pairs.append((tuple(end), tuple(tip), r0, r0 * 0.4))
+            tips.append(tuple(tip))
+    return pairs, tips
+
+
+def add_roots(trunk, rng, count, r_base, reach, bark):
+    """Surface roots, part of the trunk's own mesh (so they stay with the stump when it's felled):
+    `count` of them arching out of the flare and down into the ground, `reach` metres out. Kept
+    under the chopping band, whose rings the notch reads."""
+    mesh = bpy.data.meshes.new("roots")
+    for i in range(count):
+        a = i * math.tau / count + rng.uniform(-0.35, 0.35)
+        out = Vector((math.cos(a), math.sin(a), 0.0))
+        far = r_base + reach * rng.uniform(0.7, 1.2)
+        bm = limb(out * r_base * 0.4 + Vector((0, 0, 0.2)), out * far + Vector((0, 0, -0.2)),
+                  r_base * 0.36, r_base * 0.12, rng, bark, segments=4, arch=0.08)
+        for v in bm.verts:
+            v.co.z = min(v.co.z, CARVE_BAND[0] - 0.08)
+        bm.to_mesh(mesh)
+        bm.free()
+        trunk.from_mesh(mesh)
+    bpy.data.meshes.remove(mesh)
+    return trunk
+
+
+def join_parts(prefix, name, groups=1):
+    """Joins the objects named `prefix`* into `groups` objects (named `name`, or `name`0, 1 ...
+    when more than one), by which way round the tree they sit: fewer meshes to draw, while the
+    canopy still shakes in a few separate parts on a hit."""
+    objs = sorted((o for o in bpy.context.scene.objects if o.type == "MESH" and o.name.startswith(prefix)),
+                  key=lambda o: o.name)
+    if not objs:
+        return
+    bpy.context.view_layer.update()
+    buckets = [[] for _ in range(groups)]
+    for o in objs:
+        c = o.matrix_world @ (sum((v.co for v in o.data.vertices), Vector()) / max(len(o.data.vertices), 1))
+        buckets[int((math.atan2(c.y, c.x) / math.tau + 0.5) * groups) % groups].append(o)
+    k = 0
+    for bucket in buckets:
+        if not bucket:
+            continue
+        bpy.ops.object.select_all(action="DESELECT")
+        for o in bucket:
+            o.select_set(True)
+        bpy.context.view_layer.objects.active = bucket[0]
+        bpy.ops.object.join()
+        bucket[0].name = f"{name}{k}" if groups > 1 else name
+        k += 1
+
+
 def fan(n, radius, z, rng, start=0.0, jit=0.25):
     """n points round a circle (radius, at height z), a little uneven."""
     return [(math.cos(start + i * math.tau / n + rng.uniform(-jit, jit)) * radius,
              math.sin(start + i * math.tau / n + rng.uniform(-jit, jit)) * radius, z + rng.uniform(-0.15, 0.15))
             for i in range(n)]
+
+
+## How big each choppable tree grows, by species: (out, up, girth). The trees are drawn at a
+## smaller size and grown at the end (grow_crown): the crown and limbs spread `out` and rise `up`
+## above the chopping band, which stays at the axe's height; the trunk is built that tall and
+## `girth` thicker. Oaks are the broad, stout ones, pines the tall ones, birches tall and slim.
+TREE_SIZE = {"tree": (1.5, 1.5, 1.25), "birch": (1.5, 1.8, 1.15), "oak": (2.0, 2.0, 1.5), "pine": (1.5, 1.9, 1.35)}
+
+
+def lifted(up):
+    """Heights stretched `up` times above the chopping band (the band itself stays put)."""
+    return lambda z: z if z <= CARVE_BAND[1] else CARVE_BAND[1] + (z - CARVE_BAND[1]) * up
+
+
+def grow_crown(out, up):
+    """Grows everything built so far but the trunk and the stump (the limbs and canopy): `out`
+    times as far from the trunk and `up` times as high above the chopping band (see lifted). The
+    trunk is built at the grown height, its lean `out` times as far, so the limbs still meet it."""
+    lift = lifted(up)
+    bpy.context.view_layer.update()  # (or a new object's matrix_world is still the identity)
+    for o in bpy.context.scene.objects:
+        if o.type != "MESH" or o.name == "Body_Trunk" or o.name.startswith("Rubble_"):
+            continue
+        m = o.matrix_world.copy()
+        inv = m.inverted()
+        for v in o.data.vertices:
+            p = m @ v.co
+            v.co = inv @ Vector((p.x * out, p.y * out, lift(p.z)))
 
 
 def cut_stump(r_bottom, r_top, bark, rng):
@@ -1841,23 +2296,31 @@ def cut_stump(r_bottom, r_top, bark, rng):
     make_object("Rubble_Stump", bm, (0, 0, 0.2))
 
 
-def tree_round(name="tree_round", out="designs"):
+def tree_round(name="tree_round", out_dir="designs"):
     """Starter A (picked: the game's tree): a rounded crown of clumps on three spreading branches,
     a little root flare."""
     reset()
     rng = seeded(70)
     r = recipe(70, tall=(-0.3, 0.0, 0.45), spread=(0.8, 0.95, 1.2), bushy=(0.85, 1.0, 1.18), lean=(0.3, 1.0, 2.2))
     up = r.tall  # (everything above the trunk's foot moves up with it)
-    make_object("Body_Trunk", ringed_trunk(rng, 12, 0.24, 0.15, 2.9 + up, STARTER_BARK, flare=0.3,
-                                           lean=(0.12 * r.lean, 0.05 * r.lean)))
+    out, rise, girth = TREE_SIZE["tree"]
+    trunk = ringed_trunk(rng, 12, 0.24 * girth, 0.15 * girth, lifted(rise)(2.9 + up), STARTER_BARK,
+                         flare=0.3, lean=(0.12 * r.lean * out, 0.05 * r.lean * out), furrows=0.03)
+    make_object("Body_Trunk", add_roots(trunk, rng, 3, 0.24 * girth, 0.35, STARTER_BARK))
+    base = (0.1, 0.03, 2.5 + up)
     ends = fan(3, r.spread, 3.5 + up, rng, 0.4)
-    limbs(rng, [((0.1, 0.03, 2.5 + up), e, 0.09, 0.04) for e in ends], STARTER_BARK)
-    spots = [(0.8 * r.bushy, e, (1, 1, 0.8)) for e in ends]
-    spots += [(0.95 * r.bushy, (0.1, 0.0, 3.85 + up), (1, 1, 0.8)), (0.6 * r.bushy, (0.5, -0.4, 4.2 + up), (1, 1, 0.85)),
-              (0.55 * r.bushy, (-0.45, 0.35, 4.15 + up), (1, 1, 0.85))]
+    twigs, tips = fork(rng, [(base, e) for e in ends], 0.5, 0.045)
+    limbs(rng, [(base, e, 0.09, 0.04) for e in ends] + twigs, STARTER_BARK)
+    spots = [(0.62 * r.bushy, e, (1, 1, 0.8)) for e in ends]
+    spots += [(0.45 * r.bushy * rng.uniform(0.8, 1.15), t, (1, 1, 0.85)) for t in tips]
+    spots += [(0.8 * r.bushy, (0.1, 0.0, 3.95 + up), (1, 1, 0.8)), (0.5 * r.bushy, (0.5, -0.4, 4.3 + up), (1, 1, 0.85)),
+              (0.45 * r.bushy, (-0.45, 0.35, 4.25 + up), (1, 1, 0.85))]
     clumps(rng, spots, STARTER_LEAVES)
-    cut_stump(0.24, 0.22, STARTER_BARK, rng)
-    export(os.path.join(out, name))
+    grow_crown(out, rise)
+    join_parts("Body_Limb", "Body_Limbs")
+    join_parts("Body_Canopy", "Body_Canopy", 3)
+    cut_stump(0.24 * girth, 0.22 * girth, STARTER_BARK, rng)
+    export(os.path.join(out_dir, name))
 
 
 def tree_tiered():
@@ -1876,7 +2339,7 @@ def tree_tiered():
     export(os.path.join("designs", "tree_tiered"))
 
 
-def birch_airy(name="birch_airy", out="designs"):
+def birch_airy(name="birch_airy", out_dir="designs"):
     """Birch A (picked: the game's birch): a slim white trunk dashed with black, curving gently,
     and small upright clumps hung along its upper half."""
     reset()
@@ -1884,24 +2347,31 @@ def birch_airy(name="birch_airy", out="designs"):
     r = recipe(72, tall=(0.85, 1.0, 1.18), lean=(0.3, 1.0, 1.8), bushy=(0.85, 1.0, 1.18), reach=(0.8, 1.0, 1.3))
     top = 4.3 * r.tall
     lean = (0.3 * r.lean, -0.1 * r.lean)
-    make_object("Body_Trunk", ringed_trunk(rng, 10, 0.17, 0.09, top, BIRCH_BARK, flare=0.15, lobes=4,
-                                           lean=lean, marks=("neutral.1", 0.16),
-                                           upper=tuple(z for z in (2.0, 2.6, 3.2, 3.8, 4.4) if z < top - 0.4)))
+    out, rise, girth = TREE_SIZE["birch"]
+    trunk = ringed_trunk(rng, 10, 0.17 * girth, 0.09 * girth, lifted(rise)(top), BIRCH_BARK,
+                         flare=0.15, lobes=4, lean=(lean[0] * out, lean[1] * out), marks=("neutral.1", 0.16))
+    make_object("Body_Trunk", add_roots(trunk, rng, 3, 0.17 * girth, 0.2, ("neutral.4", "neutral.5", "neutral.4", "neutral.6")))
     spots = []
     pairs = []
-    for i, z in enumerate((2.4, 2.9, 3.35, 3.8)):
+    for i, z in enumerate((2.3, 2.6, 2.9, 3.2, 3.5, 3.8)):  # (a tall birch: more of them)
         z = 1.45 + (z - 1.45) * (top - 1.45) / (4.3 - 1.45)
         a = i * 2.2 + rng.uniform(-0.3, 0.3)
         bend = ((z - 1.45) / (top - 1.45)) ** 2
         base = (lean[0] * bend, lean[1] * bend, z)
         tip = (base[0] + math.cos(a) * 0.4 * r.reach, base[1] + math.sin(a) * 0.4 * r.reach, z + 0.4)
         pairs.append((base, tip, 0.05, 0.025))
-        spots.append((0.52 * r.bushy, tip, (0.8, 0.8, 1.25)))
+        spots.append((0.42 * r.bushy, tip, (0.8, 0.8, 1.25)))
+        twigs, tips = fork(rng, [(base, tip)], 0.3, 0.025, count=(1, 2), rise=0.6)
+        pairs += twigs
+        spots += [(0.32 * r.bushy, t, (0.8, 0.8, 1.3)) for t in tips]
     spots.append((0.5 * r.bushy, (0.32 * r.lean, lean[1], top + 0.25), (0.85, 0.85, 1.3)))
     limbs(rng, pairs, BIRCH_BARK)
     clumps(rng, spots, BIRCH_LEAVES)
-    cut_stump(0.17, 0.16, BIRCH_BARK, rng)
-    export(os.path.join(out, name))
+    grow_crown(out, rise)
+    join_parts("Body_Limb", "Body_Limbs")
+    join_parts("Body_Canopy", "Body_Canopy", 3)
+    cut_stump(0.17 * girth, 0.16 * girth, BIRCH_BARK, rng)
+    export(os.path.join(out_dir, name))
 
 
 def birch_forked():
@@ -1921,21 +2391,35 @@ def birch_forked():
     export(os.path.join("designs", "birch_forked"))
 
 
-def oak_spreading(name="oak_spreading", out="designs"):
+def oak_spreading(name="oak_spreading", out_dir="designs"):
     """Oak A (picked: the game's oak): a stout trunk on big buttress roots, four thick limbs
     reaching out wide, a broad crown of heavy clumps."""
     reset()
     rng = seeded(74)
     r = recipe(74, tall=(-0.2, 0.0, 0.4), spread=(1.3, 1.6, 1.95), bushy=(0.88, 1.0, 1.15), limbs=(3, 4, 5))
     up = r.tall
-    make_object("Body_Trunk", ringed_trunk(rng, 12, 0.36, 0.26, 2.4 + up, OAK_BARK, flare=0.5, lobes=6, lean=(0.08, 0.0)))
+    out, rise, girth = TREE_SIZE["oak"]
+    trunk = ringed_trunk(rng, 12, 0.36 * girth, 0.26 * girth, lifted(rise)(2.4 + up), OAK_BARK,
+                         flare=0.5, lobes=6, lean=(0.08 * out, 0.0), furrows=0.05)
+    make_object("Body_Trunk", add_roots(trunk, rng, 5, 0.36 * girth, 0.4, OAK_BARK))
+    base = (0, 0, 2.1 + up)
     ends = fan(r.limbs, r.spread, 3.0 + up, rng, 0.5)
-    limbs(rng, [((0, 0, 2.1 + up), e, 0.16, 0.07) for e in ends], OAK_BARK)
-    spots = [(1.0 * r.bushy, (e[0], e[1], e[2] + 0.2), (1.15, 1.15, 0.65)) for e in ends]
-    spots += [(1.25 * r.bushy, (0.05, 0.0, 3.55 + up), (1.15, 1.15, 0.65))]
+    twigs, tips = fork(rng, [(base, e) for e in ends], 0.75, 0.07, rise=0.5)
+    limbs(rng, [(base, e, 0.16, 0.07) for e in ends] + twigs, OAK_BARK)
+    spots = [(0.8 * r.bushy, (e[0], e[1], e[2] + 0.2), (1.15, 1.15, 0.75)) for e in ends]
+    spots += [(0.62 * r.bushy * rng.uniform(0.8, 1.15), t, (1.15, 1.15, 0.8)) for t in tips]
+    # a domed crown, not a flat table: a ring of clumps above the limbs and one on top
+    spots += [(0.85 * r.bushy, (x * 0.45, y * 0.45, 3.95 + up), (1.1, 1.1, 0.85))
+              for x, y, _ in fan(r.limbs, r.spread, 0.0, rng, 0.5 + math.pi / r.limbs)]
+    spots += [(1.0 * r.bushy, (0.05, 0.0, 4.25 + up), (1.1, 1.1, 0.8))]
+    # (grown this big, the crown wants filling in between the limbs' clumps)
+    spots += [(0.75 * r.bushy, (e[0] * 0.55, e[1] * 0.55, e[2] + 0.45), (1.1, 1.1, 0.7)) for e in fan(r.limbs, r.spread, 3.0 + up, rng, 0.5 + math.pi / r.limbs)]
     clumps(rng, spots, OAK_LEAVES)
-    cut_stump(0.36, 0.33, OAK_BARK, rng)
-    export(os.path.join(out, name))
+    grow_crown(out, rise)
+    join_parts("Body_Limb", "Body_Limbs")
+    join_parts("Body_Canopy", "Body_Canopy", 3)
+    cut_stump(0.36 * girth, 0.33 * girth, OAK_BARK, rng)
+    export(os.path.join(out_dir, name))
 
 
 def oak_gnarled():
@@ -1959,25 +2443,50 @@ def oak_gnarled():
 
 
 def needle_cone(rng, r, h, tip=0.05):
-    """One tier of a pine: a cone with a ragged, drooping rim (leafy() needles it)."""
-    bm = prism(9, r, tip, h)
-    for v in bm.verts:  # ragged rim, the points drooping
-        if v.co.z < 0:
-            v.co.z -= rng.uniform(0.05, 0.3)
-            v.co.x *= rng.uniform(0.85, 1.1)
-            v.co.y *= rng.uniform(0.85, 1.1)
+    """One tier of a pine (leafy() needles it), centred on the origin: not a smooth cone but a
+    whorl of boughs: its rim lobed into bough tips that droop and stick out unevenly, its sides
+    sagging (a hollow profile) up to the leader."""
+    sides = 14
+    off = Vector((rng.uniform(-50, 50), rng.uniform(-50, 50), rng.uniform(-50, 50)))
+    lobe = [1.0 + 0.25 * noise.noise(Vector((math.cos(i * math.tau / sides), math.sin(i * math.tau / sides), 0.0)) * 1.7 + off)
+            + (0.14 if i % 2 else -0.1) for i in range(sides)]
+    bm = bmesh.new()
+    rings = []
+    for t in (0.0, 0.3, 0.62):
+        rr = r * (1.0 - t) ** 1.35 + tip
+        ring = []
+        for i in range(sides):
+            a = i * math.tau / sides
+            k = rr * (1.0 + (lobe[i] - 1.0) * (1.0 - t))
+            z = -h / 2 + h * t
+            if t == 0.0:  # bough tips droop, some further
+                k *= rng.uniform(0.9, 1.08)
+                z -= rng.uniform(0.05, 0.3) * (1.6 if i % 2 else 0.8)
+            ring.append(bm.verts.new((math.cos(a) * k, math.sin(a) * k, z)))
+        rings.append(ring)
+    apex = bm.verts.new((0, 0, h / 2))
+    for lo, hi in zip(rings, rings[1:]):
+        for i in range(sides):
+            j = (i + 1) % sides
+            bm.faces.new((lo[i], lo[j], hi[j], hi[i]))
+    for i in range(sides):
+        bm.faces.new((rings[-1][i], rings[-1][(i + 1) % sides], apex))
+    bm.faces.new(list(reversed(rings[0])))
+    bm.normal_update()
     return bm
 
 
-def pine_classic(name="pine_classic", out="designs"):
+def pine_classic(name="pine_classic", out_dir="designs"):
     """Pine A (picked: the game's pine): a tall straight trunk with stacked cones of needles,
     their rims drooping and ragged. The lowest rim stays above the chopping band."""
     reset()
     rng = seeded(76)
     shape = recipe(76, tall=(0.85, 1.0, 1.2), wide=(0.82, 1.0, 1.15))
     lift = lambda z: 2.65 + (z - 2.65) * shape.tall  # (the lowest rim stays put, above the chopping band)
-    make_object("Body_Trunk", ringed_trunk(rng, 10, 0.3, 0.1, lift(5.9), PINE_BARK, flare=0.25, lobes=5,
-                                           upper=(2.0, 2.6) + tuple(lift(z) for z in (3.4, 4.2, 5.0))))
+    out, rise, girth = TREE_SIZE["pine"]
+    trunk = ringed_trunk(rng, 10, 0.3 * girth, 0.1 * girth, lifted(rise)(lift(5.9)), PINE_BARK,
+                         flare=0.25, lobes=5, furrows=0.04)
+    make_object("Body_Trunk", add_roots(trunk, rng, 4, 0.3 * girth, 0.35, PINE_BARK))
     for i, (r, h, z) in enumerate(((1.9, 1.5, 2.65), (1.6, 1.4, 3.4), (1.25, 1.3, 4.1), (0.9, 1.2, 4.75), (0.5, 1.1, 5.4))):
         r, h, z = r * shape.wide, h * shape.tall, lift(z)
         bm = needle_cone(rng, r, h, 0.06)
@@ -1985,8 +2494,10 @@ def pine_classic(name="pine_classic", out="designs"):
               droop=0.5, open_bottom=True)
         spherical_normals(make_object(f"Body_Canopy{i}", bm, (0, 0, z), (0, 0, rng.uniform(0, math.tau))),
                           centre=(0, 0, -h * 0.3))
-    cut_stump(0.3, 0.28, PINE_BARK, rng)
-    export(os.path.join(out, name))
+    grow_crown(out, rise)
+    join_parts("Body_Canopy", "Body_Canopy", 3)
+    cut_stump(0.3 * girth, 0.28 * girth, PINE_BARK, rng)
+    export(os.path.join(out_dir, name))
 
 
 def pine_scots():
@@ -2519,8 +3030,8 @@ def oak_item():
 
 
 def iron_item():
-    """Iron ore: a chunk of basalt column, glinting iron where it broke."""
-    ore_chunk("iron", 34, ("stone.3", "stone.2"), "metal.3", ("metal.6", "ore.iron"), 0.85, size=0.14)
+    """Iron ore: a chunk of the rusty boulder, glinting iron where it broke."""
+    ore_chunk("iron", 34, ("wood.4", "wood.3"), "wood.4", ("ore.iron", "accent.0"), 0.6, size=0.14)
 
 
 def log_item_variant(name, seed, bark, end_grain, radius=0.09):
@@ -2635,9 +3146,9 @@ def lily_flower():
 def shore_stone():
     reset()
     rng = seeded(44)
-    bm = blob(0.28, rng, jitter_amount=0.28, squash=(1.2, 1.0, 0.55), subdiv=2)
+    bm = smooth_blob(0.28, rng, lumpy=0.26, squash=(1.2, 1.0, 0.55), subdiv=2)
     paint(bm, shade_by_normal("stone.5", "stone.4", "stone.3", rng))
-    make_object("Stone", weathered(bm, (0, 0, 0.06), moss_amount=0.9))  # (by the water: mossy)
+    make_object("Stone", weathered(bm, (0, 0, 0.06), moss_amount=0.9, soil=0.6))  # (by the water: mossy)
     export(os.path.join("scenery", "shore_stone"), loose_edges=True)
 
 
@@ -2708,9 +3219,9 @@ def bush(name, seed, blobs, shades):
 def boulder(name, seed, size, squash):
     reset()
     rng = seeded(seed)
-    bm = blob(size, rng, jitter_amount=0.25, squash=squash, subdiv=2)
+    bm = smooth_blob(size, rng, lumpy=0.24, squash=squash, subdiv=3)
     paint(bm, shade_by_normal("stone.5", "stone.4", "stone.3", rng))
-    make_object("Boulder", weathered(bm, (0, 0, size * squash[2] * 0.6)))  # sunk a little into the ground
+    make_object("Boulder", weathered(bm, (0, 0, size * squash[2] * 0.6), soil=1.0))  # sunk a little into the ground
     merge_all("Boulder")
     export(os.path.join("scenery", name), loose_edges=True)
 
@@ -2941,6 +3452,141 @@ def big_scenery():
     boulder("boulder_flat", 57, 0.7, (1.4, 1.1, 0.5))
 
 
+# --- ore walls ----------------------------------------------------------------------------------
+# The quarry's walls (OreWall): a block of rock WALL_SIZE across, tall and deep, cut into
+# WALL_LAYERS layers front to back, each a few dozen Voronoi pieces about head-sized. The front of
+# the first layer is the weathered face; everything else is cut faces, fresh stone, so whatever a
+# dug-out layer leaves showing is newly broken rock. Pieces are named L<layer>_<nn>. The ore isn't
+# baked in: the game threads veins through each panel from the world seed (OreWall, the WALL part
+# of node_surface.gdshaderinc).
+# models/walls/panel_<n>.pieces.json: {"layers": [[pieces] per layer], "links": piece -> the pieces
+# of its own layer it touches, "seeds": piece -> its Voronoi seed (Godot space: x, y up, z out of
+# the face)}; the game finds the piece struck as the one with the nearest seed.
+
+WALL_SIZE = (3.0, 4.0, 4.0)  # across, deep (into the wall), tall (m; Blender x, y, z)
+WALL_LAYERS = 8
+WALL_PIECE = 0.34  # the closest two seeds of a layer may be (m)
+WALL_TEMPLATES = 4
+
+
+def wall_block(rng, rough=0.1):
+    """The panel's rock before it's cut: a box from x -w/2..w/2, y 0..deep (into the wall),
+    z 0..tall, gridded so the front (y = 0) can be roughened: it bulges and dips by up to `rough`
+    with smooth noise, a quarried face rather than a sawn one."""
+    w, d, h = WALL_SIZE
+    bm = box((w, d, h))
+    bmesh.ops.translate(bm, vec=Vector((0, d / 2, h / 2)), verts=bm.verts)
+    cuts = [(Vector((x, 0, 0)), Vector((1, 0, 0))) for x in [-w / 2 + (i + 1) * 0.25 for i in range(int(w / 0.25) - 1)]]
+    cuts += [(Vector((0, 0, z)), Vector((0, 0, 1))) for z in [(i + 1) * 0.25 for i in range(int(h / 0.25) - 1)]]
+    for p, n in cuts:
+        bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=p, plane_no=n)
+    off = Vector((rng.uniform(-50, 50), rng.uniform(-50, 50), rng.uniform(-50, 50)))
+    for v in bm.verts:
+        if v.co.y < 0.01:
+            v.co.y += rough * (fbm(v.co * 0.9 + off) + 0.35 * noise.noise(v.co * 3.7 + off))
+    bmesh.ops.triangulate(bm, faces=bm.faces[:])
+    return bm
+
+
+def wall_seeds(rng):
+    """Seeds per layer: dart-thrown over the face, at least WALL_PIECE apart, at the layer's depth
+    give or take a little (so the layers interlock instead of meeting on a flat plane). At most 96
+    a layer (the game hides broken pieces with a 96-bit mask)."""
+    w, d, h = WALL_SIZE
+    depth = d / WALL_LAYERS
+    layers = []
+    for k in range(WALL_LAYERS):
+        pts = []
+        for _ in range(4000):
+            if len(pts) >= 96:
+                break
+            p = Vector((rng.uniform(-w / 2 + 0.08, w / 2 - 0.08), (k + 0.5) * depth + rng.uniform(-0.12, 0.12) * depth / 0.5,
+                        rng.uniform(0.08, h - 0.08)))
+            if all(Vector((p.x - q.x, p.z - q.z)).length > WALL_PIECE for q in pts):
+                pts.append(p)
+        layers.append(pts)
+    return layers
+
+
+def wall_cell(src, seeds, index):
+    """voronoi_cell, cut only by the seeds near enough to matter (a panel has hundreds)."""
+    a = seeds[index]
+    near = [j for j, b in enumerate(seeds) if j != index and (b - a).length < WALL_PIECE * 3.4]
+    bm = src.copy()
+    cut = bm.faces.layers.int.get("cut") or bm.faces.layers.int.new("cut")
+    across = bm.faces.layers.int.get("across") or bm.faces.layers.int.new("across")
+    for j in near:
+        if not bm.faces:
+            break
+        b = seeds[j]
+        res = bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:],
+                                     plane_co=(a + b) * 0.5, plane_no=(b - a).normalized(), clear_outer=True)
+        edges = [e for e in res["geom_cut"] if isinstance(e, bmesh.types.BMEdge) and e.is_boundary]
+        if edges:
+            for f in bmesh.ops.holes_fill(bm, edges=edges, sides=0)["faces"]:
+                f[cut] = 1
+                f[across] = j + 1
+    return bm
+
+
+def wall_panel(n):
+    reset()
+    rng = seeded(4100 + n)
+    whole = wall_block(rng)
+    w, d, h = WALL_SIZE
+    layers = wall_seeds(rng)
+    seeds = [s for layer in layers for s in layer]
+    names = [f"L{k}_{i:02d}" for k, layer in enumerate(layers) for i in range(len(layer))]
+    layer_of = [k for k, layer in enumerate(layers) for _ in layer]
+    links = {nm: set() for nm in names}
+    field = Vector((rng.uniform(-50, 50), rng.uniform(-50, 50), rng.uniform(-50, 50)))
+    bend = 0.035
+    # the shade is baked before the warp, against the block as cut: a piece's new corners lie
+    # exactly on it then (warped, they sit a hair inside, and the rays outlined every piece dark)
+    bvh = BVHTree.FromBMesh(whole)
+    for i in range(len(seeds)):
+        bm = wall_cell(whole, seeds, i)
+        cut = bm.faces.layers.int.get("cut")
+        across = bm.faces.layers.int.get("across")
+        if not bm.faces:
+            continue
+        split_long_edges(bm, 0.2)
+        bmesh.ops.triangulate(bm, faces=bm.faces[:])
+        for f in bm.faces:
+            j = f[across] - 1
+            if f[cut] and j >= 0 and layer_of[j] == layer_of[i] and f.calc_area() > 1e-4:
+                links[names[i]].add(names[j])
+                links[names[j]].add(names[i])
+        # the block's outside (the face, and its sides where they peep past the pillars) is
+        # weathered skin; inside it's all fresh stone
+        # one shade a piece, inside and out (a shade per face speckles the small faces like a
+        # chequerboard): the face lighter on top, darker underneath
+        # (the baked weathering varies the face; mixing swatches piece by piece made a patchwork)
+        inner = "stone.5" if rng.random() < 0.6 else "stone.4"
+        paint(bm, lambda f: inner if f[cut] else "stone.5" if f.normal.z > 0.55 else "stone.3" if f.normal.z < -0.4 else "stone.4")
+        bake_weathering(bm, cut, bvh, h, moss_amount=0.35, reach=0.5, soil=0.6)
+        warp(bm, bend, field)
+        centre = sum((v.co for v in bm.verts), Vector()) / len(bm.verts)
+        bmesh.ops.translate(bm, vec=-centre, verts=bm.verts)
+        make_object(names[i], bm, centre)
+    whole.free()
+    name = os.path.join("walls", f"panel_{n}")
+    export(name, loose_edges=True)
+    present = {o.name for o in bpy.context.scene.objects}
+    data = {"layers": [[nm for nm, k in zip(names, layer_of) if k == L and nm in present] for L in range(WALL_LAYERS)],
+            "links": {nm: sorted(l & present) for nm, l in links.items() if nm in present},
+            "seeds": {nm: [round(s.x, 4), round(s.z, 4), round(-s.y, 4)] for nm, s in zip(names, seeds) if nm in present},
+            "size": [w, h, d]}
+    with open(os.path.join(OUT_DIR, name + ".pieces.json"), "w") as f:
+        json.dump(data, f, indent=1)
+
+
+def ore_walls():
+    os.makedirs(os.path.join(OUT_DIR, "walls"), exist_ok=True)
+    for n in range(WALL_TEMPLATES):
+        wall_panel(n)
+
+
 if __name__ == "__main__":  # make_village.py imports the helpers above without building these
     os.makedirs(os.path.join(OUT_DIR, "scenery"), exist_ok=True)
     os.makedirs(os.path.join(OUT_DIR, "fish"), exist_ok=True)
@@ -2956,6 +3602,6 @@ if __name__ == "__main__":  # make_village.py imports the helpers above without 
     for build in builds:
         if not only or build.__name__ in only:
             build()
-    for build in (designs, tree_designs, variants, ore_variants, tree_variants):  # only when asked for by name: not the game's own models
+    for build in (designs, tree_designs, variants, ore_variants, tree_variants, ore_walls):  # only when asked for by name: not the game's own models
         if build.__name__ in only:
             build()

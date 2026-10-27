@@ -51,15 +51,32 @@ instance uniform vec4 theme_c = vec4(0.0, 1.0, 1.0, 0.0);
 uniform vec3 moss_color : source_color = vec3(0.2, 0.32, 0.1);
 uniform vec3 snow_color : source_color = vec3(0.9, 0.94, 1.0);
 uniform vec3 dust_color : source_color = vec3(0.8, 0.74, 0.64);
+#ifdef ROCK
+// A rock's weathered skin pulled toward the ground's range, as the terrain's own rock is: the
+// darkest stone lifted (linear) and the colour greyed a little, so it sits in the grass instead
+// of standing out of it like a cut-out. Ore and fresh breaks stay as made.
+uniform float skin_lift = 0.02;
+uniform float skin_grey = 0.2;
+#endif
 varying vec3 v_world;         // world position and normal, for the dressing
 varying vec3 v_world_normal;
 varying float v_rise;         // height above the node's origin (m)
+// Metres of damp soil and moss up a trunk's foot (set by ResourceNode on its trees; 0 = none), so
+// it grows out of the ground instead of standing on it. By the mesh's own height, so the stump
+// keeps it and the felled log doesn't. (Rocks have theirs baked: bake_weathering's soil.)
+instance uniform float foot = 0.0;
+uniform vec3 soil_color : source_color = vec3(0.36, 0.29, 0.2);
+varying float v_local_y;
 
 #ifdef ROCK
 // A rock of many pieces is drawn as one mesh (ResourceNode merges them): UV2.x is the piece's
 // index + 1 on every vertex (0 = not a piece), and these bits say which have broken off, 24 to a
 // component (a float holds whole numbers that big exactly).
 instance uniform vec4 pieces_gone = vec4(0.0);
+// The fault (ResourceNode): a piece worked loose, centred at xyz (world) and w across; the fresh
+// breaks round it, the walls of the gap it opened, go dark, so the gap reads as a deep crack
+// rather than a pale line (w 0 = no fault).
+instance uniform vec4 fault_shadow = vec4(0.0);
 // The baked shade (tools/blender/make_models.py bake_weathering); alpha 0 on fresh cut faces.
 varying vec4 v_shade;
 
@@ -70,11 +87,59 @@ bool piece_gone(int i) {
 }
 #endif
 
+#ifdef WALL
+// An ore wall's layer (OreWall, node_wall.gdshader): the ore isn't in the mesh. Veins are sheets
+// through the panel (its own space: x across, y up, z out of the face), each a plane (xyz normal,
+// w its distance from the origin) bowed by two waves (vein_wave: xyz how tight and which way, w how
+// far). piece_ore says which ore each piece carries (0 = none: the vein isn't drawn on it, so a
+// piece shows ore exactly when it drops some); ore_uv is each ore's palette swatch.
+// OreWall mirrors the vein maths (_vein_distance) to decide which pieces carry ore.
+uniform int vein_count = 0;
+uniform vec4 vein_plane[4];
+uniform vec4 vein_wave[4];
+uniform float vein_width[4];
+uniform int piece_ore[96];
+uniform vec2 ore_uv[8];
+// The piece under the crosshair (its index; -1 none): the hover highlight and the hit flash light
+// that piece alone, not the whole wall.
+instance uniform float aim_piece = -1.0;
+varying vec3 v_panel;
+varying vec3 v_panel_normal;
+varying flat int v_piece;
+
+float vein_distance(int i, vec3 p) {
+	vec4 pl = vein_plane[i];
+	vec4 wv = vein_wave[i];
+	float phase = pl.w * 3.1;
+	float bow = sin(dot(p, wv.xyz) + phase) * 0.6 + sin(dot(p, wv.zxy * 1.7) + phase * 1.3) * 0.4;
+	return dot(p, pl.xyz) - pl.w + bow * wv.w;
+}
+
+// 1 on a vein, easing off at its edges; `halo` 1 near one (where flecks of ore are scattered).
+float vein_mask(vec3 p, out float halo) {
+	float m = 0.0;
+	halo = 0.0;
+	for (int i = 0; i < vein_count; i++) {
+		float w = vein_width[i];
+		float d = abs(vein_distance(i, p));
+		m = max(m, 1.0 - smoothstep(w * 0.55, w, d));
+		halo = max(halo, 1.0 - smoothstep(w, w * 2.6, d));
+	}
+	return m;
+}
+#endif
+
 void vertex() {
 	DETAIL_CAPTURE
+	v_local_y = VERTEX.y;
 #ifdef ROCK
 	v_shade = COLOR;
 	int piece = int(UV2.x + 0.5) - 1;
+#ifdef WALL
+	v_panel = VERTEX;
+	v_panel_normal = NORMAL;
+	v_piece = piece;
+#endif
 	if (piece >= 0 && piece < 96 && piece_gone(piece)) {
 		VERTEX = vec3(0.0);  // every corner on one point: the triangle draws nothing
 	}
@@ -179,6 +244,7 @@ void fragment() {
 			NORMAL = -NORMAL;  // both sides share the canopy's outward normal
 		}
 		BACKLIGHT = base * translucency;
+		rim *= 0.25;  // (so many cards are seen edge-on that the highlight's rim would gild the crown)
 	} else {
 		base *= DETAIL(UV);
 		ALPHA = 1.0;
@@ -194,8 +260,40 @@ void fragment() {
 	// Squared, near enough: pow(shade, 2.2) came out NaN on some pixels, which the glow smeared
 	// into big white blobs)
 	base *= mix(v_shade.rgb * v_shade.rgb, vec3(fresh_brightness), fresh);
+	if (fault_shadow.w > 0.0) {
+		float gap = 1.0 - smoothstep(fault_shadow.w * 0.5, fault_shadow.w, distance(v_world, fault_shadow.xyz));
+#ifdef WALL
+		// a wall's loose slab: only the walls of its gap, not the fresh face round it
+		gap *= 1.0 - smoothstep(0.5, 0.9, abs(v_panel_normal.z));
+#endif
+		base *= mix(1.0, 0.1, fresh * gap);
+	}
 	int row = int(floor(UV.y * 8.0));
 	float ore = float(row == 1 || row == 5);  // the palette's ore and metal rows glint
+#ifdef WALL
+	vec3 wall_glint = vec3(0.0);
+	int kind = v_piece >= 0 && v_piece < 96 ? piece_ore[v_piece] : 0;
+	if (kind > 0) {
+		// ragged edges (the point looked up wanders a little), and flecks of ore scattered round it
+		vec3 wander = vec3(theme_noise(v_panel * 5.0), theme_noise(v_panel * 5.0 + 11.0), theme_noise(v_panel * 5.0 + 23.0)) - 0.5;
+		float halo;
+		float vein = vein_mask(v_panel + wander * 0.12, halo);
+		float fleck = step(0.8, theme_noise(v_panel * 16.0 + 4.0)) * halo;
+		vein = max(vein, fleck);
+		// on the weathered face the ore is dulled; a fresh break shows it bright; never one flat colour
+		float grain = theme_noise(v_panel * 9.0 + 2.0);
+		vec3 ore_c = texture(palette, ore_uv[kind]).rgb * mix(0.62, 1.12, fresh) * mix(0.72, 1.18, grain);
+		base = mix(base, ore_c, vein);
+		ore = max(ore, vein);
+		// glints: points of the vein catching the light as you move past them, so a seam reads
+		// even at the back of a dark alcove
+		float spark = smoothstep(0.86, 0.97, theme_noise(v_panel * 26.0 + VIEW * 2.5));
+		wall_glint = ore_c * spark * vein;
+		row = vein > 0.5 ? 1 : row;  // (glows like the palette's ore row, below)
+	}
+#endif
+	float skin = (1.0 - fresh) * (1.0 - ore);
+	base = mix(base, mix(base, vec3(dot(base, vec3(0.299, 0.587, 0.114))), skin_grey) + skin_lift, skin);
 	float wet;
 	base = theme_dress(base, (1.0 - fresh) * (1.0 - ore), 0.0, wet);  // the skin, never the ore or a break
 	base *= mix(1.0, theme_b.w, ore);
@@ -207,17 +305,35 @@ void fragment() {
 	// notch and the end grain use, see TrunkCarve) stays as made
 	int row = int(floor(UV.y * 8.0));
 	float cut_wood = float(row == 2 && UV.x >= 0.625);
+	if (foot > 0.0) {  // a ragged line of soil, going over to moss here and there
+		float n = theme_noise(v_world * 3.0);
+		float band = 1.0 - smoothstep(0.0, 1.0, v_local_y / foot + (n - 0.5) * 0.8);
+		vec3 grime = mix(soil_color, moss_color, smoothstep(0.35, 0.75, theme_noise(v_world * 1.7 + 3.0)));
+		base = mix(base, grime * (0.8 + 0.4 * n), band * 0.7 * (1.0 - cut_wood));
+	}
 	float wet;
 	base = theme_dress(base, 1.0 - cut_wood, float(row == 3), wet);
 	ROUGHNESS = mix(1.0, 0.5, wet);
 #endif
 	vec3 lit = mix(glow_color, glow_tint.rgb, glow_tint.a);
-	ALBEDO = mix(mix(base, lit, glow * 0.6), vec3(1.0), flash);
-	EMISSION = vec3(flash) * 0.6 + highlight_color * (0.08 + rim * 0.5) * highlight + lit * glow * 2.0;
+	float lift = highlight;
+	float white = flash;
+#ifdef WALL
+	float aimed = float(v_piece >= 0 && abs(float(v_piece) - aim_piece) < 0.5);
+	lift *= aimed;
+	white *= aimed;
+#endif
+	ALBEDO = mix(mix(base, lit, glow * 0.6), vec3(1.0), white);
+	// highlight: the node lifted in its own colours, a thin warm rim round its edges (a flat yellow
+	// wash swamped dark leaves and pale bark alike)
+	EMISSION = vec3(white) * 0.6 + (base * 0.22 + highlight_color * rim * rim * 0.3) * lift + lit * glow * 2.0;
 	// shimmer: a rare look's (NodeTheme) slow glints, so it's spotted from a way off
 	float glint = smoothstep(0.78, 0.95, theme_noise(v_world * 5.0 + vec3(0.0, TIME * 0.6, 0.0)));
 	EMISSION += base * glint * theme_c.w * 2.5;
 #ifdef ROCK
 	EMISSION += base * float(row == 1) * ore_glow * theme_b.w;  // ore still reads down in the shade of a hole
+#endif
+#ifdef WALL
+	EMISSION += wall_glint;
 #endif
 }

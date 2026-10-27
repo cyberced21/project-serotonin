@@ -8,6 +8,11 @@ extends RefCounted
 ## less to either side, in a V: a steep upper face and a flatter lower one, like a felling notch.
 ## Hits from other sides deepen the notch round there instead, so walking round the tree widens it.
 ## When the tree falls, split() cuts the trunk at the notch's ring into a stump and the log.
+##
+## Two layers: the bark is `bark` metres thick over the wood. A hit strips a ragged blaze of bark
+## round where it lands (wide in front, narrowing round the sides, its edge torn), the wood showing
+## a bark's thickness down with the torn edge of the bark round it; the first hit on bark mostly
+## strips it, and the hits after cut the notch into the wood beneath. Each hit widens the blaze.
 
 ## How deep the notch is, per direction round the trunk (bins over a full turn).
 const BINS := 32
@@ -19,6 +24,13 @@ const SLOPE_DOWN := 3.0
 const SPREAD := 1.6
 ## The core is never carved thinner than this share of the trunk's radius.
 const CORE := 0.12
+## How far up and down from the ring one hit strips the bark (m), and the most it ever reaches.
+const BLAZE_STEP := 0.21
+const BLAZE_MAX := 0.5
+## How far round the trunk the stripping reaches (like SPREAD): an oval blaze on the side struck.
+const BLAZE_SPREAD := 3.5
+## How much of a hit on bark goes into the wood under it (the rest strips the bark).
+const ON_BARK := 0.35
 ## A face this far off its original direction is cut wood rather than bark (dot of normals).
 const CUT_FACE := 0.97
 ## Palette swatches (art/palette.json "uv", same space as the model's UVs): the notch's cut faces
@@ -26,6 +38,10 @@ const CUT_FACE := 0.97
 ## (share of the way out, swatch): a darker band of sapwood under the bark, then pale and mid
 ## rings round to the heart.
 const CUT_UV := Vector2(0.9375, 0.3125)  # wood.7
+## The wood laid bare under stripped bark (sapwood: a little duller than a fresh cut), and the torn
+## edge of the bark round it (its inner layer).
+const SAPWOOD_UV := Vector2(0.8125, 0.3125)  # wood.6
+const BARK_EDGE_UV := Vector2(0.5625, 0.3125)  # wood.4
 const GRAIN := [
 	[1.0, Vector2(0.6875, 0.3125)],  # wood.5
 	[0.86, Vector2(0.9375, 0.3125)],  # wood.7
@@ -38,6 +54,10 @@ var original: ArrayMesh
 ## The notch's ring height (mesh space), or NAN before the first hit.
 var ring := NAN
 var depth := PackedFloat32Array()
+## How far up and down from the ring the bark is stripped, per direction (bins as `depth`; 0 = whole).
+var blaze := PackedFloat32Array()
+## How thick the bark is (m).
+var bark := 0.03
 
 var _arrays: Array
 var _verts: PackedVector3Array
@@ -46,16 +66,22 @@ var _uvs: PackedVector2Array
 var _index: PackedInt32Array
 var _ring_heights: PackedFloat32Array
 var _winding := 1.0  # which way round the triangles go (sign of cross vs the outward normal)
+var _band: Vector2
+var _bark_uv := Vector2.ZERO  # the bark's own swatch, for the bark round the end grain
+var _stripped := PackedByteArray()  # per vertex, set by _carved_verts(): bark gone there
 
 
-func _init(mesh: ArrayMesh, band: Vector2) -> void:
+func _init(mesh: ArrayMesh, band: Vector2, bark_thickness := 0.03) -> void:
 	original = mesh
+	bark = bark_thickness
+	_band = band
 	_arrays = mesh.surface_get_arrays(0)
 	_verts = _arrays[Mesh.ARRAY_VERTEX]
 	_normals = _arrays[Mesh.ARRAY_NORMAL]
 	_uvs = _arrays[Mesh.ARRAY_TEX_UV]
 	_index = _arrays[Mesh.ARRAY_INDEX] if _arrays[Mesh.ARRAY_INDEX] else PackedInt32Array(range(_verts.size()))
 	depth.resize(BINS)
+	blaze.resize(BINS)
 	var heights := {}
 	for v in _verts:
 		if v.y >= band.x and v.y <= band.y:
@@ -67,6 +93,11 @@ func _init(mesh: ArrayMesh, band: Vector2) -> void:
 		if n.length_squared() > 0.0:
 			_winding = signf(n.dot(_normals[_index[i]]))
 			break
+	for i in range(0, _index.size(), 3):  # the bark: a side face of the trunk in the band
+		var v := _verts[_index[i]]
+		if absf(_normals[_index[i]].y) < 0.4 and v.y >= band.x and v.y <= band.y:
+			_bark_uv = _uvs[_index[i]]
+			break
 
 
 func is_started() -> bool:
@@ -76,6 +107,7 @@ func is_started() -> bool:
 func reset() -> void:
 	ring = NAN
 	depth.fill(0.0)
+	blaze.fill(0.0)
 
 
 ## The trunk's radius at height `y`, toward `dir` (mesh space, horizontal).
@@ -100,16 +132,23 @@ func hit(y: float, dir: Vector3, share: float) -> void:
 		ring = _nearest_ring(y)
 	var at := atan2(dir.z, dir.x)
 	var radius := radius_at(ring, dir)
-	var amount := radius * share
+	var on_bark := blaze_toward(dir) < BLAZE_STEP * 0.5  # (bark still there where it lands)
+	var amount := radius * share * (ON_BARK if on_bark else 1.0)
 	var limit := radius * (1.0 - CORE)
 	for b in BINS:
 		var off := angle_difference(at, _bin_angle(b))
 		var w := pow(maxf(cos(off), 0.0), SPREAD)
 		depth[b] = minf(depth[b] + amount * w, limit)
+		# the bark comes away round it, a little further each hit, and clear of the notch where
+		# that's cut deeper than the bark (its shallow wings just tear through it)
+		var reach := pow(maxf(cos(off), 0.0), BLAZE_SPREAD)
+		blaze[b] = minf(maxf(blaze[b] + BLAZE_STEP * reach, depth[b] / SLOPE_UP + 0.03 if depth[b] > bark else 0.0),
+				BLAZE_MAX)
 
 
 func to_dict() -> Dictionary:
-	return {"ring": snappedf(ring, 0.001), "depth": Array(depth).map(func(v: float) -> float: return snappedf(v, 0.001))}
+	var snap := func(v: float) -> float: return snappedf(v, 0.001)
+	return {"ring": snappedf(ring, 0.001), "depth": Array(depth).map(snap), "blaze": Array(blaze).map(snap)}
 
 
 func from_dict(d: Dictionary) -> void:
@@ -120,13 +159,25 @@ func from_dict(d: Dictionary) -> void:
 	var saved: Array = d["depth"]
 	for b in mini(saved.size(), BINS):
 		depth[b] = float(saved[b])
+	saved = d.get("blaze", [])
+	for b in BINS:  # (a save from before the bark had layers: stripped just round the notch)
+		blaze[b] = float(saved[b]) if b < saved.size() else (depth[b] / SLOPE_UP + 0.03 if depth[b] > bark else 0.0)
 
 
 ## How deep the notch is toward `dir` (interpolated between bins).
 func depth_toward(dir: Vector3) -> float:
+	return _toward(depth, dir)
+
+
+## How far up and down from the ring the bark is stripped toward `dir`.
+func blaze_toward(dir: Vector3) -> float:
+	return _toward(blaze, dir)
+
+
+func _toward(bins: PackedFloat32Array, dir: Vector3) -> float:
 	var f := fposmod(atan2(dir.z, dir.x), TAU) / TAU * BINS
 	var b := int(f) % BINS
-	return lerpf(depth[b], depth[(b + 1) % BINS], f - floorf(f))
+	return lerpf(bins[b], bins[(b + 1) % BINS], f - floorf(f))
 
 
 ## Where the notch's surface is toward `dir` at its ring (mesh space): where the axe bites.
@@ -158,6 +209,30 @@ func split() -> Dictionary:
 	return {"stump": _build(verts, below, cap, Vector3.UP), "log": _build(verts, above, cap, Vector3.DOWN)}
 
 
+## Where the hinge tore when the tree went over: `count` points on the cut face at the ring (mesh
+## space), mostly on the side the notch never reached, spread across the wood that held.
+func hinge_points(count: int) -> PackedVector3Array:
+	var weights := PackedFloat32Array()
+	var total := 0.0
+	for b in BINS:
+		var dir := Vector3(cos(_bin_angle(b)), 0.0, sin(_bin_angle(b)))
+		var held := maxf(1.0 - depth[b] / maxf(radius_at(ring, dir), 0.01), 0.0)
+		weights.append(held * held * held)  # (the uncut side, not the notch's shallow wings)
+		total += weights[b]
+	var out := PackedVector3Array()
+	for i in count:
+		var pick := randf() * total
+		var b := 0
+		while b < BINS - 1 and pick > weights[b]:
+			pick -= weights[b]
+			b += 1
+		var angle := _bin_angle(b) + randf_range(-0.5, 0.5) * TAU / BINS
+		var dir := Vector3(cos(angle), 0.0, sin(angle))
+		var solid := radius_at(ring, dir) - depth_toward(dir)
+		out.append(Vector3(0.0, ring, 0.0) + dir * solid * randf_range(0.3, 0.92))
+	return out
+
+
 # --- internals ------------------------------------------------------------------------------
 
 func _bin_angle(b: int) -> float:
@@ -176,6 +251,8 @@ func _nearest_ring(y: float) -> float:
 
 func _carved_verts() -> PackedVector3Array:
 	var verts := _verts.duplicate()
+	_stripped.resize(verts.size())
+	_stripped.fill(0)
 	if not is_started():
 		return verts
 	for i in verts.size():
@@ -185,7 +262,15 @@ func _carved_verts() -> PackedVector3Array:
 		var r := flat.length()
 		if r < 0.001:
 			continue
+		# bark stripped here? (the blaze's edge torn: each vertex a little in or out of it; only in
+		# the band, whose rings are close enough for a torn edge)
+		var torn := 0.7 + 0.6 * fposmod(sin(float(i) * 12.9898) * 43758.5453, 1.0)
+		var in_band := v.y >= _band.x - 0.01 and v.y <= _band.y + 0.01
+		var under := in_band and absf(dy) < blaze_toward(flat) * torn
 		var push := depth_toward(flat) - (dy * SLOPE_UP if dy > 0.0 else -dy * SLOPE_DOWN)
+		if under:
+			_stripped[i] = 1
+			push = maxf(push, bark)
 		if push <= 0.0:
 			continue
 		var scale := maxf(r - push, r * CORE) / r
@@ -207,8 +292,10 @@ func _cap_loop(verts: PackedVector3Array) -> PackedVector3Array:
 	return loop
 
 
-## An ArrayMesh of `index`'s triangles over `verts`, flat-shaded, notch faces in cut wood; with a
-## `cap` loop, also the cut across it facing `cap_up`, in growth rings (GRAIN).
+## An ArrayMesh of `index`'s triangles over `verts`: the bark where it's whole, the wood bared
+## under it in sapwood, the torn edge between them in the bark's inner layer, the notch's faces
+## flat-shaded in cut wood; with a `cap` loop, also the cut across it facing `cap_up`, in a ring of
+## bark round growth rings (GRAIN).
 func _build(verts: PackedVector3Array, index: PackedInt32Array, cap := PackedVector3Array(),
 		cap_up := Vector3.ZERO) -> ArrayMesh:
 	var st := SurfaceTool.new()
@@ -218,11 +305,19 @@ func _build(verts: PackedVector3Array, index: PackedInt32Array, cap := PackedVec
 		var b := verts[index[i + 1]]
 		var c := verts[index[i + 2]]
 		var n := _face_normal(a, b, c) * _winding
-		var was := _normals[index[i]]
-		var cut := n.dot(was) < CUT_FACE
-		st.set_normal(n)
+		# turned away from the face it was (not from the smoothed normal at a corner, which a
+		# lumpy, ridged trunk's own faces stray from without being cut)
+		var was := _face_normal(_verts[index[i]], _verts[index[i + 1]], _verts[index[i + 2]]) * _winding
+		var bare := _stripped[index[i]] + _stripped[index[i + 1]] + _stripped[index[i + 2]]
+		var edge := bare > 0 and bare < 3  # the step from the bark down to the wood
+		var cut := not edge and n.dot(was) < CUT_FACE
+		var uv := BARK_EDGE_UV if edge else CUT_UV if cut else SAPWOOD_UV if bare == 3 else Vector2(-1, -1)
 		for k in 3:
-			st.set_uv(CUT_UV if cut else _uvs[index[i + k]])
+			# the bark keeps the model's smooth normals (flat ones would facet the whole trunk on
+			# the first hit), and so does the wood bared under it; the notch and the bark's torn
+			# edge are flat, so they read crisp
+			st.set_normal(n if cut or edge else _normals[index[i + k]])
+			st.set_uv(uv if uv.x >= 0.0 else _uvs[index[i + k]])
 			st.add_vertex(verts[index[i + k]])
 	if cap.size() >= 3:
 		var centre := Vector3.ZERO
@@ -230,10 +325,17 @@ func _build(verts: PackedVector3Array, index: PackedInt32Array, cap := PackedVec
 			centre += p
 		centre /= cap.size()
 		st.set_normal(cap_up)
-		for g in GRAIN.size():  # each ring: a band between its outline and the next one in
-			var outer: float = GRAIN[g][0]
-			var inner: float = GRAIN[g + 1][0] if g + 1 < GRAIN.size() else 0.0
-			st.set_uv(GRAIN[g][1])
+		var radius := 0.0
+		for p in cap:
+			radius += Vector2(p.x - centre.x, p.z - centre.z).length() / cap.size()
+		var skin := clampf(1.0 - bark / maxf(radius, 0.01), 0.75, 0.97)  # the bark's ring, then the wood's
+		var rings := [[1.0, _bark_uv]]
+		for g in GRAIN:
+			rings.append([g[0] * skin, g[1]])
+		for g in rings.size():  # each ring: a band between its outline and the next one in
+			var outer: float = rings[g][0]
+			var inner: float = rings[g + 1][0] if g + 1 < rings.size() else 0.0
+			st.set_uv(rings[g][1])
 			for k in cap.size():
 				var p := cap[k]
 				var q := cap[(k + 1) % cap.size()]
