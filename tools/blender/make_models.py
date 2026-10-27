@@ -2142,8 +2142,8 @@ def add_roots(trunk, rng, count, r_base, reach, bark):
         a = i * math.tau / count + rng.uniform(-0.35, 0.35)
         out = Vector((math.cos(a), math.sin(a), 0.0))
         far = r_base + reach * rng.uniform(0.7, 1.2)
-        bm = limb(out * r_base * 0.4 + Vector((0, 0, 0.25)), out * far + Vector((0, 0, -0.12)),
-                  r_base * 0.42, r_base * 0.1, rng, bark, segments=4, arch=0.12)
+        bm = limb(out * r_base * 0.4 + Vector((0, 0, 0.2)), out * far + Vector((0, 0, -0.2)),
+                  r_base * 0.36, r_base * 0.12, rng, bark, segments=4, arch=0.08)
         for v in bm.verts:
             v.co.z = min(v.co.z, CARVE_BAND[0] - 0.08)
         bm.to_mesh(mesh)
@@ -2232,7 +2232,7 @@ def tree_round(name="tree_round", out_dir="designs"):
     out, rise, girth = TREE_SIZE["tree"]
     trunk = ringed_trunk(rng, 12, 0.24 * girth, 0.15 * girth, lifted(rise)(2.9 + up), STARTER_BARK,
                          flare=0.3, lean=(0.12 * r.lean * out, 0.05 * r.lean * out), furrows=0.03)
-    make_object("Body_Trunk", add_roots(trunk, rng, 3, 0.24 * girth, 0.55, STARTER_BARK))
+    make_object("Body_Trunk", add_roots(trunk, rng, 3, 0.24 * girth, 0.35, STARTER_BARK))
     base = (0.1, 0.03, 2.5 + up)
     ends = fan(3, r.spread, 3.5 + up, rng, 0.4)
     twigs, tips = fork(rng, [(base, e) for e in ends], 0.5, 0.045)
@@ -2276,7 +2276,7 @@ def birch_airy(name="birch_airy", out_dir="designs"):
     out, rise, girth = TREE_SIZE["birch"]
     trunk = ringed_trunk(rng, 10, 0.17 * girth, 0.09 * girth, lifted(rise)(top), BIRCH_BARK,
                          flare=0.15, lobes=4, lean=(lean[0] * out, lean[1] * out), marks=("neutral.1", 0.16))
-    make_object("Body_Trunk", add_roots(trunk, rng, 3, 0.17 * girth, 0.3, ("neutral.4", "neutral.5", "neutral.4", "neutral.6")))
+    make_object("Body_Trunk", add_roots(trunk, rng, 3, 0.17 * girth, 0.2, ("neutral.4", "neutral.5", "neutral.4", "neutral.6")))
     spots = []
     pairs = []
     for i, z in enumerate((2.3, 2.6, 2.9, 3.2, 3.5, 3.8)):  # (a tall birch: more of them)
@@ -2327,7 +2327,7 @@ def oak_spreading(name="oak_spreading", out_dir="designs"):
     out, rise, girth = TREE_SIZE["oak"]
     trunk = ringed_trunk(rng, 12, 0.36 * girth, 0.26 * girth, lifted(rise)(2.4 + up), OAK_BARK,
                          flare=0.5, lobes=6, lean=(0.08 * out, 0.0), furrows=0.05)
-    make_object("Body_Trunk", add_roots(trunk, rng, 5, 0.36 * girth, 0.7, OAK_BARK))
+    make_object("Body_Trunk", add_roots(trunk, rng, 5, 0.36 * girth, 0.4, OAK_BARK))
     base = (0, 0, 2.1 + up)
     ends = fan(r.limbs, r.spread, 3.0 + up, rng, 0.5)
     twigs, tips = fork(rng, [(base, e) for e in ends], 0.75, 0.07, rise=0.5)
@@ -2412,7 +2412,7 @@ def pine_classic(name="pine_classic", out_dir="designs"):
     out, rise, girth = TREE_SIZE["pine"]
     trunk = ringed_trunk(rng, 10, 0.3 * girth, 0.1 * girth, lifted(rise)(lift(5.9)), PINE_BARK,
                          flare=0.25, lobes=5, furrows=0.04)
-    make_object("Body_Trunk", add_roots(trunk, rng, 4, 0.3 * girth, 0.55, PINE_BARK))
+    make_object("Body_Trunk", add_roots(trunk, rng, 4, 0.3 * girth, 0.35, PINE_BARK))
     for i, (r, h, z) in enumerate(((1.9, 1.5, 2.65), (1.6, 1.4, 3.4), (1.25, 1.3, 4.1), (0.9, 1.2, 4.75), (0.5, 1.1, 5.4))):
         r, h, z = r * shape.wide, h * shape.tall, lift(z)
         bm = needle_cone(rng, r, h, 0.06)

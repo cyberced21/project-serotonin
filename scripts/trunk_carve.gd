@@ -207,7 +207,7 @@ func _cap_loop(verts: PackedVector3Array) -> PackedVector3Array:
 	return loop
 
 
-## An ArrayMesh of `index`'s triangles over `verts`, flat-shaded, notch faces in cut wood; with a
+## An ArrayMesh of `index`'s triangles over `verts`, notch faces flat-shaded in cut wood; with a
 ## `cap` loop, also the cut across it facing `cap_up`, in growth rings (GRAIN).
 func _build(verts: PackedVector3Array, index: PackedInt32Array, cap := PackedVector3Array(),
 		cap_up := Vector3.ZERO) -> ArrayMesh:
@@ -218,10 +218,14 @@ func _build(verts: PackedVector3Array, index: PackedInt32Array, cap := PackedVec
 		var b := verts[index[i + 1]]
 		var c := verts[index[i + 2]]
 		var n := _face_normal(a, b, c) * _winding
-		var was := _normals[index[i]]
+		# turned away from the face it was (not from the smoothed normal at a corner, which a
+		# lumpy, ridged trunk's own faces stray from without being cut)
+		var was := _face_normal(_verts[index[i]], _verts[index[i + 1]], _verts[index[i + 2]]) * _winding
 		var cut := n.dot(was) < CUT_FACE
-		st.set_normal(n)
 		for k in 3:
+			# the bark keeps the model's smooth normals (flat ones would facet the whole trunk on
+			# the first hit); only the notch's fresh faces are flat, so the cut reads crisp
+			st.set_normal(n if cut else _normals[index[i + k]])
 			st.set_uv(CUT_UV if cut else _uvs[index[i + k]])
 			st.add_vertex(verts[index[i + k]])
 	if cap.size() >= 3:

@@ -193,6 +193,7 @@ void fragment() {
 			NORMAL = -NORMAL;  // both sides share the canopy's outward normal
 		}
 		BACKLIGHT = base * translucency;
+		rim *= 0.25;  // (so many cards are seen edge-on that the highlight's rim would gild the crown)
 	} else {
 		base *= DETAIL(UV);
 		ALPHA = 1.0;
@@ -235,7 +236,9 @@ void fragment() {
 #endif
 	vec3 lit = mix(glow_color, glow_tint.rgb, glow_tint.a);
 	ALBEDO = mix(mix(base, lit, glow * 0.6), vec3(1.0), flash);
-	EMISSION = vec3(flash) * 0.6 + highlight_color * (0.08 + rim * 0.5) * highlight + lit * glow * 2.0;
+	// highlight: the node lifted in its own colours, a thin warm rim round its edges (a flat yellow
+	// wash swamped dark leaves and pale bark alike)
+	EMISSION = vec3(flash) * 0.6 + (base * 0.22 + highlight_color * rim * rim * 0.3) * highlight + lit * glow * 2.0;
 	// shimmer: a rare look's (NodeTheme) slow glints, so it's spotted from a way off
 	float glint = smoothstep(0.78, 0.95, theme_noise(v_world * 5.0 + vec3(0.0, TIME * 0.6, 0.0)));
 	EMISSION += base * glint * theme_c.w * 2.5;
