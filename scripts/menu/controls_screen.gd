@@ -15,6 +15,7 @@ const ROWS := [
 	["Talk to a villager", "interact", ""],
 	["Swap spear / rod", "swap_fishing", ""],
 	["Skills: levels, XP, perks, talents", "skills", ""],
+	["World map (wheel zoom, drag to pan)", "map", ""],
 	["Pause", "", "Esc"],
 ]
 const DEBUG_ROWS := [
