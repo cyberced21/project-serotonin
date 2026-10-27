@@ -18,7 +18,7 @@ specialize.
 | P3 | Equal means | **XP per hour and fish per hour** for a skilled player at the same tier and level, per species, within ±15%. Measured by a bot bench (phase 7), tuned by the numbers, not by feel alone. |
 | P4 | Identities | Spear: fast, multi-catch on schools, a miss scatters them. Rod: slow, one fish per bite, quiet, bigger payout per fish (Perfect!). Tuned so they even out over an hour (P3). |
 | P5 | Size in the water | **Each fish has its size from the moment it spawns**: big ones are visibly bigger in the school (model scale ~0.8x–1.35x), so you can pick your target. The size gives the weight popup ("Trout, 1.4 kg") and +0–50% XP **for both tools**. |
-| P6 | Big fish count extra | On pickup, a fish past a size threshold is worth more than one: **Big** (top ~16%) counts **2**, **Huge** (top ~4%) counts **3**, with a popup. Both tools. |
+| P6 | Big fish count extra | On pickup, a fish past a size threshold is worth more than one: **Big** (~12%) counts **2**, **Huge** (top ~4%) counts **3**, with a popup. Both tools. |
 | P7 | Tiers gate species | **Like the axe and pickaxe**: four spears and four rods, each opening the same fish at the same tier (so neither tool gets a species first). The Fishing level stops gating (soft difficulty only, like mining since tools landed). Each tier also gets a little stronger. |
 | P8 | Under-levelled | One rule for both tools: below a species' rating, each tool's success drops by about the same amount for the same gap (spear: dodge chance; rod: window). Bench-checked (P3). |
 | P9 | Village perks | Every fisher's hut perk helps both tools. *Bonus fish* (today spear-only) counts for the rod too; *Sharper eyes* (today rod-only) also widens the spear's skewer. |

@@ -1,5 +1,5 @@
 extends SceneTree
-## Headless checks for rod fishing's pure logic (RodCast, FishBite): no scene, no save is touched.
+## Headless checks for fishing's pure logic (RodCast, FishBite, FishSize): no scene, no save is touched.
 ##
 ##     godot --headless --path . -s res://tools/test_fishing.gd
 
@@ -14,6 +14,7 @@ var _failures := 0
 func _init() -> void:
 	_test_cast()
 	_test_scales()
+	_test_sizes()
 	for id in SPECIES:
 		var s: FishSpecies = load("res://data/fish/%s.tres" % id)
 		_test_window(s)
@@ -45,6 +46,23 @@ func _test_scales() -> void:
 	var five := FishBite.window_scale(25, 30)
 	_check(five > 0.65 and five < 0.8, "5 under: hard but possible (%.2f)" % five)
 	_check(FishBite.window_scale(10, 30) <= 0.21, "20 under: near-impossible")
+
+
+func _test_sizes() -> void:
+	_check(FishSize.count_for(0.2) == 1 and FishSize.count_for(FishSize.BIG) == 2 and FishSize.count_for(FishSize.HUGE) == 3, "size counts 1 / 2 / 3")
+	_check(FishSize.scale_for(0.0) < FishSize.scale_for(1.0), "bigger fish are drawn bigger")
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	var big := 0
+	var huge := 0
+	for i in 10000:
+		var c := FishSize.count_for(FishSize.roll(rng.randf()))
+		big += 1 if c == 2 else 0
+		huge += 1 if c == 3 else 0
+	_check(big > 900 and big < 1500, "about 12%% are Big (%d / 10000)" % big)
+	_check(huge > 250 and huge < 650, "about 4%% are Huge (%d / 10000)" % huge)
+	print("  sizes: %.1f%% Big, %.1f%% Huge: %.2f fish per catch on average" % [big / 100.0, huge / 100.0,
+		(10000 + big + 2 * huge) / 10000.0])
 
 
 func _test_window(s: FishSpecies) -> void:

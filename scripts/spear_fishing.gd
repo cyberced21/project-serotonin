@@ -176,12 +176,13 @@ func thrust() -> void:
 			t.tween_interval(0.06)
 			await t.finished
 		else:
-			var species: Array[FishSpecies] = []
+			var xp := 0.0
 			for f in caught:
-				species.append(f.species)
+				xp += f.species.xp * f.xp_scale() * (1.5 if f.is_under_levelled() else 1.0)  # (reaching up pays)
+			var n := caught.size()
 			_put_on_spear(caught)
 			FishPond.disturb(get_tree(), entry, 2.0)  # the rest of the school bolts
-			_impact(species, entry)
+			_impact(n, xp, entry)
 			# hold: the fish wriggle on the spear (hit-stop stretches this)
 			t = create_tween()
 			t.tween_interval(hold_time)
@@ -210,11 +211,12 @@ func _put_on_spear(caught: Array[Fish]) -> void:
 		var f := caught[i]
 		var copy := f.species.model.instantiate() as Node3D
 		copy.set_meta("item", f.species.id)
-		# the fisher's dock: sometimes a fish counts twice
+		# a Big one counts 2, a Huge one 3; and the fisher's dock sometimes doubles it
 		var bonus := randf() < Village.stat(&"bonus_fish_chance")
-		copy.set_meta("count", 2 if bonus else 1)
-		if bonus:
-			PopupText.spawn(player.get_parent(), f.global_position + Vector3.UP * 0.6, "Bonus!", Skills.color(&"fishing"), 5, 0.1)
+		copy.set_meta("count", FishSize.count_for(f.size) * (2 if bonus else 1))
+		var word := " ".join(PackedStringArray([FishSize.word(f.size), "Bonus!" if bonus else ""])).strip_edges()
+		if word != "":
+			PopupText.spawn(player.get_parent(), f.global_position + Vector3.UP * (0.6 + i * 0.12), word, Skills.color(&"fishing"), 5, 0.1)
 		var mat := ShaderMaterial.new()
 		mat.shader = FISH_SHADER
 		mat.set_shader_parameter("palette", PALETTE)
@@ -229,7 +231,7 @@ func _put_on_spear(caught: Array[Fish]) -> void:
 		spear.add_child(copy)
 		# across the shaft near the tip, stacked back along it for multi-spears (scaled down: the
 		# viewmodel camera is close, full-size fish would fill the screen)
-		copy.scale = Vector3.ONE * 0.6
+		copy.scale = Vector3.ONE * 0.6 * FishSize.scale_for(f.size)
 		copy.position = Vector3(0, 0, -1.1 + i * 0.16)
 		copy.rotation = Vector3(randf_range(-0.4, 0.4), PI / 2 + randf_range(-0.3, 0.3), randf_range(-0.3, 0.3))
 		_on_spear.append(copy)
@@ -237,14 +239,9 @@ func _put_on_spear(caught: Array[Fish]) -> void:
 		f.queue_free()
 
 
-## Escalating feedback + XP for n fish on one thrust.
-func _impact(species: Array[FishSpecies], at: Vector3) -> void:
-	var n := species.size()
-	var xp := 0.0
-	for s in species:
-		xp += s.xp * (1.5 if Skills.levels_under(&"fishing", s.required_level) > 0 else 1.0)  # (reaching up pays)
-	xp = roundi(xp * (1.0 + multi_xp_bonus * (n - 1)))
-	var gained := Skills.add_xp(&"fishing", xp)
+## Escalating feedback + XP (`xp`: the fish's own, summed) for n fish on one thrust.
+func _impact(n: int, xp: float, at: Vector3) -> void:
+	var gained := Skills.add_xp(&"fishing", roundi(xp * (1.0 + multi_xp_bonus * (n - 1))))
 	Juice.hitstop(0.05 + 0.03 * (n - 1))
 	Juice.shake(2.0 + 1.2 * (n - 1))
 	for i in n:  # one wet thwack per fish, each a little higher (real time, so hit-stop can't delay them)

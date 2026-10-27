@@ -12,8 +12,9 @@ extends Node
 ##    a splash, a "!", the rod bends hard. Pull (click) inside the window. Early spooks it; late,
 ##    it spits the hook and the float bobs back up for the next one.
 ## 3. Yank: pulled on time, the fish tears out of the water and sails over in an arc (LandedFish),
-##    slaps down on the bank beside you and flops about. Walk up to it to pick it up. Every fish
-##    rolls a size; a perfect cast plus a quick pull is "Perfect!" (+50% XP).
+##    slaps down on the bank beside you and flops about. Walk up to it to pick it up. Its size was
+##    there all along (FishSize): bigger pays more XP, and a Big one counts 2, a Huge one 3. A
+##    perfect cast plus a quick pull is "Perfect!" (+50% XP).
 ## Under-levelled fish still bite, but the window is far tighter (FishBite.window_scale).
 
 enum State { IDLE, BACKCAST, FLIGHT, WAITING, RETRIEVE, YANK, DONE }
@@ -91,6 +92,8 @@ var _done_wait := 0.0
 var _catch_text := ""
 var _catch_xp := 0
 var _catch_perfect := false
+var _catch_size := ""
+var _catch_bonus := false
 
 
 func _ready() -> void:
@@ -357,12 +360,16 @@ func _yank(f: Fish, timing: float) -> void:
 		f.school.remove_fish(f)
 	FishPond.disturb(get_tree(), at, 1.5)  # the rest of them scatter
 	# the payoff, worked out now (popped up when it lands)
-	var size := pow(_rng.randf(), 1.6)  # big ones are rare
 	_catch_perfect = _verdict.get("quality", -1) == RodCast.Quality.PERFECT and timing < 0.5
 	var under := Skills.level(&"fishing") < s.required_level
-	var mult := (1.5 if _catch_perfect else 1.0) * (1.0 + 0.5 * size) * (1.5 if under else 1.0)
+	var mult := (1.5 if _catch_perfect else 1.0) * f.xp_scale() * (1.5 if under else 1.0)
 	_catch_xp = Skills.add_xp(&"fishing", roundi(s.xp * mult))
-	_catch_text = "%s, %.1f kg" % [Items.display_name(s.id), lerpf(s.weight.x, s.weight.y, size)]
+	_catch_text = "%s, %.1f kg" % [Items.display_name(s.id), f.weight()]
+	_catch_size = FishSize.word(f.size)
+	var count := FishSize.count_for(f.size)
+	_catch_bonus = randf() < Village.stat(&"bonus_fish_chance")  # the fisher's dock
+	if _catch_bonus:
+		count *= 2
 	# the big pull
 	Juice.hitstop(0.1 if _catch_perfect else 0.07)
 	Juice.shake(2.6 if _catch_perfect else 2.0)
@@ -374,7 +381,7 @@ func _yank(f: Fish, timing: float) -> void:
 	_ripple(surface, 2.6)
 	var from := f.global_transform
 	from.origin = surface + Vector3.UP * 0.1
-	caught = LandedFish.spawn(player.get_parent(), s, f.length, from, _landing_spot(at))
+	caught = LandedFish.spawn(player.get_parent(), f, from, _landing_spot(at), count)
 	caught.landed.connect(_on_landed)
 	f.queue_free()  # (already off its school's books)
 	lure.retire()
@@ -386,8 +393,12 @@ func _yank(f: Fish, timing: float) -> void:
 func _on_landed(at: Vector3) -> void:
 	var color := Skills.color(&"fishing")
 	var top := at + Vector3.UP * 0.7
-	if _catch_perfect:
-		PopupText.spawn(player.get_parent(), top + Vector3.UP * 0.2, "Perfect!", color, 7)
+	var words: PackedStringArray = []
+	for w in ["Perfect!" if _catch_perfect else "", _catch_size, "Bonus!" if _catch_bonus else ""]:
+		if w != "":
+			words.append(w)
+	if not words.is_empty():
+		PopupText.spawn(player.get_parent(), top + Vector3.UP * 0.2, " ".join(words), color, 7)
 	PopupText.spawn(player.get_parent(), top, _catch_text, Color.WHITE, 5, 0.08)
 	if _catch_xp > 0:
 		PopupText.spawn(player.get_parent(), top + Vector3.DOWN * 0.18, "+%d" % _catch_xp, color, 4, 0.16)

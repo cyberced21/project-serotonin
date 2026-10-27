@@ -2,7 +2,8 @@ class_name LandedFish
 extends Node3D
 ## A fish the rod yanked out of the water (RodFishing): it sails over in a high, tumbling arc
 ## trailing drips, slaps down on the bank beside you, flops about, then lies there glinting until
-## you walk up to it, which puts it in the inventory. Left lying, it comes to you like any drop.
+## you walk up to it, which puts it in the inventory (`count` of it: a Big one counts 2, a Huge 3).
+## Left lying, it comes to you like any drop.
 
 enum Phase { FLY, FLOP, REST, PULL }
 
@@ -25,6 +26,7 @@ signal landed(at: Vector3)
 @export var collect_height := 1.0
 
 var item: StringName
+var count := 1
 var phase := Phase.FLY
 
 var _surfaces: Array[GeometryInstance3D] = []
@@ -49,12 +51,13 @@ var _rng := RandomNumberGenerator.new()
 
 
 ## Starts it flying from `from` (where the fish was in the water) to the ground at `to`.
-static func spawn(parent: Node, species: FishSpecies, body_length: float, from: Transform3D, to: Vector3) -> LandedFish:
+static func spawn(parent: Node, fish: Fish, from: Transform3D, to: Vector3, p_count: int) -> LandedFish:
 	var f := LandedFish.new()
 	f.name = "LandedFish"
-	f.item = species.id
+	f.item = fish.species.id
+	f.count = p_count
 	parent.add_child(f)
-	f._build(species, body_length)
+	f._build(fish.species, fish.length, FishSize.scale_for(fish.size))
 	f._from = from.origin
 	f._to = to
 	f._arc = 1.8 + RodFishing._flat(from.origin, to) * 0.14
@@ -63,10 +66,11 @@ static func spawn(parent: Node, species: FishSpecies, body_length: float, from: 
 	return f
 
 
-func _build(species: FishSpecies, body_length: float) -> void:
+func _build(species: FishSpecies, body_length: float, model_scale: float) -> void:
 	_rng.randomize()
 	var model := species.model.instantiate() as Node3D
 	add_child(model)
+	model.scale = Vector3.ONE * model_scale
 	var mat := ShaderMaterial.new()
 	mat.shader = SHADER
 	mat.set_shader_parameter("palette", PALETTE)
@@ -79,7 +83,7 @@ func _build(species: FishSpecies, body_length: float) -> void:
 		mesh.set_instance_shader_parameter("phase", _rng.randf() * TAU)
 		_surfaces.append(mesh)
 		aabb = mesh.get_aabb() if aabb.size == Vector3.ZERO else aabb.merge(mesh.get_aabb())
-	_half_height = maxf(aabb.size.x, 0.03) * 0.5  # lying on its flank, its width is its height
+	_half_height = maxf(aabb.size.x * model_scale, 0.03) * 0.5  # lying on its flank, its width is its height
 	_yaw = _rng.randf() * TAU
 	_side = 1.0 if _rng.randf() < 0.5 else -1.0
 	# drips shaken off on the way over
@@ -218,7 +222,7 @@ func _pull(delta: float) -> void:
 	var target := player.global_position + Vector3.UP * collect_height
 	var to := target - global_position
 	if to.length() < 0.35:
-		Inventory.add(item)
+		Inventory.add(item, count)
 		Sfx.play_pickup()
 		queue_free()
 		return
