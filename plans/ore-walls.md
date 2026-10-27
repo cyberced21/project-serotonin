@@ -78,6 +78,30 @@ synthesized slab rumble (synth_gathering.py); debris thrown and faded as today (
 7. **Procgen pit.** The same placer for terraced / deep / broken pits, saved in the world's file.
 8. **Tour + polish.** Graphics-tour stop, screenshots, docs/TODO.md items.
 
+## As built (2026-10-26, branch `walls`, all 8 phases)
+
+Where the build differs from the decisions above:
+
+- **Blocks stand in front of the walls rather than in holes cut into the terrain** (decisions 7–8).
+  Each block of rock (panels, pillars, cap) sits on the level below, its back against the
+  terrace wall and its cap flush with the level above. The player sees the same thing: real 4 m
+  alcoves under a walkable roof. But there are no heightmap holes or terrain edits, and a dug-out
+  terrace is as wide as before. The walkway in front of an undug wall is ~4.6 m narrower.
+- **`OreWall` extends `ResourceNode`** rather than sharing a helper pulled out of it: the player,
+  saves and helpers (XP, hit effects, debris throws) work unchanged, and `resource_node.gd`
+  wasn't refactored.
+- **The piece struck is found by its Voronoi seed**, not by a collider per piece. Hulls per piece
+  exist only while the player is within 14 m; further off, one box stands in.
+- **Veins are one, sometimes two, a panel** (~12–25 vein pieces a layer). Two or three gave ~30.
+- **No stone drops** (decision 10): the game has no stone item.
+- **The pillars and cap are built in code** (`OreWallRun`), since a pillar has to fill whatever
+  wedge two panels on a curve leave between them. Bedrock is a slab behind each panel.
+- **Extra rule:** once 85% of a layer is gone, the rest crumbles out, so there's no hunting the
+  corners for the last few pieces.
+- **Walls tighter than 12 m** are left bare (a deep procgen pit's last wall).
+
+Open items: docs/TODO.md "Ore walls".
+
 ## Later
 
 Tunnels: an alcove's back opens into a drift you keep digging (needs a different support rule,

@@ -56,6 +56,23 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 - [ ] **The seam-crack code** in `resource_node.gd` (and `fractured()`) is now used only by `models/designs/`; drop it if those designs go.
 - [ ] **Icons** don't show the baked shade (Workbench renders palette colour only).
 
+### Ore walls ([plans/ore-walls.md](../plans/ore-walls.md))
+
+- [x] **Panels dug piece by piece** (`OreWall`, `make_models.py` `ore_walls`): 3 x 4 m, 4 m deep, eight layers of ~70 Voronoi pieces; the piece struck is the one with the nearest seed; dug stays dug (saved per panel).
+- [x] **Veins** threaded through each panel from its seed (`node_surface.gdshaderinc` WALL), richer with depth and further down the pit; a vein piece needs its ore's pick, drops 1 ore and its XP.
+- [x] **Runs** (`OreWallRun`): pillars between panels, a cap rock over them, bedrock behind; dug in, a panel is a roofed alcove, lit from within as it deepens.
+- [x] **Loose slabs** (two a layer): struck, or undercut, the whole slab comes down (synthesized `slab` sound). Stragglers crumble once 85% of a layer is gone.
+- [x] **Placed** round Greystone's five rings (161 panels, in place of the terrace ore rocks) and a generated world's pit (`OreWallPlacer`).
+- [ ] **Playtest:** everything is bot-verified only (screenshots, headless tests). Swings per layer (~30 with a crystal pick, untried with a stone one), slab frequency, vein amount (one vein, sometimes two, ~12–25 vein pieces a layer), whether the alcove light looks like light or like a lamp.
+- [ ] **No stone item:** the plan had stone pieces drop stone 1 in 4, but the game has no stone item or use for one; they give XP only.
+- [ ] **Iron veins read almost white** (the palette's `ore.iron` is pale silver), and **coal veins on the weathered face read like black cracks**.
+- [ ] **Lone panels** (a run of one, between a ramp and stairs) look like a stray cube.
+- [ ] **Props keep their stretch of wall bare** (ladders, scaffolds); the scaffolds could move onto the caps.
+- [ ] **Panel save ids follow the terrain:** a panel is keyed by its ring, run and place in the run, so regenerating Greystone's terrain (or changing the placer) can hand dug progress to a different panel.
+- [ ] **The cap top sits ~5 cm under the level above** (the terrain shows through near the back); fine so far.
+- [ ] **Debug menu:** no teleport to a wall or reset of dug walls yet.
+- [ ] **Tunnels:** an alcove's back opening into a drift (the plan's "later").
+
 ### Woodcutting overhaul
 
 Plan and decisions: `plans/woodcutting-overhaul.md`.
