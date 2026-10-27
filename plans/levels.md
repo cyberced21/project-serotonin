@@ -5,7 +5,7 @@ levels decide *how well*. Chosen 2026-10-20 from two explorations
 ([levels-milestones.md](levels-milestones.md), [levels-talents.md](levels-talents.md)): B's
 steady per-level growth, with D's gameplay-changing techniques turned into C-style **choices**.
 
-Status: **phases 1 and 2 built** 2026-10-27 on branch `levels` (off `fishing-yank`): the minor
+Status: **phases 1 to 3 built** (3: the bench) 2026-10-27 on branch `levels` (off `fishing-yank`): the minor
 tracks (`scripts/perks.gd`), the perk line under the level-up banner, a Skills page in the pause
 menu; the talent framework (choice cards, picks saved, mastery, respec at Greta). Unplayed by
 hand. **The talents don't do anything yet**: their effects are phases 4 and 5.
@@ -169,7 +169,19 @@ boost by choosing who to visit. Each is the villager's trade flavour, never a ta
    has a third tab, Talents: reset one skill, free the first time, then 20 of its base goods per
    pick (the rare-item option, 10 per pick plus one item, comes with rare items in phase 6).
    `tools/test_talents.gd` (rules) and `tools/talent_playtest.gd` (the flow in a real world).
-3. **The balance bench** (headless, yield per minute per talent).
+3. ~~**The balance bench**~~: built 2026-10-27, `tools/talent_bench.gd` on a shared bot
+   (`tools/bench_bot.gd`, also behind `tools/fishing_bench.gd` now). Per milestone: a no-talent
+   baseline, then each option alone, at that level with the best tools, each `--repeats` times in
+   a fresh copy of one world (fishing: the pond in main.tscn, rod and spear each against their
+   own baseline). Judged on items/min (fishing: XP/min). Windowed and muted. It reports its own
+   noise and won't judge a pair when runs of one option disagree by more than ±15%.
+   **Finding**: the bot isn't frame-exact, so runs scatter: mining ±14% at 2 game minutes, the
+   rod ±12% at 3. Use 5+ minutes and 3 repeats for verdicts (long: ~20 min per milestone). The
+   spear at level 10 on the pond barely caught anything (0.3 fish/min): most fish were below
+   its length. The bot now only goes for fish it can reach. The fishing tools were balanced at
+   30 (plans/fishing-parity.md); level 10 needs a look.
+   Also fixed: walks the bot skips by teleporting are now really charged to the clock (the
+   fishing bench's next steps used to swallow them, so the rod's walks were free).
 4. **Woodcutting talents** end to end, then played by hand before the rest.
 5. **Mining**, then **Fishing**, then **Farming** talents.
 6. **Flourishes, rare-item uses, README, TODO.**
