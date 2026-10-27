@@ -9,7 +9,7 @@ extends Resource
 ## All of it comes from the seed and the node's position, so nothing needs saving.
 ## The look goes to the node shaders as three instance uniforms (node_surface.gdshaderinc):
 ## theme_a = (moss, snow, wet, dust), theme_b = (hue shift, value, saturation, vein) and, for the
-## leaves instead of theme_b's colour, theme_c = (autumn, value, saturation, 0).
+## leaves instead of theme_b's colour, theme_c = (autumn, value, saturation, shimmer).
 
 ## The name shown in tools and the debug menu ("Pine Forest moss").
 @export var title := ""
@@ -38,6 +38,12 @@ extends Resource
 ## saturation above).
 @export var leaf_value := Vector2(1.0, 1.0)
 @export var leaf_saturation := Vector2(1.0, 1.0)
+@export_group("Rare")
+## For a rare look (data/themes/rare/): how much it glints (slow sparkles, so it's spotted from a
+## way off), drops on top of the usual, and the XP multiplied by this.
+@export var shimmer := Vector2(0.0, 0.0)
+@export var bonus_drops := 0
+@export var xp_scale := 1.0
 @export_group("Clusters")
 ## How far a node strays from its cluster's draw, as a share of each range (0 = identical siblings).
 @export_range(0.0, 1.0) var jitter := 0.25
@@ -49,12 +55,12 @@ func look(cluster: int, node: int) -> Array[Vector4]:
 	c.seed = cluster
 	var n := RandomNumberGenerator.new()
 	n.seed = node
-	var ranges := [moss, snow, wet, dust, hue, value, saturation, vein, autumn, leaf_value, leaf_saturation]
+	var ranges := [moss, snow, wet, dust, hue, value, saturation, vein, autumn, leaf_value, leaf_saturation, shimmer]
 	var v: Array[float] = []
 	for r: Vector2 in ranges:
 		var t := clampf(c.randf() + n.randf_range(-1.0, 1.0) * jitter, 0.0, 1.0)
 		v.append(lerpf(r.x, r.y, t))
-	return [Vector4(v[0], v[1], v[2], v[3]), Vector4(v[4], v[5], v[6], v[7]), Vector4(v[8], v[9], v[10], 0.0)]
+	return [Vector4(v[0], v[1], v[2], v[3]), Vector4(v[4], v[5], v[6], v[7]), Vector4(v[8], v[9], v[10], v[11])]
 
 
 ## Dresses one mesh with a look from look().

@@ -54,6 +54,7 @@ if args.per_node:  # (title, nodes, theme) per tile
 else:
     runs = [(t, args.nodes, t) for t in themes]
 for title, nodes, theme in [] if args.tour else runs:
+    title = title.replace("/", "_")  # (rare/<id> themes)
     name = f"{args.label}/{title}"
     subprocess.run([args.godot, "--path", ROOT, "--screen", "1", "--resolution", "1280x720",
                     "-s", "res://tools/theme_gallery.gd", "--", f"--nodes={nodes}",

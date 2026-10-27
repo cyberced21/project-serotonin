@@ -254,6 +254,8 @@ var _last_hit_msec := -100000
 var _surfaces: Array[GeometryInstance3D] = []
 ## The place's dressing (NodeTheme.look()): set by the spawner before the node enters the tree.
 var look: Array[Vector4] = []
+## A rare look (ProcgenMap.rares), if this is the one: its bonus drops and XP.
+var rare: NodeTheme
 var _flash_tween: Tween
 var _nudge_tween: Tween
 var _burst_home := Vector3.ZERO
@@ -593,6 +595,8 @@ func _tool_ring(info: HitInfo) -> void:
 func _award_xp(amount: int, big := false) -> void:
 	if amount <= 0:
 		return
+	if rare:
+		amount = roundi(amount * rare.xp_scale)
 	var gained := Skills.add_xp(skill, amount)
 	if gained > 0:
 		PopupText.spawn(get_parent(), _popup_pos() + Vector3(randf_range(-0.2, 0.2), 0.25 if big else 0.0, 0.0),
@@ -606,6 +610,9 @@ func _popup_pos() -> Vector3:
 func _break(info: HitInfo) -> void:
 	_clear_fault()
 	_award_xp(roundi(xp_on_break * (1.0 + (Skills.UNDER_XP_BONUS if is_under_levelled() else 0.0))), true)
+	if rare:
+		PopupText.spawn(get_parent(), _popup_pos() + Vector3.UP * 0.55, "Rare find: %s!" % rare.title,
+			Color(1.0, 0.85, 0.45), 9, 0.15)
 	if _carve and clean_layers:  # the hinge giving way: a deep snap of the last fibres
 		Sfx.play_at(clean_layers, info.position, 0.6, 3.0)
 	else:
@@ -767,6 +774,8 @@ func _drop_count() -> int:
 		extra = int(Village.stat(&"extra_logs"))  # the woodcutter's lodge
 	elif skill == &"mining":
 		extra = int(Village.stat(&"extra_ore"))  # Edda's assay shed
+	if rare:
+		extra += rare.bonus_drops
 	return randi_range(drops_min, maxi(drops_min, drops_max)) + extra
 
 

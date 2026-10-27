@@ -1,6 +1,6 @@
 extends SceneTree
 ## Theme tour: generates a procgen world and, in each biome, stands by its busiest cluster of
-## nodes and saves a screenshot (docs/images/themes/<label>/<n>_<biome>_<kind>.png), to see a
+## trees or rocks, then by each of the seed's rare looks, and saves a screenshot (docs/images/themes/<label>/<n>_<biome>_<kind>.png), to see a
 ## place's theme on its rocks, trees and scenery together. The debug menu builds the world from
 ## the same command line (`--procgen --seed=N`).
 ##
@@ -58,6 +58,7 @@ func _run() -> void:
 			nodes.append(n as Node3D)
 	var seen := {}
 	var shot := 0
+	var stops: Array = []  # [name, focus node]
 	for site: Dictionary in map.get("sites"):
 		var key := "%s_%s" % [site["biome"], site.get("kind", &"")]
 		if seen.has(key):
@@ -80,7 +81,13 @@ func _run() -> void:
 		if best == null:
 			print("TOUR %s: no nodes" % key)
 			continue
-		var focus := best.global_position + Vector3.UP * 0.8
+		stops.append([key, best])
+	for n in nodes:  # and the seed's rare looks (ProcgenMap.rares)
+		var rare: Resource = n.get("rare")
+		if rare:
+			stops.append(["rare_%s" % String(rare.get("title")).to_snake_case(), n])
+	for stop: Array in stops:
+		var focus := (stop[1] as Node3D).global_position + Vector3.UP * 0.8
 		player.call("teleport", focus, focus + Vector3.FORWARD)  # (so the world streams in round it)
 		cam.global_position = _viewpoint(terrain, focus)
 		cam.look_at(focus)
@@ -88,9 +95,9 @@ func _run() -> void:
 		for n in nodes:  # (the parked player's crosshair lights up whatever it's on)
 			n.call("set_highlighted", false)
 		shot += 1
-		var name := "%02d_%s" % [shot, key]
+		var name := "%02d_%s" % [shot, stop[0]]
 		await _shot("%s/%s.png" % [out, name])
-		print("TOUR %s  %d nodes round %s" % [name, best_count, best.name])
+		print("TOUR %s  at %s" % [name, (stop[1] as Node).name])
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://procgen_%d.json" % world_seed))
 	quit()
 

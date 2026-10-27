@@ -37,6 +37,8 @@ const FAMILIES := 4
 @export var sink := 0.15
 ## How the place dresses its nodes (moss, snow…); none = as made.
 @export var theme: NodeTheme
+## A rare look (data/themes/rare/) for the first tree or rock placed, with its bonus.
+@export var rare: NodeTheme
 @export_group("Hotspots")
 ## Spots the nodes crowd around, (x, z, radius): glades, the trail.
 @export var hotspots := PackedVector3Array()
@@ -100,6 +102,10 @@ func _spawn() -> void:
 				node.model = entry.variants[v - 1]
 		if theme:
 			node.look = theme.look(cluster, hash([seed, node.save_id]))
+		if rare and node.skill in [&"woodcutting", &"mining"]:
+			node.look = rare.look(cluster, hash([seed, node.save_id]))
+			node.rare = rare
+			rare = null  # (just the one)
 		node.name = String(node.save_id)
 		node.position = to_local(ground as Vector3) - Vector3.UP * sink
 		node.rotation.y = yaw

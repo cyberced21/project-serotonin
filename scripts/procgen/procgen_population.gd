@@ -80,6 +80,7 @@ const SCENERY_AREA := Rect2(-185, -185, 370, 370)
 
 
 static func populate(parent: Node3D, map: ProcgenMap) -> void:
+	var spawners := {}  # site -> its spawner
 	for i in map.sites.size():
 		var site: Dictionary = map.sites[i]
 		var spec: Dictionary = NODES.get(site["biome"], {}).get(site["tier"], {})
@@ -104,12 +105,30 @@ static func populate(parent: Node3D, map: ProcgenMap) -> void:
 		spawner.accept = func(p: Vector2) -> bool:
 			return map.cells[ProcgenMap.pixel_index(p)] == cell and not in_pit.call(p)
 		parent.add_child(spawner)
+		spawners[i] = spawner
+	_place_rares(map, spawners)
 	_quarry_levels(parent, map)
 	var boxes := _cell_boxes(map)
 	for i in map.sites.size():
 		var box: Rect2 = boxes[i].intersection(SCENERY_AREA)
 		if box.has_area():
 			parent.add_child(_scenery(map, i, box))
+
+
+## Hands each of the seed's rare looks (ProcgenMap.rares) to its site's spawner, or, for a site
+## with no nodes, the nearest site's that has some.
+static func _place_rares(map: ProcgenMap, spawners: Dictionary) -> void:
+	for r: Dictionary in map.rares:
+		var at: Vector2 = map.sites[r["site"]]["pos"]
+		var best: NodeSpawner = null
+		var best_d := INF
+		for i in spawners:
+			var d: float = (map.sites[i]["pos"] as Vector2).distance_to(at)
+			if d < best_d and (spawners[i] as NodeSpawner).rare == null:
+				best_d = d
+				best = spawners[i]
+		if best:
+			best.rare = load("res://data/themes/rare/%s.tres" % r["theme"])
 
 
 ## How a biome kind dresses its nodes (data/themes/<kind>.tres), else its biome

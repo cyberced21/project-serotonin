@@ -49,6 +49,8 @@ const BIOME_TEXTURE := {&"pinewood": WorldMap.TEX_FOREST, &"goldmeadow": WorldMa
 ## In `cells`, a pixel up on the rim (no biome).
 const RIM_CELL := 255
 
+## The rare looks a seed picks from (data/themes/rare/<id>.tres): one-off nodes worth a bonus.
+const RARE_THEMES: Array[StringName] = [&"ancient", &"scorched", &"frosted", &"gilded"]
 ## Each biome's kinds, [id, name on the arrival card]; the seed rolls one per biome.
 const KINDS := {
 	&"clearing": [[&"meadow", "Meadow"], [&"hollow", "Hollow"]],
@@ -166,6 +168,9 @@ var kinds: Dictionary[StringName, StringName] = {}
 ## The resource this seed has twice as much of, and the one it has half as much of (item ids).
 var rich: StringName = &""
 var lean: StringName = &""
+## The rare looks this seed: 1 to 3 of {theme: StringName (data/themes/rare/<theme>.tres), site:
+## int (index into `sites`)}. The site's first tree or rock wears it (see ProcgenPopulation).
+var rares: Array[Dictionary] = []
 ## Where the hub is, and how wide its ground eases up into the land (a Hollow's rises close).
 var hub := HUB_CENTER
 var hub_ramp := HUB_RAMP
@@ -254,6 +259,7 @@ func sub_seed(part: StringName) -> int:
 func generate() -> void:
 	_roll_kinds()
 	_place_sites()
+	_roll_rares()
 	heights.resize(SIZE * SIZE)
 	ids.resize(SIZE * SIZE)
 	cells.resize(SIZE * SIZE)
@@ -310,6 +316,23 @@ func height_image() -> Image:
 
 
 # --- sites ------------------------------------------------------------------------------------
+
+## Picks this seed's rare looks (see `rares`), each from a different theme at a different site.
+func _roll_rares() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = sub_seed(&"rares")  # (its own, so nothing else moves)
+	var themes := RARE_THEMES.duplicate()
+	var at: Array = range(sites.size())
+	for list in [themes, at]:  # shuffled with the seed's own generator
+		for i in range(list.size() - 1, 0, -1):
+			var j := rng.randi_range(0, i)
+			var t: Variant = list[i]
+			list[i] = list[j]
+			list[j] = t
+	rares.clear()
+	for k in mini(rng.randi_range(1, 3), mini(themes.size(), at.size())):
+		rares.append({"theme": themes[k], "site": at[k]})
+
 
 func _roll_kinds() -> void:
 	kinds.clear()

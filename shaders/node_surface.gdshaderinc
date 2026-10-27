@@ -44,7 +44,7 @@ instance uniform vec4 glow_tint : source_color = vec4(1.0, 1.0, 1.0, 0.0);
 
 // The place's dressing (NodeTheme, set per node): theme_a = (moss, snow, wet, dust), each 0..1;
 // theme_b = (hue shift in turns, value, saturation, vein glint); theme_c, the leaves instead of
-// theme_b's colour = (autumn 0..1, value, saturation, unused). The defaults leave the model as made.
+// theme_b's colour = (autumn 0..1, value, saturation, shimmer: a rare look's glints, 0..1). The defaults leave the model as made.
 instance uniform vec4 theme_a = vec4(0.0);
 instance uniform vec4 theme_b = vec4(0.0, 1.0, 1.0, 1.0);
 instance uniform vec4 theme_c = vec4(0.0, 1.0, 1.0, 0.0);
@@ -214,6 +214,9 @@ void fragment() {
 	vec3 lit = mix(glow_color, glow_tint.rgb, glow_tint.a);
 	ALBEDO = mix(mix(base, lit, glow * 0.6), vec3(1.0), flash);
 	EMISSION = vec3(flash) * 0.6 + highlight_color * (0.08 + rim * 0.5) * highlight + lit * glow * 2.0;
+	// shimmer: a rare look's (NodeTheme) slow glints, so it's spotted from a way off
+	float glint = smoothstep(0.78, 0.95, theme_noise(v_world * 5.0 + vec3(0.0, TIME * 0.6, 0.0)));
+	EMISSION += base * glint * theme_c.w * 2.5;
 #ifdef ROCK
 	EMISSION += base * float(row == 1) * ore_glow * theme_b.w;  // ore still reads down in the shade of a hole
 #endif
