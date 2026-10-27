@@ -156,6 +156,7 @@ SMOOTH = [
     ("rock", 50), ("iron_rock", 50), ("coal_rock", 50), ("gold_rock", 50),
     ("designs/copper_*", 50), ("designs/iron_*", 50), ("designs/coal_*", 50), ("designs/gold_*", 50),
     ("scenery/boulder_*", 50), ("scenery/shore_stone", 50), ("scenery/quarry_rubble", 45),
+    ("walls/*", 50),
     # trees: round trunks and limbs, hard cut ends
     ("tree", 70), ("oak", 70), ("birch", 70), ("pine", 70), ("designs/tree_*", 70),
     ("designs/oak_*", 70), ("designs/birch_*", 70), ("designs/pine_*", 70), ("scenery/canopy_*", 70),
@@ -3451,6 +3452,146 @@ def big_scenery():
     boulder("boulder_flat", 57, 0.7, (1.4, 1.1, 0.5))
 
 
+# --- ore walls ----------------------------------------------------------------------------------
+# The quarry's walls (OreWall): a block of rock WALL_SIZE across, tall and deep, cut into
+# WALL_LAYERS layers front to back, each a few dozen Voronoi pieces about head-sized. The front of
+# the first layer is the weathered face; everything else is cut faces, fresh stone, so whatever a
+# dug-out layer leaves showing is newly broken rock. Pieces are named L<layer>_<nn>. The ore isn't
+# baked in: the game threads veins through each panel from the world seed (OreWall, the WALL part
+# of node_surface.gdshaderinc).
+# models/walls/panel_<n>.pieces.json: {"layers": [[pieces] per layer], "links": piece -> the pieces
+# of its own layer it touches, "seeds": piece -> its Voronoi seed (Godot space: x, y up, z out of
+# the face)}; the game finds the piece struck as the one with the nearest seed.
+
+WALL_SIZE = (3.0, 4.0, 4.0)  # across, deep (into the wall), tall (m; Blender x, y, z)
+WALL_LAYERS = 8
+WALL_PIECE = 0.34  # the closest two seeds of a layer may be (m)
+WALL_TEMPLATES = 4
+
+
+def wall_block(rng, rough=0.1):
+    """The panel's rock before it's cut: a box from x -w/2..w/2, y 0..deep (into the wall),
+    z 0..tall, gridded so the front (y = 0) can be roughened: it bulges and dips by up to `rough`
+    with smooth noise, a quarried face rather than a sawn one."""
+    w, d, h = WALL_SIZE
+    bm = box((w, d, h))
+    bmesh.ops.translate(bm, vec=Vector((0, d / 2, h / 2)), verts=bm.verts)
+    cuts = [(Vector((x, 0, 0)), Vector((1, 0, 0))) for x in [-w / 2 + (i + 1) * 0.25 for i in range(int(w / 0.25) - 1)]]
+    cuts += [(Vector((0, 0, z)), Vector((0, 0, 1))) for z in [(i + 1) * 0.25 for i in range(int(h / 0.25) - 1)]]
+    for p, n in cuts:
+        bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=p, plane_no=n)
+    off = Vector((rng.uniform(-50, 50), rng.uniform(-50, 50), rng.uniform(-50, 50)))
+    for v in bm.verts:
+        if v.co.y < 0.01:
+            v.co.y += rough * (fbm(v.co * 0.9 + off) + 0.35 * noise.noise(v.co * 3.7 + off))
+    bmesh.ops.triangulate(bm, faces=bm.faces[:])
+    return bm
+
+
+def wall_seeds(rng):
+    """Seeds per layer: dart-thrown over the face, at least WALL_PIECE apart, at the layer's depth
+    give or take a little (so the layers interlock instead of meeting on a flat plane). At most 96
+    a layer (the game hides broken pieces with a 96-bit mask)."""
+    w, d, h = WALL_SIZE
+    depth = d / WALL_LAYERS
+    layers = []
+    for k in range(WALL_LAYERS):
+        pts = []
+        for _ in range(4000):
+            if len(pts) >= 96:
+                break
+            p = Vector((rng.uniform(-w / 2 + 0.08, w / 2 - 0.08), (k + 0.5) * depth + rng.uniform(-0.12, 0.12) * depth / 0.5,
+                        rng.uniform(0.08, h - 0.08)))
+            if all(Vector((p.x - q.x, p.z - q.z)).length > WALL_PIECE for q in pts):
+                pts.append(p)
+        layers.append(pts)
+    return layers
+
+
+def wall_cell(src, seeds, index):
+    """voronoi_cell, cut only by the seeds near enough to matter (a panel has hundreds)."""
+    a = seeds[index]
+    near = [j for j, b in enumerate(seeds) if j != index and (b - a).length < WALL_PIECE * 3.4]
+    bm = src.copy()
+    cut = bm.faces.layers.int.get("cut") or bm.faces.layers.int.new("cut")
+    across = bm.faces.layers.int.get("across") or bm.faces.layers.int.new("across")
+    for j in near:
+        if not bm.faces:
+            break
+        b = seeds[j]
+        res = bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:],
+                                     plane_co=(a + b) * 0.5, plane_no=(b - a).normalized(), clear_outer=True)
+        edges = [e for e in res["geom_cut"] if isinstance(e, bmesh.types.BMEdge) and e.is_boundary]
+        if edges:
+            for f in bmesh.ops.holes_fill(bm, edges=edges, sides=0)["faces"]:
+                f[cut] = 1
+                f[across] = j + 1
+    return bm
+
+
+def wall_panel(n):
+    reset()
+    rng = seeded(4100 + n)
+    whole = wall_block(rng)
+    w, d, h = WALL_SIZE
+    layers = wall_seeds(rng)
+    seeds = [s for layer in layers for s in layer]
+    names = [f"L{k}_{i:02d}" for k, layer in enumerate(layers) for i in range(len(layer))]
+    layer_of = [k for k, layer in enumerate(layers) for _ in layer]
+    links = {nm: set() for nm in names}
+    field = Vector((rng.uniform(-50, 50), rng.uniform(-50, 50), rng.uniform(-50, 50)))
+    bend = 0.035
+    bent = whole.copy()
+    warp(bent, bend, field)
+    bvh = BVHTree.FromBMesh(bent)
+    bent.free()
+    for i in range(len(seeds)):
+        bm = wall_cell(whole, seeds, i)
+        cut = bm.faces.layers.int.get("cut")
+        across = bm.faces.layers.int.get("across")
+        if not bm.faces:
+            continue
+        split_long_edges(bm, 0.2)
+        bmesh.ops.triangulate(bm, faces=bm.faces[:])
+        for f in bm.faces:
+            j = f[across] - 1
+            if f[cut] and j >= 0 and layer_of[j] == layer_of[i] and f.calc_area() > 1e-4:
+                links[names[i]].add(names[j])
+                links[names[j]].add(names[i])
+        # the sides, top and foot of the block meet the pillars, the cap and the ground: only the
+        # front is the weathered face; inside it's all fresh stone
+        outside = lambda f: not f[cut] and f.calc_center_median().y < 0.2
+        for f in bm.faces:
+            if not f[cut] and not outside(f):
+                f[cut] = 1
+        # one shade a piece, inside and out (a shade per face speckles the small faces like a
+        # chequerboard): the face lighter on top, darker underneath
+        side = "stone.4" if rng.random() < 0.6 else "terrain.rock"
+        inner = "stone.5" if rng.random() < 0.6 else "stone.4"
+        paint(bm, lambda f: inner if f[cut] else "stone.5" if f.normal.z > 0.55 else "stone.2" if f.normal.z < -0.4 else side)
+        warp(bm, bend, field)
+        bake_weathering(bm, cut, bvh, h, moss_amount=0.35, reach=0.5, soil=0.6)
+        centre = sum((v.co for v in bm.verts), Vector()) / len(bm.verts)
+        bmesh.ops.translate(bm, vec=-centre, verts=bm.verts)
+        make_object(names[i], bm, centre)
+    whole.free()
+    name = os.path.join("walls", f"panel_{n}")
+    export(name, loose_edges=True)
+    present = {o.name for o in bpy.context.scene.objects}
+    data = {"layers": [[nm for nm, k in zip(names, layer_of) if k == L and nm in present] for L in range(WALL_LAYERS)],
+            "links": {nm: sorted(l & present) for nm, l in links.items() if nm in present},
+            "seeds": {nm: [round(s.x, 4), round(s.z, 4), round(-s.y, 4)] for nm, s in zip(names, seeds) if nm in present},
+            "size": [w, h, d]}
+    with open(os.path.join(OUT_DIR, name + ".pieces.json"), "w") as f:
+        json.dump(data, f, indent=1)
+
+
+def ore_walls():
+    os.makedirs(os.path.join(OUT_DIR, "walls"), exist_ok=True)
+    for n in range(WALL_TEMPLATES):
+        wall_panel(n)
+
+
 if __name__ == "__main__":  # make_village.py imports the helpers above without building these
     os.makedirs(os.path.join(OUT_DIR, "scenery"), exist_ok=True)
     os.makedirs(os.path.join(OUT_DIR, "fish"), exist_ok=True)
@@ -3466,6 +3607,6 @@ if __name__ == "__main__":  # make_village.py imports the helpers above without 
     for build in builds:
         if not only or build.__name__ in only:
             build()
-    for build in (designs, tree_designs, variants, ore_variants, tree_variants):  # only when asked for by name: not the game's own models
+    for build in (designs, tree_designs, variants, ore_variants, tree_variants, ore_walls):  # only when asked for by name: not the game's own models
         if build.__name__ in only:
             build()

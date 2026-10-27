@@ -87,12 +87,54 @@ bool piece_gone(int i) {
 }
 #endif
 
+#ifdef WALL
+// An ore wall's layer (OreWall, node_wall.gdshader): the ore isn't in the mesh. Veins are sheets
+// through the panel (its own space: x across, y up, z out of the face), each a plane (xyz normal,
+// w its distance from the origin) bowed by two waves (vein_wave: xyz how tight and which way, w how
+// far). piece_ore says which ore each piece carries (0 = none: the vein isn't drawn on it, so a
+// piece shows ore exactly when it drops some); ore_uv is each ore's palette swatch.
+// OreWall mirrors the vein maths (_vein_distance) to decide which pieces carry ore.
+uniform int vein_count = 0;
+uniform vec4 vein_plane[4];
+uniform vec4 vein_wave[4];
+uniform float vein_width[4];
+uniform int piece_ore[96];
+uniform vec2 ore_uv[8];
+// The piece under the crosshair (its index; -1 none): the hover highlight and the hit flash light
+// that piece alone, not the whole wall.
+instance uniform float aim_piece = -1.0;
+varying vec3 v_panel;
+varying flat int v_piece;
+
+float vein_distance(int i, vec3 p) {
+	vec4 pl = vein_plane[i];
+	vec4 wv = vein_wave[i];
+	float phase = pl.w * 3.1;
+	float bow = sin(dot(p, wv.xyz) + phase) * 0.6 + sin(dot(p, wv.zxy * 1.7) + phase * 1.3) * 0.4;
+	return dot(p, pl.xyz) - pl.w + bow * wv.w;
+}
+
+// 1 on a vein, easing off at its edges.
+float vein_mask(vec3 p) {
+	float m = 0.0;
+	for (int i = 0; i < vein_count; i++) {
+		float w = vein_width[i];
+		m = max(m, 1.0 - smoothstep(w * 0.55, w, abs(vein_distance(i, p))));
+	}
+	return m;
+}
+#endif
+
 void vertex() {
 	DETAIL_CAPTURE
 	v_local_y = VERTEX.y;
 #ifdef ROCK
 	v_shade = COLOR;
 	int piece = int(UV2.x + 0.5) - 1;
+#ifdef WALL
+	v_panel = VERTEX;
+	v_piece = piece;
+#endif
 	if (piece >= 0 && piece < 96 && piece_gone(piece)) {
 		VERTEX = vec3(0.0);  // every corner on one point: the triangle draws nothing
 	}
@@ -219,6 +261,17 @@ void fragment() {
 	}
 	int row = int(floor(UV.y * 8.0));
 	float ore = float(row == 1 || row == 5);  // the palette's ore and metal rows glint
+#ifdef WALL
+	int kind = v_piece >= 0 && v_piece < 96 ? piece_ore[v_piece] : 0;
+	if (kind > 0) {
+		float vein = vein_mask(v_panel);
+		// on the weathered face the ore is dulled; a fresh break shows it bright
+		vec3 ore_c = texture(palette, ore_uv[kind]).rgb * mix(0.7, 1.15, fresh);
+		base = mix(base, ore_c, vein);
+		ore = max(ore, vein);
+		row = vein > 0.5 ? 1 : row;  // (glows like the palette's ore row, below)
+	}
+#endif
 	float skin = (1.0 - fresh) * (1.0 - ore);
 	base = mix(base, mix(base, vec3(dot(base, vec3(0.299, 0.587, 0.114))), skin_grey) + skin_lift, skin);
 	float wet;
@@ -243,10 +296,17 @@ void fragment() {
 	ROUGHNESS = mix(1.0, 0.5, wet);
 #endif
 	vec3 lit = mix(glow_color, glow_tint.rgb, glow_tint.a);
-	ALBEDO = mix(mix(base, lit, glow * 0.6), vec3(1.0), flash);
+	float lift = highlight;
+	float white = flash;
+#ifdef WALL
+	float aimed = float(v_piece >= 0 && abs(float(v_piece) - aim_piece) < 0.5);
+	lift *= aimed;
+	white *= aimed;
+#endif
+	ALBEDO = mix(mix(base, lit, glow * 0.6), vec3(1.0), white);
 	// highlight: the node lifted in its own colours, a thin warm rim round its edges (a flat yellow
 	// wash swamped dark leaves and pale bark alike)
-	EMISSION = vec3(flash) * 0.6 + (base * 0.22 + highlight_color * rim * rim * 0.3) * highlight + lit * glow * 2.0;
+	EMISSION = vec3(white) * 0.6 + (base * 0.22 + highlight_color * rim * rim * 0.3) * lift + lit * glow * 2.0;
 	// shimmer: a rare look's (NodeTheme) slow glints, so it's spotted from a way off
 	float glint = smoothstep(0.78, 0.95, theme_noise(v_world * 5.0 + vec3(0.0, TIME * 0.6, 0.0)));
 	EMISSION += base * glint * theme_c.w * 2.5;

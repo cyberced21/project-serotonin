@@ -1,0 +1,34 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/resource_node.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scripts/ore_wall.gd" id="2_script"]
+[ext_resource type="AudioStream" path="res://audio/stone_hit.tres" id="4_hit"]
+[ext_resource type="AudioStream" path="res://audio/stone_break.tres" id="5_break"]
+[ext_resource type="Resource" path="res://audio/mining/pickaxe_hit.tres" id="8_hit_layers"]
+[ext_resource type="Resource" path="res://audio/mining/pickaxe_pull.tres" id="9_pull_layers"]
+[ext_resource type="Resource" path="res://audio/mining/debris_stone.tres" id="10_debris_layers"]
+[ext_resource type="Resource" path="res://audio/mining/split.tres" id="12_split_layers"]
+[ext_resource type="PackedScene" path="res://scenes/fx/hit_fx.tscn" id="13_hit_fx"]
+
+[node name="OreWall" instance=ExtResource("1_base")]
+script = ExtResource("2_script")
+item = &"ore"
+tool_type = &"pickaxe"
+skill = &"mining"
+xp_per_hit = 2
+xp_on_break = 25
+chip_color = Color(0.627, 0.651, 0.698, 1)
+popup_height = 2.0
+hit_fx = ExtResource("13_hit_fx")
+spark_amount = 5
+hit_sfx = ExtResource("4_hit")
+break_sfx = ExtResource("5_break")
+hit_layers = ExtResource("8_hit_layers")
+pull_layers = ExtResource("9_pull_layers")
+debris_layers = ExtResource("10_debris_layers")
+split_layers = ExtResource("12_split_layers")
+ore_color = Color(0.88, 0.54, 0.29, 1)
+show_respawn_timer = false
+show_respawn_ghost = false
+weak_point = false
+draw_distance = 140.0
