@@ -531,7 +531,7 @@ SOIL = (0.86, 0.72, 0.55)
 
 
 def bake_weathering(bm, cut, bvh, top_z, moss=(0.55, 0.82, 0.42), moss_amount=0.85, reach=0.7, ground=0.0,
-                    only=None, soil=0.0):
+                    only=None, soil=0.0, tint=None):
     """Weathered outside, fresh inside: writes the "cut_mark" colour (float, linear) of every
     face corner. Outside faces get a baked shade the rock shader multiplies in: crevices and the
     foot darker (rays against `bvh`, the whole rock, and the ground at z = 0), the top lighter,
@@ -539,7 +539,9 @@ def bake_weathering(bm, cut, bvh, top_z, moss=(0.55, 0.82, 0.42), moss_amount=0.
     Cut faces are (1, 1, 1) with alpha 0: the shader shows them clean and fresh, and the game
     tells them from the outside by that alpha. `ground`: the ground's height (None: no ground,
     for something placed anywhere); `only(face)`: bake just those faces, the rest stay white;
-    `soil`: how much of a ragged band of SOIL the foot wears (0..1)."""
+    `soil`: how much of a ragged band of SOIL the foot wears (0..1); `tint(face, point)`: a colour
+    (r, g, b, each 0..1) the outside is multiplied by besides, face by face (staining the skin a
+    colour the palette hasn't got: iron's rust)."""
     layer = bm.loops.layers.float_color.get("cut_mark") or bm.loops.layers.float_color.new("cut_mark")
     bm.normal_update()
     shade = {}
@@ -581,7 +583,10 @@ def bake_weathering(bm, cut, bvh, top_z, moss=(0.55, 0.82, 0.42), moss_amount=0.
             elif only is not None and not only(f):
                 loop[layer] = (1.0, 1.0, 1.0, 1.0)
             else:
-                loop[layer] = shade.get(loop.vert, (1.0, 1.0, 1.0, 1.0))
+                s = shade.get(loop.vert, (1.0, 1.0, 1.0, 1.0))
+                if tint:
+                    s = tuple(a * b for a, b in zip(s, tint(f, loop.vert.co))) + (s[3],)
+                loop[layer] = s
 
 
 def swatch_names():
@@ -630,7 +635,8 @@ def _weather_group(objs, names, ground, moss_amount, prefix):
 
 
 def shattered(name, rng, whole, seeds, choose, rubble=("stone.4", "stone.2", "stone.1"), size=1.0, out="",
-              stretch=None, post=None, ore_swatches=("ore.",), rules=None, moss_amount=0.85, body=None, bend=0.06):
+              stretch=None, post=None, ore_swatches=("ore.",), rules=None, moss_amount=0.85, body=None, bend=0.06,
+              tint=None):
     """Cuts `whole` into Voronoi pieces round `seeds`, all alike (no core): Chunk_NN, plus
     Rubble_*, weathered by bake_weathering. The game knocks pieces off where they're struck and
     drops whatever's left hanging, so it needs to know which pieces touch, and which carry ore
@@ -641,7 +647,7 @@ def shattered(name, rng, whole, seeds, choose, rubble=("stone.4", "stone.2", "st
     choose(face, is_cut, piece) picks each face's swatch; post(piece_mesh, piece, cut_layer)
     can reshape a piece; `stretch` scales the cells (see stretched_cell); `body`, a bmesh,
     becomes Body_Core, a part that never breaks (painted and weathered by the caller); `bend`, how
-    far (m, per metre of `size`) the warp bows the pieces."""
+    far (m, per metre of `size`) the warp bows the pieces; `tint`, see bake_weathering."""
     names = [f"Chunk_{i:02d}" for i in range(len(seeds))]
     links = {n: set() for n in names}
     ore_area = {}  # piece -> m² of ore faces
@@ -675,7 +681,7 @@ def shattered(name, rng, whole, seeds, choose, rubble=("stone.4", "stone.2", "st
             return swatch
         paint(bm, pick)  # (before the warp: the veins are where they were sliced)
         warp(bm, bend * size, field)
-        bake_weathering(bm, cut, bvh, top_z, moss_amount=moss_amount, soil=1.0)
+        bake_weathering(bm, cut, bvh, top_z, moss_amount=moss_amount, soil=1.0, tint=tint)
         centre = sum((v.co for v in bm.verts), Vector()) / len(bm.verts)
         bmesh.ops.translate(bm, vec=-centre, verts=bm.verts)
         make_object(names[i], bm, centre)
@@ -1055,6 +1061,73 @@ def iron_banded():
               rubble=("accent.0", "metal.2", "stone.1"))
 
 
+def iron_limonite(name="iron_limonite", out="designs"):
+    """Iron C (the pick): a lumpy, knobbly, pitted boulder of weathered iron ore, rust red-brown
+    all over with patches of dark steel-grey hematite that catch the light, and ochre flecks; it
+    breaks open steel-grey and glinting, streaked blood-red, under a brown rind. Breaks where
+    struck. Rust isn't in the palette: the skin is painted pale brown and stained rust through the
+    baked shade (bake_weathering's tint), the hematite is the metal row (it glints)."""
+    reset()
+    rng = seeded(105)
+    r = recipe(105, wide=(1.0, 1.12, 1.3), deep=(0.9, 1.0, 1.1), tall=(0.62, 0.76, 0.9),
+               lumpy=(0.85, 1.0, 1.3), chops=(2, 4, 6), size=(1.0, 1.1, 1.22))
+    squash = (r.wide, r.deep, r.tall)
+    whole, cz = boulder_mesh(rng, 1.0, subdiv=4, squash=squash, lumps=11, chops=r.chops,
+                             lump_amp=(0.16 * r.lumpy, 0.32 * r.lumpy), noise=0.1)
+    bmesh.ops.translate(whole, vec=Vector((0, 0, -0.06)), verts=whole.verts)  # sunk into the ground
+    cz -= 0.06
+    centre = Vector((0, 0, cz))
+    # knobbly and pitted: knobs swelling out, pockets eaten in between them (the base stays put)
+    off = Vector((rng.uniform(-50, 50), rng.uniform(-50, 50), rng.uniform(-50, 50)))
+    knob = lambda c: fbm(c * 2.6 + off)
+    whole.normal_update()
+    moves = {}
+    for v in whole.verts:
+        pit = max(0.0, noise.noise(v.co * 3.0 + off * 0.7) - 0.15) / 0.85
+        moves[v] = v.normal * (0.28 * knob(v.co) - 0.3 * pit * pit) * max(0.0, min(1.0, v.co.z / 0.25))
+    for v, d in moves.items():
+        v.co += d
+    # the hematite: small patches on the knobs, where a field runs high, their outlines smoothed
+    hem_off = Vector((rng.uniform(-50, 50), rng.uniform(-50, 50), rng.uniform(-50, 50)))
+    hematite = lambda c: fbm(c * 2.2 + hem_off) + 0.5 * knob(c)
+    HEM = 0.3
+    HEMATITE = (0.58, 0.46, 0.47)
+    snap_to_outline(whole, hematite, HEM, HEM - 0.15, HEM + 0.15)
+
+    def choose(f, is_cut, i):
+        c = f.calc_center_median()
+        if is_cut:  # a brown rind, then dark steel-grey iron, glinting, streaked blood-red
+            if (c - centre).length > 0.72 * max(squash[0], squash[1]) or c.z > cz + 0.8 * squash[2]:
+                return "wood.2" if noise.noise(c * 6.0) > 0 else "wood.3"
+            streak = noise.noise(Vector((c.x * 2.0, c.y * 2.0, c.z * 6.0)) + off)
+            if streak > 0.42:
+                return "accent.0"
+            if streak > 0.25:
+                return "wood.1"
+            if noise.noise(c * 9.0 + off) > 0.45:
+                return "ore.iron_dark"
+            return "metal.3" if streak < -0.3 else "neutral.3"
+        if hematite(c) > HEM:  # (the ore row: it glints; darkened warm by the tint)
+            return "ore.iron_dark"
+        return "wood.5"
+
+    def tint(f, co):
+        """Rust, in a slow mottle from deep red-brown to orange, ochre-yellow here and there; the
+        hematite dark red-grey, the rust round it darkening into it."""
+        h = hematite(f.calc_center_median())
+        if h > HEM:
+            return HEMATITE
+        k = 0.5 + 0.5 * fbm(co * 2.2 + off * 0.3)
+        rust = tuple(a + (b - a) * k for a, b in zip((0.74, 0.38, 0.28), (1.0, 0.6, 0.4)))
+        ochre = max(0.0, min(1.0, (noise.noise(co * 4.5 + off * 1.3) - 0.35) * 3.0))
+        rust = tuple(a + (b - a) * ochre for a, b in zip(rust, (1.0, 0.86, 0.5)))
+        near = max(0.0, 1.0 - (HEM - h) / 0.12)  # (a soft edge, not a hole cut in the rust)
+        return tuple(a + (b - a) * near * 0.7 for a, b in zip(rust, (0.55, 0.32, 0.26)))
+    shattered(name, rng, whole, shatter_seeds(rng, 1.0, squash, cz), choose,
+              rubble=("wood.3", "wood.2", "metal.1"), out=out, ore_swatches=("metal.", "ore.iron"),
+              moss_amount=0.3, rules={"knock": 0, "shatter_at": 0.5}, tint=tint)
+
+
 def coal_strata(name="coal_strata", out="designs", shatter=False):
     """Coal A: a low, wide outcrop of layered rock: thick black coal seams between grey shale,
     and the pieces come away as slabs along the layers. With `shatter`, it's stacked plates that
@@ -1288,7 +1361,7 @@ def gold_geode_shatter(name="gold_rock", out="", heart="gold"):
 
 def designs():
     os.makedirs(os.path.join(OUT_DIR, "designs"), exist_ok=True)
-    for build in (copper_verdigris, copper_malachite, iron_columns, iron_banded,
+    for build in (copper_verdigris, copper_malachite, iron_columns, iron_banded, iron_limonite,
                   coal_strata, coal_lump, gold_quartz, gold_geode, gold_veined):
         build()
     gold_geode_shatter("gold_geode_quartz", out="designs", heart="quartz")
@@ -1309,8 +1382,8 @@ def rock():
 
 
 def iron_rock():
-    """Iron (Mining 15): basalt columns, jointed so they topple."""
-    iron_columns("iron_rock", out="", shatter=True)
+    """Iron (Mining 15): the rusty, pitted limonite boulder, breaking where it's struck."""
+    iron_limonite("iron_rock", out="")
 
 
 def coal_rock():
@@ -2956,8 +3029,8 @@ def oak_item():
 
 
 def iron_item():
-    """Iron ore: a chunk of basalt column, glinting iron where it broke."""
-    ore_chunk("iron", 34, ("stone.3", "stone.2"), "metal.3", ("metal.6", "ore.iron"), 0.85, size=0.14)
+    """Iron ore: a chunk of the rusty boulder, glinting iron where it broke."""
+    ore_chunk("iron", 34, ("wood.4", "wood.3"), "wood.4", ("ore.iron", "accent.0"), 0.6, size=0.14)
 
 
 def log_item_variant(name, seed, bark, end_grain, radius=0.09):
