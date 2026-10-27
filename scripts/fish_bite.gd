@@ -6,6 +6,13 @@ const TAP_GAP := 0.14
 const TAKE_AFTER_TAPS := Vector2(0.3, 0.36)
 
 
+## The chance a fish you've got (speared, or pulled on time) is really yours: certain at or
+## above its level, 10% less per level under, never below 10%. The same for both tools: under,
+## the spear's fish dodges and the rod's hook slips.
+static func catch_chance(level: int, required: int) -> float:
+	return maxf(1.0 - 0.1 * maxi(required - level, 0), 0.1)
+
+
 ## [{t (s after it arrives under the float), kind}], ending on the take: nibbles (fake-outs), the
 ## tap-tap (it's about to commit), then the take. Ambushers (pike) sit still a long while, then
 ## take with no warning. `calm` (0..1, the fisher's hut) takes nibbles off.

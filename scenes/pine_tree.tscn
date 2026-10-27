@@ -12,10 +12,12 @@ size = Vector3(1.0, 10.0, 1.0)
 [node name="PineTree" instance=ExtResource("1_base")]
 tool_tier = 2
 item = &"pine"
-max_hits = 9
+max_hits = 25
+drops_min = 4
+drops_max = 6
 respawn_time = 40.0
 required_level = 25
-xp_per_hit = 12
+xp_per_hit = 9
 xp_on_break = 45
 chip_color = Color(0.761, 0.6, 0.424, 1)
 burst_color = Color(0.14, 0.3, 0.18, 1)

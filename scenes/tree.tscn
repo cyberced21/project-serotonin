@@ -18,9 +18,10 @@ size = Vector3(0.75, 4.4, 0.75)
 [node name="Tree" instance=ExtResource("1_base")]
 item = &"wood"
 tool_type = &"axe"
-max_hits = 5
-drops_min = 2
-drops_max = 4
+max_hits = 15
+xp_per_hit = 4
+drops_min = 4
+drops_max = 6
 skill = &"woodcutting"
 chip_color = Color(0.871, 0.698, 0.463, 1)
 burst_color = Color(0.22, 0.502, 0.298, 1)

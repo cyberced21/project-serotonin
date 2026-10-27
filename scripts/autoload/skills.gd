@@ -1,6 +1,7 @@
 extends Node
 ## Gathering skills: skill id -> total XP. Levels are derived from XP via one shared curve.
 ## To add a skill: add a row to SKILLS, then set `skill` on the resource node scene.
+## Owns the talents you've picked (`talents`, saved under their own key).
 
 signal xp_gained(skill: StringName, amount: int, total: int)
 signal leveled_up(skill: StringName, level: int)
@@ -29,10 +30,13 @@ const SKILLS := {
 
 var xp: Dictionary[StringName, int] = {}
 var last_trained: StringName = &"woodcutting"
+var talents := Talents.new(level)
 
 
 func _ready() -> void:
 	SaveGame.register(&"skills", self)
+	SaveGame.register(&"talents", talents)
+	talents.changed.connect(func(_s: StringName) -> void: SaveGame.mark_dirty())
 
 
 ## Adds XP (clamped at the max level), plus the town hall's bonus. Returns how much was actually gained.
@@ -53,6 +57,7 @@ func add_xp(skill: StringName, amount: int) -> int:
 	var after := level(skill)
 	if after > before:
 		leveled_up.emit(skill, after)
+		talents.on_level(skill, before, after)
 		SaveGame.save()
 	return total - old
 
@@ -67,6 +72,7 @@ func set_level(skill: StringName, lvl: int) -> void:
 	xp_gained.emit(skill, 0, xp[skill])
 	if level(skill) > before:
 		leveled_up.emit(skill, level(skill))
+		talents.on_level(skill, before, level(skill))
 
 
 func xp_for_level(lvl: int) -> int:
@@ -119,5 +125,5 @@ func from_dict(d: Dictionary) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if OS.is_debug_build() and event.is_action_pressed("debug_give_xp"):
+	if (OS.is_debug_build() or OS.has_feature("playtest")) and event.is_action_pressed("debug_give_xp"):
 		add_xp(last_trained, DEBUG_XP)

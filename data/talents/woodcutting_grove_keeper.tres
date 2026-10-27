@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/talent_def.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"grove_keeper"
+skill = &"woodcutting"
+milestone = 30
+style = &"forester"
+style_name = "Forester"
+display_name = "Grove keeper"
+text = "Trees you fell regrow twice as fast, fine-grained: your first clean cut on one doubles its drops."

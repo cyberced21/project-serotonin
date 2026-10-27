@@ -105,7 +105,7 @@ func from_dict(d: Dictionary) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not OS.is_debug_build():
+	if not (OS.is_debug_build() or OS.has_feature("playtest")):
 		return
 	if event.is_action_pressed("debug_give_items"):
 		for item in Items.DEFS:

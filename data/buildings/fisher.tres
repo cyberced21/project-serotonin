@@ -21,13 +21,13 @@ text = "Calmer fish: they spook from 25% closer"
 script = ExtResource("4_effect")
 stat = &"bonus_fish_chance"
 value = 0.25
-text = "25% chance a speared fish counts twice"
+text = "25% chance a fish counts twice"
 
 [sub_resource type="Resource" id="Effect_3_2"]
 script = ExtResource("4_effect")
-stat = &"line_notches"
-value = 1.0
-text = "Stronger line: one more mistake before it snaps"
+stat = &"strike_window"
+value = 0.25
+text = "Sharper eyes: 25% longer to pull on the rod, 25% wider spear thrusts"
 
 [sub_resource type="Resource" id="Tier_1"]
 script = ExtResource("2_tier")
@@ -41,7 +41,7 @@ cost = Dictionary[StringName, int]({
 &"wood": 10,
 &"perch": 10
 })
-lines = PackedStringArray("Up on stilts, dry as a bone. Well. Drier.", "A rod lets you fish from the bank. Watch the float: little twitches are teasing, it's the dunk you strike on.", "Trout are clever. Pike are cleverer, and they only live in the pond over the hill.", "A dock, that's my dream. Fish right off the end of it.")
+lines = PackedStringArray("Up on stilts, dry as a bone. Well. Drier.", "A rod lets you fish from the bank. Watch the float: little twitches are teasing. When it goes under, pull!", "Trout are clever. Pike are cleverer, and they only live in the pond over the hill.", "A dock, that's my dream. Fish right off the end of it.")
 effects = Array[ExtResource("4_effect")]([SubResource("Effect_2_0")])
 
 [sub_resource type="Resource" id="Tier_3"]
@@ -53,7 +53,7 @@ cost = Dictionary[StringName, int]({
 &"pike": 3,
 &"char": 2
 })
-lines = PackedStringArray("Pike from the other pond, in my hut! You're a legend.", "Come sit on the dock. Fish don't bite any better, but the view's nice.", "Got a boat now, too. Haven't worked out where to row it.", "Char from the deep middle of the lake. You'll want a rod for those, the spear won't reach.")
+lines = PackedStringArray("Pike from the other pond, in my hut! You're a legend.", "Come sit on the dock. Fish don't bite any better, but the view's nice.", "Got a boat now, too. Haven't worked out where to row it.", "Char live in the deep middle of the lake. A rod reaches them, or wade in at dawn or dusk when they come up to feed.")
 effects = Array[ExtResource("4_effect")]([SubResource("Effect_3_0"), SubResource("Effect_3_1"), SubResource("Effect_3_2")])
 
 [resource]

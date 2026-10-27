@@ -22,6 +22,8 @@ extends RigidBody3D
 
 
 var item: StringName = &"wood"
+## The skill that dropped it: its long-reach perk (Perks) widens magnet_radius.
+var skill: StringName = &""
 var icon: Texture2D
 var _model: Node3D
 
@@ -31,10 +33,12 @@ var _delay := 0.0
 var _age := 0.0
 var _launch_velocity := Vector3.ZERO
 var _magnet := false
+var _reach := 0.0  # magnet_radius after the long-reach perk
 var _vel := Vector3.ZERO
 
 
 func _ready() -> void:
+	_reach = magnet_radius * (1.0 + Perks.bonus(skill, &"reach"))
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON  # flies on physics ticks
 	var scene := Items.model(item)
 	if scene:
@@ -93,7 +97,7 @@ func _physics_process(delta: float) -> void:
 
 	if not _magnet:
 		var d := global_position.distance_to(target)
-		if _age > settle_time and (d < magnet_radius or (_age > auto_pull_time and d < auto_pull_radius)):
+		if _age > settle_time and (d < _reach or (_age > auto_pull_time and d < auto_pull_radius)):
 			_magnet = true
 			freeze = true  # kinematic: we move it ourselves from here on
 			_vel = Vector3.UP * 2.0  # small hop before it zips over

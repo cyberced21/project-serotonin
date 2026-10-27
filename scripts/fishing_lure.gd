@@ -5,8 +5,8 @@ extends Node3D
 ## species' notice radius may notice it (front-only for station-holders: the float has to drift
 ## down to them), break from its school and swim over. Under the float it plays its species' tell
 ## rhythm (FishBite.tells): nibbles (a twitch: a fake-out), the tap-tap (it's about to commit), then the
-## take (the float dunks under) and a short window to strike before it spits the hook.
-## RodFishing calls strike() when the player jerks the rod and gets back what happened.
+## take (the float is dragged right under) and a short window to strike before it spits the hook.
+## RodFishing calls strike() when the player yanks the rod and gets back what happened.
 
 signal tell(kind: StringName)  # &"nibble", &"tap", &"take", &"spat", &"approach", &"spooked"
 
@@ -32,8 +32,8 @@ var take_window := 0.25
 var curious := 0.0
 ## The fisher's hut: calmer fish notice from further and nibble less (Village fish_calm).
 var calm := 0.0
-## 0 = floating, 1 = dragged under (the fight).
-var sink := 0.0
+## The fisher's hut: a longer window to strike (Village strike_window, +0.25 = 25% longer).
+var window_bonus := 0.0
 
 var _model: Node3D
 var _settle := SETTLE
@@ -137,7 +137,7 @@ func _physics_process(delta: float) -> void:
 
 ## Down the current (rivers), stopping where it runs aground on a bank.
 func _drift(delta: float) -> void:
-	if water.flow == Vector3.ZERO or bite == Bite.TAKE or sink > 0.5:
+	if water.flow == Vector3.ZERO or bite == Bite.TAKE:
 		return
 	var next := global_position + water.flow * delta
 	var w := WaterBody.surface_at(get_tree(), next)
@@ -152,12 +152,11 @@ func _process(delta: float) -> void:
 	_bob += delta * 2.3
 	_twitch = move_toward(_twitch, 0.0, delta * 0.25)
 	var under := 0.0
-	if bite == Bite.TAKE:
-		under = 0.09  # dunked: only the antenna tip shows
-	under = maxf(under, sink * 0.14)
+	if bite == Bite.TAKE:  # dragged right under, jittering as the fish pulls
+		under = 0.17 + sin(take_age * 70.0) * 0.012
 	var y := (sin(_bob) * 0.006 - _twitch - under) * FLOAT_SCALE * 0.8
-	_model.position.y = lerpf(_model.position.y, y, 1.0 - exp(-30.0 * delta))
-	var lean := sin(_bob * 0.7) * 0.06 + (0.3 if bite == Bite.TAKE else 0.0)
+	_model.position.y = lerpf(_model.position.y, y, 1.0 - exp(-(60.0 if bite == Bite.TAKE else 30.0) * delta))
+	var lean := sin(_bob * 0.7) * 0.06 + (0.6 if bite == Bite.TAKE else 0.0)
 	_model.rotation.x = lerpf(_model.rotation.x, lean, 1.0 - exp(-12.0 * delta))
 
 
@@ -184,7 +183,10 @@ func _look_for_fish(delta: float) -> void:
 				facing.y = 0.0
 				if d > 0.3 and facing.normalized().dot(to / d) < 0.35:
 					continue
-			var rate := s.notice_rate * (1.6 if curious > 0.0 else 1.0) * (1.0 - 0.5 * d / radius)
+			var rate := s.notice_rate * (1.6 if curious > 0.0 else 1.0) * (1.0 - 0.5 * d / radius) \
+				* (1.0 + Perks.bonus(&"fishing", &"patience"))  # the level's patience perk: bites come sooner
+			if not f.tool_can_take(&"rod"):
+				rate *= 0.3  # too strong for your rod: it bites now and then (and tears free)
 			if _rng.randf() < rate * delta:
 				_engage(f)
 				return
@@ -247,15 +249,10 @@ func _play_tells(delta: float) -> void:
 			&"take":
 				bite = Bite.TAKE
 				take_age = 0.0
-				take_window = fish.species.strike_window * _window_scale(fish.species)
+				take_window = fish.species.strike_window * (1.0 + Perks.bonus(&"fishing", &"hands")) * (1.0 + window_bonus)
 				_nudge_fish(0.12)
-				WaterRipple.spawn(water, global_position, 1.2, 0.6)
+				WaterRipple.spawn(water, global_position, 1.8, 0.7)
 		tell.emit(kind)
-
-
-func _window_scale(s: FishSpecies) -> float:
-	var level: int = get_tree().root.get_node("Skills").level(&"fishing")
-	return FishFight.level_scales(level, s.required_level).x
 
 
 ## Pushes the fish up into the float for a tell (it mouths it).

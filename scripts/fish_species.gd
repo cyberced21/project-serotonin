@@ -6,6 +6,9 @@ extends Resource
 @export var id: StringName = &"perch"  ## item id given when caught (see Items)
 @export var model: PackedScene
 @export_range(1, 50) var required_level := 1
+## The spear or rod tier it takes (Tools.LADDER): below it, the spear glances off and the hook
+## tears out. Both tools open the same fish at the same tier.
+@export_range(0, 3) var tool_tier := 0
 @export_range(0, 500) var xp := 10
 
 @export_group("School")
@@ -17,6 +20,9 @@ extends Resource
 @export var lurker := false
 ## The shallowest water it swims in (m). Deep-water species (char) keep to the middle of a lake.
 @export var min_depth := 0.3
+## Deep-water fish (char, salmon) come up into the shallows to feed at dawn and dusk, where a
+## wading spear can reach them: how deep the water is they head for then (m). Negative: never.
+@export var dusk_depth := -1.0
 
 @export_group("Hunting")
 ## A lurker that hunts: the species id it stalks (e.g. perch). Empty = doesn't hunt.
@@ -60,27 +66,11 @@ extends Resource
 @export var nibble_gap := Vector2(0.5, 1.2)
 ## The two quick twitches right before the take.
 @export var tap_tap := true
-## Seconds to strike once the float dunks under, before the fish spits the hook.
+## Seconds to strike (yank it out) once the float dunks under, before the fish spits the hook.
 @export var strike_window := 0.25
 ## Pike: no nibbles and no tap-tap; it sits under the float for a while, then slams it.
 @export var ambush := false
 
-@export_group("Fight")
-## How often each move comes up: pull, run, headshake, jump (relative weights).
-@export var move_weights := Vector4(5, 1, 2, 0)
-## Warning before a run or a jump (s, min max). Shorter below your level.
-@export var telegraph := Vector2(0.45, 0.6)
-## How fast a run takes line (m/s), and how long one lasts (s, min max).
-@export var run_speed := 1.2
-@export var run_time := Vector2(0.8, 1.4)
-## Jerks in a headshake (min, max) and the beat between them (s).
-@export var shake_jerks := Vector2i(2, 3)
-@export var shake_beat := 0.34
-## How fast holding the reel through a pull brings it in (m/s), before its size slows it.
-@export var reel_speed := 1.6
-## How much each extra unit of size slows the reel (0.35 = the biggest reels in 35% slower).
-@export_range(0.0, 0.9) var size_drag := 0.35
-
 @export_group("Size")
-## Weight range (kg): each catch rolls one. Bigger fight longer and give more XP (up to +50%).
+## Weight range (kg): each catch rolls one. Bigger give more XP (up to +50%).
 @export var weight := Vector2(0.1, 0.4)

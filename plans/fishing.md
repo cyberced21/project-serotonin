@@ -1,5 +1,20 @@
 # Rod fishing
 
+> **Reworked 2026-10-27 (branch `fishing-yank`): the fight is gone.** Even its designer found the
+> fight too hard to play, so a hooked fish is now one big moment instead of a tug of war. The take
+> (R2) is loud: the float is dragged right under with a plunge, a zinging line and a bell
+> (`hooked`), a burst of spray, a big "!" over the float, the rod bent hard and thrumming. Click
+> inside the strike window (now 0.6 s perch .. 0.42 s salmon, still level-scaled) and the fish is
+> **yanked out** (`yank`: hit-stop, shake, spray), flies over in a tumbling arc on the line
+> (`LandedFish`), lands on the bank ~2.6 m beside you (the view eases round to keep it on screen),
+> flops a few times (`flop`) and lies there glinting until you walk up to it. Late: "Too slow", it
+> spits the hook and the float stays out. R3 (fight), R9's landing flashes / Clean, R10's rooting,
+> look tug, notches and prompt assist, and R6's pike steals are gone; `FishFight` is deleted
+> (its level scaling lives on as `FishBite.window_scale`). R11's +1 notch perk became
+> *Sharper eyes*: 25% longer to pull. Cast (R5), bite rhythms (R2) and rivers (R7) are unchanged.
+> Then **spear and rod were made equal styles** (plans/fishing-parity.md): Q swaps them, tiers,
+> sizes, one under-level rule. Everything below is the original design, kept for the record.
+
 Branch `fishing` (off `main`), one commit per phase, then a PR. Spearfishing stays as it is; the rod
 is the second way to fish, sharing the Fishing skill.
 

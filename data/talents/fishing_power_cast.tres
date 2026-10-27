@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/talent_def.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"power_cast"
+skill = &"fishing"
+milestone = 30
+style = &"angler"
+style_name = "Angler"
+display_name = "Power cast"
+text = "Hold the back-cast longer for +50% range, out to water no one else can reach."

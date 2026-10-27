@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/talent_def.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"reapers_spin"
+skill = &"farming"
+milestone = 30
+style = &"harvester"
+style_name = "Harvester"
+display_name = "Reaper's spin"
+text = "Hold to spin and cut everything around you."

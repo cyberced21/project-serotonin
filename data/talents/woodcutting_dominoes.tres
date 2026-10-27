@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/talent_def.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"dominoes"
+skill = &"woodcutting"
+milestone = 20
+style = &"feller"
+style_name = "Feller"
+display_name = "Dominoes"
+text = "The notch's side steers the fall, and a falling trunk hits hard on any tree it lands on."

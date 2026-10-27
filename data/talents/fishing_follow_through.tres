@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/talent_def.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"follow_through"
+skill = &"fishing"
+milestone = 20
+style = &"spearman"
+style_name = "Spearman"
+display_name = "Follow-through"
+text = "After a catch, a second thrust within 0.6 s can take a fish from the scattering school."

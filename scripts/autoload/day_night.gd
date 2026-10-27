@@ -98,5 +98,5 @@ func from_dict(d: Dictionary) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if OS.is_debug_build() and event.is_action_pressed("debug_skip_time"):
+	if (OS.is_debug_build() or OS.has_feature("playtest")) and event.is_action_pressed("debug_skip_time"):
 		time = fmod(time + DEBUG_SKIP, 1.0)

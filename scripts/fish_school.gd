@@ -79,7 +79,7 @@ func disturb(pos: Vector3, loudness: float) -> void:
 			spooked = true
 	if not spooked:
 		return
-	_alert = species.calm_down
+	_alert = species.calm_down / (1.0 + Perks.bonus(&"fishing", &"patience"))  # the fisher's patience perk
 	for f in fish:
 		if f.lure != null:  # it was nosing a float: it's gone
 			f.lure.fish_spooked(f)
@@ -189,7 +189,7 @@ func _steer(f: Fish, center: Vector3, heading: Vector3, delta: float) -> void:
 
 	# stay in water deep enough: if heading into the shallows, bend back toward the pond centre
 	var ahead := pos + f.velocity.normalized() * 0.5
-	if water.depth_here(ahead) < species.min_depth:
+	if water.depth_here(ahead) < _min_depth():
 		var to_center := water.global_position - pos
 		to_center.y = 0.0
 		f.velocity = f.velocity.lerp(to_center.normalized() * f.velocity.length(), clampf(8.0 * delta, 0.0, 1.0))
@@ -229,7 +229,7 @@ func _hold_station(f: Fish, delta: float) -> void:
 ## Keeps a position in the water column: between bed and surface at the fish's preferred depth.
 func _clamp_to_water(p: Vector3, f: Fish) -> Vector3:
 	var depth := water.depth_here(p)
-	if depth < species.min_depth * 0.7:
+	if depth < _min_depth() * 0.7:
 		p = p.lerp(Vector3(water.global_position.x, p.y, water.global_position.z), 0.02)
 		depth = water.depth_here(p)
 	var bed := water.surface_height - depth
@@ -252,9 +252,26 @@ func _update_goal(delta: float) -> void:
 
 func _pick_goal() -> void:
 	_goal_timer = randf_range(5.0, 9.0)
-	var p := FishPond.random_point(water, species.min_depth + 0.15)
+	var p := Vector3.INF
+	if species.dusk_depth >= 0.0 and DayNight.twilight() > 0.15 and not fish.is_empty():
+		# up into the nearest shallows to feed, long enough to get there and linger
+		var from := fish[0].global_position
+		for k in 8:
+			var q := FishPond.random_point(water, species.dusk_depth, species.dusk_depth + 0.35)
+			if q != Vector3.INF and (p == Vector3.INF or from.distance_squared_to(q) < from.distance_squared_to(p)):
+				p = q
+		_goal_timer = randf_range(18.0, 26.0)
+	if p == Vector3.INF:
+		p = FishPond.random_point(water, _min_depth() + 0.15)
 	if p != Vector3.INF:
 		_goal = p
+
+
+## The shallowest water it keeps to now: deep-water species come up at dawn and dusk.
+func _min_depth() -> float:
+	if species.dusk_depth < 0.0:
+		return species.min_depth
+	return lerpf(species.min_depth, species.dusk_depth, DayNight.twilight())
 
 
 func set_lurk_spot(p: Vector3) -> void:

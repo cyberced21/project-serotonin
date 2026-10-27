@@ -1,27 +1,24 @@
 extends SceneTree
-## Headless checks for rod fishing's pure logic (RodCast, FishFight, FishBite.tells): no scene,
-## no save is touched.
+## Headless checks for fishing's pure logic (RodCast, FishBite, FishSize): no scene, no save is touched.
 ##
 ##     godot --headless --path . -s res://tools/test_fishing.gd
-##
-## Bots play whole fights at 60 fps: one that answers every move a frame after its cue must land
-## every species without losing a notch; one that only holds the reel must always snap.
 
 const SPECIES := ["perch", "trout", "pike", "char", "grayling", "salmon"]
-const DT := 1.0 / 60.0
+## The shortest strike window a fish may have at its own level (s): a human sees the take and
+## clicks in about 0.25 s, so this leaves room to spare.
+const MIN_WINDOW := 0.4
 
 var _failures := 0
-var _last_time := 0.0
 
 
 func _init() -> void:
 	_test_cast()
 	_test_scales()
+	_test_sizes()
 	for id in SPECIES:
 		var s: FishSpecies = load("res://data/fish/%s.tres" % id)
-		_test_bots(s)
+		_test_window(s)
 		_test_tells(s)
-	_test_early_bow()
 	print("test_fishing: %s" % ("all passed" if _failures == 0 else "%d FAILED" % _failures))
 	quit(1 if _failures > 0 else 0)
 
@@ -44,71 +41,31 @@ func _test_cast() -> void:
 
 
 func _test_scales() -> void:
-	_check(FishFight.level_scales(30, 30) == Vector2(1, 1), "at level: no change")
-	_check(is_equal_approx(FishFight.level_scales(50, 30).x, 1.2), "20 above: +20%")
-	var five := FishFight.level_scales(25, 30)
-	_check(five.x > 0.65 and five.x < 0.8 and five.y < 1.0, "5 under: hard but possible (%s)" % five)
-	_check(FishFight.level_scales(10, 30).x <= 0.21, "20 under: near-impossible")
+	_check(FishBite.catch_chance(30, 30) == 1.0, "at level: always yours")
+	_check(is_equal_approx(FishBite.catch_chance(25, 30), 0.5), "5 under: half the time")
+	_check(is_equal_approx(FishBite.catch_chance(1, 30), 0.1), "far under: one in ten")
 
 
-## Plays a fight: `answers` true = a bot reacting a frame after each cue; false = holds the reel.
-func _play(s: FishSpecies, seed_: int, answers: bool, size := 0.5, scales := Vector2.ONE) -> FishFight:
+func _test_sizes() -> void:
+	_check(FishSize.count_for(0.2) == 1 and FishSize.count_for(FishSize.BIG) == 2 and FishSize.count_for(FishSize.HUGE) == 3, "size counts 1 / 2 / 3")
+	_check(FishSize.scale_for(0.0) < FishSize.scale_for(1.0), "bigger fish are drawn bigger")
 	var rng := RandomNumberGenerator.new()
-	rng.seed = seed_
-	var fight := FishFight.new(s, 9.0, size, scales.x, scales.y, 3, rng)
-	var reel := true
-	var click := false
-	var bow := false
-	_last_time = 0.0
-	for i in 60 * 240:
-		var ev := fight.step(DT, reel, click, bow)
-		_last_time += DT
-		click = false
-		bow = false
-		if fight.is_over():
-			break
-		if not answers:
-			continue
-		for e in ev:
-			match e["type"]:
-				"telegraph":
-					reel = false  # anything but a pull: let go
-				"move":
-					reel = e["move"] == FishFight.Move.PULL
-				"jerk", "flash":
-					click = true
-				"splash":
-					bow = true
-				"landing":
-					reel = false
-	return fight
+	rng.seed = 3
+	var big := 0
+	var huge := 0
+	for i in 10000:
+		var c := FishSize.count_for(FishSize.roll(rng.randf()))
+		big += 1 if c == 2 else 0
+		huge += 1 if c == 3 else 0
+	_check(big > 900 and big < 1500, "about 12%% are Big (%d / 10000)" % big)
+	_check(huge > 250 and huge < 650, "about 4%% are Huge (%d / 10000)" % huge)
+	print("  sizes: %.1f%% Big, %.1f%% Huge: %.2f fish per catch on average" % [big / 100.0, huge / 100.0,
+		(10000 + big + 2 * huge) / 10000.0])
 
 
-func _test_bots(s: FishSpecies) -> void:
-	var landed := 0
-	var clean := 0
-	var time := 0.0
-	for k in 20:
-		var f := _play(s, 100 + k, true)
-		landed += 1 if f.result == &"landed" else 0
-		clean += 1 if f.result == &"landed" and not f.damaged else 0
-		time += _last_time
-	_check(landed == 20, "%s: the answering bot lands every fight (%d/20)" % [s.id, landed])
-	_check(clean == 20, "%s: ...and cleanly (%d/20)" % [s.id, clean])
-	var snapped := 0
-	var hurt := 0
-	for k in 20:
-		var f := _play(s, 200 + k, false)
-		snapped += 1 if f.result == &"snapped" else 0
-		hurt += 1 if f.damaged else 0
-	_check(hurt == 20, "%s: holding the reel through everything costs notches (%d/20)" % [s.id, hurt])
-	print("  %s: a 9 m fight takes the bot %.1f s on average; the lazy bot snaps %d/20" % [s.id, time / 20.0, snapped])
-	# far under level, even a frame-perfect answer to a tiny window mostly fails
-	var under := 0
-	for k in 20:
-		var f := _play(s, 300 + k, true, 1.0, FishFight.level_scales(s.required_level - 20, s.required_level))
-		under += 1 if f.damaged else 0
-	print("  %s: 20 under, the bot loses notches in %d/20 fights" % [s.id, under])
+func _test_window(s: FishSpecies) -> void:
+	_check(s.strike_window >= MIN_WINDOW, "%s: %.2f s to pull at its level (want %.2f+)" % [s.id, s.strike_window, MIN_WINDOW])
+	print("  %s: %.0f ms to pull at its level" % [s.id, s.strike_window * 1000.0])
 
 
 func _test_tells(s: FishSpecies) -> void:
@@ -129,22 +86,3 @@ func _test_tells(s: FishSpecies) -> void:
 	# calmer fish (the fisher's hut) nibble less
 	var calm := FishBite.tells(s, rng, 1.0).filter(func(t: Dictionary) -> bool: return t["kind"] == &"nibble").size()
 	_check(calm <= maxi(s.nibbles.y - 2, 0), "%s: calm fish nibble less" % s.id)
-
-
-func _test_early_bow() -> void:
-	var s: FishSpecies = load("res://data/fish/salmon.tres")
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 5
-	var fight := FishFight.new(s, 9.0, 0.5, 1.0, 1.0, 3, rng)
-	var tested := false
-	for i in 60 * 120:
-		var bow := false
-		if fight.move == FishFight.Move.JUMP and fight.phase == FishFight.Phase.TELEGRAPH and fight._t < 0.05:
-			bow = true  # way before the splash
-		var ev := fight.step(DT, false, false, bow)
-		for e in ev:
-			if e["type"] == "damage" and e["reason"] == "jump":
-				tested = true
-		if tested or fight.is_over():
-			break
-	_check(tested, "bowing long before the splash costs a notch")

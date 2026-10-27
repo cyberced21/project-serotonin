@@ -6,7 +6,8 @@ extends Node
 ##
 ## A strike: wind-up -> thrust -> on the impact frame a thin capsule is swept from where the
 ## spear enters the water, along your aim. Every fish inside is skewered (multi-spears are
-## physical: line up a school). Fish you're under-levelled for usually dodge. Caught fish appear
+## physical: line up a school). Fish your spear's tier can't take glance off it ("Needs Iron
+## spear"), and fish you're under-levelled for usually dodge. Caught fish appear
 ## on the held spear, wriggling; the hit escalates with each extra fish (hit-stop, shake, rising pitch,
 ## "Double!"); on the yank they flip off into the inventory. Misses splash and scatter fish.
 
@@ -26,8 +27,19 @@ const DODGE_COLOR := Color("ff8a7a")
 @export var skewer_radius := 0.06
 ## Skewer length grows by this fraction every 10 Fishing levels.
 @export var reach_bonus_per_10_levels := 0.1
-## Extra XP per additional fish on the same thrust (0.5 = +50% each).
-@export var multi_xp_bonus := 0.5
+## What each spear tier above the stick adds (Tools): reach (m) and skewer length (fraction).
+@export var reach_per_tier := 0.15
+## How far past the spear's length to look for a fish you'd think you could reach (it says "Too deep").
+const DEEP_LOOK := 3.0
+@export var length_per_tier := 0.1
+## Extra XP per additional fish on the same thrust (0.3 = +30% each).
+@export var multi_xp_bonus := 0.3
+## A fish already bolting (a school you just scattered) is this much harder to take: stalk calm
+## ones rather than chase (tuned with tools/fishing_bench.gd).
+@export_range(0.0, 1.0) var flee_catch := 0.4
+## Every speared fish pays this much of its XP: the spear takes many, the rod (RodFishing.catch_xp)
+## few but richer, and over an hour they come out even (tools/fishing_bench.gd).
+@export var catch_xp := 0.85
 
 @export_group("Thrust timing")
 @export var windup_time := 0.14
@@ -43,6 +55,8 @@ const DODGE_COLOR := Color("ff8a7a")
 var water: WaterBody
 var water_point := Vector3.INF
 var fish_target: Fish
+## A fish on your aim line but past the spear's length (the Player shows "Too deep"), or null.
+var deep_fish: Fish
 
 var _rest_pos := Vector3.ZERO
 var _rest_rot := Vector3.ZERO
@@ -61,6 +75,7 @@ func can_thrust() -> bool:
 func clear_target() -> void:
 	water = null
 	water_point = Vector3.INF
+	deep_fish = null
 	_set_fish_target(null)
 
 
@@ -75,7 +90,7 @@ func update_target() -> void:
 	for node in get_tree().get_nodes_in_group("water"):
 		var wb := node as WaterBody
 		var t := (wb.surface_height - from.y) / dir.y
-		if t <= 0.0 or t > reach:
+		if t <= 0.0 or t > _reach():
 			continue
 		var p := from + dir * t
 		var flat := Vector2(p.x - player.global_position.x, p.z - player.global_position.z).length()
@@ -86,7 +101,9 @@ func update_target() -> void:
 			continue  # the bank or a rock is in the way
 		water = wb
 		water_point = p
-		_set_fish_target(_fish_along(p, dir))
+		_set_fish_target(_fish_along(p, dir, 0.0, _length()))
+		if fish_target == null:
+			deep_fish = _fish_along(p, dir, _length(), _length() + DEEP_LOOK)
 		return
 
 
@@ -100,14 +117,19 @@ func _set_fish_target(f: Fish) -> void:
 		f.set_highlighted(true)
 
 
+func _reach() -> float:
+	return reach + reach_per_tier * Tools.tier(&"spear")
+
+
 func _length() -> float:
 	var level: int = Skills.level(&"fishing")
-	return skewer_length * (1.0 + reach_bonus_per_10_levels * floorf(level / 10.0))
+	return skewer_length * (1.0 + reach_bonus_per_10_levels * floorf(level / 10.0) + length_per_tier * Tools.tier(&"spear"))
 
 
-## The first fish along the spear line from the surface point, if any.
-func _fish_along(p: Vector3, dir: Vector3) -> Fish:
-	var query := PhysicsRayQueryParameters3D.create(p - dir * 0.05, p + dir * _length(), Fish.FISH_LAYER)
+## The first fish along the spear line from the surface point, between `near` and `far` (m) past
+## it, if any.
+func _fish_along(p: Vector3, dir: Vector3, near: float, far: float) -> Fish:
+	var query := PhysicsRayQueryParameters3D.create(p + dir * (near - 0.05), p + dir * far, Fish.FISH_LAYER)
 	query.collide_with_areas = true
 	query.collide_with_bodies = false
 	var hit := player.get_world_3d().direct_space_state.intersect_ray(query)
@@ -118,7 +140,8 @@ func _fish_along(p: Vector3, dir: Vector3) -> Fish:
 func _skewer(entry: Vector3, dir: Vector3) -> Array[Fish]:
 	var length := _length()
 	var capsule := CapsuleShape3D.new()
-	capsule.radius = skewer_radius
+	capsule.radius = skewer_radius * (1.0 + Village.stat(&"strike_window")) \
+		* (1.0 + Perks.bonus(&"fishing", &"hands"))  # the hut's sharper eyes, the level's quick hands
 	capsule.height = length
 	var y := dir.normalized()
 	var x := y.cross(Vector3.UP).normalized() if absf(y.y) < 0.99 else Vector3.RIGHT
@@ -163,10 +186,18 @@ func thrust() -> void:
 		var hits := _skewer(entry, dir)
 		var caught: Array[Fish] = []
 		var dodgers: Array[Fish] = []
-		for f in hits:  # under-levelled fish usually dodge
-			(caught if randf() < f.catch_chance() else dodgers).append(f)
+		var glanced: Array[Fish] = []
+		for f in hits:  # too weak a spear glances off; under-levelled fish usually dodge
+			if not f.tool_can_take(&"spear"):
+				glanced.append(f)
+			else:
+				var chance := f.catch_chance() * (flee_catch if f.state == Fish.State.FLEE else 1.0)
+				(caught if randf() < chance else dodgers).append(f)
 		_splash(entry, 1.0 if caught.is_empty() else 0.7)
-		if not dodgers.is_empty() and caught.is_empty():
+		if not glanced.is_empty() and caught.is_empty():
+			_play_at(load("res://audio/fishing/jerk.tres"), entry, 1.6, -2.0)
+			PopupText.spawn(player.get_parent(), entry + Vector3.UP * 0.3, glanced[0].needs_text(&"spear"), DODGE_COLOR, 5)
+		elif not dodgers.is_empty() and caught.is_empty():
 			var sp := dodgers[0].species
 			PopupText.spawn(player.get_parent(), entry + Vector3.UP * 0.3,
 				"%s %d" % [Skills.display_name(&"fishing"), sp.required_level], DODGE_COLOR, 5)
@@ -176,12 +207,13 @@ func thrust() -> void:
 			t.tween_interval(0.06)
 			await t.finished
 		else:
-			var species: Array[FishSpecies] = []
+			var xp := 0.0
 			for f in caught:
-				species.append(f.species)
+				xp += f.species.xp * f.xp_scale() * (1.5 if f.is_under_levelled() else 1.0)  # (reaching up pays)
+			var n := caught.size()
 			_put_on_spear(caught)
 			FishPond.disturb(get_tree(), entry, 2.0)  # the rest of the school bolts
-			_impact(species, entry)
+			_impact(n, xp, entry)
 			# hold: the fish wriggle on the spear (hit-stop stretches this)
 			t = create_tween()
 			t.tween_interval(hold_time)
@@ -210,11 +242,12 @@ func _put_on_spear(caught: Array[Fish]) -> void:
 		var f := caught[i]
 		var copy := f.species.model.instantiate() as Node3D
 		copy.set_meta("item", f.species.id)
-		# the fisher's dock: sometimes a fish counts twice
+		# a Big one counts 2, a Huge one 3; and the fisher's dock sometimes doubles it
 		var bonus := randf() < Village.stat(&"bonus_fish_chance")
-		copy.set_meta("count", 2 if bonus else 1)
-		if bonus:
-			PopupText.spawn(player.get_parent(), f.global_position + Vector3.UP * 0.6, "Bonus!", Skills.color(&"fishing"), 5, 0.1)
+		copy.set_meta("count", FishSize.count_for(f.size) * (2 if bonus else 1))
+		var word := " ".join(PackedStringArray([FishSize.word(f.size), "Bonus!" if bonus else ""])).strip_edges()
+		if word != "":
+			PopupText.spawn(player.get_parent(), f.global_position + Vector3.UP * (0.6 + i * 0.12), word, Skills.color(&"fishing"), 5, 0.1)
 		var mat := ShaderMaterial.new()
 		mat.shader = FISH_SHADER
 		mat.set_shader_parameter("palette", PALETTE)
@@ -229,7 +262,7 @@ func _put_on_spear(caught: Array[Fish]) -> void:
 		spear.add_child(copy)
 		# across the shaft near the tip, stacked back along it for multi-spears (scaled down: the
 		# viewmodel camera is close, full-size fish would fill the screen)
-		copy.scale = Vector3.ONE * 0.6
+		copy.scale = Vector3.ONE * 0.6 * FishSize.scale_for(f.size)
 		copy.position = Vector3(0, 0, -1.1 + i * 0.16)
 		copy.rotation = Vector3(randf_range(-0.4, 0.4), PI / 2 + randf_range(-0.3, 0.3), randf_range(-0.3, 0.3))
 		_on_spear.append(copy)
@@ -237,14 +270,9 @@ func _put_on_spear(caught: Array[Fish]) -> void:
 		f.queue_free()
 
 
-## Escalating feedback + XP for n fish on one thrust.
-func _impact(species: Array[FishSpecies], at: Vector3) -> void:
-	var n := species.size()
-	var xp := 0.0
-	for s in species:
-		xp += s.xp * (1.5 if Skills.levels_under(&"fishing", s.required_level) > 0 else 1.0)  # (reaching up pays)
-	xp = roundi(xp * (1.0 + multi_xp_bonus * (n - 1)))
-	var gained := Skills.add_xp(&"fishing", xp)
+## Escalating feedback + XP (`xp`: the fish's own, summed) for n fish on one thrust.
+func _impact(n: int, xp: float, at: Vector3) -> void:
+	var gained := Skills.add_xp(&"fishing", roundi(xp * catch_xp * (1.0 + multi_xp_bonus * (n - 1))))
 	Juice.hitstop(0.05 + 0.03 * (n - 1))
 	Juice.shake(2.0 + 1.2 * (n - 1))
 	for i in n:  # one wet thwack per fish, each a little higher (real time, so hit-stop can't delay them)

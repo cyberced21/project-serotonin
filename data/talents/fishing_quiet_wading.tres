@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/talent_def.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"quiet_wading"
+skill = &"fishing"
+milestone = 10
+style = &"spearman"
+style_name = "Spearman"
+display_name = "Quiet wading"
+text = "Schools don't scatter when you walk in, only when you thrust."

@@ -13,8 +13,10 @@ const BINDINGS := {
 	"jump": [KEY_SPACE],
 	"sprint": [KEY_SHIFT],
 	"crouch": [KEY_CTRL, KEY_C],
-	# rod fishing: drop the rod tip when a hooked fish jumps (also the right mouse button)
-	"bow": [KEY_Q],
+	# swap the fishing tool: spear <-> rod
+	"swap_fishing": [KEY_Q],
+	# the Skills page (levels, XP, perks, talents), straight from play
+	"skills": [KEY_K],
 	# debug builds only
 	"debug_menu": [KEY_F1],
 	"debug_skip_time": [KEY_F6],
@@ -35,6 +37,3 @@ func _enter_tree() -> void:
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT
 	InputMap.action_add_event("gather", click)
-	var right := InputEventMouseButton.new()
-	right.button_index = MOUSE_BUTTON_RIGHT
-	InputMap.action_add_event("bow", right)

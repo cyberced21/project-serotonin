@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/talent_def.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"skewer"
+skill = &"fishing"
+milestone = 30
+style = &"spearman"
+style_name = "Spearman"
+display_name = "Skewer"
+text = "A thrust through a dense school can take two or three fish."

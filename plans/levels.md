@@ -5,8 +5,10 @@ levels decide *how well*. Chosen 2026-10-20 from two explorations
 ([levels-milestones.md](levels-milestones.md), [levels-talents.md](levels-talents.md)): B's
 steady per-level growth, with D's gameplay-changing techniques turned into C-style **choices**.
 
-Status: **designed** (grilled 2026-10-20; not started). No branch yet. Built after
-tool-progression.md.
+Status: **phases 1 to 3 built** (3: the bench) 2026-10-27 on branch `levels` (off `fishing-yank`): the minor
+tracks (`scripts/perks.gd`), the perk line under the level-up banner, a Skills page in the pause
+menu; the talent framework (choice cards, picks saved, mastery, respec at Greta). Unplayed by
+hand. **The talents don't do anything yet**: their effects are phases 4 and 5.
 
 ## Decisions (grilled 2026-10-20)
 
@@ -18,6 +20,8 @@ tool-progression.md.
 | L4 | Balance | Options in a pair are matched by **style, not power**: neither is "more damage". Each pair should come out about even in yield per minute (see "Keeping it balanced"). |
 | L5 | Under-levelled | A real penalty, as in tool-progression T5. |
 | L7 | When you pick | The two cards appear **once the current action ends** (the tree falls, the fish is landed or lost; never mid-fight), with **"decide later"**: the choice then waits in the skills panel with a badge. |
+| L9 | Fishing track 2 (2026-10-27) | **Patience** replaces *Strong line*, which did almost what the Second strike talent does: rod bites come sooner, and a school you scattered settles sooner. Fishing's version of "quicker recovery", for both tools. |
+| L10 | Angler 40 (2026-10-27) | **Trophy hunter** replaces *Play the fish* (the fight it turned is gone): the rod's way to target size, as the spear already can by eye. |
 | L6 | Level 50 | **Mastery**: you also gain the other option of one milestone, your choice. It rewards whatever mix you took rather than pushing one style. |
 
 ## Every level: small perks
@@ -31,11 +35,16 @@ to 40% better than at level 1.
 |---|---|---|---|
 | Woodcutting | **Steadier aim**: the clean-cut tolerance into the notch is wider | **Quicker recovery**: less time between swings | **Long reach**: logs fly to you from further away (pickup magnet) |
 | Mining | **Keen eye**: more leeway in how close a hit must be to a crack tip to count | **Quicker recovery** | **Long reach** (ore) |
-| Fishing | **Quick hands**: the strike, bow and jerk windows are wider | **Strong line**: runs give back a little less distance | **Smooth cast**: a wider sweet spot on the release |
-| Farming | **Wide blade**: the sickle sweeps a wider arc | **Quicker recovery** | **Long reach** (grain) |
+| Fishing | **Quick hands**: the strike window (rod) is wider and the thrust (spear) a little thicker | **Patience**: bites come sooner (rod), a scattered school settles sooner (spear) | **Smooth cast**: a wider sweet spot on the release |
+| Farming | **Wide blade**: the sickle catches a sheaf a little off the crosshair | **Quicker recovery** | **Long reach** (grain) |
 
-Fishing's current per-10-level cast range (`range_per_10_levels`) and the level window scaling
-(`FishFight.level_scales`) fold into these tracks.
+As built: each level from 2 adds one step (2.2%) to tracks 1, 2, 3 in turn, so +35 to 37% at 50.
+Quick hands took over the old level scaling of the strike window (`FishBite.window_scale`, now
+gone) and Smooth cast that of the cast's sweet spot. The rod's cast range
+(`range_per_10_levels`) and the spear's skewer length (`reach_bonus_per_10_levels`) stay as they
+are: the fishing bench balanced the two tools with them. Wide blade isn't Harvester's *Wide
+sweep* (one swing, several sheaves): it only forgives aim. (The rod's fight is gone since
+2026-10-27: plans/fishing-parity.md.)
 
 **Flourishes (15 / 25 / 35 / 45)**:
 - A tool trail on clean hits.
@@ -70,7 +79,7 @@ Fishing's current per-10-level cast range (`range_per_10_levels`) and the level 
 | 10 | **Feel the take**: a faint rod tremble one beat before the take. | **Quiet wading**: schools don't scatter when you walk in, only when you thrust. |
 | 20 | **Second strike**: once per bite, a late strike can be saved with a quick re-strike. | **Follow-through**: after a catch, a second thrust within 0.6 s can take a fish from the scattering school. |
 | 30 | **Power cast**: hold the back-cast longer for +50% range, out to water no one else can reach. | **Skewer**: a thrust through a dense school can take two or three fish. |
-| 40 | **Play the fish**: a perfect answer to a run turns it back toward you, so a skilled fight ends much sooner. | **Spear throw**: throw the spear up to 8 m at a fish, then pull it back. The spear reaches the rod's water. |
+| 40 | **Trophy hunter**: the biggest fish nearby notice your float first, so far more of your catches are Big or Huge. | **Spear throw**: throw the spear up to 8 m at a fish, then pull it back. The spear reaches the rod's water. |
 
 Choosing a style here also chooses a tool, so Fishing's pairs are balanced across *both*
 tools: one rod perk and one spear perk at every milestone.
@@ -148,11 +157,66 @@ boost by choosing who to visit. Each is the villager's trade flavour, never a ta
 
 ## Phases (draft, after tool-progression)
 
-1. **Minor tracks + level-up moment**: per-skill track values read by the technique windows,
-   popups naming the perk, stings, the skills panel.
-2. **Talent framework**: `TalentDef` resources (`data/talents/`), picks in `Skills` + save, the
-   choice cards, the talents page, respec at Greta.
-3. **The balance bench** (headless, yield per minute per talent).
-4. **Woodcutting talents** end to end, then played by hand before the rest.
+1. ~~**Minor tracks + level-up moment**~~: done 2026-10-27. `Perks` (track values) read by the
+   technique windows, swing recovery, pickup magnet, sickle aim and fishing; the perk named
+   under the level-up banner; a Skills page in the pause menu; `tools/test_perks.gd`.
+2. ~~**Talent framework**~~: done 2026-10-27. `TalentDef` (all 32 in `data/talents/`, texts from
+   the tables above); `Talents` (owned by `Skills` as `Skills.talents`, saved under its own key
+   `talents`, so old saves load with no picks); gameplay asks `Skills.talents.has(&"chain_cut")`.
+   `TalentCards` (on the HUD) waits until you're idle 2.2 s after a milestone, pauses, and shows
+   the pair; "Decide later" / Esc leaves it waiting (a badge on the pause menu's Skills button,
+   a Choose button on the Skills page). Mastery offers the four options not taken. Greta's panel
+   has a third tab, Talents: reset one skill, free the first time, then 20 of its base goods per
+   pick (the rare-item option, 10 per pick plus one item, comes with rare items in phase 6).
+   `tools/test_talents.gd` (rules) and `tools/talent_playtest.gd` (the flow in a real world).
+3. ~~**The balance bench**~~: built 2026-10-27, `tools/talent_bench.gd` on a shared bot
+   (`tools/bench_bot.gd`, also behind `tools/fishing_bench.gd` now). Per milestone: a no-talent
+   baseline, then each option alone, at that level with the best tools, each `--repeats` times in
+   a fresh copy of one world (fishing: the pond in main.tscn, rod and spear each against their
+   own baseline). Judged on items/min (fishing: XP/min). Windowed and muted. It reports its own
+   noise and won't judge a pair when runs of one option disagree by more than ±15%.
+   **Finding**: the bot isn't frame-exact, so runs scatter: mining ±14% at 2 game minutes, the
+   rod ±12% at 3. Use 5+ minutes and 3 repeats for verdicts (long: ~20 min per milestone). The
+   spear at level 10 on the pond barely caught anything (0.3 fish/min): most fish were below
+   its length. The bot now only goes for fish it can reach. The fishing tools were balanced at
+   30 (plans/fishing-parity.md); level 10 needs a look.
+   Also fixed: walks the bot skips by teleporting are now really charged to the clock (the
+   fishing bench's next steps used to swallow them, so the rod's walks were free).
+4. **Woodcutting talents** end to end, then played by hand before the rest. **Built, not
+   balanced** (2026-10-27): all eight in `ResourceNode` ("woodcutting talents" section) and
+   `player.gd` (Power swing's charge, Momentum); heartwood and trophy logs are items (icons are
+   tinted log icons for now). `tools/woodcutting_talents_playtest.gd` checks each one headless.
+   **The talent model** (`tools/talent_model.gd`): woodcutting worked out in code on a measured
+   world's trees (`tools/model_data/`), every number read from the game; all milestones in a
+   few seconds, no noise. It plays the best trees for the level with the axe that just opens
+   them (the bench used the best axe, which fells everything in 1-2 swings and flattens every
+   talent). First findings (60 game min, a bot that never misses):
+   | Lv | Pair | Result |
+   |---|---|---|
+   | 10 | Chain cut / Back cut | +0% / -10%: 5-hit trees fall before a chain starts; walking round costs more than the triple gives |
+   | 20 | Dominoes / Heartwood | +0% / +282%: oaks stand 12-16 m apart (nothing to fall on); a knot on every tree is a stream of heartwood, not a jackpot |
+   | 30 | Power swing / Grove keeper | -9% / +120%: a 1 s charge for 3 hits loses to 6 quick swings; double-speed regrowth plus double logs on every regrown tree |
+   | 40 | Momentum / Old growth | -4% / +0%: chopping isn't the limit (walking and regrowth are); no ancient pine near the start |
+   Woodcutting is **limited by walking and regrowth**, not swing speed: trees take 3-6 s to fell
+   and regrow in 15-40 s. Speed talents have little to win; yield talents dominate.
+   **Decided and tuned (2026-10-27): longer fells.** Trees take 15 / 15 / 20 / 25 hits (tree,
+   birch, oak, pine; were 5 / 5 / 7 / 9), with more logs (4-6, oak 3-4) and less XP a hit
+   (4 / 5 / 4 / 9), so no-talent logs/min and XP/min stay near what they were. Talents retuned:
+   Back cut by angle (a hit >120° round from the notch's side once it's a quarter deep) x4;
+   Power swing 4 hits, 7 clean; heartwood knots on 12% of trees; Grove keeper 1.3x regrowth and
+   1.3x logs; Dominoes also lands hard (1.25x logs) since trees rarely stand close enough to
+   crush; ancient trees regrow 20x slower and give 3x logs. The model's swing time is calibrated
+   x1.5 against the bench (its XP/min matched the bench's 838 at level 30, and then Power swing
+   +40% vs the bench's +43%, Grove keeper +30% vs +29%). Result, as score vs no talent (bot /
+   a player landing 80% of clean cuts):
+   | Lv | Feller | Forester | Gap |
+   |---|---|---|---|
+   | 10 | Chain cut +8% / +9% | Back cut +12% / +18% | 3% / 8% |
+   | 20 | Dominoes +25% / +25% | Heartwood +28% / +24% | 2% / 1% |
+   | 30 | Power swing +40% / +43% | Grove keeper +30% / +30% | 7% / 9% |
+   | 40 | Momentum +21% / +21% | Old growth +30% / +34% | 8% / 11% |
+   Still open: XP/min differs a lot by talent (XP is per swing, so Power swing and Back cut level
+   you ~40% slower than Grove keeper); rare finds count as 8 / 25 logs, a stand-in until phase 6
+   gives them uses; Dominoes depends on how close trees grow. Not played by hand.
 5. **Mining**, then **Fishing**, then **Farming** talents.
 6. **Flourishes, rare-item uses, README, TODO.**

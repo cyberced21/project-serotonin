@@ -8,6 +8,10 @@ extends Node3D
 ## ground, keeps `spacing` between nodes, and keeps clear of buildings, props and the spawn.
 ## Put it at the scene's origin, above SceneryScatter in the tree, so the scenery keeps off its
 ## nodes too.
+## With a frame_budget_ms it spreads the spawning over frames (a generated world's loading screen),
+## the same nodes in the same places; `finished` says when it's done.
+
+signal finished
 
 const BARE_TEXTURES: Array[int] = [WorldMap.TEX_PATH, WorldMap.TEX_ROAD, WorldMap.TEX_QUARRY, WorldMap.TEX_CROP]
 const SAND_HEIGHT := -0.04
@@ -56,6 +60,9 @@ const FAMILIES := 4
 ## Set from code to narrow where nodes may go further: func(p: Vector2) -> bool, world XZ (a
 ## procgen world keeps each spawner to its own biome cell).
 var accept := Callable()
+## Milliseconds of spawning per frame before it waits for the next; 0 = all at once.
+var frame_budget_ms := 0.0
+var done := false
 
 var _taken: Array[Vector3] = []  # (x, z, radius) already used
 
@@ -68,7 +75,9 @@ func _spawn() -> void:
 	var terrain := get_tree().get_first_node_in_group("terrain") as Terrain3D
 	if terrain == null or terrain.data == null or entries.is_empty():
 		push_warning("NodeSpawner %s: nothing to spawn on" % name)
+		_finish()
 		return
+	var frame_start := Time.get_ticks_usec()
 	_collect_taken()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed
@@ -112,8 +121,17 @@ func _spawn() -> void:
 		add_child(node)
 		_taken.append(Vector3(p.x, p.y, spacing))
 		placed += 1
+		if frame_budget_ms > 0.0 and Time.get_ticks_usec() - frame_start > frame_budget_ms * 1000.0:
+			await get_tree().process_frame
+			frame_start = Time.get_ticks_usec()
 	if placed < count:
 		push_warning("NodeSpawner %s: only found room for %d of %d" % [name, placed, count])
+	_finish()
+
+
+func _finish() -> void:
+	done = true
+	finished.emit()
 
 
 ## The ground point at `p` if a node may stand there, else null.

@@ -13,14 +13,19 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 - [x] **A lake:** south of the clearing, up a second path. It's 1.35 m deep in the middle, with trout, perch and Arctic char (Fishing 30, keeps to deep water via `FishSpecies.min_depth`).
 - [ ] **A stream** feeding the pond. Needs flowing water that isn't a flat `WaterBody` surface.
 - [x] **Rod fishing:** cast, bite, fight, land, all timing (plans/fishing.md). Grayling and salmon in generated worlds' rivers (pools at bends, a current that carries the float).
-- [ ] **Play the rod by hand** — the bots land everything (tools/test_fishing.gd, tools/fishing_playtest.gd), but the windows, telegraph lengths and fight lengths (perch ~7 s .. salmon ~25 s for a 9 m fight) need tuning by feel: `data/fish/*.tres` *Rod* / *Fight* groups.
-- [ ] **Listen to the rod's sounds** (`tools/synth_fishing.py`): every cue is synthesized and unheard; the cast whip, nibble vs. tap vs. bloop, and the run's hiss carry the gameplay, so they have to be told apart by ear.
+- [ ] **Play the rod by hand** — reworked 2026-10-27 to *wait for the take, then pull* (no fight). The bot lands everything (tools/fishing_playtest.gd); tune the strike windows (0.42–0.6 s) and the hook moment's punch by feel: `data/fish/*.tres` *Rod* group, `RodFishing._hook_moment` / `_yank`.
+- [x] **Spear and rod as equal styles** (plans/fishing-parity.md): Q swaps them, fish sizes you can see (Big x2, Huge x3), four forged tiers of each opening the same fish, char and salmon in the shallows at dawn and dusk, one under-level rule, shared hut perks. Tuned with `tools/fishing_bench.gd`.
+- [ ] **Play the spear vs rod balance by hand** — the bench's pond numbers are even on XP (rod 292, spear 259 XP/min) but the spear lands ~3x the fish, because the bot never misses and walks straight to the next one. Fish a pond with each for ten minutes and compare; the levers are `SpearFishing.catch_xp` / `flee_catch` / `multi_xp_bonus`, `RodFishing.catch_xp`, and each species' `notice_rate` / `nibbles`. Schools' regrowth (`FishSchool`, 15–25 s a fish) caps the spear.
+- [ ] **The spear on the lake at midday** catches nothing (the fish swim too deep for its reach); that's meant (it's the rod's water then), but check it reads as fair in play, e.g. a hover hint.
+- [ ] **The fisher's tier 3** asks for pike and char, which now need iron fishing tools (smithy tier 3): check the building order still flows.
+- [ ] **Listen to the rod's sounds** (`tools/synth_fishing.py`): every cue is synthesized and unheard; the cast whip, nibble vs. tap, and the take's `hooked` stinger carry the gameplay, so they have to be told apart by ear. `yank` and `flop` are new too. The old fight's sounds (hiss, bulge, strain, snap, thrash, hoist, reel) are unused now.
 - [ ] **A river in the main world** so grayling and salmon can go into upgrade costs (they're only in generated worlds; the fisher's tier 3 asks for char, the rod-only fish the main world has).
 - [ ] **Bait / lures** (attract certain species: spinner for pike, fly for grayling) and a personal-best log of fish sizes.
 - [ ] **Rod in the Settings screen** — prompt assist lives in the debug menu's Player tab (and settings.cfg `[gameplay]`) until `menus` lands.
 
 ## Gathering
 
+- [ ] **Deepen tree logging** (asked 2026-10-27): long fells are fine (trees now take 15/20/25 hits), but chopping isn't interactive enough yet. Later: cut bigger and bigger notches into trees, so where and how you cut matters more as you go (the notch is `TrunkCarve`; the woodcutting talents in `ResourceNode` lean on it). Re-check the talents with `tools/talent_model.gd` after.
 - [x] **Weak points:** a glowing diamond on one chunk. A swing aimed at it counts an extra hit, gives double XP and a "Weak spot!" burst, then the spot moves (`ResourceNode` *Weak point* group).
 - [x] **True tool sinking:** during the bite, a world copy of the tool sticks with its edge buried in the node. The held fist stays on screen holding the handle (`player.gd` `_stick_in_world`).
 - [x] **Clean respawn ghost:** one silhouette outline via the stencil buffer (`ResourceNode.ghost_silhouette`, on by default).
@@ -130,14 +135,29 @@ Plan and decisions: [plans/biomes.md](../plans/biomes.md).
 - [ ] **Trophy / achievement spot** in or near the town hall: medals, discoveries, maxed skills.
 - [ ] **A "leaves" footstep set** for the forest floor (it sounds like grass for now).
 
-## Generated worlds (experimental)
+## Menus and worlds
 
-Plans and decisions: [plans/procgen.md](../plans/procgen.md), [plans/procgen-variety.md](../plans/procgen-variety.md). On the `procgen` branch.
+Plan and decisions: [plans/menus.md](../plans/menus.md).
+
+- [x] **Main menu, worlds, pause, settings, New World:** a menu over a drifting view of the clearing, a folder per world (`user://worlds/`), Esc pauses, four settings tabs, world settings with a live map, small and large worlds, a loading screen.
+- [ ] **Playtest the menus by hand:** Continue / Play, the pause menu, Save & Quit and its picture, rename / duplicate / delete, the old saves moving into folders on first start. Checked by `tools/menu_shots.gd` and the tests, not by playing.
+- [ ] **Display settings in a window:** borderless, fullscreen and the window sizes weren't tried on screen (the machine was busy).
+- [ ] **A large world in a window:** its load time (~20 s headless) and how it looks; the one windowed check came out washed out white (probably snow under Frostpeak's fog where the camera landed, not confirmed).
+- [ ] **Key rebinding** in Settings > Controls (left for later in the plan).
+- [ ] **A second quarry on large worlds** (the plan's "if it fits"): the quarry is one stamp, one `Biome.quarry_*`, one set of levels today.
+- [ ] **Repeated biomes' arrival cards** show the first site's kind (`Biome.kind_names` is per biome, not per site).
+- [ ] **Small worlds are 384 m**, not the planned 256 (at 256 the rim would start 44 m from the middle, over the hub).
+- [ ] **The debug menu's Graphics tab** now duplicates Settings > Graphics; keep it or drop it.
+- [ ] **Sound on the menu:** the backdrop is silent (no ambience or music).
+
+## Generated worlds
+
+Plans and decisions: [plans/procgen.md](../plans/procgen.md), [plans/procgen-variety.md](../plans/procgen-variety.md), [plans/menus.md](../plans/menus.md) (world settings, sizes, loading). Merged into `main` 2026-10-19.
 
 - [x] **A world from a seed:** biome ring, water with fish, a quarry pit, trails, spawners and scenery per biome, four baked variants of every gatherable and big scenery model (`scripts/procgen/`, `scenes/procgen.tscn`).
 - [x] **A voice per tree species and per ore** (`tools/synth_wood_sounds.py`, `tools/synth_mining_sounds.py`). This changes the hand-built world's sounds too.
 - [ ] **Playtest and listen:** walk a few seeds; listen to every tree species and ore (the voices are measured, not heard yet: no steady pulsing, no beating tones, pitch and ring in the intended order).
-- [ ] **Load time:** about 4–7 s per seed now (measured headless; ~8 s windowed before the variety work): ~1.8 s for the map, ~2.7 s spawning (each fractured ore rock takes ~50 ms to build), ~1.4 s scenery, the rest the first frame's shaders. Could spread the spawning over frames behind the overlay, or cache built rocks.
+- [x] **Load time:** the map generates on a worker thread and the spawning and scenery are spread over frames behind a loading screen; a normal world is ready in ~5 s headless (was ~8), a large one in ~20. Caching built rocks could still cut it.
 - [ ] **The quarry ambience hum** (55 + 82.5 Hz) repeats 27.5 times a second: a low growl. Worth a listen given how the breeze turned out.
 - [x] **Variety:** a kind per biome, Hearthvale (the village) on every seed, rivers, ruins, camps and rare spots, rich and lean resources, an off-centre start (`plans/procgen-variety.md`).
 - [ ] **New screenshots:** `docs/images/procgen.png` predates the village, rivers and landmarks (skipped while a game was using the GPU; take them with the shots script when the machine's free).
@@ -150,7 +170,7 @@ Plans and decisions: [plans/procgen.md](../plans/procgen.md), [plans/procgen-var
 - [ ] **Themed nodes, load time:** about +0.5–0.75 s a seed (7.5 → 8.25 s windowed, ±1 s run to run); not the doubled variants. Probably the heavier node shader's first compile; check with a profiler.
 - [ ] **Themed nodes, the hand-built world:** its spawners and scenery have no theme (`NodeSpawner.theme`, `SceneryScatter.theme`); the biome scenes could each take one.
 - [ ] **Themed nodes, not done:** Old Growth trees taller or gnarlier by theme (only the background canopies grow, via `KIND_SCALE`); no trees grow on Frostpeak, so snow on crowns only shows on the rare Frost-touched one.
-- [ ] **Merge or drop:** the branch carries the wood and mining voicing and the camera fix (already on `main`); the procgen world itself only touches the debug menu, `SaveGame.use_file`, `Biome.locator` and `NodeSpawner.accept` / `SpawnEntry.variants`.
+- [x] **Merge or drop:** merged into `main` (2026-10-19, with the ores work).
 
 ## Movement
 
@@ -184,7 +204,7 @@ Plans and decisions: [plans/procgen.md](../plans/procgen.md), [plans/procgen-var
 - [x] **Mining sounds:** cut from the GDC 2026 sampler (`tools/cut_sounds.py`).
 - [x] **Even mining levels:** every clip at the same loudness, one source per layer, and the plain hit ducks under a crack tip or a split (`ResourceNode._hit_sounds`). Measured with `tools/measure_mix.py`: a plain hit stays within a 3.4 dB window (was 10.7), a tip hit lands 2 dB above it, a split 3.7 dB.
 - [x] **Synthesized mining sounds** (`tools/synth_mining_sounds.py`, 2026-10-17, `procgen` branch) replace the GDC clips below, with a voice per ore. Re-run `tools/measure_mix.py` and rebalance the stack volumes after a listen.
-- [ ] ~~**Better source material for mining (next):**~~ superseded by the synthesis above. playtested, the sounds are even now but still don't feel right. The sampler has almost no real rock: ice cracks, a metal pipe on concrete, body punches and a broom sweeping crumbs stand in for stone cracking, the pick's bite, the thump and gravel, and the split crunch is a "gore smash". Find a real rock / mining library (stone impacts, pick on rock, rubble, gravel), then point the recipes in `tools/cut_sounds.py` at it: the layer stacks, the loudness matching and the ducking all stay. Re-run `tools/measure_mix.py` and rebalance the layer volumes after.
+- [x] ~~**Better source material for mining (next):**~~ superseded by the synthesis above. playtested, the sounds are even now but still don't feel right. The sampler has almost no real rock: ice cracks, a metal pipe on concrete, body punches and a broom sweeping crumbs stand in for stone cracking, the pick's bite, the thump and gravel, and the split crunch is a "gore smash". Find a real rock / mining library (stone impacts, pick on rock, rubble, gravel), then point the recipes in `tools/cut_sounds.py` at it: the layer stacks, the loudness matching and the ducking all stay. Re-run `tools/measure_mix.py` and rebalance the layer volumes after.
 
 ## World & tech
 
@@ -194,4 +214,4 @@ Plans and decisions: [plans/procgen.md](../plans/procgen.md), [plans/procgen-var
 - [x] **Stars and moon:** `shaders/sky.gdshader` draws the gradient, a sun disc by day, a moon disc and twinkling stars at night.
 - [x] **Terrain collision range:** Terrain3D now builds collision for the whole map up front (`collision_mode` Full/Game, ~0.1 s at 512 m). Revisit if the world gets much bigger.
 - [x] **Saved node keys:** every placed node has a `save_id`. Saves keyed by the old scene path carry over automatically.
-- [ ] **GPU driver reset, once:** on 2026-10-16 the game lost its graphics device on Direct3D 12 (GTX 1080 Ti; Windows logged a TDR, `0x141`). It didn't happen again in hours of testing. If it comes back, try Vulkan (`rendering/rendering_device/driver.windows`), which NVIDIA's older cards handle better.
+- [ ] **GPU driver resets:** on 2026-10-16 the game lost its graphics device on Direct3D 12 (GTX 1080 Ti; Windows logged a TDR, `0x141`), and again on 2026-10-19 a moment after a generated world appeared (`nvlddmkm` event 153, `0x887a0005`). Switched to Vulkan (`rendering/rendering_device/driver.windows`) the same day; watch whether it comes back.

@@ -12,10 +12,12 @@ size = Vector3(1.25, 3.6, 1.25)
 [node name="OakTree" instance=ExtResource("1_tree")]
 tool_tier = 1
 item = &"oak"
-max_hits = 7
+max_hits = 20
+drops_min = 3
+drops_max = 4
 respawn_time = 30.0
 required_level = 15
-xp_per_hit = 9
+xp_per_hit = 4
 xp_on_break = 30
 chip_color = Color(0.761, 0.6, 0.424, 1)
 burst_color = Color(0.16, 0.36, 0.2, 1)

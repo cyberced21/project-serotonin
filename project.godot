@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Project serotonin"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/menu/main_menu.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.svg"
 
@@ -19,14 +19,17 @@ config/icon="res://icon.svg"
 
 GameInput="*res://scripts/autoload/game_input.gd"
 GraphicsSettings="*res://scripts/autoload/graphics_settings.gd"
+Settings="*res://scripts/autoload/settings.gd"
 Juice="*res://scripts/autoload/juice.gd"
 Sfx="*res://scripts/autoload/sfx.gd"
 SaveGame="*res://scripts/autoload/save_game.gd"
+Worlds="*res://scripts/autoload/worlds.gd"
 Inventory="*res://scripts/autoload/inventory.gd"
 Skills="*res://scripts/autoload/skills.gd"
 Tools="*res://scripts/autoload/tools.gd"
 Village="*res://scripts/autoload/village.gd"
 DayNight="*res://scripts/autoload/day_night.gd"
+PauseMenu="*res://scripts/autoload/pause_menu.gd"
 DebugMenu="*res://scripts/autoload/debug_menu.gd"
 Biome="*res://scripts/autoload/biome.gd"
 

@@ -8,6 +8,10 @@ const DEFS := {
 	&"birch": {"name": "Birch logs"},
 	&"oak": {"name": "Oak logs"},
 	&"pine": {"name": "Pine logs"},
+	# rare finds (plans/levels.md): never needed for progress; their icons are tinted log icons
+	# for now (art/icons), not renders
+	&"heartwood": {"name": "Heartwood"},
+	&"trophy_log": {"name": "Trophy log"},
 	&"ore": {"name": "Copper ore"},
 	&"iron": {"name": "Iron ore"},
 	&"coal": {"name": "Coal"},

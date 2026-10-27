@@ -153,6 +153,15 @@ extends CharacterBody3D
 @export var recover_time := 0.16
 @export var swing_cooldown := 0.12
 @export var move_slow_while_swinging := 0.3
+## Power swing (a woodcutting talent): hold this long on a tree for a full charge; you move this
+## much slower while charging. A tap still swings as usual.
+@export var power_charge_time := 1.0
+@export var move_slow_while_charging := 0.4
+## Momentum (a woodcutting talent): each tree felled within this many seconds of the last makes
+## the axe this much faster, up to this many times.
+@export var momentum_window := 10.0
+@export var momentum_step := 0.15
+@export var momentum_max := 3
 
 @export_group("Bite")
 ## How far the tool sinks into the node on impact (m, viewmodel space).
@@ -223,6 +232,9 @@ const BUZZ_DECAY := 0.07
 const WORLD_MASK := 1
 ## Villagers (see Villager.NPC_LAYER): the crosshair ray stops on them, mantling ignores them.
 const NPC_MASK := 1 << 6
+## Farming's wide blade (Perks): how far off the crosshair's line the sickle still catches a sheaf,
+## in m per unit of the perk's bonus (so about 0.36 m at level 50).
+const WIDE_BLADE_PER_BONUS := 1.0
 const STAND_HEIGHT := 1.8
 const CROUCH_HEIGHT := 1.0
 const STAND_EYE := 1.6
@@ -279,8 +291,14 @@ var _stand_probe := CapsuleShape3D.new()
 
 var _target: ResourceNode
 var _talk_target: Villager
+## "Q: rod" when you aim at water only the other fishing tool takes; the swap's name, briefly.
+var _swap_hint := ""
+var _swap_shown := 0.0
 var _swinging := false
 var _cooldown := 0.0
+var _charge := -1.0  # Power swing: seconds held on a tree, -1 when not charging
+var _momentum := 0  # Momentum: trees felled in a quick run (each makes the axe faster)
+var _since_felled := INF  # seconds since the last tree came down
 var _tool_rest := Vector3.ZERO
 var _buzz := 0.0  # current quiver size (rad), see _impact_feel
 var _buzz_us := 0
@@ -312,7 +330,10 @@ var _equip_dip := 0.0
 
 func _ready() -> void:
 	add_to_group("player")
-	_base_fov = camera.fov
+	for a: Node in [slide_audio, mantle_audio, footsteps]:
+		a.set("bus", &"Movement")
+	_base_fov = Settings.fov()
+	Settings.changed.connect(func() -> void: _base_fov = Settings.fov())
 	_tool_rest = tool_pivot.position
 	_stand_probe.radius = body_shape.radius - 0.01
 	_stand_probe.height = STAND_HEIGHT
@@ -331,9 +352,9 @@ func _ready() -> void:
 	_build_speed_feel()
 	for t in [&"pickaxe", &"axe", &"sickle"]:
 		_use_tool_model(tools[t], tool_model(t))
-	_use_tool_model(tools[&"spear"], spear_model)
+	_use_tool_model(tools[&"spear"], tool_model(&"spear"))
 	Tools.changed.connect(func(t: StringName, _tier: int) -> void:  # a newly forged one
-		if tools.has(t):
+		if tools.has(t) and t != &"rod":  # (RodFishing rebuilds its own rod: it bends)
 			_use_tool_model(tools[t], tool_model(t)))
 	tools[&"rod"] = rodfishing.rod  # (built by RodFishing, on its own grip like the spear)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -372,12 +393,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var motion := event as InputEventMouseMotion
-		rotate_y(-motion.relative.x * mouse_sensitivity)
+		var sens := mouse_sensitivity * Settings.sensitivity()
+		rotate_y(-motion.relative.x * sens)
 		var limit := deg_to_rad(max_pitch_deg)
-		_pitch = clampf(_pitch - motion.relative.y * mouse_sensitivity, -limit, limit)
+		var dy := -motion.relative.y if Settings.invert_y() else motion.relative.y
+		_pitch = clampf(_pitch - dy * sens, -limit, limit)
 		_look_delta += motion.relative
-	elif event.is_action_pressed("ui_cancel"):
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	elif event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		get_viewport().set_input_as_handled()
@@ -466,6 +487,7 @@ func _build_speed_feel() -> void:
 		loop.loop_begin = 0
 		loop.loop_end = int(loop.get_length() * loop.mix_rate)
 	_wind.stream = wind_sfx
+	_wind.bus = &"Movement"
 	_wind.volume_db = -40.0
 	add_child(_wind)
 	var layer := CanvasLayer.new()
@@ -516,6 +538,15 @@ func _physics_process(delta: float) -> void:
 	_update_crouch(delta)
 
 	_cooldown -= delta
+	_swap_shown -= delta
+	_since_felled += delta
+	if _since_felled > momentum_window:
+		_momentum = 0
+	_update_charge(delta)
+	if Input.is_action_just_pressed("swap_fishing") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED 			and not rodfishing.is_busy() and not _swinging:
+		Tools.swap_fishing_style()
+		_swap_shown = 1.0
+		Sfx.play(load("res://audio/fishing/jerk.tres"), 1.2, -10.0)
 	_update_target()
 	if rodfishing.is_busy():
 		pass  # the rod has the buttons (RodFishing reads them itself)
@@ -525,7 +556,9 @@ func _physics_process(delta: float) -> void:
 			_talk_target.interact()
 	elif Input.is_action_pressed("gather") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED \
 			and is_on_floor() and _state == State.NORMAL and not _swinging and _cooldown <= 0.0:
-		if _target:
+		if _target and _target.skill == &"woodcutting" and Skills.talents.has(&"power_swing"):
+			_charge = 0.0 if _charge < 0.0 else _charge + delta  # Power swing: hold, then let go
+		elif _target:
 			_swing(_target.tool_type)
 		elif spearfishing.can_thrust():
 			spearfishing.thrust()
@@ -581,7 +614,7 @@ func _move(delta: float) -> void:
 	if _state == State.WALLRUN and _jump_buffer > 0.0:
 		horizontal = _wall_jump(horizontal)
 		jumped = true
-	elif _jump_buffer > 0.0 and _coyote > 0.0 and not _swinging and _can_stand() and not rodfishing.is_fighting():
+	elif _jump_buffer > 0.0 and _coyote > 0.0 and not _swinging and _can_stand():
 		var spd := horizontal.length()
 		if _state == State.SLIDE:
 			spd += slide_jump_boost  # slide cancel: keep the slide's speed, plus a kick
@@ -608,9 +641,9 @@ func _move(delta: float) -> void:
 	var sprinting := Input.is_action_pressed("sprint") and input.y < 0.0 and not _swinging and not crouched
 	var speed := crouch_speed if crouched else (sprint_speed if sprinting else walk_speed)
 	speed *= move_slow_while_swinging if _swinging else 1.0
+	speed *= move_slow_while_charging if _charge >= 0.0 else 1.0
 	speed *= wading
 	speed *= 1.0 + Village.stat(&"run_speed")  # Rosa's bread
-	speed *= rodfishing.move_scale()  # a fish on: rooted to a shuffle
 
 	match _state:
 		State.SLIDE:
@@ -640,7 +673,7 @@ func _move(delta: float) -> void:
 
 	# a wider view the faster you go
 	var spd_t := clampf((horizontal.length() - walk_speed) / (max_speed - walk_speed), 0.0, 1.0)
-	var kick := spd_t * speed_fov_kick + (slide_fov_kick * 0.5 if _state == State.SLIDE else 0.0) + _fov_punch
+	var kick := (spd_t * speed_fov_kick + (slide_fov_kick * 0.5 if _state == State.SLIDE else 0.0) + _fov_punch) 			* Settings.camera_motion()
 	_fov_punch = move_toward(_fov_punch, 0.0, 40.0 * delta)
 	camera.base_fov = lerpf(camera.base_fov, _base_fov + kick, 1.0 - exp(-10.0 * delta))  # (+ impact kicks)
 
@@ -968,12 +1001,84 @@ func _aim(length := reach) -> Dictionary:
 	return get_world_3d().direct_space_state.intersect_ray(query)
 
 
+## Mid-action: a swing or thrust under way, a charge held, or the rod out (TalentCards waits for
+## this to end).
+func is_busy() -> bool:
+	return _swinging or _charge >= 0.0 or rodfishing.is_busy()
+
+
+## A tree came down (ResourceNode): Momentum counts a quick run of them.
+func note_felled() -> void:
+	if Skills.talents.has(&"momentum"):
+		if _since_felled <= momentum_window:
+			_momentum = mini(_momentum + 1, momentum_max)
+			PopupText.spawn(get_parent(), global_position + Vector3.UP * 2.2, "Momentum ×%d" % _momentum,
+				ResourceNode.TALENT_COLOR, 9)
+	_since_felled = 0.0
+
+
+## Power swing: while gather is held on a tree the axe draws back; let go to swing, full power
+## once it's been held power_charge_time. Looking away or losing the tree drops the charge.
+func _update_charge(delta: float) -> void:
+	if _charge < 0.0:
+		return
+	var held := Input.is_action_pressed("gather") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+	if _target == null or _target.skill != &"woodcutting" or _swinging:
+		_charge = -1.0
+		return
+	var pose := _swing_pose(&"axe")
+	var t := clampf(_charge / power_charge_time, 0.0, 1.0)
+	var drawn: float = lerpf(pose.get("ready", pose.get("rest", 0.0)), pose.get("windup", 0.0) * 1.25, t)
+	tool_pivot.rotation.x = lerpf(tool_pivot.rotation.x, drawn, 1.0 - exp(-10.0 * delta))
+	if held:
+		return  # (_physics_process counts it up)
+	var full := _charge >= power_charge_time
+	_charge = -1.0
+	_swing(&"axe", full)
+
+
 func _node_under_crosshair(hit: Dictionary) -> ResourceNode:
 	var node := hit.get("collider") as ResourceNode
 	return node if node and node.is_available() else null
 
 
+## Farming's wide-blade perk (Perks): the sickle also catches a sheaf within WIDE_BLADE_PER_BONUS
+## * the bonus of the crosshair's line. Returns a hit on the sheaf nearest the line, or `hit` as it was.
+func _blade_aim(hit: Dictionary) -> Dictionary:
+	var radius := WIDE_BLADE_PER_BONUS * Perks.bonus(&"farming", &"blade")
+	if radius <= 0.0:
+		return hit
+	var from := camera.global_position
+	var forward := -camera.global_basis.z
+	var length: float = reach if hit.is_empty() else minf(reach, from.distance_to(hit["position"]) + radius)
+	var capsule := CapsuleShape3D.new()
+	capsule.radius = radius
+	capsule.height = length + radius * 2.0
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = capsule
+	q.collision_mask = WORLD_MASK
+	q.exclude = [get_rid()]
+	# the capsule's axis is its local Y: lay it along the view ray
+	q.transform = Transform3D(Basis(Quaternion(Vector3.UP, forward)), from + forward * length * 0.5)
+	var best: ResourceNode = null
+	var best_d := INF
+	for r in get_world_3d().direct_space_state.intersect_shape(q, 16):
+		var node := r.get("collider") as ResourceNode
+		if node == null or node.skill != &"farming" or not node.is_available():
+			continue
+		var to := node.global_position - from
+		var d := (to - forward * to.dot(forward)).length()  # off the line
+		if d < best_d:
+			best_d = d
+			best = node
+	if best == null:
+		return hit
+	var at := best.global_position + Vector3.UP * 0.4
+	return {"collider": best, "position": at, "normal": -forward}
+
+
 func _update_target() -> void:
+	_swap_hint = ""
 	if rodfishing.is_busy():  # the rod stays in hand until the float's back (or the fish is)
 		_clear_targets()
 		_equip(&"rod")
@@ -988,6 +1093,8 @@ func _update_target() -> void:
 		node = _node_under_crosshair(hit)
 		if node is OreWall:  # (it lights, and gates, the one piece the crosshair is on)
 			(node as OreWall).aim_at(hit["position"], hit["normal"])
+	if talk == null and node == null:
+		node = _node_under_crosshair(_blade_aim(hit))
 	if talk == null and node == null:
 		talk = _villager_behind_clutter()
 	if talk != _talk_target:
@@ -1006,12 +1113,17 @@ func _update_target() -> void:
 		spearfishing.clear_target()
 		rodfishing.clear_target()
 	elif not _swinging:  # mid-thrust, SpearFishing re-aims on its own impact frame
+		# the fishing tool you've chosen; the other one only to hint at the swap
 		spearfishing.update_target()
-		# water beyond the spear's reach: the rod's
-		if spearfishing.can_thrust():
-			rodfishing.clear_target()
+		rodfishing.update_target()
+		if Tools.fishing_style == &"rod":
+			if not rodfishing.can_cast() and spearfishing.can_thrust():
+				_swap_hint = "Q: spear"
+			spearfishing.clear_target()
 		else:
-			rodfishing.update_target()
+			if not spearfishing.can_thrust() and rodfishing.can_cast():
+				_swap_hint = "Q: rod"
+			rodfishing.clear_target()
 
 	# bring out the right tool for whatever you're looking at
 	if not _swinging:
@@ -1034,9 +1146,21 @@ func _update_target() -> void:
 	elif _target and _target.is_under_levelled():
 		hover_label.text = _target.under_text()
 		hover_label.modulate = UNDER_COLOR
+	elif fish and not fish.tool_can_take(&"spear"):
+		hover_label.text = fish.needs_text(&"spear")
+		hover_label.modulate = DEFLECT_COLOR
 	elif fish and fish.is_under_levelled():
 		hover_label.text = "%s %d" % [Skills.display_name(&"fishing"), fish.species.required_level]
 		hover_label.modulate = UNDER_COLOR
+	elif spearfishing.deep_fish != null:  # on your line, but past the spear's tip
+		hover_label.text = "Too deep"
+		hover_label.modulate = DEFLECT_COLOR
+	elif _swap_shown > 0.0:
+		hover_label.text = "Rod" if Tools.fishing_style == &"rod" else "Spear"
+		hover_label.modulate = Color.WHITE
+	elif _swap_hint != "":
+		hover_label.text = _swap_hint
+		hover_label.modulate = Color(1, 1, 1, 0.7)
 	else:
 		hover_label.text = ""
 
@@ -1123,7 +1247,7 @@ func _equip(tool: StringName) -> void:
 		create_tween().tween_property(self, "_equip_dip", 0.0, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
-func _swing(tool: StringName) -> void:
+func _swing(tool: StringName, power := false) -> void:
 	_swinging = true
 	_equip(tool)
 	var pose := _swing_pose(tool)
@@ -1133,6 +1257,8 @@ func _swing(tool: StringName) -> void:
 	var sideways := tool == &"sickle"
 	var axis := "rotation:z" if sideways else "rotation:x"
 	var pace: float = SICKLE_SPEED if sideways else pose["pace"]
+	if tool == &"axe":
+		pace *= 1.0 + momentum_step * _momentum  # Momentum
 	var smooth: bool = pose.get("smooth", false)
 	var ease := Tween.EASE_IN_OUT if smooth else Tween.EASE_OUT
 	var windup: float = windup_time / pace * pose.get("windup_scale", 1.0)
@@ -1162,9 +1288,12 @@ func _swing(tool: StringName) -> void:
 
 	# 3. impact frame — hits whatever the crosshair is on *now*; looked away = whiff
 	var hit := _aim()
+	if tool == &"sickle" and _node_under_crosshair(hit) == null:
+		hit = _blade_aim(hit)
 	var node := _node_under_crosshair(hit)
 	if node:
 		var info := HitInfo.new(hit["position"], hit["normal"], node, camera.global_position)
+		info.power = power
 		if node.hit(info):
 			_impact_feel(info, node.last_impact if "last_impact" in node else 1.0)
 			await _bite(tool, info)
@@ -1174,8 +1303,10 @@ func _swing(tool: StringName) -> void:
 			_impact_feel(info, 0.6, 2.5)  # bounced off: little kick, a nasty sting in the hands
 			await _bounce(tool)
 
-	# 4. recover — back to the ready stance if there's more to mine, else to rest
-	var recover: float = recover_time / pace * pose.get("recover_scale", 1.0)
+	# 4. recover — back to the ready stance if there's more to mine, else to rest (quicker with
+	# the level's recovery perk)
+	var quick := 1.0 + Perks.bonus(Perks.TOOL_SKILL.get(tool, &""), &"recovery")
+	var recover: float = recover_time / pace * pose.get("recover_scale", 1.0) / quick
 	var ready := _ready_stance()
 	var trans := Tween.TRANS_SINE if smooth else Tween.TRANS_BACK
 	t = create_tween().set_parallel()
@@ -1185,7 +1316,7 @@ func _swing(tool: StringName) -> void:
 	t.tween_property(self, "_grip_blend", pose.get("ready_blend", 0.0) if ready else 0.0, recover * (1.0 if ready else 1.6)) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await t.finished
-	_cooldown = swing_cooldown
+	_cooldown = swing_cooldown / quick
 	_swinging = false
 
 

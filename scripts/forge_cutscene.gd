@@ -427,6 +427,13 @@ func _tool_model() -> Node3D:
 	var inst := scene.instantiate() as Node3D
 	for m in inst.find_children("*", "MeshInstance3D", true, false):
 		(m as MeshInstance3D).material_override = preload("res://materials/node_palette.tres")
+	if tool == &"spear" or tool == &"rod":  # long, and lying along -Z: stood up and scaled to fit
+		var holder := Node3D.new()
+		holder.add_child(inst)
+		inst.rotation.x = PI * 0.5
+		inst.scale = Vector3.ONE * 0.38
+		inst.position.y = 0.1
+		return holder
 	return inst
 
 

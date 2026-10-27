@@ -7,11 +7,10 @@ extends CanvasLayer
 ##   World     time of day, time scale, pause, regrow every node, restock every pond
 ##   Teleport  to each building, biome landmark, pond and kind of resource node (the nearest one)
 ##   Player    fly mode, a live readout (can stay pinned on screen), save / wipe the save
-##   Procgen   enter a generated world by seed, or a new random one, and back to the main world
+##   Procgen   a scratch generated world by seed, or a new random one, and back to the main menu
 ##   Graphics  Low / Medium / High presets and each costly effect on its own (GraphicsSettings)
 ## The old F6–F10 keys still work. Toggles that stay on (fly, pause, time scale) show as a tag at
 ## the top of the screen while the menu is closed.
-## `--procgen` on the command line (after `--`) starts in a generated world; `--seed=N` picks it.
 
 const WIDTH := 460.0
 const BG := Color(0.09, 0.075, 0.06, 0.94)
@@ -55,8 +54,9 @@ var _gfx_sliders: Dictionary[StringName, HSlider] = {}
 var _gfx_msaa: Dictionary[int, Button] = {}
 
 
+## Only in debug builds and playtest exports (export_presets.cfg sets the "playtest" feature).
 func _ready() -> void:
-	if not OS.is_debug_build():
+	if not (OS.is_debug_build() or OS.has_feature("playtest")):
 		queue_free()
 		return
 	layer = 10
@@ -67,19 +67,6 @@ func _ready() -> void:
 	Skills.xp_gained.connect(func(_s: StringName, _a: int, _t: int) -> void: _refresh_skills())
 	Tools.changed.connect(func(_t: StringName, _tier: int) -> void: _refresh_skills())
 	Village.tier_changed.connect(func(_id: StringName, _t: int) -> void: _refresh_village())
-	_start_from_cmdline.call_deferred()
-
-
-## `-- --procgen [--seed=N]`: straight into a generated world (a random seed if none is given).
-func _start_from_cmdline() -> void:
-	var args := OS.get_cmdline_user_args()
-	if not args.has("--procgen"):
-		return
-	var s := ProcgenWorld.random_seed()
-	for arg in args:
-		if arg.begins_with("--seed="):
-			s = arg.trim_prefix("--seed=").to_int()
-	ProcgenWorld.enter(get_tree(), s)
 
 
 func is_open() -> bool:
@@ -137,7 +124,7 @@ func _process(_delta: float) -> void:
 	var p := _player()
 	if p and p.debug_fly:
 		tags.append("FLY")
-	if get_tree().paused:
+	if get_tree().paused and not PauseMenu.is_open():
 		tags.append("PAUSED")
 	if not is_equal_approx(Engine.time_scale, 1.0):
 		tags.append("TIME ×%s" % Engine.time_scale)
@@ -212,25 +199,25 @@ func _enter_procgen(s: int) -> void:
 	close()
 	get_tree().paused = false
 	Engine.time_scale = 1.0
-	ProcgenWorld.enter(get_tree(), s)
+	Worlds.play_scratch(s)
 
 
 func _enter_typed_seed() -> void:
 	var text := _seed_edit.text.strip_edges()
-	_enter_procgen(text.to_int() if text.is_valid_int() else ProcgenWorld.random_seed())
+	_enter_procgen(text.to_int() if text.is_valid_int() else ProcgenMap.random_seed())
 
 
 func _leave_procgen() -> void:
 	close()
 	get_tree().paused = false
 	Engine.time_scale = 1.0
-	ProcgenWorld.leave(get_tree())
+	Worlds.leave()
 
 
 func _refresh_procgen() -> void:
 	var world := _procgen_world()
 	if world == null or world.map == null:
-		_procgen_status.text = "In the main world"
+		_procgen_status.text = "In %s" % Worlds.current_meta.get("name", "no world")
 		return
 	var map := world.map
 	var kinds: PackedStringArray = []
@@ -240,10 +227,13 @@ func _refresh_procgen() -> void:
 	for r: Dictionary in map.rares:
 		var theme := load("res://data/themes/rare/%s.tres" % r["theme"]) as NodeTheme
 		rares.append("%s (%s)" % [theme.title, String(map.sites[r["site"]]["biome"]).capitalize()])
-	_procgen_status.text = "In a generated world, seed %d\n%s\nRich in %s, lean on %s\nRare: %s" % [ProcgenWorld.world_seed,
-			", ".join(kinds), Items.display_name(map.rich), Items.display_name(map.lean), ", ".join(rares)]
+	_procgen_status.text = "In %s, seed %d
+%s
+Rich in %s, lean on %s
+Rare: %s" % [Worlds.current_meta.get("name", "?"),
+			world.world_seed, ", ".join(kinds), Items.display_name(map.rich), Items.display_name(map.lean), ", ".join(rares)]
 	if _seed_edit.text.is_empty():
-		_seed_edit.text = str(ProcgenWorld.world_seed)
+		_seed_edit.text = str(world.world_seed)
 
 
 func _disarm_reset() -> void:
@@ -633,11 +623,6 @@ func _build_player() -> Control:
 	box.add_child(_fly)
 	_pin = _check("Keep the readout on screen", func(_on: bool) -> void: pass)
 	box.add_child(_pin)
-	box.add_child(_heading("Fishing"))
-	RodFishing._load_settings()
-	var prompts := _check("Rod prompt assist: a small hint for each move (saved)", RodFishing.set_prompt_assist)
-	prompts.set_pressed_no_signal(RodFishing.prompt_assist)
-	box.add_child(prompts)
 	box.add_child(_heading("Save"))
 	var row := HBoxContainer.new()
 	row.add_child(_button("Save now", SaveGame.save))
@@ -664,11 +649,11 @@ func _build_procgen() -> Control:
 	row.add_child(_seed_edit)
 	row.add_child(_button("Enter this seed", _enter_typed_seed))
 	box.add_child(row)
-	box.add_child(_button("New seed (random)", func() -> void: _enter_procgen(ProcgenWorld.random_seed())))
-	box.add_child(_button("Back to the main world", _leave_procgen))
+	box.add_child(_button("New seed (random)", func() -> void: _enter_procgen(ProcgenMap.random_seed())))
+	box.add_child(_button("Back to the main menu", _leave_procgen))
 	var note := _label(13)
-	note.text = "Every seed has its own character and save (user://procgen_<seed>.json).
-The main world's save is never touched."
+	note.text = "Seeds entered here go into a scratch world (worlds/_scratch), wiped each time.
+Your own worlds are never touched."
 	note.modulate = DIM
 	box.add_child(note)
 	return box

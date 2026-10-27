@@ -73,11 +73,14 @@ const VARIANTS := 8
 const SCENERY_AREA := Rect2(-185, -185, 370, 370)
 
 
-static func populate(parent: Node3D, map: ProcgenMap) -> void:
-	var spawners := {}  # site -> its spawner
+## Every spawner, then every scatter, one at a time, each spread over frames by `budget_ms` (0: all
+## in this frame, as before). `on_progress` gets 0..1 as they finish. Await it when budgeted.
+static func populate(parent: Node3D, map: ProcgenMap, budget_ms := 0.0, on_progress := Callable()) -> void:
+	var by_site := {}  # site -> its spawner
 	for i in map.sites.size():
 		var site: Dictionary = map.sites[i]
-		var spec: Dictionary = NODES.get(site["biome"], {}).get(site["tier"], {})
+		var tiers: Dictionary = NODES.get(site["biome"], {})
+		var spec: Dictionary = tiers.get(site["tier"], tiers.get(2, tiers.get(1, {})))  # a large world's repeats
 		if spec.is_empty():
 			continue
 		spec = _with_kind(spec, site.get("kind", &""))
@@ -97,16 +100,38 @@ static func populate(parent: Node3D, map: ProcgenMap) -> void:
 			var vc: Vector2 = map.village["center"]
 			in_pit = func(p: Vector2) -> bool: return p.distance_to(vc) < ProcgenMap.VILLAGE_RADIUS
 		spawner.accept = func(p: Vector2) -> bool:
-			return map.cells[ProcgenMap.pixel_index(p)] == cell and not in_pit.call(p)
-		parent.add_child(spawner)
-		spawners[i] = spawner
-	_place_rares(map, spawners)
-	_quarry_levels(parent, map)
+			return map.cells[map.pixel_index(p)] == cell and not in_pit.call(p)
+		by_site[i] = spawner
+	_place_rares(map, by_site)
+	var spawners: Array[NodeSpawner] = []
+	for i in by_site:
+		spawners.append(by_site[i])
+	spawners.append_array(_quarry_levels(parent, map))
+	var scatters: Array[SceneryScatter] = []
 	var boxes := _cell_boxes(map)
 	for i in map.sites.size():
-		var box: Rect2 = boxes[i].intersection(SCENERY_AREA)
+		var box: Rect2 = boxes[i].intersection(SCENERY_AREA.grow((map.metres - ProcgenMap.SIZE) * 0.5))
 		if box.has_area():
-			parent.add_child(_scenery(map, i, box))
+			scatters.append(_scenery(map, i, box))
+	# the nodes first and one spawner at a time (each keeps clear of the ones before it), then
+	# the scenery round them
+	var all: Array[Node3D] = []
+	all.append_array(spawners)
+	all.append_array(scatters)
+	var slow := PackedStringArray()
+	for k in all.size():
+		var t := Time.get_ticks_msec()
+		all[k].set("frame_budget_ms", budget_ms)
+		parent.add_child(all[k])
+		if budget_ms > 0.0:
+			if not all[k].get("done"):
+				await all[k].finished
+			if Time.get_ticks_msec() - t > 1000:
+				slow.append("%s %d" % [all[k].name, Time.get_ticks_msec() - t])
+			if on_progress.is_valid():
+				on_progress.call(float(k + 1) / all.size())
+	if not slow.is_empty():
+		print("ProcgenPopulation: slow: ", ", ".join(slow))
 
 
 ## Hands each of the seed's rare looks (ProcgenMap.rares) to its site's spawner, or, for a site
@@ -173,16 +198,20 @@ static func _spawner(map: ProcgenMap, node_name: String, spec: Dictionary) -> No
 		entries.append(e)
 	spawner.entries = entries
 	# more (or fewer) nodes by as much as the rich (or lean) one's share changed, so every other
-	# resource keeps its usual number and only that one doubles (or halves)
-	spawner.count = maxi(1, roundi(spawner.count * after / before))
+	# resource keeps its usual number and only that one doubles (or halves); then the world's
+	# resources setting, for every node alike
+	var scale: float = WorldSettings.RESOURCE_SCALE[map.settings["resources"]]
+	spawner.count = maxi(1, roundi(spawner.count * after / before * scale))
 	return spawner
 
 
-## The pit's walls lined with ore wall (OreWallPlacer, as in Greystone Quarry), and a spawner of
-## crystal on the floor, on quarry stone only, clear of the innermost wall's blocks of rock.
-static func _quarry_levels(parent: Node3D, map: ProcgenMap) -> void:
+## The pit's walls lined with ore wall (OreWallPlacer, as in Greystone Quarry, added to `parent`
+## now), and a spawner of crystal on the floor (returned, not yet added), on quarry stone only,
+## clear of the innermost wall's blocks of rock.
+static func _quarry_levels(parent: Node3D, map: ProcgenMap) -> Array[NodeSpawner]:
+	var out: Array[NodeSpawner] = []
 	if map.quarry.is_empty():
-		return
+		return out
 	var qc: Vector2 = map.quarry["center"]
 	var walls: Array = map.quarry["walls"]
 	var placer := OreWallPlacer.new()
@@ -206,7 +235,8 @@ static func _quarry_levels(parent: Node3D, map: ProcgenMap) -> void:
 	spawner.allowed_ids = ids
 	spawner.hotspot_share = 0.0
 	spawner.path_clearance = 1.0
-	parent.add_child(spawner)
+	out.append(spawner)
+	return out
 
 
 ## Each cell's bounding box (world XZ), from the cells map.
@@ -214,18 +244,18 @@ static func _cell_boxes(map: ProcgenMap) -> Array[Rect2]:
 	var lo: Array[Vector2i] = []
 	var hi: Array[Vector2i] = []
 	for i in map.sites.size():
-		lo.append(Vector2i(ProcgenMap.SIZE, ProcgenMap.SIZE))
+		lo.append(Vector2i(map.size, map.size))
 		hi.append(Vector2i(-1, -1))
-	for y in ProcgenMap.SIZE:
-		for x in ProcgenMap.SIZE:
-			var c := map.cells[y * ProcgenMap.SIZE + x]
+	for y in map.size:
+		for x in map.size:
+			var c := map.cells[y * map.size + x]
 			if c != ProcgenMap.RIM_CELL:
 				lo[c] = lo[c].min(Vector2i(x, y))
 				hi[c] = hi[c].max(Vector2i(x, y))
 	var out: Array[Rect2] = []
 	for i in map.sites.size():
-		var origin := Vector2(ProcgenMap.ORIGIN.x, ProcgenMap.ORIGIN.z)
-		out.append(Rect2(origin + Vector2(lo[i]), Vector2(hi[i] - lo[i] + Vector2i.ONE)) if hi[i].x >= 0 else Rect2())
+		out.append(Rect2(map.origin + Vector2(lo[i]) * map.step, Vector2(hi[i] - lo[i] + Vector2i.ONE) * map.step)
+				if hi[i].x >= 0 else Rect2())
 	return out
 
 
@@ -235,6 +265,8 @@ static func _scenery(map: ProcgenMap, i: int, box: Rect2) -> SceneryScatter:
 	var scatter := SceneryScatter.new()
 	scatter.name = "Scenery_%d_%s" % [i, biome]
 	scatter.area = box
+	if map.settings["size"] == &"large":  # big cells' boxes overlap a lot: keep to its own cell
+		scatter.accept = func(p: Vector2) -> bool: return map.cells[map.pixel_index(p)] == i
 	scatter.seed = map.sub_seed(StringName(scatter.name))
 	scatter.theme = theme_for(biome, map.sites[i].get("kind", &""))
 	var ground: Array[int] = [WorldMap.TEX_DEFAULT]

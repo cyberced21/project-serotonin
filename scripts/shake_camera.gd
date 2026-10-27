@@ -40,14 +40,15 @@ func _ready() -> void:
 
 
 func shake(amount: float) -> void:
-	_trauma = minf(maxf(_trauma, amount / max_amount), 1.0)
+	_trauma = minf(maxf(_trauma, amount * Settings.camera_motion() / max_amount), 1.0)
 
 
 ## Snaps the view `pitch_deg` up and `yaw_deg` round (positive: left), and the FOV `fov_deg`
 ## narrower; all spring back over a fraction of a second.
 func kick(pitch_deg: float, yaw_deg: float, fov_deg: float) -> void:
-	_kick += Vector2(deg_to_rad(pitch_deg), deg_to_rad(yaw_deg))
-	fov_offset -= fov_deg
+	var m := Settings.camera_motion()  # the comfort setting
+	_kick += Vector2(deg_to_rad(pitch_deg), deg_to_rad(yaw_deg)) * m
+	fov_offset -= fov_deg * m
 
 
 func _process(_delta: float) -> void:

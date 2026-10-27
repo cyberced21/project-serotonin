@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/talent_def.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"heartwood"
+skill = &"woodcutting"
+milestone = 20
+style = &"forester"
+style_name = "Forester"
+display_name = "Heartwood"
+text = "After a few hits a glowing knot shows on the trunk. Hit it clean for a big chunk and a heartwood log."
