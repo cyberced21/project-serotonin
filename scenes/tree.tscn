@@ -40,6 +40,7 @@ clean_layers = ExtResource("11_clean_layers")
 land_layers = ExtResource("14_land_layers")
 bark_color = Color(0.451, 0.31, 0.2, 1)
 bark_thickness = 0.03
+lingering_rubble = 40
 
 [node name="CollisionShape3D" parent="." index="0"]
 position = Vector3(0, 2.2, 0)

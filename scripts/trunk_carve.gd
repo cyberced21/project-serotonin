@@ -209,6 +209,30 @@ func split() -> Dictionary:
 	return {"stump": _build(verts, below, cap, Vector3.UP), "log": _build(verts, above, cap, Vector3.DOWN)}
 
 
+## Where the hinge tore when the tree went over: `count` points on the cut face at the ring (mesh
+## space), mostly on the side the notch never reached, spread across the wood that held.
+func hinge_points(count: int) -> PackedVector3Array:
+	var weights := PackedFloat32Array()
+	var total := 0.0
+	for b in BINS:
+		var dir := Vector3(cos(_bin_angle(b)), 0.0, sin(_bin_angle(b)))
+		var held := maxf(1.0 - depth[b] / maxf(radius_at(ring, dir), 0.01), 0.0)
+		weights.append(held * held * held)  # (the uncut side, not the notch's shallow wings)
+		total += weights[b]
+	var out := PackedVector3Array()
+	for i in count:
+		var pick := randf() * total
+		var b := 0
+		while b < BINS - 1 and pick > weights[b]:
+			pick -= weights[b]
+			b += 1
+		var angle := _bin_angle(b) + randf_range(-0.5, 0.5) * TAU / BINS
+		var dir := Vector3(cos(angle), 0.0, sin(angle))
+		var solid := radius_at(ring, dir) - depth_toward(dir)
+		out.append(Vector3(0.0, ring, 0.0) + dir * solid * randf_range(0.3, 0.92))
+	return out
+
+
 # --- internals ------------------------------------------------------------------------------
 
 func _bin_angle(b: int) -> float:
