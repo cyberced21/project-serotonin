@@ -304,6 +304,7 @@ func _refresh_layers() -> void:
 			if want:
 				_update_mask(k)
 	_refresh_slabs()
+	_light_alcove()
 
 
 func _make_layer(k: int) -> MeshInstance3D:
@@ -357,6 +358,42 @@ func _update_mask(k: int) -> void:
 		if i < 96:
 			words[i / 24] |= 1 << (i % 24)
 	_layer_mesh[k].set_instance_shader_parameter("pieces_gone", Vector4(words[0], words[1], words[2], words[3]))
+
+
+# --- light -----------------------------------------------------------------------------------
+# Dug in under the cap rock the back of an alcove would be too dark to read the veins, so a soft
+# warm light (the daylight spilling in, and bouncing off the fresh stone) fills it, more the
+# deeper it goes. No shadows: it's a fill, not a lamp.
+
+const ALCOVE_LIGHT := Color(1.0, 0.86, 0.68)
+## The alcove gets its light once it's this deep (m), and is lit at most this bright.
+const ALCOVE_LIT_FROM := 1.0
+const ALCOVE_ENERGY := Vector2(0.25, 0.7)
+var _alcove: OmniLight3D
+
+
+func _light_alcove() -> void:
+	var depth := minf(front, LAYERS) * LAYER_DEPTH
+	if depth < ALCOVE_LIT_FROM:
+		if _alcove:
+			_alcove.visible = false
+		return
+	if _alcove == null:
+		_alcove = OmniLight3D.new()
+		_alcove.name = "AlcoveLight"
+		_alcove.light_color = ALCOVE_LIGHT
+		_alcove.shadow_enabled = false
+		_alcove.light_specular = 0.15
+		_alcove.omni_attenuation = 1.2
+		_alcove.distance_fade_enabled = true
+		_alcove.distance_fade_begin = 35.0
+		_alcove.distance_fade_length = 10.0
+		add_child(_alcove)
+	_alcove.visible = true
+	var t := clampf((depth - ALCOVE_LIT_FROM) / (DEPTH - ALCOVE_LIT_FROM), 0.0, 1.0)
+	_alcove.light_energy = lerpf(ALCOVE_ENERGY.x, ALCOVE_ENERGY.y, t)
+	_alcove.omni_range = depth + 2.0
+	_alcove.position = Vector3(0, HEIGHT * 0.55, -depth * 0.5 + 0.4)
 
 
 # --- collision -------------------------------------------------------------------------------

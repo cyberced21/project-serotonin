@@ -6,7 +6,7 @@ shader_type spatial;
 
 uniform float ore_roughness = 0.5;
 uniform float ore_metallic = 0.35;
-uniform float ore_glow = 0.15;
+uniform float ore_glow = 0.3;  // (more than a rock's: a vein at the back of an alcove still reads)
 uniform float fresh_brightness = 1.1;
 
 #define ROCK

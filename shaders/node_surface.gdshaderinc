@@ -104,6 +104,7 @@ uniform vec2 ore_uv[8];
 // that piece alone, not the whole wall.
 instance uniform float aim_piece = -1.0;
 varying vec3 v_panel;
+varying vec3 v_panel_normal;
 varying flat int v_piece;
 
 float vein_distance(int i, vec3 p) {
@@ -136,6 +137,7 @@ void vertex() {
 	int piece = int(UV2.x + 0.5) - 1;
 #ifdef WALL
 	v_panel = VERTEX;
+	v_panel_normal = NORMAL;
 	v_piece = piece;
 #endif
 	if (piece >= 0 && piece < 96 && piece_gone(piece)) {
@@ -260,11 +262,16 @@ void fragment() {
 	base *= mix(v_shade.rgb * v_shade.rgb, vec3(fresh_brightness), fresh);
 	if (fault_shadow.w > 0.0) {
 		float gap = 1.0 - smoothstep(fault_shadow.w * 0.5, fault_shadow.w, distance(v_world, fault_shadow.xyz));
+#ifdef WALL
+		// a wall's loose slab: only the walls of its gap, not the fresh face round it
+		gap *= 1.0 - smoothstep(0.5, 0.9, abs(v_panel_normal.z));
+#endif
 		base *= mix(1.0, 0.1, fresh * gap);
 	}
 	int row = int(floor(UV.y * 8.0));
 	float ore = float(row == 1 || row == 5);  // the palette's ore and metal rows glint
 #ifdef WALL
+	vec3 wall_glint = vec3(0.0);
 	int kind = v_piece >= 0 && v_piece < 96 ? piece_ore[v_piece] : 0;
 	if (kind > 0) {
 		// ragged edges (the point looked up wanders a little), and flecks of ore scattered round it
@@ -278,6 +285,10 @@ void fragment() {
 		vec3 ore_c = texture(palette, ore_uv[kind]).rgb * mix(0.62, 1.12, fresh) * mix(0.72, 1.18, grain);
 		base = mix(base, ore_c, vein);
 		ore = max(ore, vein);
+		// glints: points of the vein catching the light as you move past them, so a seam reads
+		// even at the back of a dark alcove
+		float spark = smoothstep(0.86, 0.97, theme_noise(v_panel * 26.0 + VIEW * 2.5));
+		wall_glint = ore_c * spark * vein;
 		row = vein > 0.5 ? 1 : row;  // (glows like the palette's ore row, below)
 	}
 #endif
@@ -321,5 +332,8 @@ void fragment() {
 	EMISSION += base * glint * theme_c.w * 2.5;
 #ifdef ROCK
 	EMISSION += base * float(row == 1) * ore_glow * theme_b.w;  // ore still reads down in the shade of a hole
+#endif
+#ifdef WALL
+	EMISSION += wall_glint;
 #endif
 }
