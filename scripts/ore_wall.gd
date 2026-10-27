@@ -595,7 +595,7 @@ func _refresh_slabs() -> void:
 			_dress(m)
 			_slab_mesh[key] = m
 		var w := global_transform * c
-		var gap := Vector4(w.x, w.y, w.z, across + 0.35)
+		var gap := Vector4(w.x, w.y, w.z, across + 0.6)
 		_slab_mesh[key].set_instance_shader_parameter("fault_shadow", gap)
 		if shadow == Vector4.ZERO:
 			shadow = gap  # (the layer takes one: the first slab's)

@@ -3557,12 +3557,8 @@ def wall_panel(n):
             if f[cut] and j >= 0 and layer_of[j] == layer_of[i] and f.calc_area() > 1e-4:
                 links[names[i]].add(names[j])
                 links[names[j]].add(names[i])
-        # the sides, top and foot of the block meet the pillars, the cap and the ground: only the
-        # front is the weathered face; inside it's all fresh stone
-        outside = lambda f: not f[cut] and f.calc_center_median().y < 0.2
-        for f in bm.faces:
-            if not f[cut] and not outside(f):
-                f[cut] = 1
+        # the block's outside (the face, and its sides where they peep past the pillars) is
+        # weathered skin; inside it's all fresh stone
         # one shade a piece, inside and out (a shade per face speckles the small faces like a
         # chequerboard): the face lighter on top, darker underneath
         # (the baked weathering varies the face; mixing swatches piece by piece made a patchwork)
