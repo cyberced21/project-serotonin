@@ -14,7 +14,7 @@ specialize.
 | # | Topic | Decision |
 |---|-------|----------|
 | P1 | Choosing | **You pick the tool**: Q swaps spear ↔ rod (Q was the old fight's bow, now free), and the choice is remembered (saved). The spear takes water within its reach, the rod anything from 2 m out to its cast range, so the middle distance works with either. Aiming at water the held tool can't take shows a hint ("Q: rod"). |
-| P2 | Every fish both ways | Every species can be caught with either tool somewhere, sometime. **Char** come up into the lake's shallows at dawn and dusk; **salmon** run up the shallow riffles between pools. The rod reaches them any time from the bank; the spear needs the right time and place. No village cost only one tool can pay. |
+| P2 | Every fish both ways | Every species can be caught with either tool somewhere, sometime. **Char** and **salmon** come up out of deep water into the nearest shallows to feed at dawn and dusk (`FishSpecies.dusk_depth`). The rod reaches them any time from the bank; the spear needs the right time and place. No village cost only one tool can pay. |
 | P3 | Equal means | **XP per hour and fish per hour** for a skilled player at the same tier and level, per species, within ±15%. Measured by a bot bench (phase 7), tuned by the numbers, not by feel alone. |
 | P4 | Identities | Spear: fast, multi-catch on schools, a miss scatters them. Rod: slow, one fish per bite, quiet, bigger payout per fish (Perfect!). Tuned so they even out over an hour (P3). |
 | P5 | Size in the water | **Each fish has its size from the moment it spawns**: big ones are visibly bigger in the school (model scale ~0.8x–1.35x), so you can pick your target. The size gives the weight popup ("Trout, 1.4 kg") and +0–50% XP **for both tools**. |
@@ -54,7 +54,7 @@ on the rod, such fish notice the float a third as often, and when one does take,
 3. **Tool tiers** — spear and rod in `Tools.LADDER` / `RECIPES`, species rated by tier, the
    glance-off and torn-hook feedback, the Forge tab, level gating turned soft.
 4. **Models** — four spears and four rods (Blender script), icons, the viewmodel per tier.
-5. **Every fish both ways** — char in the shallows at dawn and dusk, salmon on the riffles;
+5. **Every fish both ways** — char and salmon up in the shallows at dawn and dusk;
    village costs checked.
 6. **Power and perks** — per-tier power, the shared under-level rule, the hut's perks for both.
 7. **The bench** — a headless bot that fishes each species with each tool and prints XP/hour and

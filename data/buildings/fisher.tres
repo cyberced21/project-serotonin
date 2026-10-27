@@ -53,7 +53,7 @@ cost = Dictionary[StringName, int]({
 &"pike": 3,
 &"char": 2
 })
-lines = PackedStringArray("Pike from the other pond, in my hut! You're a legend.", "Come sit on the dock. Fish don't bite any better, but the view's nice.", "Got a boat now, too. Haven't worked out where to row it.", "Char from the deep middle of the lake. You'll want a rod for those, the spear won't reach.")
+lines = PackedStringArray("Pike from the other pond, in my hut! You're a legend.", "Come sit on the dock. Fish don't bite any better, but the view's nice.", "Got a boat now, too. Haven't worked out where to row it.", "Char live in the deep middle of the lake. A rod reaches them, or wade in at dawn or dusk when they come up to feed.")
 effects = Array[ExtResource("4_effect")]([SubResource("Effect_3_0"), SubResource("Effect_3_1"), SubResource("Effect_3_2")])
 
 [resource]

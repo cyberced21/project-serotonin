@@ -20,6 +20,9 @@ extends Resource
 @export var lurker := false
 ## The shallowest water it swims in (m). Deep-water species (char) keep to the middle of a lake.
 @export var min_depth := 0.3
+## Deep-water fish (char, salmon) come up into the shallows to feed at dawn and dusk, where a
+## wading spear can reach them: how deep the water is they head for then (m). Negative: never.
+@export var dusk_depth := -1.0
 
 @export_group("Hunting")
 ## A lurker that hunts: the species id it stalks (e.g. perch). Empty = doesn't hunt.
