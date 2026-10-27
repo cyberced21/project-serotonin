@@ -11,8 +11,10 @@ const ROWS := [
 	["Jump", "jump", ""],
 	["Sprint (in the air: air dash)", "sprint", ""],
 	["Crouch, slide (while sprinting)", "crouch", ""],
-	["Gather, swing, strike", "gather", ""],
+	["Gather, swing; fish (thrust, or hold to cast)", "gather", ""],
 	["Talk to a villager", "interact", ""],
+	["Swap spear / rod", "swap_fishing", ""],
+	["Skills: levels, XP, perks, talents", "skills", ""],
 	["Pause", "", "Esc"],
 ]
 const DEBUG_ROWS := [

@@ -51,6 +51,9 @@ func resume() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("skills") and not _busy:
+		_toggle_skills()
+		return
 	if not event.is_action_pressed("ui_cancel") or _busy:
 		return
 	if is_open():
@@ -62,6 +65,25 @@ func _input(event: InputEvent) -> void:
 	elif not Worlds.current.is_empty() and not _other_menu_open() 			and get_tree().get_first_node_in_group("loading_screen") == null:
 		open()
 		get_viewport().set_input_as_handled()
+
+
+## K: the Skills page straight from play (paused, like the menu), and K again back to play.
+func _toggle_skills() -> void:
+	if is_open():
+		if _skills.visible:
+			resume()
+			get_viewport().set_input_as_handled()
+		return
+	if Worlds.current.is_empty() or _other_menu_open():
+		return
+	if get_tree().get_first_node_in_group("loading_screen") != null:
+		return
+	var cards := get_tree().get_first_node_in_group("talent_cards") as TalentCards
+	if cards and cards.is_open():
+		return
+	open()
+	_show_skills()
+	get_viewport().set_input_as_handled()
 
 
 ## The upgrade panel and debug menu close on Esc themselves (their _input runs before this one).

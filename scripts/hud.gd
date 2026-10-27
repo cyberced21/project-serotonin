@@ -11,6 +11,8 @@ const BAR_WIDTH := 320.0
 ## Distance from the bottom of the screen to the XP bar.
 const BAR_BOTTOM := 90.0
 const BAR_LINGER := 3.0
+## How long the "ESC menu" hint stays at the bottom of the screen after a world opens.
+const HINT_LINGER := 12.0
 
 var _labels: Dictionary[StringName, Label] = {}
 var _rows: Dictionary[StringName, Control] = {}
@@ -35,12 +37,17 @@ func _ready() -> void:
 		if Inventory.count(id) > 0:
 			_add_row(id)
 
+	# every control is on the pause menu's Controls page: here, just how to get there, for a moment
 	var hint := _make_label(16)
-	hint.text = "WASD move  ·  SHIFT sprint  ·  SPACE jump  ·  CTRL crouch / slide  ·  E / click gather, fish  ·  Q spear / rod  ·  E talk  ·  ESC pause"
+	hint.text = "ESC menu & controls  ·  K skills"
 	hint.modulate = Color(1, 1, 1, 0.7)
 	add_child(hint)
 	hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_KEEP_SIZE, 16)
 	hint.grow_vertical = Control.GROW_DIRECTION_BEGIN  # grows upward from the bottom edge
+	var fade := create_tween()
+	fade.tween_interval(HINT_LINGER)
+	fade.tween_property(hint, "modulate:a", 0.0, 1.5)
+	fade.tween_callback(hint.queue_free)
 
 	_build_xp_bar()
 	_build_banner()

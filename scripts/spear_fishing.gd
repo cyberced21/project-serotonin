@@ -29,6 +29,8 @@ const DODGE_COLOR := Color("ff8a7a")
 @export var reach_bonus_per_10_levels := 0.1
 ## What each spear tier above the stick adds (Tools): reach (m) and skewer length (fraction).
 @export var reach_per_tier := 0.15
+## How far past the spear's length to look for a fish you'd think you could reach (it says "Too deep").
+const DEEP_LOOK := 3.0
 @export var length_per_tier := 0.1
 ## Extra XP per additional fish on the same thrust (0.3 = +30% each).
 @export var multi_xp_bonus := 0.3
@@ -53,6 +55,8 @@ const DODGE_COLOR := Color("ff8a7a")
 var water: WaterBody
 var water_point := Vector3.INF
 var fish_target: Fish
+## A fish on your aim line but past the spear's length (the Player shows "Too deep"), or null.
+var deep_fish: Fish
 
 var _rest_pos := Vector3.ZERO
 var _rest_rot := Vector3.ZERO
@@ -71,6 +75,7 @@ func can_thrust() -> bool:
 func clear_target() -> void:
 	water = null
 	water_point = Vector3.INF
+	deep_fish = null
 	_set_fish_target(null)
 
 
@@ -96,7 +101,9 @@ func update_target() -> void:
 			continue  # the bank or a rock is in the way
 		water = wb
 		water_point = p
-		_set_fish_target(_fish_along(p, dir))
+		_set_fish_target(_fish_along(p, dir, 0.0, _length()))
+		if fish_target == null:
+			deep_fish = _fish_along(p, dir, _length(), _length() + DEEP_LOOK)
 		return
 
 
@@ -119,9 +126,10 @@ func _length() -> float:
 	return skewer_length * (1.0 + reach_bonus_per_10_levels * floorf(level / 10.0) + length_per_tier * Tools.tier(&"spear"))
 
 
-## The first fish along the spear line from the surface point, if any.
-func _fish_along(p: Vector3, dir: Vector3) -> Fish:
-	var query := PhysicsRayQueryParameters3D.create(p - dir * 0.05, p + dir * _length(), Fish.FISH_LAYER)
+## The first fish along the spear line from the surface point, between `near` and `far` (m) past
+## it, if any.
+func _fish_along(p: Vector3, dir: Vector3, near: float, far: float) -> Fish:
+	var query := PhysicsRayQueryParameters3D.create(p + dir * (near - 0.05), p + dir * far, Fish.FISH_LAYER)
 	query.collide_with_areas = true
 	query.collide_with_bodies = false
 	var hit := player.get_world_3d().direct_space_state.intersect_ray(query)

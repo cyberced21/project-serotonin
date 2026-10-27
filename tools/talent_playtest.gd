@@ -34,12 +34,21 @@ func _run() -> void:
 	_check(talents.has(options[0].get_meta("def").id), "the talent is yours")
 
 	var pause := root.get_node("PauseMenu")
-	pause.call("open")
-	pause.call("_show_skills")
+	var k := InputEventAction.new()
+	k.action = &"skills"
+	k.pressed = true
+	Input.parse_input_event(k)
+	await process_frame
 	await process_frame
 	var screen: Control = pause.get("_skills")
-	_check(screen.visible and screen.get("_list").get_child_count() == 4, "the Skills page lists four skills")
-	pause.call("resume")
+	_check(screen.visible and paused, "K opens the Skills page, paused")
+	_check(screen.get("_list").get_child_count() == 4, "the Skills page lists four skills")
+	var texts := screen.find_children("*", "Label", true, false).map(func(l: Label) -> String: return l.text)
+	_check(texts.any(func(t: String) -> bool: return t.ends_with("to level 11")), "it shows the XP left to the next level")
+	Input.parse_input_event(k)
+	await process_frame
+	await process_frame
+	_check(not screen.visible and not paused, "K again goes back to play")
 
 	var panel: Node = get_first_node_in_group("upgrade_panel")
 	var greta: Node = null

@@ -15,6 +15,8 @@ const BINDINGS := {
 	"crouch": [KEY_CTRL, KEY_C],
 	# swap the fishing tool: spear <-> rod
 	"swap_fishing": [KEY_Q],
+	# the Skills page (levels, XP, perks, talents), straight from play
+	"skills": [KEY_K],
 	# debug builds only
 	"debug_menu": [KEY_F1],
 	"debug_skip_time": [KEY_F6],

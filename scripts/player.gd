@@ -1102,6 +1102,9 @@ func _update_target() -> void:
 	elif fish and fish.is_under_levelled():
 		hover_label.text = "%s %d" % [Skills.display_name(&"fishing"), fish.species.required_level]
 		hover_label.modulate = UNDER_COLOR
+	elif spearfishing.deep_fish != null:  # on your line, but past the spear's tip
+		hover_label.text = "Too deep"
+		hover_label.modulate = DEFLECT_COLOR
 	elif _swap_shown > 0.0:
 		hover_label.text = "Rod" if Tools.fishing_style == &"rod" else "Spear"
 		hover_label.modulate = Color.WHITE
