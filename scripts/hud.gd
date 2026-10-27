@@ -24,6 +24,7 @@ var _xp_fade_tween: Tween
 var _xp_fill_tween: Tween
 
 var _banner: Label
+var _perk_line: Label  # under the banner: the perk this level brought (Perks)
 var _banner_tween: Tween
 
 var _clock: Label
@@ -121,6 +122,13 @@ func _build_banner() -> void:
 	_banner.add_theme_constant_override("shadow_offset_y", 4)
 	_banner.modulate.a = 0.0
 	add_child(_banner)
+	_perk_line = _make_label(24)
+	_perk_line.anchor_right = 1.0
+	_perk_line.anchor_top = 1.0
+	_perk_line.anchor_bottom = 1.0
+	_perk_line.offset_bottom = 34
+	_perk_line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_banner.add_child(_perk_line)  # scales and fades with the banner
 
 
 func _add_row(id: StringName) -> void:
@@ -193,13 +201,15 @@ func _on_xp_gained(skill: StringName, _amount: int, _total: int) -> void:
 func _on_leveled_up(skill: StringName, lvl: int) -> void:
 	_banner.text = "%s %d!" % [Skills.display_name(skill), lvl]
 	_banner.add_theme_color_override("font_color", Skills.color(skill))
+	var perk := Perks.perk_at(skill, lvl)
+	_perk_line.text = "%s: %s" % [perk["name"], perk["text"]] if not perk.is_empty() else ""
 	if _banner_tween:
 		_banner_tween.kill()
 	_banner.modulate.a = 1.0
 	_banner.scale = Vector2(0.3, 0.3)
 	_banner_tween = create_tween()
 	_banner_tween.tween_property(_banner, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	_banner_tween.tween_interval(1.5)
+	_banner_tween.tween_interval(2.5)  # long enough to read the perk line
 	_banner_tween.tween_property(_banner, "modulate:a", 0.0, 0.4)
 	Sfx.play(LEVEL_UP_SFX, 1.0, -3.0)
 	Juice.shake(2.0)  # no hitstop: it would stack with the break hitstop and feel laggy

@@ -41,9 +41,6 @@ func _test_cast() -> void:
 
 
 func _test_scales() -> void:
-	_check(FishBite.window_scale(30, 30) == 1.0, "at level: no change")
-	_check(is_equal_approx(FishBite.window_scale(50, 30), 1.2), "20 above: +20%%")
-	_check(FishBite.window_scale(10, 30) == 1.0, "under: the window doesn't shrink")
 	_check(FishBite.catch_chance(30, 30) == 1.0, "at level: always yours")
 	_check(is_equal_approx(FishBite.catch_chance(25, 30), 0.5), "5 under: half the time")
 	_check(is_equal_approx(FishBite.catch_chance(1, 30), 0.1), "far under: one in ten")

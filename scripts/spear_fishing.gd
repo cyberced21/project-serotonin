@@ -132,7 +132,8 @@ func _fish_along(p: Vector3, dir: Vector3) -> Fish:
 func _skewer(entry: Vector3, dir: Vector3) -> Array[Fish]:
 	var length := _length()
 	var capsule := CapsuleShape3D.new()
-	capsule.radius = skewer_radius * (1.0 + Village.stat(&"strike_window"))  # the hut's sharper eyes
+	capsule.radius = skewer_radius * (1.0 + Village.stat(&"strike_window")) \
+		* (1.0 + Perks.bonus(&"fishing", &"hands"))  # the hut's sharper eyes, the level's quick hands
 	capsule.height = length
 	var y := dir.normalized()
 	var x := y.cross(Vector3.UP).normalized() if absf(y.y) < 0.99 else Vector3.RIGHT

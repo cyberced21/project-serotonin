@@ -5,8 +5,9 @@ levels decide *how well*. Chosen 2026-10-20 from two explorations
 ([levels-milestones.md](levels-milestones.md), [levels-talents.md](levels-talents.md)): B's
 steady per-level growth, with D's gameplay-changing techniques turned into C-style **choices**.
 
-Status: **designed** (grilled 2026-10-20; not started). No branch yet. Built after
-tool-progression.md.
+Status: **phase 1 built** 2026-10-27 on branch `levels` (off `fishing-yank`): the minor tracks
+(`scripts/perks.gd`), the perk line under the level-up banner, and a Skills page in the pause
+menu. Unplayed. Phases 2 to 6 not started.
 
 ## Decisions (grilled 2026-10-20)
 
@@ -18,6 +19,8 @@ tool-progression.md.
 | L4 | Balance | Options in a pair are matched by **style, not power**: neither is "more damage". Each pair should come out about even in yield per minute (see "Keeping it balanced"). |
 | L5 | Under-levelled | A real penalty, as in tool-progression T5. |
 | L7 | When you pick | The two cards appear **once the current action ends** (the tree falls, the fish is landed or lost; never mid-fight), with **"decide later"**: the choice then waits in the skills panel with a badge. |
+| L9 | Fishing track 2 (2026-10-27) | **Patience** replaces *Strong line*, which did almost what the Second strike talent does: rod bites come sooner, and a school you scattered settles sooner. Fishing's version of "quicker recovery", for both tools. |
+| L10 | Angler 40 (2026-10-27) | **Trophy hunter** replaces *Play the fish* (the fight it turned is gone): the rod's way to target size, as the spear already can by eye. |
 | L6 | Level 50 | **Mastery**: you also gain the other option of one milestone, your choice. It rewards whatever mix you took rather than pushing one style. |
 
 ## Every level: small perks
@@ -31,12 +34,16 @@ to 40% better than at level 1.
 |---|---|---|---|
 | Woodcutting | **Steadier aim**: the clean-cut tolerance into the notch is wider | **Quicker recovery**: less time between swings | **Long reach**: logs fly to you from further away (pickup magnet) |
 | Mining | **Keen eye**: more leeway in how close a hit must be to a crack tip to count | **Quicker recovery** | **Long reach** (ore) |
-| Fishing | **Quick hands**: the strike window (rod) is wider and the thrust (spear) a little thicker | **Strong line**: a pull a hair after the window still lands the fish | **Smooth cast**: a wider sweet spot on the release |
-| Farming | **Wide blade**: the sickle sweeps a wider arc | **Quicker recovery** | **Long reach** (grain) |
+| Fishing | **Quick hands**: the strike window (rod) is wider and the thrust (spear) a little thicker | **Patience**: bites come sooner (rod), a scattered school settles sooner (spear) | **Smooth cast**: a wider sweet spot on the release |
+| Farming | **Wide blade**: the sickle catches a sheaf a little off the crosshair | **Quicker recovery** | **Long reach** (grain) |
 
-Fishing's current per-10-level cast range (`range_per_10_levels`), skewer length
-(`reach_bonus_per_10_levels`) and the level window scaling (`FishBite.window_scale`) fold into
-these tracks. (The rod's fight is gone since 2026-10-27: plans/fishing-parity.md.)
+As built: each level from 2 adds one step (2.2%) to tracks 1, 2, 3 in turn, so +35 to 37% at 50.
+Quick hands took over the old level scaling of the strike window (`FishBite.window_scale`, now
+gone) and Smooth cast that of the cast's sweet spot. The rod's cast range
+(`range_per_10_levels`) and the spear's skewer length (`reach_bonus_per_10_levels`) stay as they
+are: the fishing bench balanced the two tools with them. Wide blade isn't Harvester's *Wide
+sweep* (one swing, several sheaves): it only forgives aim. (The rod's fight is gone since
+2026-10-27: plans/fishing-parity.md.)
 
 **Flourishes (15 / 25 / 35 / 45)**:
 - A tool trail on clean hits.
@@ -149,8 +156,9 @@ boost by choosing who to visit. Each is the villager's trade flavour, never a ta
 
 ## Phases (draft, after tool-progression)
 
-1. **Minor tracks + level-up moment**: per-skill track values read by the technique windows,
-   popups naming the perk, stings, the skills panel.
+1. ~~**Minor tracks + level-up moment**~~: done 2026-10-27. `Perks` (track values) read by the
+   technique windows, swing recovery, pickup magnet, sickle aim and fishing; the perk named
+   under the level-up banner; a Skills page in the pause menu; `tools/test_perks.gd`.
 2. **Talent framework**: `TalentDef` resources (`data/talents/`), picks in `Skills` + save, the
    choice cards, the talents page, respec at Greta.
 3. **The balance bench** (headless, yield per minute per talent).

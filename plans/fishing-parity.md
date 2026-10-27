@@ -80,7 +80,7 @@ All eight phases built on `fishing-yank`, bot-verified, **not yet played by hand
 
 ### levels.md rod talents to rewrite (P10)
 
-(Done: Quick hands, Strong line and Trophy hunter in levels.md.) The old fight's perks no longer fit: *Quick hands* (strike, bow and jerk windows) becomes the
+(Done: Quick hands, Patience (replacing Strong line, levels.md L9) and Trophy hunter in levels.md.) The old fight's perks no longer fit: *Quick hands* (strike, bow and jerk windows) becomes the
 strike window only; *Strong line* (runs give back less) and *Play the fish* (Lv 40: turn a run)
 need replacing, e.g. *Strong line*: a late pull still lands the fish one time in three;
 *Play the fish*: a big fish on the rod rolls one size class up.

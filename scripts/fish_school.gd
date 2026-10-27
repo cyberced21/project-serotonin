@@ -79,7 +79,7 @@ func disturb(pos: Vector3, loudness: float) -> void:
 			spooked = true
 	if not spooked:
 		return
-	_alert = species.calm_down
+	_alert = species.calm_down / (1.0 + Perks.bonus(&"fishing", &"patience"))  # the fisher's patience perk
 	for f in fish:
 		if f.lure != null:  # it was nosing a float: it's gone
 			f.lure.fish_spooked(f)

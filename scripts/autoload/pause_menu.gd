@@ -1,6 +1,6 @@
 extends CanvasLayer
 ## Esc in a world pauses the game (the whole tree: day and night, fish, villagers, a falling tree
-## all hold) and opens this: Resume, Settings, Controls, Save & Quit to Menu, Quit to Desktop.
+## all hold) and opens this: Resume, Skills, Settings, Controls, Save & Quit to Menu, Quit to Desktop.
 ## Esc again resumes. The upgrade panel and the debug menu take Esc first while they're open.
 ## Leaving takes a picture for the world's card (thumb.png) without the menus in it, then shows a
 ## "Saved" toast that stays up over the main menu.
@@ -12,6 +12,7 @@ var _panel: PanelContainer
 var _column: VBoxContainer
 var _world_label: Label
 var _controls: ControlsScreen
+var _skills: SkillsScreen
 var _settings: SettingsScreen
 var _toast: Label
 var _busy := false
@@ -51,7 +52,7 @@ func _input(event: InputEvent) -> void:
 	if not event.is_action_pressed("ui_cancel") or _busy:
 		return
 	if is_open():
-		if _controls.visible or _settings.visible:
+		if _controls.visible or _settings.visible or _skills.visible:
 			_show_panel()
 		else:
 			resume()
@@ -69,6 +70,7 @@ func _other_menu_open() -> bool:
 
 func _show_panel() -> void:
 	_controls.visible = false
+	_skills.visible = false
 	_settings.visible = false
 	_panel.visible = true
 	(_column.get_child(0) as Button).grab_focus()
@@ -77,6 +79,11 @@ func _show_panel() -> void:
 func _show_controls() -> void:
 	_panel.visible = false
 	_controls.visible = true
+
+
+func _show_skills() -> void:
+	_panel.visible = false
+	_skills.visible = true
 
 
 func _show_settings() -> void:
@@ -143,6 +150,7 @@ func _hide_all() -> void:
 	_shade.visible = false
 	_panel.visible = false
 	_controls.visible = false
+	_skills.visible = false
 	_settings.visible = false
 
 
@@ -169,6 +177,7 @@ func _build() -> void:
 	_column.add_theme_constant_override("separation", 8)
 	box.add_child(_column)
 	_column.add_child(MenuUI.button("Resume", resume, 20))
+	_column.add_child(MenuUI.button("Skills", _show_skills, 20))
 	_column.add_child(MenuUI.button("Settings", _show_settings, 20))
 	_column.add_child(MenuUI.button("Controls", _show_controls, 20))
 	_column.add_child(MenuUI.spacer(4))
@@ -181,6 +190,14 @@ func _build() -> void:
 	_controls.grow_vertical = Control.GROW_DIRECTION_BOTH
 	_controls.closed.connect(_show_panel)
 	_shade.add_child(_controls)
+
+	_skills = SkillsScreen.new()
+	_skills.set_anchors_preset(Control.PRESET_CENTER)
+	_skills.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_skills.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_skills.custom_minimum_size = Vector2(640, 0)
+	_skills.closed.connect(_show_panel)
+	_shade.add_child(_skills)
 
 	_settings = SettingsScreen.new()
 	_settings.set_anchors_preset(Control.PRESET_CENTER)

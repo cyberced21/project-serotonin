@@ -231,7 +231,7 @@ func _update_cast() -> void:
 
 
 func _release(error: float) -> void:
-	var scale := FishBite.window_scale(Skills.level(&"fishing"), 1)
+	var scale := 1.0 + Perks.bonus(&"fishing", &"cast")  # the level's smooth-cast perk
 	_verdict = RodCast.judge(error, scale)
 	var to := RodCast.landing(_cast_from, _cast_aim, _verdict, _rng)
 	_land_water = _water_at(to)

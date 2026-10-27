@@ -448,9 +448,10 @@ func _power_scale() -> float:
 	return Skills.under_scale(skill, required_level, Skills.UNDER_POWER_PER_LEVEL, Skills.UNDER_POWER_FLOOR)
 
 
-## How wide the technique windows are after the under-level penalty (1.0 at or above the rating).
+## How wide the technique windows are: the level's aim perk (Perks), times the under-level penalty.
 func _window_scale() -> float:
-	return Skills.under_scale(skill, required_level, Skills.UNDER_WINDOW_PER_LEVEL, Skills.UNDER_WINDOW_FLOOR)
+	return (1.0 + Perks.bonus(skill, &"aim")) \
+		* Skills.under_scale(skill, required_level, Skills.UNDER_WINDOW_PER_LEVEL, Skills.UNDER_WINDOW_FLOOR)
 
 
 ## Called by the player while the crosshair is on this node.
@@ -813,6 +814,7 @@ func _spawn_drops(info: HitInfo) -> void:
 func _launch_drop(from: Vector3, velocity: Vector3, delay: float) -> void:
 	var p := PICKUP_SCENE.instantiate()
 	p.item = item
+	p.skill = skill
 	p.icon = item_icon if item_icon else Items.icon(item)
 	get_parent().add_child(p)
 	p.launch(from, velocity, delay)

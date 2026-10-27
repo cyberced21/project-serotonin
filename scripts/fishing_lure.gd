@@ -183,7 +183,8 @@ func _look_for_fish(delta: float) -> void:
 				facing.y = 0.0
 				if d > 0.3 and facing.normalized().dot(to / d) < 0.35:
 					continue
-			var rate := s.notice_rate * (1.6 if curious > 0.0 else 1.0) * (1.0 - 0.5 * d / radius)
+			var rate := s.notice_rate * (1.6 if curious > 0.0 else 1.0) * (1.0 - 0.5 * d / radius) \
+				* (1.0 + Perks.bonus(&"fishing", &"patience"))  # the level's patience perk: bites come sooner
 			if not f.tool_can_take(&"rod"):
 				rate *= 0.3  # too strong for your rod: it bites now and then (and tears free)
 			if _rng.randf() < rate * delta:
@@ -248,15 +249,10 @@ func _play_tells(delta: float) -> void:
 			&"take":
 				bite = Bite.TAKE
 				take_age = 0.0
-				take_window = fish.species.strike_window * _window_scale(fish.species) * (1.0 + window_bonus)
+				take_window = fish.species.strike_window * (1.0 + Perks.bonus(&"fishing", &"hands")) * (1.0 + window_bonus)
 				_nudge_fish(0.12)
 				WaterRipple.spawn(water, global_position, 1.8, 0.7)
 		tell.emit(kind)
-
-
-func _window_scale(s: FishSpecies) -> float:
-	var level: int = get_tree().root.get_node("Skills").level(&"fishing")
-	return FishBite.window_scale(level, s.required_level)
 
 
 ## Pushes the fish up into the float for a tell (it mouths it).

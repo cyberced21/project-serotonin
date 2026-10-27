@@ -223,6 +223,9 @@ const BUZZ_DECAY := 0.07
 const WORLD_MASK := 1
 ## Villagers (see Villager.NPC_LAYER): the crosshair ray stops on them, mantling ignores them.
 const NPC_MASK := 1 << 6
+## Farming's wide blade (Perks): how far off the crosshair's line the sickle still catches a sheaf,
+## in m per unit of the perk's bonus (so about 0.36 m at level 50).
+const WIDE_BLADE_PER_BONUS := 1.0
 const STAND_HEIGHT := 1.8
 const CROUCH_HEIGHT := 1.0
 const STAND_EYE := 1.6
@@ -984,6 +987,41 @@ func _node_under_crosshair(hit: Dictionary) -> ResourceNode:
 	return node if node and node.is_available() else null
 
 
+## Farming's wide-blade perk (Perks): the sickle also catches a sheaf within WIDE_BLADE_PER_BONUS
+## * the bonus of the crosshair's line. Returns a hit on the sheaf nearest the line, or `hit` as it was.
+func _blade_aim(hit: Dictionary) -> Dictionary:
+	var radius := WIDE_BLADE_PER_BONUS * Perks.bonus(&"farming", &"blade")
+	if radius <= 0.0:
+		return hit
+	var from := camera.global_position
+	var forward := -camera.global_basis.z
+	var length: float = reach if hit.is_empty() else minf(reach, from.distance_to(hit["position"]) + radius)
+	var capsule := CapsuleShape3D.new()
+	capsule.radius = radius
+	capsule.height = length + radius * 2.0
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = capsule
+	q.collision_mask = WORLD_MASK
+	q.exclude = [get_rid()]
+	# the capsule's axis is its local Y: lay it along the view ray
+	q.transform = Transform3D(Basis(Quaternion(Vector3.UP, forward)), from + forward * length * 0.5)
+	var best: ResourceNode = null
+	var best_d := INF
+	for r in get_world_3d().direct_space_state.intersect_shape(q, 16):
+		var node := r.get("collider") as ResourceNode
+		if node == null or node.skill != &"farming" or not node.is_available():
+			continue
+		var to := node.global_position - from
+		var d := (to - forward * to.dot(forward)).length()  # off the line
+		if d < best_d:
+			best_d = d
+			best = node
+	if best == null:
+		return hit
+	var at := best.global_position + Vector3.UP * 0.4
+	return {"collider": best, "position": at, "normal": -forward}
+
+
 func _update_target() -> void:
 	_swap_hint = ""
 	if rodfishing.is_busy():  # the rod stays in hand until the float's back (or the fish is)
@@ -1000,6 +1038,8 @@ func _update_target() -> void:
 		node = _node_under_crosshair(hit)
 		if node is OreWall:  # (it lights, and gates, the one piece the crosshair is on)
 			(node as OreWall).aim_at(hit["position"], hit["normal"])
+	if talk == null and node == null:
+		node = _node_under_crosshair(_blade_aim(hit))
 	if talk == null and node == null:
 		talk = _villager_behind_clutter()
 	if talk != _talk_target:
@@ -1188,6 +1228,8 @@ func _swing(tool: StringName) -> void:
 
 	# 3. impact frame — hits whatever the crosshair is on *now*; looked away = whiff
 	var hit := _aim()
+	if tool == &"sickle" and _node_under_crosshair(hit) == null:
+		hit = _blade_aim(hit)
 	var node := _node_under_crosshair(hit)
 	if node:
 		var info := HitInfo.new(hit["position"], hit["normal"], node, camera.global_position)
@@ -1200,8 +1242,10 @@ func _swing(tool: StringName) -> void:
 			_impact_feel(info, 0.6, 2.5)  # bounced off: little kick, a nasty sting in the hands
 			await _bounce(tool)
 
-	# 4. recover — back to the ready stance if there's more to mine, else to rest
-	var recover: float = recover_time / pace * pose.get("recover_scale", 1.0)
+	# 4. recover — back to the ready stance if there's more to mine, else to rest (quicker with
+	# the level's recovery perk)
+	var quick := 1.0 + Perks.bonus(Perks.TOOL_SKILL.get(tool, &""), &"recovery")
+	var recover: float = recover_time / pace * pose.get("recover_scale", 1.0) / quick
 	var ready := _ready_stance()
 	var trans := Tween.TRANS_SINE if smooth else Tween.TRANS_BACK
 	t = create_tween().set_parallel()
@@ -1211,7 +1255,7 @@ func _swing(tool: StringName) -> void:
 	t.tween_property(self, "_grip_blend", pose.get("ready_blend", 0.0) if ready else 0.0, recover * (1.0 if ready else 1.6)) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await t.finished
-	_cooldown = swing_cooldown
+	_cooldown = swing_cooldown / quick
 	_swinging = false
 
 

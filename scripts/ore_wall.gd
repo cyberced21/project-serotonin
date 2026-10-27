@@ -830,6 +830,7 @@ func _pop_piece(k: int, i: int, info: HitInfo) -> void:
 			+ Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)) * 0.6
 		var p := PICKUP_SCENE.instantiate()
 		p.item = ORES[kind]["item"]
+		p.skill = &"mining"
 		p.icon = Items.icon(p.item)
 		get_parent().add_child(p)
 		p.launch(c + global_basis.z * 0.3, vel, 0.05)
