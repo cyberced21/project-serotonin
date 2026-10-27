@@ -21,6 +21,9 @@ const SNOW_HEIGHT := 38.0
 ## World XZ rectangle to fill (x, z, width, depth).
 @export var area := Rect2(-110, -80, 280, 200)
 @export var seed := 1
+## How the place dresses the boulders, bushes and trees (moss, snow…; see NodeTheme), a look per
+## layer and cell; none = as made. The swaying plants (grass, flowers) are left as they are.
+@export var theme: NodeTheme
 @export_group("Keep clear (m)")
 @export var node_radius := 1.8
 @export var prop_radius := 1.0
@@ -152,9 +155,11 @@ func _keep(at: Vector3, radius: float) -> void:
 
 func _build_cells(layer: ScatterLayer, mesh: Mesh, cells: Dictionary[Vector2i, Array]) -> void:
 	var material := PaletteMaterial.for_mesh(mesh)  # (weathered stones: the rock material)
+	var dressed := theme != null
 	if PaletteMaterial.has_cards(mesh):
 		material = PaletteMaterial.FOLIAGE  # leaf cards: their own wind
 	elif layer.sway > 0.0:
+		dressed = false
 		var sway := ShaderMaterial.new()
 		sway.shader = SWAY
 		sway.set_shader_parameter("palette", PALETTE.get_shader_parameter("palette"))
@@ -174,6 +179,8 @@ func _build_cells(layer: ScatterLayer, mesh: Mesh, cells: Dictionary[Vector2i, A
 			mm.set_instance_transform(i, Transform3D(t.basis, t.origin - centre))
 		mmi.multimesh = mm
 		mmi.material_override = material
+		if dressed:  # (instance uniforms are per MultiMesh: the cell's whole layer wears one look)
+			NodeTheme.dress(mmi, theme.look(hash([seed, key.x, key.y]), hash([seed, key.x, key.y, layer.model.resource_path])))
 		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if layer.cast_shadow \
 			else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		if layer.visible_distance > 0.0:

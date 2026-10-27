@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="NodeTheme" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/node_theme.gd" id="1_theme"]
+
+[resource]
+script = ExtResource("1_theme")
+title = "Birch Grove lichen"
+moss = Vector2(0.1, 0.3)
+dust = Vector2(0.35, 0.55)
+value = Vector2(1.08, 1.2)
+saturation = Vector2(0.8, 0.95)
+autumn = Vector2(0.3, 0.6)
+leaf_value = Vector2(1.05, 1.15)

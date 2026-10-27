@@ -25,9 +25,9 @@ text = "Sharper tools: 40% chance a hit counts twice"
 
 [sub_resource type="Resource" id="Effect_4_1"]
 script = ExtResource("4_effect")
-stat = &"hit_power"
-value = 0.5
-text = "Crystal edges: every other hit cuts twice as deep"
+stat = &"streak_double"
+value = 3.0
+text = "Crystal edges: every 3rd hit in a row counts twice"
 
 [sub_resource type="Resource" id="Tier_1"]
 script = ExtResource("2_tier")

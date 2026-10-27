@@ -10,6 +10,15 @@ const MAX_LEVEL := 50
 const CURVE_BASE := 50.0
 const CURVE_EXPONENT := 2.2
 const DEBUG_XP := 500
+## Under-levelled (a node or fish rated above your level): you can still gather, but worse.
+## Per level below: this much less hit power, down to the floor ...
+const UNDER_POWER_PER_LEVEL := 0.06
+const UNDER_POWER_FLOOR := 0.4
+## ... and technique windows (clean cut, crack tip, weak point) this much tighter.
+const UNDER_WINDOW_PER_LEVEL := 0.04
+const UNDER_WINDOW_FLOOR := 0.5
+## Reaching up pays: breaking an under-levelled node gives this much more XP.
+const UNDER_XP_BONUS := 0.25
 
 const SKILLS := {
 	&"woodcutting": {"name": "Woodcutting", "color": Color("9be27a")},
@@ -79,6 +88,16 @@ func progress(skill: StringName) -> float:
 		return 1.0
 	var start := xp_for_level(lvl)
 	return float(xp.get(skill, 0) - start) / (xp_for_level(lvl + 1) - start)
+
+
+## How many levels below `rating` you are in `skill` (0 at or above it).
+func levels_under(skill: StringName, rating: int) -> int:
+	return maxi(rating - level(skill), 0)
+
+
+## 1.0 at or above `rating`, falling `per_level` per level under it, never below `min_scale`.
+func under_scale(skill: StringName, rating: int, per_level: float, min_scale: float) -> float:
+	return maxf(1.0 - per_level * levels_under(skill, rating), min_scale)
 
 
 func display_name(skill: StringName) -> String:

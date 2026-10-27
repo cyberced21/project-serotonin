@@ -32,14 +32,16 @@ whatever you hit.
   - The canopy shakes and drops leaves with every hit. Near the end the tree sways and creaks; the last hit snaps it, it hangs on the hinge for a moment, then falls sideways to you (never onto you), toward whichever side is clear. It lands with a slump and spills logs.
   - What's left is the cut stump, growth rings and all, until the tree grows back. A half-cut tree keeps its notch through saving and loading.
   - Four trees, each its own look: a round starter tree, a slim white birch dashed with black, a broad oak on buttress roots, and a tall pine of ragged cones. The forest's background trees match them.
-- **Skills:** Woodcutting, Mining, Fishing and Farming, each with XP and levels. Nodes and fish above your level bounce off or dodge.
+- **Skills and tools:** Woodcutting, Mining, Fishing and Farming, each with XP and levels.
+  - **Tools decide what you can gather.** A node needs a good enough tool, or the swing bounces off ("Needs Iron pick"). Picks and axes come in stone, copper, iron and crystal, sickles in stone and copper; you start with stone and Greta forges the rest (see the village). A better tool also hits harder on everything below it, throws more sparks (white-hot from iron, violet from crystal), rings under every hit and swings heavier.
+  - **Levels decide how well.** Every node and fish has a level rating. Below it you can still gather, just worse: 6% less hit power per level under (never below 40%) and tighter clean-cut, crack-tip and weak-point windows, with the rating shown in amber. Reaching up pays: +25% XP for breaking an under-levelled node, +50% for an under-levelled fish (which the spear only sometimes takes, and the rod's windows tighten for).
   - Every ore breaks its own way: **copper** is a verdigris-capped boulder that flakes away, its copper veins running through it; **iron** a cluster of basalt columns in jointed segments, so knocking out a column's foot topples it; **coal** courses of plates, dull charcoal in pale shale outside and glossy inside, that drop a layer when undercut; **gold** a brown geode, thinly veined, whose tough shell (two hits a piece) hides a quartz-rimmed gold heart; and **crystal** violet crystals in shards that snap off where struck and bring the rest of the crystal down.
-  - Higher-level nodes:
-    - Birch (Woodcutting 8) grows west of the clearing.
-    - Oak (15) grows around the village, and iron rocks (Mining 15) sit east of the smithy. The village's top tiers ask for them.
-    - Pine (25) is on the northern hills, coal (Mining 20) by the pass, and gold (30) in the foothills of the peak. The newcomers' cottages are built from them, and the smithy and town hall want coal and gold for their top tiers.
-    - Crystal (Mining 40) grows only on the floor of Greystone Quarry. The smithy's fourth tier is forged with it.
-    - Wheat (Farming 1) and barley (Farming 15) stand in Goldmeadow's crop squares. You cut them with a sickle, which comes out when you aim at grain. There's nothing to spend them on yet.
+  - Harder nodes (the tool that opens each, and its level rating):
+    - Birch (stone axe, Woodcutting 8) grows west of the clearing.
+    - Oak (copper axe, 15) grows around the village, and iron rocks (copper pick, Mining 15) sit east of the smithy. The village's top tiers ask for them.
+    - Pine (iron axe, 25) is on the northern hills, coal (copper pick, Mining 20) by the pass, and gold (iron pick, 30) in the foothills of the peak. The newcomers' cottages are built from them, and the smithy and town hall want coal and gold for their top tiers.
+    - Crystal (iron pick, Mining 40) grows only on the floor of Greystone Quarry. The smithy's fourth tier is forged with it.
+    - Wheat (stone sickle, Farming 1) and barley (copper sickle, Farming 15) stand in Goldmeadow's crop squares. You cut them with a sickle, which comes out when you aim at grain. There's nothing to spend them on yet.
 - **Spearfishing.**
   - Ponds in the clearing and the village, and a deeper lake to the south where Arctic char (Fishing 30) keep to the middle.
   - Wade into the pond and stalk wary schools of perch, trout and pike. The pike hunts too: watch it stalk the perch and lunge. Crouch to stay quiet: splashing and misses scatter them.
@@ -66,7 +68,13 @@ whatever you hit.
   - **Water:** ponds and a lake with fish, and a river (sometimes two) winding down from the mountains into the lake; trails ford it.
   - **Out in the wilds:** ruins to climb (a Broken Tower or an Old Colonnade, an ore rock waiting on top), abandoned camps, and rare spots (a crystal outcrop or gold vein in the mountains, a ring of ancient oaks, a pond full of pike, a flower meadow).
   - **Rich and lean:** each seed has twice as much of one resource and half as much of another; the debug menu's *Procgen* tab says which.
-  - Dirt trails wind from the clearing to every biome and shore. Each tree, rock, bush and boulder may be one of four baked variants of its model, so no two look alike.
+  - Dirt trails wind from the clearing to every biome and shore.
+  - **Every place dresses its trees and rocks** (`data/themes/`): deep moss in the Old Growth, snow caps on Frostpeak, pale dust in the quarry, sun-bleached stone and warm leaves in Goldmeadow, wet dark feet at Stillwater, gold patches in a Birch Grove or Orchard Downs. The ore, the fresh breaks and the cut wood never change, so copper always reads as copper. Rocks and trees come in eight shapes each, four families of proportions (squat or tall, lumpy or smooth, wide or narrow crowns); nodes growing close together share a family and a look, so they read as siblings. The scenery round them wears the same theme.
+  - **Rare looks:** one to three nodes a seed are Ancient moss, Lightning-scorched, Frost-touched or Gilded. They glint, and give an extra drop and half as much XP again (the *Procgen* tab says where).
+
+  | Each place's theme on the five ores (struck twice: the insides stay clean) | And on the trees |
+  |---|---|
+  | ![Rocks by theme](docs/images/themes/rocks.png) | ![Trees by theme](docs/images/themes/trees.png) |
 
   | A generated world (before rivers, villages and landmarks) | Seed 42 from above (`tools/procgen_preview.gd`: ruins magenta, camps orange, rare spots yellow) |
   |---|---|
@@ -78,10 +86,13 @@ whatever you hit.
   - Best lap and splits are saved. Bronze, silver and gold times each hang a banner on the gate.
 - **A village to build up.** Over the hills, a dirt path leads to a valley with four villagers: a woodcutter, a smith, a fisher and the mayor.
   - Talk to a villager (E) to see what their building's next tier costs, then pay with the logs, ore and fish you've gathered.
+  - **Greta forges tools.** Her panel has a Forge tab: the next pick, axe and sickle, what each opens and what it costs. Each is made from what the tool before it can gather, and her smithy's tier caps the best she can make (the Stone Forge does copper, the Smithy iron, the Crystal Forge crystal).
+    - Forging plays **the forge moment**: the village hushes and the view darkens round the flaring forge, Greta strikes three ringing blows, quenches the blade in a burst of steam, and the new tool is revealed in a shaft of its colour before it swings into your hands while the villagers cheer. Iron adds thunder and the town hall's bell; crystal darkens the sky and sends a violet beam up out of the anvil. E skips to the reveal.
+    - Your first hit with a new tool lands with a shockwave.
   - Every building has three tiers (the smithy has a fourth, the Crystal Forge, which needs town hall tier 3). The town hall's tier caps the houses, so raising it opens the next round.
   - The village grows: raising the town hall brings new neighbours, whose cottages build themselves (Rosa the baker at tier 2, Edda the prospector at tier 3). Their cottages upgrade too: Rosa's into a bakery and bakehouse, Edda's into an assay shed and office.
   - Every tier above the first gives a perk, shown in the panel:
-    - Smithy: sharper tools, so a hit can count twice. At the Crystal Forge, every other hit also cuts twice as deep.
+    - Smithy: sharper tools, so a hit can count twice. At the Crystal Forge, every 3rd hit in a row counts twice too.
     - Woodcutter: extra logs from every tree.
     - Fisher: calmer fish, then a chance of a bonus fish.
     - Town hall: bonus XP in every skill.
@@ -116,7 +127,8 @@ whatever you hit.
   - Villagers go home after dark, but step out if you come to their door.
   - Fish are dozy around dawn and dusk.
 - **Positional audio:** footsteps change with the surface (grass, dirt, stone, sand, snow, water; the road and quarry crunch), and the slide scrape, splashes and spear hits are placed in 3D. Mining and woodcutting sounds are synthesized (a wooden thunk, fibres snapping, the trunk creaking; a stone knock, the pick ringing, cracks running), built up in layers, each with several variations. Every tree species and every ore has its own voice: a birch rings high and short, an oak deep and long; iron rings hard, coal crumbles, crystal chimes.
-- **Saving:** skills, inventory, player position, the village's tiers, the time of day, which nodes are depleted (with their respawn timers), the biomes you've discovered, and your best lap and medals.
+- **Saving:** skills, inventory, your tools, player position, the village's tiers, the time of day, which nodes are depleted (with their respawn timers), the biomes you've discovered, and your best lap and medals.
+  - Saves from before tool progression (save version 1) aren't loaded: the game renames them aside as `save.json.pre-tools.bak` (never deleted) and starts fresh. Tool scripts (`-s`) never touch an old save; they use `user://tool_run_save.json` instead.
 
 ## Controls
 
@@ -130,7 +142,7 @@ whatever you hit.
 | Rod: bow when a hooked fish jumps | Right mouse or Q |
 | Talk to a villager | E |
 | Free the mouse | Esc (click to recapture) |
-| Debug menu: items, skill levels, building tiers, time of day and speed, pause, teleports (buildings, biomes, ponds, nodes), fly mode, a live readout (with the biome), save wipe, generated worlds (enter a seed, a new random one, back to the main world), graphics presets and effects | F1 (debug builds) |
+| Debug menu: items, skill levels, tool tiers, building tiers, time of day and speed, pause, teleports (buildings, biomes, ponds, nodes), fly mode, a live readout (with the biome), save wipe, generated worlds (enter a seed, a new random one, back to the main world), graphics presets and effects | F1 (debug builds) |
 | Debug: skip ahead 3 hours / give 50 of every item / upgrade every building (wraps back to tier 1) | F6 / F7 / F8 (debug builds) |
 | Debug: give XP / reset save | F9 / F10 (debug builds) |
 
@@ -175,7 +187,7 @@ Key scripts:
 - **Looks:** `grass_field.gd` (the grass round the player), `color_grade.gd` (the colour-grading table), `palette_material.gd` (plain or leaf-card material per mesh). Plan and decisions: [plans/graphics.md](plans/graphics.md)
 - **Generated worlds:** `procgen/procgen_map.gd` (the seed's heights, surfaces, biome cells, water, quarry and trails, as plain arrays), `procgen/procgen_world.gd` (builds `scenes/procgen.tscn` from it, enter / leave, a save per seed), `procgen/procgen_population.gd` (the spawners and scenery per biome cell, by kind), `procgen/procgen_landmarks.gd` (ruins, camps, rare spots). Plans and decisions: [plans/procgen.md](plans/procgen.md), [plans/procgen-variety.md](plans/procgen-variety.md)
 - **The road:** `road_course.gd` (set pieces by metres along the road), `time_trial.gd`
-- **Autoloads:** `Skills`, `Inventory`, `SaveGame`, `Village` (building tiers, the town-hall cap, perks), `DayNight` (the clock), `Biome` (where you are, the mood, cards and ambience), `GraphicsSettings` (quality presets), `Juice` (hit-stop and shake), `Sfx`, `GameInput`
+- **Autoloads:** `Skills`, `Tools` (the tool tiers you own, Greta's recipes), `Inventory`, `SaveGame`, `Village` (building tiers, the town-hall cap, perks), `DayNight` (the clock), `Biome` (where you are, the mood, cards and ambience), `GraphicsSettings` (quality presets), `Juice` (hit-stop and shake), `Sfx`, `GameInput`
 
 ## Asset pipeline
 
@@ -185,12 +197,14 @@ Most content is generated by scripts, so it's easy to tweak and regenerate. Run 
 |---|---|
 | Palette atlas (`art/palette.png` + `.json`) | `python tools/make_palette.py` |
 | Surface textures → `art/textures/` (detail per palette row, terrain ground, leaf cards; needs numpy) | `python tools/make_textures.py` |
-| Low-poly models → `models/*.glb` (needs Blender 4.2+) | `blender -b -P tools/blender/make_models.py -- models art/palette.json` (add builder names such as `forest quarry farming road` to rebuild only those) |
+| Low-poly models → `models/*.glb` (needs Blender 4.2+) | `blender -b -P tools/blender/make_models.py -- models art/palette.json` (add builder names such as `forest quarry farming road tool_tiers` to rebuild only those; `tool_tiers`: every tier of the forged tools into `models/tools/`) |
 | Village buildings, villagers and props → `models/village/` | `blender -b -P tools/blender/make_village.py -- models art/palette.json` (or name builders, e.g. `smithy`) |
 | Item icons → `art/icons/*.png` | `blender -b -P tools/blender/render_icons.py -- models art/palette.png art/icons`, then `python tools/outline_icons.py` (name item ids after either to do only those) |
 | Ore design candidates → `models/designs/` (not used by the game; two looks per ore) | `blender -b -P tools/blender/make_models.py -- models art/palette.json designs` |
 | Tree design candidates → `models/designs/` (two looks per tree; the picked ones also build `tree`, `birch`, `oak` and `pine`) | `blender -b -P tools/blender/make_models.py -- models art/palette.json tree_designs` |
-| Model variants for generated worlds → `models/variants/` (4 of each ore rock, choppable tree, bush, boulder and background tree, from shifted seeds) | `blender -b -P tools/blender/make_models.py -- models art/palette.json variants` (`ore_variants`: just the ore rocks) |
+| Model variants for generated worlds → `models/variants/` (8 of each ore rock and choppable tree over four shape families, see `recipe()`; 4 of each bush, boulder and background tree; from shifted seeds) | `blender -b -P tools/blender/make_models.py -- models art/palette.json variants` (`ore_variants` / `tree_variants`: just those) |
+| Theme gallery: nodes lined up in the main world, a row per theme (`data/themes/`), on a throwaway save → `docs/images/themes/<label>.png` | `godot --path . --screen 1 -s res://tools/theme_gallery.gd -- --nodes=rock,oak_tree [--themes=plain,pinewood] [--looks] [--hit=2]` |
+| A contact sheet of those, one tile per theme (or per node with `--per-node`, or a procgen seed's biomes and rare looks with `--tour SEED`) | `python tools/theme_sheet.py --godot <console exe> --nodes rock,iron_rock --label rocks [--tour 7]` (needs Pillow) |
 | Close-ups of an ore rock being mined, a screenshot a hit → `docs/images/ores/<label>/` | `godot --path . -s res://tools/ore_closeup.gd -- --ore=rock [--fault] [--angle=30]` |
 | Gathering sounds, woodcutting and mining → `audio/gathering/` (synthesized: every clip, plus a voice per species and ore), and the stacks the scenes play in `audio/woodcutting/` and `audio/mining/` | `python tools/synth_gathering.py` |
 | Graphics tour: screenshots of fixed views (or a generated world's) and the frame rate at each, on a throwaway save | `godot --path . -s res://tools/graphics_tour.gd -- --label=NAME [--preset=high] [--only=pond,...] [--procgen=SEED]` (saves to `docs/images/graphics/NAME/`) |
@@ -204,6 +218,8 @@ Most content is generated by scripts, so it's easy to tweak and regenerate. Run 
 | Rod fishing's sounds (cast whip, plip, nibble, bloop, reel, creak, hiss, jump, snap, ...) → `audio/fishing/` | `python tools/synth_fishing.py` (needs numpy) |
 | Rod fishing's timing logic: bots play whole fights for every species (an answering one must land them all cleanly, a lazy one must snap) | `godot --headless --path . -s res://tools/test_fishing.gd` |
 | Rod fishing end to end in the real game: a bot casts, waits for a bite, strikes, fights and lands, saving screenshots to `user://fishing_playtest/` (throwaway save) | `godot --path . --screen 1 -s res://tools/fishing_playtest.gd -- [--casts=3] [--level=30] [--procgen=SEED]` |
+| The forge cutscene's sounds (flare, drone, three blows, quench hiss, reveal, thunder, bell, beam, first-swing shockwave, ...) → `audio/forge/` | `python tools/synth_forge.py` (needs numpy) |
+| The forge moment in the real game: Greta forges a tool (tier 1 copper, 2 iron, 3 crystal), screenshots of every beat and the first swing after → `user://forge_playtest/` (throwaway save) | `godot --path . --screen 1 --resolution 1280x720 -s res://tools/forge_playtest.gd -- [--tier=1] [--tool=pickaxe] [--skip]` |
 | Placeholder biome ambience (forest, field, quarry) | `python tools/synth_ambience.py` (needs numpy) |
 | Terrain: the original layout plus the biomes and roads (**overwrites** `terrain_data/`) | `godot --headless --path . -s res://tools/generate_test_terrain.gd` (add `-- --preview=map.png` for a top-down check). It keeps the ground under hand-placed nodes as it was and reports any that moved. |
 
@@ -223,6 +239,7 @@ hand-edit a model, import the `.glb` in Blender, edit it, and export it back as 
 - **A new item:** add a row to `Items.DEFS` (`scripts/items.gd`) and an entry to `ICONS` in `tools/blender/render_icons.py`.
 - **A new fish:** add a model to the Blender script and a `FishSpecies` `.tres` in `data/fish/`, then list it in the pond's `Fish` node (`FishPond.schools`). Its *Rod*, *Fight* and *Size* groups set how it bites and fights; run `tools/test_fishing.gd` after (it checks a good player can land it).
 - **A new skill:** add a row to `Skills.SKILLS` (`scripts/autoload/skills.gd`).
+- **A new tool tier:** add its name to `Tools.LADDER` and its recipe to `Tools.RECIPES` (`scripts/autoload/tools.gd`), set `tool_tier` on the nodes it opens, and build its model and icon (`make_models.py` `tool_tiers`, `render_icons.py`).
 - **A new village building:**
   1. Add a function to `tools/blender/make_village.py` that builds each tier's pieces with a `Kit("T1", ...)`, `Kit("T2", ...)` and so on.
   2. Add a `BuildingDef` `.tres` in `data/buildings/` with its tiers, costs and lines.

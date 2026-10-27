@@ -18,13 +18,14 @@ static var _materials := {}
 
 ## Plays at `at` on a surface facing `normal`. `swing` is the direction the tool was travelling
 ## (sparks glance off along it). `strength`: 1 for a hit, more for bigger moments (a crack tip,
-## a split) — more chips and dust.
+## a split) — more chips and dust. `spark_tint`: the sparks' colour instead of the hot orange
+## (a better tool's: white-hot iron, violet crystal); blank keeps the orange.
 static func spawn(scene: PackedScene, parent: Node, at: Vector3, normal: Vector3, swing: Vector3,
-		stone: Color, ore: Color, strength := 1.0, spark_count := 0) -> void:
+		stone: Color, ore: Color, strength := 1.0, spark_count := 0, spark_tint := Color(0, 0, 0, 0)) -> void:
 	var fx := scene.instantiate() as HitFx
 	parent.add_child(fx)
 	fx.global_transform = Transform3D(facing(normal), at + normal * 0.04)
-	fx._play(normal, swing, stone, ore, strength, spark_count)
+	fx._play(normal, swing, stone, ore, strength, spark_count, spark_tint)
 
 
 ## The impact star: a bright flash at the point of contact for two or three frames, popping out
@@ -94,7 +95,8 @@ static func facing(dir: Vector3) -> Basis:
 	return Basis.looking_at(-dir, Vector3.UP if absf(dir.y) < 0.95 else Vector3.RIGHT)
 
 
-func _play(normal: Vector3, swing: Vector3, stone: Color, ore: Color, strength: float, spark_count: int) -> void:
+func _play(normal: Vector3, swing: Vector3, stone: Color, ore: Color, strength: float, spark_count: int,
+		spark_tint: Color) -> void:
 	chips.process_material = _tinted(chips.process_material, stone, ore)
 	shards.process_material = _tinted(shards.process_material, stone, ore)
 	dust.process_material = _tinted(dust.process_material, stone.lightened(0.3), Color())
@@ -105,11 +107,25 @@ func _play(normal: Vector3, swing: Vector3, stone: Color, ore: Color, strength: 
 		p.emitting = true
 	if spark_count > 0:
 		sparks.amount = spark_count
+		if spark_tint.a > 0.0:
+			sparks.material_override = _spark_material(sparks.draw_pass_1.surface_get_material(0), spark_tint)
 		var glance := swing.bounce(normal).normalized() * 0.7 + normal * 0.5
 		sparks.global_basis = facing(glance.normalized())
 		sparks.emitting = true
 	var life := maxf(chips.lifetime, dust.lifetime) * 1.3
 	get_tree().create_timer(life).timeout.connect(queue_free)
+
+
+static var _spark_materials := {}
+
+
+## The spark material in `tint` (one per colour, so it compiles once).
+static func _spark_material(base: Material, tint: Color) -> Material:
+	if not _spark_materials.has(tint):
+		var m := base.duplicate() as StandardMaterial3D
+		m.albedo_color = tint
+		_spark_materials[tint] = m
+	return _spark_materials[tint]
 
 
 ## A copy of `base` in these colours: `ore` (unless it's blank) on ORE_SHARE of the particles.

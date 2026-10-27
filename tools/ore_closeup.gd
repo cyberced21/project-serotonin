@@ -49,7 +49,8 @@ func _run() -> void:
 	if gfx:
 		gfx.set("persist", false)
 	root.get_node("DayNight").set("time", 0.42)
-	root.get_node("Skills").call("set_level", &"mining", 50)  # (every ore can be mined)
+	root.get_node("Skills").call("set_level", &"mining", 50)
+	root.get_node("Tools").call("set_tier", &"pickaxe", 3)  # (every ore can be mined)
 	var node := _find_rock()
 	if node == null:
 		push_error("no %s.tscn in the world" % ore)

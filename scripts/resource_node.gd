@@ -27,6 +27,16 @@ const GHOST_OUTLINE_STENCIL := preload("res://shaders/ghost_outline_stencil.gdsh
 const GHOST_MASK_STENCIL := preload("res://shaders/ghost_mask_stencil.gdshader")
 const DEFLECT_SFX := preload("res://audio/stone_hit.tres")
 const DEFLECT_COLOR := Color("ff8a7a")
+## The tool's ring per tier above stone (_tool_ring), from tools/synth_forge.py.
+const TOOL_RINGS: Array[AudioStream] = [preload("res://audio/forge/ring_copper.wav"),
+	preload("res://audio/forge/ring_iron.wav"), preload("res://audio/forge/ring_crystal.wav")]
+## The sparks' colour per tool tier: stone and copper the usual hot orange (blank), iron white-hot,
+## crystal violet.
+const SPARK_TINTS: Array[Color] = [Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(1.0, 0.95, 0.82), Color(0.82, 0.6, 1.0)]
+## A pause longer than this between hits ends a streak (Village stat streak_double).
+const STREAK_GAP_MSEC := 3000
+## The skill rating popup on an under-levelled hit that barely bit.
+const UNDER_COLOR := Color("ffc27a")
 const SHARP_COLOR := Color("ffd27a")
 ## The impact star's tint: a plain hit, a crack tip (and splits).
 const STAR_HIT := Color(1.0, 0.97, 0.9)
@@ -57,6 +67,9 @@ const CRACKING_LAYER := 1 << 10
 ## Leave empty to use the item's icon from art/icons/ (see Items).
 @export var item_icon: Texture2D
 @export var tool_type: StringName = &"axe"
+## The tool tier that bites this node (Tools.LADDER: 0 stone, 1 copper, 2 iron, 3 crystal).
+## Below it, hits bounce off.
+@export_range(0, 3) var tool_tier := 0
 @export_range(1, 20) var max_hits := 5
 @export_range(0, 10) var drops_min := 2
 @export_range(0, 10) var drops_max := 4
@@ -72,6 +85,8 @@ const CRACKING_LAYER := 1 << 10
 @export_group("Skill")
 ## Skill id from Skills.SKILLS (e.g. woodcutting, mining).
 @export var skill: StringName = &"woodcutting"
+## How hard the node is: below this level you still gather, but with less power per hit and
+## tighter clean-cut / crack-tip / weak-point windows (Skills.UNDER_*), and more XP when it breaks.
 @export_range(1, 50) var required_level := 1
 @export_range(0, 100) var xp_per_hit := 5
 @export_range(0, 500) var xp_on_break := 15
@@ -232,8 +247,15 @@ var hits_left := 0
 var last_impact := 1.0
 var _crack_sound := 0  # CRACK_* : what this hit's crack did, for _hit_sounds
 var _crack_step := 0  # ... and how far along it is (each step a little higher)
-var _cut := 0.0  # hit_power's fraction of a hit, carried over to the next one
+var _cut := 0.0  # the fraction of a hit (under-levelled) carried over to the next one
+var _ring: AudioStreamPlayer3D  # the tool's ring (_tool_ring), made on first use
+var _streak := 0  # biting hits in a row on this node (the Crystal Forge's streak_double)
+var _last_hit_msec := -100000
 var _surfaces: Array[GeometryInstance3D] = []
+## The place's dressing (NodeTheme.look()): set by the spawner before the node enters the tree.
+var look: Array[Vector4] = []
+## A rare look (ProcgenMap.rares), if this is the one: its bonus drops and XP.
+var rare: NodeTheme
 var _flash_tween: Tween
 var _nudge_tween: Tween
 var _burst_home := Vector3.ZERO
@@ -260,6 +282,7 @@ func _ready() -> void:
 	_burst_home = burst.position
 	_break_audio_home = break_audio.position
 	_collect_surfaces(visual)
+	_dress(self)
 	_fit_collision()
 	if not _links.is_empty():
 		_ground_rock()
@@ -383,16 +406,41 @@ func is_available() -> bool:
 	return hits_left > 0
 
 
-## False when the player's skill level is too low — hits will bounce off.
+## False when the player's tool is too weak for this node — hits will bounce off.
 func can_gather() -> bool:
-	return Skills.level(skill) >= required_level
+	return Tools.can_work(tool_type, tool_tier)
+
+
+## "Needs Iron pick": shown on a deflect and when the crosshair is on a node you can't work yet.
+func needs_text() -> String:
+	return "Needs %s" % Tools.display_name(tool_type, tool_tier)
+
+
+## Your skill is below the node's rating: it can be gathered, just slowly.
+func is_under_levelled() -> bool:
+	return Skills.levels_under(skill, required_level) > 0
+
+
+## "Mining 15": the node's rating, shown when you're under it.
+func under_text() -> String:
+	return "%s %d" % [Skills.display_name(skill), required_level]
+
+
+## Hit power left after the under-level penalty (1.0 at or above the rating).
+func _power_scale() -> float:
+	return Skills.under_scale(skill, required_level, Skills.UNDER_POWER_PER_LEVEL, Skills.UNDER_POWER_FLOOR)
+
+
+## How wide the technique windows are after the under-level penalty (1.0 at or above the rating).
+func _window_scale() -> float:
+	return Skills.under_scale(skill, required_level, Skills.UNDER_WINDOW_PER_LEVEL, Skills.UNDER_WINDOW_FLOOR)
 
 
 ## Called by the player while the crosshair is on this node.
 func set_highlighted(on: bool) -> void:
 	for s in _surfaces:
 		s.set_instance_shader_parameter("highlight", 1.0 if on else 0.0)
-	if on and _weak and not _weak.visible and can_gather():  # levelled up since it was hidden
+	if on and _weak and not _weak.visible and can_gather():  # got a better tool since it was hidden
 		_place_weak_point()
 
 
@@ -405,18 +453,29 @@ func hit(info: HitInfo) -> bool:
 		_deflect(info)
 		return false
 	var before := hits_left
-	# the smithy's sharper tools: sometimes a hit counts twice, and crystal edges cut deeper every
-	# time (the fraction carries over, so +0.5 means every other hit counts twice); the weak point
-	# always adds more
-	_cut += 1.0 + Village.stat(&"hit_power")
+	# a better tool than the node needs bites deeper (+1 cut per tier above); under-levelled, every
+	# hit bites less (the fraction carries over to the next hit)
+	_cut += (1.0 + Tools.tiers_above(tool_type, tool_tier)) * _power_scale()
 	var cuts := int(_cut)
 	_cut -= cuts
-	var double := randf() < Village.stat(&"double_hit_chance") or cuts > 1
+	# the smithy's sharper tools: sometimes a hit counts twice; at the Crystal Forge, so does every
+	# Nth biting hit in a row on this node. The weak point, crack tips and clean cuts add more.
+	var now := Time.get_ticks_msec()
+	if cuts == 0 or now - _last_hit_msec > STREAK_GAP_MSEC:
+		_streak = 0
+	_streak += 1 if cuts > 0 else 0
+	_last_hit_msec = now
+	var every := int(Village.stat(&"streak_double"))
+	var streak_hit := every > 0 and _streak > 0 and _streak % every == 0
+	var double := cuts > 0 and (streak_hit or randf() < Village.stat(&"double_hit_chance"))
 	var weak := _is_weak_hit(info)
 	var tip := cracks and _is_tip_hit(info)
 	_clean = _carve != null and _is_clean_cut(info)
-	hits_left = maxi(hits_left - cuts - (1 if double and cuts == 1 else 0) - (weak_point_extra_hits if weak else 0)
+	hits_left = maxi(hits_left - cuts - (1 if double else 0) - (weak_point_extra_hits if weak else 0)
 		- (crack_tip_extra_hits if tip else 0) - (clean_cut_extra_hits if _clean else 0), 0)
+	# under-levelled, a plain hit can fall short of a whole cut: it marks the node but takes nothing
+	var bit := hits_left < before
+	var fresh := bit and Tools.take_fresh(tool_type)  # the first bite of a just-forged tool
 	if weak:
 		_weak_hit_feedback(info)
 	if _carve:
@@ -424,21 +483,27 @@ func hit(info: HitInfo) -> bool:
 		_tree_reacts(info, 1.0 - float(hits_left) / max_hits)
 	SaveGame.mark_dirty()
 	var collapsed := 0
-	if not _links.is_empty():
-		collapsed = _knock_out(info, 2 if double else 1)  # (sets hits_left)
+	if not _links.is_empty() and bit:
+		collapsed = _knock_out(info, maxi(cuts, 1) + (1 if double else 0))  # (sets hits_left)
 	var stress := 1.0 - float(hits_left) / max_hits  # 0 -> 1 as it depletes
 
 	var pitch := 1.0 + stress * stress_pitch - (0.12 if double else 0.0)
 	_crack_sound = 0  # (set by the crack code below; the sounds are played together at the end)
 	_flash()
 	_nudge(info.away() * (1.6 if double else 1.0))
-	_hit_effects(info, 1.5 if tip or _clean else 1.0)
+	_hit_effects(info, 2.0 if fresh else 1.5 if tip or _clean else 1.0)
+	if bit:
+		_tool_ring(info)
+	if fresh:
+		ForgeCutscene.first_swing(get_parent(), info.position, info.normal, ForgeCutscene.tier_color(Tools.tier(tool_type)))
 	Juice.shake(shake_hit + stress * 1.5 + (1.5 if double else 0.0))
 	Juice.hitstop(hitstop_hit + (0.035 if double else 0.0))
 	if double:
 		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.35, 0), "Sharp!", SHARP_COLOR, 9)
 	if _clean:
 		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.6, 0), "Clean cut!", clean_cut_color, 10)
+	elif not bit:  # under-levelled, and this one didn't bite: say why
+		PopupText.spawn(get_parent(), _popup_pos(), under_text(), UNDER_COLOR, 7)
 	_award_xp(xp_per_hit * (2 if double else 1) * (2 if weak or tip or _clean else 1))
 
 	var split := hits_left > 0 and cracks and _links.is_empty() and _grow_crack(info, tip)
@@ -447,6 +512,8 @@ func hit(info: HitInfo) -> bool:
 	if collapsed > 0 and hits_left > 0:
 		_collapse_feedback(info, collapsed)
 	last_impact = 2.5 if hits_left == 0 else 2.0 if split or collapsed > 0 else 1.5 if tip or weak or double or _clean else 1.0
+	if fresh:
+		last_impact = 3.0
 	_hit_sounds(info, pitch, double, split)
 	if _clean and hits_left > 0:  # a sharper crack on top of the thunk
 		if clean_layers:
@@ -500,17 +567,36 @@ func _hit_sounds(info: HitInfo, pitch: float, double: bool, split: bool) -> void
 	_crack_sound = 0
 
 
-## Under-levelled: the tool bounces off — clank, small nudge, no damage, no XP.
+## Too weak a tool: it bounces off — clank, small nudge, no damage, no XP.
 func _deflect(info: HitInfo) -> void:
 	_play(audio, DEFLECT_SFX, 1.8)
 	_nudge(info.away())
 	Juice.shake(0.5)
-	PopupText.spawn(get_parent(), _popup_pos(), "%s %d" % [Skills.display_name(skill), required_level], DEFLECT_COLOR)
+	PopupText.spawn(get_parent(), _popup_pos(), needs_text(), DEFLECT_COLOR)
+
+
+## The tool's own ring under a biting hit: copper dull, iron bright, crystal a glassy chime.
+func _tool_ring(info: HitInfo) -> void:
+	var tier := Tools.tier(tool_type) if Tools.LADDER.has(tool_type) else 0
+	if tier < 1 or tier > TOOL_RINGS.size():
+		return
+	if _ring == null:
+		_ring = AudioStreamPlayer3D.new()
+		_ring.bus = &"SFX"
+		_ring.unit_size = 4.0
+		add_child(_ring)
+	_ring.global_position = info.position
+	_ring.stream = TOOL_RINGS[tier - 1]
+	_ring.volume_db = -10.0
+	_ring.pitch_scale = randf_range(0.95, 1.05)
+	_ring.play()
 
 
 func _award_xp(amount: int, big := false) -> void:
 	if amount <= 0:
 		return
+	if rare:
+		amount = roundi(amount * rare.xp_scale)
 	var gained := Skills.add_xp(skill, amount)
 	if gained > 0:
 		PopupText.spawn(get_parent(), _popup_pos() + Vector3(randf_range(-0.2, 0.2), 0.25 if big else 0.0, 0.0),
@@ -523,7 +609,10 @@ func _popup_pos() -> Vector3:
 
 func _break(info: HitInfo) -> void:
 	_clear_fault()
-	_award_xp(xp_on_break, true)
+	_award_xp(roundi(xp_on_break * (1.0 + (Skills.UNDER_XP_BONUS if is_under_levelled() else 0.0))), true)
+	if rare:
+		PopupText.spawn(get_parent(), _popup_pos() + Vector3.UP * 0.55, "Rare find: %s!" % rare.title,
+			Color(1.0, 0.85, 0.45), 9, 0.15)
 	if _carve and clean_layers:  # the hinge giving way: a deep snap of the last fibres
 		Sfx.play_at(clean_layers, info.position, 0.6, 3.0)
 	else:
@@ -685,6 +774,8 @@ func _drop_count() -> int:
 		extra = int(Village.stat(&"extra_logs"))  # the woodcutter's lodge
 	elif skill == &"mining":
 		extra = int(Village.stat(&"extra_ore"))  # Edda's assay shed
+	if rare:
+		extra += rare.bonus_drops
 	return randi_range(drops_min, maxi(drops_min, drops_max)) + extra
 
 
@@ -964,7 +1055,7 @@ func _is_clean_cut(info: HitInfo) -> bool:
 	if deep < full * clean_cut_after:
 		return false
 	var mouth := _trunk.global_transform * (_carve.bite_point(dir) + dir.normalized() * deep * 0.5)
-	return _aimed_near(info, mouth, clean_cut_radius)
+	return _aimed_near(info, mouth, clean_cut_radius * _window_scale())
 
 
 ## A wood chip flying out of the notch as the axe comes free: a flat wedge of cut wood, a big
@@ -990,6 +1081,7 @@ func _make_stump(mesh: Mesh) -> void:
 	_stump.material_override = NODE_PALETTE
 	rubble.add_child(_stump)
 	_stump.transform = rubble.transform.affine_inverse() * _trunk_rest
+	_dress(_stump)
 	_limit_drawing(rubble)
 
 
@@ -1549,7 +1641,7 @@ var _crack_tip: Decal
 
 func _is_tip_hit(info: HitInfo) -> bool:
 	for p in crack_tips():
-		if _aimed_near(info, p, crack_tip_radius):
+		if _aimed_near(info, p, crack_tip_radius * _window_scale()):
 			return true
 	return false
 
@@ -2277,7 +2369,7 @@ func _place_weak_point() -> void:
 func _is_weak_hit(info: HitInfo) -> bool:
 	if _weak == null or not _weak.visible:
 		return false
-	return _aimed_near(info, _weak.global_position, weak_point_radius)
+	return _aimed_near(info, _weak.global_position, weak_point_radius * _window_scale())
 
 
 ## Whether the swing's line passes within `radius` of `point`.
@@ -2404,9 +2496,12 @@ func _hit_effects(info: HitInfo, strength: float) -> void:
 		_chips_at(info)
 		return
 	var swing := (info.position - info.from).normalized()
-	var sparks := roundi(spark_amount * (2.0 if strength > 1.2 else 1.0))
+	# a better tool throws more sparks, and iron and crystal throw them in their own colour
+	var tier := Tools.tier(tool_type) if Tools.LADDER.has(tool_type) else 1
+	var sparks := roundi(spark_amount * (2.0 if strength > 1.2 else 1.0) * (0.6 + 0.4 * tier))
 	var second := ore_color if cracks else bark_color if _carve else Color(0, 0, 0, 0)
-	HitFx.spawn(hit_fx, get_parent(), info.position, info.normal, swing, chip_color, second, strength, sparks)
+	HitFx.spawn(hit_fx, get_parent(), info.position, info.normal, swing, chip_color, second, strength, sparks,
+		SPARK_TINTS[tier] if tier < SPARK_TINTS.size() else Color(0, 0, 0, 0))
 	HitFx.star(get_parent(), info.position + info.normal * 0.08, STAR_TIP if strength > 1.2 else STAR_HIT, 0.8 * strength)
 	_add_rubble(info.position, 1 if strength <= 1.0 else 2)
 
@@ -2513,6 +2608,17 @@ func _collect_surfaces(n: Node) -> void:
 		if c is GeometryInstance3D:
 			_surfaces.append(c)
 		_collect_surfaces(c)
+
+
+## Dresses every mesh under `n` with this node's theme (the pieces and parts that fly off or fall
+## keep it: they're the same meshes, or copies of them).
+func _dress(n: Node) -> void:
+	if look.is_empty():
+		return
+	if n is MeshInstance3D:
+		NodeTheme.dress(n, look)
+	for g in n.find_children("*", "MeshInstance3D", true, false):
+		NodeTheme.dress(g, look)
 
 
 func _play(player: AudioStreamPlayer3D, stream: AudioStream, pitch := 1.0) -> void:

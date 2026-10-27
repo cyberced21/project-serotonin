@@ -62,6 +62,8 @@ var _watching := false  # standing back while the building is upgraded
 var _audio: AudioStreamPlayer3D
 var _player: Node3D
 var _terrain: Terrain3D
+## A cutscene is posing this villager (script_pose): no walking, working or talking of its own.
+var scripted := false
 
 
 func _ready() -> void:
@@ -114,6 +116,25 @@ func interact() -> void:
 func set_highlighted(on: bool) -> void:
 	for s in _surfaces:
 		s.set_instance_shader_parameter("highlight", 1.0 if on else 0.0)
+
+
+## A cutscene's pose for one part (see _pose); the part eases to it every frame.
+func script_pose(part: StringName, x: float, z := 0.0, offset := Vector3.ZERO) -> void:
+	_pose(part, x, z, 0.0, offset)
+
+
+## A cutscene puts the villager at `at` (on the ground), facing `toward`.
+func script_place(at: Vector3, toward: Vector3) -> void:
+	global_position = _ground(at)
+	var d := toward - global_position
+	_yaw = atan2(d.x, d.z)
+	rotation.y = _yaw
+	reset_physics_interpolation()
+
+
+## The world position of a part (e.g. the hammer hand), or the villager's own.
+func part_position(part: StringName) -> Vector3:
+	return _parts[part].global_position if _parts.has(part) else global_position
 
 
 func cheer() -> void:
@@ -221,6 +242,8 @@ func _tick(delta: float) -> void:
 		_model.visible = not away and not _inside
 		_shape.set_deferred("disabled", away or _inside)
 	if away:
+		return
+	if scripted:
 		return
 
 	if state == State.CHEER:

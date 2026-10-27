@@ -8,6 +8,7 @@
 size = Vector3(0.8, 1, 0.8)
 
 [node name="Barley" instance=ExtResource("1_base")]
+tool_tier = 1
 item = &"barley"
 tool_type = &"sickle"
 max_hits = 4

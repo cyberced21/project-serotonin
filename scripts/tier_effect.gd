@@ -4,7 +4,7 @@ extends Resource
 ## stat (Village.stat), and the systems that care read them:
 ##   xp_bonus            fraction extra XP in every skill (Skills.add_xp)
 ##   double_hit_chance   chance a tool hit counts twice (ResourceNode.hit)
-##   hit_power           extra hits every tool hit counts for, fractions carried over (ResourceNode.hit)
+##   streak_double       every Nth biting hit in a row on a node counts twice (ResourceNode.hit)
 ##   extra_logs          extra drops from trees (ResourceNode)
 ##   fish_calm           fraction off every fish's scare radius (FishSchool.disturb); on the rod, fish
 ##                       notice the float from further and nibble less (FishingLure)

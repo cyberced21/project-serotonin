@@ -13,6 +13,7 @@ size = Vector3(2.5, 1.7, 2.3)
 hit_layers = ExtResource("v_pickaxe_hit")
 crack_layers = ExtResource("v_crack_tip")
 split_layers = ExtResource("v_split")
+tool_tier = 1
 item = &"iron"
 max_hits = 8
 respawn_time = 30.0

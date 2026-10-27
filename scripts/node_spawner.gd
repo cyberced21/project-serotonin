@@ -12,6 +12,10 @@ extends Node3D
 const BARE_TEXTURES: Array[int] = [WorldMap.TEX_PATH, WorldMap.TEX_ROAD, WorldMap.TEX_QUARRY, WorldMap.TEX_CROP]
 const SAND_HEIGHT := -0.04
 const MAX_TRIES_PER_NODE := 40
+## Nodes in the same square this size (m) are one cluster (see cluster_at).
+const CLUSTER_SIZE := 14.0
+## The shape families the baked variants are spread over (tools/blender/make_models.py FAMILIES).
+const FAMILIES := 4
 
 @export var entries: Array[SpawnEntry] = []
 @export var count := 20
@@ -31,6 +35,10 @@ const MAX_TRIES_PER_NODE := 40
 @export_range(0.0, 1.0) var min_normal_y := 0.8
 ## How far each node's base sinks into the ground, so it doesn't float on slopes.
 @export var sink := 0.15
+## How the place dresses its nodes (moss, snow…); none = as made.
+@export var theme: NodeTheme
+## A rare look (data/themes/rare/) for the first tree or rock placed, with its bonus.
+@export var rare: NodeTheme
 @export_group("Hotspots")
 ## Spots the nodes crowd around, (x, z, radius): glades, the trail.
 @export var hotspots := PackedVector3Array()
@@ -87,10 +95,17 @@ func _spawn() -> void:
 			continue
 		var node := entry.scene.instantiate() as ResourceNode
 		node.save_id = StringName("%s_%03d" % [save_prefix, placed])
-		if not entry.variants.is_empty():  # its own model or one of the variants, by save id
-			var v := hash(node.save_id) % (entry.variants.size() + 1)
+		var cluster := cluster_at(p)
+		if not entry.variants.is_empty():
+			var v := _pick_look(entry.variants.size(), cluster, hash(node.save_id))
 			if v > 0:
 				node.model = entry.variants[v - 1]
+		if theme:
+			node.look = theme.look(cluster, hash([seed, node.save_id]))
+		if rare and node.skill in [&"woodcutting", &"mining"]:
+			node.look = rare.look(cluster, hash([seed, node.save_id]))
+			node.rare = rare
+			rare = null  # (just the one)
 		node.name = String(node.save_id)
 		node.position = to_local(ground as Vector3) - Vector3.UP * sink
 		node.rotation.y = yaw
@@ -131,6 +146,27 @@ func _ground(terrain: Terrain3D, p: Vector2) -> Variant:
 		if (p.x - t.x) * (p.x - t.x) + (p.y - t.y) * (p.y - t.y) < t.z * t.z:
 			return null
 	return at
+
+
+## The cluster world XZ `p` is in: nodes in the same CLUSTER_SIZE square share their shape family
+## and where they sit in their theme's ranges, so neighbours look like siblings.
+func cluster_at(p: Vector2) -> int:
+	var cell := Vector2i((p / CLUSTER_SIZE).floor())
+	return hash([seed, cell.x, cell.y])
+
+
+## Which look a node wears out of a model and its `variants` (0 = the model, v = variant v): one of
+## the cluster's shape family (tools/blender/make_models.py's recipe(): the model and every
+## FAMILIES-th variant after it), told apart by `salt`.
+static func _pick_look(variants: int, cluster: int, salt: int) -> int:
+	var family := cluster % FAMILIES
+	var looks: Array[int] = []
+	for v in variants + 1:
+		if v % FAMILIES == family:
+			looks.append(v)
+	if looks.is_empty():  # (fewer variants than families)
+		return salt % (variants + 1)
+	return looks[salt % looks.size()]
 
 
 func _allowed(id: int) -> bool:

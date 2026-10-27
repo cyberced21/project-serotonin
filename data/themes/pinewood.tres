@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="NodeTheme" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/node_theme.gd" id="1_theme"]
+
+[resource]
+script = ExtResource("1_theme")
+title = "Pinewood moss"
+moss = Vector2(0.4, 0.75)
+wet = Vector2(0.0, 0.2)
+hue = Vector2(-0.01, 0.015)
+value = Vector2(0.82, 0.98)
+saturation = Vector2(0.9, 1.1)
+leaf_value = Vector2(0.9, 1.0)

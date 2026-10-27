@@ -68,6 +68,18 @@ Plan and decisions: `plans/woodcutting-overhaul.md`.
 - [ ] **The notch on birch** shows less (pale cut wood on white bark); a darker cut colour for it if it reads poorly.
 - [ ] **Bucking the fallen trunk into logs** with more swings (left out of this overhaul).
 
+## Tools and levels ([plans/tool-progression.md](../plans/tool-progression.md))
+
+- [x] **Tools gate, levels are soft:** `Tools` autoload, `tool_tier` on every node, under-level penalty and XP bonus (`Skills.UNDER_*`), the spear's gate soft too.
+- [x] **Greta forges:** Forge tab, `Tools.RECIPES`, smithy-tier cap, +1 hit power per tier above a node, the Crystal Forge's streak double hit.
+- [x] **The forge moment** (`ForgeCutscene`), per-tier escalation, the first-swing shockwave; tier models, icons, sparks, rings and swing pitch.
+- [x] **Fresh start:** save version 2; older saves renamed aside (`*.pre-tools.bak`).
+- [ ] **Play it by hand.** Everything is bot-tested and screenshotted only: the gate and the under-level penalty (is the 40% floor, reached 10 levels under, too forgiving?), the recipe quantities (`Tools.RECIPES`, first guesses), and the cutscene's pacing (8.6 s; ~9.3 s real with the blows' hit-stops).
+- [ ] **Listen to the forge and tool sounds** (`tools/synth_forge.py`): flare, drone, the three blows, hiss, reveal swell, thunder, bell, beam, shockwave, and the copper / iron / crystal rings. All unheard.
+- [ ] **Greta's hammer pose** in the cutscene is the arm only (her work animation's hammer stays in her hand); a real hammer swing and the blank in her tongs would sell it more.
+- [ ] **`SaveGame.register` and freed nodes:** registering a save id whose previous owner was freed errors ("Trying to assign invalid previously freed instance", the typed `old` in `register`). Seen only in a test that reused ids; would bite a scene reload that re-registers.
+- [ ] **Levels: per-level perks and talent choices** — the next plan, [plans/levels.md](../plans/levels.md).
+
 ## Village
 
 Design notes are in [village-design.md](village-design.md).
@@ -109,6 +121,12 @@ Plans and decisions: [plans/procgen.md](../plans/procgen.md), [plans/procgen-var
 - [ ] **Walk the new pieces:** climb both ruins to their reward, wade a river and its fords, check the Lakeside Village's fisher meets the pond, see each kind's ground in person.
 - [ ] **The ring road / time trial in generated worlds:** still left out (hand-placed with baked heights).
 - [ ] **Hand-sculpting a seed:** a seed you like could be baked to `terrain_data`-style files and edited.
+- [x] **Themed nodes** ([plans/themed-nodes.md](../plans/themed-nodes.md), branch `themes`): a theme per biome kind dressing rocks, trees and scenery; shape families; rare looks.
+- [ ] **Themed nodes, playtest:** walk a few seeds and judge each theme in person (only screenshots so far: `docs/images/themes/`). Wet (Stillwater, Marsh) is the faintest; the trees' dressing is gentler than the rocks'.
+- [ ] **Themed nodes, saves:** which variant a node wears now goes by its cluster's shape family, so a half-mined rock in a procgen save made before this may come back as a different variant (its saved pieces then point at the wrong ones). Fresh seeds are fine.
+- [ ] **Themed nodes, load time:** about +0.5–0.75 s a seed (7.5 → 8.25 s windowed, ±1 s run to run); not the doubled variants. Probably the heavier node shader's first compile; check with a profiler.
+- [ ] **Themed nodes, the hand-built world:** its spawners and scenery have no theme (`NodeSpawner.theme`, `SceneryScatter.theme`); the biome scenes could each take one.
+- [ ] **Themed nodes, not done:** Old Growth trees taller or gnarlier by theme (only the background canopies grow, via `KIND_SCALE`); no trees grow on Frostpeak, so snow on crowns only shows on the rare Frost-touched one.
 - [ ] **Merge or drop:** the branch carries the wood and mining voicing and the camera fix (already on `main`); the procgen world itself only touches the debug menu, `SaveGame.use_file`, `Biome.locator` and `NodeSpawner.accept` / `SpawnEntry.variants`.
 
 ## Movement

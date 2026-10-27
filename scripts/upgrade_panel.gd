@@ -5,6 +5,9 @@ extends CanvasLayer
 ## button that's live only when you can afford it and the town hall allows it.
 ## Frees the mouse while open. Closes on E, Esc, clicking outside it, or walking away.
 ## Upgrading closes it so you can watch the building go up.
+## Greta's panel has a second tab, Forge: the next pick, axe and sickle (Tools.RECIPES), each with
+## its cost and what it opens, greyed out until the smithy's tier allows it. Forging plays the
+## forge moment (ForgeCutscene).
 
 const OPEN_SFX := preload("res://audio/pickup.tres")
 const WIDTH := 460.0
@@ -30,6 +33,12 @@ var _perks_next: Label
 var _costs: GridContainer
 var _button: Button
 var _status: Label
+var _tabs: HBoxContainer
+var _tab_upgrade: Button
+var _tab_forge: Button
+var _upgrade_box: VBoxContainer
+var _forge_box: VBoxContainer
+var _forging := false
 
 
 func _ready() -> void:
@@ -39,6 +48,7 @@ func _ready() -> void:
 	_panel.visible = false
 	Inventory.changed.connect(func(_i: StringName, _c: int) -> void: _refresh())
 	Village.tier_changed.connect(func(_id: StringName, _t: int) -> void: _refresh())
+	Tools.changed.connect(func(_t: StringName, _tier: int) -> void: _refresh())
 
 
 func is_open() -> bool:
@@ -55,6 +65,7 @@ func open(v: Villager) -> void:
 	var def := v.building.def
 	_name.text = def.villager_name
 	_line.text = "“%s”" % _pick_line()
+	_forging = false
 	_refresh()
 	_panel.visible = true
 	_panel.pivot_offset = _panel.size / 2.0
@@ -112,6 +123,15 @@ func _refresh() -> void:
 	if villager == null:
 		return
 	var def := villager.building.def
+	_tabs.visible = def.id == Tools.SMITHY
+	_forging = _forging and _tabs.visible
+	_tab_upgrade.button_pressed = not _forging
+	_tab_forge.button_pressed = _forging
+	_upgrade_box.visible = not _forging
+	_forge_box.visible = _forging
+	_panel.offset_top = -300 if _forging else -170  # (the forge list is taller: keep it on screen)
+	if _forging:
+		_refresh_forge()
 	var tier_now := Village.tier(def.id)
 	var current := def.get_tier(tier_now)
 	_role.text = "%s  ·  %s  ·  %s" % [def.villager_role, def.display_name, current.name if current else "?"]
@@ -135,23 +155,7 @@ func _refresh() -> void:
 	_perks_next.visible = not _perks_next.text.is_empty()
 	_costs.visible = true
 	_button.visible = true
-	var ids := next.cost.keys()
-	ids.sort_custom(func(a: StringName, b: StringName) -> bool: return Items.order(a) < Items.order(b))
-	for item in ids:
-		var need: int = next.cost[item]
-		var have := Inventory.count(item)
-		var icon := TextureRect.new()
-		icon.texture = Items.icon(item)
-		icon.custom_minimum_size = Vector2(ICON_SIZE, ICON_SIZE)
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.tooltip_text = Items.display_name(item)
-		_costs.add_child(icon)
-		var label := _label(20)
-		label.text = "%d / %d  %s" % [mini(have, need), need, Items.display_name(item)]
-		label.add_theme_color_override("font_color", HAVE_COLOR if have >= need else NEED_COLOR)
-		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		_costs.add_child(label)
+	_add_costs(_costs, next.cost)
 	var capped := Village.is_capped(def.id)
 	_button.disabled = not Village.can_upgrade(def.id)
 	_button.text = "Upgrade to %s" % next.name
@@ -162,6 +166,104 @@ func _refresh() -> void:
 		_status.text = "Not enough resources yet."
 	else:
 		_status.text = ""
+
+
+## One row per item in `cost`: its icon, then have / need (green once there's enough).
+func _add_costs(grid: GridContainer, cost: Dictionary) -> void:
+	for item in _sorted(cost):
+		var need: int = cost[item]
+		var have := Inventory.count(item)
+		grid.add_child(_icon(item, ICON_SIZE))
+		var label := _label(20)
+		label.text = "%d / %d  %s" % [mini(have, need), need, Items.display_name(item)]
+		label.add_theme_color_override("font_color", HAVE_COLOR if have >= need else NEED_COLOR)
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		grid.add_child(label)
+
+
+## The same on one line, compact (the Forge tab): icon, have/need, icon, have/need ...
+func _add_cost_row(row: HBoxContainer, cost: Dictionary) -> void:
+	for item in _sorted(cost):
+		var need: int = cost[item]
+		var have := Inventory.count(item)
+		row.add_child(_icon(item, 26.0))
+		var label := _label(16)
+		label.text = "%d/%d" % [mini(have, need), need]
+		label.add_theme_color_override("font_color", HAVE_COLOR if have >= need else NEED_COLOR)
+		row.add_child(label)
+
+
+func _sorted(cost: Dictionary) -> Array:
+	var ids := cost.keys()
+	ids.sort_custom(func(a: StringName, b: StringName) -> bool: return Items.order(a) < Items.order(b))
+	return ids
+
+
+func _icon(item: StringName, size: float) -> TextureRect:
+	var icon := TextureRect.new()
+	icon.texture = Items.icon(item)
+	icon.custom_minimum_size = Vector2(size, size)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.tooltip_text = Items.display_name(item)
+	return icon
+
+
+## The Forge tab: for each tiered tool, the next one Greta can make (or that you have the best).
+func _refresh_forge() -> void:
+	for c in _forge_box.get_children():
+		c.queue_free()
+	# per tool: the next one and what it opens, then its costs in a row with the Forge button
+	for tool in Tools.LADDER:
+		var t := Tools.tier(tool)
+		var recipe := Tools.next_recipe(tool)
+		var head := HBoxContainer.new()  # the tool's icon (the next one, or yours once it's the best)
+		head.add_theme_constant_override("separation", 8)
+		_forge_box.add_child(head)
+		head.add_child(_icon(StringName("tool_%s_%d" % [tool, mini(t + 1, Tools.max_tier(tool))]), 30.0))
+		var title := _label(19)
+		head.add_child(title)
+		if recipe.is_empty():
+			title.text = "%s: the finest there is" % Tools.display_name(tool, t)
+			title.add_theme_color_override("font_color", HAVE_COLOR)
+			_forge_box.add_child(HSeparator.new())
+			continue
+		title.text = "%s  ·  %s" % [Tools.display_name(tool, t + 1), recipe["opens"]]
+		title.add_theme_color_override("font_color", ACCENT)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		_forge_box.add_child(row)
+		if Tools.forge_unlocked(tool):
+			_add_cost_row(row, recipe["cost"])
+			var button := _make_button("Forge")
+			button.custom_minimum_size = Vector2(96, 34)
+			button.size_flags_horizontal = Control.SIZE_SHRINK_END | Control.SIZE_EXPAND
+			button.add_theme_font_size_override("font_size", 17)
+			button.disabled = not Tools.can_forge(tool)
+			button.tooltip_text = "Forge the %s (yours: %s)" % [Tools.display_name(tool, t + 1), Tools.display_name(tool, t)]
+			button.pressed.connect(_on_forge_pressed.bind(tool))
+			row.add_child(button)
+		else:
+			var needs := Village.get_def(Tools.SMITHY).get_tier(Tools.smithy_needed(t + 1))
+			var locked := _label(16)
+			locked.text = "Needs the %s first" % (needs.name if needs else "next smithy")
+			locked.add_theme_color_override("font_color", NEED_COLOR)
+			row.add_child(locked)
+		_forge_box.add_child(HSeparator.new())
+
+
+func _on_forge_pressed(tool: StringName) -> void:
+	if villager == null:
+		return
+	var greta := villager
+	if Tools.forge(tool):
+		close()
+		ForgeCutscene.play(greta, tool)  # Greta makes it, then hands it over
+
+
+func _show_tab(forge: bool) -> void:
+	_forging = forge
+	_refresh()
 
 
 ## The tier's perks, one per line; with `except`, only the ones that tier doesn't already give.
@@ -224,26 +326,61 @@ func _build() -> void:
 	_line.custom_minimum_size = Vector2(WIDTH - 40, 0)
 	box.add_child(_line)
 
+	_tabs = HBoxContainer.new()
+	_tabs.add_theme_constant_override("separation", 8)
+	_tab_upgrade = _make_tab("Upgrade", false)
+	_tab_forge = _make_tab("Forge", true)
+	box.add_child(_tabs)
+
+	_upgrade_box = VBoxContainer.new()
+	_upgrade_box.add_theme_constant_override("separation", 10)
+	box.add_child(_upgrade_box)
+	_forge_box = VBoxContainer.new()
+	_forge_box.add_theme_constant_override("separation", 6)
+	box.add_child(_forge_box)
+
 	_perks_now = _label(16)
 	_perks_now.add_theme_color_override("font_color", HAVE_COLOR)
-	box.add_child(_perks_now)
+	_upgrade_box.add_child(_perks_now)
 
-	box.add_child(HSeparator.new())
+	_upgrade_box.add_child(HSeparator.new())
 	_next = _label(21)
-	box.add_child(_next)
+	_upgrade_box.add_child(_next)
 	_perks_next = _label(17)
 	_perks_next.add_theme_color_override("font_color", PERK_COLOR)
-	box.add_child(_perks_next)
-	_costs = GridContainer.new()
-	_costs.columns = 2
-	_costs.add_theme_constant_override("h_separation", 12)
-	_costs.add_theme_constant_override("v_separation", 6)
-	box.add_child(_costs)
+	_upgrade_box.add_child(_perks_next)
+	_costs = _grid()
+	_upgrade_box.add_child(_costs)
 
-	_button = Button.new()
-	_button.add_theme_font_size_override("font_size", 20)
-	_button.custom_minimum_size = Vector2(0, 44)
-	_button.focus_mode = Control.FOCUS_NONE
+	_button = _make_button("")
+	_button.pressed.connect(_on_upgrade_pressed)
+	_upgrade_box.add_child(_button)
+	_status = _label(16)
+	_status.add_theme_color_override("font_color", NEED_COLOR)
+	_upgrade_box.add_child(_status)
+
+	var hint := _label(14)
+	hint.text = "E / Esc  close"
+	hint.modulate = DIM
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	box.add_child(hint)
+
+
+func _grid() -> GridContainer:
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 12)
+	grid.add_theme_constant_override("v_separation", 6)
+	return grid
+
+
+## A green action button (Upgrade, Forge), greyed out when disabled.
+func _make_button(text: String) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.add_theme_font_size_override("font_size", 20)
+	button.custom_minimum_size = Vector2(0, 44)
+	button.focus_mode = Control.FOCUS_NONE
 	var normal := StyleBoxFlat.new()
 	normal.bg_color = Color("3f7f45")
 	normal.set_corner_radius_all(6)
@@ -253,21 +390,34 @@ func _build() -> void:
 	pressed.bg_color = Color("356a3b")
 	var disabled := normal.duplicate() as StyleBoxFlat
 	disabled.bg_color = Color(0.3, 0.3, 0.3, 0.6)
-	_button.add_theme_stylebox_override("normal", normal)
-	_button.add_theme_stylebox_override("hover", hover)
-	_button.add_theme_stylebox_override("pressed", pressed)
-	_button.add_theme_stylebox_override("disabled", disabled)
-	_button.pressed.connect(_on_upgrade_pressed)
-	box.add_child(_button)
-	_status = _label(16)
-	_status.add_theme_color_override("font_color", NEED_COLOR)
-	box.add_child(_status)
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("disabled", disabled)
+	return button
 
-	var hint := _label(14)
-	hint.text = "E / Esc  close"
-	hint.modulate = DIM
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	box.add_child(hint)
+
+## A tab toggle (Upgrade / Forge) on Greta's panel: lit when it's the open one.
+func _make_tab(text: String, forge: bool) -> Button:
+	var tab := Button.new()
+	tab.text = text
+	tab.toggle_mode = true
+	tab.focus_mode = Control.FOCUS_NONE
+	tab.add_theme_font_size_override("font_size", 17)
+	tab.custom_minimum_size = Vector2(110, 34)
+	tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var off := StyleBoxFlat.new()
+	off.bg_color = Color(1, 1, 1, 0.06)
+	off.set_corner_radius_all(6)
+	var on := off.duplicate() as StyleBoxFlat
+	on.bg_color = Color("8a6142")
+	tab.add_theme_stylebox_override("normal", off)
+	tab.add_theme_stylebox_override("hover", off)
+	tab.add_theme_stylebox_override("pressed", on)
+	tab.add_theme_stylebox_override("hover_pressed", on)
+	tab.pressed.connect(_show_tab.bind(forge))
+	_tabs.add_child(tab)
+	return tab
 
 
 func _label(font_size: int) -> Label:

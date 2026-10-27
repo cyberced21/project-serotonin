@@ -10,6 +10,7 @@
 hit_layers = ExtResource("v_pickaxe_hit")
 crack_layers = ExtResource("v_crack_tip")
 split_layers = ExtResource("v_split")
+tool_tier = 2
 item = &"gold"
 max_hits = 10
 respawn_time = 60.0
