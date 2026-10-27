@@ -32,6 +32,8 @@ const RECIPES := {
 const SMITHY := &"smithy"
 
 var tiers: Dictionary[StringName, int] = {}
+## How you fish: &"spear" or &"rod" (Q swaps). Either takes any water it can reach.
+var fishing_style := &"spear"
 ## Tools just forged whose first biting hit hasn't landed yet (it gets an oversized impact).
 ## Not saved: the moment is right after the forge.
 var fresh: Dictionary[StringName, bool] = {}
@@ -111,11 +113,22 @@ func set_tier(tool: StringName, t: int) -> void:
 	changed.emit(tool, tiers[tool])
 
 
+## Q: the spear for the rod, or back.
+func swap_fishing_style() -> void:
+	fishing_style = &"rod" if fishing_style == &"spear" else &"spear"
+	SaveGame.mark_dirty()
+
+
 func to_dict() -> Dictionary:
-	return tiers.duplicate()
+	var d := {"fishing_style": String(fishing_style)}
+	for key in tiers:
+		d[key] = tiers[key]
+	return d
 
 
 func from_dict(d: Dictionary) -> void:
 	tiers.clear()
+	fishing_style = &"rod" if d.get("fishing_style", "") == "rod" else &"spear"
 	for key in d:
-		tiers[StringName(key)] = int(d[key])  # JSON stores numbers as floats
+		if key != "fishing_style":
+			tiers[StringName(key)] = int(d[key])  # JSON stores numbers as floats

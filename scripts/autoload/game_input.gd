@@ -13,6 +13,8 @@ const BINDINGS := {
 	"jump": [KEY_SPACE],
 	"sprint": [KEY_SHIFT],
 	"crouch": [KEY_CTRL, KEY_C],
+	# swap the fishing tool: spear <-> rod
+	"swap_fishing": [KEY_Q],
 	# debug builds only
 	"debug_menu": [KEY_F1],
 	"debug_skip_time": [KEY_F6],

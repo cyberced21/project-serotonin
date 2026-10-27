@@ -39,6 +39,8 @@ const LAND_DISTANCE := 2.6
 
 ## Cast range (m, along your aim), plus this every 10 Fishing levels.
 @export var cast_range := 14.0
+## The nearest water it casts to (m, flat from your feet).
+@export var min_distance := 2.0
 @export var range_per_10_levels := 1.0
 
 @export_group("Cast timing")
@@ -114,8 +116,8 @@ func clear_target() -> void:
 	aim_point = Vector3.INF
 
 
-## Called by the Player each physics frame when nothing else is targeted (and the spear can't
-## reach): water beyond the spear's reach and within cast range, in sight.
+## Called by the Player each physics frame when nothing else is targeted: water from
+## min_distance out to cast range, in sight.
 func update_target() -> void:
 	clear_target()
 	var cam: Camera3D = player.camera
@@ -123,14 +125,15 @@ func update_target() -> void:
 	var dir := -cam.global_basis.z
 	if dir.y > -0.01:
 		return
-	var spear_reach: float = player.spearfishing.reach
 	var max_range := _range()
 	for node in get_tree().get_nodes_in_group("water"):
 		var wb := node as WaterBody
 		var t := (wb.surface_height - from.y) / dir.y
-		if t <= spear_reach or t > max_range:
+		if t <= 0.0 or t > max_range:
 			continue
 		var p := from + dir * t
+		if _flat(p, player.global_position) < min_distance:
+			continue
 		if wb.depth_here(p) < 0.15:
 			continue
 		var query := PhysicsRayQueryParameters3D.create(from, p, WORLD_MASK, [player.get_rid()])

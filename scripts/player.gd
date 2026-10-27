@@ -279,6 +279,9 @@ var _stand_probe := CapsuleShape3D.new()
 
 var _target: ResourceNode
 var _talk_target: Villager
+## "Q: rod" when you aim at water only the other fishing tool takes; the swap's name, briefly.
+var _swap_hint := ""
+var _swap_shown := 0.0
 var _swinging := false
 var _cooldown := 0.0
 var _tool_rest := Vector3.ZERO
@@ -520,6 +523,11 @@ func _physics_process(delta: float) -> void:
 	_update_crouch(delta)
 
 	_cooldown -= delta
+	_swap_shown -= delta
+	if Input.is_action_just_pressed("swap_fishing") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED 			and not rodfishing.is_busy() and not _swinging:
+		Tools.swap_fishing_style()
+		_swap_shown = 1.0
+		Sfx.play(load("res://audio/fishing/jerk.tres"), 1.2, -10.0)
 	_update_target()
 	if rodfishing.is_busy():
 		pass  # the rod has the buttons (RodFishing reads them itself)
@@ -977,6 +985,7 @@ func _node_under_crosshair(hit: Dictionary) -> ResourceNode:
 
 
 func _update_target() -> void:
+	_swap_hint = ""
 	if rodfishing.is_busy():  # the rod stays in hand until the float's back (or the fish is)
 		_clear_targets()
 		_equip(&"rod")
@@ -1009,12 +1018,17 @@ func _update_target() -> void:
 		spearfishing.clear_target()
 		rodfishing.clear_target()
 	elif not _swinging:  # mid-thrust, SpearFishing re-aims on its own impact frame
+		# the fishing tool you've chosen; the other one only to hint at the swap
 		spearfishing.update_target()
-		# water beyond the spear's reach: the rod's
-		if spearfishing.can_thrust():
-			rodfishing.clear_target()
+		rodfishing.update_target()
+		if Tools.fishing_style == &"rod":
+			if not rodfishing.can_cast() and spearfishing.can_thrust():
+				_swap_hint = "Q: spear"
+			spearfishing.clear_target()
 		else:
-			rodfishing.update_target()
+			if not spearfishing.can_thrust() and rodfishing.can_cast():
+				_swap_hint = "Q: rod"
+			rodfishing.clear_target()
 
 	# bring out the right tool for whatever you're looking at
 	if not _swinging:
@@ -1040,6 +1054,12 @@ func _update_target() -> void:
 	elif fish and fish.is_under_levelled():
 		hover_label.text = "%s %d" % [Skills.display_name(&"fishing"), fish.species.required_level]
 		hover_label.modulate = UNDER_COLOR
+	elif _swap_shown > 0.0:
+		hover_label.text = "Rod" if Tools.fishing_style == &"rod" else "Spear"
+		hover_label.modulate = Color.WHITE
+	elif _swap_hint != "":
+		hover_label.text = _swap_hint
+		hover_label.modulate = Color(1, 1, 1, 0.7)
 	else:
 		hover_label.text = ""
 

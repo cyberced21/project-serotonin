@@ -72,6 +72,7 @@ func _run() -> void:
 		root.get_node("Skills").call("set_level", &"fishing", level)
 	player = get_first_node_in_group("player")
 	rod = player.get_node("RodFishing")
+	root.get_node("Tools").set("fishing_style", &"rod")
 	var lake = _lake()
 	if lake == null and procgen_seed < 0:
 		_say("no lake found")
