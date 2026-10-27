@@ -73,6 +73,10 @@ varying float v_local_y;
 // index + 1 on every vertex (0 = not a piece), and these bits say which have broken off, 24 to a
 // component (a float holds whole numbers that big exactly).
 instance uniform vec4 pieces_gone = vec4(0.0);
+// The fault (ResourceNode): a piece worked loose, centred at xyz (world) and w across; the fresh
+// breaks round it, the walls of the gap it opened, go dark, so the gap reads as a deep crack
+// rather than a pale line (w 0 = no fault).
+instance uniform vec4 fault_shadow = vec4(0.0);
 // The baked shade (tools/blender/make_models.py bake_weathering); alpha 0 on fresh cut faces.
 varying vec4 v_shade;
 
@@ -209,6 +213,10 @@ void fragment() {
 	// Squared, near enough: pow(shade, 2.2) came out NaN on some pixels, which the glow smeared
 	// into big white blobs)
 	base *= mix(v_shade.rgb * v_shade.rgb, vec3(fresh_brightness), fresh);
+	if (fault_shadow.w > 0.0) {
+		float gap = 1.0 - smoothstep(fault_shadow.w * 0.5, fault_shadow.w, distance(v_world, fault_shadow.xyz));
+		base *= mix(1.0, 0.1, fresh * gap);
+	}
 	int row = int(floor(UV.y * 8.0));
 	float ore = float(row == 1 || row == 5);  // the palette's ore and metal rows glint
 	float skin = (1.0 - fresh) * (1.0 - ore);

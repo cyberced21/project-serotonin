@@ -1327,7 +1327,7 @@ func _fit_collision() -> void:
 		var to_visual := visual.global_transform.affine_inverse()
 		for m in visual.find_children("*", "MeshInstance3D", true, false):
 			var mesh := m as MeshInstance3D
-			if not mesh.visible or mesh.mesh == null or mesh == _merged:
+			if not mesh.visible or mesh.mesh == null or mesh == _merged or mesh == _loose:
 				continue
 			var xform := to_visual * mesh.global_transform
 			for s in mesh.mesh.get_surface_count():
@@ -1549,7 +1549,7 @@ func _update_piece_mask() -> void:
 		return
 	var words := [0, 0, 0, 0]
 	for i in mini(_pieces.size(), 96):
-		if not _pieces[i].visible:
+		if not _pieces[i].visible or (_loose and _pieces[i] == _fault_piece):  # (the loose one is drawn on its own)
 			words[i / 24] |= 1 << (i % 24)
 	_merged.set_instance_shader_parameter("pieces_gone", Vector4(words[0], words[1], words[2], words[3]))
 
@@ -1645,16 +1645,25 @@ func _unsupported() -> Array[MeshInstance3D]:
 	return out
 
 
-## The fault: one spot on an ore rock where it's ready to give, a hairline crack with grit
-## trickling out of it. Find it and hit it and a whole cluster breaks out (FAULT_BREAK pieces,
-## tough ones too) with a deep crunch; then it opens up somewhere else a moment later.
+## The fault: one piece of an ore rock that has worked loose. It stands a few cm proud of the rest,
+## tipped out at the top, so a dark gap opens round it; every few seconds it settles with a tick
+## and lets a pinch of grit fall. Find it and hit it and a whole cluster breaks out (FAULT_BREAK
+## pieces, tough ones too) with a deep crunch; then another piece works loose a moment later.
 const FAULT_RADIUS := 0.35
 const FAULT_REACH := 1.1
 const FAULT_BREAK := 6
 const FAULT_DELAY := 0.8
+## How far the loose piece stands out (m, at least: a big one up to 1.8 times it), how far it tips out at the top (radians), how long it
+## takes to work loose, and how often it settles (s, between).
+const FAULT_GAP := 0.045
+const FAULT_TIP := 0.07
+const FAULT_LOOSEN := 0.7
+const FAULT_SETTLE := Vector2(2.5, 5.0)
 var _fault_piece: MeshInstance3D
 var _fault_point := Vector3.ZERO  # node space
 var _fault_marks: Array[Node] = []
+var _loose: MeshInstance3D  # the fault piece, drawn on its own where it has worked loose
+var _loose_rest := Transform3D.IDENTITY  # ... and where that is (chunks space)
 
 
 func _place_fault() -> void:
@@ -1679,17 +1688,103 @@ func _place_fault() -> void:
 	var spot: Array = spots.pick_random()
 	_fault_piece = spot[0]
 	_fault_point = spot[1]
-	var n: Vector3 = spot[2]
-	var side := n.cross(Vector3.UP)
-	side = (side if side.length() > 0.1 else Vector3.RIGHT).normalized().rotated(n, randf_range(-0.7, 0.7))
-	var crack := _crack_decal(_fault_point - side * 0.3, _fault_point + side * 0.3, n, 0.3)
-	if crack:
-		_fault_marks.append(crack)
-	var dust := _tip_dust(_fault_point, n)
-	dust.amount = 16
-	dust.lifetime = 1.2
-	dust.scale_amount_max = 0.7
-	_fault_marks.append(dust)
+	_work_loose(_fault_piece)
+
+
+## The fault piece works loose: drawn on its own (hidden in the merged mesh), it eases out along
+## its outside a few cm and tips out at the top, opening a shadowed gap round its outline.
+func _work_loose(piece: MeshInstance3D) -> void:
+	if _merged == null:
+		return
+	var tris := _piece_tris(piece)
+	var normals: PackedVector3Array = tris[1]
+	var out := Vector3.ZERO
+	for n in normals:
+		out += n
+	out = piece.transform.basis * out
+	out = (out if out.length() > 0.01 else piece.position - _shape_centre).normalized()
+	out = (out * Vector3(1.0, 0.3, 1.0)).normalized()  # (out from the rock, not up: it would float)
+	_loose = piece.duplicate() as MeshInstance3D
+	_loose.name = "Loose"
+	_loose.layers = _merged.layers
+	_loose.visibility_range_end = _merged.visibility_range_end
+	_loose.visibility_range_end_margin = _merged.visibility_range_end_margin
+	_loose.visibility_range_fade_mode = _merged.visibility_range_fade_mode
+	for p in ["flash", "highlight"]:
+		_loose.set_instance_shader_parameter(p, 0.0)
+	visual.add_child(_loose)  # (not among the Chunks: everything that walks the pieces would meet it)
+	_loose.transform = chunks.transform * piece.transform
+	_dress(_loose)
+	_surfaces.append(_loose)
+	_update_piece_mask()
+	# the walls of the gap in shadow (node_surface.gdshaderinc), on the rock and the piece alike
+	var across := piece.get_aabb().get_longest_axis_size()
+	var shadow := Vector4(0, 0, 0, across * 0.85)
+	var centre := chunks.global_transform * piece.position
+	shadow.x = centre.x
+	shadow.y = centre.y
+	shadow.z = centre.z
+	for g in [_merged, _loose]:
+		g.set_instance_shader_parameter("fault_shadow", shadow)
+	# out (further for a bigger piece), and tipped about its foot: a horizontal axis along the
+	# rock's face, under the piece
+	var axis := out.cross(Vector3.UP).normalized()
+	var foot := piece.position - Vector3.UP * piece.get_aabb().size.y * 0.4
+	var tip := Transform3D(Basis(axis, -FAULT_TIP), foot) * Transform3D(Basis.IDENTITY, -foot)
+	var gap := clampf(across * 0.08, FAULT_GAP, FAULT_GAP * 1.8)
+	_loose_rest = chunks.transform * Transform3D(Basis.IDENTITY, out * gap) * tip * piece.transform
+	var loose := _loose
+	var start := loose.transform
+	var rest := _loose_rest
+	var ease := loose.create_tween()
+	ease.tween_method(func(t: float) -> void: loose.transform = start.interpolate_with(rest, t),
+		0.0, 1.0, FAULT_LOOSEN).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	ease.tween_callback(_fault_grit.bind(8))
+	_settle_later(loose)
+
+
+## Every so often the loose piece settles: a tiny drop and shiver, and a pinch of grit falls.
+func _settle_later(loose: MeshInstance3D) -> void:
+	var rest := _loose_rest
+	var t := loose.create_tween()  # (all of them go with the piece)
+	t.tween_interval(randf_range(FAULT_SETTLE.x, FAULT_SETTLE.y))
+	t.tween_callback(func() -> void:
+		if loose != _loose:
+			return  # (cleared in the meantime: it's on its way out)
+		var jolt := loose.create_tween()
+		var down := Transform3D(Basis.IDENTITY, Vector3(randf_range(-1, 1) * 0.004, -0.006, randf_range(-1, 1) * 0.004)) * rest
+		jolt.tween_property(loose, "transform", down, 0.05)
+		jolt.tween_property(loose, "transform", rest, 0.25).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+		_fault_grit(randi_range(3, 6))
+		_settle_later(loose))
+
+
+## A pinch of the rock's grit falling out of the gap under the loose piece.
+func _fault_grit(count: int) -> void:
+	if _loose == null:
+		return
+	var grit := chips.duplicate() as CPUParticles3D
+	grit.one_shot = true
+	grit.explosiveness = 0.5
+	grit.amount = count
+	grit.lifetime = 1.0
+	grit.direction = Vector3.DOWN
+	grit.spread = 35.0
+	grit.initial_velocity_min = 0.1
+	grit.initial_velocity_max = 0.5
+	grit.scale_amount_min = 0.2
+	grit.scale_amount_max = 0.45
+	grit.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	grit.emission_sphere_radius = 0.06
+	grit.color = chip_color.lightened(0.1)
+	notches.add_child(grit)
+	var under := _fault_point - Vector3.UP * 0.12
+	grit.transform = Transform3D(Basis.IDENTITY, under)
+	grit.emitting = true
+	_fault_marks.append(grit)
+	grit.finished.connect(func() -> void:
+		_fault_marks.erase(grit)
+		grit.queue_free())
 
 
 func _clear_fault() -> void:
@@ -1697,7 +1792,14 @@ func _clear_fault() -> void:
 		if is_instance_valid(m):
 			m.queue_free()
 	_fault_marks.clear()
+	if _loose:
+		_surfaces.erase(_loose)
+		_loose.queue_free()
+		_loose = null
+	if _merged:
+		_merged.set_instance_shader_parameter("fault_shadow", Vector4.ZERO)
 	_fault_piece = null
+	_update_piece_mask()
 
 
 func _fault_feedback(info: HitInfo) -> void:

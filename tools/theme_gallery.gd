@@ -15,6 +15,7 @@ extends SceneTree
 ##                  shape family: 0 4 8 | 1 5 | 2 6 | 3 7
 ##   --hit=N        strike every node N times first, to show the fresh insides against the dressing
 ##   --tier=N       the pickaxe's and axe's tier (default 3, the best: everything breaks fast)
+##   --fault=M      a close-up of the first node's fault from M metres out (an ore rock's)
 ##   --settle=S     seconds between the last hit and the shot (default 2.5; a felled tree is gone by 5)
 ##   --label=NAME   file name under docs/images/themes/ (default "gallery")
 ## The game is played on a throwaway save, so the real one is never touched.
@@ -31,6 +32,7 @@ const LOOK_ORDER: Array[int] = [0, 4, 8, 1, 5, 2, 6, 3, 7]
 var label := "gallery"
 var settle := 2.5
 var tier := 3
+var fault_view := 0.0
 
 
 func _initialize() -> void:
@@ -48,6 +50,7 @@ func _initialize() -> void:
 			"label": label = v
 			"settle": settle = v.to_float()
 			"tier": tier = v.to_int()
+			"fault": fault_view = v.to_float()
 	if looks:
 		copies = LOOK_ORDER.size()
 	if themes.is_empty():
@@ -121,6 +124,12 @@ func _run() -> void:
 	var tilt := deg_to_rad(view)
 	cam.global_position = centre + Vector3(0, sin(tilt) * back + 0.8, depth * 0.5 + cos(tilt) * back)
 	cam.look_at(centre + Vector3(0, 0.6, depth * 0.1))
+	if fault_view > 0.0 and not made.is_empty():  # close on the first node's fault instead
+		var node := made[0]
+		var at := node.to_global(node.get("_fault_point"))
+		var out := (at - node.to_global(node.get("_shape_centre"))) * Vector3(1, 0, 1)
+		cam.global_position = at + out.normalized() * fault_view + Vector3.UP * fault_view * 0.35
+		cam.look_at(at)
 	cam.current = true
 	await _wait(settle)
 	await _shot("res://docs/images/themes/%s.png" % label)
