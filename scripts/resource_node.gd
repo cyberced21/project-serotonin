@@ -21,6 +21,8 @@ const NODE_PALETTE := preload("res://materials/node_palette.tres")
 ## Object-name prefixes in a model (.glb) and where those meshes go.
 const MODEL_PARTS := {"body_": "Visual/Body", "chunk_": "Visual/Chunks", "rubble_": "Rubble"}
 const NOTCH_COLOR := Color(0.08, 0.06, 0.05, 0.85)
+## How far up a tree's trunk the soil and moss at its foot reach (m; see _dress).
+const TRUNK_FOOT := 0.45
 const GHOST_OUTLINE := preload("res://shaders/ghost_outline.gdshader")
 const GHOST_MASK := preload("res://shaders/ghost_mask.gdshader")
 const GHOST_OUTLINE_STENCIL := preload("res://shaders/ghost_outline_stencil.gdshader")
@@ -2613,6 +2615,9 @@ func _collect_surfaces(n: Node) -> void:
 ## Dresses every mesh under `n` with this node's theme (the pieces and parts that fly off or fall
 ## keep it: they're the same meshes, or copies of them).
 func _dress(n: Node) -> void:
+	if carve_notch:  # a tree: soil and moss up the foot of its trunk (node_surface.gdshaderinc)
+		for g in ([n] if n is MeshInstance3D else []) + n.find_children("*", "MeshInstance3D", true, false):
+			(g as MeshInstance3D).set_instance_shader_parameter("foot", TRUNK_FOOT)
 	if look.is_empty():
 		return
 	if n is MeshInstance3D:

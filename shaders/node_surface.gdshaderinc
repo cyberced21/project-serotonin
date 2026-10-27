@@ -51,9 +51,22 @@ instance uniform vec4 theme_c = vec4(0.0, 1.0, 1.0, 0.0);
 uniform vec3 moss_color : source_color = vec3(0.2, 0.32, 0.1);
 uniform vec3 snow_color : source_color = vec3(0.9, 0.94, 1.0);
 uniform vec3 dust_color : source_color = vec3(0.8, 0.74, 0.64);
+#ifdef ROCK
+// A rock's weathered skin pulled toward the ground's range, as the terrain's own rock is: the
+// darkest stone lifted (linear) and the colour greyed a little, so it sits in the grass instead
+// of standing out of it like a cut-out. Ore and fresh breaks stay as made.
+uniform float skin_lift = 0.02;
+uniform float skin_grey = 0.2;
+#endif
 varying vec3 v_world;         // world position and normal, for the dressing
 varying vec3 v_world_normal;
 varying float v_rise;         // height above the node's origin (m)
+// Metres of damp soil and moss up a trunk's foot (set by ResourceNode on its trees; 0 = none), so
+// it grows out of the ground instead of standing on it. By the mesh's own height, so the stump
+// keeps it and the felled log doesn't. (Rocks have theirs baked: bake_weathering's soil.)
+instance uniform float foot = 0.0;
+uniform vec3 soil_color : source_color = vec3(0.36, 0.29, 0.2);
+varying float v_local_y;
 
 #ifdef ROCK
 // A rock of many pieces is drawn as one mesh (ResourceNode merges them): UV2.x is the piece's
@@ -72,6 +85,7 @@ bool piece_gone(int i) {
 
 void vertex() {
 	DETAIL_CAPTURE
+	v_local_y = VERTEX.y;
 #ifdef ROCK
 	v_shade = COLOR;
 	int piece = int(UV2.x + 0.5) - 1;
@@ -196,6 +210,8 @@ void fragment() {
 	base *= mix(v_shade.rgb * v_shade.rgb, vec3(fresh_brightness), fresh);
 	int row = int(floor(UV.y * 8.0));
 	float ore = float(row == 1 || row == 5);  // the palette's ore and metal rows glint
+	float skin = (1.0 - fresh) * (1.0 - ore);
+	base = mix(base, mix(base, vec3(dot(base, vec3(0.299, 0.587, 0.114))), skin_grey) + skin_lift, skin);
 	float wet;
 	base = theme_dress(base, (1.0 - fresh) * (1.0 - ore), 0.0, wet);  // the skin, never the ore or a break
 	base *= mix(1.0, theme_b.w, ore);
@@ -207,6 +223,12 @@ void fragment() {
 	// notch and the end grain use, see TrunkCarve) stays as made
 	int row = int(floor(UV.y * 8.0));
 	float cut_wood = float(row == 2 && UV.x >= 0.625);
+	if (foot > 0.0) {  // a ragged line of soil, going over to moss here and there
+		float n = theme_noise(v_world * 3.0);
+		float band = 1.0 - smoothstep(0.0, 1.0, v_local_y / foot + (n - 0.5) * 0.8);
+		vec3 grime = mix(soil_color, moss_color, smoothstep(0.35, 0.75, theme_noise(v_world * 1.7 + 3.0)));
+		base = mix(base, grime * (0.8 + 0.4 * n), band * 0.7 * (1.0 - cut_wood));
+	}
 	float wet;
 	base = theme_dress(base, 1.0 - cut_wood, float(row == 3), wet);
 	ROUGHNESS = mix(1.0, 0.5, wet);

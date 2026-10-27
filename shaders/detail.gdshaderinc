@@ -17,6 +17,10 @@ uniform float detail_strength = 1.0;
 
 // stone, ore, wood, leaves, terrain, metal, accent, neutral
 const float DETAIL_ROW_STRENGTH[8] = float[](0.55, 0.45, 0.6, 0.55, 0.45, 0.35, 0.3, 0.25);
+// As the terrain's texture does (terrain.gdshader shadow_tint): the darker texels lean cool and
+// the lighter ones warm, by this much per unit of brightness change, so models are coloured the
+// way the ground round them is.
+const vec3 DETAIL_TILT = vec3(0.32, 0.06, -0.38);
 
 varying vec3 v_detail_pos;
 varying vec3 v_detail_nrm;
@@ -36,12 +40,13 @@ float detail_sample(float layer, vec3 pos, vec3 nrm) {
 }
 
 // Multiplier for a fixed slice (0..7).
-float detail_factor_layer(int layer, vec3 pos, vec3 nrm) {
+vec3 detail_factor_layer(int layer, vec3 pos, vec3 nrm) {
 	float d = detail_sample(float(layer), pos, nrm);
-	return 1.0 + (d - 0.5) * 2.0 * DETAIL_ROW_STRENGTH[layer] * detail_strength;
+	float f = 1.0 + (d - 0.5) * 2.0 * DETAIL_ROW_STRENGTH[layer] * detail_strength;
+	return vec3(f) + (f - 1.0) * DETAIL_TILT;
 }
 
 // Multiplier for a palette face: the palette row its UV sits in picks the slice.
-float detail_factor(vec2 uv, vec3 pos, vec3 nrm) {
+vec3 detail_factor(vec2 uv, vec3 pos, vec3 nrm) {
 	return detail_factor_layer(clamp(int(floor(uv.y * 8.0)), 0, 7), pos, nrm);
 }

@@ -3,147 +3,146 @@
   "Chunk_00": [
    "Chunk_01",
    "Chunk_05",
-   "Chunk_08",
-   "Chunk_11",
+   "Chunk_06",
+   "Chunk_09",
    "Chunk_12",
-   "Chunk_15",
-   "Chunk_18",
+   "Chunk_16",
+   "Chunk_19",
    "Chunk_22"
   ],
   "Chunk_01": [
    "Chunk_00",
    "Chunk_02",
-   "Chunk_05",
    "Chunk_06",
-   "Chunk_08",
+   "Chunk_07",
    "Chunk_09",
+   "Chunk_10",
    "Chunk_12",
    "Chunk_13",
-   "Chunk_15",
    "Chunk_16",
-   "Chunk_18",
+   "Chunk_17",
    "Chunk_19",
+   "Chunk_20",
    "Chunk_22",
    "Chunk_23"
   ],
   "Chunk_02": [
    "Chunk_01",
    "Chunk_03",
-   "Chunk_06",
    "Chunk_07",
-   "Chunk_09",
+   "Chunk_08",
    "Chunk_10",
+   "Chunk_11",
    "Chunk_13",
    "Chunk_14",
-   "Chunk_16",
    "Chunk_17",
-   "Chunk_19",
+   "Chunk_18",
    "Chunk_20",
+   "Chunk_21",
    "Chunk_23",
    "Chunk_24"
   ],
   "Chunk_03": [
    "Chunk_02",
    "Chunk_04",
-   "Chunk_07",
-   "Chunk_10",
+   "Chunk_08",
+   "Chunk_11",
    "Chunk_14",
-   "Chunk_17",
-   "Chunk_20",
+   "Chunk_15",
+   "Chunk_18",
    "Chunk_21",
    "Chunk_24"
   ],
   "Chunk_04": [
    "Chunk_03",
-   "Chunk_21"
+   "Chunk_15"
   ],
   "Chunk_05": [
    "Chunk_00",
-   "Chunk_01",
    "Chunk_06",
-   "Chunk_08",
    "Chunk_09",
+   "Chunk_22",
+   "Chunk_25",
+   "Chunk_33"
+  ],
+  "Chunk_06": [
+   "Chunk_00",
+   "Chunk_01",
+   "Chunk_05",
+   "Chunk_07",
+   "Chunk_09",
+   "Chunk_10",
    "Chunk_22",
    "Chunk_23",
    "Chunk_25",
    "Chunk_26",
    "Chunk_33",
-   "Chunk_34"
-  ],
-  "Chunk_06": [
-   "Chunk_01",
-   "Chunk_02",
-   "Chunk_05",
-   "Chunk_07",
-   "Chunk_09",
-   "Chunk_23",
-   "Chunk_26",
-   "Chunk_34"
+   "Chunk_34",
+   "Chunk_35"
   ],
   "Chunk_07": [
+   "Chunk_01",
    "Chunk_02",
-   "Chunk_03",
    "Chunk_06",
-   "Chunk_09",
+   "Chunk_08",
    "Chunk_10",
+   "Chunk_11",
    "Chunk_23",
    "Chunk_24",
-   "Chunk_34"
+   "Chunk_26",
+   "Chunk_35"
   ],
   "Chunk_08": [
-   "Chunk_00",
-   "Chunk_01",
-   "Chunk_05",
-   "Chunk_09",
-   "Chunk_11",
-   "Chunk_12",
-   "Chunk_25",
-   "Chunk_26",
-   "Chunk_27",
-   "Chunk_28"
-  ],
-  "Chunk_09": [
-   "Chunk_01",
-   "Chunk_02",
-   "Chunk_05",
-   "Chunk_06",
-   "Chunk_07",
-   "Chunk_08",
-   "Chunk_10",
-   "Chunk_12",
-   "Chunk_13",
-   "Chunk_26",
-   "Chunk_28"
-  ],
-  "Chunk_10": [
    "Chunk_02",
    "Chunk_03",
    "Chunk_07",
-   "Chunk_09",
+   "Chunk_11",
+   "Chunk_24",
+   "Chunk_35"
+  ],
+  "Chunk_09": [
+   "Chunk_00",
+   "Chunk_01",
+   "Chunk_05",
+   "Chunk_06",
+   "Chunk_10",
+   "Chunk_12",
    "Chunk_13",
-   "Chunk_14"
+   "Chunk_25",
+   "Chunk_26",
+   "Chunk_27"
+  ],
+  "Chunk_10": [
+   "Chunk_01",
+   "Chunk_02",
+   "Chunk_06",
+   "Chunk_07",
+   "Chunk_09",
+   "Chunk_11",
+   "Chunk_13",
+   "Chunk_14",
+   "Chunk_26",
+   "Chunk_27",
+   "Chunk_28"
   ],
   "Chunk_11": [
-   "Chunk_00",
+   "Chunk_02",
+   "Chunk_03",
+   "Chunk_07",
    "Chunk_08",
-   "Chunk_12",
-   "Chunk_15",
-   "Chunk_27",
-   "Chunk_29"
+   "Chunk_10",
+   "Chunk_14",
+   "Chunk_15"
   ],
   "Chunk_12": [
    "Chunk_00",
    "Chunk_01",
-   "Chunk_08",
    "Chunk_09",
-   "Chunk_11",
    "Chunk_13",
-   "Chunk_15",
    "Chunk_16",
+   "Chunk_17",
    "Chunk_27",
-   "Chunk_28",
-   "Chunk_29",
-   "Chunk_30"
+   "Chunk_29"
   ],
   "Chunk_13": [
    "Chunk_01",
@@ -152,209 +151,226 @@
    "Chunk_10",
    "Chunk_12",
    "Chunk_14",
-   "Chunk_16",
    "Chunk_17",
+   "Chunk_18",
+   "Chunk_27",
+   "Chunk_28",
+   "Chunk_29",
    "Chunk_30"
   ],
   "Chunk_14": [
    "Chunk_02",
    "Chunk_03",
    "Chunk_10",
-   "Chunk_13",
-   "Chunk_17"
-  ],
-  "Chunk_15": [
-   "Chunk_00",
-   "Chunk_01",
    "Chunk_11",
-   "Chunk_12",
-   "Chunk_16",
-   "Chunk_18",
-   "Chunk_19",
-   "Chunk_29",
-   "Chunk_30",
-   "Chunk_31"
-  ],
-  "Chunk_16": [
-   "Chunk_01",
-   "Chunk_02",
-   "Chunk_12",
    "Chunk_13",
    "Chunk_15",
+   "Chunk_18",
+   "Chunk_28",
+   "Chunk_30"
+  ],
+  "Chunk_15": [
+   "Chunk_03",
+   "Chunk_04",
+   "Chunk_11",
+   "Chunk_14"
+  ],
+  "Chunk_16": [
+   "Chunk_00",
+   "Chunk_01",
+   "Chunk_12",
    "Chunk_17",
    "Chunk_19",
-   "Chunk_20",
-   "Chunk_30",
+   "Chunk_29",
    "Chunk_31",
    "Chunk_32"
   ],
   "Chunk_17": [
+   "Chunk_01",
+   "Chunk_02",
+   "Chunk_12",
+   "Chunk_13",
+   "Chunk_16",
+   "Chunk_18",
+   "Chunk_19",
+   "Chunk_20",
+   "Chunk_29",
+   "Chunk_30",
+   "Chunk_32"
+  ],
+  "Chunk_18": [
    "Chunk_02",
    "Chunk_03",
    "Chunk_13",
    "Chunk_14",
-   "Chunk_16",
+   "Chunk_17",
    "Chunk_20",
    "Chunk_21",
-   "Chunk_32"
-  ],
-  "Chunk_18": [
-   "Chunk_00",
-   "Chunk_01",
-   "Chunk_15",
-   "Chunk_19",
-   "Chunk_22",
-   "Chunk_31"
+   "Chunk_30"
   ],
   "Chunk_19": [
+   "Chunk_00",
    "Chunk_01",
-   "Chunk_02",
-   "Chunk_15",
    "Chunk_16",
-   "Chunk_18",
+   "Chunk_17",
    "Chunk_20",
    "Chunk_22",
-   "Chunk_23",
    "Chunk_31",
-   "Chunk_32"
+   "Chunk_32",
+   "Chunk_33",
+   "Chunk_34"
   ],
   "Chunk_20": [
+   "Chunk_01",
    "Chunk_02",
-   "Chunk_03",
-   "Chunk_16",
    "Chunk_17",
+   "Chunk_18",
    "Chunk_19",
    "Chunk_21",
+   "Chunk_22",
    "Chunk_23",
    "Chunk_24",
-   "Chunk_32"
+   "Chunk_32",
+   "Chunk_34",
+   "Chunk_35"
   ],
   "Chunk_21": [
+   "Chunk_02",
    "Chunk_03",
-   "Chunk_04",
-   "Chunk_17",
-   "Chunk_20"
+   "Chunk_18",
+   "Chunk_20",
+   "Chunk_24",
+   "Chunk_35"
   ],
   "Chunk_22": [
    "Chunk_00",
    "Chunk_01",
    "Chunk_05",
-   "Chunk_18",
+   "Chunk_06",
    "Chunk_19",
+   "Chunk_20",
    "Chunk_23",
-   "Chunk_31",
-   "Chunk_33"
+   "Chunk_33",
+   "Chunk_34"
   ],
   "Chunk_23": [
    "Chunk_01",
    "Chunk_02",
-   "Chunk_05",
    "Chunk_06",
    "Chunk_07",
-   "Chunk_19",
    "Chunk_20",
    "Chunk_22",
    "Chunk_24",
-   "Chunk_31",
-   "Chunk_32",
-   "Chunk_33",
-   "Chunk_34"
+   "Chunk_34",
+   "Chunk_35"
   ],
   "Chunk_24": [
    "Chunk_02",
    "Chunk_03",
    "Chunk_07",
+   "Chunk_08",
    "Chunk_20",
+   "Chunk_21",
    "Chunk_23",
-   "Chunk_32",
-   "Chunk_34"
+   "Chunk_35"
   ],
   "Chunk_25": [
    "Chunk_05",
-   "Chunk_08",
-   "Chunk_26",
-   "Chunk_33"
-  ],
-  "Chunk_26": [
-   "Chunk_05",
    "Chunk_06",
-   "Chunk_08",
    "Chunk_09",
-   "Chunk_25",
+   "Chunk_26",
    "Chunk_33",
    "Chunk_34"
   ],
-  "Chunk_27": [
-   "Chunk_08",
-   "Chunk_11",
-   "Chunk_12",
-   "Chunk_28",
-   "Chunk_29",
-   "Chunk_30"
-  ],
-  "Chunk_28": [
-   "Chunk_08",
+  "Chunk_26": [
+   "Chunk_06",
+   "Chunk_07",
    "Chunk_09",
-   "Chunk_12",
-   "Chunk_27",
-   "Chunk_30"
+   "Chunk_10",
+   "Chunk_25",
+   "Chunk_34",
+   "Chunk_35"
   ],
-  "Chunk_29": [
-   "Chunk_11",
-   "Chunk_12",
-   "Chunk_15",
-   "Chunk_27",
-   "Chunk_30"
-  ],
-  "Chunk_30": [
+  "Chunk_27": [
+   "Chunk_09",
+   "Chunk_10",
    "Chunk_12",
    "Chunk_13",
-   "Chunk_15",
-   "Chunk_16",
-   "Chunk_27",
    "Chunk_28",
    "Chunk_29"
   ],
-  "Chunk_31": [
-   "Chunk_15",
+  "Chunk_28": [
+   "Chunk_10",
+   "Chunk_13",
+   "Chunk_14",
+   "Chunk_27",
+   "Chunk_29",
+   "Chunk_30"
+  ],
+  "Chunk_29": [
+   "Chunk_12",
+   "Chunk_13",
    "Chunk_16",
+   "Chunk_17",
+   "Chunk_27",
+   "Chunk_28",
+   "Chunk_30",
+   "Chunk_31",
+   "Chunk_32"
+  ],
+  "Chunk_30": [
+   "Chunk_13",
+   "Chunk_14",
+   "Chunk_17",
    "Chunk_18",
+   "Chunk_28",
+   "Chunk_29",
+   "Chunk_32"
+  ],
+  "Chunk_31": [
+   "Chunk_16",
    "Chunk_19",
-   "Chunk_22",
-   "Chunk_23",
-   "Chunk_32",
-   "Chunk_33",
-   "Chunk_34"
+   "Chunk_29",
+   "Chunk_32"
   ],
   "Chunk_32": [
    "Chunk_16",
    "Chunk_17",
    "Chunk_19",
    "Chunk_20",
-   "Chunk_23",
-   "Chunk_24",
-   "Chunk_31",
-   "Chunk_34"
+   "Chunk_29",
+   "Chunk_30",
+   "Chunk_31"
   ],
   "Chunk_33": [
    "Chunk_05",
+   "Chunk_06",
+   "Chunk_19",
+   "Chunk_22",
+   "Chunk_25",
+   "Chunk_34"
+  ],
+  "Chunk_34": [
+   "Chunk_06",
+   "Chunk_19",
+   "Chunk_20",
    "Chunk_22",
    "Chunk_23",
    "Chunk_25",
    "Chunk_26",
-   "Chunk_31",
-   "Chunk_34"
+   "Chunk_33",
+   "Chunk_35"
   ],
-  "Chunk_34": [
-   "Chunk_05",
+  "Chunk_35": [
    "Chunk_06",
    "Chunk_07",
+   "Chunk_08",
+   "Chunk_20",
+   "Chunk_21",
    "Chunk_23",
    "Chunk_24",
    "Chunk_26",
-   "Chunk_31",
-   "Chunk_32",
-   "Chunk_33"
+   "Chunk_34"
   ]
  },
  "ore": [
@@ -392,7 +408,8 @@
   "Chunk_31",
   "Chunk_32",
   "Chunk_33",
-  "Chunk_34"
+  "Chunk_34",
+  "Chunk_35"
  ],
  "support": "below",
  "knock": 0,

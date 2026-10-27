@@ -27,17 +27,17 @@ const BARLEY := preload("res://scenes/barley_sheaf.tscn")
 
 ## Per biome and tier (0 hub, 1 inner ring, 2 outer ring): how many nodes, and [scene, weight] pairs.
 const NODES := {
-	&"clearing": {0: {"count": 12, "spacing": 5.0, "entries": [[TREE, 3.0], [ROCK, 2.0]]}},
+	&"clearing": {0: {"count": 12, "spacing": 6.0, "entries": [[TREE, 3.0], [ROCK, 2.0]]}},
 	&"pinewood": {
 		1: {"count": 22, "spacing": 4.5, "entries": [[BIRCH, 3.0], [TREE, 1.5], [PINE, 0.3]]},
 		2: {"count": 26, "spacing": 4.5, "entries": [[PINE, 3.0], [BIRCH, 1.0]]},
 	},
 	&"goldmeadow": {1: {"count": 24, "spacing": 4.0, "entries": [[WHEAT, 3.0], [BARLEY, 1.5], [OAK, 1.2]]}},
-	&"stillwater": {2: {"count": 12, "spacing": 5.0, "entries": [[OAK, 2.0], [TREE, 1.0], [IRON, 1.0]]}},
+	&"stillwater": {2: {"count": 12, "spacing": 7.0, "entries": [[OAK, 2.0], [TREE, 1.0], [IRON, 1.0]]}},
 	&"frostpeak": {2: {"count": 14, "spacing": 5.5, "entries": [[COAL, 2.0], [GOLD, 1.5], [IRON, 1.0]],
 			"min_normal_y": 0.8}},
 	&"quarry": {2: {"count": 6, "spacing": 5.0, "entries": [[ROCK, 2.0], [IRON, 1.0]]}},  # the apron
-	&"hearthvale": {1: {"count": 9, "spacing": 5.0, "entries": [[TREE, 2.0], [OAK, 1.5], [ROCK, 1.0]]}},  # round the flat
+	&"hearthvale": {1: {"count": 9, "spacing": 6.5, "entries": [[TREE, 2.0], [OAK, 1.5], [ROCK, 1.0]]}},  # round the flat
 }
 ## How a biome's kind changes its nodes: weights multiplied per scene, and "count" the number.
 const KIND_NODES := {
@@ -274,11 +274,11 @@ static func _scenery(map: ProcgenMap, i: int, box: Rect2) -> SceneryScatter:
 		_layer("scenery/boulder_flat", 0.1, [d], {"scale_range": Vector2(0.7, 1.5), "min_normal_y": 0.5,
 				"align_to_slope": true, "collide": true, "clearance": 1.5}),
 		# forest floor, as in the Pinewood
-		_layer("scenery/canopy_pine", 2.0, [forest], {"scale_range": Vector2(0.85, 1.35), "min_normal_y": 0.75,
+		_layer("scenery/canopy_pine", 2.0, [forest], {"scale_range": Vector2(1.45, 2.2), "min_normal_y": 0.75,
 				"sway": 0.05, "collide": true, "collision_size": Vector3(0.5, 4, 0.5), "clearance": 1.0}),
-		_layer("scenery/canopy_pine_young", 0.9, [forest], {"scale_range": Vector2(0.8, 1.25), "min_normal_y": 0.75,
+		_layer("scenery/canopy_pine_young", 0.9, [forest], {"scale_range": Vector2(1.2, 1.8), "min_normal_y": 0.75,
 				"sway": 0.08, "collide": true, "collision_size": Vector3(0.35, 2.5, 0.35), "clearance": 0.8}),
-		_layer("scenery/canopy_birch", 0.4, [forest], {"scale_range": Vector2(0.85, 1.2), "min_normal_y": 0.75,
+		_layer("scenery/canopy_birch", 0.4, [forest], {"scale_range": Vector2(1.45, 2.0), "min_normal_y": 0.75,
 				"sway": 0.08, "collide": true, "collision_size": Vector3(0.3, 4, 0.3), "clearance": 1.0}),
 		_layer("scenery/fern", 2.5, [forest], {"scale_range": Vector2(0.7, 1.4), "cluster": Vector2i(2, 5),
 				"cluster_radius": 1.6, "min_normal_y": 0.75, "sway": 0.4, "cast_shadow": false, "visible_distance": 60.0}),
