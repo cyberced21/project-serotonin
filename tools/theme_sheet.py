@@ -5,7 +5,10 @@ close) and tiles the shots into one labelled image, docs/images/themes/<label>.p
     python tools/theme_sheet.py ... --themes plain,pinewood,frostpeak --copies 2 --hit 2
     python tools/theme_sheet.py ... --nodes rock,iron_rock --themes plain --looks --per-node
 
---looks shows each node in all its baked looks, grouped by shape family; --per-node gives each
+    python tools/theme_sheet.py ... --tour 7 --label tour_7
+
+--tour runs tools/theme_tour.gd on a procgen seed instead: a shot of each biome's busiest
+cluster of nodes, tiled. --looks shows each node in all its baked looks, grouped by shape family; --per-node gives each
 node its own tile instead of each theme (with one theme).
 
 Themes default to "plain" and every data/themes/*.tres. The single shots are deleted once tiled.
@@ -31,6 +34,7 @@ ap.add_argument("--label", default="sheet")
 ap.add_argument("--columns", type=int, default=3)
 ap.add_argument("--looks", action="store_true")
 ap.add_argument("--per-node", action="store_true")
+ap.add_argument("--tour", type=int, default=0)
 args = ap.parse_args()
 
 themes = args.themes.split(",") if args.themes else ["plain"] + sorted(
@@ -38,11 +42,18 @@ themes = args.themes.split(",") if args.themes else ["plain"] + sorted(
 shots = os.path.join(ROOT, "docs", "images", "themes", args.label)
 os.makedirs(shots, exist_ok=True)
 tiles = []
+if args.tour:
+    subprocess.run([args.godot, "--path", ROOT, "--screen", "1", "--resolution", "1280x720",
+                    "-s", "res://tools/theme_tour.gd", "--", "--procgen", f"--seed={args.tour}",
+                    f"--label={args.label}"],
+                   check=True, timeout=400, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    for f in sorted(os.listdir(shots)):
+        tiles.append((f[3:-4], Image.open(os.path.join(shots, f)).convert("RGB")))
 if args.per_node:  # (title, nodes, theme) per tile
     runs = [(n, n, themes[0]) for n in args.nodes.split(",")]
 else:
     runs = [(t, args.nodes, t) for t in themes]
-for title, nodes, theme in runs:
+for title, nodes, theme in [] if args.tour else runs:
     name = f"{args.label}/{title}"
     subprocess.run([args.godot, "--path", ROOT, "--screen", "1", "--resolution", "1280x720",
                     "-s", "res://tools/theme_gallery.gd", "--", f"--nodes={nodes}",

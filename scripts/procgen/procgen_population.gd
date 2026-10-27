@@ -226,6 +226,7 @@ static func _scenery(map: ProcgenMap, i: int, box: Rect2) -> SceneryScatter:
 	scatter.name = "Scenery_%d_%s" % [i, biome]
 	scatter.area = box
 	scatter.seed = map.sub_seed(StringName(scatter.name))
+	scatter.theme = theme_for(biome, map.sites[i].get("kind", &""))
 	var ground: Array[int] = [WorldMap.TEX_DEFAULT]
 	match biome:
 		&"pinewood":
