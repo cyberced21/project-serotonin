@@ -135,7 +135,6 @@ func _refresh() -> void:
 	_upgrade_box.visible = _tab == Tab.UPGRADE
 	_forge_box.visible = _tab == Tab.FORGE
 	_talents_box.visible = _tab == Tab.TALENTS
-	_panel.offset_top = -170 if _tab == Tab.UPGRADE else -300  # (the lists are taller: keep them on screen)
 	if _tab == Tab.FORGE:
 		_refresh_forge()
 	elif _tab == Tab.TALENTS:
@@ -367,15 +366,10 @@ func _build() -> void:
 	style.set_corner_radius_all(10)
 	style.set_content_margin_all(20)
 	_panel.add_theme_stylebox_override("panel", style)
+	# the right of the screen, a share of the window (MenuUI.place): the villager stays in view on
+	# the left, and the longer tabs scroll instead of running off the bottom
 	_panel.custom_minimum_size = Vector2(WIDTH, 0)
-	_panel.anchor_left = 0.5
-	_panel.anchor_right = 0.5
-	_panel.anchor_top = 0.5
-	_panel.anchor_bottom = 0.5
-	_panel.offset_left = 60
-	_panel.offset_right = 60 + WIDTH
-	_panel.offset_top = -170
-	_panel.grow_vertical = Control.GROW_DIRECTION_END
+	MenuUI.place(_panel, Rect2(0.52, 0.06, 0.44, 0.88))
 	add_child(_panel)
 
 	var box := VBoxContainer.new()
@@ -400,15 +394,17 @@ func _build() -> void:
 	_make_tab("Talents", Tab.TALENTS)
 	box.add_child(_tabs)
 
+	var tabs := VBoxContainer.new()  # whichever tab is open, in one scroll area
+	box.add_child(MenuUI.scroll(tabs))
 	_upgrade_box = VBoxContainer.new()
 	_upgrade_box.add_theme_constant_override("separation", 10)
-	box.add_child(_upgrade_box)
+	tabs.add_child(_upgrade_box)
 	_forge_box = VBoxContainer.new()
 	_forge_box.add_theme_constant_override("separation", 6)
-	box.add_child(_forge_box)
+	tabs.add_child(_forge_box)
 	_talents_box = VBoxContainer.new()
 	_talents_box.add_theme_constant_override("separation", 6)
-	box.add_child(_talents_box)
+	tabs.add_child(_talents_box)
 
 	_perks_now = _label(16)
 	_perks_now.add_theme_color_override("font_color", HAVE_COLOR)

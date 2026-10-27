@@ -83,37 +83,16 @@ func _build() -> void:
 	_column.add_child(MenuUI.button("Controls", _open.bind(&"controls"), 20))
 	_column.add_child(MenuUI.button("Quit", func() -> void: get_tree().quit(), 20))
 
+	# the screens fill the right of the menu, as shares of the window (MenuUI.place)
 	_worlds = WorldsScreen.new()
-	_worlds.anchor_left = 1.0
-	_worlds.anchor_right = 1.0
-	_worlds.anchor_bottom = 1.0
-	_worlds.offset_left = -680
-	_worlds.offset_right = -40
-	_worlds.offset_top = 40
-	_worlds.offset_bottom = -40
+	MenuUI.place(_worlds, Rect2(0.4, 0.05, 0.57, 0.9))
 	_worlds.new_world_requested.connect(_new_world)
 	_controls = ControlsScreen.new()
-	_controls.anchor_left = 1.0
-	_controls.anchor_right = 1.0
-	_controls.offset_left = -680
-	_controls.offset_right = -40
-	_controls.offset_top = 40
+	MenuUI.place(_controls, Rect2(0.4, 0.05, 0.57, 0.9), true)
 	_settings = SettingsScreen.new()
-	_settings.anchor_left = 1.0
-	_settings.anchor_right = 1.0
-	_settings.anchor_bottom = 1.0
-	_settings.offset_left = -680
-	_settings.offset_right = -40
-	_settings.offset_top = 40
-	_settings.offset_bottom = -40
+	MenuUI.place(_settings, Rect2(0.4, 0.05, 0.57, 0.9))
 	_new_world_screen = NewWorldScreen.new()
-	_new_world_screen.anchor_left = 1.0
-	_new_world_screen.anchor_right = 1.0
-	_new_world_screen.anchor_bottom = 1.0
-	_new_world_screen.offset_left = -820
-	_new_world_screen.offset_right = -40
-	_new_world_screen.offset_top = 40
-	_new_world_screen.offset_bottom = -40
+	MenuUI.place(_new_world_screen, Rect2(0.36, 0.05, 0.61, 0.9))
 	_new_world_screen.created.connect(_on_created)
 	for screen: Control in [_worlds, _controls, _settings, _new_world_screen]:
 		screen.visible = false

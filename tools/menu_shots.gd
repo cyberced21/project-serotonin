@@ -61,6 +61,7 @@ func _run() -> void:
 	await _wait(0.5)
 	await _shot("pause")
 	_check(root.get_node("SaveGame").get_tree().paused, "the pause menu pauses the tree")
+	await _in_game_shots(pause)
 	await pause.call("_save_and_quit", false)
 	await _wait(3.0)
 	_check(FileAccess.file_exists(worlds.call("thumb_path", "classic")), "Save & Quit took a picture")
@@ -88,6 +89,49 @@ func _run() -> void:
 	await _wait(1.0)
 	_remove_tree(ProjectSettings.globalize_path(ROOT))
 	quit()
+
+
+## The panels you meet while playing: the Skills page (with talents picked and waiting), the
+## talent cards, Greta's three tabs, the debug menu. Leaves the pause menu open, as it found it.
+func _in_game_shots(pause: Node) -> void:
+	var skills := root.get_node("Skills")
+	for s in ["woodcutting", "mining", "fishing", "farming"]:
+		skills.call("set_level", StringName(s), 23)
+	var talents = skills.get("talents")
+	talents.call("pick", &"woodcutting", 10, &"chain_cut")
+	talents.call("pick", &"woodcutting", 20, &"heartwood")
+	pause.call("_show_skills")
+	await _wait(0.5)
+	await _shot("skills")
+	var cards := get_first_node_in_group("talent_cards")
+	if cards:
+		cards.call("show_choice", &"mining")
+		await _wait(0.5)
+		await _shot("talent_cards")
+		cards.call("_close")
+	pause.call("resume")
+	var panel := get_first_node_in_group("upgrade_panel")
+	var greta: Node3D = null
+	for b in get_nodes_in_group("building"):
+		if b.get("def").id == &"smithy":
+			greta = b.get_node_or_null("Villager")
+	if greta and panel:
+		var player: Node3D = get_first_node_in_group("player")
+		player.global_position = greta.global_position + Vector3(1.5, 0.5, 0)  # (it closes if you're far)
+		for tab in 3:
+			panel.call("open", greta)
+			panel.call("_show_tab", tab)
+			await _wait(0.4)
+			await _shot("greta_%s" % ["upgrade", "forge", "talents"][tab])
+		panel.call("close")
+	var debug := root.get_node_or_null("DebugMenu")
+	if debug:
+		debug.call("open")
+		await _wait(0.4)
+		await _shot("debug_menu")
+		debug.call("close")
+	pause.call("open")
+	await _wait(0.3)
 
 
 func _check(ok: bool, what: String) -> void:

@@ -6,22 +6,23 @@ extends PanelContainer
 
 signal closed
 
-var _list: VBoxContainer
+var _list: GridContainer  # the skill cards, two across (it scrolls if the window's too short)
 
 
 func _init() -> void:
-	add_theme_stylebox_override("panel", MenuUI.box(MenuUI.BG, 22.0, MenuUI.BORDER))
+	add_theme_stylebox_override("panel", MenuUI.box(MenuUI.BG, 24.0, MenuUI.BORDER))
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 10)
+	box.add_theme_constant_override("separation", 12)
 	add_child(box)
-	box.add_child(MenuUI.title("Skills", 30))
-	_list = VBoxContainer.new()
-	_list.add_theme_constant_override("separation", 14)
-	box.add_child(_list)
-	box.add_child(MenuUI.spacer(4))
-	var back := MenuUI.button("Back", func() -> void: closed.emit(), 17)
+	box.add_child(MenuUI.title("Skills", 34))
+	_list = GridContainer.new()
+	_list.columns = 2
+	_list.add_theme_constant_override("h_separation", 16)
+	_list.add_theme_constant_override("v_separation", 16)
+	box.add_child(MenuUI.scroll(_list))
+	var back := MenuUI.button("Back", func() -> void: closed.emit(), 19)
 	back.size_flags_horizontal = Control.SIZE_SHRINK_END
-	back.custom_minimum_size = Vector2(110, 0)
+	back.custom_minimum_size = Vector2(130, 0)
 	box.add_child(back)
 	visibility_changed.connect(func() -> void:
 		if visible:
@@ -47,35 +48,40 @@ func _refresh() -> void:
 func _skill_card(skill: StringName) -> Control:
 	var lvl := Skills.level(skill)
 	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", MenuUI.box(MenuUI.CARD, 12.0))
+	card.add_theme_stylebox_override("panel", MenuUI.box(MenuUI.CARD, 14.0))
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 4)
+	box.add_theme_constant_override("separation", 6)
 	card.add_child(box)
 
 	var head := HBoxContainer.new()
-	head.add_child(MenuUI.label(Skills.display_name(skill), 20, Skills.color(skill)))
+	head.add_child(MenuUI.label(Skills.display_name(skill), 24, Skills.color(skill)))
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(spacer)
 	var lvl_text := "Level %d (max)" % lvl if lvl >= Skills.MAX_LEVEL else "Level %d" % lvl
-	head.add_child(MenuUI.label(lvl_text, 18, MenuUI.ACCENT))
+	head.add_child(MenuUI.label(lvl_text, 21, MenuUI.ACCENT))
 	box.add_child(head)
 	box.add_child(_xp_bar(skill, lvl))
 
 	var grid := GridContainer.new()
 	grid.columns = 3
-	grid.add_theme_constant_override("h_separation", 18)
-	grid.add_theme_constant_override("v_separation", 2)
+	grid.add_theme_constant_override("h_separation", 14)
+	grid.add_theme_constant_override("v_separation", 4)
 	box.add_child(grid)
 	var tracks: Array = Perks.TRACKS[skill]
 	for i in tracks.size():
 		var b := Perks.bonus_at(skill, tracks[i]["id"], lvl)
-		grid.add_child(MenuUI.label(tracks[i]["name"], 16))
-		grid.add_child(MenuUI.label("+%d%%" % roundi(b * 100.0), 16, MenuUI.GOOD if b > 0.0 else MenuUI.DIM))
-		grid.add_child(MenuUI.label(tracks[i]["text"], 15, MenuUI.DIM))
+		grid.add_child(MenuUI.label(tracks[i]["name"], 17))
+		grid.add_child(MenuUI.label("+%d%%" % roundi(b * 100.0), 17, MenuUI.GOOD if b > 0.0 else MenuUI.DIM))
+		var what := MenuUI.label(tracks[i]["text"], 15, MenuUI.DIM)
+		what.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART  # (a narrow window: wrap, don't spill)
+		what.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		grid.add_child(what)
 	if lvl < Skills.MAX_LEVEL:
 		var next := Perks.perk_at(skill, lvl + 1)
-		box.add_child(MenuUI.label("Next, at %d: %s" % [lvl + 1, next["name"].to_lower()], 15, MenuUI.DIM))
+		box.add_child(MenuUI.label("Next, at %d: %s" % [lvl + 1, next["name"].to_lower()], 16, MenuUI.DIM))
 	box.add_child(_talent_row(skill, lvl))
 	return card
 
@@ -119,27 +125,27 @@ func _talent_row(skill: StringName, lvl: int) -> Control:
 	var talents := Skills.talents
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", 14)
-	row.add_child(MenuUI.label("Talents", 16))
+	row.add_child(MenuUI.label("Talents", 17))
 	for m in TalentDef.MILESTONES:
 		var def := talents.picked(skill, m)
 		var chip: Label
 		if def:
-			chip = MenuUI.label("%d %s" % [m, def.display_name], 15, MenuUI.ACCENT)
+			chip = MenuUI.label("%d %s" % [m, def.display_name], 16, MenuUI.ACCENT)
 			chip.tooltip_text = "%s: %s" % [def.style_name, def.text]
 			chip.mouse_filter = Control.MOUSE_FILTER_PASS
 		elif lvl >= m:
-			chip = MenuUI.label("%d waiting" % m, 15, MenuUI.GOOD)
+			chip = MenuUI.label("%d waiting" % m, 16, MenuUI.GOOD)
 		else:
-			chip = MenuUI.label("%d —" % m, 15, MenuUI.DIM)
+			chip = MenuUI.label("%d —" % m, 16, MenuUI.DIM)
 		row.add_child(chip)
 	var mastered: TalentDef = talents.defs.get(talents.mastery.get(skill, &""))
 	if mastered:
-		var chip := MenuUI.label("50 %s" % mastered.display_name, 15, MenuUI.ACCENT)
+		var chip := MenuUI.label("50 %s" % mastered.display_name, 16, MenuUI.ACCENT)
 		chip.tooltip_text = "Mastery (%s): %s" % [mastered.style_name, mastered.text]
 		chip.mouse_filter = Control.MOUSE_FILTER_PASS
 		row.add_child(chip)
 	if talents.has_waiting(skill):
-		row.add_child(MenuUI.button("Choose", _choose.bind(skill), 15))
+		row.add_child(MenuUI.button("Choose", _choose.bind(skill), 17))
 	return row
 
 
