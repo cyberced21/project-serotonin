@@ -12,7 +12,8 @@
 > look tug, notches and prompt assist, and R6's pike steals are gone; `FishFight` is deleted
 > (its level scaling lives on as `FishBite.window_scale`). R11's +1 notch perk became
 > *Sharper eyes*: 25% longer to pull. Cast (R5), bite rhythms (R2) and rivers (R7) are unchanged.
-> Everything below is the original design, kept for the record.
+> Then **spear and rod were made equal styles** (plans/fishing-parity.md): Q swaps them, tiers,
+> sizes, one under-level rule. Everything below is the original design, kept for the record.
 
 Branch `fishing` (off `main`), one commit per phase, then a PR. Spearfishing stays as it is; the rod
 is the second way to fish, sharing the Fishing skill.

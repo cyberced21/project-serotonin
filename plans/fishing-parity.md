@@ -61,9 +61,26 @@ on the rod, such fish notice the float a third as often, and when one does take,
    fish/hour; tune until they're within ±15%.
 8. **Docs** — README, TODO, fishing.md, levels.md's rod talents rewritten for the yank.
 
+## Status (2026-10-27)
+
+All eight phases built on `fishing-yank`, bot-verified, **not yet played by hand**.
+
+- Changes found while building: fish your rod can't take notice the float a third as often (a
+  starter rod on the lake was mostly torn hooks); the under-level rule became one shared chance
+  (P8); the dawn/dusk rise heads for the *nearest* shallows and lingers 18–26 s (random ones were
+  too far to reach in time).
+- The bench (`tools/fishing_bench.gd`, level 30, tier 3, 5 game minutes each, the village pond):
+  before tuning, spear 285 XP/min vs rod 107. After: **rod 292, spear 259 XP/min** (within P3's
+  15%). Fish per minute still differ (spear ~21, rod ~6): the bot spears every regrown fish with
+  perfect aim, so check that by hand before tuning further (docs/TODO.md).
+- Tuning that got there: `notice_rate` up ~1.7x and a nibble fewer (perch, trout); a rod catch
+  pays `RodFishing.catch_xp` 1.8x, a speared fish `SpearFishing.catch_xp` 0.85x with +30% per
+  extra fish (was +50%); a bolting fish is speared at 0.4x the chance (`flee_catch`).
+- The lake at midday is rod water: the spear's bot catches nothing there (too deep).
+
 ### levels.md rod talents to rewrite (P10)
 
-The old fight's perks no longer fit: *Quick hands* (strike, bow and jerk windows) becomes the
+(Done: Quick hands, Strong line and Trophy hunter in levels.md.) The old fight's perks no longer fit: *Quick hands* (strike, bow and jerk windows) becomes the
 strike window only; *Strong line* (runs give back less) and *Play the fish* (Lv 40: turn a run)
 need replacing, e.g. *Strong line*: a late pull still lands the fish one time in three;
 *Play the fish*: a big fish on the rod rolls one size class up.
