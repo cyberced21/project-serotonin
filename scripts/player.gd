@@ -337,9 +337,9 @@ func _ready() -> void:
 	_build_speed_feel()
 	for t in [&"pickaxe", &"axe", &"sickle"]:
 		_use_tool_model(tools[t], tool_model(t))
-	_use_tool_model(tools[&"spear"], spear_model)
+	_use_tool_model(tools[&"spear"], tool_model(&"spear"))
 	Tools.changed.connect(func(t: StringName, _tier: int) -> void:  # a newly forged one
-		if tools.has(t):
+		if tools.has(t) and t != &"rod":  # (RodFishing rebuilds its own rod: it bends)
 			_use_tool_model(tools[t], tool_model(t)))
 	tools[&"rod"] = rodfishing.rod  # (built by RodFishing, on its own grip like the spear)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -1051,6 +1051,9 @@ func _update_target() -> void:
 	elif _target and _target.is_under_levelled():
 		hover_label.text = _target.under_text()
 		hover_label.modulate = UNDER_COLOR
+	elif fish and not fish.tool_can_take(&"spear"):
+		hover_label.text = fish.needs_text(&"spear")
+		hover_label.modulate = DEFLECT_COLOR
 	elif fish and fish.is_under_levelled():
 		hover_label.text = "%s %d" % [Skills.display_name(&"fishing"), fish.species.required_level]
 		hover_label.modulate = UNDER_COLOR

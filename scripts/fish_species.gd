@@ -6,6 +6,9 @@ extends Resource
 @export var id: StringName = &"perch"  ## item id given when caught (see Items)
 @export var model: PackedScene
 @export_range(1, 50) var required_level := 1
+## The spear or rod tier it takes (Tools.LADDER): below it, the spear glances off and the hook
+## tears out. Both tools open the same fish at the same tier.
+@export_range(0, 3) var tool_tier := 0
 @export_range(0, 500) var xp := 10
 
 @export_group("School")

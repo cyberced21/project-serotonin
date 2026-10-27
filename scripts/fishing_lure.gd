@@ -184,6 +184,8 @@ func _look_for_fish(delta: float) -> void:
 				if d > 0.3 and facing.normalized().dot(to / d) < 0.35:
 					continue
 			var rate := s.notice_rate * (1.6 if curious > 0.0 else 1.0) * (1.0 - 0.5 * d / radius)
+			if not f.tool_can_take(&"rod"):
+				rate *= 0.3  # too strong for your rod: it bites now and then (and tears free)
 			if _rng.randf() < rate * delta:
 				_engage(f)
 				return

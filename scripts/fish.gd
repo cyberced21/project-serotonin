@@ -100,6 +100,16 @@ func flash() -> void:
 			s.set_instance_shader_parameter("flash", v), 0.8, 0.0, 0.12)
 
 
+## True if your `tool` (&"spear" or &"rod") is good enough for this species.
+func tool_can_take(tool: StringName) -> bool:
+	return Tools.can_work(tool, species.tool_tier)
+
+
+## "Needs Iron spear": your `tool` is too weak for it.
+func needs_text(tool: StringName) -> String:
+	return "Needs %s" % Tools.display_name(tool, species.tool_tier)
+
+
 ## Under-levelled for this species: the spear only sometimes takes it (it usually dodges).
 func is_under_levelled() -> bool:
 	return Skills.levels_under(&"fishing", species.required_level) > 0

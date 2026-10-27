@@ -8,6 +8,7 @@ script = ExtResource("1_script")
 id = &"grayling"
 model = ExtResource("2_model")
 required_level = 15
+tool_tier = 1
 xp = 40
 school_min = 3
 school_max = 5

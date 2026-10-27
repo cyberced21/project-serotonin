@@ -40,7 +40,7 @@ Quantities to tune. To check: the fisher's tier 3 (trout, pike, char) needs iron
 so it comes after the smithy's tier 3: confirm that order matches the other buildings.
 
 **Too weak a tool**: the spear glances off with a clank and the fish bolts ("Needs iron spear");
-on the rod, the fish takes and the hook tears out on the yank ("Needs iron rod"), so you learn why.
+on the rod, such fish notice the float a third as often, and when one does take, the hook tears out on the yank ("Needs Iron-reel rod"), so you learn why.
 
 **Power per tier** (the tools' raw strength; technique stays with levels): spear +reach and
 +skewer length; rod +cast range and +strike window. Sized so the two climb together (P3).

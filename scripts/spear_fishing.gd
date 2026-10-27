@@ -6,7 +6,8 @@ extends Node
 ##
 ## A strike: wind-up -> thrust -> on the impact frame a thin capsule is swept from where the
 ## spear enters the water, along your aim. Every fish inside is skewered (multi-spears are
-## physical: line up a school). Fish you're under-levelled for usually dodge. Caught fish appear
+## physical: line up a school). Fish your spear's tier can't take glance off it ("Needs Iron
+## spear"), and fish you're under-levelled for usually dodge. Caught fish appear
 ## on the held spear, wriggling; the hit escalates with each extra fish (hit-stop, shake, rising pitch,
 ## "Double!"); on the yank they flip off into the inventory. Misses splash and scatter fish.
 
@@ -163,10 +164,17 @@ func thrust() -> void:
 		var hits := _skewer(entry, dir)
 		var caught: Array[Fish] = []
 		var dodgers: Array[Fish] = []
-		for f in hits:  # under-levelled fish usually dodge
-			(caught if randf() < f.catch_chance() else dodgers).append(f)
+		var glanced: Array[Fish] = []
+		for f in hits:  # too weak a spear glances off; under-levelled fish usually dodge
+			if not f.tool_can_take(&"spear"):
+				glanced.append(f)
+			else:
+				(caught if randf() < f.catch_chance() else dodgers).append(f)
 		_splash(entry, 1.0 if caught.is_empty() else 0.7)
-		if not dodgers.is_empty() and caught.is_empty():
+		if not glanced.is_empty() and caught.is_empty():
+			_play_at(load("res://audio/fishing/jerk.tres"), entry, 1.6, -2.0)
+			PopupText.spawn(player.get_parent(), entry + Vector3.UP * 0.3, glanced[0].needs_text(&"spear"), DODGE_COLOR, 5)
+		elif not dodgers.is_empty() and caught.is_empty():
 			var sp := dodgers[0].species
 			PopupText.spawn(player.get_parent(), entry + Vector3.UP * 0.3,
 				"%s %d" % [Skills.display_name(&"fishing"), sp.required_level], DODGE_COLOR, 5)

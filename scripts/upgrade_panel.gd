@@ -5,7 +5,7 @@ extends CanvasLayer
 ## button that's live only when you can afford it and the town hall allows it.
 ## Frees the mouse while open. Closes on E, Esc, clicking outside it, or walking away.
 ## Upgrading closes it so you can watch the building go up.
-## Greta's panel has a second tab, Forge: the next pick, axe and sickle (Tools.RECIPES), each with
+## Greta's panel has a second tab, Forge: the next pick, axe, sickle, spear and rod (Tools.RECIPES), each with
 ## its cost and what it opens, greyed out until the smithy's tier allows it. Forging plays the
 ## forge moment (ForgeCutscene).
 

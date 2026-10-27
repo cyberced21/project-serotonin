@@ -8,6 +8,7 @@ script = ExtResource("1_script")
 id = &"char"
 model = ExtResource("2_model")
 required_level = 30
+tool_tier = 2
 xp = 80
 school_min = 2
 school_max = 3

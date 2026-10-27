@@ -25,6 +25,8 @@ const REACTION := 0.25
 
 var casts := 3
 var level := 30
+## The rod's tier (Tools): 3 opens every fish; lower, and better fish tear the hook out.
+var rod_tier := 3
 var procgen_seed := -1
 var player
 var rod
@@ -40,6 +42,8 @@ func _initialize() -> void:
 			casts = arg.trim_prefix("--casts=").to_int()
 		elif arg.begins_with("--level="):
 			level = arg.trim_prefix("--level=").to_int()
+		elif arg.begins_with("--rod-tier="):
+			rod_tier = arg.trim_prefix("--rod-tier=").to_int()
 		elif arg.begins_with("--procgen="):
 			procgen_seed = arg.trim_prefix("--procgen=").to_int()
 	_run.call_deferred()
@@ -73,6 +77,7 @@ func _run() -> void:
 	player = get_first_node_in_group("player")
 	rod = player.get_node("RodFishing")
 	root.get_node("Tools").set("fishing_style", &"rod")
+	root.get_node("Tools").call("set_tier", &"rod", rod_tier)
 	var lake = _lake()
 	if lake == null and procgen_seed < 0:
 		_say("no lake found")

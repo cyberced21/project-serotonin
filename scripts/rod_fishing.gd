@@ -329,9 +329,29 @@ func _strike() -> void:
 	_kick(-0.35)  # the rod jerks back
 	Sfx.play(load("res://audio/fishing/jerk.tres"), 1.0, -4.0)
 	if result == &"hooked" and is_instance_valid(on):
-		_yank(on, lure.strike_timing())
+		if on.tool_can_take(&"rod"):
+			_yank(on, lure.strike_timing())
+		else:
+			_tear_free(on)
 	else:
 		_retrieve()
+
+
+## Too weak a rod for this fish: the hook tears out as you pull, and it bolts ("Needs Iron-reel rod").
+func _tear_free(f: Fish) -> void:
+	var at := _surface(f.global_position)
+	f.lure = null
+	f.state = Fish.State.FLEE
+	f.flee_time = 0.8
+	f.velocity = _flat_dir(player.global_position, f.global_position) * f.species.flee_speed
+	FishPond.disturb(get_tree(), at, 1.5)
+	_play_at("res://audio/fishing/snap.tres", at, 1.0, -2.0)
+	splash(player.get_parent(), at, 0.9)
+	_ripple(at, 2.0)
+	Juice.shake(1.2)
+	_kick(-0.5)
+	PopupText.spawn(player.get_parent(), at + Vector3.UP * 0.5, f.needs_text(&"rod"), MISS_COLOR.lerp(Color("ff8a7a"), 0.8), 7)
+	_retrieve()
 
 
 func _retrieve() -> void:

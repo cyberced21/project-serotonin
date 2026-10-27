@@ -5,11 +5,14 @@ extends Node
 
 signal changed(tool: StringName, tier: int)
 
-## Tool type -> its tiers' names, lowest first. The fishing spear and rod have no tiers.
+## Tool type -> its tiers' names, lowest first. The spear and the rod climb together: each tier
+## opens the same fish for both (FishSpecies.tool_tier), so neither way of fishing gets one first.
 const LADDER := {
 	&"pickaxe": ["Stone pick", "Copper pick", "Iron pick", "Crystal pick"],
 	&"axe": ["Stone axe", "Copper axe", "Iron axe", "Crystal axe"],
 	&"sickle": ["Stone sickle", "Copper sickle"],
+	&"spear": ["Sharpened stick", "Copper spear", "Iron spear", "Crystal spear"],
+	&"rod": ["Willow pole", "Copper-reel rod", "Iron-reel rod", "Crystal rod"],
 }
 ## What Greta needs to forge each tier above the first (index = tier - 1), and what it opens.
 ## Each is made from what the tier below can gather. Tier t needs the smithy at tier t + 1.
@@ -26,6 +29,17 @@ const RECIPES := {
 	],
 	&"sickle": [
 		{"cost": {&"ore": 8, &"wood": 8}, "opens": "Opens barley"},
+	],
+	# the fishing tools also take a few of the fish the tier below can catch
+	&"spear": [
+		{"cost": {&"ore": 8, &"wood": 8, &"perch": 6}, "opens": "Opens trout and grayling"},
+		{"cost": {&"iron": 10, &"coal": 6, &"oak": 8, &"trout": 6}, "opens": "Opens pike and char"},
+		{"cost": {&"crystal": 6, &"gold": 6, &"oak": 10, &"pike": 3}, "opens": "Opens salmon: the finest spear"},
+	],
+	&"rod": [
+		{"cost": {&"ore": 8, &"birch": 8, &"perch": 6}, "opens": "Opens trout and grayling"},
+		{"cost": {&"iron": 10, &"coal": 6, &"birch": 10, &"trout": 6}, "opens": "Opens pike and char"},
+		{"cost": {&"crystal": 6, &"gold": 6, &"pine": 10, &"pike": 3}, "opens": "Opens salmon: the finest rod"},
 	],
 }
 ## The building whose tier caps the tools Greta can forge.
