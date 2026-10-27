@@ -38,7 +38,7 @@ func _ready() -> void:
 ## `legacy_key`: an older key the same system used to save under; its data moves to `key`.
 func register(key: StringName, system: Object, legacy_key: StringName = &"") -> void:
 	var k := String(key)
-	var old: Object = _systems.get(k)
+	var old: Variant = _systems.get(k)  # (untyped: it may have been freed since, which a typed var refuses)
 	if old != system and is_instance_valid(old) and (not old is Node or (old as Node).is_inside_tree()):
 		push_warning("SaveGame: '%s' is registered twice; give one of them a different save id" % k)
 	_systems[k] = system

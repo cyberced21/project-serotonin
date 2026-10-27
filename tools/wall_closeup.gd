@@ -1,6 +1,7 @@
 extends SceneTree
-## Ore wall close-up: stands a panel of ore wall (OreWall) on Greystone Quarry's floor, works
-## its face with the pick, and saves screenshots along the way, to judge how it digs.
+## Ore wall close-up: stands a run of three ore wall panels (OreWallRun) on Greystone Quarry's
+## floor, works the middle one's face with the pick, and saves screenshots along the way, to
+## judge how it digs.
 ##
 ##   godot --path . --screen 1 --resolution 1280x720 -s res://tools/wall_closeup.gd
 ##
@@ -13,6 +14,8 @@ extends SceneTree
 ##   --dig=N       dig out the first N layers straight away (to look deeper in)
 ##   --tier=N      the pickaxe's tier (default 3: every ore can be mined)
 ##   --angle=DEG   look from this far round (the swings still come from the front)
+##   --distance=M  how far back to stand (default 3.2)
+##   --curve=M     bend the run of panels round a circle this big (the quarry's walls are curved)
 ##   --label=NAME  sub-folder of docs/images/walls/ to save into (default "latest")
 ## The game is played on a throwaway save, so the real one is never touched.
 
@@ -24,6 +27,8 @@ var ring := Vector2i(0, 1)
 var dig := 0
 var tier := 3
 var angle := 0.0
+var distance := 3.2
+var curve := 0.0
 var out_dir := "res://docs/images/walls/latest"
 
 
@@ -46,6 +51,10 @@ func _initialize() -> void:
 			tier = v.to_int()
 		elif arg.begins_with("--angle="):
 			angle = v.to_float()
+		elif arg.begins_with("--distance="):
+			distance = v.to_float()
+		elif arg.begins_with("--curve="):
+			curve = v.to_float()
 		elif arg.begins_with("--label="):
 			out_dir = "res://docs/images/walls/" + v
 	_run.call_deferred()
@@ -67,20 +76,30 @@ func _run() -> void:
 	var spot := WorldMap.QUARRY_CENTER_3 + Vector3(0, 0, -11.0)  # (the pit floor, facing its middle)
 	var ground := _cast(spot + Vector3.UP * 50.0, spot + Vector3.DOWN * 50.0)
 	spot.y = ground["position"].y - 0.1 if not ground.is_empty() else 0.0
-	var wall := (load("res://scenes/ore_wall.tscn") as PackedScene).instantiate()
-	wall.set("template", template)
-	wall.set("save_id", &"closeup")
-	for prop in ["vein_seed", "ring", "rings"]:
-		if prop in wall:
-			wall.set(prop, vein_seed if prop == "vein_seed" else ring.x if prop == "ring" else ring.y)
-	current_scene.add_child(wall)
-	wall.global_position = spot
+	# a run of three panels (bent round a circle of --curve metres, if given): the middle one's dug
+	# (loaded, not named: a -s script compiles before the autoloads the wall scripts use exist)
+	var run: Node3D = load("res://scripts/ore_wall_run.gd").new()
+	var step := 3.0 + 1.0  # (a panel and a pillar)
+	for i in 3:
+		var x := (i - 1) * step
+		var turn := 0.0 if curve <= 0.0 else -x / curve
+		var at := Vector3(sin(-turn) * curve, 0, curve - cos(turn) * curve) if curve > 0.0 else Vector3(x, 0, 0)
+		run.get("panels").append(Transform3D(Basis(Vector3.UP, turn), at))
+		run.get("templates").append((template + i) % 4)
+		run.get("seeds").append(vein_seed + i)
+		run.get("save_ids").append("closeup_%d" % i)
+	run.set("ring", ring.x)
+	run.set("rings", ring.y)
+	current_scene.add_child(run)
+	run.global_position = spot
+	run.call("build")
+	var wall := run.get_node("Panel1") as StaticBody3D
 	if dig > 0 and wall.has_method("dig_layers"):
 		wall.call("dig_layers", dig)
 	var face := spot + Vector3(0, 0, -float(dig) * 0.5)
 	var watch := Vector3.BACK.rotated(Vector3.UP, deg_to_rad(angle))
 	for i in 2:
-		p.call("teleport", face + watch * 3.2, face + Vector3.UP * 1.6)
+		p.call("teleport", face + watch * distance, face + Vector3.UP * 1.6)
 		await _wait(0.5)
 	var cam := p.get("camera") as Camera3D
 	(cam.get_parent() as Node3D).rotation.x = 0.0
