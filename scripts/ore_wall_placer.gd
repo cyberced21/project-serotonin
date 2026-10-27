@@ -12,6 +12,9 @@ extends Node3D
 @export var walls: Array[float] = []
 ## How far each level is below the one above (m).
 @export var level_drop := 5.0
+## Walls tighter than this (m, radius) are left bare: a block of rock round a small pit's last
+## wall would leave no floor.
+@export var min_radius := 12.0
 ## Saves go under "wall:<save_prefix>_r<ring>_<n>"; veins come from `seed`.
 @export var save_prefix := "quarry_wall"
 @export var seed := 0
@@ -49,7 +52,7 @@ func _place() -> void:
 		_props.append(Vector3(at.x, at.z, (p as Prop).footprint_radius()))
 	placed.resize(walls.size())
 	for w in walls.size():
-		placed[w] = _line_wall(w)
+		placed[w] = _line_wall(w) if walls[w] >= min_radius else 0
 
 
 ## Stands runs of panels round wall w. How many panels.

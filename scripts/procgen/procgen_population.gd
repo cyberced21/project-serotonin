@@ -4,7 +4,8 @@ extends RefCounted
 ## - a NodeSpawner per biome cell, kept to its own cell, with that biome's trees, rocks or grain;
 ##   the inner ring gets the gentler mix, the outer ring the harder one (birch near the hub, pine
 ##   far out; copper and iron by the hub, coal and gold on Frostpeak's foothills);
-## - in the quarry pit, one spawner per level, harder ore the deeper you go, crystal on the floor;
+## - in the quarry pit, ore walls along every wall (OreWallPlacer: richer the deeper you go), and
+##   crystal on the floor;
 ## - a SceneryScatter per biome cell, over just that cell's bounding box and with just its biome's
 ##   layers (so no layer samples ground it can't grow on): grass, flowers, bushes and boulders on
 ##   open ground, canopies and ferns on forest floor, meadow grass on the field, rubble in the
@@ -64,14 +65,7 @@ const KIND_SCENERY := {
 const KIND_SCALE := {
 	&"old_growth": {"canopy_pine": 1.3, "canopy_birch": 1.2},
 }
-## The quarry pit's levels below the rim, from the top down: a count and [scene, weight] pairs.
-## Below the last level is the floor, where the crystal grows. A pit with fewer levels than this
-## skips the middle ones (see _quarry_level).
-const QUARRY_LEVELS := [
-	{"count": 6, "entries": [[IRON, 2.0], [ROCK, 1.0]]},
-	{"count": 5, "entries": [[COAL, 3.0], [IRON, 1.0]]},
-	{"count": 6, "entries": [[COAL, 2.0], [GOLD, 1.5]]},
-]
+## Crystals on the quarry's floor (its levels have ore walls instead: _quarry_levels).
 const CRYSTALS := 4
 ## How many baked variants each model may have (tools/blender/make_models.py's VARIANTS).
 const VARIANTS := 8
@@ -184,38 +178,35 @@ static func _spawner(map: ProcgenMap, node_name: String, spec: Dictionary) -> No
 	return spawner
 
 
-## A spawner per pit level, each a ring between its wall and the next one in (clear of both),
-## on quarry stone only, so nothing lands on the haul road; crystal on the floor.
+## The pit's walls lined with ore wall (OreWallPlacer, as in Greystone Quarry), and a spawner of
+## crystal on the floor, on quarry stone only, clear of the innermost wall's blocks of rock.
 static func _quarry_levels(parent: Node3D, map: ProcgenMap) -> void:
 	if map.quarry.is_empty():
 		return
 	var qc: Vector2 = map.quarry["center"]
 	var walls: Array = map.quarry["walls"]
-	for k in walls.size():
-		var outer := float(walls[k]) - 1.5
-		var inner := float(walls[k + 1]) + 1.5 if k + 1 < walls.size() else 0.0
-		var spec: Dictionary = {"count": CRYSTALS, "entries": [[CRYSTAL, 1.0]]}  # the floor
-		if k < walls.size() - 1:
-			spec = _quarry_level(k, walls.size() - 1).duplicate()
-		spec = _with_kind(spec, map.kinds.get(&"quarry", &""))
-		spec["spacing"] = 4.5
-		var spawner := _spawner(map, "QuarryLevel%d" % (k + 1), spec)
-		spawner.theme = theme_for(&"quarry", map.kinds.get(&"quarry", &""))
-		spawner.ring = Vector4(qc.x, qc.y, inner, outer)
-		spawner.area = Rect2(qc - Vector2.ONE * outer, Vector2.ONE * outer * 2.0)
-		var ids: Array[int] = [WorldMap.TEX_QUARRY]
-		spawner.allowed_ids = ids
-		spawner.hotspot_share = 0.0
-		spawner.path_clearance = 1.0
-		parent.add_child(spawner)
-
-
-## Level k of a pit with `levels` levels: the top one is always QUARRY_LEVELS' first and the
-## bottom one its last, so a shallower pit skips the middle.
-static func _quarry_level(k: int, levels: int) -> Dictionary:
-	if levels <= 1:
-		return QUARRY_LEVELS[-1]
-	return QUARRY_LEVELS[roundi(float(k) * (QUARRY_LEVELS.size() - 1) / (levels - 1))]
+	var placer := OreWallPlacer.new()
+	placer.name = "QuarryWalls"
+	placer.center = qc
+	for w in walls:
+		placer.walls.append(float(w))
+	placer.level_drop = ProcgenMap.QUARRY_LEVEL_DROP
+	placer.save_prefix = "quarry_wall"
+	placer.seed = map.seed
+	parent.add_child(placer)
+	var last := float(walls[-1])
+	var outer := last - (OreWall.DEPTH + OreWallPlacer.BACK_GAP if last >= placer.min_radius else 0.0) - 1.5
+	var spec := _with_kind({"count": CRYSTALS, "entries": [[CRYSTAL, 1.0]]}, map.kinds.get(&"quarry", &""))
+	spec["spacing"] = 4.5
+	var spawner := _spawner(map, "QuarryFloor", spec)
+	spawner.theme = theme_for(&"quarry", map.kinds.get(&"quarry", &""))
+	spawner.ring = Vector4(qc.x, qc.y, 0.0, outer)
+	spawner.area = Rect2(qc - Vector2.ONE * outer, Vector2.ONE * outer * 2.0)
+	var ids: Array[int] = [WorldMap.TEX_QUARRY]
+	spawner.allowed_ids = ids
+	spawner.hotspot_share = 0.0
+	spawner.path_clearance = 1.0
+	parent.add_child(spawner)
 
 
 ## Each cell's bounding box (world XZ), from the cells map.

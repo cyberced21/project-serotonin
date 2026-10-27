@@ -1,25 +1,20 @@
 extends SceneTree
-## Ore wall tour: opens the main world, reports how many ore wall panels Greystone Quarry's placer
-## stood on each ring and how fast it draws, and saves screenshots from round the pit.
+## Ore wall tour: opens the main world (or a generated one), reports how many ore wall panels the
+## quarry's placer (OreWallPlacer) stood on each ring and how fast it draws, and saves screenshots
+## from the rim and from each level, looking along its wall.
 ##
 ##   godot --path . --screen 1 --resolution 1280x720 -s res://tools/wall_tour.gd
 ##
 ## Options (after `--`):
-##   --label=NAME  sub-folder of docs/images/walls/ to save into (default "tour")
-##   --night       at night instead of mid-morning
-## The game is played on a throwaway save, so the real one is never touched.
+##   --label=NAME    sub-folder of docs/images/walls/ to save into (default "tour")
+##   --night         at night instead of mid-morning
+##   --procgen=SEED  a generated world (scenes/procgen.tscn) instead of the hand-built one
+## The game is played on a throwaway save, so the real one is never touched (a generated world's
+## too: it never switches to that seed's own file).
 
 var out_dir := "res://docs/images/walls/tour"
 var time := 0.42
-
-## Viewpoints: [name, where to stand (world), what to look at].
-const QUARRY := Vector3(-175, 0, -15)
-var SPOTS := [
-	["rim", QUARRY + Vector3(48, 0, 30), QUARRY],
-	["floor", QUARRY + Vector3(-4, 0, 6), QUARRY + Vector3(6, 6, -14)],
-	["level2", QUARRY + Vector3(0, 0, 37.5), QUARRY + Vector3(-14, 4, 46)],
-	["level4", QUARRY + Vector3(-17, 0, -3), QUARRY + Vector3(-26, 3, 6)],
-]
+var procgen := 0
 
 
 func _initialize() -> void:
@@ -28,6 +23,8 @@ func _initialize() -> void:
 			out_dir = "res://docs/images/walls/" + arg.get_slice("=", 1)
 		elif arg == "--night":
 			time = 0.9
+		elif arg.begins_with("--procgen="):
+			procgen = arg.get_slice("=", 1).to_int()
 	_run.call_deferred()
 
 
@@ -35,22 +32,45 @@ func _run() -> void:
 	root.get_node("SaveGame").set("path", "user://wall_tour_save.json")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://wall_tour_save.json"))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(out_dir))
-	change_scene_to_file("res://scenes/main.tscn")
-	await _wait(3.0)
+	if procgen > 0:
+		var world: Variant = load("res://scripts/procgen/procgen_world.gd")
+		world.world_seed = procgen
+		change_scene_to_file("res://scenes/procgen.tscn")
+		await _wait(12.0)  # (it generates first)
+	else:
+		change_scene_to_file("res://scenes/main.tscn")
+		await _wait(3.0)
 	var gfx := root.get_node_or_null("GraphicsSettings")
 	if gfx:
 		gfx.set("persist", false)
 	root.get_node("DayNight").set("time", time)
-	var placer := current_scene.find_child("Walls", true, false)
-	var walls := get_nodes_in_group("ore_wall")
-	print("PLACED per ring %s, %d panels in all" % [placer.get("placed") if placer else "-", walls.size()])
+	var placer: Node3D = null
+	for n in current_scene.find_children("*", "Node3D", true, false):
+		if n.get_script() and n.get_script().resource_path.ends_with("ore_wall_placer.gd"):
+			placer = n
+	if placer == null:
+		push_error("no OreWallPlacer in this world")
+		quit(1)
+		return
+	print("PLACED per ring %s, %d panels in all" % [placer.get("placed"), get_nodes_in_group("ore_wall").size()])
+	# the rim looking in, then each level looking along the foot of its wall
+	var c2: Vector2 = placer.get("center")
+	var c := Vector3(c2.x, 0, c2.y)
+	var radii: Array = placer.get("walls")
+	var spots := [["rim", c + Vector3(1, 0, 0.6).normalized() * (float(radii[0]) + 6.0), c]]
+	for k in radii.size():
+		var a := 0.7 + k * 1.3
+		var out := Vector3(cos(a), 0, sin(a))
+		var side := Vector3(-out.z, 0, out.x)
+		var stand: Vector3 = c + out * (float(radii[k]) - 7.5)
+		spots.append(["level%d" % (k + 1), stand, stand + side * 8.0 + out * 3.5 + Vector3.UP * 2.0])
 	var p := get_first_node_in_group("player") as Node3D
 	var terrain := get_first_node_in_group("terrain")
-	for spot: Array in SPOTS:
+	for spot: Array in spots:
 		var at: Vector3 = spot[1]
 		at.y = terrain.get("data").call("get_height", at) + 0.1
 		var look: Vector3 = spot[2]
-		look.y += terrain.get("data").call("get_height", Vector3(look.x, 0, look.z))
+		look.y += at.y
 		for i in 2:
 			p.call("teleport", at, look)
 			await _wait(0.5)
