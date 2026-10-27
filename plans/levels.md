@@ -198,7 +198,25 @@ boost by choosing who to visit. Each is the villager's trade flavour, never a ta
    | 30 | Power swing / Grove keeper | -9% / +120%: a 1 s charge for 3 hits loses to 6 quick swings; double-speed regrowth plus double logs on every regrown tree |
    | 40 | Momentum / Old growth | -4% / +0%: chopping isn't the limit (walking and regrowth are); no ancient pine near the start |
    Woodcutting is **limited by walking and regrowth**, not swing speed: trees take 3-6 s to fell
-   and regrow in 15-40 s. Speed talents have little to win; yield talents dominate. Needs
-   design decisions before tuning (see the session of 2026-10-27).
+   and regrow in 15-40 s. Speed talents have little to win; yield talents dominate.
+   **Decided and tuned (2026-10-27): longer fells.** Trees take 15 / 15 / 20 / 25 hits (tree,
+   birch, oak, pine; were 5 / 5 / 7 / 9), with more logs (4-6, oak 3-4) and less XP a hit
+   (4 / 5 / 4 / 9), so no-talent logs/min and XP/min stay near what they were. Talents retuned:
+   Back cut by angle (a hit >120° round from the notch's side once it's a quarter deep) x4;
+   Power swing 4 hits, 7 clean; heartwood knots on 12% of trees; Grove keeper 1.3x regrowth and
+   1.3x logs; Dominoes also lands hard (1.25x logs) since trees rarely stand close enough to
+   crush; ancient trees regrow 20x slower and give 3x logs. The model's swing time is calibrated
+   x1.5 against the bench (its XP/min matched the bench's 838 at level 30, and then Power swing
+   +40% vs the bench's +43%, Grove keeper +30% vs +29%). Result, as score vs no talent (bot /
+   a player landing 80% of clean cuts):
+   | Lv | Feller | Forester | Gap |
+   |---|---|---|---|
+   | 10 | Chain cut +8% / +9% | Back cut +12% / +18% | 3% / 8% |
+   | 20 | Dominoes +25% / +25% | Heartwood +28% / +24% | 2% / 1% |
+   | 30 | Power swing +40% / +43% | Grove keeper +30% / +30% | 7% / 9% |
+   | 40 | Momentum +21% / +21% | Old growth +30% / +34% | 8% / 11% |
+   Still open: XP/min differs a lot by talent (XP is per swing, so Power swing and Back cut level
+   you ~40% slower than Grove keeper); rare finds count as 8 / 25 logs, a stand-in until phase 6
+   gives them uses; Dominoes depends on how close trees grow. Not played by hand.
 5. **Mining**, then **Fishing**, then **Farming** talents.
 6. **Flourishes, rare-item uses, README, TODO.**

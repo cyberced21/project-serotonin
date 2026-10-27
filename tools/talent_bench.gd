@@ -166,6 +166,18 @@ func _session(m: int, def, tool: String) -> Dictionary:
 	var tools := root.get_node("Tools")
 	for t in tools.get("LADDER"):
 		tools.call("set_tier", t, tools.call("max_tier", t))
+	# gathering: the best nodes the level allows, with the tool that just opens them (as
+	# tools/talent_model.gd plays it; the best tool would fell anything in a swing or two)
+	bot.only_tier = -1
+	if skill != &"fishing":
+		var best := 0
+		for n in get_nodes_in_group("gatherable"):
+			if n.get("skill") == skill and int(n.get("required_level")) <= m:
+				best = maxi(best, int(n.get("tool_tier")))
+		var swung: StringName = _tool_of(skill)
+		if swung != &"":
+			tools.call("set_tier", swung, best)
+		bot.only_tier = best
 	if tool != "":
 		tools.set("fishing_style", StringName(tool))
 	root.get_node("DayNight").set("time", 0.4)
@@ -204,3 +216,8 @@ func _items() -> int:
 	for id in inv.get("items"):
 		n += inv.call("count", id)
 	return n
+
+
+## The tool a gathering skill swings.
+func _tool_of(s: StringName) -> StringName:
+	return {&"woodcutting": &"axe", &"mining": &"pickaxe", &"farming": &"sickle"}.get(s, &"")

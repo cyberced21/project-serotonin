@@ -33,12 +33,17 @@ const STAND_OFF := 1.5
 ## How close a falling trunk passes for Dominoes to crush a tree (ResourceNode._crush_along).
 const CRUSH_REACH := 0.9
 const PAIR_TOLERANCE := 0.15
+## Real swings take longer than player.gd's timings add up to (the frame a swing waits to start,
+## the hit-stop stretching the bite, the tool settling): this many times as long. Calibrated
+## against tools/talent_bench.gd (--swing-scale tries others).
+const SWING_SCALE := 1.5
 const MILESTONES := [10, 20, 30, 40]
 
 var levels: Array[int] = [10, 20, 30, 40]
 var minutes := 60.0
 var axe_override := -1
 var human := 1.0
+var swing_scale := SWING_SCALE
 var only: Array = []  # talent ids to run, empty = each milestone's pair
 var world_seed := 42
 
@@ -60,6 +65,7 @@ func _initialize() -> void:
 			"minutes": minutes = kv[1].to_float()
 			"axe": axe_override = kv[1].to_int()
 			"human": human = kv[1].to_float()
+			"swing-scale": swing_scale = kv[1].to_float()
 			"level":
 				levels.clear()
 				for l in kv[1].split(","):
@@ -202,10 +208,11 @@ func _simulate(lvl: int, tier: int, axe: int, id: StringName) -> Dictionary:
 	var state := []  # per tree: {ready_at, hits_left, fine}
 	var eligible: Array[int] = []  # the trees it goes for
 	var choppable: Array[int] = []  # every tree the axe cuts (what a Dominoes trunk can bring down)
+	var no_pool: Array[int] = []
 	for i in trees.size():
 		var s: Dictionary = _stats[trees[i]["scene"]]
 		state.append({"ready_at": 0.0, "hits_left": s["max_hits"], "fine": false})
-		if s["tier"] == tier and s["req"] <= lvl:
+		if (s["tier"] == tier and s["req"] <= lvl) or (s["tier"] <= axe and _old_growth(i, id)):
 			eligible.append(i)
 		if s["tier"] <= axe:
 			choppable.append(i)
@@ -229,7 +236,7 @@ func _simulate(lvl: int, tier: int, axe: int, id: StringName) -> Dictionary:
 	var last_fell := -INF
 	var chop_time := 0.0
 	while t < end:
-		var i := _next_tree(eligible, state, pos, t, has.call(&"old_growth"))
+		var i := _next_tree(eligible, state, pos, t, has.call(&"old_growth"), choppable if has.call(&"dominoes") else no_pool)
 		if i < 0:  # nothing grown back: wait for the first
 			var soonest := INF
 			for j in eligible:
@@ -261,7 +268,7 @@ func _simulate(lvl: int, tier: int, axe: int, id: StringName) -> Dictionary:
 		if has.call(&"momentum") and t - (AFTER_FELL + r["time"]) - last_fell <= player.momentum_window:
 			momentum = mini(momentum + 1, player.momentum_max)
 		last_fell = t - AFTER_FELL
-		_fell(i, state, t, has.call(&"grove_keeper"))
+		_fell(i, state, t, has.call(&"grove_keeper"), _old_growth(i, id))
 		if has.call(&"dominoes"):  # it falls toward its notch: back the way you came
 			for j in _crushed(i, came_from, choppable, state, t):
 				crushes += 1
@@ -269,7 +276,7 @@ func _simulate(lvl: int, tier: int, axe: int, id: StringName) -> Dictionary:
 				state[j]["hits_left"] = maxi(state[j]["hits_left"] - ceili(s["max_hits"] * RN.CRUSH_SHARE), 0)
 				xp += s["xp_hit"] * 2
 				if state[j]["hits_left"] == 0:  # down too: its logs, and it regrows
-					logs += s["drops"] * (RN.OLD_GROWTH_DROPS if _old_growth(j, id) else 1)
+					logs += s["drops"] * RN.DOMINOES_LOGS
 					xp += s["xp_break"]
 					_fell(j, state, t, false)
 	var mins := t / 60.0
@@ -285,7 +292,9 @@ func _simulate(lvl: int, tier: int, axe: int, id: StringName) -> Dictionary:
 
 ## The nearest grown tree (an old-growth one you can see counts as a quarter as far, as the bot
 ## goes for them), or -1.
-func _next_tree(eligible: Array[int], state: Array, pos: Vector2, t: float, old_growth: bool) -> int:
+## With Dominoes (`domino_pool`, the trees a trunk can bring down) a tree with one in reach counts
+## as half as far: a player looks for them.
+func _next_tree(eligible: Array[int], state: Array, pos: Vector2, t: float, old_growth: bool, domino_pool: Array[int]) -> int:
 	var best := -1
 	var best_d := INF
 	for i in eligible:
@@ -294,6 +303,8 @@ func _next_tree(eligible: Array[int], state: Array, pos: Vector2, t: float, old_
 		var d := pos.distance_to(trees[i]["pos"])
 		if old_growth and _old_growth(i, &"old_growth"):
 			d *= 0.25
+		if not domino_pool.is_empty() and _domino_target(i, domino_pool, state, t) >= 0:
+			d *= 0.5
 		if d < best_d:
 			best_d = d
 			best = i
@@ -305,9 +316,9 @@ func _old_growth(i: int, id: StringName) -> bool:
 
 
 ## Down: it grows back after its time (halved by Grove keeper, and fine-grained then).
-func _fell(i: int, state: Array, t: float, grove: bool) -> void:
+func _fell(i: int, state: Array, t: float, grove: bool, ancient := false) -> void:
 	var s: Dictionary = _stats[trees[i]["scene"]]
-	state[i]["ready_at"] = t + s["respawn"] / (RN.GROVE_REGROW if grove else 1.0)
+	state[i]["ready_at"] = t + s["respawn"] * (RN.OLD_GROWTH_REGROW if ancient else 1.0) / (RN.GROVE_REGROW if grove else 1.0)
 	state[i]["hits_left"] = s["max_hits"]
 	state[i]["fine"] = grove
 
@@ -362,6 +373,7 @@ func _chop(i: int, st: Dictionary, lvl: int, axe: int, id: StringName, momentum:
 	var bites := 0
 	var knot := false
 	var knot_done := false
+	var knot_grows := false
 	var fine_cut := false
 	var time := 0.0
 	var xp := 0.0
@@ -371,7 +383,7 @@ func _chop(i: int, st: Dictionary, lvl: int, axe: int, id: StringName, momentum:
 	var cycle := _swing_time(lvl, momentum)
 	var charge: float = player.power_charge_time + 0.1 if id == &"power_swing" else 0.0
 	while hits > 0 and swings < 500:
-		if id == &"back_cut" and not went_round and bites >= 3:
+		if id == &"back_cut" and not went_round and front >= RN.BACK_CUT_AFTER:
 			went_round = true  # walk round to the far side (straight across, as the bot charges it)
 			on_back = true
 			time += 2.0 * STAND_OFF / player.walk_speed
@@ -389,7 +401,7 @@ func _chop(i: int, st: Dictionary, lvl: int, axe: int, id: StringName, momentum:
 				chain = chain + 1 if clean else 0
 				if chain >= 2:
 					extra += mini(chain - 1, RN.CHAIN_MAX)
-			if id == &"back_cut" and on_back and front >= RN.BACK_CUT_AFTER and back < front * 0.5:
+			if id == &"back_cut" and on_back and front >= RN.BACK_CUT_AFTER:
 				extra += cuts * (RN.BACK_CUT_TIMES - 1)
 			if id == &"power_swing":
 				extra += maxi((RN.POWER_CLEAN_HITS if clean else RN.POWER_HITS) - (cuts + (s["clean_extra"] if clean else 0)), 0)
@@ -413,10 +425,13 @@ func _chop(i: int, st: Dictionary, lvl: int, axe: int, id: StringName, momentum:
 				front_barked = true
 			if hits > 0:
 				bites += 1
-				if id == &"heartwood" and bites == RN.KNOT_AFTER and not knot_done:
+				if bites == 1:
+					knot_grows = rng.randf() < RN.KNOT_CHANCE
+				if id == &"heartwood" and bites == RN.KNOT_AFTER and knot_grows and not knot_done:
 					knot = true
 					knot_done = true
-	var logs: float = s["drops"] * (2.0 if fine_cut else 1.0) * (RN.OLD_GROWTH_DROPS if _old_growth(i, id) else 1)
+	var logs: float = s["drops"] * (RN.FINE_GRAIN_DROPS if fine_cut else 1.0) \
+		* (RN.OLD_GROWTH_DROPS if _old_growth(i, id) else 1) * (RN.DOMINOES_LOGS if id == &"dominoes" else 1.0)
 	if _old_growth(i, id):
 		rare.append(&"trophy_log")
 	xp += s["xp_break"]
@@ -429,6 +444,6 @@ func _swing_time(lvl: int, momentum: int) -> float:
 	var pose: Dictionary = player.SWINGS[&"axe"]
 	var pace: float = pose["pace"] * (1.0 + player.momentum_step * momentum)
 	var quick: float = 1.0 + perks.bonus_at(&"woodcutting", &"recovery", lvl)
-	return player.windup_time / pace * pose.get("windup_scale", 1.0) + player.strike_time / pace \
-		+ player.bite_hold + player.yank_time \
-		+ (player.recover_time / pace * pose.get("recover_scale", 1.0) + player.swing_cooldown) / quick
+	return swing_scale * (player.windup_time / pace * pose.get("windup_scale", 1.0) + player.strike_time / pace
+		+ player.bite_hold + player.yank_time
+		+ (player.recover_time / pace * pose.get("recover_scale", 1.0) + player.swing_cooldown) / quick)

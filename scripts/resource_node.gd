@@ -44,27 +44,36 @@ const SHARP_COLOR := Color("ffd27a")
 const TALENT_COLOR := Color("ffe9a8")
 ## Chain cut: the most extra hits a run of clean cuts reaches.
 const CHAIN_MAX := 3
-## Back cut: a hit opposite a notch this deep (share of a full notch, as for a clean cut), with
-## this side under half as deep, counts this many times.
+## Back cut: once the notch is this deep (share of a full notch, as for a clean cut), a hit from
+## more than this far round from its side counts this many times.
 const BACK_CUT_AFTER := 0.25
-const BACK_CUT_TIMES := 3
+const BACK_CUT_ANGLE := 120.0
+const BACK_CUT_TIMES := 4
 ## Power swing: a full charge counts as this many hits, or this many on a clean cut.
-const POWER_HITS := 3
-const POWER_CLEAN_HITS := 5
-## Heartwood: the knot shows after this many biting hits; hitting it takes this many extra.
+const POWER_HITS := 4
+const POWER_CLEAN_HITS := 7
+## Heartwood: this share of trees grow a knot; it shows after this many biting hits; hitting it
+## takes this many extra.
+const KNOT_CHANCE := 0.12
 const KNOT_AFTER := 3
 const KNOT_EXTRA := 3
 const KNOT_RADIUS := 0.16
 const KNOT_COLOR := Color("ffb347")
-## Dominoes: a falling trunk takes this share of the max hits off each tree it lands on.
+## Dominoes: a tree you fell lands hard, shaking loose this many times the logs; a falling trunk
+## takes this share of the max hits off each tree it lands on.
+const DOMINOES_LOGS := 1.25
 const CRUSH_SHARE := 0.6
-## Grove keeper: your felled trees regrow this much faster.
-const GROVE_REGROW := 2.0
+## Grove keeper: your felled trees regrow this much faster, fine-grained: the first clean cut on
+## one multiplies its logs by this.
+const GROVE_REGROW := 1.3
+const FINE_GRAIN_DROPS := 1.3
 ## Old growth: one tree in this many (by its save id) is ancient; it takes this many times the
-## hits and drops this many times the logs, plus a trophy log.
+## hits and drops this many times the logs, plus a trophy log, and takes this many times as long
+## to grow back (an ancient tree is a find, not a farm).
 const OLD_GROWTH_ONE_IN := 30
 const OLD_GROWTH_TOUGH := 3.0
-const OLD_GROWTH_DROPS := 4
+const OLD_GROWTH_DROPS := 3
+const OLD_GROWTH_REGROW := 20.0
 const OLD_GROWTH_SHIMMER := 0.8
 ## The impact star's tint: a plain hit, a crack tip (and splits).
 const STAR_HIT := Color(1.0, 0.97, 0.9)
@@ -848,7 +857,9 @@ func _drop_count() -> int:
 		extra += rare.bonus_drops
 	var count := randi_range(drops_min, maxi(drops_min, drops_max)) + extra
 	if _fine_cut:  # Grove keeper: the first clean cut on a fine-grained tree
-		count *= 2
+		count = roundi(count * FINE_GRAIN_DROPS)
+	if skill == &"woodcutting" and topple and Skills.talents.has(&"dominoes"):  # a hard landing
+		count = roundi(count * DOMINOES_LOGS)
 	if _old_growth_active():
 		count *= OLD_GROWTH_DROPS
 	return count
@@ -1148,6 +1159,8 @@ func _carve_hit(info: HitInfo, cuts: int) -> void:
 	dir.y = 0.0
 	var y := (to_trunk * info.position).y
 	var stripped := _blaze_area()
+	if not _carve.is_started() and dir.length_squared() > 0.0001:
+		_notch_from = dir.normalized()  # the notch's side (Back cut and Dominoes go by it)
 	_carve.hit(y, dir, notch_depth * cuts / max_hits)
 	_trunk.mesh = _carve.carved()
 	info.position = _trunk.global_transform * _carve.bite_point(dir)
@@ -2574,6 +2587,8 @@ static func _crack_dot(img: Image, cx: float, y: int, radius: float, color: Colo
 # plans/levels.md: Feller (chain cut, dominoes, power swing, momentum) vs Forester (back cut,
 # heartwood, grove keeper, old growth). Each asks Skills.talents.has() at the moment it matters.
 
+var _notch_from := Vector3.ZERO  # trunk space: the side the notch was begun on (ZERO: not yet)
+var _knot_grows := false  # Heartwood: this tree has a knot to find (rolled as it grows)
 var _chain := 0  # Chain cut: clean cuts in a row on this tree
 var _bites := 0  # biting hits on this tree since it grew (Heartwood's knot comes after a few)
 var _knot: MeshInstance3D  # Heartwood: the glowing knot, while it shows
@@ -2616,19 +2631,25 @@ func _woodcutting_talents(info: HitInfo, cuts: int) -> Dictionary:
 	return {"extra": extra, "say": "  ".join(say)} if not say.is_empty() else {"extra": extra}
 
 
-## A swing from the far side of a well-started notch (Back cut): this side's barely touched.
+## A swing from the far side of a well-started notch (Back cut): more than BACK_CUT_ANGLE round
+## from the side the notch was begun on, once it's BACK_CUT_AFTER deep.
 func _is_back_cut(info: HitInfo) -> bool:
-	if _carve == null or not _carve.is_started():
+	if _carve == null or not _carve.is_started() or _notch_from == Vector3.ZERO:
 		return false
 	var dir := _trunk.global_transform.affine_inverse().basis * (info.from - info.position)
 	dir.y = 0.0
-	var full := _carve.radius_at(_carve.ring, -dir) * notch_depth
-	var opposite := _carve.depth_toward(-dir)
-	return opposite >= full * BACK_CUT_AFTER and _carve.depth_toward(dir) < opposite * 0.5
+	var full := _carve.radius_at(_carve.ring, _notch_from) * notch_depth
+	return _carve.depth_toward(_notch_from) >= full * BACK_CUT_AFTER \
+		and dir.normalized().dot(_notch_from) < cos(deg_to_rad(BACK_CUT_ANGLE))
 
 
-## Where the notch faces (world, horizontal): the deepest way into the trunk.
+## Where the notch faces (world, horizontal): the side it was begun on, or else (a notch loaded
+## from a save) the deepest way into the trunk.
 func _notch_dir() -> Vector3:
+	if _notch_from != Vector3.ZERO:
+		var w := _trunk.global_transform.basis * _notch_from
+		w.y = 0.0
+		return w.normalized()
 	var best := Vector3.ZERO
 	var deepest := -1.0
 	for i in TrunkCarve.BINS:
@@ -2656,7 +2677,9 @@ func _talent_fall(usual: Vector3) -> Vector3:
 ## After a biting hit: Heartwood's knot shows once the tree's taken a few.
 func _after_bite() -> void:
 	_bites += 1
-	if _bites == KNOT_AFTER and not _knot_done and Skills.talents.has(&"heartwood") and _trunk:
+	if _bites == 1:
+		_knot_grows = randf() < KNOT_CHANCE  # (rolled once a tree, on its first bite)
+	if _bites == KNOT_AFTER and _knot_grows and not _knot_done and Skills.talents.has(&"heartwood") and _trunk:
 		_knot_done = true
 		_show_knot()
 
@@ -2698,6 +2721,7 @@ func _felled_by_talents(regrow: float) -> float:
 	var t := Skills.talents
 	if _old_growth_active():
 		_bonus_items.append(&"trophy_log")
+		regrow *= OLD_GROWTH_REGROW
 	var player := get_tree().get_first_node_in_group("player")
 	if player and player.has_method("note_felled"):
 		player.note_felled()
@@ -2713,6 +2737,8 @@ func _felled_by_talents(regrow: float) -> float:
 func _regrown() -> void:
 	_chain = 0
 	_bites = 0
+	_notch_from = Vector3.ZERO
+	_knot_grows = false
 	_knot_done = false
 	_fine_cut = false
 	_fine_grained = _fine_next

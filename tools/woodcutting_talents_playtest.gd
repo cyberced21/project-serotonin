@@ -1,8 +1,8 @@
 extends SceneTree
 ## Checks the woodcutting talents (plans/levels.md) in a real world, headless: it strikes trees
 ## directly (ResourceNode.hit with a HitInfo from a spot beside the trunk), each talent alone,
-## and checks what it should do: chain cut's growing extra hits, a back cut's triple, a power
-## swing's three, heartwood's knot and log, dominoes' crush, grove keeper's quick fine regrowth,
+## and checks what it should do: chain cut's growing extra hits, a back cut's four, a power
+## swing's four, heartwood's knot and log, dominoes' crush, grove keeper's quick fine regrowth,
 ## momentum's count, old growth's shimmer and toughness.
 ##   godot --headless --path . -s res://tools/woodcutting_talents_playtest.gd -- --save-root=user://wc_talents
 ## (No game class names here: an -s script compiles before the autoloads exist.)
@@ -94,21 +94,23 @@ func _chain_cut() -> void:
 	_only(&"chain_cut")
 	var tree = _tree()
 	var took: Array[int] = []
-	for i in 6:
+	for i in 12:
 		took.append(await _strike(tree, Vector3.RIGHT))
 	print("  chain cut: hits taken per swing %s" % [took])
-	_check(took[4] > took[3] and took[3] > took[2], "chain cut: a run of clean cuts takes more and more")
+	var first_clean := took.find(2)  # (a clean cut alone takes 2; the run then adds +1, +2, +3)
+	_check(first_clean >= 0 and took[first_clean + 1] == 3 and took[first_clean + 2] == 4,
+		"chain cut: a run of clean cuts takes more and more")
 
 
 func _back_cut() -> void:
 	_only(&"back_cut")
 	var tree = _tree()
-	for i in 3:
+	for i in 8:  # (the notch has to be a quarter deep first)
 		await _strike(tree, Vector3.RIGHT)
 	var plain := await _strike(tree, Vector3.FORWARD)  # round the side: not a back cut
 	var back := await _strike(tree, Vector3.LEFT)
 	print("  back cut: from the side %d, from the back %d" % [plain, back])
-	_check(back >= plain * 3, "back cut: a hit opposite the notch counts triple")
+	_check(back >= plain * 4, "back cut: a hit opposite the notch counts four times")
 
 
 func _power_swing() -> void:
@@ -117,7 +119,7 @@ func _power_swing() -> void:
 	var plain := await _strike(tree, Vector3.RIGHT)
 	var power := await _strike(tree, Vector3.FORWARD, true)
 	print("  power swing: plain %d, charged %d" % [plain, power])
-	_check(power >= 3, "power swing: a charged swing counts three")
+	_check(power >= 4, "power swing: a charged swing counts four")
 	_only(&"")
 	var tree2 = _tree()
 	_check(await _strike(tree2, Vector3.RIGHT, true) == 1, "power swing: without the talent a charge is just a swing")
@@ -126,7 +128,9 @@ func _power_swing() -> void:
 func _heartwood() -> void:
 	_only(&"heartwood")
 	var tree = _tree()
-	for i in 3:
+	await _strike(tree, Vector3.RIGHT)
+	tree.set("_knot_grows", true)  # (only KNOT_CHANCE of trees grow one: make this one of them)
+	for i in 2:
 		await _strike(tree, Vector3.RIGHT)
 	var knot: Node3D = tree.get("_knot")
 	_check(knot != null and knot.visible, "heartwood: a knot shows after three bites")
@@ -156,7 +160,7 @@ func _grove_keeper() -> void:
 		await _strike(tree, Vector3.RIGHT)
 		guard += 1
 	var timer = tree.get("_respawn_timer")
-	_check(timer != null and timer.time_left <= full / 2.0 + 0.5, "grove keeper: regrows in half the time")
+	_check(timer != null and timer.time_left <= full / 1.3 + 0.5, "grove keeper: regrows faster")
 	_check(tree.get("_fine_next"), "grove keeper: and grows back fine-grained")
 
 

@@ -25,6 +25,7 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 
 ## Gathering
 
+- [ ] **Deepen tree logging** (asked 2026-10-27): long fells are fine (trees now take 15/20/25 hits), but chopping isn't interactive enough yet. Later: cut bigger and bigger notches into trees, so where and how you cut matters more as you go (the notch is `TrunkCarve`; the woodcutting talents in `ResourceNode` lean on it). Re-check the talents with `tools/talent_model.gd` after.
 - [x] **Weak points:** a glowing diamond on one chunk. A swing aimed at it counts an extra hit, gives double XP and a "Weak spot!" burst, then the spot moves (`ResourceNode` *Weak point* group).
 - [x] **True tool sinking:** during the bite, a world copy of the tool sticks with its edge buried in the node. The held fist stays on screen holding the handle (`player.gd` `_stick_in_world`).
 - [x] **Clean respawn ghost:** one silhouette outline via the stencil buffer (`ResourceNode.ghost_silhouette`, on by default).

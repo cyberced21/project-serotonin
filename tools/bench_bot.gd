@@ -24,6 +24,8 @@ const STAND_OFF := 1.5
 const NODE_TIMEOUT := 40.0
 
 var tree: SceneTree
+## Gather only nodes of this tool tier (-1: any); an old-growth tree you can see always counts.
+var only_tier := -1
 var player
 var speed := 3.0
 var verbose := false
@@ -84,8 +86,11 @@ func nearest_node(skill: StringName):
 	for n in tree.get_nodes_in_group("gatherable"):
 		if n.get("skill") != skill or not n.call("is_available") or not n.call("can_gather") or n.call("is_under_levelled"):
 			continue
+		var ancient: bool = skill == &"woodcutting" and n.call("_old_growth_active")
+		if only_tier >= 0 and int(n.get("tool_tier")) != only_tier and not ancient:
+			continue
 		var d := flat(n.global_position, player.global_position)
-		if skill == &"woodcutting" and n.call("_old_growth_active"):
+		if ancient:
 			d *= 0.25
 		if d < best_d:
 			best_d = d
