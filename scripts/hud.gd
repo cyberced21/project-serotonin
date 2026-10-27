@@ -45,6 +45,7 @@ func _ready() -> void:
 	_build_xp_bar()
 	_build_banner()
 	_build_clock()
+	add_child(TalentCards.new())
 
 	Inventory.changed.connect(_on_changed)
 	Skills.xp_gained.connect(_on_xp_gained)

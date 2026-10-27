@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/talent_def.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"momentum"
+skill = &"woodcutting"
+milestone = 40
+style = &"feller"
+style_name = "Feller"
+display_name = "Momentum"
+text = "Each tree felled within 10 s of the last makes your swings 15% faster, up to three times."

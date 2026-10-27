@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/talent_def.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"green_thumb"
+skill = &"farming"
+milestone = 10
+style = &"grower"
+style_name = "Grower"
+display_name = "Green thumb"
+text = "Sheaves near you regrow twice as fast."

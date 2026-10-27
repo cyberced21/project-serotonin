@@ -982,6 +982,11 @@ func _aim(length := reach) -> Dictionary:
 	return get_world_3d().direct_space_state.intersect_ray(query)
 
 
+## Mid-action: a swing or thrust under way, or the rod out (TalentCards waits for this to end).
+func is_busy() -> bool:
+	return _swinging or rodfishing.is_busy()
+
+
 func _node_under_crosshair(hit: Dictionary) -> ResourceNode:
 	var node := hit.get("collider") as ResourceNode
 	return node if node and node.is_available() else null

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/talent_def.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"split_shot"
+skill = &"mining"
+milestone = 20
+style = &"breaker"
+style_name = "Breaker"
+display_name = "Split shot"
+text = "A crack-tip hit can split the rock clean in two, both halves dropping their ore at once."

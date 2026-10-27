@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/talent_def.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"gem_eye"
+skill = &"mining"
+milestone = 40
+style = &"prospector"
+style_name = "Prospector"
+display_name = "Gem eye"
+text = "Some rocks hide a gem pocket that glints. Hit it precisely to pop a gem."

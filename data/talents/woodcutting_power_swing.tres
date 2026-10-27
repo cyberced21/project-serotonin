@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/talent_def.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"power_swing"
+skill = &"woodcutting"
+milestone = 30
+style = &"feller"
+style_name = "Feller"
+display_name = "Power swing"
+text = "Hold to charge: one swing counts as three hits, five on a clean cut."

@@ -7,7 +7,8 @@ extends CanvasLayer
 ## Upgrading closes it so you can watch the building go up.
 ## Greta's panel has a second tab, Forge: the next pick, axe, sickle, spear and rod (Tools.RECIPES), each with
 ## its cost and what it opens, greyed out until the smithy's tier allows it. Forging plays the
-## forge moment (ForgeCutscene).
+## forge moment (ForgeCutscene). A third tab, Talents, resets one skill's talent picks (respec,
+## plans/levels.md L8): the first ever is free, after that it costs that skill's goods.
 
 const OPEN_SFX := preload("res://audio/pickup.tres")
 const WIDTH := 460.0
@@ -19,6 +20,8 @@ const NEED_COLOR := Color("ff8a7a")
 const DIM := Color(1, 1, 1, 0.6)
 const ACCENT := Color("ffd27a")
 const PERK_COLOR := Color("a9d8ff")
+
+enum Tab { UPGRADE, FORGE, TALENTS }
 
 var villager: Villager
 var _closed_msec := -100000
@@ -34,11 +37,11 @@ var _costs: GridContainer
 var _button: Button
 var _status: Label
 var _tabs: HBoxContainer
-var _tab_upgrade: Button
-var _tab_forge: Button
+var _tab_buttons: Array[Button] = []
 var _upgrade_box: VBoxContainer
 var _forge_box: VBoxContainer
-var _forging := false
+var _talents_box: VBoxContainer
+var _tab := Tab.UPGRADE
 
 
 func _ready() -> void:
@@ -49,6 +52,7 @@ func _ready() -> void:
 	Inventory.changed.connect(func(_i: StringName, _c: int) -> void: _refresh())
 	Village.tier_changed.connect(func(_id: StringName, _t: int) -> void: _refresh())
 	Tools.changed.connect(func(_t: StringName, _tier: int) -> void: _refresh())
+	Skills.talents.changed.connect(func(_s: StringName) -> void: _refresh())
 
 
 func is_open() -> bool:
@@ -65,7 +69,7 @@ func open(v: Villager) -> void:
 	var def := v.building.def
 	_name.text = def.villager_name
 	_line.text = "“%s”" % _pick_line()
-	_forging = false
+	_tab = Tab.UPGRADE
 	_refresh()
 	_panel.visible = true
 	_panel.pivot_offset = _panel.size / 2.0
@@ -124,14 +128,18 @@ func _refresh() -> void:
 		return
 	var def := villager.building.def
 	_tabs.visible = def.id == Tools.SMITHY
-	_forging = _forging and _tabs.visible
-	_tab_upgrade.button_pressed = not _forging
-	_tab_forge.button_pressed = _forging
-	_upgrade_box.visible = not _forging
-	_forge_box.visible = _forging
-	_panel.offset_top = -300 if _forging else -170  # (the forge list is taller: keep it on screen)
-	if _forging:
+	if not _tabs.visible:
+		_tab = Tab.UPGRADE
+	for i in _tab_buttons.size():
+		_tab_buttons[i].button_pressed = i == _tab
+	_upgrade_box.visible = _tab == Tab.UPGRADE
+	_forge_box.visible = _tab == Tab.FORGE
+	_talents_box.visible = _tab == Tab.TALENTS
+	_panel.offset_top = -170 if _tab == Tab.UPGRADE else -300  # (the lists are taller: keep them on screen)
+	if _tab == Tab.FORGE:
 		_refresh_forge()
+	elif _tab == Tab.TALENTS:
+		_refresh_talents()
 	var tier_now := Village.tier(def.id)
 	var current := def.get_tier(tier_now)
 	_role.text = "%s  ·  %s  ·  %s" % [def.villager_role, def.display_name, current.name if current else "?"]
@@ -261,8 +269,67 @@ func _on_forge_pressed(tool: StringName) -> void:
 		ForgeCutscene.play(greta, tool)  # Greta makes it, then hands it over
 
 
-func _show_tab(forge: bool) -> void:
-	_forging = forge
+## The Talents tab: per skill with picks, what you took, and the reset with its price.
+func _refresh_talents() -> void:
+	for c in _talents_box.get_children():
+		c.queue_free()
+	var talents := Skills.talents
+	var any := false
+	for skill in Skills.SKILLS:
+		if talents.picked_count(skill) == 0:
+			continue
+		any = true
+		var title := _label(19)
+		title.text = Skills.display_name(skill)
+		title.add_theme_color_override("font_color", Skills.color(skill))
+		_talents_box.add_child(title)
+		var names := PackedStringArray()
+		for m in TalentDef.MILESTONES:
+			var def := talents.picked(skill, m)
+			if def:
+				names.append(def.display_name)
+		if talents.mastery.has(skill):
+			names.append(talents.defs[talents.mastery[skill]].display_name)
+		var picked := _label(16)
+		picked.text = ", ".join(names)
+		picked.modulate = DIM
+		picked.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		picked.custom_minimum_size = Vector2(WIDTH - 40, 0)
+		_talents_box.add_child(picked)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		_talents_box.add_child(row)
+		var cost := talents.respec_cost(skill)
+		if cost.is_empty():
+			var free := _label(16)
+			free.text = "Free, this once"
+			free.add_theme_color_override("font_color", HAVE_COLOR)
+			row.add_child(free)
+		else:
+			_add_cost_row(row, cost)
+		var button := _make_button("Reset")
+		button.custom_minimum_size = Vector2(96, 34)
+		button.size_flags_horizontal = Control.SIZE_SHRINK_END | Control.SIZE_EXPAND
+		button.add_theme_font_size_override("font_size", 17)
+		button.disabled = not cost.is_empty() and not Inventory.has_all(cost)
+		button.tooltip_text = "Forget %s's talents and choose again" % Skills.display_name(skill)
+		button.pressed.connect(_on_respec_pressed.bind(skill))
+		row.add_child(button)
+		_talents_box.add_child(HSeparator.new())
+	if not any:
+		var none := _label(17)
+		none.text = "No talents to reset yet: they come at level 10."
+		none.modulate = DIM
+		_talents_box.add_child(none)
+
+
+func _on_respec_pressed(skill: StringName) -> void:
+	if villager and Skills.talents.respec(skill, Inventory):
+		close()  # the choices come up again once you're back on your feet (TalentCards)
+
+
+func _show_tab(tab: Tab) -> void:
+	_tab = tab
 	_refresh()
 
 
@@ -328,8 +395,9 @@ func _build() -> void:
 
 	_tabs = HBoxContainer.new()
 	_tabs.add_theme_constant_override("separation", 8)
-	_tab_upgrade = _make_tab("Upgrade", false)
-	_tab_forge = _make_tab("Forge", true)
+	_make_tab("Upgrade", Tab.UPGRADE)
+	_make_tab("Forge", Tab.FORGE)
+	_make_tab("Talents", Tab.TALENTS)
 	box.add_child(_tabs)
 
 	_upgrade_box = VBoxContainer.new()
@@ -338,6 +406,9 @@ func _build() -> void:
 	_forge_box = VBoxContainer.new()
 	_forge_box.add_theme_constant_override("separation", 6)
 	box.add_child(_forge_box)
+	_talents_box = VBoxContainer.new()
+	_talents_box.add_theme_constant_override("separation", 6)
+	box.add_child(_talents_box)
 
 	_perks_now = _label(16)
 	_perks_now.add_theme_color_override("font_color", HAVE_COLOR)
@@ -397,8 +468,8 @@ func _make_button(text: String) -> Button:
 	return button
 
 
-## A tab toggle (Upgrade / Forge) on Greta's panel: lit when it's the open one.
-func _make_tab(text: String, forge: bool) -> Button:
+## A tab toggle (Upgrade / Forge / Talents) on Greta's panel: lit when it's the open one.
+func _make_tab(text: String, tab_id: Tab) -> Button:
 	var tab := Button.new()
 	tab.text = text
 	tab.toggle_mode = true
@@ -415,8 +486,9 @@ func _make_tab(text: String, forge: bool) -> Button:
 	tab.add_theme_stylebox_override("hover", off)
 	tab.add_theme_stylebox_override("pressed", on)
 	tab.add_theme_stylebox_override("hover_pressed", on)
-	tab.pressed.connect(_show_tab.bind(forge))
+	tab.pressed.connect(_show_tab.bind(tab_id))
 	_tabs.add_child(tab)
+	_tab_buttons.append(tab)
 	return tab
 
 

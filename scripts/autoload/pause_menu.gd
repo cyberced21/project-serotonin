@@ -13,6 +13,7 @@ var _column: VBoxContainer
 var _world_label: Label
 var _controls: ControlsScreen
 var _skills: SkillsScreen
+var _skills_button: Button
 var _settings: SettingsScreen
 var _toast: Label
 var _busy := false
@@ -34,6 +35,7 @@ func open() -> void:
 		return
 	get_tree().paused = true
 	_world_label.text = Worlds.current_meta.get("name", "")
+	_skills_button.text = "Skills  · a talent to choose" if Skills.talents.any_waiting() else "Skills"
 	_shade.visible = true
 	_show_panel()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -177,7 +179,8 @@ func _build() -> void:
 	_column.add_theme_constant_override("separation", 8)
 	box.add_child(_column)
 	_column.add_child(MenuUI.button("Resume", resume, 20))
-	_column.add_child(MenuUI.button("Skills", _show_skills, 20))
+	_skills_button = MenuUI.button("Skills", _show_skills, 20)
+	_column.add_child(_skills_button)
 	_column.add_child(MenuUI.button("Settings", _show_settings, 20))
 	_column.add_child(MenuUI.button("Controls", _show_controls, 20))
 	_column.add_child(MenuUI.spacer(4))

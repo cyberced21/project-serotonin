@@ -1,7 +1,8 @@
 class_name SkillsScreen
 extends PanelContainer
-## Every skill's level and its three perk tracks (Perks): how far each has come, and what the next
-## level brings. Rebuilt each time it opens, so it's always current.
+## Every skill's level, its three perk tracks (Perks): how far each has come and what the next
+## level brings, and its talents (Talents): what you picked at each milestone, and a Choose button
+## when a choice is waiting. Rebuilt each time it opens or a pick changes, so it's always current.
 
 signal closed
 
@@ -23,6 +24,9 @@ func _init() -> void:
 	back.custom_minimum_size = Vector2(110, 0)
 	box.add_child(back)
 	visibility_changed.connect(func() -> void:
+		if visible:
+			_refresh())
+	Skills.talents.changed.connect(func(_s: StringName) -> void:
 		if visible:
 			_refresh())
 
@@ -72,4 +76,41 @@ func _skill_card(skill: StringName) -> Control:
 	if lvl < Skills.MAX_LEVEL:
 		var next := Perks.perk_at(skill, lvl + 1)
 		box.add_child(MenuUI.label("Next, at %d: %s" % [lvl + 1, next["name"].to_lower()], 15, MenuUI.DIM))
+	box.add_child(_talent_row(skill, lvl))
 	return card
+
+
+## One chip per milestone: the talent picked there, "waiting", or the level still to reach; then
+## mastery once it's taken, and a Choose button while a choice waits.
+func _talent_row(skill: StringName, lvl: int) -> Control:
+	var talents := Skills.talents
+	var row := HFlowContainer.new()
+	row.add_theme_constant_override("h_separation", 14)
+	row.add_child(MenuUI.label("Talents", 16))
+	for m in TalentDef.MILESTONES:
+		var def := talents.picked(skill, m)
+		var chip: Label
+		if def:
+			chip = MenuUI.label("%d %s" % [m, def.display_name], 15, MenuUI.ACCENT)
+			chip.tooltip_text = "%s: %s" % [def.style_name, def.text]
+			chip.mouse_filter = Control.MOUSE_FILTER_PASS
+		elif lvl >= m:
+			chip = MenuUI.label("%d waiting" % m, 15, MenuUI.GOOD)
+		else:
+			chip = MenuUI.label("%d —" % m, 15, MenuUI.DIM)
+		row.add_child(chip)
+	var mastered: TalentDef = talents.defs.get(talents.mastery.get(skill, &""))
+	if mastered:
+		var chip := MenuUI.label("50 %s" % mastered.display_name, 15, MenuUI.ACCENT)
+		chip.tooltip_text = "Mastery (%s): %s" % [mastered.style_name, mastered.text]
+		chip.mouse_filter = Control.MOUSE_FILTER_PASS
+		row.add_child(chip)
+	if talents.has_waiting(skill):
+		row.add_child(MenuUI.button("Choose", _choose.bind(skill), 15))
+	return row
+
+
+func _choose(skill: StringName) -> void:
+	var cards := get_tree().get_first_node_in_group("talent_cards") as TalentCards
+	if cards:
+		cards.show_choice(skill)

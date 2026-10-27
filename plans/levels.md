@@ -5,9 +5,10 @@ levels decide *how well*. Chosen 2026-10-20 from two explorations
 ([levels-milestones.md](levels-milestones.md), [levels-talents.md](levels-talents.md)): B's
 steady per-level growth, with D's gameplay-changing techniques turned into C-style **choices**.
 
-Status: **phase 1 built** 2026-10-27 on branch `levels` (off `fishing-yank`): the minor tracks
-(`scripts/perks.gd`), the perk line under the level-up banner, and a Skills page in the pause
-menu. Unplayed. Phases 2 to 6 not started.
+Status: **phases 1 and 2 built** 2026-10-27 on branch `levels` (off `fishing-yank`): the minor
+tracks (`scripts/perks.gd`), the perk line under the level-up banner, a Skills page in the pause
+menu; the talent framework (choice cards, picks saved, mastery, respec at Greta). Unplayed by
+hand. **The talents don't do anything yet**: their effects are phases 4 and 5.
 
 ## Decisions (grilled 2026-10-20)
 
@@ -159,8 +160,15 @@ boost by choosing who to visit. Each is the villager's trade flavour, never a ta
 1. ~~**Minor tracks + level-up moment**~~: done 2026-10-27. `Perks` (track values) read by the
    technique windows, swing recovery, pickup magnet, sickle aim and fishing; the perk named
    under the level-up banner; a Skills page in the pause menu; `tools/test_perks.gd`.
-2. **Talent framework**: `TalentDef` resources (`data/talents/`), picks in `Skills` + save, the
-   choice cards, the talents page, respec at Greta.
+2. ~~**Talent framework**~~: done 2026-10-27. `TalentDef` (all 32 in `data/talents/`, texts from
+   the tables above); `Talents` (owned by `Skills` as `Skills.talents`, saved under its own key
+   `talents`, so old saves load with no picks); gameplay asks `Skills.talents.has(&"chain_cut")`.
+   `TalentCards` (on the HUD) waits until you're idle 2.2 s after a milestone, pauses, and shows
+   the pair; "Decide later" / Esc leaves it waiting (a badge on the pause menu's Skills button,
+   a Choose button on the Skills page). Mastery offers the four options not taken. Greta's panel
+   has a third tab, Talents: reset one skill, free the first time, then 20 of its base goods per
+   pick (the rare-item option, 10 per pick plus one item, comes with rare items in phase 6).
+   `tools/test_talents.gd` (rules) and `tools/talent_playtest.gd` (the flow in a real world).
 3. **The balance bench** (headless, yield per minute per talent).
 4. **Woodcutting talents** end to end, then played by hand before the rest.
 5. **Mining**, then **Fishing**, then **Farming** talents.

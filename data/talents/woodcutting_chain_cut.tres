@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/talent_def.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"chain_cut"
+skill = &"woodcutting"
+milestone = 10
+style = &"feller"
+style_name = "Feller"
+display_name = "Chain cut"
+text = "Back-to-back clean cuts each count one extra hit, up to three. A miss resets it."

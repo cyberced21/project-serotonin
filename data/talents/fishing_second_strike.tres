@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/talent_def.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"second_strike"
+skill = &"fishing"
+milestone = 20
+style = &"angler"
+style_name = "Angler"
+display_name = "Second strike"
+text = "Once per bite, a late strike can be saved with a quick re-strike."
