@@ -10,3 +10,6 @@ __pycache__/
 docs/images/graphics/scratch/
 docs/sound_preview/
 docs/images/walls/scratch/
+
+# Exported builds (export_presets.cfg)
+/build/

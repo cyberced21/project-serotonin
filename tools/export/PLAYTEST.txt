@@ -1,0 +1,32 @@
+Project serotonin - playtest build
+==================================
+
+Unzip the whole folder somewhere, then run ProjectSerotonin.exe.
+Keep libterrain.windows.release.x86_64.dll next to the exe: the game needs it.
+
+Windows may warn that the app is unrecognised (it isn't signed):
+click "More info", then "Run anyway".
+
+Needs a graphics card with Vulkan (most cards from the last ~8 years).
+
+Controls
+--------
+WASD / mouse      move / look
+Shift             sprint (air dash in the air)
+Space             jump / mantle / wall run
+Ctrl or C         crouch / slide
+Left mouse or E   gather (axe, pickaxe, sickle), spear, fish
+Right mouse or Q  bow when a hooked fish jumps
+E                 talk to a villager
+Esc               pause menu (settings, controls, save and quit)
+
+Debug menu (left on for testing)
+--------------------------------
+F1                debug menu: items, skill levels, tools, teleports, fly mode, time of day...
+F6 / F7 / F8      skip 3 hours / 50 of every item / upgrade every building
+F9 / F10          give XP / reset save
+
+Saves live in %APPDATA%\Godot\app_userdata\Project serotonin\worlds
+
+Found a bug? Tell me what you were doing, and send the log:
+%APPDATA%\Godot\app_userdata\Project serotonin\logs\godot.log
