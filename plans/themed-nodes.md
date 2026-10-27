@@ -1,7 +1,18 @@
 # Themed nodes: the art style baked into generation
 
-Agreed on 2026-10-26. Branch `themes`, off `main` once the `tools` PR (#4) is merged (off `tools`
-until then). One commit per phase.
+Agreed on 2026-10-26. Branch `themes`, off `tools` (the `tools` PR, #4, was still open). One
+commit per phase. **Status: all 7 phases done 2026-10-26**, unpushed and unplayed (judged from
+screenshots in `docs/images/themes/`). Open items are in docs/TODO.md ("Themed nodes").
+
+What changed from the decisions below while building:
+- No squash/stretch at load time (non-uniform scale fights the pieces' physics); proportions come
+  only from the shape families' recipes in Blender.
+- Three instance uniforms, not two: `theme_c` gives the leaves their own colour (autumn, value,
+  saturation) and a rare look's shimmer.
+- Scenery is dressed with the same instance uniforms, which Godot applies per MultiMesh: each
+  32 m cell of a layer wears one look. No `INSTANCE_CUSTOM`.
+- Rare looks are Ancient moss, Lightning-scorched, Frost-touched and Gilded (they fit trees and
+  rocks alike), rolled by `ProcgenMap` so the preview tool can list them.
 
 ## Why
 
@@ -52,23 +63,23 @@ every rock in a place clearly belonging to the same family and the same place.
 
 ## Phases
 
-1. **Tracer: copper in two kinds.** A `NodeTheme` resource (`data/themes/`), the seed hierarchy
+1. ✅ **Tracer: copper in two kinds.** A `NodeTheme` resource (`data/themes/`), the seed hierarchy
    with cluster seeds in `NodeSpawner`, the two theme uniforms in the node shader, applied to
    copper only, with Pine Forest and Frostpeak dressings. Load-time measurement. Screenshots of the
    same rock in both kinds (`tools/ore_closeup.gd`) added to docs/images.
-2. **Every rock, every kind.** All five ores and every kind's dressing from the table; Quarry dust
+2. ✅ **Every rock, every kind.** All five ores and every kind's dressing from the table; Quarry dust
    and Frostpeak snow checked against the quarry levels and foothills.
-3. **Shape recipes.** Ore builders in `make_models.py` take ranges instead of fixed values; 8
+3. ✅ **Shape recipes.** Ore builders in `make_models.py` take ranges instead of fixed values; 8
    variants each; a cluster picks its variants from a shared shape family (picked by cluster seed,
    not just by save id). `VARIANTS` in `procgen_population.gd` follows.
-4. **Trees.** Tree builders take shape ranges (lean, crown size, gnarl); 8 variants; bark and
+4. ✅ **Trees.** Tree builders take shape ranges (lean, crown size, gnarl); 8 variants; bark and
    canopy dressing through the foliage and palette paths; snow on Frostpeak pines; the felled log
    keeps its tree's dressing.
-5. **Scenery.** Boulders, bushes and background canopies themed via MultiMesh custom data, so the
+5. ✅ **Scenery.** Boulders, bushes and background canopies themed via MultiMesh custom data, so the
    ground round a node matches it.
-6. **Rare themed nodes.** The one-off looks, 1–3 per seed, with their bonus; shown in the debug
+6. ✅ **Rare themed nodes.** The one-off looks, 1–3 per seed, with their bonus; shown in the debug
    menu's Procgen tab and the preview tool's output.
-7. **Wrap-up.** README, docs/TODO.md, a graphics tour shot per kind, load-time check against
+7. ✅ **Wrap-up.** README, docs/TODO.md, a graphics tour shot per kind, load-time check against
    phase 1's numbers.
 
 ## Verifying
