@@ -31,11 +31,12 @@ to 40% better than at level 1.
 |---|---|---|---|
 | Woodcutting | **Steadier aim**: the clean-cut tolerance into the notch is wider | **Quicker recovery**: less time between swings | **Long reach**: logs fly to you from further away (pickup magnet) |
 | Mining | **Keen eye**: more leeway in how close a hit must be to a crack tip to count | **Quicker recovery** | **Long reach** (ore) |
-| Fishing | **Quick hands**: the strike, bow and jerk windows are wider | **Strong line**: runs give back a little less distance | **Smooth cast**: a wider sweet spot on the release |
+| Fishing | **Quick hands**: the strike window (rod) is wider and the thrust (spear) a little thicker | **Strong line**: a pull a hair after the window still lands the fish | **Smooth cast**: a wider sweet spot on the release |
 | Farming | **Wide blade**: the sickle sweeps a wider arc | **Quicker recovery** | **Long reach** (grain) |
 
-Fishing's current per-10-level cast range (`range_per_10_levels`) and the level window scaling
-(`FishFight.level_scales`) fold into these tracks.
+Fishing's current per-10-level cast range (`range_per_10_levels`), skewer length
+(`reach_bonus_per_10_levels`) and the level window scaling (`FishBite.window_scale`) fold into
+these tracks. (The rod's fight is gone since 2026-10-27: plans/fishing-parity.md.)
 
 **Flourishes (15 / 25 / 35 / 45)**:
 - A tool trail on clean hits.
@@ -70,7 +71,7 @@ Fishing's current per-10-level cast range (`range_per_10_levels`) and the level 
 | 10 | **Feel the take**: a faint rod tremble one beat before the take. | **Quiet wading**: schools don't scatter when you walk in, only when you thrust. |
 | 20 | **Second strike**: once per bite, a late strike can be saved with a quick re-strike. | **Follow-through**: after a catch, a second thrust within 0.6 s can take a fish from the scattering school. |
 | 30 | **Power cast**: hold the back-cast longer for +50% range, out to water no one else can reach. | **Skewer**: a thrust through a dense school can take two or three fish. |
-| 40 | **Play the fish**: a perfect answer to a run turns it back toward you, so a skilled fight ends much sooner. | **Spear throw**: throw the spear up to 8 m at a fish, then pull it back. The spear reaches the rod's water. |
+| 40 | **Trophy hunter**: the biggest fish nearby notice your float first, so far more of your catches are Big or Huge. | **Spear throw**: throw the spear up to 8 m at a fish, then pull it back. The spear reaches the rod's water. |
 
 Choosing a style here also chooses a tool, so Fishing's pairs are balanced across *both*
 tools: one rod perk and one spear perk at every milestone.

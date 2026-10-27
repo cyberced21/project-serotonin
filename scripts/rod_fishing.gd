@@ -44,6 +44,9 @@ const LAND_DISTANCE := 2.6
 ## The nearest water it casts to (m, flat from your feet).
 @export var min_distance := 2.0
 @export var range_per_10_levels := 1.0
+## A rod catch pays this much more XP than the same fish speared: one fish at a time, so each one
+## is worth more (tuned with tools/fishing_bench.gd against the spear).
+@export var catch_xp := 1.8
 ## What each rod tier above the willow pole adds (Tools): cast range (m) and strike window.
 @export var range_per_tier := 1.5
 @export var window_per_tier := 0.08
@@ -94,7 +97,7 @@ var _retrieve_from := Vector3.ZERO
 var _done_wait := 0.0
 # the catch, popped up once it lands
 var _catch_text := ""
-var _catch_xp := 0
+var _catch_gained := 0
 var _catch_perfect := false
 var _catch_size := ""
 var _catch_bonus := false
@@ -392,8 +395,8 @@ func _yank(f: Fish, timing: float) -> void:
 	# the payoff, worked out now (popped up when it lands)
 	_catch_perfect = _verdict.get("quality", -1) == RodCast.Quality.PERFECT and timing < 0.5
 	var under := Skills.level(&"fishing") < s.required_level
-	var mult := (1.5 if _catch_perfect else 1.0) * f.xp_scale() * (1.5 if under else 1.0)
-	_catch_xp = Skills.add_xp(&"fishing", roundi(s.xp * mult))
+	var mult := catch_xp * (1.5 if _catch_perfect else 1.0) * f.xp_scale() * (1.5 if under else 1.0)
+	_catch_gained = Skills.add_xp(&"fishing", roundi(s.xp * mult))
 	_catch_text = "%s, %.1f kg" % [Items.display_name(s.id), f.weight()]
 	_catch_size = FishSize.word(f.size)
 	var count := FishSize.count_for(f.size)
@@ -430,8 +433,8 @@ func _on_landed(at: Vector3) -> void:
 	if not words.is_empty():
 		PopupText.spawn(player.get_parent(), top + Vector3.UP * 0.2, " ".join(words), color, 7)
 	PopupText.spawn(player.get_parent(), top, _catch_text, Color.WHITE, 5, 0.08)
-	if _catch_xp > 0:
-		PopupText.spawn(player.get_parent(), top + Vector3.DOWN * 0.18, "+%d" % _catch_xp, color, 4, 0.16)
+	if _catch_gained > 0:
+		PopupText.spawn(player.get_parent(), top + Vector3.DOWN * 0.18, "+%d" % _catch_gained, color, 4, 0.16)
 
 
 ## The fish is down (or gone): off the hook, and the float comes back with the slack line.

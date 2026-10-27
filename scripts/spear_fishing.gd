@@ -30,8 +30,14 @@ const DODGE_COLOR := Color("ff8a7a")
 ## What each spear tier above the stick adds (Tools): reach (m) and skewer length (fraction).
 @export var reach_per_tier := 0.15
 @export var length_per_tier := 0.1
-## Extra XP per additional fish on the same thrust (0.5 = +50% each).
-@export var multi_xp_bonus := 0.5
+## Extra XP per additional fish on the same thrust (0.3 = +30% each).
+@export var multi_xp_bonus := 0.3
+## A fish already bolting (a school you just scattered) is this much harder to take: stalk calm
+## ones rather than chase (tuned with tools/fishing_bench.gd).
+@export_range(0.0, 1.0) var flee_catch := 0.4
+## Every speared fish pays this much of its XP: the spear takes many, the rod (RodFishing.catch_xp)
+## few but richer, and over an hour they come out even (tools/fishing_bench.gd).
+@export var catch_xp := 0.85
 
 @export_group("Thrust timing")
 @export var windup_time := 0.14
@@ -176,7 +182,8 @@ func thrust() -> void:
 			if not f.tool_can_take(&"spear"):
 				glanced.append(f)
 			else:
-				(caught if randf() < f.catch_chance() else dodgers).append(f)
+				var chance := f.catch_chance() * (flee_catch if f.state == Fish.State.FLEE else 1.0)
+				(caught if randf() < chance else dodgers).append(f)
 		_splash(entry, 1.0 if caught.is_empty() else 0.7)
 		if not glanced.is_empty() and caught.is_empty():
 			_play_at(load("res://audio/fishing/jerk.tres"), entry, 1.6, -2.0)
@@ -256,7 +263,7 @@ func _put_on_spear(caught: Array[Fish]) -> void:
 
 ## Escalating feedback + XP (`xp`: the fish's own, summed) for n fish on one thrust.
 func _impact(n: int, xp: float, at: Vector3) -> void:
-	var gained := Skills.add_xp(&"fishing", roundi(xp * (1.0 + multi_xp_bonus * (n - 1))))
+	var gained := Skills.add_xp(&"fishing", roundi(xp * catch_xp * (1.0 + multi_xp_bonus * (n - 1))))
 	Juice.hitstop(0.05 + 0.03 * (n - 1))
 	Juice.shake(2.0 + 1.2 * (n - 1))
 	for i in n:  # one wet thwack per fish, each a little higher (real time, so hit-stop can't delay them)
