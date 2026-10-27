@@ -466,6 +466,31 @@ def split(rng, v=PLAIN_STONE):
     return echo(rng, out, 1.4, 1.1)
 
 
+def slab(rng, v=PLAIN_STONE):
+    """A loose slab of an ore wall coming away: a deep crack, the slab grinding as it slides off
+    the rock behind, then the heavy fall, its pieces knocking apart on the ground and a patter of
+    grit after, all thrown back by the quarry walls."""
+    n = secs(1.7)
+    out = burst(rng, n, 900, 5000, 0.0025, 0.6)
+    out += punch(n, 160, 55, 0.02, 0.09, 1.2)
+    out += splinters(rng, n, int(rng.integers(40, 60)), 0.12, 800, 5000, 0.25, 0.0015)
+    slide = secs(rng.uniform(0.28, 0.36))
+    grip = stick_slip(rng, slide, rng.uniform(40, 60), rng.uniform(90, 130), wobble=0.5, contact=0.0006)
+    grip *= env(slide, 0.03, slide / RATE * 0.4, slide / RATE * 0.4)
+    at(out, strike(grip, stone(rng, v, lo=250, count=40, tau=0.03), slide + secs(0.1)) * 0.5, 0.06)
+    when, g = rng.uniform(0.42, 0.5), 1.0
+    for _ in range(rng.integers(4, 6)):
+        knock = burst(rng, secs(0.15), 700, 4000, 0.0015, g * 0.5)
+        knock += punch(secs(0.15), rng.uniform(150, 190), rng.uniform(65, 85), 0.008, 0.05, g)
+        knock += dsine(secs(0.15), rng.uniform(380, 620), 0.018, g * 0.6)
+        at(out, knock, when)
+        when += rng.uniform(0.05, 0.13)
+        g *= rng.uniform(0.55, 0.8)
+    grit = grains(rng, secs(0.6), np.sort(rng.uniform(0.0, 0.45, 40)), rng.uniform(0.2, 0.7, 40))
+    at(out, strike(grit, pebbles(rng), secs(0.7)), when, 0.4)
+    return echo(rng, out, 1.6, 1.3)
+
+
 def scrape(rng, v=PLAIN_STONE):
     """The point dragged out of the rock: steel grinding on stone, catching unevenly."""
     n = secs(rng.uniform(0.16, 0.24))
@@ -517,7 +542,7 @@ def rustle(rng, v=None):
 WOOD = [("chop", 8, chop), ("clean_cut", 4, clean_cut), ("pull", 4, pull), ("creak", 4, creak),
         ("fall", 2, fall), ("land", 3, land)]
 STONE = [("mine", 8, mine), ("crack", 5, crack), ("split", 4, split), ("scrape", 4, scrape),
-         ("pebble", 6, pebble), ("whoosh", 6, whoosh), ("rustle", 4, rustle)]
+         ("pebble", 6, pebble), ("whoosh", 6, whoosh), ("rustle", 4, rustle), ("slab", 3, slab)]
 WOOD_VOICED = ("chop", "creak", "land")
 STONE_VOICED = ("mine", "crack", "split")
 
@@ -534,6 +559,7 @@ STACKS = {
     "mining/pickaxe_hit": ([("stone/mine", 0.0, 0.04, True, 0.0)], "voiced", {}),
     "mining/crack_tip": ([("stone/crack", 2.0, 0.04, True, 0.0)], "voiced", {}),
     "mining/split": ([("stone/split", 2.0, 0.04, True, 0.0)], "voiced", {}),
+    "mining/slab": ([("stone/slab", 3.0, 0.05, True, 0.0)], None, {"unit_size": 6.0, "max_distance": 60.0}),
     "mining/pickaxe_pull": ([("stone/scrape", -8.0, 0.06, True, 0.0)], None, {}),
     "mining/debris_stone": ([("stone/pebble", -2.0, 0.12, True, 0.0)], None,
                             {"bus": "Debris", "unit_size": 2.5, "max_distance": 30.0}),

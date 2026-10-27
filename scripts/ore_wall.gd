@@ -71,6 +71,7 @@ var _aimed: Array = []
 var _near := false
 var _piece_shapes := {}  # layer * 1000 + index -> its CollisionShape3D, while near
 var _check_in := 0.0
+var _grit_in := 3.0
 
 static var _cache := {}  # template -> its pieces (see _template)
 
@@ -93,6 +94,11 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if _near:
+		_grit_in -= delta
+		if _grit_in <= 0.0:
+			_grit_in = randf_range(SLAB_SETTLE.x, SLAB_SETTLE.y)
+			_settle_grit()
 	_check_in -= delta
 	if _check_in > 0.0:
 		return
@@ -156,16 +162,16 @@ static func _template(n: int) -> Array:
 	return layers
 
 
-## One mesh of all a layer's pieces, each vertex carrying its piece's index + 1 in UV2.x (the
-## shader hides broken pieces by it, and finds each piece's ore).
-static func _merge(pieces: Array) -> ArrayMesh:
+## One mesh of a layer's pieces (all of them, or just `only`), each vertex carrying its piece's
+## index + 1 in UV2.x (the shader hides broken pieces by it, and finds each piece's ore).
+static func _merge(pieces: Array, only := PackedInt32Array()) -> ArrayMesh:
 	var verts := PackedVector3Array()
 	var normals := PackedVector3Array()
 	var uvs := PackedVector2Array()
 	var uv2s := PackedVector2Array()
 	var colours := PackedColorArray()
 	var indices := PackedInt32Array()
-	for i in pieces.size():
+	for i in (only if not only.is_empty() else PackedInt32Array(range(pieces.size()))):
 		var mesh: Mesh = pieces[i]["mesh"]
 		var xf: Transform3D = pieces[i]["xform"]
 		for s in mesh.get_surface_count():
@@ -297,6 +303,7 @@ func _refresh_layers() -> void:
 			_layer_mesh[k].visible = want
 			if want:
 				_update_mask(k)
+	_refresh_slabs()
 
 
 func _make_layer(k: int) -> MeshInstance3D:
@@ -342,7 +349,11 @@ func _layer_material(k: int) -> ShaderMaterial:
 
 func _update_mask(k: int) -> void:
 	var words := [0, 0, 0, 0]
-	for i: int in _gone[k]:
+	var hidden := _gone[k].keys()
+	for s in _layer_slabs(k):  # (a loose slab is drawn on its own, standing out of the face)
+		if _slab_live(k, s):
+			hidden.append_array(Array(s))
+	for i: int in hidden:
 		if i < 96:
 			words[i / 24] |= 1 << (i % 24)
 	_layer_mesh[k].set_instance_shader_parameter("pieces_gone", Vector4(words[0], words[1], words[2], words[3]))
@@ -440,6 +451,8 @@ func _show_aim() -> void:
 	for k in LAYERS:
 		if _layer_mesh[k]:
 			_layer_mesh[k].set_instance_shader_parameter("aim_piece", float(_aimed[1]) if not _aimed.is_empty() and _aimed[0] == k else -1.0)
+	for key: int in _slab_mesh:  # (a loose slab's pieces are drawn there)
+		_slab_mesh[key].set_instance_shader_parameter("aim_piece", float(_aimed[1]) if not _aimed.is_empty() and _aimed[0] == key / 100 else -1.0)
 
 
 func is_available() -> bool:
@@ -454,6 +467,237 @@ func set_highlighted(on: bool) -> void:
 		_show_aim()
 
 
+# --- loose slabs -----------------------------------------------------------------------------
+# A few clusters of pieces in each layer have worked loose (the rocks' fault, grown up): once
+# their layer is the face, each stands a few cm proud of it and tips out at the top, a dark crack
+# round it, and every so often lets a little grit fall. Strike one anywhere, or dig out what's
+# under it, and the whole slab comes down at once. Your pick has to be able to take every piece
+# in it, or it holds.
+
+const SLAB_LAYERS := preload("res://audio/mining/slab.tres")
+const SLABS_PER_LAYER := 2
+const SLAB_SIZE := Vector2i(5, 7)
+const SLAB_OUT := 0.04
+const SLAB_TIP := 0.03
+const SLAB_SETTLE := Vector2(3.0, 6.0)
+## Once this share of a layer is dug out, the rest of it comes away.
+const CRUMBLE_AT := 0.85
+
+var _slabs := {}  # layer -> its slabs (each the indices of its pieces)
+var _slab_mesh := {}  # layer * 100 + slab -> the slab drawn on its own, while it's loose
+## How many slabs have come down (tools/wall_closeup.gd reports it).
+var slabs_dropped := 0
+
+
+## Layer k's slabs: grown out from pieces off the floor, through the pieces they touch.
+func _layer_slabs(k: int) -> Array:
+	if _slabs.has(k):
+		return _slabs[k]
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([vein_seed, template, k, "slab"])
+	var pieces := _layer_pieces(k)
+	var taken := {}
+	var out := []
+	for tries in 40:
+		if out.size() >= SLABS_PER_LAYER:
+			break
+		var start := rng.randi() % pieces.size()
+		var c: Vector3 = pieces[start]["centre"]
+		if taken.has(start) or c.y < 1.0 or c.y > HEIGHT - 0.6 or absf(c.x) > WIDTH * 0.5 - 0.4:
+			continue
+		var want := rng.randi_range(SLAB_SIZE.x, SLAB_SIZE.y)
+		var slab := PackedInt32Array([start])
+		var edge := [start]
+		while slab.size() < want and not edge.is_empty():
+			var at: int = edge.pop_at(rng.randi() % edge.size())
+			for o in pieces[at]["links"]:
+				if slab.size() < want and not taken.has(o) and not o in slab:
+					slab.append(o)
+					edge.append(o)
+		if slab.size() < SLAB_SIZE.x:
+			continue
+		for i in slab:
+			taken[i] = true
+		out.append(slab)
+	_slabs[k] = out
+	return out
+
+
+## A slab is loose while it's whole and its layer is the face.
+func _slab_live(k: int, slab: PackedInt32Array) -> bool:
+	if k != front:
+		return false
+	for i in slab:
+		if _is_gone(k, i):
+			return false
+	return true
+
+
+## The loose slab piece p is in, or empty.
+func _slab_holding(p: Array) -> PackedInt32Array:
+	for s: PackedInt32Array in _layer_slabs(p[0]):
+		if p[1] in s and _slab_live(p[0], s):
+			return s
+	return PackedInt32Array()
+
+
+## The best pick any piece in the slab needs.
+func _slab_hardest(k: int, slab: PackedInt32Array) -> int:
+	var t := 0
+	for i in slab:
+		var kind := _ore_of([k, i])
+		t = maxi(t, ORES[kind]["tier"] if kind != STONE else 0)
+	return t
+
+
+func _slab_centre(k: int, slab: PackedInt32Array) -> Vector3:
+	var c := Vector3.ZERO
+	for i in slab:
+		c += _piece(k, i)["centre"]
+	return c / slab.size()
+
+
+## The loose slabs drawn on their own, standing out and tipped; the rest back in their layer.
+func _refresh_slabs() -> void:
+	var live := {}
+	if front < LAYERS:
+		var slabs := _layer_slabs(front)
+		for s in slabs.size():
+			if _slab_live(front, slabs[s]):
+				live[front * 100 + s] = slabs[s]
+	for key in _slab_mesh.keys():
+		if not live.has(key):
+			_surfaces.erase(_slab_mesh[key])
+			_slab_mesh[key].queue_free()
+			_slab_mesh.erase(key)
+	var shadow := Vector4.ZERO
+	for key: int in live:
+		var slab: PackedInt32Array = live[key]
+		var c := _slab_centre(front, slab)
+		var across := 0.0
+		var foot := INF
+		for i in slab:
+			across = maxf(across, (_piece(front, i)["centre"] as Vector3).distance_to(c))
+			for p: Vector3 in _piece(front, i)["points"]:
+				foot = minf(foot, p.y)
+		if not _slab_mesh.has(key):
+			var m := MeshInstance3D.new()
+			m.name = "Slab%d" % key
+			m.mesh = _merge(_layer_pieces(front), slab)
+			m.material_override = _layer_mesh[front].material_override
+			m.visibility_range_end = draw_distance
+			# out from the face, and tipped out at the top about its foot
+			var pivot := Vector3(c.x, foot, c.z)
+			var tip := Transform3D(Basis(Vector3.RIGHT, SLAB_TIP), pivot) * Transform3D(Basis.IDENTITY, -pivot)
+			m.transform = Transform3D(Basis.IDENTITY, Vector3(0, 0, SLAB_OUT)) * tip
+			visual.add_child(m)
+			_surfaces.append(m)
+			_dress(m)
+			_slab_mesh[key] = m
+		var w := global_transform * c
+		var gap := Vector4(w.x, w.y, w.z, across + 0.35)
+		_slab_mesh[key].set_instance_shader_parameter("fault_shadow", gap)
+		if shadow == Vector4.ZERO:
+			shadow = gap  # (the layer takes one: the first slab's)
+	if front < LAYERS and _layer_mesh[front]:
+		_layer_mesh[front].set_instance_shader_parameter("fault_shadow", shadow)
+
+
+## The loose slab nothing holds up any more (every piece under it in its layer dug out, and it's
+## off the floor), as [layer, slab], or empty.
+func _undercut() -> Array:
+	if front >= LAYERS:
+		return []
+	for slab: PackedInt32Array in _layer_slabs(front):
+		if not _slab_live(front, slab) or not Tools.can_work(tool_type, _slab_hardest(front, slab)):
+			continue
+		var held := false
+		for i in slab:
+			var me: Dictionary = _piece(front, i)
+			for p: Vector3 in me["points"]:
+				held = held or p.y < 0.15  # (on the floor)
+			for o in me["links"]:
+				if not o in slab and not _is_gone(front, o) \
+						and (_piece(front, o)["centre"] as Vector3).y < (me["centre"] as Vector3).y - 0.05:
+					held = true
+		if not held:
+			return [front, slab]
+	return []
+
+
+## The whole slab comes away: every piece of it thrown, its ore spilled, a deep crack and rumble.
+func _drop_slab(k: int, slab: PackedInt32Array, info: HitInfo) -> void:
+	var c := global_transform * _slab_centre(k, slab)
+	slabs_dropped += 1
+	var xp := 0
+	for i in slab:
+		if _is_gone(k, i):
+			continue
+		var kind := _ore_of([k, i])
+		xp += ORES[kind]["xp"] if kind != STONE else xp_per_hit
+		_pop_piece(k, i, info)
+	_popup_at = c + global_basis.z * 0.6
+	PopupText.spawn(get_parent(), _popup_at + Vector3.UP * 0.5, "Slab!", ore_color, 13)
+	_award_xp(xp * 2, true)
+	Sfx.play_at(SLAB_LAYERS, c)
+	_play(break_audio, break_sfx, 0.8)
+	Juice.shake(3.5)
+	Juice.hitstop(0.09)
+	HitFx.star(get_parent(), info.position + info.normal * 0.1, STAR_TIP, 2.5)
+	last_impact = 2.0
+	_dug(info)  # (and anything it was holding up in turn)
+
+
+## A piece of the face left on its own (nothing beside it in its layer) crumbles out, and once
+## most of a layer is gone so does the rest of it: no hunting round the corners for the last few.
+func _crumble(info: HitInfo) -> void:
+	if front >= LAYERS:
+		return
+	var all := float(_gone[front].size()) / _layer_pieces(front).size() >= CRUMBLE_AT
+	for i in _layer_pieces(front).size():
+		if _is_gone(front, i):
+			continue
+		var alone := true
+		for o in _piece(front, i)["links"]:
+			alone = alone and _is_gone(front, o)
+		var kind := _ore_of([front, i])
+		if (alone or all) and Tools.can_work(tool_type, ORES[kind]["tier"] if kind != STONE else 0):
+			_award_xp(ORES[kind]["xp"] if kind != STONE else xp_per_hit)
+			_pop_piece(front, i, info)
+
+
+## Now and then a loose slab lets a pinch of grit fall from the crack under it.
+func _settle_grit() -> void:
+	if front >= LAYERS or _slab_mesh.is_empty():
+		return
+	var key: int = _slab_mesh.keys().pick_random()
+	var slab: PackedInt32Array = _layer_slabs(front)[key % 100]
+	var under := _slab_centre(front, slab)
+	var foot := INF
+	for i in slab:
+		for p: Vector3 in _piece(front, i)["points"]:
+			foot = minf(foot, p.y)
+	under.y = foot
+	var grit := chips.duplicate() as CPUParticles3D
+	grit.one_shot = true
+	grit.explosiveness = 0.4
+	grit.amount = randi_range(4, 8)
+	grit.lifetime = 1.0
+	grit.direction = Vector3.DOWN
+	grit.spread = 30.0
+	grit.initial_velocity_min = 0.1
+	grit.initial_velocity_max = 0.5
+	grit.scale_amount_min = 0.2
+	grit.scale_amount_max = 0.45
+	grit.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	grit.emission_box_extents = Vector3(0.3, 0.02, 0.05)
+	grit.color = chip_color.lightened(0.1)
+	add_child(grit)
+	grit.position = under + Vector3(0, 0, SLAB_OUT + 0.03)
+	grit.emitting = true
+	grit.finished.connect(grit.queue_free)
+
+
 # --- digging ---------------------------------------------------------------------------------
 
 func hit(info: HitInfo) -> bool:
@@ -464,6 +708,15 @@ func hit(info: HitInfo) -> bool:
 		return false
 	_popup_at = info.position + info.normal * 0.3
 	_rate(struck)
+	var slab := _slab_holding(struck)
+	if not slab.is_empty():  # a loose slab: struck anywhere, it all comes down
+		var hardest := _slab_hardest(struck[0], slab)
+		if not Tools.can_work(tool_type, hardest):
+			tool_tier = hardest
+			_deflect(info)
+			return false
+		_drop_slab(struck[0], slab, info)
+		return true
 	if not can_gather():  # a vein your pick can't take yet: it rings off it
 		_deflect(info)
 		return false
@@ -493,7 +746,7 @@ func hit(info: HitInfo) -> bool:
 		ore = ore or kind != STONE
 	_award_xp(xp, ore)
 	last_impact = 1.5 if out.size() > 2 or ore else 1.0
-	_dug(out)
+	_dug(info)
 	return true
 
 
@@ -505,7 +758,7 @@ func _knock_out_from(struck: Array, info: HitInfo, extra: int) -> Array:
 	var near: Array = []
 	for o in _piece(k, struck[1])["links"]:  # (not a vein your pick can't take: it stays put)
 		var kind := _ore_of([k, o])
-		if not _is_gone(k, o) and Tools.can_work(tool_type, ORES[kind]["tier"] if kind != STONE else 0):
+		if not _is_gone(k, o) and Tools.can_work(tool_type, ORES[kind]["tier"] if kind != STONE else 0) 				and _slab_holding([k, o]).is_empty():  # (a loose slab comes down whole, or not at all)
 			near.append(o)
 	near.sort_custom(func(a: int, b: int) -> bool:
 		return (_piece(k, a)["centre"] as Vector3).distance_squared_to(at) < (_piece(k, b)["centre"] as Vector3).distance_squared_to(at))
@@ -545,12 +798,14 @@ func _pop_piece(k: int, i: int, info: HitInfo) -> void:
 		p.launch(c + global_basis.z * 0.3, vel, 0.05)
 
 
-## After pieces come out: the layers drawn, the face moving back once a layer's gone, the hulls
-## and box, the save.
-func _dug(out: Array) -> void:
-	var layers := {}
-	for p in out:
-		layers[p[0]] = true
+## After pieces come out: any loose slab they undercut falls, the layers drawn, the face moving
+## back once a layer's gone, the hulls and box, the save.
+func _dug(info: HitInfo) -> void:
+	var fell := _undercut()
+	if not fell.is_empty():
+		_drop_slab(fell[0], fell[1], info)
+		return
+	_crumble(info)
 	while front < LAYERS and _gone[front].size() >= _layer_pieces(front).size():
 		front += 1
 		_layer_cleared()

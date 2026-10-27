@@ -122,7 +122,7 @@ func _run() -> void:
 			await _shot("wall_%d" % (i + 1))
 	for k in 8:
 		print("LAYER %d ore %s" % [k, wall.call("ore_count", k)])
-	print("WALL front %d  bit %d of %d  gone %s" % [wall.get("front"), dug, hits, wall.call("to_dict")["gone"].map(func(a: Array) -> int: return a.size())])
+	print("WALL front %d  bit %d of %d  slabs %d  gone %s" % [wall.get("front"), dug, hits, wall.get("slabs_dropped"), wall.call("to_dict")["gone"].map(func(a: Array) -> int: return a.size())])
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://wall_closeup_save.json"))
 	quit()
 
