@@ -1,7 +1,8 @@
 extends SceneTree
 ## Rod fishing, played end to end in the real main world by a bot: stands on the lake shore, casts
-## (releasing on the sweet spot), waits for a real fish to take, strikes, answers every move of
-## the fight, lands it on a flash, and saves screenshots along the way. Prints what happened.
+## (releasing on the sweet spot), waits for a real fish to take, pulls a human-ish beat later,
+## watches the fish fly out and land beside it, walks over to pick it up, and saves screenshots
+## along the way. Prints what happened.
 ##
 ##   godot --path . --screen 1 --resolution 1280x720 -s res://tools/fishing_playtest.gd [-- --casts=3 --level=30]
 ##
@@ -15,17 +16,12 @@ extends SceneTree
 
 const OUT := "user://fishing_playtest"
 const SAVE := "user://fishing_playtest_save.json"
-# RodFishing.State / FishingLure.Bite / FishFight.Move / FishFight.Phase, as ints
+# RodFishing.State / FishingLure.Bite, as ints
 const WAITING := 3
-const FIGHT := 5
+const YANK := 5
 const TAKE := 4
-const PULL := 0
-const RUN := 1
-const HEADSHAKE := 2
-const JUMP := 3
-const TELEGRAPH := 1
-const ACTIVE := 2
-const LANDING := 3
+## Seconds from the take to the click: about a person's reaction.
+const REACTION := 0.25
 
 var casts := 3
 var level := 30
@@ -89,11 +85,11 @@ func _run() -> void:
 		else:
 			await _stand_at(lake, i)
 		if not rod.call("can_cast"):
-			_say("can't cast from here (aim %s)" % rod.get("aim_point"))
+			_say("can't cast from here (aim %s, rod state %d)" % [rod.get("aim_point"), rod.get("state")])
 			continue
 		await _shot("aim")
 		if await _cast():
-			var result: String = await _bite_and_fight()
+			var result: String = await _bite_and_yank()
 			_say("result: " + result)
 			if result == "landed":
 				landed += 1
@@ -219,7 +215,7 @@ func _cast() -> bool:
 	return ok
 
 
-func _bite_and_fight() -> String:
+func _bite_and_yank() -> String:
 	var lure = rod.get("lure")
 	var waited := 0.0
 	var seen := {}
@@ -227,77 +223,54 @@ func _bite_and_fight() -> String:
 		await physics_frame
 		waited += 1.0 / 60.0
 		if not is_instance_valid(lure):
-			return "float gone"
+			return "float gone (rod state %d, on floor %s, vy %.1f)" % [rod.get("state"), player.is_on_floor(), player.velocity.y]
 		var bite: int = lure.get("bite")
 		if not seen.has(bite):
 			seen[bite] = true
 			_say("  bite state %d at %.1f s%s" % [bite, waited, (" (%s)" % lure.get("fish").species.id) if lure.get("fish") else ""])
 		if bite == TAKE:
-			await _wait(0.12)  # a human-ish reaction
+			await _wait(0.06)
+			await _shot("take")
+			await _wait(REACTION - 0.06)
 			_tap("gather")
 			break
-	if rod.get("state") != WAITING and rod.get("state") != FIGHT:
-		await _wait(0.1)
 	await _wait(0.1)
-	if rod.get("state") != FIGHT:
+	if rod.get("state") != YANK:
 		_release_all()
 		_tap("gather")  # reel in
 		await _wait(0.6)
-		return "no bite in time" if waited >= 45.0 else "missed the strike (state %d)" % rod.get("state")
-	var fish = rod.get("fish")
-	_say("  hooked a %s, %.1f m out" % [fish.species.id, rod.get("fight").distance])
-	return await _fight()
-
-
-## Answers the fight like test_fishing's bot: reel on pulls, let go otherwise, click each jerk, bow
-## on the splash, grab on the flash.
-func _fight() -> String:
-	var fight = rod.get("fight")
-	var last = fight
-	var clicked_jerks := {}
-	var bowed := false
-	var shot_fight := false
+		return "no bite in time" if waited >= 45.0 else "missed the pull (state %d)" % rod.get("state")
+	var caught = rod.get("caught")
+	var id: StringName = caught.get("item")
+	var before: int = root.get_node("Inventory").call("count", id)
+	_say("  yanked a %s out" % id)
+	await _wait(0.25)
+	await _shot("yank")
 	var t := 0.0
-	while rod.get("state") == FIGHT and t < 120.0:
+	while is_instance_valid(caught) and caught.get("phase") == 0 and t < 3.0:  # LandedFish.Phase.FLY
 		await physics_frame
 		t += 1.0 / 60.0
-		fight = rod.get("fight")
-		if fight == null:
-			break
-		last = fight
-		var phase: int = fight.phase
-		var move: int = fight.move
-		if not shot_fight and t > 1.0:
-			shot_fight = true
-			await _shot("fight")
-		if phase == LANDING:
-			_set_held("gather", false)
-			if rod.get("_flash"):
-				_tap("gather")
-				await _shot("landing")
-			continue
-		if move == PULL and phase == ACTIVE:
-			_set_held("gather", true)
-			bowed = false
-			continue
-		_set_held("gather", false)
-		if move == HEADSHAKE and phase == ACTIVE:
-			var jerks: Array = fight.get("_jerks")
-			for j in jerks.size():
-				if not clicked_jerks.has(j) and fight.get("_t") >= jerks[j] + 0.04:
-					clicked_jerks[j] = true
-					_tap("gather")
-		elif move != HEADSHAKE:
-			clicked_jerks.clear()
-		if move == JUMP and phase == ACTIVE and not bowed:
-			bowed = true
-			_tap("bow")
-			await _shot("jump")
-	_release_all()
-	var r: String = String(last.result) if last else "?"
-	_say("  %s after %.1f s, %d of %d notches left, ended on move %d phase %d" % [r, t, last.notches, last.max_notches, last.move, last.phase])
+	if not is_instance_valid(caught):
+		return "the fish vanished in the air"
+	var down: Vector3 = caught.global_position
+	_say("  landed %.1f m away after %.2f s" % [_flat(down, player.global_position), t])
 	await _wait(0.3)
-	return r if r != "" else "timeout"
+	await _shot("landed")
+	await _wait(1.2)
+	await _shot("flopping")
+	# walk up to it (the bot just steps next to it)
+	var me: Vector3 = player.global_position
+	player.global_position = me.lerp(down, 0.6)
+	t = 0.0
+	while is_instance_valid(caught) and t < 3.0:
+		await physics_frame
+		t += 1.0 / 60.0
+	var after: int = root.get_node("Inventory").call("count", id)
+	return "landed" if after == before + 1 else "not picked up (%d -> %d)" % [before, after]
+
+
+func _flat(a: Vector3, b: Vector3) -> float:
+	return Vector2(a.x - b.x, a.z - b.z).length()
 
 
 # --- input ---------------------------------------------------------------------------------

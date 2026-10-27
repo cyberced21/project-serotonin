@@ -60,27 +60,11 @@ extends Resource
 @export var nibble_gap := Vector2(0.5, 1.2)
 ## The two quick twitches right before the take.
 @export var tap_tap := true
-## Seconds to strike once the float dunks under, before the fish spits the hook.
+## Seconds to strike (yank it out) once the float dunks under, before the fish spits the hook.
 @export var strike_window := 0.25
 ## Pike: no nibbles and no tap-tap; it sits under the float for a while, then slams it.
 @export var ambush := false
 
-@export_group("Fight")
-## How often each move comes up: pull, run, headshake, jump (relative weights).
-@export var move_weights := Vector4(5, 1, 2, 0)
-## Warning before a run or a jump (s, min max). Shorter below your level.
-@export var telegraph := Vector2(0.45, 0.6)
-## How fast a run takes line (m/s), and how long one lasts (s, min max).
-@export var run_speed := 1.2
-@export var run_time := Vector2(0.8, 1.4)
-## Jerks in a headshake (min, max) and the beat between them (s).
-@export var shake_jerks := Vector2i(2, 3)
-@export var shake_beat := 0.34
-## How fast holding the reel through a pull brings it in (m/s), before its size slows it.
-@export var reel_speed := 1.6
-## How much each extra unit of size slows the reel (0.35 = the biggest reels in 35% slower).
-@export_range(0.0, 0.9) var size_drag := 0.35
-
 @export_group("Size")
-## Weight range (kg): each catch rolls one. Bigger fight longer and give more XP (up to +50%).
+## Weight range (kg): each catch rolls one. Bigger give more XP (up to +50%).
 @export var weight := Vector2(0.1, 0.4)

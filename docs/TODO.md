@@ -13,8 +13,8 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 - [x] **A lake:** south of the clearing, up a second path. It's 1.35 m deep in the middle, with trout, perch and Arctic char (Fishing 30, keeps to deep water via `FishSpecies.min_depth`).
 - [ ] **A stream** feeding the pond. Needs flowing water that isn't a flat `WaterBody` surface.
 - [x] **Rod fishing:** cast, bite, fight, land, all timing (plans/fishing.md). Grayling and salmon in generated worlds' rivers (pools at bends, a current that carries the float).
-- [ ] **Play the rod by hand** — the bots land everything (tools/test_fishing.gd, tools/fishing_playtest.gd), but the windows, telegraph lengths and fight lengths (perch ~7 s .. salmon ~25 s for a 9 m fight) need tuning by feel: `data/fish/*.tres` *Rod* / *Fight* groups.
-- [ ] **Listen to the rod's sounds** (`tools/synth_fishing.py`): every cue is synthesized and unheard; the cast whip, nibble vs. tap vs. bloop, and the run's hiss carry the gameplay, so they have to be told apart by ear.
+- [ ] **Play the rod by hand** — reworked 2026-10-27 to *wait for the take, then pull* (no fight). The bot lands everything (tools/fishing_playtest.gd); tune the strike windows (0.42–0.6 s) and the hook moment's punch by feel: `data/fish/*.tres` *Rod* group, `RodFishing._hook_moment` / `_yank`.
+- [ ] **Listen to the rod's sounds** (`tools/synth_fishing.py`): every cue is synthesized and unheard; the cast whip, nibble vs. tap, and the take's `hooked` stinger carry the gameplay, so they have to be told apart by ear. `yank` and `flop` are new too. The old fight's sounds (hiss, bulge, strain, snap, thrash, hoist, reel) are unused now.
 - [ ] **A river in the main world** so grayling and salmon can go into upgrade costs (they're only in generated worlds; the fisher's tier 3 asks for char, the rod-only fish the main world has).
 - [ ] **Bait / lures** (attract certain species: spinner for pike, fly for grayling) and a personal-best log of fish sizes.
 - [ ] **Rod in the Settings screen** — prompt assist lives in the debug menu's Player tab (and settings.cfg `[gameplay]`) until `menus` lands.

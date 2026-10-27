@@ -9,7 +9,7 @@ extends Resource
 ##   fish_calm           fraction off every fish's scare radius (FishSchool.disturb); on the rod, fish
 ##                       notice the float from further and nibble less (FishingLure)
 ##   bonus_fish_chance   chance a speared fish counts twice (SpearFishing)
-##   line_notches        extra line notches on the rod: mistakes a fight can take (RodFishing)
+##   strike_window       longer to pull once a fish takes the float (+0.25 = 25%; FishingLure)
 ##   run_speed           fraction faster walking and sprinting (Player)
 ##   extra_ore           extra drops from rocks and veins (ResourceNode)
 ##   rock_regrow         fraction off the respawn time of rocks and veins (ResourceNode)

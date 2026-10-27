@@ -585,7 +585,7 @@ func _move(delta: float) -> void:
 	if _state == State.WALLRUN and _jump_buffer > 0.0:
 		horizontal = _wall_jump(horizontal)
 		jumped = true
-	elif _jump_buffer > 0.0 and _coyote > 0.0 and not _swinging and _can_stand() and not rodfishing.is_fighting():
+	elif _jump_buffer > 0.0 and _coyote > 0.0 and not _swinging and _can_stand():
 		var spd := horizontal.length()
 		if _state == State.SLIDE:
 			spd += slide_jump_boost  # slide cancel: keep the slide's speed, plus a kick
@@ -614,7 +614,6 @@ func _move(delta: float) -> void:
 	speed *= move_slow_while_swinging if _swinging else 1.0
 	speed *= wading
 	speed *= 1.0 + Village.stat(&"run_speed")  # Rosa's bread
-	speed *= rodfishing.move_scale()  # a fish on: rooted to a shuffle
 
 	match _state:
 		State.SLIDE:

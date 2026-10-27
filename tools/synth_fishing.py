@@ -24,6 +24,11 @@ in the minigame is one of these, so each has to be told apart at a glance by ear
   thrash      the fish thrashing at your feet
   hoist       the fish lifted out: a big spray and a drip-off
   spook       a fish bolting: a quick swirl
+  hooked      the take, the moment to pull: a heavy plunge, the line zinging tight, a bell
+  yank        the strike that lands it: a whoosh and the water tearing open
+  flop        the fish hitting the bank, and each flop after
+
+(reel, hiss, bulge, strain, snap, thrash and hoist were the old fight's; nothing plays them now.)
 """
 import os
 import wave
@@ -303,11 +308,72 @@ def spook(rng):
     return out
 
 
+# --- the hook and the yank ------------------------------------------------------------------------
+
+def hooked(rng):
+    """The take, the one moment that matters: a heavy plunge, the line zinging tight, and a bright
+    bell on top so it cuts through anything else that's playing."""
+    out = np.zeros(secs(0.9))
+    n = secs(0.32)
+    t = np.arange(n) / RATE
+    place(out, sweep(n, rng.uniform(430, 480), rng.uniform(110, 130), 0.45) * env(n, 0.003, 0.09), 0.0)
+    place(out, np.sin(2 * np.pi * rng.uniform(55, 65) * t) * env(n, 0.002, 0.07) * 0.9, 0.0)
+    m = secs(0.3)
+    place(out, band(rng.standard_normal(m), 300, 6000) * env(m, 0.002, 0.06) * 1.1, 0.0)
+    bubbles(rng, out, 10, 0.05, 0.5, 0.3, 350, 1100)
+    # the line coming tight: a rising zing with a little wobble
+    z = secs(0.4)
+    tz = np.arange(z) / RATE
+    f0 = rng.uniform(560, 620)
+    wob = 1.0 + 0.012 * np.sin(2 * np.pi * 23 * tz)
+    zing = sweep(z, f0, f0 * 2.2, 0.35) * wob + 0.4 * sweep(z, f0 * 2.01, f0 * 4.4, 0.35)
+    place(out, zing * env(z, 0.004, 0.12) * 0.35, 0.025)
+    # the bell: two bright, slightly inharmonic partials
+    b = secs(0.8)
+    tb = np.arange(b) / RATE
+    fb = rng.uniform(1300, 1340)
+    bell = np.sin(2 * np.pi * fb * tb) + 0.5 * np.sin(2 * np.pi * fb * 2.76 * tb) * np.exp(-tb / 0.08)
+    place(out, bell * env(b, 0.001, 0.22) * 0.32, 0.0)
+    return out
+
+
+def yank(rng):
+    """The strike that lands it: the rod whooshing up and the fish tearing out of the water."""
+    out = np.zeros(secs(0.9))
+    n = secs(0.3)
+    t = np.arange(n) / RATE
+    swell = np.exp(-((t - 0.07) / 0.035) ** 2)
+    place(out, band(rng.standard_normal(n), 1200, 8000) * swell * 1.0, 0.0)
+    place(out, sweep(n, 700, 2600, 0.6) * swell * 0.12, 0.0)
+    # the water tearing open, and the spray falling back
+    m = secs(0.5)
+    place(out, band(rng.standard_normal(m), 400, 7000) * env(m, 0.004, 0.1) * 1.4, 0.04)
+    place(out, np.sin(2 * np.pi * rng.uniform(70, 85) * np.arange(m) / RATE) * env(m, 0.002, 0.05) * 0.6, 0.04)
+    bubbles(rng, out, 8, 0.06, 0.3, 0.3, 600, 1600)
+    for _ in range(rng.integers(10, 15)):  # spray pattering back down
+        place(out, drop(rng, rng.uniform(1300, 2000), rng.uniform(2300, 3200), 0.035, 0.008) * 0.25,
+              rng.uniform(0.3, 0.85))
+    return out
+
+
+def flop(rng):
+    """A wet fish hitting the ground: a soft thud and a slap."""
+    out = np.zeros(secs(0.3))
+    n = secs(0.12)
+    t = np.arange(n) / RATE
+    place(out, np.sin(2 * np.pi * rng.uniform(85, 110) * t) * env(n, 0.001, 0.03) * 0.9, 0.0)
+    place(out, band(rng.standard_normal(n), 500, 5000) * env(n, 0.0, 0.018) * 1.0, 0.0)
+    place(out, drop(rng, rng.uniform(700, 800), rng.uniform(350, 420), 0.06, 0.02) * 0.3, 0.008)
+    return out
+
+
+## (New sounds go at the end: each one's seed is its place in this list.)
 SOUNDS = {
     "cast_whip": cast_whip, "plip": plip, "plop": plop, "splosh": splosh,
     "nibble": nibble, "tap": tap, "bloop": bloop,
     "reel": reel, "creak": creak, "jerk": jerk, "hiss": hiss, "bulge": bulge, "jump": jump,
     "strain": strain, "snap": snap, "thrash": thrash, "hoist": hoist, "spook": spook,
+    "hooked": hooked, "yank": yank, "flop": flop,
 }
 
 
