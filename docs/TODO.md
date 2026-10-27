@@ -130,14 +130,29 @@ Plan and decisions: [plans/biomes.md](../plans/biomes.md).
 - [ ] **Trophy / achievement spot** in or near the town hall: medals, discoveries, maxed skills.
 - [ ] **A "leaves" footstep set** for the forest floor (it sounds like grass for now).
 
-## Generated worlds (experimental)
+## Menus and worlds
 
-Plans and decisions: [plans/procgen.md](../plans/procgen.md), [plans/procgen-variety.md](../plans/procgen-variety.md). On the `procgen` branch.
+Plan and decisions: [plans/menus.md](../plans/menus.md).
+
+- [x] **Main menu, worlds, pause, settings, New World:** a menu over a drifting view of the clearing, a folder per world (`user://worlds/`), Esc pauses, four settings tabs, world settings with a live map, small and large worlds, a loading screen.
+- [ ] **Playtest the menus by hand:** Continue / Play, the pause menu, Save & Quit and its picture, rename / duplicate / delete, the old saves moving into folders on first start. Checked by `tools/menu_shots.gd` and the tests, not by playing.
+- [ ] **Display settings in a window:** borderless, fullscreen and the window sizes weren't tried on screen (the machine was busy).
+- [ ] **A large world in a window:** its load time (~20 s headless) and how it looks; the one windowed check came out washed out white (probably snow under Frostpeak's fog where the camera landed, not confirmed).
+- [ ] **Key rebinding** in Settings > Controls (left for later in the plan).
+- [ ] **A second quarry on large worlds** (the plan's "if it fits"): the quarry is one stamp, one `Biome.quarry_*`, one set of levels today.
+- [ ] **Repeated biomes' arrival cards** show the first site's kind (`Biome.kind_names` is per biome, not per site).
+- [ ] **Small worlds are 384 m**, not the planned 256 (at 256 the rim would start 44 m from the middle, over the hub).
+- [ ] **The debug menu's Graphics tab** now duplicates Settings > Graphics; keep it or drop it.
+- [ ] **Sound on the menu:** the backdrop is silent (no ambience or music).
+
+## Generated worlds
+
+Plans and decisions: [plans/procgen.md](../plans/procgen.md), [plans/procgen-variety.md](../plans/procgen-variety.md), [plans/menus.md](../plans/menus.md) (world settings, sizes, loading). Merged into `main` 2026-10-19.
 
 - [x] **A world from a seed:** biome ring, water with fish, a quarry pit, trails, spawners and scenery per biome, four baked variants of every gatherable and big scenery model (`scripts/procgen/`, `scenes/procgen.tscn`).
 - [x] **A voice per tree species and per ore** (`tools/synth_wood_sounds.py`, `tools/synth_mining_sounds.py`). This changes the hand-built world's sounds too.
 - [ ] **Playtest and listen:** walk a few seeds; listen to every tree species and ore (the voices are measured, not heard yet: no steady pulsing, no beating tones, pitch and ring in the intended order).
-- [ ] **Load time:** about 4–7 s per seed now (measured headless; ~8 s windowed before the variety work): ~1.8 s for the map, ~2.7 s spawning (each fractured ore rock takes ~50 ms to build), ~1.4 s scenery, the rest the first frame's shaders. Could spread the spawning over frames behind the overlay, or cache built rocks.
+- [x] **Load time:** the map generates on a worker thread and the spawning and scenery are spread over frames behind a loading screen; a normal world is ready in ~5 s headless (was ~8), a large one in ~20. Caching built rocks could still cut it.
 - [ ] **The quarry ambience hum** (55 + 82.5 Hz) repeats 27.5 times a second: a low growl. Worth a listen given how the breeze turned out.
 - [x] **Variety:** a kind per biome, Hearthvale (the village) on every seed, rivers, ruins, camps and rare spots, rich and lean resources, an off-centre start (`plans/procgen-variety.md`).
 - [ ] **New screenshots:** `docs/images/procgen.png` predates the village, rivers and landmarks (skipped while a game was using the GPU; take them with the shots script when the machine's free).
@@ -150,7 +165,7 @@ Plans and decisions: [plans/procgen.md](../plans/procgen.md), [plans/procgen-var
 - [ ] **Themed nodes, load time:** about +0.5–0.75 s a seed (7.5 → 8.25 s windowed, ±1 s run to run); not the doubled variants. Probably the heavier node shader's first compile; check with a profiler.
 - [ ] **Themed nodes, the hand-built world:** its spawners and scenery have no theme (`NodeSpawner.theme`, `SceneryScatter.theme`); the biome scenes could each take one.
 - [ ] **Themed nodes, not done:** Old Growth trees taller or gnarlier by theme (only the background canopies grow, via `KIND_SCALE`); no trees grow on Frostpeak, so snow on crowns only shows on the rare Frost-touched one.
-- [ ] **Merge or drop:** the branch carries the wood and mining voicing and the camera fix (already on `main`); the procgen world itself only touches the debug menu, `SaveGame.use_file`, `Biome.locator` and `NodeSpawner.accept` / `SpawnEntry.variants`.
+- [x] **Merge or drop:** merged into `main` (2026-10-19, with the ores work).
 
 ## Movement
 
@@ -184,7 +199,7 @@ Plans and decisions: [plans/procgen.md](../plans/procgen.md), [plans/procgen-var
 - [x] **Mining sounds:** cut from the GDC 2026 sampler (`tools/cut_sounds.py`).
 - [x] **Even mining levels:** every clip at the same loudness, one source per layer, and the plain hit ducks under a crack tip or a split (`ResourceNode._hit_sounds`). Measured with `tools/measure_mix.py`: a plain hit stays within a 3.4 dB window (was 10.7), a tip hit lands 2 dB above it, a split 3.7 dB.
 - [x] **Synthesized mining sounds** (`tools/synth_mining_sounds.py`, 2026-10-17, `procgen` branch) replace the GDC clips below, with a voice per ore. Re-run `tools/measure_mix.py` and rebalance the stack volumes after a listen.
-- [ ] ~~**Better source material for mining (next):**~~ superseded by the synthesis above. playtested, the sounds are even now but still don't feel right. The sampler has almost no real rock: ice cracks, a metal pipe on concrete, body punches and a broom sweeping crumbs stand in for stone cracking, the pick's bite, the thump and gravel, and the split crunch is a "gore smash". Find a real rock / mining library (stone impacts, pick on rock, rubble, gravel), then point the recipes in `tools/cut_sounds.py` at it: the layer stacks, the loudness matching and the ducking all stay. Re-run `tools/measure_mix.py` and rebalance the layer volumes after.
+- [x] ~~**Better source material for mining (next):**~~ superseded by the synthesis above. playtested, the sounds are even now but still don't feel right. The sampler has almost no real rock: ice cracks, a metal pipe on concrete, body punches and a broom sweeping crumbs stand in for stone cracking, the pick's bite, the thump and gravel, and the split crunch is a "gore smash". Find a real rock / mining library (stone impacts, pick on rock, rubble, gravel), then point the recipes in `tools/cut_sounds.py` at it: the layer stacks, the loudness matching and the ducking all stay. Re-run `tools/measure_mix.py` and rebalance the layer volumes after.
 
 ## World & tech
 
@@ -194,4 +209,4 @@ Plans and decisions: [plans/procgen.md](../plans/procgen.md), [plans/procgen-var
 - [x] **Stars and moon:** `shaders/sky.gdshader` draws the gradient, a sun disc by day, a moon disc and twinkling stars at night.
 - [x] **Terrain collision range:** Terrain3D now builds collision for the whole map up front (`collision_mode` Full/Game, ~0.1 s at 512 m). Revisit if the world gets much bigger.
 - [x] **Saved node keys:** every placed node has a `save_id`. Saves keyed by the old scene path carry over automatically.
-- [ ] **GPU driver reset, once:** on 2026-10-16 the game lost its graphics device on Direct3D 12 (GTX 1080 Ti; Windows logged a TDR, `0x141`). It didn't happen again in hours of testing. If it comes back, try Vulkan (`rendering/rendering_device/driver.windows`), which NVIDIA's older cards handle better.
+- [ ] **GPU driver resets:** on 2026-10-16 the game lost its graphics device on Direct3D 12 (GTX 1080 Ti; Windows logged a TDR, `0x141`), and again on 2026-10-19 a moment after a generated world appeared (`nvlddmkm` event 153, `0x887a0005`). Switched to Vulkan (`rendering/rendering_device/driver.windows`) the same day; watch whether it comes back.

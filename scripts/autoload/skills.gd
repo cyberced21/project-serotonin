@@ -119,5 +119,5 @@ func from_dict(d: Dictionary) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if OS.is_debug_build() and event.is_action_pressed("debug_give_xp"):
+	if (OS.is_debug_build() or OS.has_feature("playtest")) and event.is_action_pressed("debug_give_xp"):
 		add_xp(last_trained, DEBUG_XP)

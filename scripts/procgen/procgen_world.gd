@@ -1,13 +1,11 @@
 class_name ProcgenWorld
 extends Node3D
-## The root of scenes/procgen.tscn: on load it builds a ProcgenMap from `world_seed`, hands it to
-## the Terrain3D child, and only then lets the player move, behind a "Generating…" overlay.
-## Each seed saves to its own file (save_path()), with its own character, so nothing here touches
-## the main world's save. Enter with ProcgenWorld.enter(), leave with ProcgenWorld.leave(): the
-## debug menu's Procgen tab, or `--procgen [--seed=N]` on the command line.
+## The root of scenes/procgen.tscn: on load it builds a ProcgenMap from `settings`, hands it to
+## the Terrain3D child, places everything, and only then lets the player move, behind a loading
+## screen. The map generates on a worker thread and the spawning is spread over frames
+## (FRAME_BUDGET_MS each), so the window keeps drawing (and Windows never calls it hung).
+## Worlds.play() sets `settings` and loads this scene; the world's save is its own folder's.
 
-const SCENE := "res://scenes/procgen.tscn"
-const MAIN_SCENE := "res://scenes/main.tscn"
 const Player := preload("res://scripts/player.gd")
 const WATER_SHADER := preload("res://shaders/water.gdshader")
 const PERCH := preload("res://data/fish/perch.tres")
@@ -25,51 +23,55 @@ const RIVER_GRAYLING := 3
 ## How fast the current runs (m/s): it carries a float down to the grayling.
 const RIVER_FLOW := 0.45
 const PROP := preload("res://scripts/prop.gd")
+## Milliseconds of building per frame while loading (0: all at once, the window frozen meanwhile).
+static var frame_budget_ms := 12.0
+## How the loading bar splits: the map, the terrain, the water and village, the nodes and scenery.
+const SHARE_MAP := 0.35
+const SHARE_TERRAIN := 0.1
+const SHARE_PLACES := 0.05
 
-## The seed the scene builds next time it loads (enter() sets it).
-static var world_seed := 1
+## What the scene builds next time it loads (Worlds.play() sets them): a WorldSettings dictionary,
+## and the world's name for the loading screen.
+static var settings: Dictionary = WorldSettings.defaults()
+static var world_name := ""
+## Whether an older generator made this world's save (the land may differ from what it saw).
+static var regenerated := false
 
 var map: ProcgenMap
+var world_seed: int
+var _thread: Thread
 
 @onready var _terrain := $Terrain3D as Terrain3D
 @onready var _player := $Player as Player
 
 
-static func save_path(s: int) -> String:
-	return "user://procgen_%d.json" % s
-
-
-## Switches to seed `s`'s save and (re)loads the procgen scene.
-static func enter(tree: SceneTree, s: int) -> void:
-	world_seed = s
-	SaveGame.use_file(save_path(s))
-	tree.change_scene_to_file(SCENE)
-
-
-## Back to the hand-built world and its save.
-static func leave(tree: SceneTree) -> void:
-	SaveGame.use_file(SaveGame.MAIN_PATH)
-	tree.change_scene_to_file(MAIN_SCENE)
-
-
-static func random_seed() -> int:
-	return randi_range(1, 999_999)
-
-
 func _ready() -> void:
+	world_seed = WorldSettings.normalized(settings)["seed"]
 	add_to_group("procgen_world")
 	Biome.locator = func(_p: Vector3) -> StringName: return &""  # until the map exists
 	_player.process_mode = Node.PROCESS_MODE_DISABLED
-	var overlay := _overlay()
-	# let the overlay draw before the generator holds up the frame
-	await get_tree().process_frame
+	var loading := LoadingScreen.new(world_name, Worlds.thumb_path(Worlds.current) if Worlds.current != "" else "")
+	add_child(loading)
 	await get_tree().process_frame
 	var started := Time.get_ticks_msec()
-	map = ProcgenMap.new(world_seed)
-	map.generate()
-	_build_terrain()
+	map = ProcgenMap.new(world_seed, settings)
+	_thread = Thread.new()
+	_thread.start(map.generate)
+	while _thread.is_alive():
+		loading.report(map.progress * SHARE_MAP, ProcgenMap.STAGES[map.stage])
+		await get_tree().process_frame
+	_thread.wait_to_finish()
+	_thread = null
+	var times := PackedStringArray(["map %d" % (Time.get_ticks_msec() - started)])
+	var lap := Time.get_ticks_msec()
+	await _build_terrain(func(t: float) -> void:
+		loading.report(SHARE_MAP + t * SHARE_TERRAIN, "Laying the ground"))
+	loading.report(SHARE_MAP + SHARE_TERRAIN, "Filling the water")
+	await get_tree().process_frame
 	_build_water()
 	_build_rivers()
+	loading.report(SHARE_MAP + SHARE_TERRAIN + SHARE_PLACES * 0.5, "Waking the village")
+	await get_tree().process_frame
 	_build_village()
 	ProcgenLandmarks.build(self, map)
 	Biome.locator = func(p: Vector3) -> StringName: return map.biome_at(Vector2(p.x, p.z))
@@ -78,16 +80,26 @@ func _ready() -> void:
 		Biome.quarry_depth = map.quarry["depth"]
 	for biome in map.kinds:
 		Biome.kind_names[biome] = map.kind_name(biome)
-	print("Procgen: seed %d generated in %d ms" % [world_seed, Time.get_ticks_msec() - started])
 	_place_player()
-	ProcgenPopulation.populate(self, map)
-	await get_tree().process_frame  # the spawners and the scenery fill in at the end of that frame
-	print("Procgen: seed %d ready in %d ms" % [world_seed, Time.get_ticks_msec() - started])
+	times.append("ground, water, village %d" % (Time.get_ticks_msec() - lap))
+	lap = Time.get_ticks_msec()
+	await get_tree().process_frame  # the landmarks' meadows scatter first, as they always have
+	var placed := SHARE_MAP + SHARE_TERRAIN + SHARE_PLACES
+	await ProcgenPopulation.populate(self, map, frame_budget_ms, func(t: float) -> void:
+		loading.report(placed + t * (1.0 - placed) * 0.95, "Growing the forest" if t < 0.6 else "Scattering the meadows"))
+	times.append("nodes and scenery %d" % (Time.get_ticks_msec() - lap))
+	loading.report(1.0, "Almost there")
+	for i in 3:  # the first frames compile the shaders; keep them behind the loading screen
+		await get_tree().process_frame
+	print("Procgen: seed %d (%s) ready in %d ms: %s" % [world_seed, map.settings["size"],
+			Time.get_ticks_msec() - started, ", ".join(times)])
 	_player.process_mode = Node.PROCESS_MODE_INHERIT
-	overlay.queue_free()
+	loading.queue_free()
 
 
 func _exit_tree() -> void:
+	if _thread:  # left while the map was still generating
+		_thread.wait_to_finish()
 	Biome.locator = Callable()
 	Biome.reset_quarry()
 
@@ -244,24 +256,50 @@ func _build_water() -> void:
 		add_child(body)
 
 
-func _build_terrain() -> void:
+## The heights, then the painted ground a few rows at a time (`on_progress` 0..1).
+func _build_terrain(on_progress: Callable) -> void:
 	var images: Array[Image] = []
 	images.resize(Terrain3DRegion.TYPE_MAX)
+	var corner := map.origin
 	images[Terrain3DRegion.TYPE_HEIGHT] = map.height_image()
-	_terrain.data.import_images(images, ProcgenMap.ORIGIN, 0.0, 1.0)
-	for y in ProcgenMap.SIZE:
-		for x in ProcgenMap.SIZE:
-			var id := map.ids[y * ProcgenMap.SIZE + x]
+	# Terrain3D only takes whole regions, so a map that doesn't fill them (a small world) is padded
+	# out to them with its own edge: the rim carries on to the regions' end
+	var region := float(_terrain.region_size)
+	var half := ceilf(map.metres * 0.5 / region) * region
+	if half > map.metres * 0.5:
+		corner = Vector2.ONE * -half
+		images[Terrain3DRegion.TYPE_HEIGHT] = _padded(images[Terrain3DRegion.TYPE_HEIGHT], int(half * 2.0),
+				Vector2i(map.origin - corner))
+	_terrain.data.import_images(images, Vector3(corner.x, 0.0, corner.y), 0.0, 1.0)
+	var frame_start := Time.get_ticks_usec()
+	for y in map.size:
+		for x in map.size:
+			var id := map.ids[y * map.size + x]
 			if id != WorldMap.TEX_DEFAULT:
-				var w := ProcgenMap.world(x, y)
+				var w := map.world(x, y)
 				_terrain.data.set_control_base_id(Vector3(w.x, 0, w.y), id)
+		if frame_budget_ms > 0.0 and Time.get_ticks_usec() - frame_start > frame_budget_ms * 1000.0:
+			on_progress.call(float(y + 1) / map.size)
+			await get_tree().process_frame
+			frame_start = Time.get_ticks_usec()
 	_terrain.data.update_maps(Terrain3DRegion.TYPE_CONTROL)  # painting at runtime only reaches the GPU here
 
 
+## `img` in the middle of an n × n image at `at`, each pixel round it a copy of the nearest edge pixel.
+static func _padded(img: Image, n: int, at: Vector2i) -> Image:
+	var out := Image.create_empty(n, n, false, img.get_format())
+	var last := img.get_size() - Vector2i.ONE
+	for y in n:
+		for x in n:
+			out.set_pixel(x, y, img.get_pixelv((Vector2i(x, y) - at).clamp(Vector2i.ZERO, last)))
+	return out
+
+
 ## A fresh character starts in the hub; a saved one where they left off, but never under the ground.
+## In a world an older generator made, the land may have moved: back to the hub.
 func _place_player() -> void:
 	var p := _player
-	if not SaveGame.has(&"player"):
+	if not SaveGame.has(&"player") or regenerated:
 		var at := map.hub
 		p.teleport(Vector3(at.x, map.height_at(at) + 0.1, at.y), Vector3(at.x, 0, at.y - 10.0))
 		return
@@ -270,21 +308,3 @@ func _place_player() -> void:
 	if pos.y < ground:
 		p.teleport(Vector3(pos.x, ground + 0.1, pos.z))
 
-
-func _overlay() -> CanvasLayer:
-	var layer := CanvasLayer.new()
-	layer.layer = 20
-	var bg := ColorRect.new()
-	bg.color = Color(0.09, 0.075, 0.06)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	layer.add_child(bg)
-	var label := Label.new()
-	label.text = "Generating…\nseed %d" % world_seed
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.set_anchors_preset(Control.PRESET_FULL_RECT)
-	label.add_theme_font_size_override("font_size", 32)
-	label.add_theme_color_override("font_color", Color("ffd27a"))
-	layer.add_child(label)
-	add_child(layer)
-	return layer

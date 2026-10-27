@@ -1,0 +1,164 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/menu/backdrop.gd" id="1_backdrop"]
+[ext_resource type="Shader" path="res://shaders/terrain.gdshader" id="2_terrain_shader"]
+[ext_resource type="Terrain3DAssets" path="res://materials/terrain_assets.tres" id="3_terrain_assets"]
+[ext_resource type="Script" path="res://scripts/water_body.gd" id="4_water"]
+[ext_resource type="Shader" path="res://shaders/water.gdshader" id="5_water_shader"]
+[ext_resource type="Script" path="res://scripts/pond_dressing.gd" id="6_dressing"]
+[ext_resource type="Script" path="res://scripts/scenery_scatter.gd" id="7_scatter"]
+[ext_resource type="Script" path="res://scripts/scatter_layer.gd" id="8_layer"]
+[ext_resource type="PackedScene" path="res://models/scenery/flowers_warm.glb" id="9_flowers_warm"]
+[ext_resource type="PackedScene" path="res://models/scenery/flowers_cool.glb" id="10_flowers_cool"]
+[ext_resource type="PackedScene" path="res://models/scenery/bush_round.glb" id="11_bush_round"]
+[ext_resource type="PackedScene" path="res://models/scenery/boulder_big.glb" id="12_boulder_big"]
+[ext_resource type="PackedScene" path="res://models/scenery/canopy_pine.glb" id="13_canopy_pine"]
+[ext_resource type="PackedScene" path="res://models/scenery/canopy_birch.glb" id="14_canopy_birch"]
+[ext_resource type="Script" path="res://scripts/day_night_sky.gd" id="15_sky"]
+[ext_resource type="Environment" path="res://materials/world_environment.tres" id="16_env"]
+[ext_resource type="Script" path="res://scripts/grass_field.gd" id="17_grass_field"]
+
+[sub_resource type="Terrain3DMaterial" id="Terrain3DMaterial_lowpoly"]
+shader_override_enabled = true
+shader_override = ExtResource("2_terrain_shader")
+show_checkered = false
+_shader_parameters = {
+&"sand_height": -0.05
+}
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
+render_priority = 0
+shader = ExtResource("5_water_shader")
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_water"]
+material = SubResource("ShaderMaterial_water")
+size = Vector2(26, 26)
+subdivide_width = 25
+subdivide_depth = 25
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pond"]
+size = Vector3(26, 3, 26)
+
+[sub_resource type="Resource" id="Layer_flowers_warm"]
+script = ExtResource("8_layer")
+model = ExtResource("9_flowers_warm")
+density = 0.5
+scale_range = Vector2(1.3, 1.8)
+sway = 0.8
+cast_shadow = false
+visible_distance = 60.0
+cluster = Vector2i(3, 6)
+cluster_radius = 0.7
+allowed_ids = Array[int]([0, 4])
+
+[sub_resource type="Resource" id="Layer_flowers_cool"]
+script = ExtResource("8_layer")
+model = ExtResource("10_flowers_cool")
+density = 0.4
+scale_range = Vector2(1.3, 1.8)
+sway = 0.8
+cast_shadow = false
+visible_distance = 60.0
+cluster = Vector2i(3, 6)
+cluster_radius = 0.7
+allowed_ids = Array[int]([0, 4])
+
+[sub_resource type="Resource" id="Layer_bush_round"]
+script = ExtResource("8_layer")
+model = ExtResource("11_bush_round")
+density = 0.3
+scale_range = Vector2(0.8, 1.4)
+min_normal_y = 0.8
+sway = 0.04
+clearance = 1.0
+cluster = Vector2i(1, 3)
+cluster_radius = 1.2
+allowed_ids = Array[int]([0])
+
+[sub_resource type="Resource" id="Layer_boulder_big"]
+script = ExtResource("8_layer")
+model = ExtResource("12_boulder_big")
+density = 0.08
+scale_range = Vector2(0.7, 1.6)
+min_normal_y = 0.5
+align_to_slope = true
+clearance = 1.5
+allowed_ids = Array[int]([0])
+
+[sub_resource type="Resource" id="Layer_canopy_pine"]
+script = ExtResource("8_layer")
+model = ExtResource("13_canopy_pine")
+density = 0.35
+scale_range = Vector2(0.85, 1.35)
+min_normal_y = 0.75
+sway = 0.05
+clearance = 1.0
+cluster = Vector2i(2, 5)
+cluster_radius = 5.0
+allowed_ids = Array[int]([0, 3])
+
+[sub_resource type="Resource" id="Layer_canopy_birch"]
+script = ExtResource("8_layer")
+model = ExtResource("14_canopy_birch")
+density = 0.12
+scale_range = Vector2(0.85, 1.2)
+min_normal_y = 0.75
+sway = 0.08
+clearance = 1.0
+cluster = Vector2i(1, 3)
+cluster_radius = 4.0
+allowed_ids = Array[int]([0, 3])
+
+[node name="Backdrop" type="Node3D"]
+physics_interpolation_mode = 2
+script = ExtResource("1_backdrop")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("16_env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.9, 0.6, 0)
+shadow_enabled = true
+directional_shadow_max_distance = 60.0
+
+[node name="Terrain3D" type="Terrain3D" parent="." groups=["terrain"]]
+data_directory = "res://terrain_data"
+material = SubResource("Terrain3DMaterial_lowpoly")
+assets = ExtResource("3_terrain_assets")
+
+[node name="Pond" type="Area3D" parent="."]
+position = Vector3(20, 0, 16)
+collision_layer = 0
+collision_mask = 0
+script = ExtResource("4_water")
+
+[node name="Volume" type="CollisionShape3D" parent="Pond"]
+position = Vector3(0, -1, 0)
+shape = SubResource("BoxShape3D_pond")
+
+[node name="Dressing" type="Node3D" parent="Pond"]
+script = ExtResource("6_dressing")
+
+[node name="Surface" type="MeshInstance3D" parent="Pond"]
+position = Vector3(0, -0.15, 0)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_water")
+
+[node name="Scenery" type="Node3D" parent="."]
+script = ExtResource("7_scatter")
+layers = Array[ExtResource("8_layer")]([SubResource("Layer_canopy_pine"), SubResource("Layer_canopy_birch"), SubResource("Layer_flowers_warm"), SubResource("Layer_flowers_cool"), SubResource("Layer_bush_round"), SubResource("Layer_boulder_big")])
+area = Rect2(-50, -50, 140, 130)
+seed = 7
+clear_spots = PackedVector3Array(20, 16, 22, 0, 2, 12)
+
+[node name="Sky" type="Node" parent="." node_paths=PackedStringArray("sun", "environment")]
+script = ExtResource("15_sky")
+sun = NodePath("../Sun")
+environment = NodePath("../WorldEnvironment")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(20, 5, 44)
+fov = 62.0
+
+[node name="GrassField" type="Node3D" parent="."]
+script = ExtResource("17_grass_field")

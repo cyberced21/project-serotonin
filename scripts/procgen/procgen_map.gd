@@ -15,8 +15,14 @@ extends RefCounted
 ## Pinewood, Twin Peaks, an Island Lake... A kind changes the ground here, and the nodes and scenery
 ## in ProcgenPopulation.
 
-const SIZE := 512                       # pixels = metres (vertex spacing 1)
-const ORIGIN := Vector3(-256, 0, -256)  # world position of pixel (0, 0); on Terrain3D's region grid
+## Bump whenever the same seed and settings would build different land: a world made by an older
+## generator says so on its card (Worlds.outdated), since its saved nodes may no longer match.
+const GENERATOR_VERSION := 1
+
+## The normal world's size (metres) and the world position of its corner; other sizes scale from
+## these (`metres`, `origin`), and every distance tuned on the normal map stays as it was there.
+const SIZE := 512
+const ORIGIN := Vector3(-256, 0, -256)
 const HUB_CENTER := Vector2.ZERO
 ## How far off the map's centre the hub may sit (m); the ring round it is kept inside the rim.
 const HUB_OFFSET := Vector2(18.0, 48.0)
@@ -30,6 +36,23 @@ const BUMP_HEIGHT := 1.2
 const RIM_START := 172.0
 const RIM_HEIGHT := 62.0
 const RIM_WARP := 22.0
+
+## Other sizes (WorldSettings size): a small world is one ring round the hub (no Frostpeak; its
+## coal and gold come from the quarry's levels), a large one the normal rings and two more out
+## to the rim, repeating the biomes with kinds not used yet (one village, one quarry still).
+const SMALL_RING: Array[StringName] = [&"hearthvale", &"pinewood", &"goldmeadow", &"stillwater", &"quarry"]
+const SMALL_RADIUS := Vector2(60.0, 76.0)
+const SMALL_HUB_OFFSET := Vector2(0.0, 16.0)
+const SMALL_QUARRY_DISTANCE := 92.0
+const LARGE_RINGS := [
+	[[&"pinewood", &"goldmeadow", &"stillwater", &"frostpeak", &"pinewood", &"goldmeadow", &"pinewood",
+			&"frostpeak", &"goldmeadow"], Vector2(205.0, 240.0)],
+	[[&"pinewood", &"pinewood", &"pinewood", &"pinewood", &"goldmeadow", &"goldmeadow", &"goldmeadow",
+			&"frostpeak", &"frostpeak", &"frostpeak", &"frostpeak", &"stillwater", &"stillwater"], Vector2(310.0, 360.0)],
+]
+## A large world's landmarks: this many rounds of the normal map's ruins, camps and rare spots.
+const LARGE_LANDMARK_ROUNDS := 3
+const LARGE_POND_SCALE := 3
 
 ## Biome sites: the inner ring's and the outer ring's biomes (each ring is shuffled per seed;
 ## the inner ring gets one more, a random repeat of its own), and how far out each ring sits.
@@ -157,6 +180,15 @@ const TRAIL_SMOOTH := 8.0
 const TRAIL_MAX_HEIGHT := 22.0
 
 var seed := 0
+## The map's width in metres (WorldSettings size), metres per pixel (1 for a real world, which
+## Terrain3D takes at vertex spacing 1; more for a quick preview), pixels per side, and the world
+## XZ of pixel (0, 0).
+var metres := float(SIZE)
+var step := 1.0
+var size := SIZE
+var origin := Vector2(ORIGIN.x, ORIGIN.z)
+## The world's settings (WorldSettings.normalized): picked kinds, water, terrain, size...
+var settings: Dictionary = WorldSettings.defaults()
 var heights := PackedFloat32Array()
 var ids := PackedByteArray()
 ## Index into `sites` per pixel, or RIM_CELL.
@@ -196,6 +228,12 @@ var river_mask := PackedByteArray()
 ## Places out in the wilds: {type: &"ruins" | &"camp" | &"rare", kind: StringName, name: String,
 ## pos: Vector2, angle: float, height: float (its levelled pad, for ruins and camps)}.
 var landmarks: Array[Dictionary] = []
+## How far generate() has got, 0..1, and which stage it's on (STAGES); generate() runs on a worker
+## thread behind the loading screen, which reads these.
+var progress := 0.0
+var stage := 0
+const STAGES: Array[String] = ["Shaping the land", "Flattening the village", "Filling the ponds",
+		"Cutting the rivers", "Treading the trails", "Raising the ruins"]
 
 var _hills := FastNoiseLite.new()
 var _swell := FastNoiseLite.new()
@@ -212,10 +250,23 @@ var _rng := RandomNumberGenerator.new()
 var _kind_rng := RandomNumberGenerator.new()  # its own, so rolling kinds doesn't move the sites
 var _ramp_top: Array[float] = []   # per quarry wall: angle of its ramp's top end
 var _ramp_span: Array[float] = []  # per quarry wall: angle its ramp covers
+var _relief := 1.0  # biome heights × this (WorldSettings terrain)
+## With many sites (a large world): per CANDIDATE_CELL square of warped space, the only sites that
+## can be nearest there or blend in, so a pixel doesn't measure the distance to all of them.
+const CANDIDATE_CELL := 32.0
+var _candidates: Dictionary[Vector2i, PackedInt32Array] = {}
 
 
-func _init(world_seed: int) -> void:
+## `metres_per_pixel` > 1: a coarser map for a preview (the same land, less detail).
+func _init(world_seed: int, world_settings := {}, metres_per_pixel := 1.0) -> void:
 	seed = world_seed
+	settings = WorldSettings.normalized(world_settings)
+	settings["seed"] = world_seed
+	_relief = WorldSettings.RELIEF[settings["terrain"]]
+	metres = float(WorldSettings.SIZE_METRES[settings["size"]])
+	step = metres_per_pixel
+	size = int(metres / step)
+	origin = Vector2.ONE * -metres * 0.5
 	_hills.seed = sub_seed(&"hills")
 	_hills.frequency = 0.009
 	_hills.fractal_octaves = 4
@@ -251,6 +302,10 @@ func _init(world_seed: int) -> void:
 	_kind_rng.seed = sub_seed(&"kinds")
 
 
+static func random_seed() -> int:
+	return randi_range(1, 999_999)
+
+
 ## A seed for one part of the generator, so tuning one part doesn't reshuffle the others.
 func sub_seed(part: StringName) -> int:
 	return hash([seed, part]) & 0x7fffffff
@@ -260,40 +315,57 @@ func generate() -> void:
 	_roll_kinds()
 	_place_sites()
 	_roll_rares()
-	heights.resize(SIZE * SIZE)
-	ids.resize(SIZE * SIZE)
-	cells.resize(SIZE * SIZE)
-	for y in SIZE:
-		for x in SIZE:
-			var i := y * SIZE + x
+	heights.resize(size * size)
+	ids.resize(size * size)
+	cells.resize(size * size)
+	for y in size:
+		for x in size:
+			var i := y * size + x
 			_pixel(world(x, y), i)
+		progress = 0.6 * (y + 1) / size
+	stage = 1
 	_stamp_village()
 	_stamp_quarry()
+	progress = 0.65
+	stage = 2
 	_place_water()
+	progress = 0.7
+	stage = 3
 	_carve_rivers()
+	progress = 0.8
+	stage = 4
 	_lay_trails()
+	progress = 0.95
+	stage = 5
 	_place_landmarks()
+	progress = 1.0
 
 
-static func world(x: int, y: int) -> Vector2:
-	return Vector2(x + ORIGIN.x, y + ORIGIN.z)
+## The world XZ of pixel (x, y).
+func world(x: int, y: int) -> Vector2:
+	return Vector2(x * step + origin.x, y * step + origin.y)
 
 
-static func pixel_index(w: Vector2) -> int:
-	var x := clampi(floori(w.x - ORIGIN.x), 0, SIZE - 1)
-	var y := clampi(floori(w.y - ORIGIN.z), 0, SIZE - 1)
-	return y * SIZE + x
+func pixel_index(w: Vector2) -> int:
+	var x := clampi(floori((w.x - origin.x) / step), 0, size - 1)
+	var y := clampi(floori((w.y - origin.y) / step), 0, size - 1)
+	return y * size + x
+
+
+## A distance from the normal map's centre (tuned at 512 m) moved out with this map's edge.
+func _far(d: float) -> float:
+	return d + (metres - SIZE) * 0.5
 
 
 ## The generated height under a world XZ position (bilinear between pixels).
 func height_at(w: Vector2) -> float:
-	var p := w - Vector2(ORIGIN.x, ORIGIN.z)
-	var x0 := clampi(floori(p.x), 0, SIZE - 2)
-	var y0 := clampi(floori(p.y), 0, SIZE - 2)
+	var p := (w - origin) / step
+	var x0 := clampi(floori(p.x), 0, size - 2)
+	var y0 := clampi(floori(p.y), 0, size - 2)
 	var fx := clampf(p.x - x0, 0.0, 1.0)
 	var fy := clampf(p.y - y0, 0.0, 1.0)
-	var top := lerpf(heights[y0 * SIZE + x0], heights[y0 * SIZE + x0 + 1], fx)
-	var bottom := lerpf(heights[(y0 + 1) * SIZE + x0], heights[(y0 + 1) * SIZE + x0 + 1], fx)
+	var top := lerpf(heights[y0 * size + x0], heights[y0 * size + x0 + 1], fx)
+	var bottom := lerpf(heights[(y0 + 1) * size + x0], heights[(y0 + 1) * size + x0 + 1], fx)
 	return lerpf(top, bottom, fy)
 
 
@@ -312,7 +384,7 @@ func biome_at(w: Vector2) -> StringName:
 
 
 func height_image() -> Image:
-	return Image.create_from_data(SIZE, SIZE, false, Image.FORMAT_RF, heights.to_byte_array())
+	return Image.create_from_data(size, size, false, Image.FORMAT_RF, heights.to_byte_array())
 
 
 # --- sites ------------------------------------------------------------------------------------
@@ -338,10 +410,14 @@ func _roll_kinds() -> void:
 	kinds.clear()
 	for biome in KINDS:
 		var options: Array = KINDS[biome]
-		kinds[biome] = options[_kind_rng.randi_range(0, options.size() - 1)][0]
+		var rolled: StringName = options[_kind_rng.randi_range(0, options.size() - 1)][0]  # rolled even when
+		kinds[biome] = settings["kinds"].get(biome, rolled)  # picked, so the rolls after it stay the same
 	hub_ramp = HUB_RAMP * (0.55 if kinds[&"clearing"] == &"hollow" else 1.0)
 	quarry_walls.assign(QUARRY_KIND_WALLS[kinds[&"quarry"]])
-	hub = Vector2.from_angle(_kind_rng.randf() * TAU) * _kind_rng.randf_range(HUB_OFFSET.x, HUB_OFFSET.y)
+	var offset := SMALL_HUB_OFFSET if settings["size"] == &"small" else HUB_OFFSET
+	hub = Vector2.from_angle(_kind_rng.randf() * TAU) * _kind_rng.randf_range(offset.x, offset.y)
+	if settings["size"] == &"small":
+		hub_ramp *= 0.6  # the ring sits close: let its ground rise sooner
 	var wealth := RandomNumberGenerator.new()
 	wealth.seed = sub_seed(&"wealth")
 	rich = RICH_ITEMS[wealth.randi_range(0, RICH_ITEMS.size() - 1)]
@@ -352,6 +428,16 @@ func _roll_kinds() -> void:
 
 func _place_sites() -> void:
 	sites = [{"biome": &"clearing", "kind": kinds[&"clearing"], "pos": hub, "tier": 0}]
+	if settings["size"] == &"small":
+		var ring := SMALL_RING.duplicate()
+		_shuffle(ring)
+		_ring(ring, SMALL_RADIUS, 1, _far(SITE_MAX_DISTANCE))
+		for s in sites:
+			if s["biome"] == &"quarry":
+				s["pos"] = (s["pos"] as Vector2).normalized() * SMALL_QUARRY_DISTANCE
+		_place_peaks()
+		_index_candidates()
+		return
 	var inner := INNER_BIOMES.duplicate()
 	while inner.size() < INNER_COUNT:
 		inner.append(INNER_REPEATS[_rng.randi_range(0, INNER_REPEATS.size() - 1)])
@@ -363,25 +449,90 @@ func _place_sites() -> void:
 	for s in sites:
 		if s["biome"] == &"quarry":
 			s["pos"] = (s["pos"] as Vector2).limit_length(QUARRY_MAX_DISTANCE)
+	if settings["size"] == &"large":
+		_large_rings()
 	_place_peaks()
+	_index_candidates()
 
 
-## Frostpeak's summits, by kind: one on the site; two either side of it with a saddle between;
-## or the two ends of a ridge running across the way to the hub.
+## A large world's extra rings, from their own random numbers. Each repeated biome takes a kind
+## no site of it has yet while there is one.
+func _large_rings() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = sub_seed(&"large_rings")
+	var used: Dictionary[StringName, Array] = {}
+	for b in kinds:
+		used[b] = [kinds[b]]
+	for ring in LARGE_RINGS:
+		var biomes: Array = ring[0].duplicate()
+		for i in range(biomes.size() - 1, 0, -1):
+			var j := rng.randi_range(0, i)
+			var t: Variant = biomes[i]
+			biomes[i] = biomes[j]
+			biomes[j] = t
+		var first := sites.size()
+		_ring(biomes, ring[1], 2, _far(SITE_MAX_DISTANCE), rng)
+		for k in range(first, sites.size()):
+			var b: StringName = sites[k]["biome"]
+			var fresh: Array = []
+			for option in KINDS[b]:
+				if not used[b].has(option[0]):
+					fresh.append(option[0])
+			var pool: Array = fresh if not fresh.is_empty() else KINDS[b].map(func(o: Array) -> StringName: return o[0])
+			sites[k]["kind"] = pool[rng.randi_range(0, pool.size() - 1)]
+			used[b].append(sites[k]["kind"])
+
+
+## Each Frostpeak site's summits (site["peaks"]), by its kind: one on the site; two either side of
+## it with a saddle between; or the two ends of a ridge running across the way to the hub.
+## `peaks` keeps the first Frostpeak's.
 func _place_peaks() -> void:
 	peaks.clear()
-	var fi := _site_index(&"frostpeak")
-	if fi < 0:
-		return
-	var at: Vector2 = sites[fi]["pos"]
-	var across := (at - hub).normalized().orthogonal()
-	match kinds[&"frostpeak"]:
-		&"twin_peaks":
-			peaks = [at + across * 26.0, at - across * 26.0]
-		&"ridge":
-			peaks = [at + across * 42.0, at - across * 42.0]
-		_:
-			peaks = [at]
+	for s in sites:
+		if s["biome"] != &"frostpeak":
+			continue
+		var at: Vector2 = s["pos"]
+		var across := (at - hub).normalized().orthogonal()
+		var these: Array[Vector2] = [at]
+		match s["kind"]:
+			&"twin_peaks":
+				these = [at + across * 26.0, at - across * 26.0]
+			&"ridge":
+				these = [at + across * 42.0, at - across * 42.0]
+		s["peaks"] = these
+		if peaks.is_empty():
+			peaks = these
+
+
+## For a world with many sites: which sites each CANDIDATE_CELL square (of warped space) needs.
+## A site is left out only where it can't be nearest and its blend weight is below _pixel's cut-off
+## everywhere in the square, so the result is the same as measuring every site.
+func _index_candidates() -> void:
+	_candidates.clear()
+	if sites.size() <= 12:
+		return  # few enough to measure them all (and the normal map stays exactly as it was)
+	var reach := BIOME_BLEND * log(100.0) / 3.0 + 1.0  # where the weight falls under 0.01, and a margin
+	var lo := origin - Vector2.ONE * (CELL_WARP + CANDIDATE_CELL)
+	var n := int((metres + 2.0 * (CELL_WARP + CANDIDATE_CELL)) / CANDIDATE_CELL) + 1
+	for cy in n:
+		for cx in n:
+			var rect := Rect2(lo + Vector2(cx, cy) * CANDIDATE_CELL, Vector2.ONE * CANDIDATE_CELL)
+			var nearest_far := INF  # no point in the square is further than this from its nearest site
+			for site in sites:
+				nearest_far = minf(nearest_far, _far_corner(rect, site["pos"]))
+			var list := PackedInt32Array()
+			for k in sites.size():
+				var p: Vector2 = sites[k]["pos"]
+				var near := p.distance_to(p.clamp(rect.position, rect.end))
+				if near <= nearest_far + reach:
+					list.append(k)
+			_candidates[Vector2i(cx, cy)] = list
+
+
+static func _far_corner(rect: Rect2, p: Vector2) -> float:
+	var dx := maxf(absf(p.x - rect.position.x), absf(p.x - rect.end.x))
+	var dy := maxf(absf(p.y - rect.position.y), absf(p.y - rect.end.y))
+	return sqrt(dx * dx + dy * dy)
 
 
 func _site_index(biome: StringName) -> int:
@@ -393,15 +544,18 @@ func _site_index(biome: StringName) -> int:
 
 ## Spreads `biomes` round the hub, evenly but jittered, keeping MIN_SITE_GAP between sites
 ## (as far as it can: after a few tries it takes what it has).
-func _ring(biomes: Array, radius: Vector2, tier: int) -> void:
-	var start := _rng.randf() * TAU
-	var step := TAU / biomes.size()
+func _ring(biomes: Array, radius: Vector2, tier: int, max_distance := SITE_MAX_DISTANCE,
+		rng: RandomNumberGenerator = null) -> void:
+	if rng == null:
+		rng = _rng
+	var start := rng.randf() * TAU
+	var angle_step := TAU / biomes.size()
 	for i in biomes.size():
 		var best := Vector2.ZERO
 		var best_gap := -1.0
 		for attempt in 24:
-			var a := start + i * step + _rng.randf_range(-0.3, 0.3) * step
-			var p := (hub + Vector2.from_angle(a) * _rng.randf_range(radius.x, radius.y)).limit_length(SITE_MAX_DISTANCE)
+			var a := start + i * angle_step + rng.randf_range(-0.3, 0.3) * angle_step
+			var p := (hub + Vector2.from_angle(a) * rng.randf_range(radius.x, radius.y)).limit_length(max_distance)
 			var gap := INF
 			for s in sites:
 				gap = minf(gap, p.distance_to(s["pos"]))
@@ -425,6 +579,9 @@ func _shuffle(a: Array) -> void:
 
 func _pixel(w: Vector2, i: int) -> void:
 	var warped := w + Vector2(_warp_x.get_noise_2dv(w), _warp_y.get_noise_2dv(w)) * CELL_WARP
+	if not _candidates.is_empty():
+		_pixel_among(w, warped, i)
+		return
 	var dist := PackedFloat32Array()
 	dist.resize(sites.size())
 	var nearest := 0
@@ -442,7 +599,7 @@ func _pixel(w: Vector2, i: int) -> void:
 			continue
 		h += _profile(sites[s], w) * weight
 		total += weight
-	h /= total
+	h = h / total * _relief
 	h *= smoothstep(HUB_RADIUS, HUB_RADIUS + hub_ramp, w.distance_to(hub))
 	var rim := _rim(w)
 	h += rim * rim * RIM_HEIGHT + rim * (_ridges.get_noise_2dv(w) * 0.5 + 0.5) * RIM_HEIGHT * 0.35
@@ -452,11 +609,42 @@ func _pixel(w: Vector2, i: int) -> void:
 	ids[i] = BIOME_TEXTURE.get(biome, WorldMap.TEX_DEFAULT) if rim < 0.3 else WorldMap.TEX_DEFAULT
 
 
+## _pixel for a world with many sites: only the sites that matter in this spot's square.
+func _pixel_among(w: Vector2, warped: Vector2, i: int) -> void:
+	var key := Vector2i(((warped - origin + Vector2.ONE * (CELL_WARP + CANDIDATE_CELL)) / CANDIDATE_CELL).floor())
+	var list: PackedInt32Array = _candidates.get(key, PackedInt32Array())
+	if list.is_empty():
+		list = PackedInt32Array(range(sites.size()))
+	var dist := PackedFloat32Array()
+	dist.resize(list.size())
+	var nearest := 0
+	for k in list.size():
+		dist[k] = warped.distance_to(sites[list[k]]["pos"])
+		if dist[k] < dist[nearest]:
+			nearest = k
+	var h := 0.0
+	var total := 0.0
+	for k in list.size():
+		var weight := exp(-(dist[k] - dist[nearest]) * 3.0 / BIOME_BLEND)
+		if weight < 0.01:
+			continue
+		h += _profile(sites[list[k]], w) * weight
+		total += weight
+	h = h / total * _relief
+	h *= smoothstep(HUB_RADIUS, HUB_RADIUS + hub_ramp, w.distance_to(hub))
+	var rim := _rim(w)
+	h += rim * rim * RIM_HEIGHT + rim * (_ridges.get_noise_2dv(w) * 0.5 + 0.5) * RIM_HEIGHT * 0.35
+	heights[i] = h
+	var biome: StringName = sites[list[nearest]]["biome"]
+	cells[i] = RIM_CELL if rim > 0.5 else list[nearest]
+	ids[i] = BIOME_TEXTURE.get(biome, WorldMap.TEX_DEFAULT) if rim < 0.3 else WorldMap.TEX_DEFAULT
+
+
 ## How far up the rim a spot is, 0 (not on it) to 1 (the edge of the map). The rim follows a
 ## rounded square (a superellipse, so the corners don't crease), bent so it doesn't run straight.
 func _rim(w: Vector2) -> float:
 	var r := pow(pow(absf(w.x), 4.0) + pow(absf(w.y), 4.0), 0.25) + _rim_warp.get_noise_2dv(w) * RIM_WARP
-	return smoothstep(RIM_START, SIZE * 0.5 + 8.0, r)
+	return smoothstep(_far(RIM_START), metres * 0.5 + 8.0, r)
 
 
 ## A biome's own ground at `w` (before the hub flattens it and the rim raises it).
@@ -490,7 +678,7 @@ func _profile(site: Dictionary, w: Vector2) -> float:
 			var rough := 7.0 if kind == &"broken_pit" else 4.0
 			return 8.0 + _rough.get_noise_2dv(w) * rough + hills * 6.0 + bumps
 		&"frostpeak":   # mountains on the site, snowy above the shader's snow line
-			return _mountain(w) + hills * 6.0
+			return _mountain(w, site) + hills * 6.0
 		&"hearthvale":  # round the village's flat: hills for a valley, low ground by a lake
 			if kind == &"lakeside_village":
 				return 0.5 + swell * 2.0 + bumps * 0.3
@@ -500,9 +688,10 @@ func _profile(site: Dictionary, w: Vector2) -> float:
 
 ## Frostpeak's height at `w`: a cone round each summit, or for a Ridge a spine between its two
 ## ends; ridged noise roughens it more the higher up.
-func _mountain(w: Vector2) -> float:
+func _mountain(w: Vector2, site: Dictionary) -> float:
 	var cone := 0.0
-	if kinds.get(&"frostpeak") == &"ridge" and peaks.size() == 2:
+	var peaks: Array[Vector2] = site.get("peaks", [site["pos"]] as Array[Vector2])
+	if site.get("kind") == &"ridge" and peaks.size() == 2:
 		var d := w.distance_to(Geometry2D.get_closest_point_to_segment(w, peaks[0], peaks[1]))
 		cone = pow(1.0 - smoothstep(0.0, 55.0, d), 1.4) * 0.8
 	else:
@@ -556,13 +745,13 @@ func _stamp_village() -> void:
 
 ## Calls fn(i, w) for every pixel within `radius` of world XZ `at`.
 func _for_pixels_near(at: Vector2, radius: float, fn: Callable) -> void:
-	var lo := (at - Vector2.ONE * radius - Vector2(ORIGIN.x, ORIGIN.z)).floor()
-	var hi := (at + Vector2.ONE * radius - Vector2(ORIGIN.x, ORIGIN.z)).ceil()
-	for y in range(maxi(int(lo.y), 0), mini(int(hi.y), SIZE - 1) + 1):
-		for x in range(maxi(int(lo.x), 0), mini(int(hi.x), SIZE - 1) + 1):
+	var lo := ((at - Vector2.ONE * radius - origin) / step).floor()
+	var hi := ((at + Vector2.ONE * radius - origin) / step).ceil()
+	for y in range(maxi(int(lo.y), 0), mini(int(hi.y), size - 1) + 1):
+		for x in range(maxi(int(lo.x), 0), mini(int(hi.x), size - 1) + 1):
 			var w := world(x, y)
 			if w.distance_to(at) <= radius:
-				fn.call(y * SIZE + x, w)
+				fn.call(y * size + x, w)
 
 
 func _stamp_quarry() -> void:
@@ -652,34 +841,39 @@ func _place_water() -> void:
 	if not village.is_empty() and village["lakeside"]:
 		var vp: Vector2 = village["center"] + (VILLAGE_POND["offset"] as Vector2).rotated(village["angle"])
 		_basin("VillagePond", vp, VILLAGE_POND["radius"], VILLAGE_POND["depth"], false, false, 3.5)
-	var si := _site_index(&"stillwater")
-	if si >= 0:
+	var lake_no := 0
+	for si in sites.size():
+		if sites[si]["biome"] != &"stillwater":
+			continue
+		lake_no += 1
+		var suffix := "" if lake_no == 1 else str(lake_no)  # the first is "Lake": rivers run into it
 		var at: Vector2 = (sites[si]["pos"] as Vector2).move_toward(hub, 10.0)
 		if not quarry.is_empty():  # keep the lake's banks out of the quarry's apron
 			var qc: Vector2 = quarry["center"]
 			var need := quarry_walls[0] + QUARRY_APRON + QUARRY_BLEND + LAKE_RADIUS + 10.0
 			if at.distance_to(qc) < need:
 				at = qc + (at - qc).normalized() * need
-		at = at.limit_length(140.0)
-		match kinds[&"stillwater"]:
+		at = at.limit_length(_far(140.0))
+		match sites[si]["kind"]:
 			&"island_lake":  # a wider lake, an island in its middle
-				_basin("Lake", at, LAKE_RADIUS + 7.0, LAKE_DEPTH, true)
+				_basin("Lake" + suffix, at, LAKE_RADIUS + 7.0, LAKE_DEPTH, true)
 				_island(at, ISLAND_RADIUS)
 			&"marsh":  # a smaller deep pond for the char, shallow pools scattered round it
-				_basin("Lake", at, LAKE_RADIUS - 4.0, LAKE_DEPTH, true)
+				_basin("Lake" + suffix, at, LAKE_RADIUS - 4.0, LAKE_DEPTH, true)
 				var a0 := _rng.randf() * TAU
 				for k in MARSH_POOLS:
 					var p := at + Vector2.from_angle(a0 + k * TAU / MARSH_POOLS + _rng.randf_range(-0.4, 0.4)) \
 							* _rng.randf_range(20.0, 26.0)
-					_basin("Marsh%d" % (k + 1), p, _rng.randf_range(4.0, 6.0), _rng.randf_range(0.5, 0.7), false, false)
+					_basin("Marsh%s%d" % [suffix, k + 1], p, _rng.randf_range(4.0, 6.0), _rng.randf_range(0.5, 0.7), false, false)
 			_:
-				_basin("Lake", at, LAKE_RADIUS + 4.0, LAKE_DEPTH, true)
-	for n in POND_COUNT:
+				_basin("Lake" + suffix, at, LAKE_RADIUS + 4.0, LAKE_DEPTH, true)
+	var ponds: int = WorldSettings.PONDS[settings["water"]] * (LARGE_POND_SCALE if settings["size"] == &"large" else 1)
+	for n in ponds:
 		var r := _rng.randf_range(POND_RADIUS.x, POND_RADIUS.y)
 		var best := Vector2.INF
 		var best_score := INF
 		for k in 240:  # the lowest of a few hundred allowed spots, so ponds sit in hollows
-			var p := Vector2(_rng.randf_range(-170.0, 170.0), _rng.randf_range(-170.0, 170.0))
+			var p := Vector2(_rng.randf_range(-_far(170.0), _far(170.0)), _rng.randf_range(-_far(170.0), _far(170.0)))
 			if not _pond_spot_ok(p, r):
 				continue
 			var score := height_at(p) + _rng.randf() * 2.0
@@ -691,7 +885,7 @@ func _place_water() -> void:
 
 
 func _pond_spot_ok(p: Vector2, r: float) -> bool:
-	if p.distance_to(hub) < HUB_RADIUS + hub_ramp or p.length() > 150.0 or _rim(p) > 0.0:
+	if p.distance_to(hub) < HUB_RADIUS + hub_ramp or p.length() > _far(150.0) or _rim(p) > 0.0:
 		return false
 	var biome := biome_at(p)
 	if biome == &"quarry" or biome == &"frostpeak" or biome == &"":
@@ -750,24 +944,24 @@ const POOL_SPACING := 30                 # points (m) at least between two pools
 
 func _carve_rivers() -> void:
 	rivers.clear()
-	river_mask.resize(SIZE * SIZE)
+	river_mask.resize(size * size)
 	river_mask.fill(0)
 	var lake := {}
 	for w in waters:
 		if w["name"] == "Lake":
 			lake = w
-	if lake.is_empty():
+	if lake.is_empty() or settings["water"] == &"dry":
 		return
 	var mouth: Vector2 = lake["center"]
 	var away := (mouth - hub).normalized()
 	var turns := [_rng.randf_range(-0.4, 0.4)]
-	if _rng.randf() < RIVER_SECOND_CHANCE:
+	if _rng.randf() < RIVER_SECOND_CHANCE or settings["water"] == &"wet":
 		turns.append(_rng.randf_range(1.1, 1.7) * (1.0 if _rng.randf() < 0.5 else -1.0))
 	var astar := _river_grid()
 	for turn in turns:
 		var source := mouth
 		var dir := away.rotated(turn)
-		while _rim(source) < 0.2 and source.length() < SIZE * 0.5:
+		while _rim(source) < 0.2 and source.length() < metres * 0.5:
 			source += dir * TRAIL_CELL
 		var cells_path := astar.get_id_path(_trail_cell(source), _trail_cell(mouth))
 		if cells_path.size() < 4:
@@ -792,7 +986,7 @@ func _carve_rivers() -> void:
 
 
 func _river_grid() -> AStarGrid2D:
-	var n := int(SIZE / TRAIL_CELL)
+	var n := int(metres / TRAIL_CELL)
 	var astar := AStarGrid2D.new()
 	astar.region = Rect2i(0, 0, n, n)
 	astar.cell_size = Vector2.ONE * TRAIL_CELL
@@ -933,7 +1127,7 @@ func _trail_targets() -> PackedVector2Array:
 
 ## The coarse cost grid: a square's weight grows with the steepest drop to its neighbours.
 func _trail_grid() -> AStarGrid2D:
-	var n := int(SIZE / TRAIL_CELL)
+	var n := int(metres / TRAIL_CELL)
 	var astar := AStarGrid2D.new()
 	astar.region = Rect2i(0, 0, n, n)
 	astar.cell_size = Vector2.ONE * TRAIL_CELL
@@ -964,13 +1158,13 @@ func _in_pit(w: Vector2) -> bool:
 
 
 func _trail_cell(w: Vector2) -> Vector2i:
-	var p := (w - Vector2(ORIGIN.x, ORIGIN.z)) / TRAIL_CELL
-	var n := int(SIZE / TRAIL_CELL)
+	var p := (w - origin) / TRAIL_CELL
+	var n := int(metres / TRAIL_CELL)
 	return Vector2i(clampi(int(p.x), 0, n - 1), clampi(int(p.y), 0, n - 1))
 
 
 func _trail_world(c: Vector2i) -> Vector2:
-	return Vector2(ORIGIN.x, ORIGIN.z) + (Vector2(c) + Vector2(0.5, 0.5)) * TRAIL_CELL
+	return origin + (Vector2(c) + Vector2(0.5, 0.5)) * TRAIL_CELL
 
 
 ## One round of corner cutting: the grid's staircase becomes a curve after a few.
@@ -1038,7 +1232,7 @@ func _grade_and_paint() -> void:
 				if not best.has(i) or d < best[i][0]:
 					best[i] = [d, graded])
 	for i in best:
-		var w := world(i % SIZE, i / SIZE)
+		var w := world(i % size, i / size)
 		if heights[i] < WATER_LEVEL + 0.1 or _in_pit(w) or w.distance_to(hub) < HUB_RADIUS:
 			continue
 		var d: float = best[i][0]
@@ -1074,6 +1268,11 @@ func _place_landmarks() -> void:
 	landmarks.clear()
 	var lrng := RandomNumberGenerator.new()
 	lrng.seed = sub_seed(&"landmarks")
+	for round in LARGE_LANDMARK_ROUNDS if settings["size"] == &"large" else 1:
+		_landmark_round(lrng)
+
+
+func _landmark_round(lrng: RandomNumberGenerator) -> void:
 	var ruins := 1 + int(lrng.randf() < 0.4)
 	for k in ruins:
 		var kind: Array = RUIN_KINDS[lrng.randi_range(0, RUIN_KINDS.size() - 1)]
@@ -1095,7 +1294,7 @@ func _place_landmarks() -> void:
 func _add_landmark(lrng: RandomNumberGenerator, type: StringName, kind: StringName, title: String,
 		biomes: Array, pad: bool) -> void:
 	for attempt in 400:
-		var p := Vector2(lrng.randf_range(-165.0, 165.0), lrng.randf_range(-165.0, 165.0))
+		var p := Vector2(lrng.randf_range(-_far(165.0), _far(165.0)), lrng.randf_range(-_far(165.0), _far(165.0)))
 		var angle := lrng.randf() * TAU
 		if not _landmark_spot_ok(p, biomes):
 			continue
@@ -1158,13 +1357,15 @@ const PREVIEW_TINT := {
 }
 
 
-## A top-down picture of the map: each biome tinted, shaded by height and lit from the
-## north-west, snow above the snow line, the sites marked. For checking a seed at a glance.
-func write_preview(path: String) -> Error:
-	var img := Image.create_empty(SIZE, SIZE, false, Image.FORMAT_RGB8)
-	for y in SIZE:
-		for x in SIZE:
-			var i := y * SIZE + x
+## A top-down picture of the map, a pixel per map pixel: each biome tinted, shaded by height and
+## lit from the north-west, snow above the snow line, water, paths and quarry stone. `marks`: the
+## sites (red crosses) and landmarks (squares) too, for checking a seed at a glance.
+func preview_image(marks := true) -> Image:
+	var img := Image.create_empty(size, size, false, Image.FORMAT_RGB8)
+	var rise := 0.25 / step  # the shading reads a slope, whatever the pixel size
+	for y in size:
+		for x in size:
+			var i := y * size + x
 			var h := heights[i]
 			var c: Color = Color(0.47, 0.46, 0.45) if cells[i] == RIM_CELL else PREVIEW_TINT.get(sites[cells[i]]["biome"], Color.MAGENTA)
 			c = c.lerp(Color(0.47, 0.46, 0.45), clampf((h - 20.0) / 18.0, 0.0, 0.6))
@@ -1176,19 +1377,26 @@ func write_preview(path: String) -> Error:
 				c = Color(0.72, 0.69, 0.62)
 			if h < WATER_LEVEL:
 				c = Color(0.25, 0.45, 0.62).darkened(clampf((WATER_LEVEL - h) * 0.3, 0.0, 0.5))
-			var east := heights[y * SIZE + mini(x + 1, SIZE - 1)] - h
-			var south := heights[mini(y + 1, SIZE - 1) * SIZE + x] - h
-			var light := clampf(1.0 + (east + south) * 0.25, 0.6, 1.3)  # rising to the south-east = facing the light
+			var east := heights[y * size + mini(x + 1, size - 1)] - h
+			var south := heights[mini(y + 1, size - 1) * size + x] - h
+			var light := clampf(1.0 + (east + south) * rise, 0.6, 1.3)  # rising to the south-east = facing the light
 			img.set_pixel(x, y, c * light)
-	for s in sites:
-		var p := Vector2i((s["pos"] as Vector2) - Vector2(ORIGIN.x, ORIGIN.z))
+	if not marks:
+		return img
+	var last := Vector2i(size - 1, size - 1)
+	for site in sites:
+		var p := Vector2i(((site["pos"] as Vector2) - origin) / step)
 		for k in range(-3, 4):
-			img.set_pixelv((p + Vector2i(k, 0)).clamp(Vector2i.ZERO, Vector2i(SIZE - 1, SIZE - 1)), Color.RED)
-			img.set_pixelv((p + Vector2i(0, k)).clamp(Vector2i.ZERO, Vector2i(SIZE - 1, SIZE - 1)), Color.RED)
-	var marks := {&"ruins": Color.MAGENTA, &"camp": Color.ORANGE, &"rare": Color.YELLOW}
+			img.set_pixelv((p + Vector2i(k, 0)).clamp(Vector2i.ZERO, last), Color.RED)
+			img.set_pixelv((p + Vector2i(0, k)).clamp(Vector2i.ZERO, last), Color.RED)
+	var colours := {&"ruins": Color.MAGENTA, &"camp": Color.ORANGE, &"rare": Color.YELLOW}
 	for l in landmarks:  # a little square each
-		var p := Vector2i((l["pos"] as Vector2) - Vector2(ORIGIN.x, ORIGIN.z))
+		var p := Vector2i(((l["pos"] as Vector2) - origin) / step)
 		for dy in range(-2, 3):
 			for dx in range(-2, 3):
-				img.set_pixelv((p + Vector2i(dx, dy)).clamp(Vector2i.ZERO, Vector2i(SIZE - 1, SIZE - 1)), marks[l["type"]])
-	return img.save_png(path)
+				img.set_pixelv((p + Vector2i(dx, dy)).clamp(Vector2i.ZERO, last), colours[l["type"]])
+	return img
+
+
+func write_preview(path: String) -> Error:
+	return preview_image().save_png(path)
