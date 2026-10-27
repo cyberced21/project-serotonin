@@ -745,6 +745,80 @@ def band_cuts(bands):
     return [(p + n * w * side, n) for n, p, w in bands for side in (-1, 1)]
 
 
+def ore_lenses(rng, bm, centre, count, width, reach):
+    """Ore the way it shows in a real boulder: `count` short lenses (normal, middle, half-width,
+    reach), instead of bands round the rock. Each is middled on the surface of `bm`, spread round
+    the rock from `centre` so every side shows one, and stands across the surface so it breaks it
+    as a streak; `width` (low, high) at its fattest, `reach` (low, high) metres out before it
+    tapers to a point."""
+    lenses = []
+    golden = math.pi * (3.0 - math.sqrt(5.0))
+    for i in range(count):
+        h = 0.75 - 0.9 * (i + 0.5) / count  # (the upper part and the sides, not underneath)
+        a = i * golden + rng.uniform(-0.3, 0.3)
+        out = Vector((math.cos(a) * math.sqrt(1 - h * h), math.sin(a) * math.sqrt(1 - h * h), h))
+        p = max((v.co for v in bm.verts), key=lambda co: (co - centre).normalized().dot(out))
+        n = out.orthogonal().normalized()
+        n.rotate(Matrix.Rotation(rng.uniform(0, math.tau), 3, out))
+        lenses.append((n, p - out * 0.05, rng.uniform(*width), rng.uniform(*reach)))
+    return lenses
+
+
+def lens_ratio(c, lenses, stretch=1.0):
+    """How deep in an ore lens (see ore_lenses) a point is: its distance from the lens's wavy
+    middle over the lens's width there, under 1 = inside. A lens is fattest in its middle, tapers
+    to a point at its reach (`stretch` times it), and swells and narrows along the way."""
+    best = math.inf
+    for k, (n, p, w, reach) in enumerate(lenses):
+        d = c - p
+        across = d.dot(n)
+        t = (d - n * across).length / (reach * stretch)
+        if t >= 1.0:
+            continue
+        swell = 0.7 + 0.5 * noise.noise(c * 2.6 + Vector((k * 7.0, 3.0, 1.0)))
+        best = min(best, abs(across - wave(c, n)) / max(w * (1.0 - t * t) * swell, 1e-4))
+    return best
+
+
+def snap_to_outline(bm, field, level, lo, hi):
+    """Moves each vertex whose `field` value is between `lo` and `hi` onto the nearest point along
+    its edges where the field crosses `level`, so faces painted by which side of `level` they're on
+    meet in a smooth outline instead of a zigzag of triangles."""
+    value = {v: field(v.co) for v in bm.verts}
+    moves = {}
+    for v, r in value.items():
+        if not lo <= r <= hi:
+            continue
+        best = None
+        for e in v.link_edges:
+            u = e.other_vert(v)
+            ru = value[u]
+            if ru != math.inf and (r - level) * (ru - level) < 0:
+                t = (level - r) / (ru - r)
+                if best is None or t < best[0]:
+                    best = (t, v.co.lerp(u.co, t))
+        if best is not None and best[0] < 0.6:
+            moves[v] = best[1]
+    for v, co in moves.items():
+        v.co = co
+
+
+def snap_lenses(bm, lenses):
+    """The outlines of the lenses and of their hearts (half their width) made smooth (see
+    snap_to_outline)."""
+    snap_to_outline(bm, lambda c: lens_ratio(c, lenses), 1.0, 0.75, 2.0)
+    snap_to_outline(bm, lambda c: lens_ratio(c, lenses), 0.5, 0.0, 0.75)
+
+
+def refine_near(bm, near, cuts=2):
+    """Divides the faces `near(face)` picks `cuts` + 1 ways each side, so colour painted face by
+    face there (ore) follows a curve instead of stepping in big triangles."""
+    edges = {e for f in bm.faces if near(f) for e in f.edges}
+    if edges:
+        bmesh.ops.subdivide_edges(bm, edges=list(edges), cuts=cuts, use_grid_fill=True)
+        bmesh.ops.triangulate(bm, faces=bm.faces[:])
+
+
 def layer_cuts(normal, spacing, lo, hi):
     """Parallel planes `spacing` apart along `normal`, from `lo` to `hi` (distances from the origin)."""
     return [(normal * (lo + k * spacing), normal) for k in range(int((hi - lo) / spacing) + 1)]
@@ -768,9 +842,15 @@ def copper_verdigris(name="copper_verdigris", out="designs", shatter=False):
     veins = [(Vector((1, 0.35, 0.25)).normalized(), centre + Vector((0.15, 0, 0)), 0.07),
              (Vector((-0.3, 1, -0.4)).normalized(), centre + Vector((0, -0.1, 0.1)), 0.06)]
     crust_z = cz + 0.38 * r.tall / 0.72  # verdigris above this, where rain and weather get at it
-    slice_mesh(whole, band_cuts(veins) + [(Vector((0, 0, crust_z)), Vector((0, 0, 1)))])
+    if shatter:  # ore in lenses, not bands round the rock
+        veins = ore_lenses(rng, whole, centre, 5, (0.05, 0.08), (0.35, 0.55))
+        refine_near(whole, lambda f: lens_ratio(f.calc_center_median(), veins, 1.2) < 3.5, cuts=3)
+        snap_lenses(whole, veins)
+        slice_mesh(whole, [(Vector((0, 0, crust_z)), Vector((0, 0, 1)))])
+    else:
+        slice_mesh(whole, band_cuts(veins) + [(Vector((0, 0, crust_z)), Vector((0, 0, 1)))])
     seeds = [Vector((0, 0, cz * 0.7))]
-    for n, p, _ in veins:  # pairs either side of each vein
+    for n, p, *_ in veins:  # pairs either side of each vein
         for a in (0.6, 2.2):
             s = centre + Vector((math.cos(a) * 0.75, math.sin(a) * 0.65, rng.uniform(-0.05, 0.2)))
             s += n * (0.28 - (s - p).dot(n))  # a fixed distance on one side ...
@@ -780,7 +860,15 @@ def copper_verdigris(name="copper_verdigris", out="designs", shatter=False):
 
     def choose(f, is_cut, i):
         c = f.calc_center_median()
-        if near_plane(c, veins):
+        if shatter:  # lenses of copper weathered dark, green staining round them
+            v = lens_ratio(c, veins, 1.6 if is_cut else 1.0)  # (a break opens a wider sheet of copper)
+            if v < 1.0:
+                return "ore.copper" if is_cut or (v < 0.5 and f.normal.z > 0.2) else "ore.copper_dark"
+            if is_cut:
+                return "stone.6"
+            if v < 2.8 and noise.noise(c * 6.0 + Vector((3.0, 1.0, 2.0))) > -0.2:
+                return "leaves.5"
+        elif near_plane(c, veins):
             return "ore.copper" if is_cut or f.normal.z > 0.2 else "ore.copper_dark"
         if is_cut:
             return "stone.6"
@@ -821,7 +909,8 @@ def iron_columns(name="iron_columns", out="designs", shatter=False):
     """Iron A: a cluster of dark basalt columns of different heights (upright Voronoi cells of a
     tall prism, each with its own flat top), rust bleeding down from the tops; the faces a break
     opens glint with iron. With `shatter`, each column is jointed into stacked segments that rest
-    on the one below: knock out a column's foot and the rest of it topples."""
+    on the one below: knock out a column's foot and the rest of it topples; and the columns are
+    weathered: tops worn round, rust in streaks, set a little out of line."""
     reset()
     rng = seeded(103)
     r = recipe(103, tall=(0.8, 1.0, 1.25), spread=(0.88, 1.0, 1.15), size=(0.9, 1.0, 1.12))
@@ -833,7 +922,7 @@ def iron_columns(name="iron_columns", out="designs", shatter=False):
         v.co.y *= (0.95 + rng.uniform(-0.04, 0.04)) * r.spread
     # finely divided, so the columns can swell and lean (the warp in shattered()) instead of
     # standing as ruled prisms
-    bmesh.ops.subdivide_edges(whole, edges=whole.edges[:], cuts=5, use_grid_fill=True)
+    bmesh.ops.subdivide_edges(whole, edges=whole.edges[:], cuts=8, use_grid_fill=True)
     bmesh.ops.triangulate(whole, faces=whole.faces[:])
     off = Vector((rng.uniform(-50, 50), rng.uniform(-50, 50), 0.0))
     for v in whole.verts:
@@ -843,14 +932,17 @@ def iron_columns(name="iron_columns", out="designs", shatter=False):
     seeds = [Vector((0, 0, 0.5))]
     for k in range(6):  # a ring round the middle column ...
         a = k * math.tau / 6 + rng.uniform(-0.15, 0.15)
-        seeds.append(Vector((math.cos(a) * 0.52, math.sin(a) * 0.48, 0.5)) * Vector((r.spread, r.spread, 1)))
+        k = rng.uniform(0.9, 1.12) if shatter else 1.0  # (not quite a ring: out of line)
+        seeds.append(Vector((math.cos(a) * 0.52 * k, math.sin(a) * 0.48 * k, 0.5)) * Vector((r.spread, r.spread, 1)))
     for k in range(5):  # ... and an outer one
         a = k * math.tau / 5 + 0.3 + rng.uniform(-0.2, 0.2)
-        seeds.append(Vector((math.cos(a) * 1.0, math.sin(a) * 0.92, 0.5)) * Vector((r.spread, r.spread, 1)))
+        k = rng.uniform(0.9, 1.08) if shatter else 1.0
+        seeds.append(Vector((math.cos(a) * 1.0 * k, math.sin(a) * 0.92 * k, 0.5)) * Vector((r.spread, r.spread, 1)))
     tops = [size * 1.55] + [size * rng.uniform(1.05, 1.4) for _ in range(6)] + [size * rng.uniform(0.55, 0.95) for _ in range(5)]
     tops = [t * r.tall for t in tops]
     rust = [size * rng.uniform(0.2, 0.4) for _ in seeds]  # how far rust runs down each one
     if shatter:
+        rust = [x * 1.4 for x in rust]  # (in streaks: further, but not all the way round)
         columns = seeds
         tilts = [Vector((rng.uniform(-0.12, 0.12), rng.uniform(-0.12, 0.12), 1)).normalized() for _ in columns]
         seeds, column_of = [], []
@@ -862,14 +954,46 @@ def iron_columns(name="iron_columns", out="designs", shatter=False):
                 column_of.append(c)
         whole.normal_update()
 
+        def dome(c, p):
+            """How far column c's worn top drops below its flat (tilted) top at p: more out
+            toward its edges, and unevenly."""
+            d2 = (p.x - columns[c].x) ** 2 + (p.y - columns[c].y) ** 2
+            return 0.9 * d2 + 0.03 * noise.noise(Vector((p.x * 4.0, p.y * 4.0, c * 1.7)))
+
+        def top_at(c, p):
+            t = tilts[c]
+            return tops[c] - (p.x * t.x + p.y * t.y) / t.z - dome(c, p)
+
+        def domed_top(bm, c, cut):
+            """Cuts the column off at its top, worn round (dome) rather than flat: the mesh is
+            raised so the dome lies flat, cut, lowered again, and the cap pushed up into a dome."""
+            for v in bm.verts:
+                v.co.z += dome(c, v.co)
+            res = bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:],
+                                         plane_co=Vector((0, 0, tops[c])), plane_no=tilts[c], clear_outer=True)
+            for v in bm.verts:
+                v.co.z -= dome(c, v.co)
+            edges = [e for e in res["geom_cut"] if isinstance(e, bmesh.types.BMEdge) and e.is_boundary]
+            if not edges:
+                return
+            caps = bmesh.ops.holes_fill(bm, edges=edges, sides=0)["faces"]
+            for f in caps:
+                f[cut] = 0
+            for _ in range(2):  # points inside the cap to round it
+                res = bmesh.ops.poke(bm, faces=caps)
+                for v in res["verts"]:
+                    v.co.z = top_at(c, v.co)
+                caps = res["faces"]
+
         def post_joint(bm, i, cut):
             c = column_of[i]
-            chop(bm, Vector((0, 0, tops[c])), tilts[c])
+            domed_top(bm, c, cut)
             slice_mesh(bm, [(Vector((0, 0, tops[c] - rust[c])), Vector((0, 0, 1)))])
             # a side standing clear of a shorter neighbour column is weathered outside, not a break
             across = bm.faces.layers.int.get("across")
             for f in bm.faces:
-                if f[cut] and f[across] > 0 and f.calc_center_median().z > tops[column_of[f[across] - 1]] - 0.03:
+                centre = f.calc_center_median()
+                if f[cut] and f[across] > 0 and centre.z > top_at(column_of[f[across] - 1], centre) - 0.03:
                     f[cut] = 0
                     f[across] = 0
 
@@ -879,12 +1003,14 @@ def iron_columns(name="iron_columns", out="designs", shatter=False):
                 return "metal.5" if rng.random() < 0.25 else "metal.3"
             if f.normal.z > 0.8:
                 return "stone.3"
-            if centre.z - wave(centre, UP) > tops[c] - rust[c]:  # rust running down from the top
-                return "wood.3"
+            # rust running down from the top, in streaks
+            streak = noise.noise(Vector((centre.x * 5.0, centre.y * 5.0, c * 2.1)))
+            if centre.z - wave(centre, UP) > tops[c] - rust[c] * (0.55 + 0.45 * streak):
+                return "wood.3" if streak > -0.1 else "wood.2"
             return "stone.2" if c % 2 else "stone.3"
         shattered(name, rng, whole, seeds, choose_joint, stretch=(1, 1, 0.02), post=post_joint, size=size,
                   rubble=("stone.2", "stone.1", "stone.0"), out=out, ore_swatches=("metal.",), moss_amount=0.45,
-                  rules={"support": "below", "knock": 0, "shatter_at": 0.5}, bend=0.13)
+                  rules={"support": "below", "knock": 0, "shatter_at": 0.5}, bend=0.17)
         return
 
     def post(bm, i, cut):  # a flat (slightly tilted) top at this column's height
@@ -1120,10 +1246,9 @@ def gold_geode_shatter(name="gold_rock", out="", heart="gold"):
     bmesh.ops.translate(whole, vec=Vector((0, 0, -0.05)), verts=whole.verts)
     cz -= 0.05
     centre = Vector((0, 0, cz))
-    veins = [(Vector((0.7, 0.3, 0.65)).normalized(), centre + Vector((0.1, 0, 0)), 0.03),
-             (Vector((-0.5, 0.85, 0.15)).normalized(), centre + Vector((0, 0.15, 0.05)), 0.025),
-             (Vector((0.2, -0.6, 0.8)).normalized(), centre + Vector((-0.2, -0.1, 0.1)), 0.02)]
-    slice_mesh(whole, band_cuts(veins))
+    veins = ore_lenses(rng, whole, centre, 6, (0.035, 0.055), (0.28, 0.45))  # quartz lenses
+    refine_near(whole, lambda f: lens_ratio(f.calc_center_median(), veins, 1.2) < 3.5, cuts=3)
+    snap_lenses(whole, veins)
     shell = shell_seeds(rng, size, squash, cz, sides=7, tops=3, out=(0.8, 0.72))[1:]
     inner = []
     golden = math.pi * (3.0 - math.sqrt(5.0))
@@ -1140,9 +1265,13 @@ def gold_geode_shatter(name="gold_rock", out="", heart="gold"):
 
     def choose(f, is_cut, i):
         c = f.calc_center_median()
-        if not is_cut:
-            if near_plane(c, veins):
-                return "ore.gold" if f.normal.z > -0.2 else "accent.2"
+        if not is_cut:  # quartz veins that swell and pinch out, gold in their hearts, flecks round them
+            v = lens_ratio(c, veins)
+            if v < 1.0:
+                gold = v < 0.5 and f.normal.z > -0.2 and noise.noise(c * 9.0) > -0.25
+                return "ore.gold" if gold else "neutral.6"
+            if v < 3.0 and rng.random() < 0.06:
+                return "ore.gold"
             return stone(f)
         if i < len(shell):  # the shell's breaks: brown stone, quartz where it meets the heart
             return "neutral.6" if (c - centre).length < 0.5 * size else "wood.2"
