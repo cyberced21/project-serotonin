@@ -114,12 +114,15 @@ float vein_distance(int i, vec3 p) {
 	return dot(p, pl.xyz) - pl.w + bow * wv.w;
 }
 
-// 1 on a vein, easing off at its edges.
-float vein_mask(vec3 p) {
+// 1 on a vein, easing off at its edges; `halo` 1 near one (where flecks of ore are scattered).
+float vein_mask(vec3 p, out float halo) {
 	float m = 0.0;
+	halo = 0.0;
 	for (int i = 0; i < vein_count; i++) {
 		float w = vein_width[i];
-		m = max(m, 1.0 - smoothstep(w * 0.55, w, abs(vein_distance(i, p))));
+		float d = abs(vein_distance(i, p));
+		m = max(m, 1.0 - smoothstep(w * 0.55, w, d));
+		halo = max(halo, 1.0 - smoothstep(w, w * 2.6, d));
 	}
 	return m;
 }
@@ -264,9 +267,15 @@ void fragment() {
 #ifdef WALL
 	int kind = v_piece >= 0 && v_piece < 96 ? piece_ore[v_piece] : 0;
 	if (kind > 0) {
-		float vein = vein_mask(v_panel);
-		// on the weathered face the ore is dulled; a fresh break shows it bright
-		vec3 ore_c = texture(palette, ore_uv[kind]).rgb * mix(0.7, 1.15, fresh);
+		// ragged edges (the point looked up wanders a little), and flecks of ore scattered round it
+		vec3 wander = vec3(theme_noise(v_panel * 5.0), theme_noise(v_panel * 5.0 + 11.0), theme_noise(v_panel * 5.0 + 23.0)) - 0.5;
+		float halo;
+		float vein = vein_mask(v_panel + wander * 0.12, halo);
+		float fleck = step(0.8, theme_noise(v_panel * 16.0 + 4.0)) * halo;
+		vein = max(vein, fleck);
+		// on the weathered face the ore is dulled; a fresh break shows it bright; never one flat colour
+		float grain = theme_noise(v_panel * 9.0 + 2.0);
+		vec3 ore_c = texture(palette, ore_uv[kind]).rgb * mix(0.62, 1.12, fresh) * mix(0.72, 1.18, grain);
 		base = mix(base, ore_c, vein);
 		ore = max(ore, vein);
 		row = vein > 0.5 ? 1 : row;  // (glows like the palette's ore row, below)

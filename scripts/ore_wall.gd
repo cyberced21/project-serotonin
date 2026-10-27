@@ -24,8 +24,40 @@ const NEAR := 14.0
 ## How far into the wall (m) from the hit point to look for the piece struck.
 const AIM_DEPTH := 0.08
 
+## The ores a vein can be (index = the shader's piece_ore; 0 is plain stone): the item a piece of
+## it drops, the pickaxe tier that takes it out (Tools.LADDER), the Mining level it's rated at, the
+## XP a piece gives, its palette swatch (art/palette.json) and the colour of its popups and chips.
+const ORES := [
+	{},
+	{"item": &"ore", "tier": 0, "level": 1, "xp": 6, "uv": Vector2(0.1875, 0.1875), "color": Color(0.88, 0.54, 0.29)},
+	{"item": &"coal", "tier": 1, "level": 20, "xp": 9, "uv": Vector2(0.6875, 0.1875), "color": Color(1.0, 0.35, 0.12)},
+	{"item": &"iron", "tier": 1, "level": 15, "xp": 8, "uv": Vector2(0.4375, 0.1875), "color": Color(0.72, 0.74, 0.82)},
+	{"item": &"gold", "tier": 2, "level": 30, "xp": 12, "uv": Vector2(0.5625, 0.1875), "color": Color(1.0, 0.82, 0.3)},
+	{"item": &"crystal", "tier": 2, "level": 40, "xp": 16, "uv": Vector2(0.9375, 0.1875), "color": Color(0.73, 0.55, 1.0)},
+]
+enum { STONE, COPPER, COAL, IRON, GOLD, CRYSTAL }
+## What a vein can be, by how deep it is: the layer, plus up to RING_BONUS more for a ring further
+## down the pit. A vein is one ore through a layer and may change from one layer to the next.
+const RICHNESS := [
+	[COPPER], [COPPER, COPPER, COAL], [COPPER, COAL], [COAL, IRON, COPPER], [IRON, COAL],
+	[IRON, IRON, GOLD], [IRON, GOLD], [GOLD, IRON, CRYSTAL], [GOLD, CRYSTAL], [CRYSTAL, GOLD],
+]
+const RING_BONUS := 3
+## A piece carries a vein's ore when the vein's core passes within this share of its width.
+const VEIN_CORE := 0.4
+
 ## Which of the baked panels (models/walls/panel_<n>) this one is cut like.
 @export_range(0, 3) var template := 0
+## Where its veins run (set by whoever places the panel, from the world's seed).
+@export var vein_seed := 0
+## The ring of the quarry it stands on (0 = the top) of how many: further down, richer ore.
+@export var ring := 0
+@export var rings := 1
+
+## The veins: [plane (normal, distance), wave (direction and tightness, how far it bows), width].
+var _veins: Array = []
+## Layer -> each piece's ore (ORES index), worked out when the layer is first needed.
+var _ore := {}
 
 ## Layer -> {piece index: true} for the pieces dug out.
 var _gone: Array[Dictionary] = []
@@ -53,6 +85,7 @@ func _ready() -> void:
 		_gone[k] = {}
 	_layer_mesh.resize(LAYERS)
 	hits_left = 1
+	_make_veins()
 	_fit_box()
 	_refresh_layers()
 	SaveGame.register(StringName("wall:" + String(save_id)) if not save_id.is_empty() else StringName("wall:%s" % get_path()), self)
@@ -164,6 +197,72 @@ static func _merge(pieces: Array) -> ArrayMesh:
 	return out
 
 
+# --- veins -----------------------------------------------------------------------------------
+
+## One or two sheets of ore through the panel, standing roughly across the face so each runs
+## on in from the face through every layer: follow one in and it keeps going.
+func _make_veins() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([vein_seed, template])
+	_veins.clear()
+	for v in 1 + (1 if rng.randf() < 0.35 else 0):
+		var a := rng.randf() * TAU
+		var n := Vector3(cos(a), sin(a), rng.randf_range(-0.3, 0.3)).normalized()
+		var through := Vector3(rng.randf_range(-1.1, 1.1), rng.randf_range(0.6, 3.4), rng.randf_range(-3.5, -0.5))
+		var k := Vector3(rng.randf_range(-1, 1), rng.randf_range(-1, 1), rng.randf_range(-1, 1)).normalized() * rng.randf_range(0.9, 2.0)
+		_veins.append([Vector4(n.x, n.y, n.z, n.dot(through)), Vector4(k.x, k.y, k.z, rng.randf_range(0.12, 0.3)),
+			rng.randf_range(0.12, 0.18)])
+
+
+## How far `p` (panel space) is from vein i's middle sheet (signed, m): the shader's vein_distance.
+func _vein_distance(i: int, p: Vector3) -> float:
+	var pl: Vector4 = _veins[i][0]
+	var wv: Vector4 = _veins[i][1]
+	var k := Vector3(wv.x, wv.y, wv.z)
+	var phase := pl.w * 3.1
+	var bow := sin(p.dot(k) + phase) * 0.6 + sin(p.dot(Vector3(k.z, k.x, k.y) * 1.7) + phase * 1.3) * 0.4
+	return p.dot(Vector3(pl.x, pl.y, pl.z)) - pl.w + bow * wv.w
+
+
+## Each piece's ore in layer k: a vein's if its core runs through the piece, else stone.
+func _layer_ore(k: int) -> PackedInt32Array:
+	if _ore.has(k):
+		return _ore[k]
+	var kinds := PackedInt32Array()
+	var richness := mini(k + roundi(RING_BONUS * float(ring) / maxf(rings - 1, 1)), RICHNESS.size() - 1)
+	var vein_ore := []
+	for v in _veins.size():
+		var rng := RandomNumberGenerator.new()
+		rng.seed = hash([vein_seed, v, k])
+		var choices: Array = RICHNESS[richness]
+		vein_ore.append(choices[rng.randi() % choices.size()])
+	for piece in _layer_pieces(k):
+		var kind := STONE
+		var best := INF
+		for v in _veins.size():
+			var core: float = _veins[v][2] * VEIN_CORE
+			var near := absf(_vein_distance(v, piece["centre"]))
+			for p: Vector3 in piece["points"]:
+				near = minf(near, absf(_vein_distance(v, p)))
+			if near < core and near < best:
+				best = near
+				kind = vein_ore[v]
+		kinds.append(kind)
+	_ore[k] = kinds
+	return kinds
+
+
+func _ore_of(p: Array) -> int:
+	return _layer_ore(p[0])[p[1]] if not p.is_empty() else STONE
+
+
+## The hit's needs (tool tier, Mining rating) are the piece's: ResourceNode's checks read them.
+func _rate(p: Array) -> void:
+	var kind := _ore_of(p)
+	tool_tier = ORES[kind]["tier"] if kind != STONE else 0
+	required_level = ORES[kind]["level"] if kind != STONE else 1
+
+
 func _layer_pieces(layer: int) -> Array:
 	return _template(template)[layer]["pieces"]
 
@@ -216,8 +315,29 @@ func _make_layer(k: int) -> MeshInstance3D:
 	return m
 
 
-func _layer_material(_k: int) -> ShaderMaterial:
-	return WALL_MATERIAL
+## The layer's own copy of the wall material, told where the veins run and which pieces carry ore.
+func _layer_material(k: int) -> ShaderMaterial:
+	var m := WALL_MATERIAL.duplicate() as ShaderMaterial
+	var planes := PackedVector4Array()
+	var waves := PackedVector4Array()
+	var widths := PackedFloat32Array()
+	for v in _veins:
+		planes.append(v[0])
+		waves.append(v[1])
+		widths.append(v[2])
+	m.set_shader_parameter("vein_count", _veins.size())
+	m.set_shader_parameter("vein_plane", planes)
+	m.set_shader_parameter("vein_wave", waves)
+	m.set_shader_parameter("vein_width", widths)
+	var kinds := _layer_ore(k).duplicate()
+	kinds.resize(96)
+	m.set_shader_parameter("piece_ore", kinds)
+	var uvs := PackedVector2Array()
+	for o in ORES:
+		uvs.append(o.get("uv", Vector2.ZERO))
+	uvs.resize(8)
+	m.set_shader_parameter("ore_uv", uvs)
+	return m
 
 
 func _update_mask(k: int) -> void:
@@ -299,11 +419,21 @@ func _piece_at(point: Vector3, normal: Vector3) -> Array:
 
 ## Called by the player while the crosshair is on the wall: lights the piece it's on.
 func aim_at(point: Vector3, normal: Vector3) -> void:
+	_popup_at = point + normal * 0.3
 	var aimed := _piece_at(point, normal)
 	if aimed == _aimed:
 		return
 	_aimed = aimed
+	_rate(_aimed)
 	_show_aim()
+
+
+## Popups (XP, "Needs Iron pick") come up by the piece being worked, not over the whole panel.
+var _popup_at := Vector3.ZERO
+
+
+func _popup_pos() -> Vector3:
+	return _popup_at if _popup_at != Vector3.ZERO else global_position + Vector3.UP * popup_height
 
 
 func _show_aim() -> void:
@@ -332,7 +462,9 @@ func hit(info: HitInfo) -> bool:
 	var struck := _piece_at(info.position, info.normal)
 	if struck.is_empty():
 		return false
-	if not can_gather():
+	_popup_at = info.position + info.normal * 0.3
+	_rate(struck)
+	if not can_gather():  # a vein your pick can't take yet: it rings off it
 		_deflect(info)
 		return false
 	_cut += (1.0 + Tools.tiers_above(tool_type, tool_tier)) * _power_scale()
@@ -353,8 +485,14 @@ func hit(info: HitInfo) -> bool:
 	# a piece and maybe a neighbour; a better pick takes a neighbour or two more
 	var out := _knock_out_from(struck, info, randi_range(0, 1) + mini(cuts - 1, 2) + (1 if double else 0))
 	Sfx.play_at(hit_layers, info.position, randf_range(0.95, 1.05), 2.0 if out.size() > 2 else 0.0)
-	_award_xp(xp_per_hit * out.size())
-	last_impact = 1.5 if out.size() > 2 else 1.0
+	var xp := 0
+	var ore := false
+	for p in out:
+		var kind := _ore_of(p)
+		xp += ORES[kind]["xp"] if kind != STONE else xp_per_hit
+		ore = ore or kind != STONE
+	_award_xp(xp, ore)
+	last_impact = 1.5 if out.size() > 2 or ore else 1.0
 	_dug(out)
 	return true
 
@@ -365,8 +503,9 @@ func _knock_out_from(struck: Array, info: HitInfo, extra: int) -> Array:
 	var k: int = struck[0]
 	var at := to_local(info.position)
 	var near: Array = []
-	for o in _piece(k, struck[1])["links"]:
-		if not _is_gone(k, o):
+	for o in _piece(k, struck[1])["links"]:  # (not a vein your pick can't take: it stays put)
+		var kind := _ore_of([k, o])
+		if not _is_gone(k, o) and Tools.can_work(tool_type, ORES[kind]["tier"] if kind != STONE else 0):
 			near.append(o)
 	near.sort_custom(func(a: int, b: int) -> bool:
 		return (_piece(k, a)["centre"] as Vector3).distance_squared_to(at) < (_piece(k, b)["centre"] as Vector3).distance_squared_to(at))
@@ -382,15 +521,28 @@ func _knock_out_from(struck: Array, info: HitInfo, extra: int) -> Array:
 func _pop_piece(k: int, i: int, info: HitInfo) -> void:
 	_gone[k][i] = true
 	_drop_shape(k, i)
+	var kind := _ore_of([k, i])
 	var piece := MeshInstance3D.new()
 	piece.mesh = _piece(k, i)["mesh"]
 	piece.material_override = ROCK_MATERIAL
+	if kind != STONE:  # (thrown, it's drawn without its vein: tinted the ore's colour instead)
+		piece.set_instance_shader_parameter("albedo", Color.WHITE.lerp(ORES[kind]["color"], 0.45))
 	var xf: Transform3D = global_transform * (_piece(k, i)["xform"] as Transform3D)
 	var out := (global_basis * Vector3(0, 0.3, 1)).normalized()
 	_throw(piece, xf.orthonormalized(), (out + (info.from - info.position).normalized() * 0.3).normalized(), debris_speed * 0.6)
+	var c := global_transform * (_piece(k, i)["centre"] as Vector3)
 	if hit_fx:
-		var c := global_transform * (_piece(k, i)["centre"] as Vector3)
-		HitFx.spawn(hit_fx, get_parent(), c, info.normal, -info.normal, chip_color, Color(0, 0, 0, 0), 0.6)
+		HitFx.spawn(hit_fx, get_parent(), c, info.normal, -info.normal, chip_color,
+			ORES[kind]["color"] if kind != STONE else Color(0, 0, 0, 0), 0.6)
+	if kind != STONE:  # a piece of vein: its ore spills out toward you
+		var toward := -info.away()
+		var vel := toward * randf_range(1.0, 2.0) + Vector3.UP * randf_range(2.5, 3.5) \
+			+ Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)) * 0.6
+		var p := PICKUP_SCENE.instantiate()
+		p.item = ORES[kind]["item"]
+		p.icon = Items.icon(p.item)
+		get_parent().add_child(p)
+		p.launch(c + global_basis.z * 0.3, vel, 0.05)
 
 
 ## After pieces come out: the layers drawn, the face moving back once a layer's gone, the hulls
@@ -432,6 +584,27 @@ func pull(info: HitInfo) -> void:
 	piece.set_instance_shader_parameter("albedo", chip_color)
 	var rot := Basis.from_euler(Vector3(randf(), randf(), randf()) * TAU)
 	_throw(piece, Transform3D(rot, info.position + info.normal * 0.06), (info.normal - info.away() * 0.6).normalized(), debris_speed * 0.8, 0.12)
+
+
+## Debug and tools: the first `n` layers dug out at once.
+func dig_layers(n: int) -> void:
+	for k in mini(n, LAYERS):
+		for i in _layer_pieces(k).size():
+			_gone[k][i] = true
+	front = 0
+	while front < LAYERS and _gone[front].size() >= _layer_pieces(front).size():
+		front += 1
+	_refresh_layers()
+	_rebuild_shapes()
+	SaveGame.mark_dirty()
+
+
+## Tools: how many pieces of each ore (ORES index -> count) layer k holds.
+func ore_count(k: int) -> Dictionary:
+	var out := {}
+	for kind in _layer_ore(k):
+		out[kind] = out.get(kind, 0) + 1
+	return out
 
 
 # --- saving ----------------------------------------------------------------------------------

@@ -95,22 +95,23 @@ func _run() -> void:
 		var target := face + Vector3(rng.randf_range(-1.1, 1.1), rng.randf_range(0.4, 3.4), 0.0)
 		var hit := _cast(eye, target + (target - eye).normalized() * 2.0)
 		if not hit.is_empty() and hit["collider"] == wall:
-			_swing(wall, hit, eye)
-			dug += 1
+			dug += 1 if _swing(wall, hit, eye) else 0
 		await _wait(0.12)
 		if (i + 1) % every == 0:
 			wall.call("set_highlighted", false)
 			await _wait(0.8)
 			await _shot("wall_%d" % (i + 1))
-	print("WALL front %d  hits landed %d of %d  gone %s" % [wall.get("front"), dug, hits, wall.call("to_dict")["gone"].map(func(a: Array) -> int: return a.size())])
+	for k in 8:
+		print("LAYER %d ore %s" % [k, wall.call("ore_count", k)])
+	print("WALL front %d  bit %d of %d  gone %s" % [wall.get("front"), dug, hits, wall.call("to_dict")["gone"].map(func(a: Array) -> int: return a.size())])
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://wall_closeup_save.json"))
 	quit()
 
 
-func _swing(wall: Node, hit: Dictionary, eye: Vector3) -> void:
+func _swing(wall: Node, hit: Dictionary, eye: Vector3) -> bool:
 	var info := HitInfo.new(hit["position"], hit["normal"], hit["collider"], eye)
 	wall.call("aim_at", hit["position"], hit["normal"])
-	wall.call("hit", info)
+	return wall.call("hit", info)
 
 
 func _cast(from: Vector3, to: Vector3) -> Dictionary:

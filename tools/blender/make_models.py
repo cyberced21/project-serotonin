@@ -3541,10 +3541,9 @@ def wall_panel(n):
     links = {nm: set() for nm in names}
     field = Vector((rng.uniform(-50, 50), rng.uniform(-50, 50), rng.uniform(-50, 50)))
     bend = 0.035
-    bent = whole.copy()
-    warp(bent, bend, field)
-    bvh = BVHTree.FromBMesh(bent)
-    bent.free()
+    # the shade is baked before the warp, against the block as cut: a piece's new corners lie
+    # exactly on it then (warped, they sit a hair inside, and the rays outlined every piece dark)
+    bvh = BVHTree.FromBMesh(whole)
     for i in range(len(seeds)):
         bm = wall_cell(whole, seeds, i)
         cut = bm.faces.layers.int.get("cut")
@@ -3566,11 +3565,11 @@ def wall_panel(n):
                 f[cut] = 1
         # one shade a piece, inside and out (a shade per face speckles the small faces like a
         # chequerboard): the face lighter on top, darker underneath
-        side = "stone.4" if rng.random() < 0.6 else "terrain.rock"
+        # (the baked weathering varies the face; mixing swatches piece by piece made a patchwork)
         inner = "stone.5" if rng.random() < 0.6 else "stone.4"
-        paint(bm, lambda f: inner if f[cut] else "stone.5" if f.normal.z > 0.55 else "stone.2" if f.normal.z < -0.4 else side)
-        warp(bm, bend, field)
+        paint(bm, lambda f: inner if f[cut] else "stone.5" if f.normal.z > 0.55 else "stone.3" if f.normal.z < -0.4 else "stone.4")
         bake_weathering(bm, cut, bvh, h, moss_amount=0.35, reach=0.5, soil=0.6)
+        warp(bm, bend, field)
         centre = sum((v.co for v in bm.verts), Vector()) / len(bm.verts)
         bmesh.ops.translate(bm, vec=-centre, verts=bm.verts)
         make_object(names[i], bm, centre)
