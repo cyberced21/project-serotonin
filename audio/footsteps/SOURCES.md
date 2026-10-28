@@ -10,7 +10,8 @@ to the loudness of the clips they replaced, so the mix didn't move.
 | dirt_01-04.wav | dirt | Footsteps Dirt 01 | aglinder | https://freesound.org/people/aglinder/sounds/264469/ |
 | sand_01-04.wav | sand | Gravel/Sand Walking 3 | Cornwallis89 | https://freesound.org/people/Cornwallis89/sounds/244597/ |
 | snow_01-04.wav | snow | FOOT_STEPS_SNOW_HEAVY | alexo400 | https://freesound.org/people/alexo400/sounds/543385/ |
+| rock_01-04.wav | rock | Footsteps Gravel Stones - Walk | Vrymaa | https://freesound.org/people/Vrymaa/sounds/825854/ |
+| water_01-04.wav | shallow water | Wading in a shallow river | macdaddyno1 | https://freesound.org/people/macdaddyno1/sounds/321594/ |
 
-Rock and shallow water still use the older clips: none of the first candidates fit (the user
-wants gravel crunching and stones knocking together for rock; moving water and a little mud for
-wading).
+Rock and water steps are cut longer (about 0.55 s and 0.85 s) so the stones settle and the water
+moves after each footfall; picked in a second round after the first candidates sounded too alike.
