@@ -7,7 +7,7 @@ extends Node3D
 ## Drawn as a single MultiMesh of tiny glowing billboards (additive, unshaded), so they cost
 ## next to nothing.
 
-const COUNT := 60
+const COUNT := 100
 const RING_NEAR := 4.0
 const RING_FAR := 26.0
 const SHY := 3.0
@@ -18,9 +18,12 @@ const DRIFT := 0.35
 const FLEE := 1.4
 ## Blink: seconds per cycle [min, max], and how much of a cycle the light is on.
 const BLINK := Vector2(2.2, 5.0)
-const LIT := 0.35
+const LIT := 0.5
 const COLOR := Color(1.0, 0.86, 0.38)
-const SIZE := 0.07
+## The glowing quad (m): a bright core of about a fifth of it in a soft halo.
+const SIZE := 0.28
+## How far past white the core shines (so it blooms).
+const BRIGHT := 5.0
 ## How much likelier a spot by water (within WATER_PULL m of a pond's edge) or in the forest is.
 const WATER_PULL := 12.0
 
@@ -42,7 +45,7 @@ func _ready() -> void:
 	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	mat.vertex_color_use_as_albedo = true
 	mat.albedo_texture = _dot()
-	mat.no_depth_test = false
+	mat.disable_fog = true  # lights in the dark, not lost in the evening haze
 	quad.material = mat
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
@@ -118,7 +121,7 @@ func _process(delta: float) -> void:
 		if i >= shown:
 			glow = 0.0
 		mm.set_instance_transform(i, Transform3D(Basis.IDENTITY, p))
-		mm.set_instance_color(i, Color(COLOR.r * 3.0, COLOR.g * 3.0, COLOR.b * 3.0, glow))
+		mm.set_instance_color(i, Color(COLOR.r * BRIGHT, COLOR.g * BRIGHT, COLOR.b * BRIGHT, glow))
 
 
 ## Puts firefly `i` somewhere in the ring round `at` (ahead of you when `ahead`: you won't see one
@@ -172,13 +175,13 @@ func _ground(p: Vector3, fallback: float) -> float:
 	return fallback - 1.6
 
 
-## A soft round dot, bright in the middle, for each firefly.
+## A soft round dot for each firefly: a small hot core in a wide faint halo.
 static func _dot() -> ImageTexture:
-	var n := 32
+	var n := 64
 	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
 	for y in n:
 		for x in n:
 			var d := Vector2(x + 0.5 - n * 0.5, y + 0.5 - n * 0.5).length() / (n * 0.5)
-			var v := clampf(1.0 - d, 0.0, 1.0)
-			img.set_pixel(x, y, Color(1, 1, 1, v * v))
+			var v := exp(-d * d * 40.0) + 0.35 * exp(-d * d * 5.0) * clampf(1.0 - d, 0.0, 1.0)
+			img.set_pixel(x, y, Color(1, 1, 1, clampf(v, 0.0, 1.0)))
 	return ImageTexture.create_from_image(img)
