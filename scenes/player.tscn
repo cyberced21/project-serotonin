@@ -15,6 +15,8 @@
 [ext_resource type="Script" path="res://scripts/sound_layers.gd" id="13_layers"]
 [ext_resource type="Resource" path="res://audio/mining/pickaxe_swing.tres" id="14_pick_swing"]
 [ext_resource type="Resource" path="res://audio/mining/pickaxe_windup.tres" id="15_pick_windup"]
+[ext_resource type="Resource" path="res://audio/woodcutting/axe_swing.tres" id="15_axe_swing"]
+[ext_resource type="Resource" path="res://audio/woodcutting/axe_windup.tres" id="15_axe_windup"]
 [ext_resource type="Script" path="res://scripts/rod_fishing.gd" id="16_rodfishing"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
@@ -62,11 +64,11 @@ script = ExtResource("1_script")
 swing_sfx = ExtResource("3_swing")
 tool_swing_layers = Dictionary[StringName, ExtResource("13_layers")]({
 &"pickaxe": ExtResource("14_pick_swing"),
-&"axe": ExtResource("14_pick_swing")
+&"axe": ExtResource("15_axe_swing")
 })
 tool_windup_layers = Dictionary[StringName, ExtResource("13_layers")]({
 &"pickaxe": ExtResource("15_pick_windup"),
-&"axe": ExtResource("15_pick_windup")
+&"axe": ExtResource("15_axe_windup")
 })
 pickaxe_model = ExtResource("8_pickaxe")
 axe_model = ExtResource("9_axe")

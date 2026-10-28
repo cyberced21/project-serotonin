@@ -25,3 +25,9 @@ slightly lower or higher.
 
 Every gathering sound is now a recording; `tools/synth_gathering.py` is kept only as history. **Don't
 re-run it**: it would write over all of these.
+
+**Playtest (2026-10-28): the axe's punch.** The chops and clean cuts were EQ'd for impact: +6 dB
+body under ~160 Hz, a little thump round 350 Hz, the top softened above 6 kHz, the first ~20 ms
+lifted, the tail cut short (0.4 s; clean cuts 0.6 s), every chop's hit levelled to -15 dBFS RMS.
+Chops 03 and 07 and clean cut 03 (all hiss, no body) were dropped. The axe's wind-up and whoosh
+play quieter than the pickaxe's (audio/woodcutting/axe_swing.tres, axe_windup.tres).
