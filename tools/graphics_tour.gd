@@ -10,6 +10,8 @@ extends SceneTree
 ##   --only=a,b       only these views (by name)
 ##   --set=mood       the mood pass's views instead (plans/mood-pass.md): one spot at sunrise,
 ##                    noon, sunset and night, facing the low sun, mist on the water at dawn
+##   --set=lamps      the lamps' views (plans/lamps.md): every road stretch lit and the lantern
+##                    given, at dusk and night, a dark trail by lantern alone, the lantern raised
 ##   --look=k=v,k=v   override SkyLook values for this run (numbers only), e.g. --look=water_mist=0.3
 ##   --procgen=SEED   instead: a generated world, three views from its spawn (its save is thrown
 ##                    away afterwards unless it was already there)
@@ -47,7 +49,20 @@ const MOOD_VIEWS := [
 	["hearthvale_night", Vector3(100, 0, 52), Vector3(113, 0, 40), 0.02],
 ]
 
+const LAMP_VIEWS := [
+	["village_path_dusk", Vector3(52, 0, 12), Vector3(80, 0, 34), 0.872],
+	["village_path_night", Vector3(52, 0, 12), Vector3(80, 0, 34), 0.0],
+	["village_path_back", Vector3(86, 0, 36), Vector3(42, 0, 6), 0.0],
+	["hearthvale_night", Vector3(100, 0, 52), Vector3(113, 0, 40), 0.02],
+	["ring_road_night", Vector3(181, 0, 58), Vector3(160, 0, 82), 0.0],
+	["lake_path_night", Vector3(-4, 0, 22), Vector3(-11, 0, 48), 0.95],
+	["trail_by_lantern", Vector3(0, 0, -36), Vector3(-2, 0, -52), 0.0],
+	["lantern_raised", Vector3(0, 0, -36), Vector3(-2, 0, -52), 0.0, "raise"],
+	["clearing_night", Vector3(4, 0, 10), Vector3(0, 0, -20), 0.95],
+]
+
 var views: Array = VIEWS
+var lamps := false
 var out_dir := "res://docs/images/graphics/latest"
 var preset := ""
 var only: PackedStringArray = PackedStringArray()
@@ -68,6 +83,9 @@ func _initialize() -> void:
 				SkyLook.active().set(kv[0], float(kv[1]))
 		elif arg == "--set=mood":
 			views = MOOD_VIEWS
+		elif arg == "--set=lamps":
+			views = LAMP_VIEWS
+			lamps = true
 		elif arg.begins_with("--procgen="):
 			procgen_seed = arg.trim_prefix("--procgen=").to_int()
 	_run.call_deferred()
@@ -94,10 +112,17 @@ func _run() -> void:
 		quit()
 		return
 	var p := get_first_node_in_group("player") as Node3D
+	if lamps:
+		root.get_node("Lamps").call("light_all", true)
+		root.get_node("Lamps").call("give_lantern")
 	for v in views:
 		if not only.is_empty() and not only.has(v[0]):
 			continue
 		day_night.set("time", v[3])
+		if (v as Array).size() > 4 and v[4] == "raise":
+			Input.action_press("raise_lantern")
+		else:
+			Input.action_release("raise_lantern")
 		var look: Vector3 = v[2]
 		if look == Vector3.INF:  # toward the sun, set for this time of day after a frame
 			await process_frame

@@ -141,7 +141,8 @@ func _make_lantern(size: float) -> Node3D:
 		var mesh := m as MeshInstance3D
 		mesh.material_override = PaletteMaterial.for_mesh(mesh.mesh)
 		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		mesh.set_instance_shader_parameter("glow", 1.0)
+		if String(mesh.name).begins_with("Lamp"):  # the glass glows, not the iron
+			mesh.set_instance_shader_parameter("glow", 0.7)
 	return lantern
 
 

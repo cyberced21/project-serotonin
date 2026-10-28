@@ -1091,11 +1091,11 @@ def lantern():
     of its handle ring, where it hangs from the belt (or the hand) and swings from."""
     reset()
     k = Kit("", 607)
-    iron = ("neutral.1", "neutral.1", "neutral.1")
+    iron = ("neutral.4", "neutral.3", "neutral.2")
     k.add("Ring", prism(8, 0.035, 0.035, 0.012), iron, (0, 0, -0.03), (math.pi / 2, 0, 0))
     k.add("Cap", prism(6, 0.075, 0.02, 0.06), iron, (0, 0, -0.08))
     k.add("Rim", prism(6, 0.075, 0.075, 0.015), iron, (0, 0, -0.115))
-    k.add("Lamp", prism(6, 0.06, 0.06, 0.13), ("neutral.1", "accent.3", "accent.3"), (0, 0, -0.19))
+    k.add("Lamp", prism(6, 0.06, 0.06, 0.13), ("neutral.3", "accent.3", "accent.3"), (0, 0, -0.19))
     for i in range(3):
         a = i * math.tau / 3 + math.pi / 6
         k.box("Bar", (0.012, 0.012, 0.14), (math.cos(a) * 0.066, math.sin(a) * 0.066, -0.19), iron)

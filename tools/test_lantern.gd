@@ -36,7 +36,7 @@ func _run() -> void:
 	var cam := player.get("camera") as Camera3D
 	var off := cam.global_transform.affine_inverse() * lantern.global_position
 	print("hangs at %s from the eye" % off)
-	_check(off.x < -0.1 and off.y < -0.3 and off.z < 0.0, "low on the left, in front of the eye")
+	_check(off.x < -0.1 and off.y < -0.15 and off.z < 0.0, "low on the left, in front of the eye")
 	day_night.set("time", 0.86)
 	await _frames(90)
 	_check(lamps.get("lantern_lit") and light.visible and light.light_energy > 1.0,

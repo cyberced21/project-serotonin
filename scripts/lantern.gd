@@ -11,10 +11,10 @@ extends Node3D
 const MODEL := preload("res://models/lantern.glb")
 ## Where it hangs, from the eye, in a frame that turns with you but only partly follows your
 ## looking up and down (BELT_PITCH): level, only its top and glow peek in at the bottom left.
-const BELT := Vector3(-0.3, -0.52, -0.38)
+const BELT := Vector3(-0.36, -0.25, -0.5)
 const BELT_PITCH := 0.55
 ## Raised: held up on the left, in front of you, following the view.
-const RAISED := Vector3(-0.2, -0.2, -0.5)
+const RAISED := Vector3(-0.3, -0.12, -0.72)
 const RAISE_RATE := 7.0
 ## The swing: a pendulum this stiff and this damped, pushed by how its hang point accelerates.
 const SWING_STIFFNESS := 40.0
@@ -26,6 +26,9 @@ const LIGHT_ENERGY := 1.6
 const LIGHT_RANGE := 12.0
 ## Where the flame sits, below the hang point.
 const FLAME := Vector3(0, -0.19, 0)
+## The light sits a little nearer you than the flame, so the iron facing you catches it
+## (lit from right inside, the lantern's own frame showed black).
+const LIGHT_AT := FLAME + Vector3(0, 0, 0.14)
 
 ## The player (set before it enters the tree; untyped: player.gd makes the lantern).
 var player: Node3D
@@ -50,7 +53,8 @@ func _ready() -> void:
 		mesh.material_override = PaletteMaterial.for_mesh(mesh.mesh)
 		mesh.layers = 2
 		mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		_meshes.append(mesh)
+		if String(mesh.name).begins_with("Lamp"):  # the glass glows, not the iron
+			_meshes.append(mesh)
 	_light = OmniLight3D.new()
 	_light.light_color = LIGHT_COLOR
 	_light.omni_range = LIGHT_RANGE
@@ -60,7 +64,7 @@ func _ready() -> void:
 	_light.light_energy = 0.0
 	_light.visible = false
 	_model.add_child(_light)
-	_light.position = FLAME
+	_light.position = LIGHT_AT
 	_level = 1.0 if Lamps.lantern_lit else 0.0
 	_place(0.0)
 	_last_pos = global_position
@@ -80,7 +84,7 @@ func _process(delta: float) -> void:
 	_light.visible = visible and _level > 0.01
 	_light.light_energy = LIGHT_ENERGY * _level * flicker
 	for m in _meshes:
-		m.set_instance_shader_parameter("glow", _level * (0.85 + 0.15 * flicker))
+		m.set_instance_shader_parameter("glow", _level * (0.6 + 0.1 * flicker))
 
 
 ## Hangs it from the eye (belt or raised) and swings it like a pendulum from there.
