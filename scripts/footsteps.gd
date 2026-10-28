@@ -94,6 +94,8 @@ func _ripple(size: float) -> void:
 ## Which surface the feet are on: water, grass, dirt, rock, sand or snow.
 func surface() -> StringName:
 	var feet := global_position
+	if Footbridge.on_bridge(get_tree(), feet):
+		return &"rock"  # (planks: until they have footsteps of their own)
 	if WaterBody.depth_at(get_tree(), feet) > WET_DEPTH:
 		return &"water"
 	var terrain := get_tree().get_first_node_in_group("terrain") as Terrain3D

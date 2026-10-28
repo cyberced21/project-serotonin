@@ -445,7 +445,8 @@ func _move(delta: float) -> void:
 	_move_input = input
 	var wish_dir := transform.basis * Vector3(input.x, 0.0, input.y)
 	var wish := Vector2(wish_dir.x, wish_dir.z)
-	var water_depth := WaterBody.depth_at(get_tree(), global_position)
+	var on_bridge := Footbridge.on_bridge(get_tree(), global_position)  # (over a ford, but dry)
+	var water_depth := 0.0 if on_bridge else WaterBody.depth_at(get_tree(), global_position)
 	var wading := lerpf(1.0, wade_slow, clampf(water_depth / wade_full_depth, 0.0, 1.0))
 
 	# gravity + coyote time

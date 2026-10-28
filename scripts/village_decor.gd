@@ -52,6 +52,10 @@ const WELL_TIME := 4.0
 ## Middle of the square (world XZ) and how far the village is turned (radians).
 var center := HEARTHVALE_CENTER
 var angle := 0.0
+## Where the footbridge goes: [from, to] (world XZ), or [] for none. Hearthvale's spans the gully's
+## open gap (found in _ready); a generated world passes its ford (Footbridge.find_ford).
+var footbridge_site: Array = []
+var hearthvale := true
 var board: Noticeboard
 var _built: Dictionary[StringName, Array] = {}  # project -> its props
 var _paid: Dictionary[StringName, bool] = {}  # paid for this session: build it in view
@@ -66,6 +70,9 @@ func _ready() -> void:
 	board.name = "Noticeboard"
 	board.transform = frame(NOTICEBOARD[0], NOTICEBOARD[1])
 	add_child(board)
+	if hearthvale and footbridge_site.is_empty():
+		footbridge_site = _gully_gap()
+	Projects.footbridge_here = not footbridge_site.is_empty()
 	Projects.completed.connect(func(id: StringName) -> void: _paid[id] = true)
 	Projects.changed.connect(_sync)
 	_sync()
@@ -200,7 +207,7 @@ func frame(offset: Vector2, facing: float) -> Transform3D:
 
 ## Puts up what's done and isn't standing yet; takes down what isn't done (the debug menu).
 func _sync() -> void:
-	for id in PROPS.keys() + [&"bunting"]:
+	for id in PROPS.keys() + [&"bunting", &"footbridge"]:
 		var done := Projects.is_done(id)
 		if done and not _built.has(id):
 			var made: Array[Node3D] = _make(id)
@@ -300,6 +307,16 @@ func _tok(at: Vector3, pitch: float) -> void:
 
 func _make(id: StringName) -> Array[Node3D]:
 	var out: Array[Node3D] = []
+	if id == &"footbridge":
+		if footbridge_site.is_empty():
+			return out
+		var bridge := Footbridge.new()
+		bridge.name = "Footbridge"
+		bridge.from = _ground_at(footbridge_site[0])
+		bridge.to = _ground_at(footbridge_site[1])
+		add_child(bridge)
+		out.append(bridge)
+		return out
 	if id == &"bunting":
 		for pair in BUNTING:
 			var b := Bunting.new()
@@ -317,6 +334,27 @@ func _make(id: StringName) -> Array[Node3D]:
 		add_child(prop)
 		out.append(prop)
 	return out
+
+
+## Hearthvale's gully: the half of the ring road with no earth under it, GAP m along the road
+## (tools/generate_test_terrain.gd _gully: the earth bridge is on the road's left).
+func _gully_gap() -> Array:
+	const GAP := 6.0
+	var ring := WorldMap.ring()
+	var at := 0
+	for i in ring.size():
+		if ring[i].distance_squared_to(WorldMap.GULLY_NEAR) < ring[at].distance_squared_to(WorldMap.GULLY_NEAR):
+			at = i
+	var along := (ring[(at + 1) % ring.size()] - ring[at]).normalized()
+	var left := Vector2(-along.y, along.x)
+	var mid := ring[at] - left * WorldMap.ROAD_HALF_WIDTH * 0.5
+	return [mid - along * (GAP * 0.5 + 1.5), mid + along * (GAP * 0.5 + 1.5)]
+
+
+func _ground_at(p: Vector2) -> Vector3:
+	var terrain := get_tree().get_first_node_in_group("terrain") as Terrain3D
+	var h: float = terrain.data.get_height(Vector3(p.x, 0, p.y)) if terrain and terrain.data else NAN
+	return Vector3(p.x, 0.0 if is_nan(h) else h, p.y)
 
 
 func _ground(offset: Vector2) -> Vector3:

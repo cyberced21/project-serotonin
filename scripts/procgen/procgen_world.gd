@@ -213,6 +213,8 @@ func _build_village() -> void:
 	decor.name = "Decor"
 	decor.center = map.village["center"]
 	decor.angle = map.village["angle"]
+	decor.hearthvale = false
+	decor.footbridge_site = Footbridge.find_ford(map)
 	root.add_child(decor)
 
 

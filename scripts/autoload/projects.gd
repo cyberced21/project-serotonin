@@ -28,6 +28,9 @@ const ROAD_FAR := {&"wood": 15, &"iron": 8, &"coal": 5}
 const ROAD_PREFIX := "lamps:"
 
 var _done: Dictionary[StringName, bool] = {}
+## Whether this world has somewhere for the footbridge (set by VillageDecor): if not, it isn't
+## on the board.
+var footbridge_here := false
 
 
 func _ready() -> void:
@@ -40,6 +43,8 @@ func _ready() -> void:
 func all() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for s in SPOTS:
+		if s[0] == &"footbridge" and not footbridge_here:
+			continue
 		out.append({"id": s[0], "title": s[1], "blurb": s[2], "cost": s[3], "hall": s[4],
 				"done": _done.has(s[0]), "road": &""})
 	for s in Lamps.stretches:

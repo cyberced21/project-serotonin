@@ -86,6 +86,7 @@ func _check_board(world: String, projects: Node) -> void:
 			"%s: E opens it, a note per project (%d)" % [world, notes])
 	if panel:
 		panel.call("close")
+	await _check_bridge(world, projects, decor)
 	# every decoration, done: its props stand on the ground, clear of the buildings; undone, gone
 	var buildings := get_nodes_in_group("building")
 	var terrain := get_first_node_in_group("terrain") as Terrain3D
@@ -192,6 +193,36 @@ func _check_life(projects: Node) -> void:
 	Engine.time_scale = 1.0
 	_check(drawn[0] == 1 and decor.get("_drawing") == null, "life: someone draws water at the well, then gets on")
 	day_night.set("frozen", false)
+
+
+## The footbridge: on the board where there's somewhere for it; done, it spans the gap or the
+## ford, you can stand on it, and you're out of the water on it.
+func _check_bridge(world: String, projects: Node, decor: Node) -> void:
+	var site: Array = decor.get("footbridge_site")
+	var listed := (projects.call("all") as Array).any(func(p: Dictionary) -> bool: return p["id"] == &"footbridge")
+	print("%s: footbridge site %s" % [world, site])
+	_check(listed == not site.is_empty(), "%s: the footbridge is on the board only if there's a place for it" % world)
+	if site.is_empty():
+		return
+	projects.call("set_done", &"footbridge", true)
+	await _frames(2)
+	var bridge := get_first_node_in_group("footbridge") as Node3D
+	_check(bridge != null, "%s: done, the footbridge stands" % world)
+	if bridge == null:
+		return
+	var mid: Vector3 = bridge.call("deck_at", 0.5)
+	var terrain := get_first_node_in_group("terrain") as Terrain3D
+	var below := mid.y - terrain.data.get_height(mid)
+	print("%s: deck %.1f m above the ground at its middle" % [world, below])
+	var player := get_first_node_in_group("player") as Node3D
+	player.global_position = mid + Vector3.UP * 1.0
+	for i in 60:
+		await physics_frame
+	var stood := absf(player.global_position.y - mid.y) < 0.5
+	_check(stood, "%s: you can stand on it (feet %.2f, deck %.2f)" % [world, player.global_position.y, mid.y])
+	_check(bridge.get_script().call("on_bridge", self, player.global_position), "%s: and you're out of the water on it" % world)
+	projects.call("set_done", &"footbridge", false)
+	await _frames(2)
 
 
 func _frames(n: int) -> void:
