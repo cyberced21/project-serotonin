@@ -301,7 +301,7 @@ rotation = Vector3(0, 3.42, 0)
 
 [node name="Tree3" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"tree_3"
-position = Vector3(-11, 0, 1)
+position = Vector3(-11, 0.01, 1)
 rotation = Vector3(0, 2.32, 0)
 
 [node name="Tree4" parent="Nodes" instance=ExtResource("3_tree")]
@@ -448,82 +448,82 @@ rotation = Vector3(0, 4.1, 0)
 
 [node name="Birch1" parent="Nodes" instance=ExtResource("50_birch")]
 save_id = &"birch_1"
-position = Vector3(-34, 0.73, -6)
+position = Vector3(-34, 0, -6)
 rotation = Vector3(0, 0.4, 0)
 
 [node name="Birch2" parent="Nodes" instance=ExtResource("50_birch")]
 save_id = &"birch_2"
-position = Vector3(-37, 1.9, 2)
+position = Vector3(-37, 0.03, 2)
 rotation = Vector3(0, 2.0, 0)
 
 [node name="Birch3" parent="Nodes" instance=ExtResource("50_birch")]
 save_id = &"birch_3"
-position = Vector3(-32, 0.84, 9)
+position = Vector3(-32, 0, 9)
 rotation = Vector3(0, 3.3, 0)
 
 [node name="Birch4" parent="Nodes" instance=ExtResource("50_birch")]
 save_id = &"birch_4"
-position = Vector3(-40, 2.94, -12)
+position = Vector3(-40, 0.04, -12)
 rotation = Vector3(0, 5.0, 0)
 
 [node name="Birch5" parent="Nodes" instance=ExtResource("50_birch")]
 save_id = &"birch_5"
-position = Vector3(-30, 0.95, 15)
+position = Vector3(-30, 0, 15)
 rotation = Vector3(0, 1.1, 0)
 
 [node name="Pine1" parent="Nodes" instance=ExtResource("51_pine")]
 save_id = &"pine_1"
-position = Vector3(-10, 5.69, -50)
+position = Vector3(-10, 0.63, -50)
 rotation = Vector3(0, 0.3, 0)
 
 [node name="Pine2" parent="Nodes" instance=ExtResource("51_pine")]
 save_id = &"pine_2"
-position = Vector3(5, 10.25, -55)
+position = Vector3(5, 2.12, -55)
 rotation = Vector3(0, 1.7, 0)
 
 [node name="Pine3" parent="Nodes" instance=ExtResource("51_pine")]
 save_id = &"pine_3"
-position = Vector3(18, 7.32, -48)
+position = Vector3(18, 1.21, -48)
 rotation = Vector3(0, 2.9, 0)
 
 [node name="Pine4" parent="Nodes" instance=ExtResource("51_pine")]
 save_id = &"pine_4"
-position = Vector3(-22, 10.95, -58)
+position = Vector3(-22, 4.43, -58)
 rotation = Vector3(0, 4.2, 0)
 
 [node name="Pine5" parent="Nodes" instance=ExtResource("51_pine")]
 save_id = &"pine_5"
-position = Vector3(-4, 10.26, -62)
+position = Vector3(-4, 4.17, -62)
 rotation = Vector3(0, 5.6, 0)
 
 [node name="CoalRock1" parent="Nodes" instance=ExtResource("52_coal")]
 save_id = &"coal_rock_1"
-position = Vector3(48, 6.75, 0)
+position = Vector3(48, 0.19, 0)
 rotation = Vector3(0, 0.8, 0)
 
 [node name="CoalRock2" parent="Nodes" instance=ExtResource("52_coal")]
 save_id = &"coal_rock_2"
-position = Vector3(56, 3.08, 24)
+position = Vector3(56, 0.04, 24)
 rotation = Vector3(0, 2.6, 0)
 
 [node name="CoalRock3" parent="Nodes" instance=ExtResource("52_coal")]
 save_id = &"coal_rock_3"
-position = Vector3(44, 5.75, 12)
+position = Vector3(44, 0.17, 12)
 rotation = Vector3(0, 4.4, 0)
 
 [node name="GoldRock1" parent="Nodes" instance=ExtResource("53_gold")]
 save_id = &"gold_rock_1"
-position = Vector3(-62, 15.44, -60)
+position = Vector3(-62, 20.76, -60)
 rotation = Vector3(0, 1.0, 0)
 
 [node name="GoldRock2" parent="Nodes" instance=ExtResource("53_gold")]
 save_id = &"gold_rock_2"
-position = Vector3(-70, 15.79, -48)
+position = Vector3(-70, 17.78, -48)
 rotation = Vector3(0, 3.5, 0)
 
 [node name="GoldRock3" parent="Nodes" instance=ExtResource("53_gold")]
 save_id = &"gold_rock_3"
-position = Vector3(-56, 15.07, -72)
+position = Vector3(-56, 24.63, -72)
 rotation = Vector3(0, 5.3, 0)
 
 [node name="VillagePond" type="Area3D" parent="."]

@@ -4,25 +4,25 @@ extends SceneTree
 ## Add `-- --preview=<file.png>` to also write a top-down map of the result (surface ids, shaded).
 ## WARNING: overwrites any sculpting you've done in res://terrain_data.
 ##
-## Layout: a flat clearing around the gathering area (where the trees, rocks and ruins sit, all
-## at height 0), hills rising outside it, a shallow wading pond just off the clearing (its water
-## surface lives in main.tscn at WATER_LEVEL), and one tall peak in a corner so every colour band
-## of the low-poly shader shows up.
-## Over the hills to the east lies the village: a second flat valley with its own pond, joined
-## to the clearing by a dirt path that cuts a pass through the hills. The path (and the village
-## square and the lanes to each house) is painted as texture id PATH_TEXTURE in the control map;
-## the terrain shader colours it and the footsteps sound like dirt on it.
-## South of the clearing a second path climbs over the hills to a lake in its own basin: wider and
-## deeper than the ponds (still wadeable), where the deep-water fish live.
+## Layout (plans/world.md): one rolling land, broad warped hills with soft crests, that eases
+## down into the places instead of having them stamped on. The clearing (where the trees, rocks
+## and ruins sit, at height 0), the village to the east and the lake basin to the south are
+## flats whose edges wander outward, joined by shallow valleys along the dirt paths between them.
+## The clearing and village have wading ponds, the lake is wider and deeper (still wadeable);
+## their water surfaces live in main.tscn at WATER_LEVEL. Frostpeak is one broad mountain in the
+## north-west, and the world's edge rises into high hills all round so the valley feels closed in.
+## A relax pass eases anything steeper than about 30° (the peak's top may be steeper).
+## The path (and the village square and the lanes to each house) is painted as texture id
+## PATH_TEXTURE in the control map; the terrain shader colours it and the footsteps sound like
+## dirt on it.
 ##
 ## Around all that sit the biomes (shapes in scripts/world_map.gd): the Pinewood over the northern
 ## hills, Greystone Quarry (a five-level pit) on a mountain shoulder to the west, Goldmeadow's
 ## swells and crop squares in the south-east, and a graded gravel ring road joining them, with
 ## spurs into each area. Each biome paints its own control-map texture id (WorldMap.TEX_*).
 ##
-## Everything above the old layout is added on top of it, and the ground under every hand-placed
-## node in main.tscn is pinned to the old heights (their Y is baked into the scene). The run ends
-## by listing any node whose ground still moved.
+## Hand-placed buildings, props and ruins in main.tscn stand on the flats (the run lists any whose
+## ground isn't at 0); the resource nodes under "Nodes" get their Y rewritten to the new ground.
 
 const WorldMap := preload("res://scripts/world_map.gd")
 
@@ -30,7 +30,33 @@ const SIZE := 512                       # heightmap pixels = metres (vertex spac
 const ORIGIN := Vector3(-256, 0, -256)  # world position of pixel (0, 0) — must sit on the region grid
 const CLEARING_CENTER := Vector2(0, -4)
 const CLEARING_RADIUS := 28.0
-const HILL_RAMP := 40.0                 # metres over which the hills rise out of the clearing
+const HILL_RAMP := 55.0                 # metres over which the hills rise out of the clearing
+## The flats' edges wander outward by up to this much (never inward: what's placed on them stays
+## on flat ground).
+const FLAT_GROW := 14.0
+## The hills: broad, rounded, warped so nothing reads as a circle. Height = HILL_BASE + up to
+## HILL_RANGE, eased down to the flats.
+const HILL_BASE := 3.0
+const HILL_RANGE := 17.0
+const WARP := 38.0                      # how far (m) the hills' noise is pushed around
+## Between the places the paths run along valleys: the hills keep this share of their height on
+## the valley floor, easing back to full over VALLEY_RAMP.
+const VALLEY_FLOOR := 0.22
+const VALLEY_HALF := 5.0
+const VALLEY_RAMP := 42.0
+## The world's edge rises into higher hills so the valley feels closed in, not cut off.
+const RIM_WIDTH := 95.0
+const RIM_HEIGHT := 24.0
+## Frostpeak: one broad mountain, not a cone.
+const PEAK_CENTER := Vector2(-92, -92)
+const PEAK_RADIUS := 80.0
+const PEAK_HEIGHT := 40.0
+## Steepest rise per metre the relax pass leaves between neighbouring cells, along x or z (so
+## diagonally at most ~0.64, about 32°). Not in the quarry pit; Frostpeak's top may be steeper by
+## up to PEAK_SLOPE.
+const MAX_SLOPE := 0.45
+const PEAK_SLOPE := 0.6
+const RELAX_PASSES := 80
 const DATA_DIR := "res://terrain_data"
 const WATER_LEVEL := -0.15     # keep in sync with the ponds' WaterBody nodes in main.tscn
 ## Ponds: centre, radius (roughly where the bed rises to the water line), deepest point below
@@ -41,13 +67,13 @@ const PONDS := [
 	{"center": Vector2(-16, 76), "radius": 14.0, "depth": 1.35},  # the lake
 ]
 ## The lake's flat basin (hills ease up beyond radius over the ramp).
-const LAKE_BASIN := {"center": Vector2(-16, 74), "radius": 26.0, "ramp": 30.0}
+const LAKE_BASIN := {"center": Vector2(-16, 74), "radius": 26.0, "ramp": 50.0}
 ## The path from the clearing south over the hills to the lake shore.
 const LAKE_PATH := [Vector2(-3, 16), Vector2(-6, 32), Vector2(-11, 48), Vector2(-15, 59)]
 
 const VILLAGE_CENTER := Vector2(100, 40)  # the middle of the village square
 const VILLAGE_RADIUS := 36.0
-const VILLAGE_RAMP := 30.0
+const VILLAGE_RAMP := 50.0
 ## Control-map texture id that marks the path (see shaders/terrain.gdshader, footsteps.gd).
 const PATH_TEXTURE := WorldMap.TEX_PATH
 ## The path from the clearing over the pass into the village square.
@@ -62,10 +88,6 @@ const LANES := [
 const SQUARE_RADIUS := 7.5
 const PATH_HALF_WIDTH := 1.6
 const LANE_HALF_WIDTH := 1.0
-## Where the path crosses the hills it's cut down to at most this height, with sloping
-## shoulders either side: the pass you crest before seeing the village below.
-const PASS_HEIGHT := 6.0
-const PASS_SHOULDER := 9.0
 
 ## The quarry's haul road: each ramp runs along the inside of a wall, this wide, climbing one
 ## level over RAMP_LENGTH metres; the next ramp down starts RAMP_GAP metres further round.
@@ -87,15 +109,18 @@ const GULLY_DEPTH := 4.0
 const GULLY_GAP := 6.0     # length of the gap along the road
 const GULLY_REACH := 30.0  # how far the gully runs out to either side before it's level again
 
-## Ground under hand-placed nodes is pinned within PROTECT_INNER m and eased back by PROTECT_OUTER.
-const PROTECT_INNER := 3.0
-const PROTECT_OUTER := 10.0
+## Hand-placed things other than the resource nodes (buildings, props, ruins) stand on the flats
+## at height 0; the run lists any whose ground is off by more than this.
 const MOVED_TOLERANCE := 0.05
-## Scenes placed on the new terrain (quarry props, spawners...): never pinned to the old ground.
+## Scenes placed on the terrain at runtime (quarry props, spawners...): not checked.
 const BIOME_SCENES := "res://scenes/biomes/"
+## main.tscn's resource nodes (children of "Nodes"): their Y is rewritten to the new ground.
+const MAIN_SCENE := "res://scenes/main.tscn"
 
 var _noise := FastNoiseLite.new()
-var _bumps := FastNoiseLite.new()
+var _warp_x := FastNoiseLite.new()  # push the hills' noise around, so ridges wander
+var _warp_y := FastNoiseLite.new()
+var _fine := FastNoiseLite.new()    # a gentle swell, nothing like lumps
 var _shore := FastNoiseLite.new()  # makes the pond outlines irregular
 var _rings := FastNoiseLite.new()  # makes the quarry's walls wander
 var _swell := FastNoiseLite.new()  # the field's rolling swells
@@ -124,12 +149,16 @@ func _run() -> void:
 		for x in SIZE:
 			var w := _world(x, y)
 			var i := y * SIZE + x
-			base[i] = _height(w, _noise, _bumps, _shore)
-			h[i] = _biomes(w, base[i])
+			base[i] = _height(w)
 			ids[i] = _biome_id(w + Vector2(0.5, 0.5))  # the cell's centre
 			if _on_path(w + Vector2(0.5, 0.5)):
 				ids[i] = PATH_TEXTURE
+	for y in SIZE:
+		for x in SIZE:
+			var w := _world(x, y)
+			h[y * SIZE + x] = _biomes(w, base[y * SIZE + x]) + (_peak(w) + _rim(w)) * _off_quarry(w)
 	_glades(h)
+	_relax(h)
 
 	var ring := _make_route(WorldMap.RING, true, WorldMap.ROAD_HALF_WIDTH, ROAD_GRADE, 40.0, h)
 	_bank(ring)
@@ -150,7 +179,6 @@ func _run() -> void:
 	_apply_route(_make_route(trail, false, 1.5, 0.15, 14.0, h), h, ids, PATH_TEXTURE, 8.0, 99.0, 5.0, true)
 
 	var baked := _baked_points()
-	_protect(h, base, baked)
 
 	var img := Image.create_empty(SIZE, SIZE, false, Image.FORMAT_RF)
 	for y in SIZE:
@@ -171,7 +199,9 @@ func _run() -> void:
 				painted += 1
 	_report_path_slope(terrain)
 	_report_ring(ring)
-	_report_moved(baked, h, base)
+	_report_moved(baked, h)
+	_report_slopes(h, ids)
+	_rebake_nodes(h)
 
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DATA_DIR))
 	terrain.data.save_directory(DATA_DIR)
@@ -184,10 +214,16 @@ func _run() -> void:
 
 func _setup() -> void:
 	_noise.seed = 7
-	_noise.frequency = 0.012
-	_noise.fractal_octaves = 4
-	_bumps.seed = 21
-	_bumps.frequency = 0.06
+	_noise.frequency = 0.0065
+	_noise.fractal_octaves = 3
+	_noise.fractal_gain = 0.42
+	_warp_x.seed = 31
+	_warp_x.frequency = 0.004
+	_warp_y.seed = 32
+	_warp_y.frequency = 0.004
+	_fine.seed = 21
+	_fine.frequency = 0.02
+	_fine.fractal_octaves = 1
 	_shore.seed = 5
 	_shore.frequency = 0.15
 	_rings.seed = 11
@@ -211,23 +247,88 @@ func _world(x: int, y: int) -> Vector2:
 	return Vector2(x + ORIGIN.x, y + ORIGIN.z)
 
 
-## The original layout's height: the clearing, village, lake, hills, passes, ponds and the peak.
-func _height(w: Vector2, noise: FastNoiseLite, bumps: FastNoiseLite, shore: FastNoiseLite) -> float:
-	# 0 inside the clearing and the village, easing up to 1 over the ramps
-	var outside := minf(minf(
-		smoothstep(CLEARING_RADIUS, CLEARING_RADIUS + HILL_RAMP, w.distance_to(CLEARING_CENTER)),
-		smoothstep(VILLAGE_RADIUS, VILLAGE_RADIUS + VILLAGE_RAMP, w.distance_to(VILLAGE_CENTER))),
-		smoothstep(LAKE_BASIN["radius"], LAKE_BASIN["radius"] + LAKE_BASIN["ramp"], w.distance_to(LAKE_BASIN["center"])))
-	var hills := outside * ((noise.get_noise_2dv(w) * 0.5 + 0.5) * 18.0 + 4.0)
-	var h := hills + outside * bumps.get_noise_2dv(w) * 1.5  # small lumps, not on the flats
-	# the pass: the path cuts the hills down to PASS_HEIGHT (and smooths the lumps away)
+## The land before the biomes (Frostpeak and the rim go on after them): rolling hills that ease
+## down to the clearing, the village and the lake basin, valleys along the paths between them,
+## and the ponds.
+func _height(w: Vector2) -> float:
+	# a product, not a min: where two places' rims meet there's no crease
+	var outside := _rise(w, CLEARING_CENTER, CLEARING_RADIUS, HILL_RAMP) 			* _rise(w, VILLAGE_CENTER, VILLAGE_RADIUS, VILLAGE_RAMP) 			* _rise(w, LAKE_BASIN["center"], LAKE_BASIN["radius"], LAKE_BASIN["ramp"])
 	for path in [PATH, LAKE_PATH]:
-		var cut := 1.0 - smoothstep(PATH_HALF_WIDTH, PATH_HALF_WIDTH + PASS_SHOULDER, _polyline_distance(w, path))
-		h = lerpf(h, minf(hills, PASS_HEIGHT), cut)
+		var v := smoothstep(VALLEY_HALF, VALLEY_HALF + VALLEY_RAMP, _polyline_distance(w, path))
+		outside *= lerpf(VALLEY_FLOOR, 1.0, v)
+	var h := outside * _hills(w)
 	for pond in PONDS:
-		h = _pond(w, h, pond, shore)
-	h += _bump(w, Vector2(-92, -92), 30.0) * 38.0        # the snowy peak
+		h = _pond(w, h, pond, _shore)
 	return h
+
+
+## 0 on a place's flat (its edge wandering out by up to FLAT_GROW), easing to 1 over `ramp`.
+func _rise(w: Vector2, center: Vector2, radius: float, ramp: float) -> float:
+	var grow := (_warp_x.get_noise_2dv(w * 2.5) * 0.5 + 0.5) * FLAT_GROW
+	var t := clampf((w.distance_to(center) - radius - grow) / ramp, 0.0, 1.0)
+	return t * t * t * (t * (t * 6.0 - 15.0) + 10.0)  # smootherstep: no crease at either end
+
+
+## The open hills: warped low-frequency noise with soft crests and hollows.
+func _hills(w: Vector2) -> float:
+	var q := w + Vector2(_warp_x.get_noise_2dv(w), _warp_y.get_noise_2dv(w)) * WARP
+	var n := clampf(_noise.get_noise_2dv(q) * 0.5 + 0.5, 0.0, 1.0)
+	n = n * n * (3.0 - 2.0 * n)
+	return HILL_BASE + n * HILL_RANGE + _fine.get_noise_2dv(w) * 0.6
+
+
+## 0 in the quarry and on its apron, easing to 1 down its mountainside: the peak and the rim
+## don't tilt the pit.
+func _off_quarry(w: Vector2) -> float:
+	var outer: float = WorldMap.QUARRY_WALLS[0] + WorldMap.QUARRY_APRON
+	return smoothstep(outer, outer + WorldMap.QUARRY_SLOPE, w.distance_to(WorldMap.QUARRY_CENTER))
+
+
+## Frostpeak: a broad mountain whose flanks wander (a warped distance), steepest near the top.
+func _peak(w: Vector2) -> float:
+	var q := w + Vector2(_warp_y.get_noise_2dv(w * 1.7), _warp_x.get_noise_2dv(w * 1.7)) * 22.0
+	var t := 1.0 - clampf(q.distance_to(PEAK_CENTER) / PEAK_RADIUS, 0.0, 1.0)
+	return PEAK_HEIGHT * t * t * (3.0 - 2.0 * t) * (0.85 + 0.15 * _noise.get_noise_2dv(w * 3.0))
+
+
+## The edge of the world rising into high hills (wandering, so it isn't a straight wall).
+func _rim(w: Vector2) -> float:
+	var half := SIZE * 0.5
+	var inner := half - RIM_WIDTH
+	var c := (w - Vector2(ORIGIN.x + half, ORIGIN.z + half)).abs()
+	var past := Vector2(maxf(c.x - inner, 0.0), maxf(c.y - inner, 0.0)).length()  # rounded corners
+	past += _warp_x.get_noise_2dv(w * 1.3) * 18.0
+	var t := clampf(past / RIM_WIDTH, 0.0, 1.0)
+	return RIM_HEIGHT * t * t
+
+
+## Eases every slope steeper than MAX_SLOPE back toward it, a little at a time from both sides, so
+## the hills keep their shape but lose their ledges. The flats stay put: nothing there is steep.
+func _relax(h: PackedFloat32Array) -> void:
+	var limit := PackedFloat32Array()  # per cell; 0 = leave it alone
+	limit.resize(SIZE * SIZE)
+	for y in SIZE:
+		for x in SIZE:
+			var w := _world(x, y)
+			var crags := 1.0 - smoothstep(PEAK_RADIUS * 0.15, PEAK_RADIUS * 0.6, w.distance_to(PEAK_CENTER))
+			limit[y * SIZE + x] = 0.0 if _in_pit(w) else MAX_SLOPE + crags * PEAK_SLOPE
+	for pass_i in RELAX_PASSES:
+		var changed := 0
+		for y in SIZE - 1:
+			for x in SIZE - 1:
+				var i := y * SIZE + x
+				if limit[i] == 0.0:
+					continue
+				for j in [i + 1, i + SIZE]:
+					var d: float = h[j] - h[i]
+					var excess := absf(d) - limit[i]
+					if excess > 0.0:
+						var move := signf(d) * excess * 0.5
+						h[i] += move
+						h[j] -= move
+						changed += 1
+		if changed == 0:
+			break
 
 
 ## No hills right next to the water, then a shallow bowl with a gently sloping shore.
@@ -531,8 +632,8 @@ func _nearest_sample(r: Dictionary, to: Vector2) -> int:
 
 # --- protecting hand-placed nodes -------------------------------------------------------------
 
-## Where everything placed by hand in main.tscn stands (nodes, ruins, buildings, props, water),
-## leaving out the biome scenes.
+## Where everything placed by hand in main.tscn stands (ruins, buildings, props, water), leaving
+## out the biome scenes and the resource nodes.
 func _baked_points() -> Array[Vector2]:
 	var scene := load("res://scenes/main.tscn") as PackedScene
 	var main := scene.instantiate()
@@ -546,24 +647,40 @@ func _collect(node: Node, xform: Transform3D, depth: int, out: Array[Vector2]) -
 	for child in node.get_children():
 		if not child is Node3D or child is Terrain3D or child is Light3D or child.name == "Scenery":
 			continue
-		if child.scene_file_path.begins_with(BIOME_SCENES):
-			continue  # the biomes are built on the new ground, not the old
+		if child.scene_file_path.begins_with(BIOME_SCENES) or child.name == "Nodes":
+			continue  # built on the new ground at runtime / moved onto it by _rebake_nodes
 		var t := xform * (child as Node3D).transform
 		out.append(Vector2(t.origin.x, t.origin.z))
 		if depth < 2:
 			_collect(child, t, depth + 1, out)
 
 
-## Puts the old ground back under (and eases it in around) every hand-placed node.
-func _protect(h: PackedFloat32Array, base: PackedFloat32Array, points: Array[Vector2]) -> void:
-	var keep := PackedFloat32Array()
-	keep.resize(SIZE * SIZE)
-	for p in points:
-		_for_pixels_near(p, PROTECT_OUTER, func(i: int, w: Vector2) -> void:
-			keep[i] = maxf(keep[i], 1.0 - smoothstep(PROTECT_INNER, PROTECT_OUTER, w.distance_to(p))))
-	for i in h.size():
-		if keep[i] > 0.0:
-			h[i] = lerpf(h[i], base[i], keep[i])
+## Rewrites the Y of main.tscn's resource nodes (children of "Nodes") to the new ground: a text
+## edit of their `position` lines only, so nothing else in the scene is touched.
+func _rebake_nodes(h: PackedFloat32Array) -> void:
+	const KEY := "\nposition = Vector3("
+	var blocks := FileAccess.get_file_as_string(MAIN_SCENE).split("\n[node ")
+	var moved := 0
+	for b in range(1, blocks.size()):
+		var block := blocks[b]
+		var at := block.find(KEY)
+		if not block.contains("parent=\"Nodes\"") or at < 0:
+			continue
+		var start := at + KEY.length()
+		var end := block.find(")", start)
+		var xyz := block.substr(start, end - start).split(",")
+		var x := xyz[0].strip_edges()
+		var z := xyz[2].strip_edges()
+		var y := snappedf(_sample(h, Vector2(x.to_float(), z.to_float())), 0.01)
+		if absf(y - xyz[1].strip_edges().to_float()) < 0.005:
+			continue
+		moved += 1
+		var ys := str(int(y)) if y == roundf(y) else str(y)
+		blocks[b] = block.substr(0, start) + "%s, %s, %s" % [x, ys, z] + block.substr(end)
+	var f := FileAccess.open(MAIN_SCENE, FileAccess.WRITE)
+	f.store_string("\n[node ".join(blocks))
+	f.close()
+	print("Resource nodes in main.tscn: %d moved onto the new ground" % moved)
 
 
 # --- helpers ----------------------------------------------------------------------------------
@@ -654,15 +771,45 @@ func _report_ring(r: Dictionary) -> void:
 			length, Array(heights).min(), Array(heights).max(), steepest, banked])
 
 
-## Lists hand-placed nodes whose ground moved (it shouldn't: _protect pins it).
-func _report_moved(points: Array[Vector2], h: PackedFloat32Array, base: PackedFloat32Array) -> void:
+## Lists hand-placed things (not the resource nodes: _rebake_nodes moves those) whose ground isn't
+## at height 0: they were placed on the flats.
+func _report_moved(points: Array[Vector2], h: PackedFloat32Array) -> void:
 	var moved := 0
 	for p in points:
-		var delta := absf(_sample(h, p) - _sample(base, p))
-		if delta > MOVED_TOLERANCE:
+		var g := _sample(h, p)
+		if absf(g) > MOVED_TOLERANCE and not _in_water(p):
 			moved += 1
-			print("  ground moved %.2f m under the node at (%.1f, %.1f)" % [delta, p.x, p.y])
-	print("Hand-placed nodes: %d checked, %d with moved ground" % [points.size(), moved])
+			print("  ground at %.2f m under the thing at (%.1f, %.1f)" % [g, p.x, p.y])
+	print("Hand-placed things: %d checked, %d off the flats" % [points.size(), moved])
+
+
+func _in_water(p: Vector2) -> bool:
+	for pond in PONDS:
+		if p.distance_to(pond["center"]) < float(pond["radius"]) + 2.0:
+			return true
+	return false
+
+
+## How steep the land is, leaving out the peak and the rim: shares of the cells by slope, and
+## the sheer ones off the roads and the quarry pit.
+func _report_slopes(h: PackedFloat32Array, ids: PackedByteArray) -> void:
+	var counts := [0, 0, 0, 0]  # < 15°, < 30°, < 45°, steeper
+	var sheer := 0
+	var total := 0
+	for y in SIZE - 1:
+		for x in SIZE - 1:
+			var w := _world(x, y)
+			if w.distance_to(PEAK_CENTER) < PEAK_RADIUS or _rim(w) > 2.0:
+				continue
+			var i := y * SIZE + x
+			var g := Vector2(h[i + 1] - h[i], h[i + SIZE] - h[i]).length()
+			counts[0 if g < 0.268 else 1 if g < 0.577 else 2 if g < 1.0 else 3] += 1
+			total += 1
+			if g > 2.0 and ids[i] != WorldMap.TEX_ROAD and not _in_pit(w):
+				sheer += 1
+	print("Slopes (outside peak and rim): %.1f%% under 15°, %.1f%% 15-30°, %.1f%% 30-45°, %.1f%% steeper; %d sheer cells off the roads and the pit" % [
+			100.0 * counts[0] / total, 100.0 * counts[1] / total, 100.0 * counts[2] / total,
+			100.0 * counts[3] / total, sheer])
 
 
 ## A top-down picture of the result: one colour per surface id, shaded by slope.
