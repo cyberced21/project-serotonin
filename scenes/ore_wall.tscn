@@ -5,7 +5,6 @@
 [ext_resource type="AudioStream" path="res://audio/stone_hit.tres" id="4_hit"]
 [ext_resource type="AudioStream" path="res://audio/stone_break.tres" id="5_break"]
 [ext_resource type="Resource" path="res://audio/mining/pickaxe_hit.tres" id="8_hit_layers"]
-[ext_resource type="Resource" path="res://audio/mining/pickaxe_pull.tres" id="9_pull_layers"]
 [ext_resource type="Resource" path="res://audio/mining/debris_stone.tres" id="10_debris_layers"]
 [ext_resource type="Resource" path="res://audio/mining/split.tres" id="12_split_layers"]
 [ext_resource type="PackedScene" path="res://scenes/fx/hit_fx.tscn" id="13_hit_fx"]
@@ -24,7 +23,6 @@ spark_amount = 5
 hit_sfx = ExtResource("4_hit")
 break_sfx = ExtResource("5_break")
 hit_layers = ExtResource("8_hit_layers")
-pull_layers = ExtResource("9_pull_layers")
 debris_layers = ExtResource("10_debris_layers")
 split_layers = ExtResource("12_split_layers")
 ore_color = Color(0.88, 0.54, 0.29, 1)

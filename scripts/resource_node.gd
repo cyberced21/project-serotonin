@@ -209,8 +209,9 @@ const CRACKING_LAYER := 1 << 10
 ## Every hit shakes the canopy (m it swings out at first) and shakes a few leaves loose.
 @export var canopy_shake := 0.08
 @export_range(0, 32) var leaves_per_hit := 6
-## Once this share of the hits is done the tree sways and creaks on every hit; the last hit's
-## crack holds it leaning on the hinge for `fell_pause` (s) before it goes.
+## Once this share of the hits is done the tree sways on every hit (creaking only on the
+## second-to-last: each hit before that is just the axe); the last hit's crack holds it leaning
+## on the hinge for `fell_pause` (s) before it goes.
 @export_range(0.0, 1.0) var sway_after := 0.6
 @export var sway_degrees := 1.6
 @export var fell_pause := 0.4
@@ -1058,7 +1059,7 @@ func _lean_on_hinge(felled: RigidBody3D, away: Vector3, hinge: float) -> void:
 
 
 ## The tree reacts to a hit: the canopy shakes and drops a few leaves, and late in the chop
-## (`stress` past sway_after) the whole tree sways away and back, creaking.
+## (`stress` past sway_after) the whole tree sways away and back, creaking on the second-to-last hit.
 func _tree_reacts(info: HitInfo, stress: float) -> void:
 	var away := info.away()
 	if _shake_tween:
@@ -1085,7 +1086,8 @@ func _tree_reacts(info: HitInfo, stress: float) -> void:
 		_sway_tween.tween_method(func(t: float) -> void:  # (the rotation alone: the hit's squash stays)
 			visual.quaternion = Quaternion(local_axis, big * sin(t * 7.0) * exp(-t * 2.2)), 0.0, 1.6, 1.6)
 		_sway_tween.tween_callback(func() -> void: visual.quaternion = Quaternion.IDENTITY)
-		Sfx.play_at(creak_layers, global_position + Vector3.UP * 2.0, 0.9 + randf() * 0.2, -3.0 + 6.0 * (stress - sway_after))
+		if hits_left == 1:
+			Sfx.play_at(creak_layers, global_position + Vector3.UP * 2.0, 0.9 + randf() * 0.2, -3.0 + 6.0 * (stress - sway_after))
 
 
 ## Leaves shaken loose from the canopy: a few at a time, fluttering down.
