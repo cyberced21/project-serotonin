@@ -200,6 +200,8 @@ const TOOL_HEADS := {&"axe": Vector3(0, 0.5, -0.18), &"pickaxe": Vector3(0, 0.38
 @onready var audio: AudioStreamPlayer = $Audio
 @onready var footsteps: Node = $Footsteps
 @onready var mantle_audio: AudioStreamPlayer3D = $MantleAudio
+## The lantern on your belt (made in _ready).
+var lantern: Lantern
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _base_fov := 75.0
@@ -270,6 +272,9 @@ func _ready() -> void:
 		if tools.has(t) and t != &"rod":  # (RodFishing rebuilds its own rod: it bends)
 			_use_tool_model(tools[t], tool_model(t)))
 	tools[&"rod"] = rodfishing.rod  # (built by RodFishing, on its own grip like the spear)
+	lantern = Lantern.new()
+	lantern.player = self
+	$Viewmodel/SubViewport/Camera3D.add_child(lantern)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	SaveGame.register(&"player", self)
 

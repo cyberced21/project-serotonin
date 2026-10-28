@@ -16,6 +16,8 @@ const ROWS := [
 	["Swap spear / rod", "swap_fishing", ""],
 	["Skills: levels, XP, perks, talents", "skills", ""],
 	["World map (wheel zoom, drag to pan)", "map", ""],
+	["Light / put out the lantern", "lantern", ""],
+	["Raise the lantern (hold)", "raise_lantern", ""],
 	["Pause", "", "Esc"],
 ]
 const DEBUG_ROWS := [

@@ -103,7 +103,7 @@ func _rebuild() -> void:
 
 
 func _process(delta: float) -> void:
-	var night := 1.0 - smoothstep(-0.12, 0.15, DayNight.sun_height())  # as the Sky has it
+	var night := DayNight.darkness()
 	var t := Time.get_ticks_msec() / 1000.0
 	for lamp in _lamps:
 		var on := night > WAVE_START + float(lamp["wave"]) * WAVE_SPREAD

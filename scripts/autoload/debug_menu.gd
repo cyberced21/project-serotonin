@@ -598,6 +598,12 @@ func _build_village() -> Control:
 			Lamps.set_lit(id, true)
 		_rebuild_lamps()))
 	box.add_child(lamp_row)
+	var lantern_row := HBoxContainer.new()
+	lantern_row.add_child(_button("Give the lantern", Lamps.give_lantern))
+	lantern_row.add_child(_button("Take it back", func() -> void:
+		Lamps.has_lantern = false
+		Lamps.set_lantern_lit(false)))
+	box.add_child(lantern_row)
 	_lamps_box = VBoxContainer.new()
 	box.add_child(_lamps_box)
 	return box
