@@ -15,7 +15,7 @@ static var _active: SkyLook
 @export var noon_light := Color(1.0, 0.95, 0.86)
 ## The sun's energy at noon, and when low.
 @export_range(0.0, 2.0, 0.01) var noon_energy := 0.82
-@export_range(0.0, 2.0, 0.01) var low_energy := 0.55
+@export_range(0.0, 2.0, 0.01) var low_energy := 0.65
 ## Ambient (sky) light by day: higher lifts the shadows (softer, less contrast).
 @export_range(0.0, 2.0, 0.01) var day_ambient := 1.15
 ## How dark the sun's shadows get by day (1 = full).
@@ -34,12 +34,18 @@ static var _active: SkyLook
 @export_range(0.0, 1.0, 0.01) var twilight_horizon := 0.85
 ## After sunset / before sunrise: how much of the twilight's warm light stays on the world.
 @export_range(0.0, 1.0, 0.01) var afterglow := 0.6
+## Ambient light comes from the sky dome; at sunrise / sunset it's partly this neutral colour
+## instead (twilight_sky_ambient: how much is still the sky), so a pink sky doesn't turn the world red.
+@export_range(0.0, 1.0, 0.01) var twilight_sky_ambient := 0.35
+@export var twilight_ambient := Color(0.86, 0.82, 0.78)
+## How much the clouds' lit side takes the sunrise / sunset cloud colour at its peak.
+@export_range(0.0, 1.0, 0.01) var clouds_tint := 0.6
 
 @export_group("Sunrise")
 ## Golden and fresh: yellow-orange horizon under a clean pale-blue top.
 @export var sunrise_top := Color(0.42, 0.56, 0.74)
 @export var sunrise_horizon := Color(1.0, 0.78, 0.42)
-## The light on the world, and the clouds' lit side.
+## The light on the world, and the clouds' lit side (how much they take it: clouds_tint).
 @export var sunrise_light := Color(1.0, 0.8, 0.5)
 @export var sunrise_clouds := Color(1.0, 0.86, 0.6)
 ## The grade: a tint for the darks and one for the brights.
@@ -48,12 +54,12 @@ static var _active: SkyLook
 
 @export_group("Sunset")
 ## Clearly pink: rose horizon under a lilac top.
-@export var sunset_top := Color(0.42, 0.33, 0.58)
-@export var sunset_horizon := Color(1.0, 0.55, 0.58)
-@export var sunset_light := Color(1.0, 0.62, 0.6)
-@export var sunset_clouds := Color(1.0, 0.55, 0.72)
-@export var sunset_grade_dark := Color(0.98, 0.88, 1.06)
-@export var sunset_grade_bright := Color(1.08, 0.93, 0.92)
+@export var sunset_top := Color(0.45, 0.38, 0.6)
+@export var sunset_horizon := Color(1.0, 0.58, 0.6)
+@export var sunset_light := Color(1.0, 0.74, 0.66)
+@export var sunset_clouds := Color(1.0, 0.7, 0.76)
+@export var sunset_grade_dark := Color(0.98, 0.93, 1.04)
+@export var sunset_grade_bright := Color(1.05, 0.96, 0.95)
 
 @export_group("Night")
 ## Moonlit and readable: paths and silhouettes show without a lantern; lamps are warm pools.
@@ -103,9 +109,13 @@ static var _active: SkyLook
 @export_range(0.0, 2.0, 0.05) var night_mist := 0.0
 ## Morning mist lying low over ponds, lakes and rivers (each WaterBody's Mist volume): density at
 ## its peak, when that is (DayNight time) and how long either side it lasts (fractions of a day).
-@export_range(0.0, 0.5, 0.005) var water_mist := 0.12
+@export_range(0.0, 1.0, 0.005) var water_mist := 0.4
+## How much the water mist glows with the sky's colour (it's pale, not a dark smudge, in shade).
+@export_range(0.0, 2.0, 0.05) var water_mist_glow := 0.6
 @export_range(0.0, 0.5, 0.005) var mist_peak := 0.19
 @export_range(0.01, 0.3, 0.005) var mist_width := 0.1
+## How much ambient (sky) light the mist takes in: higher is paler, softer mist in the shade.
+@export_range(0.0, 2.0, 0.05) var mist_ambient := 0.6
 ## Light shafts through the mist (times the sun's).
 @export_range(0.0, 2.0, 0.05) var shafts := 0.5
 

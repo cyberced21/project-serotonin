@@ -8,6 +8,9 @@ extends SceneTree
 ##   --label=NAME     sub-folder of docs/images/graphics/ to save into (default "latest")
 ##   --preset=NAME    low / medium / high: graphics preset to apply first (default: the saved one)
 ##   --only=a,b       only these views (by name)
+##   --set=mood       the mood pass's views instead (plans/mood-pass.md): one spot at sunrise,
+##                    noon, sunset and night, facing the low sun, mist on the water at dawn
+##   --look=k=v,k=v   override SkyLook values for this run (numbers only), e.g. --look=water_mist=0.3
 ##   --procgen=SEED   instead: a generated world, three views from its spawn (its save is thrown
 ##                    away afterwards unless it was already there)
 ## The game is played on a throwaway save, so the real one is never touched.
@@ -27,6 +30,24 @@ const VIEWS := [
 	["pinewood_dawn", Vector3(10, 0, -120), Vector3.INF, 0.2],
 ]
 
+const MOOD_VIEWS := [
+	["clearing_sunrise", Vector3(4, 0, 10), Vector3(0, 0, -20), 0.16],
+	["clearing_noon", Vector3(4, 0, 10), Vector3(0, 0, -20), 0.5],
+	["clearing_sunset", Vector3(4, 0, 10), Vector3(0, 0, -20), 0.84],
+	["clearing_night", Vector3(4, 0, 10), Vector3(0, 0, -20), 0.0],
+	["sunrise_facing_sun", Vector3(4, 0, 10), Vector3.INF, 0.17],
+	["sunset_facing_sun", Vector3(4, 0, 10), Vector3.INF, 0.83],
+	["afternoon_facing_sun", Vector3(4, 0, 10), Vector3.INF, 0.65],
+	["pond_dawn_mist", Vector3(20, 0, 30), Vector3(20, 0, 14), 0.19],
+	["stillwater_dawn_mist", Vector3(-16, 0, 96), Vector3(-16, 0, 70), 0.2],
+	["stillwater_noon", Vector3(-16, 0, 96), Vector3(-16, 0, 70), 0.5],
+	["pinewood_noon", Vector3(35, 0, -104), Vector3(18, 0, -124), 0.45],
+	["goldmeadow_noon", Vector3(170, 0, 112), Vector3(194, 0, 139), 0.5],
+	["hearthvale_sunset", Vector3(100, 0, 52), Vector3(113, 0, 40), 0.85],
+	["hearthvale_night", Vector3(100, 0, 52), Vector3(113, 0, 40), 0.02],
+]
+
+var views: Array = VIEWS
 var out_dir := "res://docs/images/graphics/latest"
 var preset := ""
 var only: PackedStringArray = PackedStringArray()
@@ -41,6 +62,12 @@ func _initialize() -> void:
 			preset = arg.trim_prefix("--preset=")
 		elif arg.begins_with("--only="):
 			only = arg.trim_prefix("--only=").split(",")
+		elif arg.begins_with("--look="):
+			for pair in arg.trim_prefix("--look=").split(","):
+				var kv := pair.split("=")
+				SkyLook.active().set(kv[0], float(kv[1]))
+		elif arg == "--set=mood":
+			views = MOOD_VIEWS
 		elif arg.begins_with("--procgen="):
 			procgen_seed = arg.trim_prefix("--procgen=").to_int()
 	_run.call_deferred()
@@ -61,12 +88,13 @@ func _run() -> void:
 	if gfx and preset != "":
 		gfx.call("apply_preset", StringName(preset))
 	var day_night := root.get_node("DayNight")
+	day_night.set("frozen", true)  # each view at exactly its time
 	if procgen_seed >= 0:
 		await _procgen_tour(day_night)
 		quit()
 		return
 	var p := get_first_node_in_group("player") as Node3D
-	for v in VIEWS:
+	for v in views:
 		if not only.is_empty() and not only.has(v[0]):
 			continue
 		day_night.set("time", v[3])

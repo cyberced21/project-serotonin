@@ -77,7 +77,7 @@ func _update() -> void:
 		_sky.set_shader_parameter("ground_color", horizon.darkened(0.5))
 		_sky.set_shader_parameter("night", night)
 		_sky.set_shader_parameter("cloud_tint", look.sunrise_clouds if morning else look.sunset_clouds)
-		_sky.set_shader_parameter("cloud_tint_amount", dusk * 0.8)
+		_sky.set_shader_parameter("cloud_tint_amount", dusk * look.clouds_tint)
 		_sky.set_shader_parameter("sun_size", look.sun_size)
 		_sky.set_shader_parameter("sun_brightness", look.sun_brightness)
 		_sky.set_shader_parameter("sun_halo", look.sun_halo)
@@ -99,10 +99,15 @@ func _update() -> void:
 		var lit := maxf(day, afterglow)
 		env.ambient_light_energy = lerpf(look.night_ambient, look.day_ambient, lit) * Biome.ambient
 		env.background_energy_multiplier = lerpf(look.night_sky, 1.0, lit)
+		env.ambient_light_color = look.twilight_ambient
+		env.ambient_light_sky_contribution = lerpf(1.0, look.twilight_sky_ambient, dusk)
 		var dawn := 1.0 - smoothstep(0.0, look.mist_width, absf(DayNight.time - look.mist_peak))
 		var thicker := 1.0 + look.morning_mist * dawn + look.night_mist * night
 		env.volumetric_fog_density = look.mist_density * minf(Biome.mist, look.biome_cap) * thicker
-		WaterBody.mist_material().density = look.water_mist * dawn
+		env.volumetric_fog_ambient_inject = look.mist_ambient
+		var mist := WaterBody.mist_material()
+		mist.density = look.water_mist * dawn
+		mist.emission = horizon.lerp(Color.WHITE, 0.5) * look.water_mist_glow * 0.1
 		env.volumetric_fog_albedo = (horizon * Biome.fog_tint).lerp(Color.WHITE, 0.45)
 		_update_grade(env, look, morning, dusk, day)
 

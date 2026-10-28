@@ -2,7 +2,25 @@
 
 Chunk 1 of [cozy.md](cozy.md). Grilled 2026-10-27. Branch `mood` off `main` when started.
 
-Status: **decided, not built.**
+Status: **all 6 phases built** 2026-10-27 on branch `mood`; checked from screenshots only
+(`docs/images/graphics/mood/`, contact sheet `_sheet.png`), **not played**. Tune by eye in the debug
+menu's Sky tab (F1), then Save: it writes `data/sky_look.tres`.
+
+### Built, and what changed on the way
+
+- Everything tunable lives in `SkyLook` (`scripts/sky_look.gd`, values in `data/sky_look.tres`).
+- Sunset first lit the world red: ambient light comes from the sky dome, so a pink sky made a pink
+  world. At twilight the ambient is now mostly a neutral warm colour (`twilight_sky_ambient`,
+  `twilight_ambient`): the sky stays pink, the grass stays green.
+- The water mist first rendered as a dark smudge (volumetric fog in shade is unlit). It now takes in
+  ambient light (`mist_ambient`) and glows faintly with the sky (`water_mist_glow`).
+- The longer twilight is visual only (`DayNight.sky_twilight()`); `DayNight.twilight()`, which fish
+  and villagers use, is unchanged, so fishing balance isn't touched.
+- Full night is now shorter: the colours reach 0.18 of a day into the night, leaving about
+  2.5 minutes of deep night (was about 5). If that's too short, shorten `twilight_night_side` or
+  lengthen `DayNight.DAY_LENGTH`.
+- Re-shoot with `tools/graphics_tour.gd -- --set=mood --label=NAME` (add `--look=key=value,...` to
+  try values without saving them).
 
 ## Where we start (2026-10-27)
 

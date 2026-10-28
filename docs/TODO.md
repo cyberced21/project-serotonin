@@ -3,6 +3,11 @@
 Everything we decided to come back to, in one place. Tick items off (`- [x]`) as they're done.
 Design background for most of these is in [3d-research-notes.md](3d-research-notes.md).
 
+## Mood ([plans/mood-pass.md](../plans/mood-pass.md))
+
+- [ ] **Tune the mood pass by eye** in the debug menu's Sky tab (F1 → Sky, Save writes `data/sky_look.tres`): sunrise/sunset palettes, noon softness, haze distance, the water mist, night brightness (the clearing under its trees is darkest). Checked from screenshots only.
+- [ ] **Night length:** deep night is now about 2.5 min (was 5) because the twilight colours reach into it; see the plan's notes for the two levers.
+
 ## Fishing
 
 - [x] **Pike as a predator:** every 25–45 s it stalks the nearest perch, lunges (ripple, the school scatters) and catches one half the time, then glides back to cover. Spooking it calls the hunt off (`FishSpecies` *Hunting* group).
