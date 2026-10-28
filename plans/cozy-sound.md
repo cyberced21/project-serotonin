@@ -75,7 +75,9 @@ One commit each; phases marked **(pick)** stop for your choice.
    its day bed); CC0 birds, crickets, frogs, owl, rare far wolf; water emitters on each
    `WaterBody`; wind in the trees; village life emitters. Takes page for the recordings.
 9. **Fireflies.** Soft blinking points over grass, ponds and the forest edge, dusk to midnight,
-   drifting away from you (cozy section 2's visual half).
+   drifting away from you (cozy section 2's visual half). *Done:* the `Fireflies` autoload, 60
+   glowing billboards in one MultiMesh round the player, likelier by still water and in the
+   Pinewood; fade in through the evening, gone by about 1 a.m.; `tools/test_fireflies.gd`.
 10. **Reverb per place and a final mix.** Reverb zones per biome (forest, hills, mine/quarry;
     indoors waits for interiors), levels balanced in the real buses (`tools/record_sfx_chain.gd`),
     then an in-game listen.
