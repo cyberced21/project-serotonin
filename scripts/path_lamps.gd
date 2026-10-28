@@ -4,8 +4,14 @@ extends Node3D
 ## an id the Lamps autoload saves as lit or not; a lit stretch gets a post every SPACING metres,
 ## on alternate sides, its arm reaching over the road. Unlit stretches have no posts at all, so
 ## lighting one (a project, later) visibly adds them.
-## Hearthvale's stretches come from WorldMap (hearthvale_stretches()), a generated world's from its
-## trails (procgen_stretches()).
+## At dusk they catch one after another in a wave out from the village (L4), each with a little
+## sputter before it takes, and at dawn go out the same way. They're kept out of the Sky's
+## "night_light" / "night_glow" groups (which light everything at once) and lit from here.
+## Hearthvale's stretches come from WorldMap (hearthvale()), a generated world's from its trails
+## (procgen()).
+
+## A lamp catches (for its sound): where.
+signal lamp_caught(at: Vector3)
 
 const SPACING := 20.0
 ## The first post this far along a stretch (from its village end): the square has its own lamps.
@@ -27,6 +33,15 @@ const LIGHT_FADE_LENGTH := 25.0
 ## The square's lamppost on the village's own stretches, the rustic one on the far roads (L5).
 const VILLAGE_MODEL := preload("res://models/village/props/lamp_post.glb")
 const FAR_MODEL := preload("res://models/village/props/lamp_post_rustic.glb")
+## The wave: how dark it must be (the Sky's night amount, 0 by day to 1) before the village's
+## nearest lamp catches, and how much darker before the farthest one does.
+const WAVE_START := 0.12
+const WAVE_SPREAD := 0.5
+## A lamp catching: brightness over its first moments [seconds, level], then it holds.
+const CATCH: Array[Vector2] = [Vector2(0.0, 0.0), Vector2(0.05, 0.7), Vector2(0.1, 0.15),
+	Vector2(0.18, 0.85), Vector2(0.27, 0.3), Vector2(0.4, 0.6), Vector2(0.8, 1.0)]
+## Going out at dawn takes this long.
+const FADE_OUT := 1.5
 
 ## {id: StringName, title: String, pts: PackedVector2Array (world XZ, from the village end),
 ## half_width: float, village: bool}
@@ -37,6 +52,10 @@ var village_center := Vector2.ZERO
 var blocked: Callable
 
 var _terrain: Terrain3D
+## One per post: {glow: Array[GeometryInstance3D], lights: Array[Light3D], wave: float 0..1,
+## on: bool, since: float (seconds since it last caught or went out), level: float}
+var _lamps: Array[Dictionary] = []
+var _first := true  # the first frame sets every lamp as it should be, no wave
 
 
 func _ready() -> void:
@@ -69,11 +88,59 @@ func _rebuild() -> void:
 	for c in get_children():
 		remove_child(c)
 		c.queue_free()
+	_lamps.clear()
 	var avoid := _obstacles()
 	var placed := PackedVector2Array()
 	for s in stretches:
 		if Lamps.is_lit(s["id"]):
 			_place_stretch(s, avoid, placed)
+	var farthest := 1.0
+	for p in placed:
+		farthest = maxf(farthest, p.distance_to(village_center))
+	for i in _lamps.size():
+		_lamps[i]["wave"] = placed[i].distance_to(village_center) / farthest
+	_first = true
+
+
+func _process(delta: float) -> void:
+	var night := 1.0 - smoothstep(-0.12, 0.15, DayNight.sun_height())  # as the Sky has it
+	var t := Time.get_ticks_msec() / 1000.0
+	for lamp in _lamps:
+		var on := night > WAVE_START + float(lamp["wave"]) * WAVE_SPREAD
+		lamp["since"] = float(lamp["since"]) + delta
+		if on != lamp["on"]:
+			lamp["on"] = on
+			lamp["since"] = 0.0
+			if on and not _first:
+				lamp_caught.emit((lamp["lights"][0] as Light3D).global_position if not (lamp["lights"] as Array).is_empty() else Vector3.ZERO)
+		var level: float
+		if _first:
+			level = 1.0 if on else 0.0
+		elif on:
+			level = _catch(lamp["since"])
+		else:
+			level = minf(float(lamp["level"]), 1.0 - float(lamp["since"]) / FADE_OUT)
+		level = maxf(level, 0.0)
+		if level == 0.0 and lamp["level"] == 0.0:
+			continue
+		lamp["level"] = level
+		for g in lamp["glow"]:
+			(g as GeometryInstance3D).set_instance_shader_parameter("glow", level)
+		for l in lamp["lights"]:  # firelight flickers, each lamp out of step (as the Sky's do)
+			var light := l as Light3D
+			var ph := float(light.get_instance_id() % 997)
+			var flicker := 1.0 + 0.1 * sin(t * 8.3 + ph) + 0.06 * sin(t * 21.7 + ph * 1.7)
+			light.visible = level > 0.01
+			light.light_energy = level * float(light.get_meta("night_energy", 1.0)) * flicker
+	_first = false
+
+
+## How bright a lamp is `t` seconds after it catches.
+static func _catch(t: float) -> float:
+	for i in range(1, CATCH.size()):
+		if t < CATCH[i].x:
+			return lerpf(CATCH[i - 1].y, CATCH[i].y, (t - CATCH[i - 1].x) / (CATCH[i].x - CATCH[i - 1].x))
+	return 1.0
 
 
 ## A post every SPACING metres, on alternate sides; where one doesn't fit (a tree, a steep bank,
@@ -117,11 +184,20 @@ func _post(at: Vector2, toward_road: Vector2, village: bool, stretch: StringName
 	prop.rotation.y = atan2(-toward_road.y, toward_road.x)  # the arm (+X) reaches over the road
 	prop.set_meta("stretch", stretch)
 	add_child(prop)
+	var lamp := {"glow": [], "lights": [], "wave": 0.0, "on": false, "since": 0.0, "level": 0.0}
+	for g in prop.find_children("*", "GeometryInstance3D", true, false):
+		if g.is_in_group("night_glow"):
+			g.remove_from_group("night_glow")
+			lamp["glow"].append(g)
 	for l in prop.find_children("*", "OmniLight3D", true, false):
 		var light := l as OmniLight3D
+		light.remove_from_group("night_light")
+		light.add_to_group("path_light")  # (GraphicsSettings still sets its shadows)
 		light.distance_fade_enabled = true
 		light.distance_fade_begin = LIGHT_FADE_BEGIN
 		light.distance_fade_length = LIGHT_FADE_LENGTH
+		lamp["lights"].append(light)
+	_lamps.append(lamp)
 
 
 ## [Vector2 position, clearance] of everything a post keeps away from.

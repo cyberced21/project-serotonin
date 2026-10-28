@@ -17,10 +17,10 @@ func _run() -> void:
 	worlds.call("reset", worlds.get("CLASSIC"))
 	worlds.call("play", worlds.get("CLASSIC"))
 	await _world_ready()
-	_check_world("Hearthvale")
+	await _check_world("Hearthvale")
 	worlds.call("play_scratch", 42)
 	await _world_ready()
-	_check_world("seed 42")
+	await _check_world("seed 42")
 	print("test_lamps: %s" % ("PASS" if _fails == 0 else "%d FAILED" % _fails))
 	quit(1 if _fails else 0)
 
@@ -69,11 +69,61 @@ func _check_world(world: String) -> void:
 	_check(posts.size() > stretches.size(), "%s: every stretch lit puts up posts" % world)
 	_check(wet == 0, "%s: no post in water or off the ground (%d)" % [world, wet])
 	_check(crowded == 0, "%s: no two posts crowd each other (%d)" % [world, crowded])
+	await _check_wave(world, path_lamps)
 	var saved: Dictionary = lamps_auto.call("to_dict")
 	_check((saved["lit"] as Array).size() == stretches.size(), "%s: the lit list saves" % world)
 	lamps_auto.call("from_dict", {})
 	var left := _count(path_lamps, &"village_path")
 	_check(left > 0 and (path_lamps.call("posts") as Array).size() == left, "%s: back to the village path on a fresh save (%d posts)" % [world, left])
+
+
+## Dark by day; at dusk the lamps near the village catch before the far ones, each once; all
+## burning by full night.
+func _check_wave(world: String, path_lamps: Node) -> void:
+	var day_night := root.get_node("DayNight")
+	day_night.set("frozen", true)
+	day_night.set("time", 0.5)
+	for i in 5:
+		await process_frame
+	var lamps: Array = path_lamps.get("_lamps")
+	var lit_by_day := 0
+	for l in lamps:
+		if float(l["level"]) > 0.0:
+			lit_by_day += 1
+	_check(lit_by_day == 0, "%s: no lamp burns at noon (%d)" % [world, lit_by_day])
+	var caught := [0]
+	var count := func(_at: Vector3) -> void: caught[0] += 1
+	path_lamps.connect("lamp_caught", count)
+	var first: Dictionary = {}  # lamp index -> frame it caught
+	var frame := 0
+	var t := 0.78
+	while t < 0.92:
+		day_night.set("time", t)
+		await process_frame
+		for i in lamps.size():
+			if not first.has(i) and float(lamps[i]["level"]) > 0.0:
+				first[i] = frame
+		frame += 1
+		t += 0.0004
+	for i in 60:
+		await process_frame
+	path_lamps.disconnect("lamp_caught", count)
+	var near_last := -1
+	var far_first := 1 << 30
+	var full := 0
+	for i in lamps.size():
+		var w: float = lamps[i]["wave"]
+		if w < 0.3:
+			near_last = maxi(near_last, first.get(i, 1 << 30))
+		elif w > 0.7:
+			far_first = mini(far_first, first.get(i, 1 << 30))
+		if float(lamps[i]["level"]) >= 1.0:
+			full += 1
+	print("%s: near lamps all lit by frame %d, far ones start at %d" % [world, near_last, far_first])
+	_check(near_last < far_first, "%s: the wave runs out from the village" % world)
+	_check(caught[0] == lamps.size(), "%s: each lamp catches once (%d of %d)" % [world, caught[0], lamps.size()])
+	_check(full == lamps.size(), "%s: all burning by full night (%d of %d)" % [world, full, lamps.size()])
+	day_night.set("frozen", false)
 
 
 func _count(path_lamps: Node, stretch: StringName) -> int:
