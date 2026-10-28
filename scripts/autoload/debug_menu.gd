@@ -9,6 +9,7 @@ extends CanvasLayer
 ##   Player    fly mode, a live readout (can stay pinned on screen), save / wipe the save
 ##   Procgen   a scratch generated world by seed, or a new random one, and back to the main menu
 ##   Graphics  Low / Medium / High presets and each costly effect on its own (GraphicsSettings)
+##   Sky       the sky's look (SkyLook) live: time scrub and hold, every colour and number, save
 ## The old F6–F10 keys still work. Toggles that stay on (fly, pause, time scale) show as a tag at
 ## the top of the screen while the menu is closed.
 
@@ -52,6 +53,10 @@ var _gfx_preset: Label
 var _gfx_checks: Dictionary[StringName, CheckBox] = {}
 var _gfx_sliders: Dictionary[StringName, HSlider] = {}
 var _gfx_msaa: Dictionary[int, Button] = {}
+var _sky_box: VBoxContainer
+var _sky_time: HSlider
+var _sky_clock: Label
+var _sky_status: Label
 
 
 ## Only in debug builds and playtest exports (export_presets.cfg sets the "playtest" feature).
@@ -116,7 +121,9 @@ func _process(_delta: float) -> void:
 		_readout.text = text
 		if not _dragging_time:
 			_time_slider.set_value_no_signal(DayNight.time)
+			_sky_time.set_value_no_signal(DayNight.time)
 		_time_label.text = DayNight.clock_text()
+		_sky_clock.text = "%s  ·  %s" % [DayNight.clock_text(), DayNight.part_of_day()]
 	_pinned.visible = _pin.button_pressed and not is_open()
 	if _pinned.visible:
 		_pinned.text = text
@@ -464,6 +471,7 @@ func _build() -> void:
 	_tabs.add_child(_scroll("Player", _build_player()))
 	_tabs.add_child(_scroll("Procgen", _build_procgen()))
 	_tabs.add_child(_scroll("Graphics", _build_graphics()))
+	_tabs.add_child(_scroll("Sky", _build_sky()))
 
 	var hint := _label(13)
 	hint.text = "F1 / Esc  close"
@@ -725,6 +733,105 @@ func _refresh_graphics() -> void:
 	var msaa := int(GraphicsSettings.get_value(&"msaa"))
 	for n in _gfx_msaa:
 		_gfx_msaa[n].modulate = ACCENT if n == msaa else Color.WHITE
+
+
+func _build_sky() -> Control:
+	var box := VBoxContainer.new()
+	_sky_clock = _label(16)
+	box.add_child(_sky_clock)
+	_sky_time = HSlider.new()
+	_sky_time.max_value = 1.0
+	_sky_time.step = 0.001
+	_sky_time.focus_mode = Control.FOCUS_NONE
+	_sky_time.value_changed.connect(func(v: float) -> void: DayNight.time = fposmod(v, 1.0))
+	_sky_time.drag_started.connect(func() -> void: _dragging_time = true)
+	_sky_time.drag_ended.connect(func(_changed: bool) -> void: _dragging_time = false)
+	box.add_child(_sky_time)
+	var row := HBoxContainer.new()
+	for spot in [["Sunrise", DayNight.SUNRISE], ["Morning", 0.3], ["Noon", 0.5], ["Sunset", DayNight.SUNSET], ["Night", 0.0]]:
+		row.add_child(_button(spot[0], func() -> void: DayNight.time = spot[1]))
+	box.add_child(row)
+	var hold := _check("Hold the time of day", func(on: bool) -> void: DayNight.frozen = on)
+	box.add_child(hold)
+	row = HBoxContainer.new()
+	row.add_child(_button("Save to sky_look.tres", _save_sky))
+	row.add_child(_button("Revert", _revert_sky))
+	row.add_child(_button("Print", func() -> void: print(var_to_str(_sky_values()))))
+	box.add_child(row)
+	_sky_status = _label(13)
+	_sky_status.modulate = DIM
+	_sky_status.text = "Edits are live; Save writes data/sky_look.tres."
+	box.add_child(_sky_status)
+	_sky_box = VBoxContainer.new()
+	box.add_child(_sky_box)
+	_rebuild_sky()
+	return box
+
+
+## One control per SkyLook property, under its group's heading: sliders for numbers (their range
+## from @export_range), colour pickers for colours.
+func _rebuild_sky() -> void:
+	for c in _sky_box.get_children():
+		c.queue_free()
+	var look := SkyLook.active()
+	for prop in look.get_property_list():
+		if prop.usage & PROPERTY_USAGE_GROUP:
+			_sky_box.add_child(_heading(prop.name))
+			continue
+		if not prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE or not prop.usage & PROPERTY_USAGE_EDITOR:
+			continue
+		var key: String = prop.name
+		var line := HBoxContainer.new()
+		var label := _label(14)
+		label.custom_minimum_size = Vector2(170, 0)
+		line.add_child(label)
+		if prop.type == TYPE_COLOR:
+			label.text = key
+			var pick := ColorPickerButton.new()
+			pick.color = look.get(key)
+			pick.edit_alpha = false
+			pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			pick.custom_minimum_size = Vector2(0, 24)
+			pick.focus_mode = Control.FOCUS_NONE
+			pick.color_changed.connect(func(c: Color) -> void: SkyLook.active().set(key, c))
+			line.add_child(pick)
+		elif prop.type == TYPE_FLOAT:
+			var bounds := (prop.hint_string as String).split(",")
+			var s := HSlider.new()
+			s.min_value = float(bounds[0]) if bounds.size() > 1 else 0.0
+			s.max_value = float(bounds[1]) if bounds.size() > 1 else 2.0
+			s.step = float(bounds[2]) if bounds.size() > 2 else 0.01
+			s.value = look.get(key)
+			s.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			s.focus_mode = Control.FOCUS_NONE
+			label.text = "%s  %s" % [key, s.value]
+			s.value_changed.connect(func(v: float) -> void:
+				SkyLook.active().set(key, v)
+				label.text = "%s  %s" % [key, v])
+			line.add_child(s)
+		else:
+			continue
+		_sky_box.add_child(line)
+
+
+func _sky_values() -> Dictionary:
+	var look := SkyLook.active()
+	var out := {}
+	for prop in look.get_property_list():
+		if prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE and prop.usage & PROPERTY_USAGE_EDITOR:
+			out[prop.name] = look.get(prop.name)
+	return out
+
+
+func _save_sky() -> void:
+	var err := SkyLook.save_active()
+	_sky_status.text = "Saved to data/sky_look.tres." if err == OK else "Couldn't save (%s): use Print." % error_string(err)
+
+
+func _revert_sky() -> void:
+	SkyLook.revert()
+	_rebuild_sky()
+	_sky_status.text = "Reverted to data/sky_look.tres."
 
 
 func _scroll(title: String, content: Control) -> ScrollContainer:

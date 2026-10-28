@@ -13,6 +13,11 @@ extends Area3D
 ## fish face up into it. Zero for ponds and lakes.
 @export var flow := Vector3.ZERO
 
+## The morning mist over the water: how high it reaches above the surface.
+const MIST_HEIGHT := 1.6
+
+static var _mist_material: FogMaterial
+
 @onready var _box: CollisionShape3D = $Volume
 
 
@@ -20,6 +25,42 @@ func _ready() -> void:
 	add_to_group("water")
 	monitoring = false  # nothing tracks overlaps; queries go through contains()
 	monitorable = false
+	_add_mist()
+
+
+## The wispy mist every body of water shares; DayNightSky sets its density (thick at dawn, gone
+## by mid-morning). Volumetric: only shows with volumetric fog on.
+static func mist_material() -> FogMaterial:
+	if _mist_material == null:
+		var noise := FastNoiseLite.new()
+		noise.frequency = 0.08
+		noise.fractal_octaves = 3
+		var wisps := NoiseTexture3D.new()
+		wisps.width = 48
+		wisps.height = 16
+		wisps.depth = 48
+		wisps.seamless = true
+		wisps.noise = noise
+		_mist_material = FogMaterial.new()
+		_mist_material.density = 0.0
+		_mist_material.albedo = Color(0.96, 0.97, 1.0)
+		_mist_material.height_falloff = 1.2
+		_mist_material.edge_fade = 0.7
+		_mist_material.density_texture = wisps
+	return _mist_material
+
+
+## A flat ellipsoid of mist lying on the water, as wide as the water's box.
+func _add_mist() -> void:
+	var size := (_box.shape as BoxShape3D).size
+	var mist := FogVolume.new()
+	mist.name = "Mist"
+	mist.shape = RenderingServer.FOG_VOLUME_SHAPE_ELLIPSOID
+	mist.size = Vector3(size.x, MIST_HEIGHT * 2.0, size.z)
+	mist.material = mist_material()
+	add_child(mist)
+	mist.position = Vector3(_box.position.x, surface_height - global_position.y, _box.position.z)
+	mist.rotation = _box.rotation
 
 
 ## True if `pos` (XZ) is over this water's volume.
