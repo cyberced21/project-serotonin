@@ -143,9 +143,11 @@ func _check_build(projects: Node, inventory: Node) -> void:
 	var new := lamps.filter(func(l: Dictionary) -> bool: return (l["prop"] as Node).get_meta("stretch") == roads[0]["road"])
 	var hidden := new.filter(func(l: Dictionary) -> bool: return (l["prop"] as Node3D).scale.x < 0.1).size()
 	_check(new.size() > 0 and hidden == new.size(), "build: its posts start down (%d of %d)" % [hidden, new.size()])
-	for i in 60 * (2 + int(new.size() * 0.35) + 1):
+	var until := Time.get_ticks_msec() + int((3.0 + new.size() * 0.35) * 1500.0)  # (time, not frames)
+	var up := 0
+	while Time.get_ticks_msec() < until and up < new.size():
 		await process_frame
-	var up := new.filter(func(l: Dictionary) -> bool: return (l["prop"] as Node3D).scale.x > 0.95).size()
+		up = new.filter(func(l: Dictionary) -> bool: return (l["prop"] as Node3D).scale.x > 0.95).size()
 	_check(up == new.size(), "build: and rise one by one along it (%d up)" % up)
 	day_night.set("frozen", false)
 

@@ -59,8 +59,6 @@ const NEW_ROAD_STEP := 0.35
 var stretches: Array[Dictionary] = []
 ## Where the wave of lighting starts at dusk (phase 2): the middle of the village square.
 var village_center := Vector2.ZERO
-## Optional: func(p: Vector2) -> bool, true where a post mustn't stand (the gully, ...).
-var blocked: Callable
 
 var _terrain: Terrain3D
 ## One per post: {glow: Array[GeometryInstance3D], lights: Array[Light3D], wave: float 0..1,
@@ -324,8 +322,6 @@ func _fits(p: Vector2, avoid: Array, placed: PackedVector2Array) -> bool:
 	for o in avoid:
 		if (o[0] as Vector2).distance_to(p) < float(o[1]):
 			return false
-	if blocked.is_valid() and blocked.call(p):
-		return false
 	if _terrain and _terrain.data:
 		var h := _terrain.data.get_height(Vector3(p.x, 0, p.y))
 		if is_nan(h):
@@ -351,62 +347,9 @@ static func _xz(v: Vector3) -> Vector2:
 ## ring, the ring cut at each turn-off, and the spurs to the lake shore, the field and the quarry.
 func hearthvale() -> void:
 	village_center = WorldMap.VILLAGE_CENTER
-	var ring := WorldMap.ring()
-	var village_path := WorldMap.spline(WorldMap.VILLAGE_PATH, false)
-	village_path.reverse()
-	stretches = [
-		_stretch(&"village_path", "The path from the clearing", village_path, 1.6, true),
-		_stretch(&"lake_path", "The path to the lake", WorldMap.spline(WorldMap.LAKE_PATH, false), 1.6),
-	]
-	# the turn-offs, each a spur from the ring (its first point on the road)
-	var q := WorldMap.QUARRY_CENTER
-	var rim := q + Vector2.from_angle(WorldMap.QUARRY_ROAD_ANGLE) * (WorldMap.QUARRY_WALLS[0] + 2.0)
-	var turns := [  # [id, title, spur control points (from the ring), village?]
-		[&"village_road", "The village road", WorldMap.SPURS[1], true],
-		[&"field_road", "The road to Goldmeadow", WorldMap.SPURS[2], false],
-		[&"lake_road", "The road to the lake shore", WorldMap.SPURS[0], false],
-		[&"quarry_road", "The road to the quarry", [rim, rim], false],
-		[&"forest_turn", "", [WorldMap.TRAIL[-1], WorldMap.TRAIL[-1]], false],
-	]
-	var cuts: Array = []  # [ring sample index, name of the turn]
-	for t in turns:
-		var ctrl: Array = (t[2] as Array).duplicate()
-		var at := _nearest(ring, ctrl[0])
-		cuts.append([at, t[1]])
-		if t[0] == &"forest_turn":
-			continue
-		if t[0] == &"quarry_road":
-			ctrl = [ring[at], rim]
-		else:
-			ctrl[0] = ring[at]
-		var pts := WorldMap.spline(ctrl, false)
-		if t[0] == &"village_road":
-			pts.reverse()  # from the village end
-		stretches.append(_stretch(t[0], t[1], pts, WorldMap.ROAD_HALF_WIDTH, t[3]))
-	# the ring between one turn-off and the next, clockwise
-	cuts.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
-	var n := ring.size()
-	for k in cuts.size():
-		var from: int = cuts[k][0]
-		var to: int = cuts[(k + 1) % cuts.size()][0]
-		var pts := PackedVector2Array()
-		var i := from
-		while i != to:
-			pts.append(ring[i])
-			i = (i + 1) % n
-		pts.append(ring[to])
-		stretches.append(_stretch(StringName("ring_%d" % k), "The ring road from %s to %s" % [
-				_turn_name(cuts[k][1]), _turn_name(cuts[(k + 1) % cuts.size()][1])], pts, WorldMap.ROAD_HALF_WIDTH))
-	blocked = func(p: Vector2) -> bool: return p.distance_to(WorldMap.GULLY_NEAR) < 14.0
-
-
-static func _turn_name(title: String) -> String:
-	match title:
-		"The village road": return "the village turn"
-		"The road to Goldmeadow": return "the field turn"
-		"The road to the lake shore": return "the lake turn"
-		"The road to the quarry": return "the quarry turn"
-	return "the forest turn"
+	stretches = []
+	for r in WorldMap.roads():
+		stretches.append(_stretch(r["id"], r["title"], r["pts"], r["half_width"], r.get("village", false)))
 
 
 static func _stretch(id: StringName, title: String, pts: PackedVector2Array, half_width: float,

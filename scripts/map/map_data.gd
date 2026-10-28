@@ -8,7 +8,7 @@ extends Node
 ##
 ##   heights: RGF   R ground height (m), G water depth (m, 0 on land)
 ##   kinds:   RGBA8 R ground texture id (WorldMap.TEX_*), G biome (index into `biomes` + 1),
-##                  B road (1 ring road, 0.5 path), A forest
+##                  B road (1 gravel road, 0.5 dirt path), A forest
 
 signal built
 

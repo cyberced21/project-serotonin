@@ -107,15 +107,19 @@ const RAMP_GAP := 4.0
 const LEDGE := 1.6
 const STAIR_WIDTH := 6.0
 
-## The ring road: steepest grade, and how far the outer edge is raised on the tightest bends.
-const ROAD_GRADE := 0.08
-const BANK := 0.5          # each edge moves this far (m) from the centre line
-const BANK_RADIUS := 60.0  # bends tighter than this get banked, fully by half of it
-## Where a road cuts this deep into a hill, its sides are sheer (wall-runnable) instead of sloped.
-const WALL_CUT := 2.5
-const GULLY_DEPTH := 4.0
-const GULLY_GAP := 6.0     # length of the gap along the road
-const GULLY_REACH := 30.0  # how far the gully runs out to either side before it's level again
+## Roads and paths: steepest grade, how far their shoulders reach and over how much they ease
+## into the ground. No sheer cuttings: a road that cuts into a hill gets sloped sides.
+const ROAD_GRADE := 0.10
+const PATH_GRADE := 0.14
+const ROAD_SHOULDER := 16.0
+const PATH_SHOULDER := 8.0
+## Where the road router (a least-cost path over a ROUTE_CELL m grid) prefers to go: cost grows
+## with the slope squared; water, the quarry pit and hand-placed things are all but walls.
+const ROUTE_CELL := 4
+const ROUTE_SLOPE_COST := 160.0
+const ROUTE_WATER_COST := 300.0
+## The lines the roads were laid on, for the game (WorldMap.roads()).
+const ROADS_OUT := "res://scripts/world_roads.gd"
 
 ## Hand-placed things other than the resource nodes (buildings, props, ruins) stand on the flats
 ## at height 0; the run lists any whose ground is off by more than this.
@@ -133,6 +137,7 @@ var _shore := FastNoiseLite.new()  # makes the pond outlines irregular
 var _rings := FastNoiseLite.new()  # makes the quarry's walls wander
 var _swell := FastNoiseLite.new()  # the field's rolling swells
 var _edge := FastNoiseLite.new()   # ragged biome borders
+var _creek_mask := PackedByteArray()  # 1 on the creek's channel and inner banks
 var _ramp_top: Array[float] = []   # per quarry wall: angle of its ramp's top end
 var _ramp_span: Array[float] = []  # per quarry wall: angle its ramp covers
 
@@ -169,25 +174,8 @@ func _run() -> void:
 	_relax(h)
 	_carve_creek(h)
 
-	var ring := _make_route(WorldMap.RING, true, WorldMap.ROAD_HALF_WIDTH, ROAD_GRADE, 40.0, h)
-	_bank(ring)
-	var gully := _nearest_sample(ring, WorldMap.GULLY_NEAR)
-	_widen(ring, gully)
-	_apply_route(ring, h, ids, WorldMap.TEX_ROAD, 20.0, WALL_CUT, 6.0, true)
-	_gully(ring, gully, h, ids)
-	for spur in WorldMap.SPURS:
-		var pts: Array = spur.duplicate()
-		pts[0] = ring["pts"][_nearest_sample(ring, pts[0])]
-		_apply_route(_make_route(pts, false, 2.0, 0.10, 20.0, h), h, ids, WorldMap.TEX_ROAD, 16.0, WALL_CUT, 6.0, true)
-	var q := WorldMap.QUARRY_CENTER
-	var rim := q + Vector2.from_angle(WorldMap.QUARRY_ROAD_ANGLE) * (WorldMap.QUARRY_WALLS[0] + 2.0)
-	var to_quarry := [ring["pts"][_nearest_sample(ring, rim)], rim]
-	_apply_route(_make_route(to_quarry, false, 2.0, 0.10, 6.0, h), h, ids, WorldMap.TEX_ROAD, 8.0, WALL_CUT, 4.0, false)
-	var trail: Array = WorldMap.TRAIL.duplicate()
-	trail[trail.size() - 1] = ring["pts"][_nearest_sample(ring, trail[trail.size() - 1])]
-	_apply_route(_make_route(trail, false, 1.5, 0.15, 14.0, h), h, ids, PATH_TEXTURE, 8.0, 99.0, 5.0, true)
-
 	var baked := _baked_points()
+	var laid := _lay_roads(h, ids, baked)
 
 	var img := Image.create_empty(SIZE, SIZE, false, Image.FORMAT_RF)
 	for y in SIZE:
@@ -206,8 +194,7 @@ func _run() -> void:
 				var w := _world(x, y)
 				terrain.data.set_control_base_id(Vector3(w.x, 0, w.y), id)
 				painted += 1
-	_report_path_slope(terrain)
-	_report_ring(ring)
+	_write_roads(laid)
 	_report_moved(baked, h)
 	_report_slopes(h, ids)
 	_rebake_nodes(h)
@@ -489,12 +476,24 @@ func _make_route(ctrl: Array, loop: bool, half: float, grade: float, smooth_m: f
 		var side := Vector2(-dirs[i].y, dirs[i].x) * half
 		ground[i] = (_sample(h, pts[i]) + _sample(h, pts[i] + side) + _sample(h, pts[i] - side)) / 3.0
 	var heights := _smooth(ground, int(smooth_m), loop)
-	_limit_grade(heights, pts, grade, loop)
+	var g := grade
+	if loop:
+		_limit_grade(heights, pts, grade, loop)
+	else:
+		# both ends on the ground; a road that must climb further than its grade allows climbs
+		# evenly a little steeper, instead of meeting the ground in a step
+		var length := 0.0
+		for i in range(1, n):
+			length += pts[i].distance_to(pts[i - 1])
+		g = maxf(grade, absf(ground[n - 1] - ground[0]) / maxf(length, 1.0) * 1.25)
+		heights[0] = ground[0]
+		heights[n - 1] = ground[n - 1]
+		_clamp_grade(heights, pts, g)
 	heights = _smooth(heights, 4, loop)
 	if not loop:  # meet the ground (or the road it starts from) exactly at both ends
-		for i in n:
-			var from_end := minf(i, n - 1 - i)
-			heights[i] = lerpf(ground[i], heights[i], smoothstep(0.0, 8.0, from_end))
+		heights[0] = ground[0]
+		heights[n - 1] = ground[n - 1]
+		_clamp_grade(heights, pts, g * 1.1)
 	var halfs := PackedFloat32Array()
 	halfs.resize(n)
 	halfs.fill(half)
@@ -522,6 +521,25 @@ func _smooth(a: PackedFloat32Array, radius: int, loop: bool) -> PackedFloat32Arr
 	return out
 
 
+## Keeps every step along an open route within `grade`, up or down, from its two pinned ends
+## inward: hills are cut and hollows filled about evenly.
+func _clamp_grade(a: PackedFloat32Array, pts: PackedVector2Array, grade: float) -> void:
+	var n := a.size()
+	for _pass in 64:
+		var changed := false
+		for dir in [1, -1]:
+			for k in range(1, n - 1):
+				var i: int = k if dir == 1 else n - 1 - k
+				var prev: int = i - dir
+				var d := grade * pts[i].distance_to(pts[prev])
+				var v := clampf(a[i], a[prev] - d, a[prev] + d)
+				if absf(v - a[i]) > 0.001:
+					a[i] = v
+					changed = true
+		if not changed:
+			return
+
+
 ## Lowers the route wherever it climbs faster than `grade` in either direction: hills become
 ## cuttings, and valleys keep their depth with the road easing down into them.
 func _limit_grade(a: PackedFloat32Array, pts: PackedVector2Array, grade: float, loop: bool) -> void:
@@ -540,32 +558,6 @@ func _limit_grade(a: PackedFloat32Array, pts: PackedVector2Array, grade: float, 
 					changed = true
 		if not changed:
 			return
-
-
-## Banks the tight bends: the outer edge up, the inner edge down.
-func _bank(r: Dictionary) -> void:
-	var dirs: PackedVector2Array = r["dirs"]
-	var n := dirs.size()
-	var bank: PackedFloat32Array = r["bank"]
-	for i in n:
-		var turn := angle_difference(dirs[posmod(i - 6, n)].angle(), dirs[(i + 6) % n].angle()) / 12.0
-		var radius := 1.0 / absf(turn) if absf(turn) > 0.0001 else INF
-		# lateral offsets are measured to the left; a left turn (turn > 0) raises the right edge
-		bank[i] = -signf(turn) * clampf((BANK_RADIUS - radius) / (BANK_RADIUS * 0.5), 0.0, 1.0) * BANK
-	r["bank"] = _smooth(bank, 10, true)
-
-
-## Doubles the road's width around the gully, so there's room for both the bridge and the gap.
-func _widen(r: Dictionary, at: int) -> void:
-	var half: PackedFloat32Array = r["half"]
-	var bank: PackedFloat32Array = r["bank"]
-	var n := half.size()
-	for i in n:
-		var k := absi(i - at)
-		k = mini(k, n - k)
-		var t := 1.0 - smoothstep(8.0, 18.0, k)
-		half[i] += WorldMap.ROAD_HALF_WIDTH * t
-		bank[i] *= 1.0 - t
 
 
 ## Lays the route into the terrain: flat (or banked) across its width, with shoulders that ease
@@ -593,8 +585,8 @@ func _apply_route(r: Dictionary, h: PackedFloat32Array, ids: PackedByteArray, te
 		var hw := half[s]
 		var road := heights[s] + bank[s] * clampf(v.z / hw, -1.0, 1.0)
 		var w := _world(i % SIZE, i / SIZE)
-		if _in_pit(w):
-			continue  # the quarry keeps its walls
+		if _in_pit(w) or _creek_mask[i] == 1:
+			continue  # the quarry keeps its walls; the creek runs on under a path (a ford)
 		if v.x <= hw:
 			h[i] = road
 			if tex == WorldMap.TEX_ROAD or ids[i] != WorldMap.TEX_ROAD:
@@ -610,26 +602,6 @@ func _apply_route(r: Dictionary, h: PackedFloat32Array, ids: PackedByteArray, te
 
 func _in_pit(w: Vector2) -> bool:
 	return w.distance_to(WorldMap.QUARRY_CENTER) < WorldMap.QUARRY_WALLS[0] + 2.0
-
-
-## A gully across the road: the left half of the road stays on an earth bridge, the right half
-## is a sheer-sided gap to jump or dash. Fall in and the gully floor rises out at either end.
-func _gully(r: Dictionary, at: int, h: PackedFloat32Array, ids: PackedByteArray) -> void:
-	var p: Vector2 = r["pts"][at]
-	var along_dir: Vector2 = r["dirs"][at]
-	var left := Vector2(-along_dir.y, along_dir.x)
-	var road: float = r["h"][at]
-	var bridge: float = r["half"][at]
-	_for_pixels_near(p, GULLY_REACH + 2.0, func(i: int, w: Vector2) -> void:
-		var off := w - p
-		var lat := off.dot(left)
-		if absf(off.dot(along_dir)) > GULLY_GAP * 0.5 or (lat >= 0.0 and lat <= bridge + 0.2):
-			return
-		var depth := GULLY_DEPTH * (1.0 - smoothstep(GULLY_REACH * 0.5, GULLY_REACH, absf(lat)))
-		if depth > 0.0 and h[i] > road - depth:
-			h[i] = road - depth
-			if ids[i] == WorldMap.TEX_ROAD:
-				ids[i] = WorldMap.TEX_DEFAULT)
 
 
 func _nearest_sample(r: Dictionary, to: Vector2) -> int:
@@ -677,9 +649,12 @@ func _carve_creek(h: PackedFloat32Array) -> void:
 			var d := w.distance_to(p)
 			if d < nearest.get(i, INF):
 				nearest[i] = d)
+	_creek_mask.resize(SIZE * SIZE)
 	for i in nearest:
 		var d: float = nearest[i]
 		var w := _world(i % SIZE, i / SIZE)
+		if d < half + 2.5:
+			_creek_mask[i] = 1
 		if d < half:
 			var depth := CREEK_DEPTH
 			for pool in WorldMap.CREEK_POOLS:
@@ -690,6 +665,110 @@ func _carve_creek(h: PackedFloat32Array) -> void:
 			var t := smoothstep(half, half + CREEK_BANK, d)
 			var bank := WATER_LEVEL + 0.1 + (d - half) * 0.15
 			h[i] = minf(h[i], lerpf(bank, h[i], t))
+
+
+## Lays WorldMap.ROADS in order: each along its fixed line or a least-cost route over the land,
+## graded, then pressed into the ground with sloped shoulders. Returns {id: laid route}.
+func _lay_roads(h: PackedFloat32Array, ids: PackedByteArray, baked: Array[Vector2]) -> Dictionary:
+	var grid := _road_grid(h, baked)
+	var laid := {}
+	for spec in WorldMap.ROADS:
+		var ctrl: Array = spec.get("ctrl", [])
+		if ctrl.is_empty():
+			var from: Vector2 = spec["from"]
+			var to: Vector2 = spec["to"]
+			if spec.has("join"):
+				from = _nearest_on(laid[spec["join"]], from)
+			if spec.has("join_end"):
+				to = _nearest_on(laid[spec["join_end"]], to)
+			ctrl = _route(grid, from, to)
+		var road: bool = spec["kind"] == &"road"
+		var half := WorldMap.ROAD_HALF_WIDTH if road else WorldMap.PATH_HALF_WIDTH
+		var before := h.duplicate()
+		var r := _make_route(ctrl, false, half, ROAD_GRADE if road else PATH_GRADE, 24.0 if road else 10.0, h)
+		_apply_route(r, h, ids, WorldMap.TEX_ROAD if road else PATH_TEXTURE,
+				ROAD_SHOULDER if road else PATH_SHOULDER, 99.0, 10.0 if road else 6.0, true)
+		laid[spec["id"]] = r
+		_report_road(spec, r, before)
+	return laid
+
+
+## The router's grid: one cell per ROUTE_CELL m, weighted by how hard the ground is to build on.
+func _road_grid(h: PackedFloat32Array, baked: Array[Vector2]) -> AStarGrid2D:
+	var n := SIZE / ROUTE_CELL
+	var grid := AStarGrid2D.new()
+	grid.region = Rect2i(0, 0, n, n)
+	grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+	grid.update()
+	for cy in n:
+		for cx in n:
+			var w := _cell_world(Vector2i(cx, cy))
+			var r := ROUTE_CELL * 0.5
+			var g := Vector2(_sample(h, w + Vector2(r, 0)) - _sample(h, w - Vector2(r, 0)),
+					_sample(h, w + Vector2(0, r)) - _sample(h, w - Vector2(0, r))).length() / ROUTE_CELL
+			var cost := 1.0 + ROUTE_SLOPE_COST * g * g
+			if _sample(h, w) < WATER_LEVEL + 0.25 or _creek_mask[_pixel(w)] == 1:
+				cost += ROUTE_WATER_COST
+			if w.distance_to(WorldMap.QUARRY_CENTER) < WorldMap.QUARRY_WALLS[0] + 1.0:
+				cost += ROUTE_WATER_COST
+			cost += _rim(w) * 4.0
+			grid.set_point_weight_scale(Vector2i(cx, cy), cost)
+	for p in baked:
+		var c := _world_cell(p)
+		if grid.is_in_boundsv(c):
+			grid.set_point_weight_scale(c, grid.get_point_weight_scale(c) + ROUTE_WATER_COST)
+	return grid
+
+
+## The cheapest way from `from` to `to`, as spline control points about three cells apart, with
+## both ends exact.
+func _route(grid: AStarGrid2D, from: Vector2, to: Vector2) -> Array:
+	var cells := grid.get_id_path(_world_cell(from), _world_cell(to))
+	var ctrl: Array = [from]
+	for k in range(3, cells.size() - 2, 3):
+		ctrl.append(_cell_world(cells[k]))
+	ctrl.append(to)
+	return ctrl
+
+
+func _cell_world(c: Vector2i) -> Vector2:
+	return Vector2(ORIGIN.x + (c.x + 0.5) * ROUTE_CELL, ORIGIN.z + (c.y + 0.5) * ROUTE_CELL)
+
+
+func _world_cell(w: Vector2) -> Vector2i:
+	return Vector2i(floori((w.x - ORIGIN.x) / ROUTE_CELL), floori((w.y - ORIGIN.z) / ROUTE_CELL))
+
+
+func _pixel(w: Vector2) -> int:
+	return clampi(int(w.y - ORIGIN.z), 0, SIZE - 1) * SIZE + clampi(int(w.x - ORIGIN.x), 0, SIZE - 1)
+
+
+func _nearest_on(r: Dictionary, to: Vector2) -> Vector2:
+	return r["pts"][_nearest_sample(r, to)]
+
+
+## The roads' lines as laid, for the game: a GDScript file of constants (exports leave out plain
+## data files), WorldMap.roads() reads it.
+func _write_roads(laid: Dictionary) -> void:
+	var lines := PackedStringArray()
+	lines.append("extends RefCounted")
+	lines.append("## Written by tools/generate_test_terrain.gd: the lines the roads were laid on (WorldMap.roads()).")
+	lines.append("## Don't edit by hand; change WorldMap.ROADS and regenerate.")
+	lines.append("")
+	lines.append("const LINES := {")
+	for spec in WorldMap.ROADS:
+		var pts: PackedVector2Array = laid[spec["id"]]["pts"].duplicate()
+		if spec.get("reverse", false):
+			pts.reverse()
+		var nums := PackedStringArray()
+		for p in pts:
+			nums.append("Vector2(%.2f, %.2f)" % [p.x, p.y])
+		lines.append("\t&\"%s\": [%s]," % [spec["id"], ", ".join(nums)])
+	lines.append("}")
+	lines.append("")
+	var f := FileAccess.open(ROADS_OUT, FileAccess.WRITE)
+	f.store_string("\n".join(lines))
+	f.close()
 
 
 ## Rewrites the Y of main.tscn's resource nodes (children of "Nodes") to the new ground: a text
@@ -749,8 +828,6 @@ func _sample(h: PackedFloat32Array, w: Vector2) -> float:
 func _on_path(w: Vector2) -> bool:
 	if w.distance_to(VILLAGE_CENTER) < SQUARE_RADIUS:
 		return true
-	if _polyline_distance(w, PATH) < PATH_HALF_WIDTH or _polyline_distance(w, LAKE_PATH) < PATH_HALF_WIDTH:
-		return true
 	for lane in LANES:
 		if _polyline_distance(w, lane) < LANE_HALF_WIDTH:
 			return true
@@ -772,40 +849,20 @@ func _bump(w: Vector2, center: Vector2, radius: float) -> float:
 
 # --- reports ----------------------------------------------------------------------------------
 
-## Prints the steepest stretch along the path, to check it stays walkable.
-func _report_path_slope(terrain: Terrain3D) -> void:
-	var steepest := 0.0
-	var top := -INF
-	for i in PATH.size() - 1:
-		var a: Vector2 = PATH[i]
-		var b: Vector2 = PATH[i + 1]
-		var steps := int(a.distance_to(b))
-		for s in steps:
-			var p := a.lerp(b, float(s) / steps)
-			var q := a.lerp(b, float(s + 1) / steps)
-			var hp: float = terrain.data.get_height(Vector3(p.x, 0, p.y))
-			var hq: float = terrain.data.get_height(Vector3(q.x, 0, q.y))
-			steepest = maxf(steepest, absf(hq - hp) / p.distance_to(q))
-			top = maxf(top, hp)
-	print("Path: highest point %.1f m, steepest grade %.2f" % [top, steepest])
-
-
-func _report_ring(r: Dictionary) -> void:
+## A road's length, steepest grade and deepest cutting (how far below the old ground it runs).
+func _report_road(spec: Dictionary, r: Dictionary, before: PackedFloat32Array) -> void:
 	var pts: PackedVector2Array = r["pts"]
 	var heights: PackedFloat32Array = r["h"]
-	var bank: PackedFloat32Array = r["bank"]
 	var length := 0.0
 	var steepest := 0.0
-	var banked := 0
-	var n := pts.size()
-	for i in n:
-		var j := (i + 1) % n
-		var d := pts[i].distance_to(pts[j])
-		length += d
-		steepest = maxf(steepest, absf(heights[j] - heights[i]) / maxf(d, 0.01))
-		banked += 1 if absf(bank[i]) > 0.05 else 0
-	print("Ring road: %.0f m long, %.1f to %.1f m high, steepest grade %.3f, %d m banked" % [
-			length, Array(heights).min(), Array(heights).max(), steepest, banked])
+	var cut := 0.0
+	for i in pts.size():
+		cut = maxf(cut, _sample(before, pts[i]) - heights[i])
+		if i > 0:
+			var d := pts[i].distance_to(pts[i - 1])
+			length += d
+			steepest = maxf(steepest, absf(heights[i] - heights[i - 1]) / maxf(d, 0.01))
+	print("%-14s %4.0f m, steepest grade %.3f, deepest cut %.1f m" % [spec["id"], length, steepest, cut])
 
 
 ## Lists hand-placed things (not the resource nodes: _rebake_nodes moves those) whose ground isn't
