@@ -678,8 +678,7 @@ func _drop_slab(k: int, slab: PackedInt32Array, info: HitInfo) -> void:
 	_award_xp(xp * 2, true)
 	Sfx.play_at(SLAB_LAYERS, c)
 	_play(break_audio, break_sfx, 0.8)
-	Juice.shake(3.5)
-	Juice.hitstop(0.09)
+	Juice.shake(shake_break)
 	HitFx.star(get_parent(), info.position + info.normal * 0.1, STAR_TIP, 2.5)
 	last_impact = 2.0
 	_dug(info)  # (and anything it was holding up in turn)
@@ -762,8 +761,6 @@ func hit(info: HitInfo) -> bool:
 	_cut -= cuts
 	var double := cuts > 0 and randf() < Village.stat(&"double_hit_chance")
 	_hit_effects(info, 1.0)
-	Juice.shake(shake_hit)
-	Juice.hitstop(hitstop_hit)
 	last_impact = 1.0
 	if cuts == 0:  # under-levelled: a hit that falls short of knocking anything out
 		PopupText.spawn(get_parent(), info.position + Vector3.UP * 0.4, under_text(), UNDER_COLOR, 7)

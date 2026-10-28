@@ -26,10 +26,7 @@ debris_speed = 1.5
 hit_sfx = ExtResource("2_rustle")
 break_sfx = ExtResource("2_rustle")
 stress_pitch = 0.25
-hitstop_hit = 0.03
-hitstop_break = 0.06
-shake_hit = 0.6
-shake_break = 1.5
+shake_break = 0.0
 
 [node name="CollisionShape3D" parent="." index="0"]
 shape = SubResource("BoxShape3D_sheaf")

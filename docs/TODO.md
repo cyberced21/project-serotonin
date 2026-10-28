@@ -8,6 +8,10 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 - [ ] **Tune the mood pass by eye** in the debug menu's Sky tab (F1 → Sky, Save writes `data/sky_look.tres`): sunrise/sunset palettes, noon softness, haze distance, the water mist, night brightness (the clearing under its trees is darkest). Checked from screenshots only.
 - [ ] **Night length:** deep night is now about 2.5 min (was 5) because the twilight colours reach into it; see the plan's notes for the two levers.
 
+## Calm feel ([plans/calm-feel.md](../plans/calm-feel.md))
+
+- [ ] **Play the calm feel**: stroll/jog speeds and the glide (`player.gd` *Ground*), whether gathering still feels satisfying without hit-stop (the stuck tool's `bite_hold`, `impact_kick`, `shake_break`), gentler popups. Checked headless only.
+
 ## Fishing
 
 - [x] **Pike as a predator:** every 25–45 s it stalks the nearest perch, lunges (ripple, the school scatters) and catches one half the time, then glides back to cover. Spooking it calls the hunt off (`FishSpecies` *Hunting* group).

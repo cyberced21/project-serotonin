@@ -4,7 +4,7 @@ extends Node
 ## first person, about 8 s. A timeline of beats (_at), so a second E can skip to the reveal:
 ##   1. the village holds its breath: ambience ducks, the screen darkens round the forge, which
 ##      flares (embers, a light), and the view eases to the anvil
-##   2. three blows, each heavier: hit-stop, sparks, a ring off the buildings, growing shake
+##   2. three blows, each heavier: sparks, a ring off the buildings, a growing (gentle) shake
 ##   3. the quench: a huge hiss, steam, everything white for a beat
 ##   4. the reveal: the tool in a shaft of light in its tier's colour, its name in big letters
 ##   5. into your hands: it rises into the viewmodel with a glint; villagers nearby cheer
@@ -94,8 +94,7 @@ static func first_swing(parent: Node, at: Vector3, normal: Vector3, color: Color
 	parent.add_child(boom)
 	boom.play()
 	boom.finished.connect(boom.queue_free)
-	Juice.hitstop(0.16)
-	Juice.shake(7.0)
+	Juice.shake(2.0)
 
 
 func _ready() -> void:
@@ -143,7 +142,7 @@ func _plan() -> void:
 	_at(END_AT, _end)
 	if tier >= 2:  # iron and above: thunder over the reveal, then the bell
 		_at(REVEAL_AT + 0.1, _sound.bind("thunder", -2.0))
-		_at(REVEAL_AT + 0.1, Juice.shake.bind(3.0))
+		_at(REVEAL_AT + 0.1, Juice.shake.bind(1.0))
 		_at(REVEAL_AT + 1.3, _sound.bind("bell", -3.0))
 	if tier >= 3:  # crystal: the beam, and the bell again
 		_at(3.6, _raise_beam)
@@ -186,8 +185,7 @@ func _blow(i: int) -> void:
 	_greta.script_pose(&"ArmR", -0.85, 0.05)
 	_greta.script_pose(&"Body", -0.12)
 	_sound("blow_%d" % (i + 1), -1.0 + 2.0 * heavy)
-	Juice.hitstop(0.05 + 0.04 * i)
-	Juice.shake(2.0 + 2.0 * i)
+	Juice.shake(0.6 + 0.5 * i)
 	_sparks(_blank.global_position, 30 + 25 * i, 3.0 + 1.5 * i)
 	_forge_light.light_energy = 14.0 + 4.0 * i
 	var mat := _blank.material_override as StandardMaterial3D
@@ -205,7 +203,7 @@ func _quench_it() -> void:
 	create_tween().tween_property(_blank, "global_position", _quench - Vector3.UP * 0.05, 0.12)
 	_sound("hiss", 0.0)
 	_steam(_quench)
-	Juice.shake(2.5)
+	Juice.shake(0.8)
 	create_tween().tween_property(_white, "color:a", 1.0, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 
 
@@ -351,7 +349,7 @@ func _raise_beam() -> void:
 	t.tween_property(_beam, "scale:y", 1.0, 1.3).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
 	t.tween_property(light, "light_energy", 6.0, 1.0)
 	_sound("beam", -2.0)
-	Juice.shake(4.0)
+	Juice.shake(1.2)
 
 
 func _sparks(at: Vector3, amount: int, speed: float) -> void:

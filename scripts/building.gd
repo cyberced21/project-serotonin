@@ -32,8 +32,8 @@ const CRYSTAL_GLOW := Color(0.7, 0.5, 1.0)
 @export var build_time := 1.3
 ## How long each piece's pop takes.
 @export var piece_pop := 0.28
-@export var shake_collapse := 1.5
-@export var shake_done := 2.5
+@export var shake_collapse := 0.8
+@export var shake_done := 1.2
 
 var tier_shown := 0
 var _tiers: Dictionary[int, Node3D] = {}

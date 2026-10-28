@@ -140,7 +140,6 @@ func _touch_down(first: bool) -> void:
 	if first:
 		_drips.emitting = false
 		RodFishing.splash(get_parent(), at + Vector3.UP * 0.05, 0.6)
-		Juice.shake(0.7)
 		landed.emit(at)
 	if _hop >= HOPS.size():
 		phase = Phase.REST

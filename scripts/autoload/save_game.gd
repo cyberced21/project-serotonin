@@ -133,6 +133,7 @@ func _load() -> void:
 		_set_aside()
 		return
 	_data = parsed["data"]
+	_data.erase("time_trial")  # the ring-road time trial, removed (plans/calm-feel.md)
 
 
 ## The save at `path` is from before the fresh start: rename it aside (.pre-tools.bak, numbered if

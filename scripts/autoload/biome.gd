@@ -217,21 +217,21 @@ func hide_card() -> void:
 
 func _show_card(mood: BiomeMood, first: bool, kind := "") -> void:
 	_title.text = mood.display_name
-	_title.add_theme_font_size_override("font_size", 56 if first else 38)
+	_title.add_theme_font_size_override("font_size", 46 if first else 34)
 	var what: String = kind if kind != "" else mood.subtitle
 	_subtitle.text = (what + "  ·  Discovered" if kind != "" else "Discovered") if first else what
 	_subtitle.add_theme_font_size_override("font_size", 24 if first else 18)
 	if first:
-		Sfx.play(FIRST_STING, 0.8, -8.0)
+		Sfx.play(FIRST_STING, 0.8, -13.0)
 	else:
-		Sfx.play(STING, 0.6, -12.0)
+		Sfx.play(STING, 0.6, -17.0)
 	if _card_tween:
 		_card_tween.kill()
 	_card.modulate.a = 0.0
 	_card_tween = create_tween()
-	_card_tween.tween_property(_card, "modulate:a", 1.0, 0.6)
+	_card_tween.tween_property(_card, "modulate:a", 1.0, 1.0).set_trans(Tween.TRANS_SINE)
 	_card_tween.tween_interval(2.5 if first else 1.6)
-	_card_tween.tween_property(_card, "modulate:a", 0.0, 0.8)
+	_card_tween.tween_property(_card, "modulate:a", 0.0, 1.2).set_trans(Tween.TRANS_SINE)
 
 
 # --- saving -------------------------------------------------------------------------------------

@@ -114,7 +114,7 @@ func _free_3d() -> AudioStreamPlayer3D:
 	_next_3d = (_next_3d + 1) % VOICES_3D
 	return p
 
-## Runs `f` now, or `delay` real seconds from now (hit-stop doesn't stretch it).
+## Runs `f` now, or `delay` real seconds from now.
 func _after(delay: float, f: Callable) -> void:
 	if delay <= 0.0:
 		f.call()

@@ -29,7 +29,7 @@ static func spawn(scene: PackedScene, parent: Node, at: Vector3, normal: Vector3
 
 
 ## The impact star: a bright flash at the point of contact for two or three frames, popping out
-## and shrinking away, drawn over everything. Real time, so it shows during the hit-stop.
+## and shrinking away, drawn over everything. Real time.
 ## `size` is its width (m) at the peak.
 static func star(parent: Node, at: Vector3, color: Color, size := 0.5) -> void:
 	var quad := QuadMesh.new()

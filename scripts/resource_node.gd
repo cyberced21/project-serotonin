@@ -180,7 +180,7 @@ const CRACKING_LAYER := 1 << 10
 @export var land_sfx: AudioStream
 @export_range(0.3, 1.5) var land_pitch := 0.55
 ## Shake when it lands, faded out over 20 m from the player.
-@export var shake_land := 3.5
+@export var shake_land := 1.2
 ## Tipping speed at the start of the fall (rad/s).
 @export var topple_push := 0.8
 
@@ -278,10 +278,9 @@ const CRACKING_LAYER := 1 << 10
 ## How white the whole node flashes on a hit (0..1). Keep it low on big nodes: on a boulder a
 ## full flash whites out the screen and drowns the impact star.
 @export_range(0.0, 1.0) var flash_strength := 0.7
-@export var hitstop_hit := 0.045
-@export var hitstop_break := 0.11
-@export var shake_hit := 1.5
-@export var shake_break := 4.0
+## A light shake on the big moments only (plans/calm-feel.md): the node breaking, a split, a fault.
+## Ordinary hits don't shake the screen.
+@export var shake_break := 1.2
 
 @onready var visual: Node3D = $Visual
 @onready var chunks: Node3D = $Visual/Chunks
@@ -559,8 +558,6 @@ func hit(info: HitInfo) -> bool:
 		_tool_ring(info)
 	if fresh:
 		ForgeCutscene.first_swing(get_parent(), info.position, info.normal, ForgeCutscene.tier_color(Tools.tier(tool_type)))
-	Juice.shake(shake_hit + stress * 1.5 + (1.5 if double else 0.0))
-	Juice.hitstop(hitstop_hit + (0.035 if double else 0.0))
 	if double:
 		PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.35, 0), "Sharp!", SHARP_COLOR, 9)
 	if talent.has("say"):
@@ -636,7 +633,6 @@ func _hit_sounds(info: HitInfo, pitch: float, double: bool, split: bool) -> void
 func _deflect(info: HitInfo) -> void:
 	_play(audio, DEFLECT_SFX, 1.8)
 	_nudge(info.away())
-	Juice.shake(0.5)
 	PopupText.spawn(get_parent(), _popup_pos(), needs_text(), DEFLECT_COLOR)
 
 
@@ -686,7 +682,6 @@ func _break(info: HitInfo) -> void:
 		_pop_chunk(c, info.away(), debris_speed * 0.7)
 	_show_depleted()
 	Juice.shake(shake_break)
-	Juice.hitstop(hitstop_break)
 	if topple:
 		var log_mesh: Mesh = null
 		var fall := info.away()
@@ -1878,8 +1873,7 @@ func _fault_feedback(info: HitInfo) -> void:
 	create_tween().tween_callback(_place_fault).set_delay(FAULT_DELAY)
 	PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.85, 0), "Fault!", ore_color, 13)
 	_award_xp(xp_per_hit * 3, true)
-	Juice.shake(3.5)
-	Juice.hitstop(0.09)
+	Juice.shake(shake_break)
 	HitFx.star(get_parent(), info.position + info.normal * 0.1, STAR_TIP, 2.5)
 	if split_layers:
 		Sfx.play_at(split_layers, info.position, 0.75)  # a deep crunch ...
@@ -1890,8 +1884,7 @@ func _fault_feedback(info: HitInfo) -> void:
 func _collapse_feedback(info: HitInfo, pieces: int) -> void:
 	PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.85, 0), "Collapse!", ore_color, 12)
 	_award_xp(xp_per_hit * mini(pieces, 4), true)
-	Juice.shake(2.5)
-	Juice.hitstop(0.06)
+	Juice.shake(shake_break * 0.8)
 	if split_layers:
 		Sfx.play_at(split_layers, info.position)
 	_add_rubble(info.position, mini(pieces, 4))
@@ -2025,16 +2018,13 @@ func _split_push(out: Vector3, info: HitInfo) -> Vector3:
 
 func _split_feedback(info: HitInfo) -> void:
 	PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.85, 0), "Split!", ore_color, 12)
-	Juice.shake(3.0)
-	Juice.hitstop(0.07)
+	Juice.shake(shake_break * 0.8)
 
 
 func _tip_feedback(info: HitInfo, segment: int) -> void:
 	_crack_sound = CRACK_TIP
 	_crack_step = segment
 	PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.6, 0), "Crack!", ore_color, 10)
-	Juice.shake(1.5)
-	Juice.hitstop(0.03)
 
 
 # --- seam cracks ----------------------------------------------------------------------------
@@ -2875,8 +2865,6 @@ func _aimed_near(info: HitInfo, point: Vector3, radius: float) -> bool:
 
 func _weak_hit_feedback(info: HitInfo) -> void:
 	PopupText.spawn(get_parent(), _popup_pos() + Vector3(0, 0.6, 0), "Weak spot!", weak_point_color, 10)
-	Juice.shake(2.0)
-	Juice.hitstop(0.05)
 	var spark := chips.duplicate() as CPUParticles3D
 	get_parent().add_child(spark)
 	spark.global_position = _weak.global_position
