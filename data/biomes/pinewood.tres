@@ -7,12 +7,12 @@
 script = ExtResource("1_mood")
 display_name = "The Pinewood"
 subtitle = "Forest"
-fog_density = 1.8
-fog_tint = Color(0.82, 0.98, 0.85, 1)
+fog_density = 1.15
+fog_tint = Color(0.86, 1.0, 0.78, 1)
 ambient = 0.75
 sun_tint = Color(0.92, 1.0, 0.9, 1)
 saturation = 0.95
-mist = 2.2
+mist = 1.2
 shadow_tint = Color(0.88, 1.0, 0.94, 1)
-highlight_tint = Color(1.02, 1.04, 0.92, 1)
+highlight_tint = Color(1.05, 1.05, 0.88, 1)
 ambience = ExtResource("2_sound")

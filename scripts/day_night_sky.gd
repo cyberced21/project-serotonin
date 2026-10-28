@@ -11,8 +11,9 @@ extends Node
 ## multiply the time of day's values, so the forest is dim and green at noon and dark at night.
 ## Every colour and number here comes from the SkyLook (data/sky_look.tres), tunable live in the
 ## debug menu's Sky tab.
-## Also: volumetric mist (thick at dawn, thinner by day, the biome's own on top) with light shafts
-## strongest when the sun is low, the colour grade (ColorGrade: the biome's tints times the time of
+## Also: distance haze that leaves the valley clear, a thin volumetric mist (with mist lying low
+## over the water in the morning: WaterBody's Mist volumes) with light shafts strongest when the
+## sun is low, the colour grade (ColorGrade: the biome's tints times the time of
 ## day's, cool blue nights, a golden sunrise and a pink sunset), and lamplight that flickers.
 
 @export var sun: DirectionalLight3D
@@ -63,7 +64,8 @@ func _update() -> void:
 		sun.light_energy = lerpf(lerpf(look.moon_energy, look.low_energy, afterglow), energy, day)
 		sun.shadow_opacity = lerpf(0.55, look.shadow_strength, day)
 		# light shafts through the mist: strongest with the sun low
-		sun.light_volumetric_fog_energy = lerpf(0.4, lerpf(2.4, 0.9, clampf(h * 2.0, 0.0, 1.0)), day)
+		var shafts := lerpf(0.4, lerpf(2.4, 0.9, clampf(h * 2.0, 0.0, 1.0)), day)
+		sun.light_volumetric_fog_energy = shafts * look.shafts
 
 	var top := look.night_top.lerp(look.day_top, day)
 	var horizon := look.night_horizon.lerp(look.day_horizon, day)
@@ -88,13 +90,19 @@ func _update() -> void:
 		env.glow_hdr_threshold = look.glow_threshold
 		env.glow_intensity = look.glow_intensity
 		env.fog_light_color = horizon * Biome.fog_tint
-		env.fog_density = look.fog_density * Biome.fog_density
+		env.fog_mode = Environment.FOG_MODE_DEPTH
+		env.fog_depth_begin = look.fog_begin
+		env.fog_depth_end = look.fog_end
+		env.fog_depth_curve = look.fog_curve
+		env.fog_density = look.fog_haze * minf(Biome.fog_density, look.biome_cap)
+		env.fog_aerial_perspective = look.fog_aerial
 		var lit := maxf(day, afterglow)
 		env.ambient_light_energy = lerpf(look.night_ambient, look.day_ambient, lit) * Biome.ambient
 		env.background_energy_multiplier = lerpf(look.night_sky, 1.0, lit)
-		var mist_peak := 1.0 - smoothstep(0.0, 0.07, absf(DayNight.time - look.mist_peak))
-		var thicker := 1.0 + look.morning_mist * mist_peak + look.night_mist * night
-		env.volumetric_fog_density = look.mist_density * Biome.mist * thicker
+		var dawn := 1.0 - smoothstep(0.0, look.mist_width, absf(DayNight.time - look.mist_peak))
+		var thicker := 1.0 + look.morning_mist * dawn + look.night_mist * night
+		env.volumetric_fog_density = look.mist_density * minf(Biome.mist, look.biome_cap) * thicker
+		WaterBody.mist_material().density = look.water_mist * dawn
 		env.volumetric_fog_albedo = (horizon * Biome.fog_tint).lerp(Color.WHITE, 0.45)
 		_update_grade(env, look, morning, dusk, day)
 

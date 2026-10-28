@@ -84,14 +84,29 @@ static var _active: SkyLook
 @export_range(0.0, 2.0, 0.01) var glow_intensity := 0.45
 
 @export_group("Fog")
-## Distance fog density (exponential: about half gone at 0.7 / density metres).
-@export_range(0.0, 0.03, 0.0005) var fog_density := 0.008
-## Volumetric mist density, and how many times thicker at the morning peak and at night.
-@export_range(0.0, 0.03, 0.0005) var mist_density := 0.006
-@export_range(0.0, 5.0, 0.05) var morning_mist := 2.2
-@export_range(0.0, 2.0, 0.05) var night_mist := 0.6
-## When the morning mist is thickest (DayNight time, 0..1).
+## Distance haze: clear up to fog_begin metres, thickening to fog_haze (0..1, how much of a far
+## thing it hides) at fog_end; fog_curve > 1 keeps the middle distance clearer.
+@export_range(0.0, 500.0, 5.0) var fog_begin := 140.0
+@export_range(50.0, 2000.0, 10.0) var fog_end := 650.0
+@export_range(0.0, 1.0, 0.01) var fog_haze := 0.7
+@export_range(0.2, 4.0, 0.05) var fog_curve := 1.2
+## How much the haze takes the sky's colour behind it (aerial perspective) rather than a flat tint.
+@export_range(0.0, 1.0, 0.01) var fog_aerial := 0.6
+## Biomes' extra fog and mist go no higher than this many times the base.
+@export_range(1.0, 3.0, 0.05) var biome_cap := 1.2
+
+@export_group("Mist")
+## Volumetric mist in the air everywhere, and how many times thicker at the morning peak and at night.
+@export_range(0.0, 0.03, 0.0005) var mist_density := 0.003
+@export_range(0.0, 5.0, 0.05) var morning_mist := 0.4
+@export_range(0.0, 2.0, 0.05) var night_mist := 0.0
+## Morning mist lying low over ponds, lakes and rivers (each WaterBody's Mist volume): density at
+## its peak, when that is (DayNight time) and how long either side it lasts (fractions of a day).
+@export_range(0.0, 0.5, 0.005) var water_mist := 0.12
 @export_range(0.0, 0.5, 0.005) var mist_peak := 0.19
+@export_range(0.01, 0.3, 0.005) var mist_width := 0.1
+## Light shafts through the mist (times the sun's).
+@export_range(0.0, 2.0, 0.05) var shafts := 0.5
 
 
 ## The look in use: data/sky_look.tres, loaded once (the Sky tab edits this same object).

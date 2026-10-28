@@ -5,7 +5,7 @@ extends SceneTree
 
 func _initialize() -> void:
 	var fails := 0
-	for path in ["res://scripts/sky_look.gd", "res://scripts/day_night_sky.gd", "res://scripts/autoload/debug_menu.gd", "res://scripts/autoload/day_night.gd"]:
+	for path in ["res://scripts/sky_look.gd", "res://scripts/day_night_sky.gd", "res://scripts/autoload/debug_menu.gd", "res://scripts/autoload/day_night.gd", "res://scripts/water_body.gd", "res://scripts/procgen/procgen_world.gd"]:
 		var script := load(path) as Script
 		if script == null or not script.can_instantiate():
 			print("FAIL compile ", path)

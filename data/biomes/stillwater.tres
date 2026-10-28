@@ -6,11 +6,11 @@
 script = ExtResource("1_mood")
 display_name = "Stillwater"
 subtitle = "The lake"
-fog_density = 1.6
-fog_tint = Color(0.88, 0.96, 1.08, 1)
+fog_density = 1.15
+fog_tint = Color(0.9, 0.98, 1.12, 1)
 ambient = 1.0
 sun_tint = Color(0.95, 0.98, 1.05, 1)
 saturation = 0.95
-mist = 1.8
+mist = 1.2
 shadow_tint = Color(0.9, 0.96, 1.08, 1)
-highlight_tint = Color(0.98, 1.02, 1.04, 1)
+highlight_tint = Color(0.98, 1.02, 1.06, 1)
