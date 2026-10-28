@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="MusicLibrary" format=3]
+
+[ext_resource type="Script" path="res://scripts/music_library.gd" id="1_lib"]
+[ext_resource type="AudioStream" path="res://audio/cues/level_up.ogg" id="20_cue_level_up"]
+[ext_resource type="AudioStream" path="res://audio/cues/discovery.mp3" id="21_cue_discovery"]
+[ext_resource type="AudioStream" path="res://audio/cues/return.mp3" id="22_cue_return"]
+[ext_resource type="AudioStream" path="res://audio/cues/upgrade.mp3" id="23_cue_upgrade"]
+[ext_resource type="AudioStream" path="res://audio/music/another_august.ogg" id="2_another_august"]
+[ext_resource type="AudioStream" path="res://audio/music/deep_humidity.ogg" id="3_deep_humidity"]
+[ext_resource type="AudioStream" path="res://audio/music/first_light.ogg" id="4_first_light"]
+[ext_resource type="AudioStream" path="res://audio/music/forest_amb.ogg" id="5_forest_amb"]
+[ext_resource type="AudioStream" path="res://audio/music/harvest.ogg" id="6_harvest"]
+[ext_resource type="AudioStream" path="res://audio/music/just_you.ogg" id="7_just_you"]
+[ext_resource type="AudioStream" path="res://audio/music/new_town.ogg" id="8_new_town"]
+[ext_resource type="AudioStream" path="res://audio/music/sunset_plains.ogg" id="9_sunset_plains"]
+[ext_resource type="AudioStream" path="res://audio/music/tower_inn.ogg" id="10_tower_inn"]
+[ext_resource type="AudioStream" path="res://audio/music/town3.ogg" id="11_town3"]
+
+[resource]
+script = ExtResource("1_lib")
+morning = Array[AudioStream]([ExtResource("9_sunset_plains")])
+day = Array[AudioStream]([ExtResource("6_harvest")])
+evening = Array[AudioStream]([ExtResource("8_new_town")])
+night = Array[AudioStream]([ExtResource("2_another_august")])
+village = Array[AudioStream]([ExtResource("11_town3")])
+forest = Array[AudioStream]([ExtResource("5_forest_amb")])
+lake = Array[AudioStream]([ExtResource("4_first_light")])
+mine = Array[AudioStream]([ExtResource("3_deep_humidity")])
+menu = Array[AudioStream]([ExtResource("7_just_you")])
+tavern = Array[AudioStream]([ExtResource("10_tower_inn")])
+cues = Dictionary[StringName, AudioStream]({&"level_up": ExtResource("20_cue_level_up"), &"discovery": ExtResource("21_cue_discovery"), &"return": ExtResource("22_cue_return"), &"upgrade": ExtResource("23_cue_upgrade")})
+trim_db = Dictionary[String, float]({"res://audio/cues/level_up.ogg": 10.3, "res://audio/cues/discovery.mp3": 3.5, "res://audio/cues/return.mp3": 2.0, "res://audio/cues/upgrade.mp3": 2.3, "res://audio/music/another_august.ogg": 3.8, "res://audio/music/deep_humidity.ogg": -3.9, "res://audio/music/first_light.ogg": 1.7, "res://audio/music/forest_amb.ogg": 26.8, "res://audio/music/harvest.ogg": -6.0, "res://audio/music/just_you.ogg": -6.6, "res://audio/music/new_town.ogg": -1.1, "res://audio/music/sunset_plains.ogg": -1.1, "res://audio/music/tower_inn.ogg": 1.0, "res://audio/music/town3.ogg": -2.7})
+repeats = Dictionary[String, int]({"res://audio/music/forest_amb.ogg": 4, "res://audio/music/new_town.ogg": 2})

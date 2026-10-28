@@ -4,7 +4,8 @@ extends CanvasLayer
 ##   Items     add or clear any item
 ##   Skills    set levels, add XP
 ##   Village   put any building at any tier (free, ignores the town hall's cap), current perks
-##   World     time of day, time scale, pause, regrow every node, restock every pond
+##   World     time of day, time scale, pause, music (what's playing, play now, skip), regrow every
+##             node, restock every pond
 ##   Teleport  to each building, biome landmark, pond and kind of resource node (the nearest one)
 ##   Player    fly mode, a live readout (can stay pinned on screen), save / wipe the save
 ##   Procgen   a scratch generated world by seed, or a new random one, and back to the main menu
@@ -42,6 +43,7 @@ var _time_label: Label
 var _dragging_time := false
 var _scale_buttons: Dictionary[float, Button] = {}
 var _pause: CheckBox
+var _music_status: Label
 var _teleport_box: VBoxContainer
 var _fly: CheckBox
 var _pin: CheckBox
@@ -124,6 +126,7 @@ func _process(_delta: float) -> void:
 			_sky_time.set_value_no_signal(DayNight.time)
 		_time_label.text = DayNight.clock_text()
 		_sky_clock.text = "%s  ·  %s" % [DayNight.clock_text(), DayNight.part_of_day()]
+		_music_status.text = Music.status
 	_pinned.visible = _pin.button_pressed and not is_open()
 	if _pinned.visible:
 		_pinned.text = text
@@ -613,6 +616,15 @@ func _build_world() -> Control:
 	_set_time_scale(1.0)
 	_pause = _check("Pause the world", func(on: bool) -> void: get_tree().paused = on)
 	box.add_child(_pause)
+
+	box.add_child(_heading("Music"))
+	_music_status = _label(14)
+	_music_status.modulate = DIM
+	box.add_child(_music_status)
+	row = HBoxContainer.new()
+	row.add_child(_button("Play a piece now", Music.play_next))
+	row.add_child(_button("Skip (go quiet)", Music.skip))
+	box.add_child(row)
 
 	box.add_child(_heading("Reset the world"))
 	row = HBoxContainer.new()

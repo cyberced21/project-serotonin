@@ -766,12 +766,12 @@ func hit(info: HitInfo) -> bool:
 		PopupText.spawn(get_parent(), info.position + Vector3.UP * 0.4, under_text(), UNDER_COLOR, 7)
 		Sfx.play_at(hit_layers, info.position)
 		return true
-	_tool_ring(info)
 	if double:
 		PopupText.spawn(get_parent(), info.position + Vector3.UP * 0.5, "Sharp!", SHARP_COLOR, 9)
 	# a piece and maybe a neighbour; a better pick takes a neighbour or two more
 	var out := _knock_out_from(struck, info, randi_range(0, 1) + mini(cuts - 1, 2) + (1 if double else 0))
-	Sfx.play_at(hit_layers, info.position, randf_range(0.95, 1.05), 2.0 if out.size() > 2 else 0.0)
+	Sfx.play_at(hit_layers, info.position, randf_range(0.95, 1.05) - TIER_PITCH * _tool_tier(),
+		(2.0 if out.size() > 2 else 0.0) + TIER_DB * _tool_tier())
 	var xp := 0
 	var ore := false
 	for p in out:

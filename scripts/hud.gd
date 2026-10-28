@@ -3,7 +3,6 @@ extends CanvasLayer
 ## change, a controls hint, a context XP bar (bottom-centre) for the skill you just trained, and
 ## a level-up banner, and the time of day (top-right).
 
-const LEVEL_UP_SFX := preload("res://audio/level_up.wav")
 
 const ICON_SIZE := 40.0
 const ROW_GAP := 6.0
@@ -207,4 +206,4 @@ func _on_leveled_up(skill: StringName, lvl: int) -> void:
 	_banner_tween.tween_property(_banner, "modulate:a", 1.0, 0.5).set_trans(Tween.TRANS_SINE)
 	_banner_tween.tween_interval(3.0)  # long enough to read the perk line
 	_banner_tween.tween_property(_banner, "modulate:a", 0.0, 0.8).set_trans(Tween.TRANS_SINE)
-	Sfx.play(LEVEL_UP_SFX, 1.0, -8.0)
+	Music.play_cue(&"level_up")

@@ -2,7 +2,8 @@ extends SceneTree
 ## Plays gathering sound stacks through the real buses (SFX's effects, then Master) and records
 ## what comes out of Master, so distortion from the bus effects can be measured without
 ## listening. Each event plays twice, once with SFX's effects bypassed, and both are saved:
-##     godot --headless --path . -s res://tools/record_sfx_chain.gd -- [--out=user://sfx_chain]
+##     godot --headless --path . -s res://tools/record_sfx_chain.gd -- [--out=user://sfx_chain] [--place=quarry]
+## --place holds that place's reverb (Acoustics.PLACES) on SFX for the "chain" takes.
 ## The report gives each event's peak at Master and how far the effects pulled its loudest
 ## moment down; a few dB is the compressor, much more is the limiter squashing it.
 
@@ -22,6 +23,8 @@ func _initialize() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):
 			out = a.trim_prefix("--out=")
+		elif a.begins_with("--place="):
+			root.get_node("Acoustics").call("hold_place", StringName(a.trim_prefix("--place=")))
 	DirAccess.make_dir_recursive_absolute(out)
 	var rec := AudioEffectRecord.new()
 	AudioServer.add_bus_effect(0, rec)

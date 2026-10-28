@@ -29,9 +29,10 @@ const GHOST_OUTLINE_STENCIL := preload("res://shaders/ghost_outline_stencil.gdsh
 const GHOST_MASK_STENCIL := preload("res://shaders/ghost_mask_stencil.gdshader")
 const DEFLECT_SFX := preload("res://audio/stone_hit.tres")
 const DEFLECT_COLOR := Color("ff8a7a")
-## The tool's ring per tier above stone (_tool_ring), from tools/synth_forge.py.
-const TOOL_RINGS: Array[AudioStream] = [preload("res://audio/forge/ring_copper.wav"),
-	preload("res://audio/forge/ring_iron.wav"), preload("res://audio/forge/ring_crystal.wav")]
+## A better tool sounds like the same tool, a touch heavier: per tier above stone its hit plays
+## this much lower (pitch share) and louder (dB).
+const TIER_PITCH := 0.015
+const TIER_DB := 0.75
 ## The sparks' colour per tool tier: stone and copper the usual hot orange (blank), iron white-hot,
 ## crystal violet.
 const SPARK_TINTS: Array[Color] = [Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(1.0, 0.95, 0.82), Color(0.82, 0.6, 1.0)]
@@ -105,6 +106,9 @@ const HIT_DUCK_TIP := -6.0
 const HIT_DUCK_SPLIT := -9.0
 ## A crack creaking on (a hit on the cracked piece, not on a tip) plays this much quieter (dB).
 const CRACK_CREAK_DB := -12.0
+## A tree groans once at a time: the lean doesn't start a second groan while the second-to-last
+## hit's is still sounding (ms; the creak recordings run ~2.7 s).
+const GROAN_MS := 2500
 ## What the crack did on this hit, for _hit_sounds.
 enum { CRACK_NONE, CRACK_CREAK, CRACK_TIP }
 ## Render layer 11: a piece being cracked, with seam_crack_on_piece_only (its decals draw only there).
@@ -209,8 +213,9 @@ const CRACKING_LAYER := 1 << 10
 ## Every hit shakes the canopy (m it swings out at first) and shakes a few leaves loose.
 @export var canopy_shake := 0.08
 @export_range(0, 32) var leaves_per_hit := 6
-## Once this share of the hits is done the tree sways and creaks on every hit; the last hit's
-## crack holds it leaning on the hinge for `fell_pause` (s) before it goes.
+## Once this share of the hits is done the tree sways on every hit (creaking only on the
+## second-to-last: each hit before that is just the axe); the last hit's crack holds it leaning
+## on the hinge for `fell_pause` (s) before it goes.
 @export_range(0.0, 1.0) var sway_after := 0.6
 @export var sway_degrees := 1.6
 @export var fell_pause := 0.4
@@ -299,7 +304,6 @@ var last_impact := 1.0
 var _crack_sound := 0  # CRACK_* : what this hit's crack did, for _hit_sounds
 var _crack_step := 0  # ... and how far along it is (each step a little higher)
 var _cut := 0.0  # the fraction of a hit (under-levelled) carried over to the next one
-var _ring: AudioStreamPlayer3D  # the tool's ring (_tool_ring), made on first use
 var _streak := 0  # biting hits in a row on this node (the Crystal Forge's streak_double)
 var _last_hit_msec := -100000
 var _surfaces: Array[GeometryInstance3D] = []
@@ -324,6 +328,7 @@ var _canopy := {}  # canopy mesh -> its rest position (carve_notch trees shake i
 var _leaves: CPUParticles3D
 var _shake_tween: Tween
 var _sway_tween: Tween
+var _groan_ms := -100000  # when this tree last started groaning
 
 
 func _ready() -> void:
@@ -549,13 +554,11 @@ func hit(info: HitInfo) -> bool:
 		collapsed = _knock_out(info, maxi(cuts, 1) + (1 if double else 0))  # (sets hits_left)
 	var stress := 1.0 - float(hits_left) / max_hits  # 0 -> 1 as it depletes
 
-	var pitch := 1.0 + stress * stress_pitch - (0.12 if double else 0.0)
+	var pitch := 1.0 + stress * stress_pitch - (0.12 if double else 0.0) - TIER_PITCH * _tool_tier()
 	_crack_sound = 0  # (set by the crack code below; the sounds are played together at the end)
 	_flash()
 	_nudge(info.away() * (1.6 if double else 1.0))
 	_hit_effects(info, 2.0 if fresh else 1.5 if tip or _clean else 1.0)
-	if bit:
-		_tool_ring(info)
 	if fresh:
 		ForgeCutscene.first_swing(get_parent(), info.position, info.normal, ForgeCutscene.tier_color(Tools.tier(tool_type)))
 	if double:
@@ -617,7 +620,7 @@ func pull(info: HitInfo) -> void:
 func _hit_sounds(info: HitInfo, pitch: float, double: bool, split: bool) -> void:
 	var duck := HIT_DUCK_SPLIT if split or hits_left == 0 else HIT_DUCK_TIP if _crack_sound == CRACK_TIP or _clean else 0.0
 	if hit_layers:
-		Sfx.play_at(hit_layers, info.position, pitch, duck + (2.0 if double else 0.0))
+		Sfx.play_at(hit_layers, info.position, pitch, duck + (2.0 if double else 0.0) + TIER_DB * _tool_tier())
 	else:
 		_play(audio, hit_sfx, pitch)
 	if split:
@@ -636,21 +639,9 @@ func _deflect(info: HitInfo) -> void:
 	PopupText.spawn(get_parent(), _popup_pos(), needs_text(), DEFLECT_COLOR)
 
 
-## The tool's own ring under a biting hit: copper dull, iron bright, crystal a glassy chime.
-func _tool_ring(info: HitInfo) -> void:
-	var tier := Tools.tier(tool_type) if Tools.LADDER.has(tool_type) else 0
-	if tier < 1 or tier > TOOL_RINGS.size():
-		return
-	if _ring == null:
-		_ring = AudioStreamPlayer3D.new()
-		_ring.bus = &"SFX"
-		_ring.unit_size = 4.0
-		add_child(_ring)
-	_ring.global_position = info.position
-	_ring.stream = TOOL_RINGS[tier - 1]
-	_ring.volume_db = -10.0
-	_ring.pitch_scale = randf_range(0.95, 1.05)
-	_ring.play()
+## How many tiers your tool of this node's type is above stone (0 for untiered tools).
+func _tool_tier() -> int:
+	return Tools.tier(tool_type) if Tools.LADDER.has(tool_type) else 0
 
 
 func _award_xp(amount: int, big := false) -> void:
@@ -1041,7 +1032,8 @@ func _lean_on_hinge(felled: RigidBody3D, away: Vector3, hinge: float) -> void:
 	var pivot := global_transform * Vector3(0.0, hinge, 0.0)
 	var start := felled.global_transform
 	var axis := Vector3.UP.cross(away).normalized()
-	Sfx.play_at(creak_layers, pivot, 0.8)
+	if Time.get_ticks_msec() - _groan_ms > GROAN_MS:  # (else the last groan carries the lean)
+		_groan(pivot, 0.8, 0.0)
 	var lean := func(angle: float) -> void:
 		var turn := Transform3D(Basis(axis, angle), pivot) * Transform3D(Basis.IDENTITY, -pivot)
 		felled.global_transform = turn * start
@@ -1053,7 +1045,7 @@ func _lean_on_hinge(felled: RigidBody3D, away: Vector3, hinge: float) -> void:
 
 
 ## The tree reacts to a hit: the canopy shakes and drops a few leaves, and late in the chop
-## (`stress` past sway_after) the whole tree sways away and back, creaking.
+## (`stress` past sway_after) the whole tree sways away and back, creaking on the second-to-last hit.
 func _tree_reacts(info: HitInfo, stress: float) -> void:
 	var away := info.away()
 	if _shake_tween:
@@ -1080,7 +1072,13 @@ func _tree_reacts(info: HitInfo, stress: float) -> void:
 		_sway_tween.tween_method(func(t: float) -> void:  # (the rotation alone: the hit's squash stays)
 			visual.quaternion = Quaternion(local_axis, big * sin(t * 7.0) * exp(-t * 2.2)), 0.0, 1.6, 1.6)
 		_sway_tween.tween_callback(func() -> void: visual.quaternion = Quaternion.IDENTITY)
-		Sfx.play_at(creak_layers, global_position + Vector3.UP * 2.0, 0.9 + randf() * 0.2, -3.0 + 6.0 * (stress - sway_after))
+		if hits_left == 1:
+			_groan(global_position + Vector3.UP * 2.0, 0.9 + randf() * 0.2, -3.0 + 6.0 * (stress - sway_after))
+
+
+func _groan(at: Vector3, pitch: float, volume_db: float) -> void:
+	_groan_ms = Time.get_ticks_msec()
+	Sfx.play_at(creak_layers, at, pitch, volume_db)
 
 
 ## Leaves shaken loose from the canopy: a few at a time, fluttering down.

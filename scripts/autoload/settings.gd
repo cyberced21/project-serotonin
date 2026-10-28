@@ -6,7 +6,7 @@ extends Node
 ##             window's size when windowed; borderless and fullscreen fill the screen and draw the
 ##             3D view at the resolution, scaled up (bilinear or FSR), the menus and text staying
 ##             sharp at the screen's own.
-##   audio     volume per bus: Master, Effects, Ambience, Movement (0..1)
+##   audio     volume per bus: Master, Effects, Ambience, Movement, Music (0..1)
 ##   controls  mouse sensitivity (× the player's own), invert Y, field of view, camera motion
 ##             (how much of the camera kicks, shakes and speed widening to keep, 0..1)
 
@@ -19,11 +19,11 @@ const RESOLUTIONS: Array[Vector2i] = [Vector2i(960, 540), Vector2i(1280, 720), V
 		Vector2i(1920, 1080), Vector2i(2560, 1440), Vector2i(3200, 1800), Vector2i(3840, 2160)]
 const UPSCALERS: Array[StringName] = [&"bilinear", &"fsr"]
 const FPS_CAPS: Array[int] = [0, 30, 60, 120, 144, 240]
-const BUSES: Array[StringName] = [&"Master", &"Effects", &"Ambience", &"Movement"]
+const BUSES: Array[StringName] = [&"Master", &"Effects", &"Ambience", &"Movement", &"Music"]
 const DEFAULTS := {
 	"display": {"window_mode": &"windowed", "resolution": Vector2i(1280, 720), "upscaling": &"fsr",
 			"vsync": true, "max_fps": 0},
-	"audio": {"Master": 1.0, "Effects": 1.0, "Ambience": 1.0, "Movement": 1.0},
+	"audio": {"Master": 1.0, "Effects": 1.0, "Ambience": 1.0, "Movement": 1.0, "Music": 1.0},
 	"controls": {"sensitivity": 1.0, "invert_y": false, "fov": 75.0, "camera_motion": 1.0},
 }
 

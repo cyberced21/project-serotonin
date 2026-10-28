@@ -20,7 +20,7 @@ const GFX_SLIDERS := {
 	&"foliage_distance": ["Grass and foliage draw distance", 0.3, 1.0, 0.05, true],
 }
 const BUS_NAMES := {&"Master": "Master", &"Effects": "Effects", &"Ambience": "Ambience",
-		&"Movement": "Footsteps and movement"}
+		&"Movement": "Footsteps and movement", &"Music": "Music"}
 
 var _tabs: TabContainer
 var _refreshers: Array[Callable] = []

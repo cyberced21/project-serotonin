@@ -165,6 +165,7 @@ func _begin() -> void:
 		_hud.visible = false
 	var t := create_tween().set_parallel()
 	t.tween_property(Biome, "ambience_duck", 0.12, 0.8)
+	t.tween_property(Music, "duck", 0.15, 0.8)
 	t.tween_method(_set_vignette, 0.0, 1.0, 0.9)
 	t.tween_property(_forge_light, "light_energy", 7.0, 0.6).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
 	if tier >= 3:
@@ -273,6 +274,7 @@ func _handover() -> void:
 	fade.tween_method(_set_vignette, 1.0, 0.0, 0.9)
 	fade.tween_property(_sky, "color:a", 0.0, 1.2)
 	fade.tween_property(Biome, "ambience_duck", 1.0, 1.4)
+	fade.tween_property(Music, "duck", 1.0, 1.4)
 	fade.tween_property(_forge_light, "light_energy", 0.0, 1.0)
 	if _spot:
 		fade.tween_property(_spot, "light_energy", 0.0, 0.5)
@@ -289,6 +291,7 @@ func _end() -> void:
 	if _hud:
 		_hud.visible = true
 	Biome.ambience_duck = 1.0
+	Music.duck = 1.0
 	queue_free()
 
 

@@ -6,7 +6,6 @@
 [ext_resource type="PackedScene" path="res://models/tree.glb" id="7_model"]
 [ext_resource type="PackedScene" path="res://scenes/fx/wood_hit_fx.tscn" id="8_hit_fx"]
 [ext_resource type="Resource" path="res://audio/woodcutting/axe_hit.tres" id="9_hit_layers"]
-[ext_resource type="Resource" path="res://audio/woodcutting/axe_pull.tres" id="10_pull_layers"]
 [ext_resource type="Resource" path="res://audio/woodcutting/clean_cut.tres" id="11_clean_layers"]
 [ext_resource type="Resource" path="res://audio/woodcutting/trunk_creak.tres" id="12_creak_layers"]
 [ext_resource type="Resource" path="res://audio/woodcutting/tree_fall.tres" id="13_fall_layers"]
@@ -33,7 +32,6 @@ break_sfx = ExtResource("5_break")
 topple = true
 land_sfx = ExtResource("5_break")
 hit_layers = ExtResource("9_hit_layers")
-pull_layers = ExtResource("10_pull_layers")
 carve_notch = true
 creak_layers = ExtResource("12_creak_layers")
 fall_layers = ExtResource("13_fall_layers")
