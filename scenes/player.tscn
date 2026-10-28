@@ -5,7 +5,6 @@
 [ext_resource type="AudioStream" path="res://audio/swing.tres" id="3_swing"]
 [ext_resource type="Script" path="res://scripts/viewmodel.gd" id="4_viewmodel"]
 [ext_resource type="Script" path="res://scripts/footsteps.gd" id="5_footsteps"]
-[ext_resource type="AudioStream" path="res://audio/movement/slide_loop.wav" id="6_slide"]
 [ext_resource type="AudioStream" path="res://audio/movement/mantle.tres" id="7_mantle"]
 [ext_resource type="PackedScene" path="res://models/pickaxe.glb" id="8_pickaxe"]
 [ext_resource type="PackedScene" path="res://models/axe.glb" id="9_axe"]
@@ -94,12 +93,6 @@ unit_size = 3.0
 max_distance = 30.0
 max_polyphony = 3
 script = ExtResource("5_footsteps")
-
-[node name="SlideAudio" type="AudioStreamPlayer3D" parent="."]
-position = Vector3(0, 0.1, 0)
-stream = ExtResource("6_slide")
-unit_size = 3.0
-max_distance = 30.0
 
 [node name="MantleAudio" type="AudioStreamPlayer3D" parent="."]
 position = Vector3(0, 1.3, -0.3)

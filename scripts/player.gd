@@ -1,7 +1,6 @@
 extends CharacterBody3D
-## First-person player: WASD to move, mouse to look, Shift to sprint, Space to jump,
-## Ctrl / C to crouch (slide while sprinting), jump at a ledge while moving forward to mantle,
-## Shift in the air to dash, jump alongside a wall at speed to wall-run (jump again to kick off),
+## First-person player: WASD to stroll, mouse to look, Shift to jog, Space to jump,
+## Ctrl / C to crouch, jump at a ledge while moving forward to mantle,
 ## hold E / left-click to gather whatever the crosshair is on. E on a villager talks to them
 ## instead (left-click never swings at villagers). Water within reach brings out the spear
 ## (SpearFishing); water further out, the rod (RodFishing), which has the buttons while it's out.
@@ -11,11 +10,8 @@ extends CharacterBody3D
 ## body's interpolated position plus the current look angles, so the view is smooth at any frame
 ## rate and mouse look never lags a tick. Head bob, landing dip and strafe lean are added there, and
 ## the held tool sways with mouse movement and bobs with your steps (see _process).
-## Movement keeps momentum (Ghostrunner-ish): speed above running pace bleeds off slowly on the
-## ground and not at all in the instant after landing, so jumping right as you land (bunny hop)
-## keeps it, and adds a little, up to max_speed. Jumping out of a slide keeps the slide's speed
-## (slide cancel); landing with crouch held at speed drops straight into a slide. In the air,
-## steering turns your velocity without losing speed. See _move.
+## Movement is calm (plans/calm-feel.md): you ease into a stroll or a jog and settle to a stop,
+## no rush, no momentum tricks. See _move.
 ## The node is hit on the *impact frame* of the swing, not when the button is pressed —
 ## lining sound + hit-stop up with the animation is what makes it feel solid.
 
@@ -41,52 +37,6 @@ extends CharacterBody3D
 ## A jump pressed this long before landing still fires on landing.
 @export var jump_buffer := 0.12
 
-@export_group("Momentum")
-## Nothing makes you faster than this (m/s).
-@export var max_speed := 16.0
-## After landing, this long with no ground friction at all: jump within it to keep your speed.
-@export var bhop_window := 0.12
-## Speed added by each clean hop (jumping within the window while faster than walking).
-@export var bhop_gain := 0.6
-## Speed above running pace lost per second on the ground (with input; more without).
-@export var overspeed_decay := 5.0
-## How fast you can turn while moving faster than running pace, on the ground (rad/s).
-@export var ground_steer := 4.0
-## How fast you can turn your velocity in the air without losing speed (rad/s).
-@export var air_control := 3.2
-## Braking in the air when pulling back against your motion (m/s per second).
-@export var air_brake := 8.0
-## Extra speed when you jump out of a slide.
-@export var slide_jump_boost := 1.2
-
-@export_group("Air dash")
-@export var dash_enabled := true
-## You dash at least this fast, in the direction you're looking.
-@export var dash_speed := 12.0
-## Upward speed at the start of the dash, and how long gravity is mostly off after it.
-@export var dash_lift := 1.5
-@export var dash_float := 0.18
-
-@export_group("Wall run")
-@export var wallrun_enabled := true
-## You need to be going at least this fast along the wall to start.
-@export var wallrun_min_speed := 5.5
-## Speed kept up while running along a wall.
-@export var wallrun_speed := 8.0
-@export var wallrun_max_time := 1.2
-## Upward speed when you hit the wall, so the run starts with a little climb.
-@export var wallrun_lift := 3.0
-## How fast you slide down the wall by the end of the run (m/s).
-@export var wallrun_sink := 2.5
-## Push away from the wall when you jump off it.
-@export var wall_jump_push := 5.5
-@export var wallrun_roll_deg := 10.0
-
-@export_group("Speed feel")
-## Extra FOV at max speed (degrees).
-@export var speed_fov_kick := 14.0
-@export var wind_sfx: AudioStream = preload("res://audio/movement/wind_loop.wav")
-
 @export_group("View feel")
 ## Gentle up-and-down of the eye with your steps (m at full sprint; 0 = off).
 @export var head_bob := 0.035
@@ -102,26 +52,11 @@ extends CharacterBody3D
 @export var wade_slow := 0.5
 ## Depth (m) at which wading is at its slowest.
 @export var wade_full_depth := 0.9
-## Slides stop in water deeper than this.
-@export var slide_max_water := 0.3
 
-@export_group("Crouch / slide")
+@export_group("Crouch")
 @export var crouch_speed := 2.5
 ## Seconds to go fully down / up.
 @export var crouch_transition := 0.12
-## Extra speed when a slide starts (only once per slide_boost_cooldown, so it can't be spammed).
-@export var slide_boost := 2.5
-@export var slide_boost_cooldown := 0.8
-## Speed lost per second on flat ground.
-@export var slide_friction := 4.0
-## How strongly slopes speed you up (downhill) or slow you down (uphill).
-@export var slide_gravity := 1.0
-@export var slide_steer := 4.0
-## The slide ends below this speed.
-@export var slide_min_speed := 3.0
-@export var slide_fov_kick := 10.0
-@export var slide_roll_deg := 3.0
-
 @export_group("Mantle")
 ## How far ahead a wall is detected.
 @export var mantle_reach := 0.8
@@ -240,15 +175,12 @@ const CROUCH_HEIGHT := 1.0
 const STAND_EYE := 1.6
 const CROUCH_EYE := 0.9
 
-enum State { NORMAL, SLIDE, MANTLE, WALLRUN }
+enum State { NORMAL, MANTLE }
 
-## Slide scrape pitch per surface (see footsteps.gd): sand is dull, rock is sharp.
-const SLIDE_PITCH := {&"grass": 1.1, &"dirt": 0.9, &"rock": 1.3, &"sand": 0.75, &"snow": 1.0}
 const DEFLECT_COLOR := Color("ff8a7a")
 ## The crosshair label on something you can gather, but are under-levelled for.
 const UNDER_COLOR := Color("ffc27a")
 const TOOL_MATERIAL := preload("res://materials/node_palette.tres")
-const SPEED_LINES := preload("res://shaders/speed_lines.gdshader")
 ## Where each tool's cutting edge is, in its model's space (tools/blender/make_models.py): the
 ## point that gets buried in the node during the bite.
 const TOOL_HEADS := {&"axe": Vector3(0, 0.5, -0.18), &"pickaxe": Vector3(0, 0.385, -0.26)}
@@ -266,7 +198,6 @@ const TOOL_HEADS := {&"axe": Vector3(0, 0.5, -0.18), &"pickaxe": Vector3(0, 0.38
 @onready var hover_label: Label = $Reticle/Hover
 @onready var audio: AudioStreamPlayer = $Audio
 @onready var footsteps: Node = $Footsteps
-@onready var slide_audio: AudioStreamPlayer3D = $SlideAudio
 @onready var mantle_audio: AudioStreamPlayer3D = $MantleAudio
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -275,18 +206,6 @@ var _coyote := 0.0
 var _jump_buffer := 0.0
 var _state := State.NORMAL
 var _crouch := 0.0  # 0 = standing, 1 = fully crouched
-var _slide_boost_cooldown := 0.0
-var _since_land := 1.0  # time on the ground since the last landing (bunny-hop window)
-var _dashed := false  # dash used this airtime
-var _dash_float_left := 0.0
-var _fov_punch := 0.0
-var _wall_normal := Vector3.ZERO
-var _last_wall_normal := Vector3.ZERO  # can't run the same wall twice in one airtime
-var _wall_side := 0.0  # +1 wall on the right, -1 on the left
-var _wallrun_time := 0.0
-var _wallrun_cooldown := 0.0
-var _wind: AudioStreamPlayer
-var _speed_lines: ShaderMaterial
 var _stand_probe := CapsuleShape3D.new()
 
 var _target: ResourceNode
@@ -310,7 +229,6 @@ var _pitch := 0.0
 ## A cutscene (ForgeCutscene) has the camera: no looking, moving, swinging or talking, and the
 ## held tool is put away (set_cutscene).
 var cutscene := false
-var _roll := 0.0  # slide roll
 var _lean := 0.0  # strafe lean
 var _eye := STAND_EYE
 var _move_input := Vector2.ZERO
@@ -330,18 +248,13 @@ var _equip_dip := 0.0
 
 func _ready() -> void:
 	add_to_group("player")
-	for a: Node in [slide_audio, mantle_audio, footsteps]:
+	for a: Node in [mantle_audio, footsteps]:
 		a.set("bus", &"Movement")
 	_base_fov = Settings.fov()
 	Settings.changed.connect(func() -> void: _base_fov = Settings.fov())
 	_tool_rest = tool_pivot.position
 	_stand_probe.radius = body_shape.radius - 0.01
 	_stand_probe.height = STAND_HEIGHT
-	var scrape := slide_audio.stream as AudioStreamWAV
-	if scrape:  # the scrape is a seamless loop; make it loop without needing import settings
-		scrape.loop_mode = AudioStreamWAV.LOOP_FORWARD
-		scrape.loop_begin = 0
-		scrape.loop_end = int(scrape.get_length() * scrape.mix_rate)  # in frames; works for any import compression
 	tool_pivot.rotation.x = DEFAULT_SWING["rest"]
 	_grip_default = grip.transform
 	_grip_rest = grip.transform
@@ -349,7 +262,6 @@ func _ready() -> void:
 	head.top_level = true
 	head.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	$Viewmodel.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-	_build_speed_feel()
 	for t in [&"pickaxe", &"axe", &"sickle"]:
 		_use_tool_model(tools[t], tool_model(t))
 	_use_tool_model(tools[&"spear"], tool_model(&"spear"))
@@ -407,7 +319,7 @@ func _unhandled_input(event: InputEvent) -> void:
 ## The eye and the held tool, every rendered frame.
 func _process(delta: float) -> void:
 	var speed := Vector2(velocity.x, velocity.z).length()
-	var grounded := (is_on_floor() and _state == State.NORMAL) or _state == State.WALLRUN
+	var grounded := is_on_floor() and _state == State.NORMAL
 	# head bob: one soft dip per footstep, scaled by speed, gone when standing still or airborne
 	var bob_target := 0.0
 	if grounded and speed > 0.5:
@@ -425,36 +337,16 @@ func _process(delta: float) -> void:
 	_dip = (_dip + k * delta) * decay
 	# lean into strafes
 	var lean_target := -_move_input.x * deg_to_rad(strafe_lean_deg) if grounded else 0.0
-	if _state == State.WALLRUN:  # tilt away from the wall
-		lean_target = _wall_side * deg_to_rad(wallrun_roll_deg)
 	_lean = lerp_angle(_lean, lean_target, 1.0 - exp(-6.0 * delta))
 
 	var feet := get_global_transform_interpolated().origin
 	head.global_transform = Transform3D(
-		Basis.from_euler(Vector3(_pitch - _dip * 0.6, rotation.y, _roll + _lean)),
+		Basis.from_euler(Vector3(_pitch - _dip * 0.6, rotation.y, _lean)),
 		feet + Vector3.UP * (_eye + bob - _dip))
 	_update_tool_feel(delta, bob, run)
-	_update_speed_feel(delta, speed)
 	if is_instance_valid(_stuck_pivot):  # the stuck tool quivers round its buried edge
 		var a := _buzz_angle()
 		_stuck_pivot.global_basis = Basis(camera.global_basis.x, a) * Basis(camera.global_basis.z, a * 0.5)
-
-
-## Rushing wind and faint speed lines, both growing from running pace up to max speed.
-func _update_speed_feel(delta: float, speed: float) -> void:
-	var t := smoothstep(sprint_speed + 0.5, max_speed, speed)
-	if _wind:
-		var db := lerpf(-38.0, -6.0, t)
-		_wind.volume_db = move_toward(_wind.volume_db, db, 60.0 * delta)
-		_wind.pitch_scale = lerpf(0.85, 1.25, t)
-		var audible := _wind.volume_db > -37.0
-		if audible and not _wind.playing:
-			_wind.play(randf() * 2.0)
-		elif not audible and _wind.playing:
-			_wind.stop()
-	if _speed_lines:
-		var current: float = _speed_lines.get_shader_parameter("intensity")
-		_speed_lines.set_shader_parameter("intensity", lerpf(current, t, 1.0 - exp(-6.0 * delta)))
 
 
 ## The held tool lags a little behind mouse movement, bobs with your steps, dips when you land,
@@ -476,32 +368,6 @@ func _update_tool_feel(delta: float, bob: float, run: float) -> void:
 	var buzz := _buzz_angle()  # still ringing after the yank
 	var tilt := Basis.from_euler(Vector3(_sway.y + buzz, _sway.x, _sway.x * 0.5 + run * 0.03 + buzz * 0.6))
 	grip.transform = Transform3D(tilt * _grip_rest.basis, _grip_rest.origin + offset)
-
-
-func _build_speed_feel() -> void:
-	_wind = AudioStreamPlayer.new()
-	_wind.name = "Wind"
-	var loop := wind_sfx as AudioStreamWAV
-	if loop:  # a seamless loop; loop it without needing import settings
-		loop.loop_mode = AudioStreamWAV.LOOP_FORWARD
-		loop.loop_begin = 0
-		loop.loop_end = int(loop.get_length() * loop.mix_rate)
-	_wind.stream = wind_sfx
-	_wind.bus = &"Movement"
-	_wind.volume_db = -40.0
-	add_child(_wind)
-	var layer := CanvasLayer.new()
-	layer.name = "SpeedLines"
-	layer.layer = 1  # over the world and the held tool, under the crosshair and HUD
-	var rect := ColorRect.new()
-	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_speed_lines = ShaderMaterial.new()
-	_speed_lines.shader = SPEED_LINES
-	_speed_lines.set_shader_parameter("intensity", 0.0)
-	rect.material = _speed_lines
-	layer.add_child(rect)
-	add_child(layer)
 
 
 ## A soft knock to the view on touching down, harder the faster you fell.
@@ -573,89 +439,49 @@ func _move(delta: float) -> void:
 	var wish := Vector2(wish_dir.x, wish_dir.z)
 	var water_depth := WaterBody.depth_at(get_tree(), global_position)
 	var wading := lerpf(1.0, wade_slow, clampf(water_depth / wade_full_depth, 0.0, 1.0))
-	if _state == State.SLIDE and water_depth > slide_max_water:
-		_state = State.NORMAL  # the water stops you
-	_wallrun_cooldown -= delta
 
 	# gravity + coyote time
 	var on_floor := is_on_floor()
 	if on_floor:
 		_coyote = coyote_time
-		_since_land += delta
-		_dashed = false
-		_last_wall_normal = Vector3.ZERO
 	else:
 		_coyote -= delta
-		if _state != State.WALLRUN:  # the wall run handles its own vertical speed
-			var g := _gravity * (fall_gravity_mult if velocity.y < 0.0 else 1.0)
-			if _dash_float_left > 0.0:
-				_dash_float_left -= delta
-				g *= 0.15
-			velocity.y -= g * delta
+		velocity.y -= _gravity * (fall_gravity_mult if velocity.y < 0.0 else 1.0) * delta
 
 	# mantle: jump at a ledge while pushing forward (on the ground or in the air)
 	_jump_buffer -= delta
 	if Input.is_action_just_pressed("jump"):
 		_jump_buffer = jump_buffer
-	var wants_mantle := input.y < -0.3 and not _swinging and _state != State.WALLRUN \
+	var wants_mantle := input.y < -0.3 and not _swinging \
 		and (_jump_buffer > 0.0 or (not on_floor and Input.is_action_pressed("jump")))
 	if wants_mantle and _try_mantle():
 		return
 
 	var horizontal := Vector2(velocity.x, velocity.z)
-
-	# air dash: Shift in the air, once per airtime, toward where you're looking
-	if dash_enabled and not on_floor and _state == State.NORMAL and not _dashed \
-			and Input.is_action_just_pressed("sprint") and not _swinging:
-		horizontal = _dash(horizontal)
-
-	# jumps: off a wall, or off the ground (keeping speed: bunny hop, slide cancel)
 	var jumped := false
-	if _state == State.WALLRUN and _jump_buffer > 0.0:
-		horizontal = _wall_jump(horizontal)
-		jumped = true
-	elif _jump_buffer > 0.0 and _coyote > 0.0 and not _swinging and _can_stand():
-		var spd := horizontal.length()
-		if _state == State.SLIDE:
-			spd += slide_jump_boost  # slide cancel: keep the slide's speed, plus a kick
-		elif on_floor and _since_land <= bhop_window and spd > walk_speed:
-			spd += bhop_gain  # clean hop
-		if horizontal.length() > 0.01:
-			horizontal = horizontal.normalized() * minf(spd, max_speed)
+	if _jump_buffer > 0.0 and _coyote > 0.0 and not _swinging and _can_stand():
 		velocity.y = jump_velocity
 		_jump_buffer = 0.0
 		_coyote = 0.0
-		_state = State.NORMAL
 		jumped = true
-	if Input.is_action_just_released("jump") and velocity.y > 0.0 and _state != State.WALLRUN:
+	if Input.is_action_just_released("jump") and velocity.y > 0.0:
 		velocity.y *= jump_cut
 
-	# start a slide: crouch while running fast on the ground
-	if _state == State.NORMAL and Input.is_action_just_pressed("crouch") and on_floor and not jumped \
-			and not _swinging and horizontal.length() > walk_speed + 0.5:
-		horizontal = _start_slide(horizontal)
-	_slide_boost_cooldown -= delta
-
-	# the walk / sprint / crouch-walk speed you're steering toward (yaw only; the head pitches)
+	# the stroll / jog / crouch-walk speed you're easing toward (yaw only; the head pitches)
 	var crouched := Input.is_action_pressed("crouch") or not _can_stand()
-	var sprinting := Input.is_action_pressed("sprint") and input.y < 0.0 and not _swinging and not crouched
-	var speed := crouch_speed if crouched else (sprint_speed if sprinting else walk_speed)
+	var jogging := Input.is_action_pressed("sprint") and input.y < 0.0 and not _swinging and not crouched
+	var speed := crouch_speed if crouched else (sprint_speed if jogging else walk_speed)
 	speed *= move_slow_while_swinging if _swinging else 1.0
 	speed *= move_slow_while_charging if _charge >= 0.0 else 1.0
 	speed *= wading
 	speed *= 1.0 + Village.stat(&"run_speed")  # Rosa's bread
 
-	match _state:
-		State.SLIDE:
-			horizontal = _slide(delta, horizontal, wish)
-		State.WALLRUN:
-			horizontal = _wallrun(delta, horizontal)
-		_:
-			if on_floor and not jumped:
-				horizontal = _ground_move(delta, horizontal, wish, speed)
-			else:
-				horizontal = _air_move(delta, horizontal, wish, speed)
-	horizontal = horizontal.limit_length(max_speed)
+	var target := wish * speed
+	if on_floor and not jumped:
+		var rate := ground_friction if target.length() < horizontal.length() else ground_accel
+		horizontal = horizontal.move_toward(target, rate * delta)
+	elif wish != Vector2.ZERO:
+		horizontal = horizontal.move_toward(target, air_accel * delta)
 	velocity.x = horizontal.x
 	velocity.z = horizontal.y
 	var was_on_floor := on_floor
@@ -664,230 +490,24 @@ func _move(delta: float) -> void:
 
 	if is_on_floor() and not was_on_floor:
 		_on_land(fall_speed)
-	elif not is_on_floor() and _state == State.NORMAL and not jumped:
-		_try_wallrun(input)
-	var stepping := _state == State.NORMAL or _state == State.WALLRUN  # no steps mid-slide
-	footsteps.tick(delta, horizontal.length() if stepping else 0.0, is_on_floor() or _state == State.WALLRUN,
-		_crouch > 0.5, walk_speed, sprint_speed)
-	_update_slide_audio(delta, horizontal.length())
-
-	# a wider view the faster you go
-	var spd_t := clampf((horizontal.length() - walk_speed) / (max_speed - walk_speed), 0.0, 1.0)
-	var kick := (spd_t * speed_fov_kick + (slide_fov_kick * 0.5 if _state == State.SLIDE else 0.0) + _fov_punch) 			* Settings.camera_motion()
-	_fov_punch = move_toward(_fov_punch, 0.0, 40.0 * delta)
-	camera.base_fov = lerpf(camera.base_fov, _base_fov + kick, 1.0 - exp(-10.0 * delta))  # (+ impact kicks)
+	footsteps.tick(delta, horizontal.length(), is_on_floor(), _crouch > 0.5, walk_speed, sprint_speed)
+	camera.base_fov = _base_fov  # (+ impact kicks)
 
 
 func _on_land(fall_speed: float) -> void:
 	footsteps.land(fall_speed)
 	if fall_speed > 2.0:
 		_land_dip(fall_speed)
-	_since_land = 0.0
-	if _state == State.WALLRUN:
-		_state = State.NORMAL
-	# land with crouch held at speed: straight into a slide (slide-hop chains)
-	var horizontal := Vector2(velocity.x, velocity.z)
-	if _state == State.NORMAL and Input.is_action_pressed("crouch") and horizontal.length() > walk_speed + 0.5:
-		horizontal = _start_slide(horizontal)
-		velocity.x = horizontal.x
-		velocity.z = horizontal.y
 
 
-# --- ground / air ---------------------------------------------------------------------------
-
-## On the ground. Faster than you could run (from a slide, a hop chain, a slope): keep the
-## momentum, steer it toward your input, bleed it off slowly, and not at all just after landing,
-## so a quick jump carries all of it. Otherwise plain acceleration / friction.
-func _ground_move(delta: float, horizontal: Vector2, wish: Vector2, speed: float) -> Vector2:
-	var spd := horizontal.length()
-	if spd > speed + 0.2:
-		if _since_land > bhop_window:
-			var decay := overspeed_decay if wish != Vector2.ZERO else overspeed_decay * 2.5
-			spd = move_toward(spd, speed, decay * delta)
-		var dir := horizontal / horizontal.length()
-		if wish != Vector2.ZERO:
-			dir = _turn_toward(dir, wish.normalized(), ground_steer * delta)
-		return dir * spd
-	var target := wish * speed
-	if _since_land <= bhop_window and target == Vector2.ZERO:
-		return horizontal  # no friction in the hop window
-	var rate := ground_friction if target == Vector2.ZERO else ground_accel
-	return horizontal.move_toward(target, rate * delta)
-
-
-## In the air. Slower than running pace: build up toward it. Faster: steer without losing speed
-## (pulling back brakes). No air drag.
-func _air_move(delta: float, horizontal: Vector2, wish: Vector2, speed: float) -> Vector2:
-	if wish == Vector2.ZERO:
-		return horizontal
-	var w := wish.normalized()
-	var spd := horizontal.length()
-	if spd < speed:
-		return horizontal.move_toward(w * speed, air_accel * delta)
-	if horizontal.dot(w) < -0.5 * spd:
-		return horizontal.move_toward(Vector2.ZERO, air_brake * delta)
-	return _turn_toward(horizontal / spd, w, air_control * delta) * spd
-
-
-## Turns unit vector `dir` toward unit vector `to` by at most `max_angle` radians.
-static func _turn_toward(dir: Vector2, to: Vector2, max_angle: float) -> Vector2:
-	var angle := dir.angle_to(to)
-	return dir.rotated(clampf(angle, -max_angle, max_angle))
-
-
-# --- slide ----------------------------------------------------------------------------------
-
-func _start_slide(horizontal: Vector2) -> Vector2:
-	_state = State.SLIDE
-	if _slide_boost_cooldown <= 0.0:
-		horizontal += horizontal.normalized() * slide_boost
-		_slide_boost_cooldown = slide_boost_cooldown
-	return horizontal.limit_length(max_speed)
-
-
-## Low friction, speeds up going downhill, a little steering. Ends when it's too slow, when
-## crouch is released, or on a jump (which keeps the momentum: the slide cancel).
-func _slide(delta: float, horizontal: Vector2, wish: Vector2) -> Vector2:
-	if is_on_floor():
-		var n := get_floor_normal()
-		# the downhill part of gravity: (n.x, n.z) points down the slope, longer on steeper ground
-		horizontal += Vector2(n.x, n.z) * _gravity * slide_gravity * delta
-		horizontal = horizontal.move_toward(Vector2.ZERO, slide_friction * delta)
-	# steering only bends the slide sideways; holding forward can't keep it going forever
-	if horizontal.length() > 0.01:
-		var along := horizontal.normalized()
-		horizontal += (wish - along * wish.dot(along)) * slide_steer * delta
-	if horizontal.length() < slide_min_speed or not Input.is_action_pressed("crouch"):
-		_state = State.NORMAL
-	return horizontal
-
-
-# --- air dash -------------------------------------------------------------------------------
-
-## A burst toward where you're looking (flattened), at least dash_speed; gravity mostly off for a
-## moment so it reads as a dash, not a fall.
-func _dash(horizontal: Vector2) -> Vector2:
-	var look := -camera.global_basis.z
-	var dir := Vector2(look.x, look.z)
-	if dir.length() < 0.1:
-		dir = Vector2(-global_basis.z.x, -global_basis.z.z)
-	dir = dir.normalized()
-	var spd := maxf(horizontal.length(), dash_speed)
-	velocity.y = maxf(velocity.y, dash_lift)
-	_dash_float_left = dash_float
-	_dashed = true
-	_fov_punch = 8.0
-	Juice.shake(0.8)
-	if swing_sfx:
-		audio.stream = swing_sfx
-		audio.pitch_scale = 0.6
-		audio.play()
-	return dir * minf(spd, max_speed)
-
-
-# --- wall run -------------------------------------------------------------------------------
-
-## A wall beside you (left or right), as {normal, side}, or {} if none. Rays from chest height.
-func _wall_beside() -> Dictionary:
-	var space := get_world_3d().direct_space_state
-	var from := global_position + Vector3.UP * 1.0
-	for side in [1.0, -1.0]:
-		var dir: Vector3 = global_basis.x * side
-		var q := PhysicsRayQueryParameters3D.create(from, from + dir * 0.8, WORLD_MASK, [get_rid()])
-		var hit := space.intersect_ray(q)
-		if not hit.is_empty() and absf((hit["normal"] as Vector3).y) < 0.3:
-			return {"normal": hit["normal"], "side": side}
-	return {}
-
-
-func _try_wallrun(input: Vector2) -> void:
-	if not wallrun_enabled or _wallrun_cooldown > 0.0 or input.y > -0.3 or _swinging:
-		return
-	var wall := _wall_beside()
-	if wall.is_empty():
-		return
-	var n: Vector3 = wall["normal"]
-	if _last_wall_normal != Vector3.ZERO and n.dot(_last_wall_normal) > 0.9:
-		return  # the same wall again, before touching the ground
-	var hv := Vector3(velocity.x, 0.0, velocity.z)
-	var along := hv - n * hv.dot(n)
-	if along.length() < wallrun_min_speed:
-		return
-	_state = State.WALLRUN
-	_wall_normal = n
-	_wall_side = wall["side"]
-	_last_wall_normal = n
-	_wallrun_time = 0.0
-	_dashed = false
-	velocity.y = maxf(velocity.y, wallrun_lift)  # a lift onto the wall
-
-
-## Running along the wall: keep (at least) running speed along it, hug it, float at first and slide
-## down toward the end. Ends on timeout, losing the wall, landing, crouching or slowing down.
-func _wallrun(delta: float, horizontal: Vector2) -> Vector2:
-	_wallrun_time += delta
-	var space := get_world_3d().direct_space_state
-	var from := global_position + Vector3.UP * 1.0
-	var q := PhysicsRayQueryParameters3D.create(from, from - _wall_normal * 1.0, WORLD_MASK, [get_rid()])
-	var hit := space.intersect_ray(q)
-	if not hit.is_empty() and absf((hit["normal"] as Vector3).y) < 0.3:
-		_wall_normal = hit["normal"]
-	var hv := Vector3(horizontal.x, 0.0, horizontal.y)
-	var along := hv - _wall_normal * hv.dot(_wall_normal)
-	if hit.is_empty() or _wallrun_time > wallrun_max_time or is_on_floor() \
-			or Input.is_action_pressed("crouch") or along.length() < wallrun_min_speed * 0.6:
-		_state = State.NORMAL
-		_wallrun_cooldown = 0.2
-		return horizontal
-	along = along.normalized() * minf(maxf(along.length(), wallrun_speed), max_speed)
-	along -= _wall_normal * 1.0  # press into it so the contact holds
-	# hold the line at first, then slide down more and more toward the end of the run
-	var sink := smoothstep(0.35, 1.0, _wallrun_time / wallrun_max_time)
-	velocity.y = move_toward(velocity.y, -wallrun_sink * sink, 9.0 * delta)
-	return Vector2(along.x, along.z)
-
-
-## Kick off the wall: away from it and up, keeping the speed along it.
-func _wall_jump(horizontal: Vector2) -> Vector2:
-	var hv := Vector3(horizontal.x, 0.0, horizontal.y)
-	var along := hv - _wall_normal * hv.dot(_wall_normal)
-	var out := along + _wall_normal * wall_jump_push
-	velocity.y = jump_velocity
-	_jump_buffer = 0.0
-	_state = State.NORMAL
-	_wallrun_cooldown = 0.25
-	_dashed = false
-	return Vector2(out.x, out.z).limit_length(max_speed)
-
-
-## Scrape loop while sliding on the ground: louder and higher the faster you go, pitched by
-## surface; fades out (rather than cutting) when the slide ends or you leave the ground.
-func _update_slide_audio(delta: float, speed: float) -> void:
-	if _state == State.SLIDE and is_on_floor():
-		if not slide_audio.playing:
-			slide_audio.volume_db = -20.0
-			slide_audio.play(randf() * 1.0)  # random start so repeated slides don't sound identical
-		var t := clampf(speed / (sprint_speed + slide_boost), 0.0, 1.0)
-		slide_audio.pitch_scale = SLIDE_PITCH.get(footsteps.surface(), 1.0) * lerpf(0.85, 1.15, t)
-		slide_audio.volume_db = move_toward(slide_audio.volume_db, lerpf(-14.0, -2.0, t), 120.0 * delta)
-	elif slide_audio.playing:
-		slide_audio.volume_db = move_toward(slide_audio.volume_db, -40.0, 120.0 * delta)
-		if slide_audio.volume_db <= -39.0:
-			slide_audio.stop()
-
-
-## Smoothly lowers the eye and shrinks the capsule while sliding / crouching.
+## Smoothly lowers the eye and shrinks the capsule while crouching.
 func _update_crouch(delta: float) -> void:
-	var want := 1.0 if (_state == State.SLIDE or Input.is_action_pressed("crouch") or not _can_stand()) \
-		and _state != State.MANTLE else 0.0
+	var want := 1.0 if (Input.is_action_pressed("crouch") or not _can_stand()) and _state != State.MANTLE else 0.0
 	_crouch = move_toward(_crouch, want, delta / crouch_transition)
 	var height := lerpf(STAND_HEIGHT, CROUCH_HEIGHT, _crouch)
 	body_shape.height = height
 	body_collision.position.y = height / 2.0
 	_eye = lerpf(STAND_EYE, CROUCH_EYE, _crouch)
-	# slight camera roll while sliding
-	var roll := slide_roll_deg if _state == State.SLIDE else 0.0
-	_roll = lerp_angle(_roll, deg_to_rad(roll), 1.0 - exp(-8.0 * delta))
 
 
 ## True if there's nothing overhead stopping the player standing up.
