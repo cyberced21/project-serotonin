@@ -17,6 +17,8 @@ const BINDINGS := {
 	"swap_fishing": [KEY_Q],
 	# the Skills page (levels, XP, perks, talents), straight from play
 	"skills": [KEY_K],
+	# the world map (scripts/map)
+	"map": [KEY_M],
 	# debug builds only
 	"debug_menu": [KEY_F1],
 	"debug_skip_time": [KEY_F6],

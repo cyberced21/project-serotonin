@@ -20,6 +20,7 @@ Left mouse or E   gather (axe, pickaxe, sickle), thrust the spear, cast the rod 
 Q                 swap spear / rod
 E                 talk to a villager (Greta at the smithy forges tools and resets talents)
 K                 skills: levels, XP, perks, talents
+M                 world map (wheel zoom, drag to pan, Space finds you)
 Esc               pause menu (skills, settings, controls, save and quit)
 
 Levelling: every level gives a small perk; at 10, 20, 30 and 40 you choose a talent.

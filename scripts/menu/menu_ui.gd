@@ -17,6 +17,37 @@ const BUTTON_PRESSED := Color("4a3220")
 const BUTTON_DISABLED := Color(0.25, 0.2, 0.16, 0.6)
 
 
+## Places `c` over `area`, a share of its parent (0..1 on each side: x, y, width, height), so it
+## grows and shrinks with the window instead of sitting at a fixed size. With `fit_height`, only
+## the top is placed and it's as tall as its content, centred on `area`'s middle.
+static func place(c: Control, area: Rect2, fit_height := false) -> void:
+	c.anchor_left = area.position.x
+	c.anchor_right = area.end.x
+	c.offset_left = 0.0
+	c.offset_right = 0.0
+	if fit_height:
+		c.anchor_top = area.get_center().y
+		c.anchor_bottom = area.get_center().y
+		c.offset_top = 0.0
+		c.offset_bottom = 0.0
+		c.grow_vertical = Control.GROW_DIRECTION_BOTH
+	else:
+		c.anchor_top = area.position.y
+		c.anchor_bottom = area.end.y
+		c.offset_top = 0.0
+		c.offset_bottom = 0.0
+
+
+## A vertical scroll area that takes the room it's given (for a panel's list that can outgrow it).
+static func scroll(content: Control) -> ScrollContainer:
+	var s := ScrollContainer.new()
+	s.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	s.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	s.add_child(content)
+	return s
+
+
 static func panel(padding := 18.0, color := BG) -> PanelContainer:
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", box(color, padding, BORDER))

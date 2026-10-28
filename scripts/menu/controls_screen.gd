@@ -15,6 +15,7 @@ const ROWS := [
 	["Talk to a villager", "interact", ""],
 	["Swap spear / rod", "swap_fishing", ""],
 	["Skills: levels, XP, perks, talents", "skills", ""],
+	["World map (wheel zoom, drag to pan)", "map", ""],
 	["Pause", "", "Esc"],
 ]
 const DEBUG_ROWS := [
@@ -28,16 +29,16 @@ func _init() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 10)
 	add_child(box)
-	box.add_child(MenuUI.title("Controls", 30))
+	box.add_child(MenuUI.title("Controls", 34))
 	var grid := GridContainer.new()
 	grid.columns = 2
 	grid.add_theme_constant_override("h_separation", 28)
 	grid.add_theme_constant_override("v_separation", 8)
 	box.add_child(grid)
 	for row in ROWS + (DEBUG_ROWS if OS.is_debug_build() or OS.has_feature("playtest") else []):
-		grid.add_child(MenuUI.label(row[0], 17))
+		grid.add_child(MenuUI.label(row[0], 19))
 		var keys: String = row[2] if row[1] == "" else keys_text(row[1])
-		grid.add_child(MenuUI.label(keys, 17, MenuUI.ACCENT))
+		grid.add_child(MenuUI.label(keys, 19, MenuUI.ACCENT))
 	box.add_child(MenuUI.spacer(6))
 	var back := MenuUI.button("Back", func() -> void: closed.emit(), 17)
 	back.size_flags_horizontal = Control.SIZE_SHRINK_END

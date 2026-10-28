@@ -9,7 +9,8 @@ extends CanvasLayer
 ## Idle this long after a choice is reached before the cards come up (the tree finishes falling,
 ## the level-up banner has its moment).
 const SETTLE := 2.2
-const CARD_WIDTH := 250.0
+## The narrowest a card gets (they widen to share the panel).
+const CARD_WIDTH := 220.0
 
 var _queue: Array[StringName] = []
 var _idle := 0.0
@@ -138,6 +139,7 @@ func _card(def: TalentDef) -> PanelContainer:
 	card.set_meta("def", def)
 	card.add_theme_stylebox_override("panel", MenuUI.box(MenuUI.CARD, 16.0, MenuUI.BORDER))
 	card.custom_minimum_size = Vector2(CARD_WIDTH, 0)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL  # the cards share the panel's width
 	card.mouse_filter = Control.MOUSE_FILTER_STOP
 	card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	card.gui_input.connect(func(e: InputEvent) -> void:
@@ -148,11 +150,11 @@ func _card(def: TalentDef) -> PanelContainer:
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(box)
 	var style_line := def.style_name if _milestone > 0 else "%s · level %d" % [def.style_name, def.milestone]
-	box.add_child(MenuUI.label(style_line, 15, MenuUI.DIM))
-	box.add_child(MenuUI.label(def.display_name, 24, MenuUI.ACCENT))
-	var text := MenuUI.label(def.text, 16)
+	box.add_child(MenuUI.label(style_line, 17, MenuUI.DIM))
+	box.add_child(MenuUI.label(def.display_name, 28, MenuUI.ACCENT))
+	var text := MenuUI.label(def.text, 19)
 	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	text.custom_minimum_size = Vector2(CARD_WIDTH - 32, 0)
+	text.custom_minimum_size = Vector2(CARD_WIDTH - 40, 0)
 	box.add_child(text)
 	for c in box.get_children():
 		(c as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -164,27 +166,25 @@ func _build() -> void:
 	_shade.color = Color(0, 0, 0, 0.5)
 	_shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_shade)
-	var panel := MenuUI.panel(24.0)
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	var panel := MenuUI.panel(28.0)
+	MenuUI.place(panel, Rect2(0.12, 0.1, 0.76, 0.8), true)  # (a share of the window: MenuUI.place)
 	_shade.add_child(panel)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 14)
 	panel.add_child(box)
-	_title = MenuUI.title("", 30)
+	_title = MenuUI.title("", 36)
 	box.add_child(_title)
 	_cards = HBoxContainer.new()
 	_cards.add_theme_constant_override("separation", 14)
 	box.add_child(_cards)
-	box.add_child(MenuUI.label("Greta at the smithy can reset a skill's talents.", 14, MenuUI.DIM))
+	box.add_child(MenuUI.label("Greta at the smithy can reset a skill's talents.", 16, MenuUI.DIM))
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 	row.alignment = BoxContainer.ALIGNMENT_END
 	box.add_child(row)
-	var later := MenuUI.button("Decide later", _close, 17)
-	later.custom_minimum_size = Vector2(150, 0)
+	var later := MenuUI.button("Decide later", _close, 20)
+	later.custom_minimum_size = Vector2(180, 0)
 	row.add_child(later)
-	_take = MenuUI.button("", _on_take, 17)
-	_take.custom_minimum_size = Vector2(220, 0)
+	_take = MenuUI.button("", _on_take, 20)
+	_take.custom_minimum_size = Vector2(260, 0)
 	row.add_child(_take)

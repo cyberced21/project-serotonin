@@ -184,51 +184,41 @@ func _build() -> void:
 	_shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_shade)
 
-	_panel = MenuUI.panel(26.0)
-	_panel.set_anchors_preset(Control.PRESET_CENTER)
-	_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
-	_panel.custom_minimum_size = Vector2(360, 0)
+	# every screen here is a share of the window (MenuUI.place), so none runs off it
+	_panel = MenuUI.panel(30.0)
+	MenuUI.place(_panel, Rect2(0.34, 0.1, 0.32, 0.8), true)
 	_shade.add_child(_panel)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 10)
+	box.add_theme_constant_override("separation", 12)
 	_panel.add_child(box)
-	box.add_child(MenuUI.title("Paused", 34))
-	_world_label = MenuUI.label("", 15, MenuUI.DIM)
+	box.add_child(MenuUI.title("Paused", 40))
+	_world_label = MenuUI.label("", 17, MenuUI.DIM)
 	box.add_child(_world_label)
 	box.add_child(MenuUI.spacer(6))
 	_column = VBoxContainer.new()
-	_column.add_theme_constant_override("separation", 8)
+	_column.add_theme_constant_override("separation", 10)
 	box.add_child(_column)
-	_column.add_child(MenuUI.button("Resume", resume, 20))
-	_skills_button = MenuUI.button("Skills", _show_skills, 20)
+	_column.add_child(MenuUI.button("Resume", resume, 24))
+	_skills_button = MenuUI.button("Skills", _show_skills, 24)
 	_column.add_child(_skills_button)
-	_column.add_child(MenuUI.button("Settings", _show_settings, 20))
-	_column.add_child(MenuUI.button("Controls", _show_controls, 20))
+	_column.add_child(MenuUI.button("Settings", _show_settings, 24))
+	_column.add_child(MenuUI.button("Controls", _show_controls, 24))
 	_column.add_child(MenuUI.spacer(4))
-	_column.add_child(MenuUI.button("Save & Quit to Menu", _save_and_quit.bind(false), 20))
-	_column.add_child(MenuUI.button("Quit to Desktop", _save_and_quit.bind(true), 20))
+	_column.add_child(MenuUI.button("Save & Quit to Menu", _save_and_quit.bind(false), 24))
+	_column.add_child(MenuUI.button("Quit to Desktop", _save_and_quit.bind(true), 24))
 
 	_controls = ControlsScreen.new()
-	_controls.set_anchors_preset(Control.PRESET_CENTER)
-	_controls.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_controls.grow_vertical = Control.GROW_DIRECTION_BOTH
+	MenuUI.place(_controls, Rect2(0.2, 0.06, 0.6, 0.88), true)
 	_controls.closed.connect(_show_panel)
 	_shade.add_child(_controls)
 
 	_skills = SkillsScreen.new()
-	_skills.set_anchors_preset(Control.PRESET_CENTER)
-	_skills.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_skills.grow_vertical = Control.GROW_DIRECTION_BOTH
-	_skills.custom_minimum_size = Vector2(640, 0)
+	MenuUI.place(_skills, Rect2(0.05, 0.05, 0.9, 0.9))
 	_skills.closed.connect(_show_panel)
 	_shade.add_child(_skills)
 
 	_settings = SettingsScreen.new()
-	_settings.set_anchors_preset(Control.PRESET_CENTER)
-	_settings.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_settings.grow_vertical = Control.GROW_DIRECTION_BOTH
-	_settings.custom_minimum_size = Vector2(680, 560)
+	MenuUI.place(_settings, Rect2(0.15, 0.06, 0.7, 0.88))
 	_settings.closed.connect(_show_panel)
 	_shade.add_child(_settings)
 
