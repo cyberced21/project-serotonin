@@ -587,17 +587,21 @@ func _build_village() -> Control:
 	_perks.add_theme_color_override("font_color", GOOD)
 	box.add_child(_perks)
 	box.add_child(HSeparator.new())
-	box.add_child(_heading("Path lamps"))
+	box.add_child(_heading("Projects (noticeboard)"))
 	var lamp_row := HBoxContainer.new()
-	lamp_row.add_child(_button("Light all", func() -> void:
-		Lamps.light_all(true)
+	lamp_row.add_child(_button("All done", func() -> void:
+		for p in Projects.all():
+			Projects.set_done(p["id"], true)
 		_rebuild_lamps()))
-	lamp_row.add_child(_button("Village only", func() -> void:
-		Lamps.light_all(false)
-		for id in Lamps.DEFAULT_LIT:
-			Lamps.set_lit(id, true)
+	lamp_row.add_child(_button("None", func() -> void:
+		for p in Projects.all():
+			Projects.set_done(p["id"], false)
 		_rebuild_lamps()))
 	box.add_child(lamp_row)
+	var lamp_note := _label(13)
+	lamp_note.text = "Free. Road lamps are projects too: a ticked road is lit."
+	lamp_note.modulate = DIM
+	box.add_child(lamp_note)
 	var lantern_row := HBoxContainer.new()
 	lantern_row.add_child(_button("Give the lantern", Lamps.give_lantern))
 	lantern_row.add_child(_button("Take it back", func() -> void:
@@ -609,14 +613,14 @@ func _build_village() -> Control:
 	return box
 
 
-## A checkbox per road stretch of this world: lit (posts along it) or not.
+## A checkbox per project of this world (decorations and road lamps): done or not.
 func _rebuild_lamps() -> void:
 	for c in _lamps_box.get_children():
 		c.queue_free()
-	for s in Lamps.stretches:
-		var id: StringName = s["id"]
-		var c := _check(s["title"], func(on: bool) -> void: Lamps.set_lit(id, on))
-		c.set_pressed_no_signal(Lamps.is_lit(id))
+	for p in Projects.all():
+		var id: StringName = p["id"]
+		var c := _check("%s  (hall %d)" % [p["title"], p["hall"]], func(on: bool) -> void: Projects.set_done(id, on))
+		c.set_pressed_no_signal(p["done"])
 		_lamps_box.add_child(c)
 
 

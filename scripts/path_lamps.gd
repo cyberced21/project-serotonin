@@ -84,7 +84,10 @@ func _ready() -> void:
 		hearthvale()
 	var listed: Array[Dictionary] = []
 	for s in stretches:
-		listed.append({"id": s["id"], "title": s["title"]})
+		var closest := INF  # how near it comes to the square (cheaper lamps near the village)
+		for p in s["pts"]:
+			closest = minf(closest, (p as Vector2).distance_to(village_center))
+		listed.append({"id": s["id"], "title": s["title"], "closest": closest})
 	Lamps.stretches = listed
 	Lamps.changed.connect(_rebuild)
 	_rebuild()
@@ -348,7 +351,7 @@ func hearthvale() -> void:
 			pts.append(ring[i])
 			i = (i + 1) % n
 		pts.append(ring[to])
-		stretches.append(_stretch(StringName("ring_%d" % k), "The ring road: %s to %s" % [
+		stretches.append(_stretch(StringName("ring_%d" % k), "The ring road from %s to %s" % [
 				_turn_name(cuts[k][1]), _turn_name(cuts[(k + 1) % cuts.size()][1])], pts, WorldMap.ROAD_HALF_WIDTH))
 	blocked = func(p: Vector2) -> bool: return p.distance_to(WorldMap.GULLY_NEAR) < 14.0
 
