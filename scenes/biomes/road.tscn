@@ -1,10 +1,6 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/road_course.gd" id="1_course"]
-[ext_resource type="Script" path="res://scripts/time_trial.gd" id="2_trial"]
 
 [node name="Road" type="Node3D"]
 script = ExtResource("1_course")
-
-[node name="TimeTrial" type="Node" parent="."]
-script = ExtResource("2_trial")
