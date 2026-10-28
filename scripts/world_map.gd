@@ -72,6 +72,19 @@ const SPURS: Array = [
 const VILLAGE_PATH: Array[Vector2] = [Vector2(22, -2), Vector2(42, 6), Vector2(62, 20), Vector2(80, 34), Vector2(100, 40)]
 const LAKE_PATH: Array[Vector2] = [Vector2(-3, 16), Vector2(-6, 32), Vector2(-11, 48), Vector2(-15, 59)]
 
+## The creek (plans/world.md): from a spring at the foot of the Pinewood hills, down its own
+## shallow vale past the clearing, through the clearing's pond and on into the lake. Its water is
+## level the whole way (at the ponds' height), built by scripts/creek.gd; the terrain generator
+## carves its bed along the same spline.
+const CREEK: Array[Vector2] = [
+	Vector2(36, -70), Vector2(31, -50), Vector2(35, -30), Vector2(31, -10), Vector2(26, 4),
+	Vector2(20, 16), Vector2(18, 26), Vector2(11, 39), Vector2(3, 51), Vector2(-5, 61),
+]
+const CREEK_HALF_WIDTH := 1.8
+## Deep pools scoured out at bends (salmon lie in them), near these points.
+const CREEK_POOLS: Array[Vector2] = [Vector2(33, -40), Vector2(13, 36)]
+const CREEK_POOL_RADIUS := 3.2
+
 const QUARRY_CENTER_3 := Vector3(-175, 0, -15)
 ## Debug-menu teleports: name -> [where, look at].
 const LANDMARKS := {
@@ -86,6 +99,7 @@ const LANDMARKS := {
 
 
 static var _ring: PackedVector2Array
+static var _creek: PackedVector2Array
 
 
 ## Points about 1 m apart along a Catmull-Rom spline through `ctrl` (closed if `loop`). The
@@ -113,3 +127,10 @@ static func ring() -> PackedVector2Array:
 	if _ring.is_empty():
 		_ring = spline(RING, true)
 	return _ring
+
+
+## The creek's centre line (cached), source to mouth, about 1 m a sample.
+static func creek() -> PackedVector2Array:
+	if _creek.is_empty():
+		_creek = spline(CREEK, false)
+	return _creek

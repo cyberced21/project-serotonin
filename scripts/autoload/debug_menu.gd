@@ -341,6 +341,10 @@ func _rebuild_teleports() -> void:
 	for w in get_tree().get_nodes_in_group("water"):
 		var water := w as Node3D
 		var label := String(water.name).capitalize()
+		if String(water.name).begins_with("Stretch"):  # the creek: one button, its first stretch
+			if water.name != &"Stretch1":
+				continue
+			label = String(water.get_parent().name).capitalize()
 		grid.add_child(_button(label, _teleport.bind(water.global_position, water.global_position + Vector3.FORWARD)))
 	_teleport_box.add_child(grid)
 

@@ -2,7 +2,7 @@ class_name Footbridge
 extends StaticBody3D
 ## The mended footbridge (plans/projects.md P10): a plank deck on two stringers between `from`
 ## and `to` (points on the ground at either end), a gentle arch, a rail each side on posts. Built
-## in code so it fits whatever it spans: Hearthvale's gully gap.
+## in code so it fits whatever it spans: the creek where the village path crosses it.
 ## You walk on it (one box collider along the deck); standing on it you're out of the water
 ## (on_bridge(): player.gd's wading and Footsteps ask).
 

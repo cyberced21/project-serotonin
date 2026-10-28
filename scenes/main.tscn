@@ -58,6 +58,7 @@
 [ext_resource type="Script" path="res://scripts/grass_field.gd" id="90_grass_field"]
 [ext_resource type="Script" path="res://scripts/path_lamps.gd" id="91_path_lamps"]
 [ext_resource type="Script" path="res://scripts/village_decor.gd" id="92_village_decor"]
+[ext_resource type="Script" path="res://scripts/creek.gd" id="93_creek"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
@@ -242,6 +243,9 @@ schools = Array[Resource]([ExtResource("10_perch"), ExtResource("10_perch"), Ext
 position = Vector3(0, -0.15, 0)
 cast_shadow = 0
 mesh = SubResource("PlaneMesh_water")
+
+[node name="Creek" type="Node3D" parent="."]
+script = ExtResource("93_creek")
 
 [node name="Ruins" type="Node3D" parent="."]
 
@@ -473,17 +477,17 @@ rotation = Vector3(0, 1.1, 0)
 
 [node name="Pine1" parent="Nodes" instance=ExtResource("51_pine")]
 save_id = &"pine_1"
-position = Vector3(-10, 0.63, -50)
+position = Vector3(-10, 0.59, -50)
 rotation = Vector3(0, 0.3, 0)
 
 [node name="Pine2" parent="Nodes" instance=ExtResource("51_pine")]
 save_id = &"pine_2"
-position = Vector3(5, 2.12, -55)
+position = Vector3(5, 1.22, -55)
 rotation = Vector3(0, 1.7, 0)
 
 [node name="Pine3" parent="Nodes" instance=ExtResource("51_pine")]
 save_id = &"pine_3"
-position = Vector3(18, 1.21, -48)
+position = Vector3(18, 0.24, -48)
 rotation = Vector3(0, 2.9, 0)
 
 [node name="Pine4" parent="Nodes" instance=ExtResource("51_pine")]
@@ -493,12 +497,12 @@ rotation = Vector3(0, 4.2, 0)
 
 [node name="Pine5" parent="Nodes" instance=ExtResource("51_pine")]
 save_id = &"pine_5"
-position = Vector3(-4, 4.17, -62)
+position = Vector3(-4, 3.51, -62)
 rotation = Vector3(0, 5.6, 0)
 
 [node name="CoalRock1" parent="Nodes" instance=ExtResource("52_coal")]
 save_id = &"coal_rock_1"
-position = Vector3(48, 0.19, 0)
+position = Vector3(48, 0.07, 0)
 rotation = Vector3(0, 0.8, 0)
 
 [node name="CoalRock2" parent="Nodes" instance=ExtResource("52_coal")]
@@ -508,7 +512,7 @@ rotation = Vector3(0, 2.6, 0)
 
 [node name="CoalRock3" parent="Nodes" instance=ExtResource("52_coal")]
 save_id = &"coal_rock_3"
-position = Vector3(44, 0.17, 12)
+position = Vector3(44, 0.06, 12)
 rotation = Vector3(0, 4.4, 0)
 
 [node name="GoldRock1" parent="Nodes" instance=ExtResource("53_gold")]

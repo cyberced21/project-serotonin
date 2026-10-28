@@ -44,6 +44,14 @@ const WARP := 38.0                      # how far (m) the hills' noise is pushed
 const VALLEY_FLOOR := 0.22
 const VALLEY_HALF := 5.0
 const VALLEY_RAMP := 42.0
+## The creek (WorldMap.CREEK) runs down a vale of its own: the hills keep this share of their
+## height along it, easing back over CREEK_VALE. Its channel is CREEK_DEPTH deep under the water
+## (CREEK_POOL_DEPTH in the pools), and its banks ease up over CREEK_BANK.
+const CREEK_VALE_FLOOR := 0.05
+const CREEK_VALE := 48.0
+const CREEK_DEPTH := 0.55
+const CREEK_POOL_DEPTH := 1.2
+const CREEK_BANK := 8.0
 ## The world's edge rises into higher hills so the valley feels closed in, not cut off.
 const RIM_WIDTH := 95.0
 const RIM_HEIGHT := 24.0
@@ -159,6 +167,7 @@ func _run() -> void:
 			h[y * SIZE + x] = _biomes(w, base[y * SIZE + x]) + (_peak(w) + _rim(w)) * _off_quarry(w)
 	_glades(h)
 	_relax(h)
+	_carve_creek(h)
 
 	var ring := _make_route(WorldMap.RING, true, WorldMap.ROAD_HALF_WIDTH, ROAD_GRADE, 40.0, h)
 	_bank(ring)
@@ -256,6 +265,8 @@ func _height(w: Vector2) -> float:
 	for path in [PATH, LAKE_PATH]:
 		var v := smoothstep(VALLEY_HALF, VALLEY_HALF + VALLEY_RAMP, _polyline_distance(w, path))
 		outside *= lerpf(VALLEY_FLOOR, 1.0, v)
+	var c := smoothstep(WorldMap.CREEK_HALF_WIDTH, CREEK_VALE, _polyline_distance(w, WorldMap.CREEK))
+	outside *= lerpf(CREEK_VALE_FLOOR, 1.0, c)
 	var h := outside * _hills(w)
 	for pond in PONDS:
 		h = _pond(w, h, pond, _shore)
@@ -653,6 +664,32 @@ func _collect(node: Node, xform: Transform3D, depth: int, out: Array[Vector2]) -
 		out.append(Vector2(t.origin.x, t.origin.z))
 		if depth < 2:
 			_collect(child, t, depth + 1, out)
+
+
+## The creek's channel along its vale: a rounded bed under the water (deeper in the pools), soft
+## banks easing up to the ground. Level water the whole way, so the bed only ever goes down.
+func _carve_creek(h: PackedFloat32Array) -> void:
+	var pts := WorldMap.creek()
+	var half := WorldMap.CREEK_HALF_WIDTH
+	var nearest: Dictionary[int, float] = {}
+	for p in pts:
+		_for_pixels_near(p, half + CREEK_BANK, func(i: int, w: Vector2) -> void:
+			var d := w.distance_to(p)
+			if d < nearest.get(i, INF):
+				nearest[i] = d)
+	for i in nearest:
+		var d: float = nearest[i]
+		var w := _world(i % SIZE, i / SIZE)
+		if d < half:
+			var depth := CREEK_DEPTH
+			for pool in WorldMap.CREEK_POOLS:
+				depth = lerpf(depth, CREEK_POOL_DEPTH, 1.0 - smoothstep(0.0, WorldMap.CREEK_POOL_RADIUS, w.distance_to(pool)))
+			var u := d / half
+			h[i] = minf(h[i], WATER_LEVEL - depth * (1.0 - u * u))
+		else:
+			var t := smoothstep(half, half + CREEK_BANK, d)
+			var bank := WATER_LEVEL + 0.1 + (d - half) * 0.15
+			h[i] = minf(h[i], lerpf(bank, h[i], t))
 
 
 ## Rewrites the Y of main.tscn's resource nodes (children of "Nodes") to the new ground: a text
