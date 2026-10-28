@@ -61,7 +61,7 @@ func _update() -> void:
 		sun.light_color = sun_color.lerp(look.moon_light, night).lerp(tw_light, afterglow) * Biome.sun_tint
 		var energy := lerpf(look.low_energy, look.noon_energy, clampf(h * 1.5, 0.0, 1.0))
 		sun.light_energy = lerpf(lerpf(look.moon_energy, look.low_energy, afterglow), energy, day)
-		sun.shadow_opacity = lerpf(0.55, 1.0, day)
+		sun.shadow_opacity = lerpf(0.55, look.shadow_strength, day)
 		# light shafts through the mist: strongest with the sun low
 		sun.light_volumetric_fog_energy = lerpf(0.4, lerpf(2.4, 0.9, clampf(h * 2.0, 0.0, 1.0)), day)
 
@@ -79,6 +79,7 @@ func _update() -> void:
 		_sky.set_shader_parameter("sun_size", look.sun_size)
 		_sky.set_shader_parameter("sun_brightness", look.sun_brightness)
 		_sky.set_shader_parameter("sun_halo", look.sun_halo)
+		_sky.set_shader_parameter("sun_halo_falloff", look.sun_halo_falloff)
 		_sky.set_shader_parameter("sun_glow", look.sun_glow)
 		_sky.set_shader_parameter("sun_glow_low", look.sun_glow_low)
 	if environment:
@@ -95,7 +96,7 @@ func _update() -> void:
 		var thicker := 1.0 + look.morning_mist * mist_peak + look.night_mist * night
 		env.volumetric_fog_density = look.mist_density * Biome.mist * thicker
 		env.volumetric_fog_albedo = (horizon * Biome.fog_tint).lerp(Color.WHITE, 0.45)
-		_update_grade(env, look, morning, dusk, night)
+		_update_grade(env, look, morning, dusk, day)
 
 	# lamps, lanterns and windows
 	var glow := smoothstep(0.15, 0.85, night)
@@ -115,12 +116,14 @@ func _update() -> void:
 
 
 ## Rebuilds the colour-grading table when the grade (biome tints times the time of day's) moves.
-func _update_grade(env: Environment, look: SkyLook, morning: bool, dusk: float, night: float) -> void:
+func _update_grade(env: Environment, look: SkyLook, morning: bool, dusk: float, day: float) -> void:
 	var dark := look.sunrise_grade_dark if morning else look.sunset_grade_dark
 	var bright := look.sunrise_grade_bright if morning else look.sunset_grade_bright
-	var deep := night * (1.0 - dusk)  # full night's grade once the twilight has gone
-	var shadows := Biome.shadow_tint * Color.WHITE.lerp(dark, dusk).lerp(look.night_grade_dark, deep)
-	var highlights := Biome.highlight_tint * Color.WHITE.lerp(bright, dusk).lerp(look.night_grade_bright, deep)
+	# night's grade, or noon's by day, then the twilight's over either
+	var shadows := look.night_grade_dark.lerp(look.noon_grade_dark, day).lerp(dark, dusk)
+	var highlights := look.night_grade_bright.lerp(look.noon_grade_bright, day).lerp(bright, dusk)
+	shadows *= Biome.shadow_tint
+	highlights *= Biome.highlight_tint
 	if env.adjustment_color_correction and _close(shadows, _grade[0]) and _close(highlights, _grade[1]):
 		return
 	_grade = [shadows, highlights]

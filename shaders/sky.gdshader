@@ -17,6 +17,7 @@ uniform float moon_size = 0.045;
 // The sun disc's brightness, its tight halo, and the wide warm glow round it (always / extra when low).
 uniform float sun_brightness = 3.0;
 uniform float sun_halo = 0.25;
+uniform float sun_halo_falloff = 9.0;
 uniform float sun_glow = 0.08;
 uniform float sun_glow_low = 0.22;
 // Fraction of sky cells holding a star (lower = fewer).
@@ -105,7 +106,7 @@ void sky() {
 			float a = acos(clamp(dot(d, LIGHT0_DIRECTION), -1.0, 1.0));
 			float sun = 1.0 - smoothstep(sun_size * 0.8, sun_size, a);
 			float moon = 1.0 - smoothstep(moon_size * 0.9, moon_size, a);
-			float halo = exp(-a * 9.0);
+			float halo = exp(-a * sun_halo_falloff);
 			col += (1.0 - night) * (vec3(1.0, 0.95, 0.85) * sun * sun_brightness + LIGHT0_COLOR * halo * sun_halo);
 			col = mix(col, vec3(0.92, 0.94, 1.0), moon * night);
 			col += vec3(0.5, 0.6, 0.9) * halo * 0.15 * night;

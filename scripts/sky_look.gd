@@ -12,12 +12,17 @@ static var _active: SkyLook
 @export var day_top := Color(0.36, 0.47, 0.62)
 @export var day_horizon := Color(0.66, 0.74, 0.78)
 ## The sun's colour high in the sky (near the horizon it takes the sunrise / sunset light).
-@export var noon_light := Color(1.0, 0.97, 0.9)
+@export var noon_light := Color(1.0, 0.95, 0.86)
 ## The sun's energy at noon, and when low.
-@export_range(0.0, 2.0, 0.01) var noon_energy := 1.0
+@export_range(0.0, 2.0, 0.01) var noon_energy := 0.82
 @export_range(0.0, 2.0, 0.01) var low_energy := 0.55
-## Ambient (sky) light by day.
-@export_range(0.0, 2.0, 0.01) var day_ambient := 1.0
+## Ambient (sky) light by day: higher lifts the shadows (softer, less contrast).
+@export_range(0.0, 2.0, 0.01) var day_ambient := 1.15
+## How dark the sun's shadows get by day (1 = full).
+@export_range(0.0, 1.0, 0.01) var shadow_strength := 0.85
+## The grade by day, away from sunrise and sunset: a faint warm tint.
+@export var noon_grade_dark := Color(1.02, 1.0, 0.97)
+@export var noon_grade_bright := Color(1.03, 1.0, 0.94)
 
 @export_group("Twilight")
 ## How far the sunrise / sunset colours reach into the day and into the night (fractions of a day;
@@ -63,19 +68,20 @@ static var _active: SkyLook
 
 @export_group("Sun")
 ## The disc's angular radius (radians) and brightness.
-@export_range(0.005, 0.1, 0.001) var sun_size := 0.035
-@export_range(0.0, 4.0, 0.05) var sun_brightness := 3.0
-## The tight halo round the disc.
-@export_range(0.0, 1.0, 0.01) var sun_halo := 0.25
+@export_range(0.005, 0.1, 0.001) var sun_size := 0.03
+@export_range(0.0, 4.0, 0.05) var sun_brightness := 1.6
+## The tight halo round the disc: how bright, and how fast it falls off (higher = tighter).
+@export_range(0.0, 1.0, 0.01) var sun_halo := 0.12
+@export_range(2.0, 30.0, 0.5) var sun_halo_falloff := 14.0
 ## The wide warm glow round the sun: always, and extra when it's low.
-@export_range(0.0, 0.5, 0.01) var sun_glow := 0.08
+@export_range(0.0, 0.5, 0.01) var sun_glow := 0.04
 @export_range(0.0, 0.5, 0.01) var sun_glow_low := 0.22
 
 @export_group("Exposure")
-@export_range(0.5, 2.0, 0.01) var exposure := 1.1
-## Bloom: how bright something must be to glow, and how strongly it does.
-@export_range(0.0, 4.0, 0.05) var glow_threshold := 0.9
-@export_range(0.0, 2.0, 0.01) var glow_intensity := 0.55
+@export_range(0.5, 2.0, 0.01) var exposure := 0.95
+## Bloom: how bright something must be to glow (lamps are about 2), and how strongly it does.
+@export_range(0.0, 4.0, 0.05) var glow_threshold := 1.2
+@export_range(0.0, 2.0, 0.01) var glow_intensity := 0.45
 
 @export_group("Fog")
 ## Distance fog density (exponential: about half gone at 0.7 / density metres).
