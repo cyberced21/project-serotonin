@@ -29,9 +29,10 @@ const GHOST_OUTLINE_STENCIL := preload("res://shaders/ghost_outline_stencil.gdsh
 const GHOST_MASK_STENCIL := preload("res://shaders/ghost_mask_stencil.gdshader")
 const DEFLECT_SFX := preload("res://audio/stone_hit.tres")
 const DEFLECT_COLOR := Color("ff8a7a")
-## The tool's ring per tier above stone (_tool_ring), from tools/synth_forge.py.
-const TOOL_RINGS: Array[AudioStream] = [preload("res://audio/forge/ring_copper.wav"),
-	preload("res://audio/forge/ring_iron.wav"), preload("res://audio/forge/ring_crystal.wav")]
+## A better tool sounds like the same tool, a touch heavier: per tier above stone its hit plays
+## this much lower (pitch share) and louder (dB).
+const TIER_PITCH := 0.015
+const TIER_DB := 0.75
 ## The sparks' colour per tool tier: stone and copper the usual hot orange (blank), iron white-hot,
 ## crystal violet.
 const SPARK_TINTS: Array[Color] = [Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(1.0, 0.95, 0.82), Color(0.82, 0.6, 1.0)]
@@ -304,7 +305,6 @@ var last_impact := 1.0
 var _crack_sound := 0  # CRACK_* : what this hit's crack did, for _hit_sounds
 var _crack_step := 0  # ... and how far along it is (each step a little higher)
 var _cut := 0.0  # the fraction of a hit (under-levelled) carried over to the next one
-var _ring: AudioStreamPlayer3D  # the tool's ring (_tool_ring), made on first use
 var _streak := 0  # biting hits in a row on this node (the Crystal Forge's streak_double)
 var _last_hit_msec := -100000
 var _surfaces: Array[GeometryInstance3D] = []
@@ -555,13 +555,11 @@ func hit(info: HitInfo) -> bool:
 		collapsed = _knock_out(info, maxi(cuts, 1) + (1 if double else 0))  # (sets hits_left)
 	var stress := 1.0 - float(hits_left) / max_hits  # 0 -> 1 as it depletes
 
-	var pitch := 1.0 + stress * stress_pitch - (0.12 if double else 0.0)
+	var pitch := 1.0 + stress * stress_pitch - (0.12 if double else 0.0) - TIER_PITCH * _tool_tier()
 	_crack_sound = 0  # (set by the crack code below; the sounds are played together at the end)
 	_flash()
 	_nudge(info.away() * (1.6 if double else 1.0))
 	_hit_effects(info, 2.0 if fresh else 1.5 if tip or _clean else 1.0)
-	if bit:
-		_tool_ring(info)
 	if fresh:
 		ForgeCutscene.first_swing(get_parent(), info.position, info.normal, ForgeCutscene.tier_color(Tools.tier(tool_type)))
 	Juice.shake(shake_hit + stress * 1.5 + (1.5 if double else 0.0))
@@ -625,7 +623,7 @@ func pull(info: HitInfo) -> void:
 func _hit_sounds(info: HitInfo, pitch: float, double: bool, split: bool) -> void:
 	var duck := HIT_DUCK_SPLIT if split or hits_left == 0 else HIT_DUCK_TIP if _crack_sound == CRACK_TIP or _clean else 0.0
 	if hit_layers:
-		Sfx.play_at(hit_layers, info.position, pitch, duck + (2.0 if double else 0.0))
+		Sfx.play_at(hit_layers, info.position, pitch, duck + (2.0 if double else 0.0) + TIER_DB * _tool_tier())
 	else:
 		_play(audio, hit_sfx, pitch)
 	if split:
@@ -645,21 +643,9 @@ func _deflect(info: HitInfo) -> void:
 	PopupText.spawn(get_parent(), _popup_pos(), needs_text(), DEFLECT_COLOR)
 
 
-## The tool's own ring under a biting hit: copper dull, iron bright, crystal a glassy chime.
-func _tool_ring(info: HitInfo) -> void:
-	var tier := Tools.tier(tool_type) if Tools.LADDER.has(tool_type) else 0
-	if tier < 1 or tier > TOOL_RINGS.size():
-		return
-	if _ring == null:
-		_ring = AudioStreamPlayer3D.new()
-		_ring.bus = &"SFX"
-		_ring.unit_size = 4.0
-		add_child(_ring)
-	_ring.global_position = info.position
-	_ring.stream = TOOL_RINGS[tier - 1]
-	_ring.volume_db = -10.0
-	_ring.pitch_scale = randf_range(0.95, 1.05)
-	_ring.play()
+## How many tiers your tool of this node's type is above stone (0 for untiered tools).
+func _tool_tier() -> int:
+	return Tools.tier(tool_type) if Tools.LADDER.has(tool_type) else 0
 
 
 func _award_xp(amount: int, big := false) -> void:
