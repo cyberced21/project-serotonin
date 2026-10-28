@@ -6,7 +6,7 @@ its own plan (and branch) when we start it, after a grill session on its open qu
 
 Status: **chunks 1–3 built, merged, released v0.3 and playtested** (2026-10-28):
 [mood-pass.md](mood-pass.md), [calm-feel.md](calm-feel.md), [cozy-sound.md](cozy-sound.md).
-Chunk 4 grilled 2026-10-28 → [lamps.md](lamps.md). Open questions at the end of each section.
+Chunk 4 built 2026-10-28 → [lamps.md](lamps.md), PR #10. Chunk 5 grilled → [projects.md](projects.md). Open questions at the end of each section.
 
 ## The pillars
 
@@ -106,6 +106,9 @@ Open: how do you get the dog (found at the start, adopted from a villager, a rew
 Name it yourself? Breed/look options?
 
 ## 5. A world that grows with what you spend
+
+**Grilled 2026-10-28 → [projects.md](projects.md)** (projects and decorations; the landslide, market
+and café are chunks 7 and 8).
 
 Today's spending is building tiers (`Village` autoload, `BuildingDef` tiers). This extends it.
 
