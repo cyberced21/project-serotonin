@@ -73,6 +73,11 @@ func twilight() -> float:
 	return 1.0 - smoothstep(0.0, TWILIGHT, d)
 
 
+## How dark it is, as the Sky lights it: 0 by day, 1 once the sun is well down (lamps catch on it).
+func darkness() -> float:
+	return 1.0 - smoothstep(-0.12, 0.15, sun_height())
+
+
 ## Like twilight(), for the sky's colours: wider, and lopsided. `day_side` and `night_side` are how
 ## far it reaches into the day and into the night (fractions of a day). 1 at sunrise / sunset.
 func sky_twilight(day_side: float, night_side: float) -> float:

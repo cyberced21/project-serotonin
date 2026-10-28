@@ -56,6 +56,7 @@
 [ext_resource type="PackedScene" path="res://scenes/coal_rock.tscn" id="52_coal"]
 [ext_resource type="PackedScene" path="res://scenes/gold_rock.tscn" id="53_gold"]
 [ext_resource type="Script" path="res://scripts/grass_field.gd" id="90_grass_field"]
+[ext_resource type="Script" path="res://scripts/path_lamps.gd" id="91_path_lamps"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
@@ -672,6 +673,9 @@ model = ExtResource("22_crates")
 [node name="Goldmeadow" parent="." instance=ExtResource("59_goldmeadow")]
 
 [node name="Road" parent="." instance=ExtResource("60_road")]
+
+[node name="PathLamps" type="Node3D" parent="."]
+script = ExtResource("91_path_lamps")
 
 [node name="Scenery" type="Node3D" parent="."]
 script = ExtResource("27_scatter")

@@ -2,8 +2,8 @@
 
 Chunk 1 of [cozy.md](cozy.md). Grilled 2026-10-27. Branch `mood` off `main` when started.
 
-Status: **all 6 phases built** 2026-10-27 on branch `mood`; checked from screenshots only
-(`docs/images/graphics/mood/`, contact sheet `_sheet.png`), **not played**. Tune by eye in the debug
+Status: **all 6 phases built** 2026-10-27 on branch `mood`, merged to main and released v0.3;
+**playtested 2026-10-28**, approved (screenshots in `docs/images/graphics/mood/`). Tune by eye in the debug
 menu's Sky tab (F1), then Save: it writes `data/sky_look.tres`.
 
 ### Built, and what changed on the way

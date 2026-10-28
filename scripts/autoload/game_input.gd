@@ -19,6 +19,9 @@ const BINDINGS := {
 	"skills": [KEY_K],
 	# the world map (scripts/map)
 	"map": [KEY_M],
+	# the lantern you carry: light it / put it out, hold to raise it (scripts/lantern.gd)
+	"lantern": [KEY_L],
+	"raise_lantern": [KEY_F],
 	# debug builds only
 	"debug_menu": [KEY_F1],
 	"debug_skip_time": [KEY_F6],

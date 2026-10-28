@@ -13,7 +13,7 @@ level fix is `Ambience.TRIM`, its place in the mix `Ambience.MIX`.
 | peak.mp3 | Frostpeak, always (weather) | Wind singing in the mountain | felix.blume | https://freesound.org/people/felix.blume/sounds/165526/ |
 | mine.mp3 | the quarry, always (weather) | archi_soundscape_cavern3 | ElanHickler | https://freesound.org/people/ElanHickler/sounds/38963/ |
 | evening.mp3 | around sunset, everywhere | evening grassland | cupido-1 | https://freesound.org/people/cupido-1/sounds/434858/ |
-| night.mp3 | at night, everywhere | Cricket chirping | GB01 | https://freesound.org/people/GB01/sounds/530477/ |
+| night.mp3 | at night: a faint wash everywhere, and the voice of each cricket spot near you (Ambience, NatureSpots) | Cricket chirping | GB01 | https://freesound.org/people/GB01/sounds/530477/ |
 | owl.mp3 | now and then at night | owl_hooting 002-070 | Gerent | https://freesound.org/people/Gerent/sounds/558396/ |
 | wolf.mp3 | rarely, far off at night, away from the village | Howl_Echo | taure | https://freesound.org/people/taure/sounds/380156/ |
 | frogs.mp3 | at still water from dusk | Frogs on a summer night 3 | macdaddyno1 | https://freesound.org/people/macdaddyno1/sounds/396490/ |

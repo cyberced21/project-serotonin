@@ -31,6 +31,7 @@ var _banner_tween: Tween
 
 
 func _ready() -> void:
+	add_to_group("hud")
 	for id in Inventory.items:  # rows for anything already held after loading a save
 		if Inventory.count(id) > 0:
 			_add_row(id)
@@ -194,10 +195,16 @@ func _on_xp_gained(skill: StringName, _amount: int, _total: int) -> void:
 
 
 func _on_leveled_up(skill: StringName, lvl: int) -> void:
-	_banner.text = "%s %d!" % [Skills.display_name(skill), lvl]
-	_banner.add_theme_color_override("font_color", Skills.color(skill))
 	var perk := Perks.perk_at(skill, lvl)
-	_perk_line.text = "%s: %s" % [perk["name"], perk["text"]] if not perk.is_empty() else ""
+	announce("%s %d!" % [Skills.display_name(skill), lvl],
+			"%s: %s" % [perk["name"], perk["text"]] if not perk.is_empty() else "", Skills.color(skill), &"level_up")
+
+
+## The big centre banner, with a line under it: a level-up, a gift. `cue`: a Music moment cue.
+func announce(title: String, line: String, color: Color, cue: StringName = &"") -> void:
+	_banner.text = title
+	_banner.add_theme_color_override("font_color", color)
+	_perk_line.text = line
 	if _banner_tween:
 		_banner_tween.kill()
 	_banner.modulate.a = 0.0
@@ -206,4 +213,5 @@ func _on_leveled_up(skill: StringName, lvl: int) -> void:
 	_banner_tween.tween_property(_banner, "modulate:a", 1.0, 0.5).set_trans(Tween.TRANS_SINE)
 	_banner_tween.tween_interval(3.0)  # long enough to read the perk line
 	_banner_tween.tween_property(_banner, "modulate:a", 0.0, 0.8).set_trans(Tween.TRANS_SINE)
-	Music.play_cue(&"level_up")
+	if cue != &"":
+		Music.play_cue(cue)

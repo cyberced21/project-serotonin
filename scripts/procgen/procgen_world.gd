@@ -74,6 +74,10 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_build_village()
 	ProcgenLandmarks.build(self, map)
+	var lamps := PathLamps.new()  # before the scenery, which keeps clear of the posts
+	lamps.name = "PathLamps"
+	lamps.procgen(map)
+	add_child(lamps)
 	Biome.locator = func(p: Vector3) -> StringName: return map.biome_at(Vector2(p.x, p.z))
 	if not map.quarry.is_empty():
 		Biome.quarry_rim_height = map.quarry["rim_height"]

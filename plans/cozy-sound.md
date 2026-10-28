@@ -3,11 +3,11 @@
 Chunk 3 of [cozy.md](cozy.md) (its section 9, plus section 2's night ambiance). Grilled
 2026-10-27. Branch `cozy-sound` off `main`.
 
-Status: **phases 1 and 2 built** 2026-10-27: the Music bus and wave system, and ten picked CC0
-tracks, one per slot (audio/music/SOURCES.md; levels from `tools/measure_music.gd`). **Not heard
-in game yet.** The shortlist page (https://claude.ai/artifact/KFsWkG9bSzt6AWRfhzDy6H) holds 46
-candidates if a slot wants more variety later. Next: phase 3, moment cues (pick). Most phases stop
-for a pick by ear: I can measure sounds, not hear them.
+Status: **all 10 phases built** 2026-10-27/28, plus playtest fixes; merged to main and released
+v0.3. **Playtested 2026-10-28**, approved: it sounds great. Music is ten CC0 tracks, one per slot
+(audio/music/SOURCES.md; levels from `tools/measure_music.gd`). The shortlist page
+(https://claude.ai/artifact/KFsWkG9bSzt6AWRfhzDy6H) holds 46 candidates if a slot wants more
+variety later.
 
 ## Where we start (2026-10-27)
 
@@ -78,6 +78,10 @@ One commit each; phases marked **(pick)** stop for your choice.
    drifting away from you (cozy section 2's visual half). *Done:* the `Fireflies` autoload, 100
    glowing billboards in one MultiMesh round the player, likelier by still water and in the
    Pinewood; fade in through the evening, gone by about 1 a.m.; `tools/test_fireflies.gd`.
+   *Playtest 2026-10-28:* too many, and tied to you. Now small clusters (3-7) tied to world spots
+   (`NatureSpots`: shores, tree and crop edges), only those within 70 m drawn. The night's crickets
+   likewise: a faint wash plus cricket spots that sing and rest on their own, the nearest few
+   heard through positional voices.
 10. **Reverb per place and a final mix.** Reverb zones per biome (forest, hills, mine/quarry;
     indoors waits for interiors), levels balanced in the real buses (`tools/record_sfx_chain.gd`),
     then an in-game listen. *Done (bar the listen):* the `Acoustics` autoload, one reverb on SFX

@@ -3,11 +3,14 @@ extends Node
 ## audio/ambience/SOURCES.md.
 ##   Beds, looped without a seam (LoopBed), crossfaded with the time of day and where you are:
 ##   the biome's own by day (its BiomeMood.ambience; the meadow's in the wild hills between
-##   biomes), the evening bed around sunset, the night bed after dark. Weather beds (the peak's
+##   biomes), the evening bed around sunset, a faint far night bed after dark. Weather beds (the peak's
 ##   wind, the quarry's air: BiomeMood.ambience_always) carry on at night under the night bed.
 ##   Spot sounds: an owl now and then at night, very rarely a wolf far off (never near the
 ##   village), a dog from the village by day, the village's chatter and the smithy's hammer by
 ##   day, the forge fire always, frogs at the water from dusk.
+##   Crickets: at night they sing from spots in the world (NatureSpots: shores, tree edges,
+##   meadow grass), each one starting and stopping on its own; the few nearest you that are
+##   singing get a positional voice, so you hear them louder as you walk up and fade behind you.
 ##   Water's lapping and streams are WaterBody's own (it asks for a bed with water_bed()).
 ## Everything plays on the Ambience bus; Biome.ambience_duck hushes it (the forge cutscene).
 
@@ -33,6 +36,19 @@ const WOLF_CLEAR := 140.0
 const WOLF_DISTANCE := 90.0
 ## The village's dog, chatter and hammer carry this far (m).
 const VILLAGE_EARSHOT := 110.0
+## The night bed (crickets everywhere) plays this quietly, a far wash under the cricket spots.
+const NIGHT_WASH := 0.25
+## Cricket spots in a world, at least this far apart; how many sing at once near you (voices),
+## full volume within CRICKET_UNIT m, gone by CRICKET_REACH; seconds each one sings and rests
+## [min, max], and how long it takes to start or stop.
+const CRICKET_SPOTS := 130
+const CRICKET_SPACING := 13.0
+const CRICKET_VOICES := 4
+const CRICKET_UNIT := 3.0
+const CRICKET_REACH := 38.0
+const CRICKET_SONG := Vector2(15.0, 50.0)
+const CRICKET_REST := Vector2(8.0, 35.0)
+const CRICKET_FADE := 4.0
 
 var _beds: Dictionary[StringName, LoopBed] = {}
 var _chatter: LoopBed
@@ -48,6 +64,14 @@ var _frog_in := 0.0
 var _village := Vector3.INF
 var _smithy_at := Vector3.INF
 var _village_from: Node = null  # a building of the world it was found in (to notice a new world)
+## Cricket spots: where, singing or resting, seconds left of that, how loud now (0..1).
+var _crickets := PackedVector3Array()
+var _singing: Array[bool] = []
+var _song_left := PackedFloat32Array()
+var _song := PackedFloat32Array()
+var _cricket_world := 0
+var _voices: Array[LoopBed] = []
+var _voice_spot := PackedInt32Array()  # which spot each voice sings for (-1: none)
 
 
 func _ready() -> void:
@@ -61,6 +85,11 @@ func _ready() -> void:
 	_chatter = _bed(load(DIR + "chatter.mp3"), true, 14.0, VILLAGE_EARSHOT)
 	_smithy = _bed(load(DIR + "smithy.mp3"), true, 6.0, 70.0)
 	_fire = _bed(load(DIR + "fire.mp3"), true, 2.5, 18.0)
+	for i in CRICKET_VOICES:
+		var v := _bed(load(DIR + "night.mp3"), true, CRICKET_UNIT, CRICKET_REACH)
+		v.top_level = true
+		_voices.append(v)
+		_voice_spot.append(-1)
 	for i in 4:
 		var p := AudioStreamPlayer3D.new()
 		p.bus = &"Ambience"
@@ -114,12 +143,15 @@ func _process(delta: float) -> void:
 		if Biome.current == &"":
 			targets[here] *= 0.6  # the open hills: a thinner meadow
 	targets[&"evening"] = parts["evening"] * (0.5 if weather else 1.0)
-	targets[&"night"] = parts["night"] * (0.5 if weather else 1.0)
+	targets[&"night"] = parts["night"] * NIGHT_WASH * (0.5 if weather else 1.0)
 	for id in _beds:
 		_beds[id].level = lerpf(_beds[id].level, targets[id] * duck, k)
 	if player == null:
 		_chatter.level = 0.0; _smithy.level = 0.0; _fire.level = 0.0
+		for v in _voices:
+			v.level = 0.0
 		return
+	_crickets_sing(delta, player.global_position, (parts["night"] + parts["evening"] * 0.6) * duck)
 	# the village
 	_find_village()
 	var day: float = parts["day"] + parts["evening"] * 0.5
@@ -153,6 +185,68 @@ func _process(delta: float) -> void:
 			var spot := _frog_spot(at)
 			if spot != Vector3.INF:
 				_shot(&"frogs", spot, 4.0, 40.0)
+
+
+## The cricket spots start and stop singing on their own; the nearest few that sing get a voice.
+## A voice keeps its spot while that one is still among the nearest, fades out before it moves
+## to another, so nothing jumps.
+func _crickets_sing(delta: float, at: Vector3, night: float) -> void:
+	var scene := get_tree().current_scene
+	if scene and scene.get_instance_id() != _cricket_world and not get_tree().get_first_node_in_group("loading_screen"):
+		_cricket_world = scene.get_instance_id()
+		_crickets = NatureSpots.find(get_tree(), CRICKET_SPACING, CRICKET_SPOTS, 0.3, 2)
+		_singing.clear(); _song_left.clear(); _song.clear()
+		for i in _crickets.size():
+			_singing.append(randf() < 0.5)
+			_song_left.append(randf_range(0.0, CRICKET_SONG.y))
+			_song.append(0.0)
+		for k in _voices.size():
+			_voice_spot[k] = -1
+			_voices[k].level = 0.0
+	var near: Array[int] = []
+	var dist: Array[float] = []
+	for i in _crickets.size():
+		_song_left[i] -= delta
+		if _song_left[i] <= 0.0:
+			_singing[i] = not _singing[i]
+			var span := CRICKET_SONG if _singing[i] else CRICKET_REST
+			_song_left[i] = randf_range(span.x, span.y)
+		_song[i] = move_toward(_song[i], 1.0 if _singing[i] else 0.0, delta / CRICKET_FADE)
+		var d := _crickets[i].distance_to(at)
+		if _song[i] > 0.01 and d < CRICKET_REACH:
+			var j := 0
+			while j < dist.size() and dist[j] < d:
+				j += 1
+			near.insert(j, i)
+			dist.insert(j, d)
+	near = near.slice(0, CRICKET_VOICES)
+	var k := 1.0 - exp(-delta * 2.0)
+	for v in _voices.size():
+		var spot := _voice_spot[v]
+		if spot >= 0 and not near.has(spot):
+			_voices[v].level = lerpf(_voices[v].level, 0.0, k)
+			if _voices[v].level < 0.01:
+				_voice_spot[v] = -1  # free for another spot
+		elif spot >= 0:
+			_voices[v].level = lerpf(_voices[v].level, _song[spot] * night, k)
+	for i in near:
+		if _voice_spot.has(i):
+			continue
+		for v in _voices.size():
+			if _voice_spot[v] == -1:
+				_voice_spot[v] = i
+				_voices[v].level = 0.0
+				_voices[v].global_position = _crickets[i] + Vector3.UP * 0.3
+				break
+
+
+## How many cricket spots are singing near `at` right now, and which voices play (tests).
+func crickets_near(at: Vector3) -> int:
+	var n := 0
+	for i in _crickets.size():
+		if _song[i] > 0.01 and _crickets[i].distance_to(at) < CRICKET_REACH:
+			n += 1
+	return n
 
 
 ## A one-shot at `pos`, round-robin over a few positional players.

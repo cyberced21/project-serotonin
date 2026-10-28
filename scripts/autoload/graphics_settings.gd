@@ -109,7 +109,7 @@ func _apply_to(n: Node) -> void:
 		sun.directional_shadow_mode = (DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 				if int(get_value(&"shadow_splits")) >= 4 else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS)
 		sun.directional_shadow_blend_splits = int(get_value(&"shadow_splits")) >= 4
-	elif n is OmniLight3D and n.is_in_group("night_light"):  # lamps and lanterns
+	elif n is OmniLight3D and (n.is_in_group("night_light") or n.is_in_group("path_light")):  # lamps
 		(n as OmniLight3D).shadow_enabled = get_value(&"light_shadows")
 
 

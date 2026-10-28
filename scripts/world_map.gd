@@ -67,6 +67,11 @@ const SPURS: Array = [
 	[Vector2(128, 96), Vector2(145, 125), Vector2(160, 150)],  # into the field
 ]
 
+## The dirt paths from the clearing (keep in sync with tools/generate_test_terrain.gd's PATH and
+## LAKE_PATH): over the pass into the village square, and south over the hills to the lake shore.
+const VILLAGE_PATH: Array[Vector2] = [Vector2(22, -2), Vector2(42, 6), Vector2(62, 20), Vector2(80, 34), Vector2(100, 40)]
+const LAKE_PATH: Array[Vector2] = [Vector2(-3, 16), Vector2(-6, 32), Vector2(-11, 48), Vector2(-15, 59)]
+
 const QUARRY_CENTER_3 := Vector3(-175, 0, -15)
 ## Debug-menu teleports: name -> [where, look at].
 const LANDMARKS := {
@@ -108,4 +113,3 @@ static func ring() -> PackedVector2Array:
 	if _ring.is_empty():
 		_ring = spline(RING, true)
 	return _ring
-

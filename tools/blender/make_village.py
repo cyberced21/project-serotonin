@@ -1068,6 +1068,41 @@ def lamp_post():
     export(os.path.join("village", "props", "lamp_post"))
 
 
+def lamp_post_rustic():
+    """The far roads' lamp: a rough leaning log with a bracket, a lantern hanging from it on a
+    short chain, and a few stones heaped round its foot."""
+    reset()
+    k = Kit("", 606)
+    k.add("Post", prism(7, 0.09, 0.07, 2.45), ("wood.3", "wood.3", "wood.2"), (0, 0, 1.22), (0.03, -0.02, 0))
+    k.box("Arm", (0.6, 0.06, 0.07), (0.27, 0, 2.3), "wood.3")
+    k.box("Brace", (0.38, 0.05, 0.05), (0.14, 0, 2.12), "wood.2", rot=(0, 0.75, 0))
+    k.box("Chain", (0.02, 0.02, 0.16), (0.5, 0, 2.19), "neutral.1")
+    k.add("Cap", prism(4, 0.13, 0.03, 0.1), ("neutral.1", "neutral.1", "neutral.1"), (0.5, 0, 2.07), (0, 0, math.pi / 4))
+    k.box("Lamp", (0.15, 0.15, 0.2), (0.5, 0, 1.92), ("neutral.1", "accent.3", "neutral.1"))
+    k.box("Base", (0.18, 0.18, 0.03), (0.5, 0, 1.8), "neutral.1")
+    for i, (x, y, s) in enumerate(((0.16, 0.05, 0.16), (-0.12, 0.12, 0.13), (0.02, -0.16, 0.14), (-0.14, -0.08, 0.1))):
+        k.box("Stone", (s, s * 0.9, s * 0.7), (x, y, s * 0.3), ("neutral.4", "neutral.3", "neutral.3"),
+              rot=(0, 0, i * 1.3), jit=0.02)
+    export(os.path.join("village", "props", "lamp_post_rustic"))
+
+
+def lantern():
+    """The lantern you carry (models/lantern.glb): a small iron-framed lantern, origin at the top
+    of its handle ring, where it hangs from the belt (or the hand) and swings from."""
+    reset()
+    k = Kit("", 607)
+    iron = ("neutral.4", "neutral.3", "neutral.2")
+    k.add("Ring", prism(8, 0.035, 0.035, 0.012), iron, (0, 0, -0.03), (math.pi / 2, 0, 0))
+    k.add("Cap", prism(6, 0.075, 0.02, 0.06), iron, (0, 0, -0.08))
+    k.add("Rim", prism(6, 0.075, 0.075, 0.015), iron, (0, 0, -0.115))
+    k.add("Lamp", prism(6, 0.06, 0.06, 0.13), ("neutral.3", "accent.3", "accent.3"), (0, 0, -0.19))
+    for i in range(3):
+        a = i * math.tau / 3 + math.pi / 6
+        k.box("Bar", (0.012, 0.012, 0.14), (math.cos(a) * 0.066, math.sin(a) * 0.066, -0.19), iron)
+    k.add("Base", prism(6, 0.08, 0.08, 0.025), iron, (0, 0, -0.265))
+    export("lantern")
+
+
 def barrel_prop():
     reset()
     k = Kit("", 603)
@@ -1103,6 +1138,6 @@ only = sys.argv[sys.argv.index("--") + 3:]  # optional: names of the builders to
 for build in (woodcutter, smithy, fisher, town_hall, baker_cottage, prospector_cottage,
               woodcutter_villager, smith_villager, fisher_villager, mayor_villager,
               baker_villager, prospector_villager,
-              bench, lamp_post, barrel_prop, crate_prop, signpost):
+              bench, lamp_post, lamp_post_rustic, lantern, barrel_prop, crate_prop, signpost):
     if not only or build.__name__ in only:
         build()

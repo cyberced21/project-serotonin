@@ -38,6 +38,7 @@ var _skill_labels: Dictionary[StringName, Label] = {}
 var _tool_labels: Dictionary[StringName, Label] = {}
 var _village_box: VBoxContainer
 var _perks: Label
+var _lamps_box: VBoxContainer
 var _time_slider: HSlider
 var _time_label: Label
 var _dragging_time := false
@@ -85,6 +86,7 @@ func open() -> void:
 	if upgrade:
 		upgrade.close()
 	_rebuild_village()  # buildings register when the scene loads, after this autoload
+	_rebuild_lamps()
 	_rebuild_teleports()
 	_refresh_items()
 	_refresh_skills()
@@ -584,7 +586,38 @@ func _build_village() -> Control:
 	_perks = _label(14)
 	_perks.add_theme_color_override("font_color", GOOD)
 	box.add_child(_perks)
+	box.add_child(HSeparator.new())
+	box.add_child(_heading("Path lamps"))
+	var lamp_row := HBoxContainer.new()
+	lamp_row.add_child(_button("Light all", func() -> void:
+		Lamps.light_all(true)
+		_rebuild_lamps()))
+	lamp_row.add_child(_button("Village only", func() -> void:
+		Lamps.light_all(false)
+		for id in Lamps.DEFAULT_LIT:
+			Lamps.set_lit(id, true)
+		_rebuild_lamps()))
+	box.add_child(lamp_row)
+	var lantern_row := HBoxContainer.new()
+	lantern_row.add_child(_button("Give the lantern", Lamps.give_lantern))
+	lantern_row.add_child(_button("Take it back", func() -> void:
+		Lamps.has_lantern = false
+		Lamps.set_lantern_lit(false)))
+	box.add_child(lantern_row)
+	_lamps_box = VBoxContainer.new()
+	box.add_child(_lamps_box)
 	return box
+
+
+## A checkbox per road stretch of this world: lit (posts along it) or not.
+func _rebuild_lamps() -> void:
+	for c in _lamps_box.get_children():
+		c.queue_free()
+	for s in Lamps.stretches:
+		var id: StringName = s["id"]
+		var c := _check(s["title"], func(on: bool) -> void: Lamps.set_lit(id, on))
+		c.set_pressed_no_signal(Lamps.is_lit(id))
+		_lamps_box.add_child(c)
 
 
 func _build_world() -> Control:
