@@ -14,6 +14,11 @@ uniform float night : hint_range(0.0, 1.0) = 0.0;
 // Angular radius of the sun / moon discs (radians).
 uniform float sun_size = 0.035;
 uniform float moon_size = 0.045;
+// The sun disc's brightness, its tight halo, and the wide warm glow round it (always / extra when low).
+uniform float sun_brightness = 3.0;
+uniform float sun_halo = 0.25;
+uniform float sun_glow = 0.08;
+uniform float sun_glow_low = 0.22;
 // Fraction of sky cells holding a star (lower = fewer).
 uniform float star_amount = 0.004;
 // Clouds: how much of the sky they cover, how big they are, and how fast they drift (and where).
@@ -59,7 +64,7 @@ void sky() {
 	if (LIGHT0_ENABLED) {
 		float a0 = acos(clamp(dot(d, LIGHT0_DIRECTION), -1.0, 1.0));
 		float low = 1.0 - clamp(LIGHT0_DIRECTION.y * 2.5, 0.0, 1.0);
-		col += LIGHT0_COLOR * exp(-a0 * 2.2) * (0.08 + 0.22 * low) * (1.0 - night);
+		col += LIGHT0_COLOR * exp(-a0 * 2.2) * (sun_glow + sun_glow_low * low) * (1.0 - night);
 	}
 
 	// clouds, on a dome over the world
@@ -97,7 +102,7 @@ void sky() {
 			float sun = 1.0 - smoothstep(sun_size * 0.8, sun_size, a);
 			float moon = 1.0 - smoothstep(moon_size * 0.9, moon_size, a);
 			float halo = exp(-a * 9.0);
-			col += (1.0 - night) * (vec3(1.0, 0.95, 0.85) * sun * 3.0 + LIGHT0_COLOR * halo * 0.25);
+			col += (1.0 - night) * (vec3(1.0, 0.95, 0.85) * sun * sun_brightness + LIGHT0_COLOR * halo * sun_halo);
 			col = mix(col, vec3(0.92, 0.94, 1.0), moon * night);
 			col += vec3(0.5, 0.6, 0.9) * halo * 0.15 * night;
 		}

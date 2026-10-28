@@ -19,6 +19,8 @@ const START_TIME := 0.3  # a new game starts mid-morning
 const DEBUG_SKIP := 0.125
 
 var time := START_TIME
+## Debug: holds the time of day still (the Sky tab, while tuning the look).
+var frozen := false
 var _was_night := false
 
 
@@ -28,6 +30,8 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if frozen:
+		return
 	time = fmod(time + delta / DAY_LENGTH, 1.0)
 	var night := is_night()
 	if night != _was_night:
