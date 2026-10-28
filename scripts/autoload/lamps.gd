@@ -15,6 +15,9 @@ const DEFAULT_LIT: Array[StringName] = [&"village_path"]
 ## The lantern lights itself when it gets this dark (DayNight.darkness()), about when the
 ## village's first path lamps catch, and goes out when it's this light again.
 const LANTERN_DARK := 0.3
+## Without a lantern yet, the elder's gift (LanternGift) starts this long before sunset (a
+## fraction of the day: about a minute of golden hour), or any time through the night.
+const GIFT_BEFORE_SUNSET := 0.06
 
 var _lit: Dictionary[StringName, bool] = {}
 ## The current world's stretches, in order: {id: StringName, title: String} (set by PathLamps).
@@ -23,6 +26,7 @@ var has_lantern := false
 var lantern_lit := false
 var _lantern_at_dusk := true
 var _dark := false
+var _gift: Node
 
 
 func _ready() -> void:
@@ -32,6 +36,7 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	_start_gift()
 	var dark := DayNight.darkness() > LANTERN_DARK
 	if dark == _dark:
 		return
@@ -40,6 +45,20 @@ func _process(_delta: float) -> void:
 		_set_lantern(true)
 	elif not dark and lantern_lit:
 		_set_lantern(false)
+
+
+func _start_gift() -> void:
+	if has_lantern or is_instance_valid(_gift):
+		return
+	var t := DayNight.time
+	if t > DayNight.SUNRISE and t < DayNight.SUNSET - GIFT_BEFORE_SUNSET:
+		return
+	var player := get_tree().get_first_node_in_group("player")
+	if player == null or not player.can_process() or get_tree().get_first_node_in_group("loading_screen"):
+		return
+	_gift = LanternGift.new()
+	_gift.name = "LanternGift"
+	get_tree().current_scene.add_child(_gift)
 
 
 ## Hands you the lantern (the elder's gift at the first dusk), lit if it's dark.
