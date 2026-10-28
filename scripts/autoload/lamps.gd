@@ -20,7 +20,8 @@ const LANTERN_DARK := 0.3
 const GIFT_BEFORE_SUNSET := 0.06
 
 var _lit: Dictionary[StringName, bool] = {}
-## The current world's stretches, in order: {id: StringName, title: String} (set by PathLamps).
+## The current world's stretches, in order: {id: StringName, title: String, closest: float m to
+## the square} (set by PathLamps).
 var stretches: Array[Dictionary] = []
 var has_lantern := false
 var lantern_lit := false

@@ -12,6 +12,8 @@ extends SceneTree
 ##                    noon, sunset and night, facing the low sun, mist on the water at dawn
 ##   --set=lamps      the lamps' views (plans/lamps.md): every road stretch lit and the lantern
 ##                    given, at dusk and night, a dark trail by lantern alone, the lantern raised
+##   --set=projects   the village projects' views (plans/projects.md): the square with none done
+##                    and with all, at dusk, the noticeboard open, the footbridge over the gully
 ##   --look=k=v,k=v   override SkyLook values for this run (numbers only), e.g. --look=water_mist=0.3
 ##   --procgen=SEED   instead: a generated world, three views from its spawn (its save is thrown
 ##                    away afterwards unless it was already there)
@@ -61,8 +63,19 @@ const LAMP_VIEWS := [
 	["clearing_night", Vector3(4, 0, 10), Vector3(0, 0, -20), 0.95],
 ]
 
+## [name, stand, look, time, projects: "none" / "all", "board" to open the noticeboard]
+const PROJECT_VIEWS := [
+	["square_before", Vector3(100, 0, 53), Vector3(100, 0, 38), 0.4, "none"],
+	["square_after", Vector3(100, 0, 53), Vector3(100, 0, 38), 0.4, "all"],
+	["square_after_west", Vector3(86, 0, 32), Vector3(104, 0, 44), 0.45, "all"],
+	["square_dusk", Vector3(100, 0, 53), Vector3(100, 0, 38), 0.865, "all"],
+	["noticeboard", Vector3(107.2, 0, 34.0), Vector3(109, 0, 32), 0.4, "none", "board"],
+	["footbridge", Vector3(182, 0, -22), Vector3(190.2, 0, -21), 0.42, "all"],
+]
+
 var views: Array = VIEWS
 var lamps := false
+var projects := false
 var out_dir := "res://docs/images/graphics/latest"
 var preset := ""
 var only: PackedStringArray = PackedStringArray()
@@ -86,6 +99,9 @@ func _initialize() -> void:
 		elif arg == "--set=lamps":
 			views = LAMP_VIEWS
 			lamps = true
+		elif arg == "--set=projects":
+			views = PROJECT_VIEWS
+			projects = true
 		elif arg.begins_with("--procgen="):
 			procgen_seed = arg.trim_prefix("--procgen=").to_int()
 	_run.call_deferred()
@@ -119,7 +135,12 @@ func _run() -> void:
 		if not only.is_empty() and not only.has(v[0]):
 			continue
 		day_night.set("time", v[3])
-		if (v as Array).size() > 4 and v[4] == "raise":
+		if projects:
+			for pr in root.get_node("Projects").call("all"):
+				root.get_node("Projects").call("set_done", pr["id"], v[4] == "all")
+			root.get_node("Village").call("set_tier", &"town_hall", 1)
+			root.get_node("Inventory").call("add", &"wood", 12)  # a note or two payable
+		if not projects and (v as Array).size() > 4 and v[4] == "raise":
 			Input.action_press("raise_lantern")
 		else:
 			Input.action_release("raise_lantern")
@@ -135,8 +156,14 @@ func _run() -> void:
 		await _wait(0.5)
 		_go(p, v[1], look)  # again, in case anything moved the player on arrival
 		await _wait(2.5)  # past the biome's 1.5 s hold and its card
+		if projects and (v as Array).size() > 5 and v[5] == "board":
+			get_first_node_in_group("noticeboard").call("interact")
+			await _wait(0.6)
 		var fps := await _measure_fps(2.0)
 		await _shot(v[0])
+		var board_panel := get_first_node_in_group("noticeboard_panel")
+		if board_panel:
+			board_panel.call("close")
 		print("VIEW %-16s %5.1f fps   at %s yaw %.2f" % [v[0], fps, p.global_position.snapped(Vector3.ONE * 0.1), p.rotation.y])
 	quit()
 
@@ -184,7 +211,7 @@ func _shot(name: String) -> void:
 	# Text off (HUD, biome card, hints); the tool in hand (Viewmodel) stays.
 	var hidden: Array[CanvasLayer] = []
 	for layer in root.find_children("*", "CanvasLayer", true, false):
-		if layer.name != "Viewmodel" and layer.visible:
+		if layer.name != "Viewmodel" and not layer.is_in_group("noticeboard_panel") and layer.visible:
 			layer.visible = false
 			hidden.append(layer)
 	await process_frame

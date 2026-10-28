@@ -51,6 +51,9 @@ const CRACKLE := preload("res://audio/lamps/crackle.wav")
 const CATCH_RANGE := 35.0
 const CATCH_DB := -12.0
 const CRACKLE_DB := -16.0
+## A road just lit (a project paid for): its posts pop up one after another along it, this many
+## seconds apart, and each catches as it does if it's dark.
+const NEW_ROAD_STEP := 0.35
 
 ## {id: StringName, title: String, pts: PackedVector2Array (world XZ, from the village end),
 ## half_width: float, village: bool}
@@ -66,6 +69,8 @@ var _terrain: Terrain3D
 var _lamps: Array[Dictionary] = []
 var _first := true  # the first frame sets every lamp as it should be, no wave
 var _crackle: LoopBed
+var _lit_before: Dictionary[StringName, bool] = {}  # the stretches lit at the last rebuild
+var _built_once := false
 
 
 func _ready() -> void:
@@ -84,7 +89,10 @@ func _ready() -> void:
 		hearthvale()
 	var listed: Array[Dictionary] = []
 	for s in stretches:
-		listed.append({"id": s["id"], "title": s["title"]})
+		var closest := INF  # how near it comes to the square (cheaper lamps near the village)
+		for p in s["pts"]:
+			closest = minf(closest, (p as Vector2).distance_to(village_center))
+		listed.append({"id": s["id"], "title": s["title"], "closest": closest})
 	Lamps.stretches = listed
 	Lamps.changed.connect(_rebuild)
 	_rebuild()
@@ -111,9 +119,26 @@ func _rebuild() -> void:
 	_lamps.clear()
 	var avoid := _obstacles()
 	var placed := PackedVector2Array()
+	var fresh: Dictionary[StringName, bool] = {}
 	for s in stretches:
 		if Lamps.is_lit(s["id"]):
+			if _built_once and not _lit_before.has(s["id"]):
+				fresh[s["id"]] = true
 			_place_stretch(s, avoid, placed)
+	_lit_before.clear()
+	for s in stretches:
+		if Lamps.is_lit(s["id"]):
+			_lit_before[s["id"]] = true
+	_built_once = true
+	var order: Dictionary[StringName, int] = {}
+	for i in _lamps.size():
+		var prop: Prop = _lamps[i]["prop"]
+		var st: StringName = prop.get_meta("stretch")
+		if fresh.has(st):
+			var k: int = order.get(st, 0)
+			order[st] = k + 1
+			_lamps[i]["delay"] = 0.4 + k * NEW_ROAD_STEP
+			_pop_in(prop, _lamps[i]["delay"])
 	var farthest := 1.0
 	for p in placed:
 		farthest = maxf(farthest, p.distance_to(village_center))
@@ -127,6 +152,9 @@ func _process(delta: float) -> void:
 	var t := Time.get_ticks_msec() / 1000.0
 	for lamp in _lamps:
 		var on := night > WAVE_START + float(lamp["wave"]) * WAVE_SPREAD
+		if float(lamp["delay"]) > 0.0:  # a new road's post, not up yet
+			lamp["delay"] = float(lamp["delay"]) - delta
+			on = false
 		lamp["since"] = float(lamp["since"]) + delta
 		if on != lamp["on"]:
 			lamp["on"] = on
@@ -154,6 +182,25 @@ func _process(delta: float) -> void:
 			light.light_energy = level * float(light.get_meta("night_energy", 1.0)) * flicker
 	_first = false
 	_place_crackle()
+
+
+## A new road's post rising out of the ground after `delay` seconds, with a wooden tok.
+func _pop_in(prop: Prop, delay: float) -> void:
+	prop.scale = Vector3.ONE * 0.01
+	var t := prop.create_tween()  # (dies with the post, if the road is rebuilt meanwhile)
+	t.tween_interval(delay)
+	t.tween_callback(func() -> void:
+		var tok := AudioStreamPlayer3D.new()
+		tok.stream = VillageDecor.TOK
+		tok.bus = &"SFX"
+		tok.unit_size = 6.0
+		tok.max_distance = 45.0
+		tok.top_level = true
+		prop.add_child(tok)
+		tok.global_position = prop.global_position
+		tok.finished.connect(tok.queue_free)
+		tok.play())
+	t.tween_property(prop, "scale", Vector3.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _caught(at: Vector3) -> void:
@@ -241,7 +288,8 @@ func _post(at: Vector2, toward_road: Vector2, village: bool, stretch: StringName
 	prop.rotation.y = atan2(-toward_road.y, toward_road.x)  # the arm (+X) reaches over the road
 	prop.set_meta("stretch", stretch)
 	add_child(prop)
-	var lamp := {"glow": [], "lights": [], "wave": 0.0, "on": false, "since": 0.0, "level": 0.0}
+	var lamp := {"glow": [], "lights": [], "wave": 0.0, "on": false, "since": 0.0, "level": 0.0,
+			"delay": 0.0, "prop": prop}
 	for g in prop.find_children("*", "GeometryInstance3D", true, false):
 		if g.is_in_group("night_glow"):
 			g.remove_from_group("night_glow")
@@ -348,7 +396,7 @@ func hearthvale() -> void:
 			pts.append(ring[i])
 			i = (i + 1) % n
 		pts.append(ring[to])
-		stretches.append(_stretch(StringName("ring_%d" % k), "The ring road: %s to %s" % [
+		stretches.append(_stretch(StringName("ring_%d" % k), "The ring road from %s to %s" % [
 				_turn_name(cuts[k][1]), _turn_name(cuts[(k + 1) % cuts.size()][1])], pts, WorldMap.ROAD_HALF_WIDTH))
 	blocked = func(p: Vector2) -> bool: return p.distance_to(WorldMap.GULLY_NEAR) < 14.0
 

@@ -45,6 +45,7 @@ var _tab := Tab.UPGRADE
 
 func _ready() -> void:
 	add_to_group("upgrade_panel")
+	add_to_group("modal_panel")
 	layer = 3
 	_build()
 	_panel.visible = false

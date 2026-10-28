@@ -1086,6 +1086,89 @@ def lamp_post_rustic():
     export(os.path.join("village", "props", "lamp_post_rustic"))
 
 
+def noticeboard():
+    """The village noticeboard (plans/projects.md): a plank board on two posts under a little
+    shingle roof, a few paper notes pinned on it. Faces Blender -Y (Godot +Z)."""
+    reset()
+    k = Kit("", 608)
+    for x in (-0.85, 0.85):
+        k.post("Post", 0.07, 0, 2.3, x, 0, ("wood.3", "wood.3", "wood.2"))
+    k.box("Board", (1.75, 0.07, 1.05), (0, 0, 1.45), ("wood.5", "wood.4", "wood.3"), jit=0.004)
+    k.box("Frame", (1.85, 0.09, 0.08), (0, 0, 2.0), "wood.2")
+    k.box("Frame", (1.85, 0.09, 0.08), (0, 0, 0.9), "wood.2")
+    for x, side in ((0, 1), (0, -1)):
+        k.box("Roof", (2.1, 0.42, 0.04), (0, side * 0.19, 2.42), ("wood.2", "wood.1", "wood.1"), rot=(side * 0.55, 0, 0))
+    k.box("Ridge", (2.15, 0.07, 0.07), (0, 0, 2.53), "wood.1")
+    notes = ((-0.55, 1.68, 0.36, 0.28, 0.05), (-0.05, 1.62, 0.3, 0.38, -0.08), (0.48, 1.7, 0.34, 0.26, 0.1),
+             (-0.42, 1.18, 0.32, 0.3, -0.06), (0.22, 1.2, 0.4, 0.3, 0.04), (0.66, 1.14, 0.22, 0.28, -0.12))
+    for i, (x, z, w, h, rot) in enumerate(notes):
+        paper = ("neutral.7", "neutral.6", "neutral.6") if i % 2 else ("wood.7", "wood.6", "wood.6")
+        k.box("Note", (w, 0.01, h), (x, -0.045, z), paper, rot=(0, rot, 0))
+        k.box("Pin", (0.025, 0.02, 0.025), (x, -0.055, z + h * 0.4), "accent.3")
+    export(os.path.join("village", "props", "noticeboard"))
+
+
+def planter():
+    """A wooden planter full of flowers (the flower boxes project): plank box, dark soil, leafy
+    clumps and bright flower heads."""
+    reset()
+    k = Kit("", 609)
+    rng = random.Random(609)
+    k.box("Box", (1.1, 0.42, 0.4), (0, 0, 0.2), ("wood.5", "wood.4", "wood.3"), jit=0.005)
+    for y in (-0.21, 0.21):
+        k.box("Rim", (1.16, 0.05, 0.05), (0, y, 0.41), "wood.2")
+    k.box("Soil", (1.0, 0.34, 0.04), (0, 0, 0.39), ("wood.0", "wood.0", "wood.0"))
+    for i in range(6):
+        x = -0.42 + i * 0.17 + rng.uniform(-0.03, 0.03)
+        k.add("Leaves", blob(0.13, rng, squash=(1, 0.8, 0.7)), ("leaves.4", "leaves.3", "leaves.2"), (x, rng.uniform(-0.06, 0.06), 0.48))
+        c = rng.choice(("accent.5", "accent.6", "accent.2", "accent.4"))
+        for j in range(2):
+            k.add("Flower", blob(0.05, rng, squash=(1, 1, 0.6)), (c, c, c),
+                  (x + rng.uniform(-0.06, 0.06), rng.uniform(-0.1, 0.1), 0.58 + rng.uniform(0, 0.06)))
+    export(os.path.join("village", "props", "planter"))
+
+
+def well():
+    """The village well: a round stone wall, two posts and a little roof, a crank with the rope
+    down to a bucket. Origin at the middle, on the ground."""
+    reset()
+    k = Kit("", 610)
+    rng = random.Random(610)
+    n = 10
+    for i in range(n):
+        a = i * math.tau / n
+        k.box("Stone", (0.42, 0.24, 0.7), (math.cos(a) * 0.62, math.sin(a) * 0.62, 0.35),
+              ("stone.5", "stone.4", "stone.3"), rot=(0, 0, a + math.pi / 2), jit=0.02)
+    k.add("Water", prism(10, 0.52, 0.52, 0.02), ("accent.4", "accent.4", "accent.4"), (0, 0, 0.45))
+    for x in (-0.72, 0.72):
+        k.post("Post", 0.06, 0.6, 2.0, x, 0, ("wood.3", "wood.3", "wood.2"))
+    k.box("Crank", (1.5, 0.08, 0.08), (0, 0, 1.55), "wood.2")
+    k.box("Handle", (0.06, 0.25, 0.06), (0.8, -0.12, 1.55), "wood.2")
+    k.box("Rope", (0.02, 0.02, 0.6), (0, 0, 1.22), ("neutral.5", "neutral.5", "neutral.4"))
+    k.add("Bucket", prism(8, 0.12, 0.14, 0.2), ("wood.5", "wood.4", "wood.3"), (0, 0, 0.84))
+    for side in (1, -1):
+        k.box("Roof", (1.8, 0.55, 0.04), (0, side * 0.24, 2.12), ("wood.2", "wood.1", "wood.1"), rot=(side * 0.6, 0, 0))
+    k.box("Ridge", (1.85, 0.07, 0.07), (0, 0, 2.27), "wood.1")
+    export(os.path.join("village", "props", "well"))
+
+
+def fountain():
+    """The square's fountain: a low eight-sided stone basin of water, a column with a bowl on top
+    that spills into it. Origin at the middle, on the ground."""
+    reset()
+    k = Kit("", 611)
+    n = 8
+    for i in range(n):
+        a = i * math.tau / n
+        k.box("Basin", (0.95, 0.22, 0.5), (math.cos(a) * 1.25, math.sin(a) * 1.25, 0.25),
+              ("stone.6", "stone.5", "stone.4"), rot=(0, 0, a + math.pi / 2), jit=0.01)
+    k.add("Water", prism(8, 1.2, 1.2, 0.03), ("accent.5", "accent.4", "accent.4"), (0, 0, 0.38), (0, 0, math.pi / 8))
+    k.add("Column", prism(8, 0.18, 0.14, 1.1), ("stone.5", "stone.4", "stone.3"), (0, 0, 0.75))
+    k.add("Bowl", prism(8, 0.25, 0.5, 0.18), ("stone.6", "stone.5", "stone.4"), (0, 0, 1.36))
+    k.add("Spout", prism(6, 0.06, 0.04, 0.25), ("stone.6", "stone.5", "stone.4"), (0, 0, 1.55))
+    export(os.path.join("village", "props", "fountain"))
+
+
 def lantern():
     """The lantern you carry (models/lantern.glb): a small iron-framed lantern, origin at the top
     of its handle ring, where it hangs from the belt (or the hand) and swings from."""
@@ -1138,6 +1221,6 @@ only = sys.argv[sys.argv.index("--") + 3:]  # optional: names of the builders to
 for build in (woodcutter, smithy, fisher, town_hall, baker_cottage, prospector_cottage,
               woodcutter_villager, smith_villager, fisher_villager, mayor_villager,
               baker_villager, prospector_villager,
-              bench, lamp_post, lamp_post_rustic, lantern, barrel_prop, crate_prop, signpost):
+              bench, lamp_post, lamp_post_rustic, lantern, noticeboard, planter, well, fountain, barrel_prop, crate_prop, signpost):
     if not only or build.__name__ in only:
         build()
