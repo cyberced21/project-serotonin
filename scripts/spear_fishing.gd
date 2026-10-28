@@ -8,7 +8,7 @@ extends Node
 ## spear enters the water, along your aim. Every fish inside is skewered (multi-spears are
 ## physical: line up a school). Fish your spear's tier can't take glance off it ("Needs Iron
 ## spear"), and fish you're under-levelled for usually dodge. Caught fish appear
-## on the held spear, wriggling; the hit escalates with each extra fish (hit-stop, shake, rising pitch,
+## on the held spear, wriggling; the hit escalates with each extra fish (shake, rising pitch,
 ## "Double!"); on the yank they flip off into the inventory. Misses splash and scatter fish.
 
 const WORLD_MASK := 1
@@ -214,7 +214,7 @@ func thrust() -> void:
 			_put_on_spear(caught)
 			FishPond.disturb(get_tree(), entry, 2.0)  # the rest of the school bolts
 			_impact(n, xp, entry)
-			# hold: the fish wriggle on the spear (hit-stop stretches this)
+			# hold: the fish wriggle on the spear
 			t = create_tween()
 			t.tween_interval(hold_time)
 			await t.finished
@@ -273,9 +273,8 @@ func _put_on_spear(caught: Array[Fish]) -> void:
 ## Escalating feedback + XP (`xp`: the fish's own, summed) for n fish on one thrust.
 func _impact(n: int, xp: float, at: Vector3) -> void:
 	var gained := Skills.add_xp(&"fishing", roundi(xp * catch_xp * (1.0 + multi_xp_bonus * (n - 1))))
-	Juice.hitstop(0.05 + 0.03 * (n - 1))
-	Juice.shake(2.0 + 1.2 * (n - 1))
-	for i in n:  # one wet thwack per fish, each a little higher (real time, so hit-stop can't delay them)
+	Juice.shake(0.6 + 0.3 * (n - 1))
+	for i in n:  # one wet thwack per fish, each a little higher (real time)
 		get_tree().create_timer(i * 0.05, true, false, true).timeout.connect(
 			_play_at.bind(SPEAR_HIT, at, 1.0 + 0.12 * i, 0.0))
 	var color := Skills.color(&"fishing")

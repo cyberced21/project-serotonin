@@ -329,7 +329,6 @@ func _hook_moment(at: Vector3) -> void:
 	# big enough to read at the far end of a cast
 	var far: float = player.camera.global_position.distance_to(at)
 	PopupText.spawn(player.get_parent(), at + Vector3.UP * (0.5 + far * 0.03), "!", HOOK_COLOR, roundi(14 + far * 3.0))
-	Juice.shake(1.1)
 	_kick(0.4)
 
 
@@ -361,7 +360,6 @@ func _tear_free(f: Fish, why: String, color: Color) -> void:
 	_play_at("res://audio/fishing/snap.tres", at, 1.0, -2.0)
 	splash(player.get_parent(), at, 0.9)
 	_ripple(at, 2.0)
-	Juice.shake(1.2)
 	_kick(-0.5)
 	PopupText.spawn(player.get_parent(), at + Vector3.UP * 0.5, why, color, 7)
 	_retrieve()
@@ -404,8 +402,7 @@ func _yank(f: Fish, timing: float) -> void:
 	if _catch_bonus:
 		count *= 2
 	# the big pull
-	Juice.hitstop(0.1 if _catch_perfect else 0.07)
-	Juice.shake(2.6 if _catch_perfect else 2.0)
+	Juice.shake(1.0 if _catch_perfect else 0.8)
 	_kick(-1.0)
 	_bend = 0.0
 	Sfx.play(load("res://audio/fishing/yank.tres"), 1.0, 0.0)

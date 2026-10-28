@@ -3,7 +3,7 @@ extends Camera3D
 ## First-person camera shake: rotation only (pitch / yaw / roll), never position — moving the
 ## eye feels like being shoved and makes people motion sick. Uses "trauma": each shake adds
 ## trauma, the visible shake is trauma², so small hits stay subtle and big breaks really kick.
-## Uses real time so it keeps shaking during hit-stop (the world freezes, the screen still rattles).
+## Uses real time, so a slowed or paused world doesn't stretch it.
 ## Also a directional kick (kick()): the view snaps a little up and away from an impact and springs
 ## back, while the FOV narrows for a moment — the player adds fov_offset to the FOV it sets.
 

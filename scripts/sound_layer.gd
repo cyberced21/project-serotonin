@@ -4,7 +4,7 @@ extends Resource
 ## volume, with its own pitch wobble. See SoundLayers.
 
 @export var stream: AudioStream
-## Seconds after the event (real time: hit-stop doesn't stretch it). Lets a gravel trickle land
+## Seconds after the event (real time). Lets a gravel trickle land
 ## a beat after the crack.
 @export_range(0.0, 1.0) var delay := 0.0
 @export_range(-40.0, 12.0) var volume_db := 0.0
