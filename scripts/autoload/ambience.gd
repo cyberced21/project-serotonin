@@ -18,7 +18,7 @@ const TRIM := {&"meadow": 34.1, &"forest": 12.8, &"lake": 14.2, &"peak": 19.9, &
 	&"evening": 33.8, &"night": 12.5, &"owl": -7.2, &"wolf": 13.7, &"frogs": 2.9, &"lapping": -0.6,
 	&"stream": 16.5, &"smithy": -0.8, &"chatter": 1.1, &"dog": 8.7, &"fire": -0.3}
 ## How loud each part plays (dB, after its trim): beds low under everything, spots a little up.
-const MIX := {&"bed": -14.0, &"evening": -15.0, &"night": -15.0, &"owl": -16.0, &"wolf": -20.0,
+const MIX := {&"bed": -16.0, &"evening": -17.0, &"night": -17.0, &"owl": -16.0, &"wolf": -20.0,
 	&"dog": -22.0, &"frogs": -16.0, &"chatter": -18.0, &"smithy": -14.0, &"fire": -12.0,
 	&"lapping": -12.0, &"stream": -12.0}
 ## Seconds to settle into a new place or time of day.

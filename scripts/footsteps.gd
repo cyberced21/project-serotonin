@@ -32,10 +32,10 @@ const SHADER_DEFAULTS := {
 @export var walk_stride := 1.8
 @export var sprint_stride := 2.6
 @export var crouch_stride := 1.1
-@export var walk_db := -4.0
-@export var sprint_db := 0.0
-@export var crouch_db := -12.0
-@export var land_db := 3.0
+@export var walk_db := -9.0
+@export var sprint_db := -5.0
+@export var crouch_db := -16.0
+@export var land_db := -1.0
 ## Falls slower than this (m/s) make no landing sound.
 @export var land_min_speed := 3.0
 

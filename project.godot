@@ -35,6 +35,7 @@ Biome="*res://scripts/autoload/biome.gd"
 Music="*res://scripts/autoload/music.gd"
 Ambience="*res://scripts/autoload/ambience.gd"
 Fireflies="*res://scripts/autoload/fireflies.gd"
+Acoustics="*res://scripts/autoload/acoustics.gd"
 
 [display]
 

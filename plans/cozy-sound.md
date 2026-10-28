@@ -80,7 +80,12 @@ One commit each; phases marked **(pick)** stop for your choice.
    Pinewood; fade in through the evening, gone by about 1 a.m.; `tools/test_fireflies.gd`.
 10. **Reverb per place and a final mix.** Reverb zones per biome (forest, hills, mine/quarry;
     indoors waits for interiors), levels balanced in the real buses (`tools/record_sfx_chain.gd`),
-    then an in-game listen.
+    then an in-game listen. *Done (bar the listen):* the `Acoustics` autoload, one reverb on SFX
+    and Movement easing to each place's (open hills barely, pines soft, Stillwater's far shore,
+    Frostpeak's late echo, the quarry's stone); interface, pickups and fishing stay dry. Peaks
+    stay under the limiter everywhere (`record_sfx_chain.gd --place=`). `tools/measure_mix.gd`
+    measures each family at Master: footsteps were as hot as a pickaxe strike (now -5 dB),
+    pickups -2 dB, the beds -2 dB to sit under the music.
 
 ## Not in this chunk
 

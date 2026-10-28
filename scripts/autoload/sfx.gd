@@ -86,7 +86,7 @@ func play_pickup() -> void:
 	var now := Time.get_ticks_msec()
 	_combo = _combo + 1 if now - _last_pickup_ms < COMBO_WINDOW_MS else 0
 	_last_pickup_ms = now
-	play(pickup_stream, 1.0 + minf(_combo * COMBO_STEP, COMBO_MAX), -4.0)
+	play(pickup_stream, 1.0 + minf(_combo * COMBO_STEP, COMBO_MAX), -6.0)
 
 ## Every layer of `sound`, non-positional (sounds the player makes with their own hands).
 func play_layers(sound: SoundLayers, pitch := 1.0, volume_db := 0.0) -> void:
