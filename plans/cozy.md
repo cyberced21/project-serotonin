@@ -6,7 +6,9 @@ its own plan (and branch) when we start it, after a grill session on its open qu
 
 Status: **chunks 1–3 built, merged, released v0.3 and playtested** (2026-10-28):
 [mood-pass.md](mood-pass.md), [calm-feel.md](calm-feel.md), [cozy-sound.md](cozy-sound.md).
-Chunk 4 built 2026-10-28 → [lamps.md](lamps.md), PR #10. Chunk 5 grilled → [projects.md](projects.md). Open questions at the end of each section.
+Chunk 4 (lamps) merged and released v0.4 → [lamps.md](lamps.md). Chunk 5 (projects) built
+2026-10-28 on branch `projects` → [projects.md](projects.md), approved from screenshots, not yet
+played. Open questions at the end of each section.
 
 ## The pillars
 
@@ -226,5 +228,6 @@ The rest of the sound overhaul runs alongside from step 3 on, once the grill has
 
 ## Next step
 
-Grill each chunk before its own plan, starting with chunk 1 (and the sound grill early, since it
-blocks a lot). The open questions in each section are the starting list.
+Grill each chunk before its own plan; the open questions in each section are the starting list.
+Next: chunk 6, **the dog** (section 4): it can carry the lantern (chunk 4) and gets a doghouse as a
+project (chunk 5, a new entry in `Projects.SPOTS` with its spot in `VillageDecor.PROPS`).
