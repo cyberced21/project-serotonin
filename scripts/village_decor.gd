@@ -33,6 +33,15 @@ const BUNTING := [[Vector2(-5.5, -6.5), Vector2(6.5, -5.5)], [Vector2(6.5, -5.5)
 	[Vector2(2.0, 7.5), Vector2(-5.5, -6.5)]]
 const BUNTING_HEIGHT := 2.3
 const TOK := preload("res://audio/ui/tok.wav")
+## Sounds (audio/projects/SOURCES.md): a hammer on each blow, the well's crank and bucket, the
+## fountain's splash, looping, heard close by.
+const HAMMERS: Array[AudioStream] = [preload("res://audio/projects/hammer_1.wav"),
+	preload("res://audio/projects/hammer_2.wav"), preload("res://audio/projects/hammer_3.wav")]
+const WELL_SOUND := preload("res://audio/projects/well.wav")
+const FOUNTAIN_SOUND := preload("res://audio/projects/fountain.wav")
+const HAMMER_DB := -6.0
+const WELL_DB := -10.0
+const FOUNTAIN_DB := -14.0
 ## The builder: a villager within BUILDER_RANGE of the spot walks over and stands this far off
 ## it; one blow every BLOW seconds, a piece popping in on each, a cheer at the end. Without
 ## anyone near (or if they don't get there within BUILDER_PATIENCE), the pieces pop in alone.
@@ -148,6 +157,7 @@ func _draw_water(v: Villager, well: Node3D) -> void:
 		v.scripted = true
 		v.script_place(v.global_position, well.global_position)
 		water_drawn.emit(well.global_position)
+		_sound(WELL_SOUND, well.global_position + Vector3.UP, WELL_DB)
 		var turns := int(WELL_TIME / 0.8)
 		for i in turns:  # cranking: both hands on the handle, round and round
 			v.script_pose(&"ArmR", -1.5, 0.1, Vector3(0, 0.08, 0))
@@ -257,6 +267,7 @@ func _build_in_view(pieces: Array[Node3D]) -> void:
 			builder.script_pose(&"ArmR", -2.3, 0.05)  # raise...
 			await get_tree().create_timer(BLOW * 0.55).timeout
 			builder.script_pose(&"ArmR", -0.6, 0.05)  # ...and down
+			_sound(HAMMERS.pick_random(), builder.global_position + Vector3.UP, HAMMER_DB, randf_range(0.94, 1.06))
 			await get_tree().create_timer(BLOW * 0.15).timeout
 		else:
 			await get_tree().create_timer(BLOW * 0.7).timeout
@@ -293,9 +304,15 @@ func _nearest_villager(at: Vector3) -> Villager:
 
 
 func _tok(at: Vector3, pitch: float) -> void:
+	_sound(TOK, at, 0.0, pitch)
+
+
+## A one-shot at `at`, gone when it's played.
+func _sound(stream: AudioStream, at: Vector3, db: float, pitch := 1.0) -> void:
 	var p := AudioStreamPlayer3D.new()
-	p.stream = TOK
+	p.stream = stream
 	p.bus = &"SFX"
+	p.volume_db = db
 	p.pitch_scale = pitch
 	p.unit_size = 6.0
 	p.max_distance = 50.0
@@ -333,6 +350,17 @@ func _make(id: StringName) -> Array[Node3D]:
 		prop.transform = frame(p[1], p[2])
 		add_child(prop)
 		out.append(prop)
+		if id == &"fountain":  # its splash, close by
+			var bed := LoopBed.new()
+			bed.stream = FOUNTAIN_SOUND
+			bed.bus = &"Ambience"
+			bed.positional = true
+			bed.unit_size = 3.0
+			bed.max_distance = 28.0
+			bed.trim_db = FOUNTAIN_DB
+			bed.level = 1.0
+			prop.add_child(bed)
+			bed.position = Vector3.UP * 1.0
 	return out
 
 

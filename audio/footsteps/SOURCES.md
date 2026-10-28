@@ -12,6 +12,7 @@ to the loudness of the clips they replaced, so the mix didn't move.
 | snow_01-04.wav | snow | FOOT_STEPS_SNOW_HEAVY | alexo400 | https://freesound.org/people/alexo400/sounds/543385/ |
 | rock_01-04.wav | rock | Footsteps Gravel Stones - Walk | Vrymaa | https://freesound.org/people/Vrymaa/sounds/825854/ |
 | water_01-04.wav | shallow water | Wading in a shallow river | macdaddyno1 | https://freesound.org/people/macdaddyno1/sounds/321594/ |
+| wood_01-04.wav | the footbridge's planks | Footsteps over Wooden Bridge (WAV) | OBXJohn | https://freesound.org/people/OBXJohn/sounds/253090/ |
 
 Rock and water steps are cut longer (about 0.55 s and 0.85 s) so the stones settle and the water
 moves after each footfall; picked in a second round after the first candidates sounded too alike.

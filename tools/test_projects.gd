@@ -221,6 +221,8 @@ func _check_bridge(world: String, projects: Node, decor: Node) -> void:
 	var stood := absf(player.global_position.y - mid.y) < 0.5
 	_check(stood, "%s: you can stand on it (feet %.2f, deck %.2f)" % [world, player.global_position.y, mid.y])
 	_check(bridge.get_script().call("on_bridge", self, player.global_position), "%s: and you're out of the water on it" % world)
+	var steps: StringName = player.get_node("Footsteps").call("surface")
+	_check(steps == &"wood", "%s: footsteps on its planks sound of wood (%s)" % [world, steps])
 	projects.call("set_done", &"footbridge", false)
 	await _frames(2)
 

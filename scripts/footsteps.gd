@@ -13,6 +13,7 @@ const SOUNDS := {
 	&"sand": preload("res://audio/footsteps/sand.tres"),
 	&"snow": preload("res://audio/footsteps/snow.tres"),
 	&"water": preload("res://audio/footsteps/water.tres"),
+	&"wood": preload("res://audio/footsteps/wood.tres"),  # the footbridge's planks
 }
 const SPLASH := preload("res://audio/movement/splash.tres")
 ## Water shallower than this (m) still sounds like the ground under it.
@@ -95,7 +96,7 @@ func _ripple(size: float) -> void:
 func surface() -> StringName:
 	var feet := global_position
 	if Footbridge.on_bridge(get_tree(), feet):
-		return &"rock"  # (planks: until they have footsteps of their own)
+		return &"wood"
 	if WaterBody.depth_at(get_tree(), feet) > WET_DEPTH:
 		return &"water"
 	var terrain := get_tree().get_first_node_in_group("terrain") as Terrain3D
