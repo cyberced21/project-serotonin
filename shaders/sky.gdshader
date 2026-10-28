@@ -25,6 +25,9 @@ uniform float star_amount = 0.004;
 uniform float cloud_coverage : hint_range(0.0, 1.0) = 0.45;
 uniform float cloud_scale = 0.9;
 uniform vec2 cloud_wind = vec2(0.006, 0.0025);
+// The clouds' lit side at sunrise / sunset (golden / pink), and how much of it.
+uniform vec3 cloud_tint : source_color = vec3(1.0, 0.8, 0.6);
+uniform float cloud_tint_amount : hint_range(0.0, 1.0) = 0.0;
 
 float hash(vec3 p) {
 	p = fract(p * 0.3183099 + 0.1);
@@ -77,7 +80,8 @@ void sky() {
 		vec2 toward = LIGHT0_ENABLED ? normalize(LIGHT0_DIRECTION.xz + vec2(1e-4)) * 0.12 : vec2(0.0);
 		float lit = clamp((f - fbm(uv + toward)) * 4.0 + 0.6, 0.0, 1.0);
 		vec3 sun_col = LIGHT0_ENABLED ? LIGHT0_COLOR : vec3(1.0);
-		vec3 bright = mix(vec3(1.0, 0.98, 0.95), sun_col, 0.35) * mix(1.0, 0.16, night);
+		vec3 bright = mix(mix(vec3(1.0, 0.98, 0.95), sun_col, 0.35), cloud_tint, cloud_tint_amount);
+		bright *= mix(1.0, 0.16, night * (1.0 - cloud_tint_amount));
 		vec3 shade = mix(top_color, horizon_color, 0.6) * mix(0.85, 0.6, night);
 		vec3 cloud = mix(shade, bright, lit);
 		col = mix(col, cloud, density * smoothstep(0.0, 0.18, d.y) * 0.92);

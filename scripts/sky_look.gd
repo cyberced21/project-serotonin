@@ -11,9 +11,8 @@ static var _active: SkyLook
 @export_group("Day")
 @export var day_top := Color(0.36, 0.47, 0.62)
 @export var day_horizon := Color(0.66, 0.74, 0.78)
-## The sun's colour high in the sky, and near the horizon.
+## The sun's colour high in the sky (near the horizon it takes the sunrise / sunset light).
 @export var noon_light := Color(1.0, 0.97, 0.9)
-@export var low_light := Color(1.0, 0.68, 0.42)
 ## The sun's energy at noon, and when low.
 @export_range(0.0, 2.0, 0.01) var noon_energy := 1.0
 @export_range(0.0, 2.0, 0.01) var low_energy := 0.55
@@ -21,11 +20,35 @@ static var _active: SkyLook
 @export_range(0.0, 2.0, 0.01) var day_ambient := 1.0
 
 @export_group("Twilight")
-@export var dusk_top := Color(0.33, 0.35, 0.55)
-@export var dusk_horizon := Color(0.95, 0.63, 0.45)
-## The grade at dusk: a tint for the darks and one for the brights.
-@export var dusk_grade_dark := Color(0.94, 0.9, 1.05)
-@export var dusk_grade_bright := Color(1.07, 0.97, 0.85)
+## How far the sunrise / sunset colours reach into the day and into the night (fractions of a day;
+## a day is 20 minutes). The colour is strong for about half of each.
+@export_range(0.01, 0.4, 0.005) var twilight_day_side := 0.12
+@export_range(0.01, 0.4, 0.005) var twilight_night_side := 0.18
+## How far the sky's top and horizon go to the twilight palette at its peak.
+@export_range(0.0, 1.0, 0.01) var twilight_top := 0.7
+@export_range(0.0, 1.0, 0.01) var twilight_horizon := 0.85
+## After sunset / before sunrise: how much of the twilight's warm light stays on the world.
+@export_range(0.0, 1.0, 0.01) var afterglow := 0.6
+
+@export_group("Sunrise")
+## Golden and fresh: yellow-orange horizon under a clean pale-blue top.
+@export var sunrise_top := Color(0.42, 0.56, 0.74)
+@export var sunrise_horizon := Color(1.0, 0.78, 0.42)
+## The light on the world, and the clouds' lit side.
+@export var sunrise_light := Color(1.0, 0.8, 0.5)
+@export var sunrise_clouds := Color(1.0, 0.86, 0.6)
+## The grade: a tint for the darks and one for the brights.
+@export var sunrise_grade_dark := Color(0.95, 0.97, 1.05)
+@export var sunrise_grade_bright := Color(1.06, 1.0, 0.86)
+
+@export_group("Sunset")
+## Clearly pink: rose horizon under a lilac top.
+@export var sunset_top := Color(0.42, 0.33, 0.58)
+@export var sunset_horizon := Color(1.0, 0.55, 0.58)
+@export var sunset_light := Color(1.0, 0.62, 0.6)
+@export var sunset_clouds := Color(1.0, 0.55, 0.72)
+@export var sunset_grade_dark := Color(0.98, 0.88, 1.06)
+@export var sunset_grade_bright := Color(1.08, 0.93, 0.92)
 
 @export_group("Night")
 @export var night_top := Color(0.03, 0.05, 0.11)

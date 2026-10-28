@@ -13,7 +13,7 @@ extends Node
 ## debug menu's Sky tab.
 ## Also: volumetric mist (thick at dawn, thinner by day, the biome's own on top) with light shafts
 ## strongest when the sun is low, the colour grade (ColorGrade: the biome's tints times the time of
-## day's, cool blue nights and a warm dusk), and lamplight that flickers.
+## day's, cool blue nights, a golden sunrise and a pink sunset), and lamplight that flickers.
 
 @export var sun: DirectionalLight3D
 @export var environment: WorldEnvironment
@@ -40,9 +40,15 @@ func _process(_delta: float) -> void:
 func _update() -> void:
 	var look := SkyLook.active()
 	var h := DayNight.sun_height()          # -1..1
-	var dusk := DayNight.twilight()         # 1 at sunrise / sunset
+	var dusk := DayNight.sky_twilight(look.twilight_day_side, look.twilight_night_side)
 	var day := smoothstep(-0.12, 0.15, h)   # 0 at night, 1 by day
 	var night := 1.0 - day
+	# sunrise and sunset each have their own palette (golden morning, pink evening)
+	var morning := DayNight.is_morning()
+	var tw_top := look.sunrise_top if morning else look.sunset_top
+	var tw_horizon := look.sunrise_horizon if morning else look.sunset_horizon
+	var tw_light := look.sunrise_light if morning else look.sunset_light
+	var afterglow := dusk * night * look.afterglow  # twilight with the sun below the horizon
 
 	# the sun by day, the moon by night: same light, swung across the sky east -> west
 	if sun:
@@ -51,23 +57,25 @@ func _update() -> void:
 		var elev := sin(PI * across) * max_elevation + 0.04
 		var yaw := sunrise_yaw + PI * across
 		sun.rotation = Vector3(-elev, yaw, 0.0)
-		var sun_color := look.low_light.lerp(look.noon_light, clampf(h * 2.0, 0.0, 1.0))
-		sun.light_color = sun_color.lerp(look.moon_light, night) * Biome.sun_tint
+		var sun_color := tw_light.lerp(look.noon_light, clampf(h * 2.0, 0.0, 1.0))
+		sun.light_color = sun_color.lerp(look.moon_light, night).lerp(tw_light, afterglow) * Biome.sun_tint
 		var energy := lerpf(look.low_energy, look.noon_energy, clampf(h * 1.5, 0.0, 1.0))
-		sun.light_energy = lerpf(look.moon_energy, energy, day)
+		sun.light_energy = lerpf(lerpf(look.moon_energy, look.low_energy, afterglow), energy, day)
 		sun.shadow_opacity = lerpf(0.55, 1.0, day)
 		# light shafts through the mist: strongest with the sun low
 		sun.light_volumetric_fog_energy = lerpf(0.4, lerpf(2.4, 0.9, clampf(h * 2.0, 0.0, 1.0)), day)
 
 	var top := look.night_top.lerp(look.day_top, day)
 	var horizon := look.night_horizon.lerp(look.day_horizon, day)
-	top = top.lerp(look.dusk_top, dusk * 0.7)
-	horizon = horizon.lerp(look.dusk_horizon, dusk * 0.8)
+	top = top.lerp(tw_top, dusk * look.twilight_top)
+	horizon = horizon.lerp(tw_horizon, dusk * look.twilight_horizon)
 	if _sky:
 		_sky.set_shader_parameter("top_color", top)
 		_sky.set_shader_parameter("horizon_color", horizon)
 		_sky.set_shader_parameter("ground_color", horizon.darkened(0.5))
 		_sky.set_shader_parameter("night", night)
+		_sky.set_shader_parameter("cloud_tint", look.sunrise_clouds if morning else look.sunset_clouds)
+		_sky.set_shader_parameter("cloud_tint_amount", dusk * 0.8)
 		_sky.set_shader_parameter("sun_size", look.sun_size)
 		_sky.set_shader_parameter("sun_brightness", look.sun_brightness)
 		_sky.set_shader_parameter("sun_halo", look.sun_halo)
@@ -80,13 +88,14 @@ func _update() -> void:
 		env.glow_intensity = look.glow_intensity
 		env.fog_light_color = horizon * Biome.fog_tint
 		env.fog_density = look.fog_density * Biome.fog_density
-		env.ambient_light_energy = lerpf(look.night_ambient, look.day_ambient, day) * Biome.ambient
-		env.background_energy_multiplier = lerpf(look.night_sky, 1.0, day)
-		var morning := 1.0 - smoothstep(0.0, 0.07, absf(DayNight.time - look.mist_peak))
-		var thicker := 1.0 + look.morning_mist * morning + look.night_mist * night
+		var lit := maxf(day, afterglow)
+		env.ambient_light_energy = lerpf(look.night_ambient, look.day_ambient, lit) * Biome.ambient
+		env.background_energy_multiplier = lerpf(look.night_sky, 1.0, lit)
+		var mist_peak := 1.0 - smoothstep(0.0, 0.07, absf(DayNight.time - look.mist_peak))
+		var thicker := 1.0 + look.morning_mist * mist_peak + look.night_mist * night
 		env.volumetric_fog_density = look.mist_density * Biome.mist * thicker
 		env.volumetric_fog_albedo = (horizon * Biome.fog_tint).lerp(Color.WHITE, 0.45)
-		_update_grade(env, look, dusk, night)
+		_update_grade(env, look, morning, dusk, night)
 
 	# lamps, lanterns and windows
 	var glow := smoothstep(0.15, 0.85, night)
@@ -106,9 +115,12 @@ func _update() -> void:
 
 
 ## Rebuilds the colour-grading table when the grade (biome tints times the time of day's) moves.
-func _update_grade(env: Environment, look: SkyLook, dusk: float, night: float) -> void:
-	var shadows := Biome.shadow_tint * Color.WHITE.lerp(look.dusk_grade_dark, dusk).lerp(look.night_grade_dark, night)
-	var highlights := Biome.highlight_tint * Color.WHITE.lerp(look.dusk_grade_bright, dusk).lerp(look.night_grade_bright, night)
+func _update_grade(env: Environment, look: SkyLook, morning: bool, dusk: float, night: float) -> void:
+	var dark := look.sunrise_grade_dark if morning else look.sunset_grade_dark
+	var bright := look.sunrise_grade_bright if morning else look.sunset_grade_bright
+	var deep := night * (1.0 - dusk)  # full night's grade once the twilight has gone
+	var shadows := Biome.shadow_tint * Color.WHITE.lerp(dark, dusk).lerp(look.night_grade_dark, deep)
+	var highlights := Biome.highlight_tint * Color.WHITE.lerp(bright, dusk).lerp(look.night_grade_bright, deep)
 	if env.adjustment_color_correction and _close(shadows, _grade[0]) and _close(highlights, _grade[1]):
 		return
 	_grade = [shadows, highlights]

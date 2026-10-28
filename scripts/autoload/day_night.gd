@@ -73,6 +73,21 @@ func twilight() -> float:
 	return 1.0 - smoothstep(0.0, TWILIGHT, d)
 
 
+## Like twilight(), for the sky's colours: wider, and lopsided. `day_side` and `night_side` are how
+## far it reaches into the day and into the night (fractions of a day). 1 at sunrise / sunset.
+func sky_twilight(day_side: float, night_side: float) -> float:
+	var rise := wrapf(time - SUNRISE, -0.5, 0.5)  # > 0: after sunrise, the day side
+	var fall := wrapf(time - SUNSET, -0.5, 0.5)   # > 0: after sunset, the night side
+	var a := 1.0 - smoothstep(0.0, day_side if rise > 0.0 else night_side, absf(rise))
+	var b := 1.0 - smoothstep(0.0, night_side if fall > 0.0 else day_side, absf(fall))
+	return maxf(a, b)
+
+
+## True from midnight to noon: the sunrise half of the day.
+func is_morning() -> bool:
+	return time < 0.5
+
+
 ## A wall clock where the sun rises at 06:00 and sets at 20:00.
 func clock_text() -> String:
 	var hours: float
