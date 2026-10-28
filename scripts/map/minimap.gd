@@ -69,6 +69,9 @@ func _layout() -> void:
 
 
 func _process(_delta: float) -> void:
+	# out of the way while a villager's panel is up (it takes the right of the screen)
+	var panel := get_tree().get_first_node_in_group("upgrade_panel") as UpgradePanel
+	visible = not (panel and panel.is_open())
 	var player := get_tree().get_first_node_in_group("player") as Node3D
 	if player:
 		view.center = Vector2(player.global_position.x, player.global_position.z)
