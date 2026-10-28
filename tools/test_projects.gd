@@ -53,6 +53,7 @@ func _run() -> void:
 	# the noticeboard, in Hearthvale and in a generated village
 	await _check_board("Hearthvale", projects)
 	await _check_build(projects, inventory)
+	await _check_life(projects)
 	worlds.call("play_scratch", 42)
 	for i in 3:
 		await process_frame
@@ -152,6 +153,44 @@ func _check_build(projects: Node, inventory: Node) -> void:
 		await process_frame
 	var up := new.filter(func(l: Dictionary) -> bool: return (l["prop"] as Node3D).scale.x > 0.95).size()
 	_check(up == new.size(), "build: and rise one by one along it (%d up)" % up)
+	day_night.set("frozen", false)
+
+
+## At dusk someone sits on each new bench; by day someone draws water at the well.
+func _check_life(projects: Node) -> void:
+	var day_night := root.get_node("DayNight")
+	var decor := get_first_node_in_group("village_decor")
+	projects.call("set_done", &"benches", true)
+	projects.call("set_done", &"well", true)
+	day_night.set("frozen", true)
+	day_night.set("time", float(day_night.get("SUNSET")) - 0.05)
+	var player := get_first_node_in_group("player") as Node3D
+	player.global_position += Vector3(0, 0, 40)  # out of the way (villagers stop to chat)
+	Engine.time_scale = 3.0
+	var seated := 0
+	for i in 60 * 30:
+		await physics_frame
+		seated = 0
+		for bench in decor.call("props_of", &"benches"):
+			for b in get_nodes_in_group("building"):
+				for c in b.get_children():
+					if c.has_method("_seated") and c.call("_seated") and (c as Node3D).global_position.distance_to((bench as Node3D).global_position) < 0.5:
+						seated += 1
+		if seated == 2:
+			break
+	print("life: %d on the benches at dusk" % seated)
+	_check(seated == 2, "life: someone sits on each new bench at dusk")
+	day_night.set("time", 0.4)
+	await _frames(10)
+	var drawn := [0]
+	decor.connect("water_drawn", func(_at: Vector3) -> void: drawn[0] += 1)
+	decor.set("_well_in", 0.1)
+	for i in 60 * 25:
+		await physics_frame
+		if drawn[0] > 0 and decor.get("_drawing") == null:
+			break
+	Engine.time_scale = 1.0
+	_check(drawn[0] == 1 and decor.get("_drawing") == null, "life: someone draws water at the well, then gets on")
 	day_night.set("frozen", false)
 
 
