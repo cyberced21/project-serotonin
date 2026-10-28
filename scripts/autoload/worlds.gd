@@ -4,7 +4,7 @@ extends Node
 ##   <id>/save.json    what SaveGame writes while the world is played
 ##   <id>/thumb.png    a screenshot, taken on Save & Quit
 ## "classic" is Hearthvale (scenes/main.tscn), the one world: always there, never deleted, only
-## reset. Generated worlds are gone (plans/world.md); their old folders are left alone, unlisted.
+## reset. Generated worlds are gone (plans/world.md); starting up deletes their old folders.
 ## Starting up, the old flat save (user://save.json) moves into the classic world's folder.
 ##
 ## Command line (after `--`), skipping the menu:
@@ -47,6 +47,7 @@ func _ready() -> void:
 	if root == DEFAULT_ROOT:
 		migrate(OLD_SAVES)
 	_ensure_classic()
+	_remove_generated()
 	SaveGame.saved.connect(_on_saved)
 	for arg in args:
 		if arg == "--classic" or arg.begins_with("--world="):
@@ -56,13 +57,12 @@ func _ready() -> void:
 
 # --- queries ----------------------------------------------------------------------------------
 
-## Every listed world's meta (not the old generated ones), the most recently played first; classic
-## is always among them.
+## Every world's meta, the most recently played first; classic is always among them.
 func list() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for id in DirAccess.get_directories_at(_abs(root)):
 		var m := meta(id)
-		if not m.is_empty() and m.get("kind") != "generated":
+		if not m.is_empty() and m.get("kind") != "generated":  # (in case one's left mid-startup)
 			out.append(m)
 	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return float(a.get("last_played", 0)) > float(b.get("last_played", 0)))
@@ -240,6 +240,14 @@ func _ensure_classic() -> void:
 	var now := Time.get_unix_time_from_system()
 	_write_meta(CLASSIC, {"version": META_VERSION, "name": "Hearthvale", "kind": "classic",
 			"created": now, "last_played": 0.0, "playtime": 0.0})
+
+
+## Deletes the worlds made by the old generator: only Hearthvale is played now.
+func _remove_generated() -> void:
+	for id in DirAccess.get_directories_at(_abs(root)):
+		if meta(id).get("kind") == "generated" and id != current:
+			_remove_tree(_abs(folder(id)))
+			print("Worlds: deleted the generated world %s" % id)
 
 
 ## The old flat save in `from` (save.json) becomes the classic world's.

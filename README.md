@@ -63,7 +63,7 @@ whatever you hit.
     - A crane on the rim, scaffold steps, ladders, and haze that thickens as you go down.
   - **Goldmeadow** (south-east): rolling farmland. Crop squares of wheat and barley between dirt tracks, a windmill with turning sails (wall-run it), a fenced pasture with hay bales, a hay cart, lone oaks, and crickets.
   - **Hearthvale** (the village), **Stillwater** (the lake), **The Clearing** and **Frostpeak** have moods of their own too.
-- **A main menu and your worlds.** The game opens on a menu over a slowly drifting view of the clearing's pond. **Continue** goes straight back into the world you played last (on a first launch it's **Play**). There's one world, Hearthvale ([plans/world.md](plans/world.md): generated worlds were removed).
+- **A main menu and your worlds.** The game opens on a menu over a slowly drifting view of the clearing's pond. **Continue** goes straight back into the world you played last (on a first launch it's **Play**). There's one world, Hearthvale ([plans/world.md](plans/world.md): generated worlds were removed, and old ones are deleted on startup).
   - **Worlds:** Hearthvale's card, with a picture (taken when you last saved and quit), when you last played and for how long. Play, rename or reset it.
   - **Esc pauses** (the whole world holds still): Resume, Settings, Controls, Save & Quit to Menu, Quit to Desktop.
   - **Settings:** graphics (presets and each effect), display (window, size, VSync, frame cap), audio (master, effects, ambience, footsteps) and controls (mouse sensitivity, invert Y, field of view, how much the camera kicks and shakes).

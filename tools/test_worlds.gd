@@ -30,9 +30,11 @@ func _run() -> void:
 	_check(not FileAccess.file_exists(LEGACY.path_join("save.json")), "old save.json moved, not copied")
 	_check(FileAccess.file_exists(LEGACY.path_join("procgen_123.json")), "an old procgen save is left alone")
 
-	# an old generated world's folder isn't listed
+	# an old generated world's folder is deleted
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(ROOT.path_join("123_4567")))
 	_write(ROOT.path_join("123_4567/world.json"), '{"version": 1, "name": "Seed 5", "kind": "generated"}')
+	worlds.call("_remove_generated")
+	_check(not worlds.call("exists", "123_4567"), "a generated world is deleted")
 	var names: Array = (worlds.call("list") as Array).map(func(m: Dictionary) -> String: return m["name"])
 	_check(names == ["Hearthvale"], "only Hearthvale is listed: %s" % [names])
 
