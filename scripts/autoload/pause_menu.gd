@@ -62,7 +62,7 @@ func _input(event: InputEvent) -> void:
 		else:
 			resume()
 		get_viewport().set_input_as_handled()
-	elif not Worlds.current.is_empty() and not _other_menu_open() 			and get_tree().get_first_node_in_group("loading_screen") == null:
+	elif not Worlds.current.is_empty() and not _other_menu_open():
 		open()
 		get_viewport().set_input_as_handled()
 
@@ -75,8 +75,6 @@ func _toggle_skills() -> void:
 			get_viewport().set_input_as_handled()
 		return
 	if Worlds.current.is_empty() or _other_menu_open():
-		return
-	if get_tree().get_first_node_in_group("loading_screen") != null:
 		return
 	var cards := get_tree().get_first_node_in_group("talent_cards") as TalentCards
 	if cards and cards.is_open():

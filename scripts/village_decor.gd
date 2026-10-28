@@ -2,8 +2,7 @@ class_name VillageDecor
 extends Node3D
 ## The village's projects in the world (plans/projects.md): the noticeboard in the square, and each
 ## decoration's props at their set spots once it's done. Spots are offsets from the middle of the
-## square (`center`), turned with the village (`angle`, as a generated village is), so Hearthvale
-## and every generated village share one layout. Facings are in the same village frame (a prop's
+## square (`center`), turned with the village (`angle`). Facings are in the same village frame (a prop's
 ## front, +Z, toward the square). The spots keep off the lanes to the houses.
 ## A project paid for just now is built where you can see it (P7): the nearest villager walks
 ## over and hammers, and each piece pops up out of the ground with a wooden tok, then a cheer.
@@ -61,10 +60,9 @@ const WELL_TIME := 4.0
 ## Middle of the square (world XZ) and how far the village is turned (radians).
 var center := HEARTHVALE_CENTER
 var angle := 0.0
-## Where the footbridge goes: [from, to] (world XZ), or [] for none. Hearthvale's spans the gully's
-## open gap (found in _ready); a generated world passes its ford (Footbridge.find_ford).
+## Where the footbridge goes: [from, to] (world XZ), or [] for none: the gully's open gap (found
+## in _ready).
 var footbridge_site: Array = []
-var hearthvale := true
 var board: Noticeboard
 var _built: Dictionary[StringName, Array] = {}  # project -> its props
 var _paid: Dictionary[StringName, bool] = {}  # paid for this session: build it in view
@@ -79,7 +77,7 @@ func _ready() -> void:
 	board.name = "Noticeboard"
 	board.transform = frame(NOTICEBOARD[0], NOTICEBOARD[1])
 	add_child(board)
-	if hearthvale and footbridge_site.is_empty():
+	if footbridge_site.is_empty():
 		footbridge_site = _gully_gap()
 	Projects.footbridge_here = not footbridge_site.is_empty()
 	Projects.completed.connect(func(id: StringName) -> void: _paid[id] = true)

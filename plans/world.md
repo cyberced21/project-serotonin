@@ -67,8 +67,10 @@ black sheer):
    hand-placed node sits on the ground.
 3. **The creek.** A spring in the Pinewood hills, a shallow wadeable bed with soft banks winding
    down past the clearing into the lake; a water surface along it (WaterBody), the footbridge
-   moved onto it where the road to the lake crosses. Done: walk the creek's length without a
-   ledge; the footbridge project builds over it.
+   moved onto it where the road to the lake crosses. Grayling (holding in the current) and
+   salmon (deep pools at the bends) move here: they lived only in generated worlds' rivers.
+   Done: walk the creek's length without a ledge; the footbridge project builds over it; both
+   fish bite.
 4. **Roads that follow the land.** Lay the network with a least-cost path over the terrain
    (slope and height change cost, water costs a crossing): the village hub to the clearing, the
    lake, the Pinewood trail, the quarry and Goldmeadow. Roads settle into the ground with gentle

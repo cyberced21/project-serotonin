@@ -130,8 +130,7 @@ func _line(r: Dictionary, base: Dictionary) -> String:
 
 
 ## A fresh copy of the bench's world, the HUD's talent cards out of the way. Fishing plays the
-## pond in main.tscn, as tools/fishing_bench.gd does: shallow enough for the spear (a generated
-## world's biggest water can be too deep to wade).
+## pond in main.tscn, as tools/fishing_bench.gd does: shallow enough for the spear.
 func _load_world() -> void:
 	Engine.time_scale = 1.0
 	bot.release_all()
@@ -140,9 +139,9 @@ func _load_world() -> void:
 		change_scene_to_file("res://scenes/main.tscn")
 		await bot.wait_real(3.0)
 	else:
-		root.get_node("Worlds").call("play_scratch", world_seed)
+		root.get_node("Worlds").call("play_fresh")
 		await process_frame
-		while get_first_node_in_group("loading_screen") != null or get_first_node_in_group("player") == null:
+		while get_first_node_in_group("player") == null:
 			await process_frame
 		await bot.wait_real(1.0)
 	var gfx := root.get_node_or_null("GraphicsSettings")

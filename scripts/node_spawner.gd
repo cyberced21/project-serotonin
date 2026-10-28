@@ -8,7 +8,7 @@ extends Node3D
 ## ground, keeps `spacing` between nodes, and keeps clear of buildings, props and the spawn.
 ## Put it at the scene's origin, above SceneryScatter in the tree, so the scenery keeps off its
 ## nodes too.
-## With a frame_budget_ms it spreads the spawning over frames (a generated world's loading screen),
+## With a frame_budget_ms it spreads the spawning over frames (so a big spawn doesn't hitch),
 ## the same nodes in the same places; `finished` says when it's done.
 
 signal finished
@@ -57,9 +57,6 @@ const FAMILIES := 4
 @export var prop_margin := 1.0
 @export var spawn_radius := 4.0
 
-## Set from code to narrow where nodes may go further: func(p: Vector2) -> bool, world XZ (a
-## procgen world keeps each spawner to its own biome cell).
-var accept := Callable()
 ## Milliseconds of spawning per frame before it waits for the next; 0 = all at once.
 var frame_budget_ms := 0.0
 var done := false
@@ -141,8 +138,6 @@ func _ground(terrain: Terrain3D, p: Vector2) -> Variant:
 		if d < ring.z or d > ring.w:
 			return null
 	elif not area.has_point(p):
-		return null
-	if accept.is_valid() and not accept.call(p):
 		return null
 	var at := Vector3(p.x, 0.0, p.y)
 	var h: float = terrain.data.get_height(at)

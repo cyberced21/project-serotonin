@@ -1,6 +1,6 @@
 extends SceneTree
 ## The final mix check (plans/cozy-sound.md, phase 10): plays each family of sounds through the
-## game's own code and buses in a generated world by day, one family at a time (the other
+## game's own code and buses in Hearthvale by day, one family at a time (the other
 ## top-level buses muted), records Master and prints how loud each comes out: the loud part
 ## (the 90th percentile of 50 ms windows, dBFS RMS) and the peak. Families: the ambience bed,
 ## music, footsteps, gathering, pickups, interface clicks.
@@ -16,9 +16,9 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	root.get_node("Worlds").call("play_scratch", 42)
+	root.get_node("Worlds").call("play_fresh")
 	await process_frame
-	while get_first_node_in_group("loading_screen") != null or get_first_node_in_group("player") == null:
+	while get_first_node_in_group("player") == null:
 		await process_frame
 	root.get_node("DayNight").set("time", 0.45)
 	for a in OS.get_cmdline_user_args():

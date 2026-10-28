@@ -96,9 +96,6 @@ func _process(delta: float) -> void:
 		return
 	var scene := get_tree().current_scene
 	if scene and scene.get_instance_id() != _world:
-		if get_tree().get_first_node_in_group("loading_screen"):
-			_mm.visible = false
-			return  # a generated world still growing its trees
 		_world = scene.get_instance_id()
 		_find_clusters()
 	var at := player.global_position

@@ -6,10 +6,6 @@ extends SceneTree
 ##
 ##   godot --path . --screen 1 --resolution 1280x720 -s res://tools/fishing_playtest.gd [-- --casts=3 --level=30]
 ##
-## `--procgen=SEED`: a generated world's river instead: casts upstream of grayling holding station
-## (letting the float drift down to them) and into the salmon pools. That world's save is thrown
-## away afterwards.
-##
 ## Windowed (the mouse has to be captured for the player to fish). Played on a throwaway save and
 ## without touching settings.cfg. Screenshots: user://fishing_playtest/*.png.
 ## (Untyped on purpose: an -s script can't name the game's classes that use autoloads.)
@@ -27,13 +23,11 @@ var casts := 3
 var level := 30
 ## The rod's tier (Tools): 3 opens every fish; lower, and better fish tear the hook out.
 var rod_tier := 3
-var procgen_seed := -1
 var player
 var rod
 var _held := {}
 var _shots := {}
 var _log: PackedStringArray = []
-var _throwaway: Array[String] = []
 
 
 func _initialize() -> void:
@@ -44,8 +38,6 @@ func _initialize() -> void:
 			level = arg.trim_prefix("--level=").to_int()
 		elif arg.begins_with("--rod-tier="):
 			rod_tier = arg.trim_prefix("--rod-tier=").to_int()
-		elif arg.begins_with("--procgen="):
-			procgen_seed = arg.trim_prefix("--procgen=").to_int()
 	_run.call_deferred()
 
 
@@ -59,37 +51,18 @@ func _run() -> void:
 		gfx.set("persist", false)
 	root.get_node("Skills").call("set_level", &"fishing", level)
 	root.get_node("DayNight").set("time", 0.4)
-	if procgen_seed >= 0:
-		var existed := FileAccess.file_exists("user://procgen_%d.json" % procgen_seed)
-		load("res://scripts/procgen/procgen_world.gd").enter(self, procgen_seed)
-		await _wait(1.0)
-		var t := 0.0
-		while t < 90.0:
-			var p = get_first_node_in_group("player")
-			if p and p.process_mode != Node.PROCESS_MODE_DISABLED:
-				break
-			await _wait(0.5)
-			t += 0.5
-		await _wait(1.0)
-		if not existed:
-			_throwaway.append("user://procgen_%d.json" % procgen_seed)
-		root.get_node("Skills").call("set_level", &"fishing", level)
 	player = get_first_node_in_group("player")
 	rod = player.get_node("RodFishing")
 	root.get_node("Tools").set("fishing_style", &"rod")
 	root.get_node("Tools").call("set_tier", &"rod", rod_tier)
 	var lake = _lake()
-	if lake == null and procgen_seed < 0:
+	if lake == null:
 		_say("no lake found")
 		return _finish()
 	var landed := 0
 	for i in casts:
 		_say("--- cast %d" % (i + 1))
-		if procgen_seed >= 0:
-			if not await _stand_by_river(i):
-				continue
-		else:
-			await _stand_at(lake, i)
+		await _stand_at(lake, i)
 		if not rod.call("can_cast"):
 			_say("can't cast from here (aim %s, rod state %d)" % [rod.get("aim_point"), rod.get("state")])
 			continue
@@ -111,8 +84,7 @@ func _run() -> void:
 
 
 func _finish() -> void:
-	root.get_node("SaveGame").set("path", SAVE)  # (a procgen world's file is thrown away below)
-	for path in [SAVE] + _throwaway:
+	for path in [SAVE]:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	quit()
 
@@ -156,53 +128,6 @@ func _stand_at(lake, i: int) -> void:
 	var drop: float = eye.y - lake.surface_height
 	player.set("_pitch", -atan2(drop, 9.0))
 	await _wait(0.3)
-
-
-## Beside a river stretch, aiming a little upstream of a grayling (even casts) or into a salmon's
-## pool (odd ones), far enough out that it's the rod's water, not the spear's.
-func _stand_by_river(i: int) -> bool:
-	var want := "salmon" if i % 2 == 1 else "grayling"
-	var target = null
-	for school in get_nodes_in_group("fish_school"):
-		if String(school.species.id) == want and not school.fish.is_empty():
-			target = school
-			if randi() % 3 == 0:
-				break
-	if target == null:
-		_say("no %s in this world" % want)
-		return false
-	var water = target.water
-	var f = target.fish[0]
-	var down: Vector3 = water.flow.normalized()
-	var spot: Vector3 = f.global_position - down * (2.5 if want == "grayling" else 1.5)
-	spot.y = water.surface_height
-	var side := down.cross(Vector3.UP).normalized()
-	var stand := spot
-	for k in 80:  # out across the bank until it's dry, then a few metres more
-		var p := spot + side * (k * 0.25)
-		if _water_at(p) == null:
-			stand = p + side * 3.0
-			break
-	var q := PhysicsRayQueryParameters3D.create(stand + Vector3.UP * 80.0, stand + Vector3.DOWN * 80.0, 1)
-	q.exclude = [player.get_rid()]
-	var hit: Dictionary = player.get_world_3d().direct_space_state.intersect_ray(q)
-	if hit:
-		stand = hit["position"] + Vector3.UP * 0.1
-	player.call("teleport", stand, spot)
-	await _wait(0.4)
-	var eye: Vector3 = player.camera.global_position
-	var flat := Vector2(spot.x - eye.x, spot.z - eye.z).length()
-	player.set("_pitch", -atan2(eye.y - spot.y, flat))
-	await _wait(0.3)
-	_say("by the river: %s at %.1f m (flow %s)" % [want, flat, water.flow])
-	return true
-
-
-func _water_at(p: Vector3):
-	for w in get_nodes_in_group("water"):
-		if w.call("depth_here", p) > 0.0:
-			return w
-	return null
 
 
 func _cast() -> bool:

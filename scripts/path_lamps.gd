@@ -7,8 +7,7 @@ extends Node3D
 ## At dusk they catch one after another in a wave out from the village (L4), each with a little
 ## sputter before it takes, and at dawn go out the same way. They're kept out of the Sky's
 ## "night_light" / "night_glow" groups (which light everything at once) and lit from here.
-## Hearthvale's stretches come from WorldMap (hearthvale()), a generated world's from its trails
-## (procgen()).
+## Hearthvale's stretches come from WorldMap (hearthvale()).
 
 ## A lamp catches (for its sound): where.
 signal lamp_caught(at: Vector3)
@@ -18,7 +17,7 @@ const SPACING := 20.0
 const FIRST := 12.0
 ## Posts stand this far beyond the path's edge.
 const SIDE_GAP := 0.9
-## No two posts closer than this (stretches meet and generated trails share their first metres).
+## No two posts closer than this (where stretches meet).
 const MIN_GAP := 12.0
 ## Kept this far from buildings (from their middle) and from gatherable nodes.
 const BUILDING_CLEARANCE := 9.0
@@ -408,58 +407,6 @@ static func _turn_name(title: String) -> String:
 		"The road to the lake shore": return "the lake turn"
 		"The road to the quarry": return "the quarry turn"
 	return "the forest turn"
-
-
-## A generated world: its trails, each from the hub out to a place. The village's trail is the
-## lit-from-the-start "village_path", turned round to start at the village.
-func procgen(map: ProcgenMap) -> void:
-	village_center = map.village.get("center", map.hub)
-	var village_trail := -1
-	var best := INF
-	if not map.village.is_empty():
-		for i in map.trails.size():
-			var d: float = map.trails[i][map.trails[i].size() - 1].distance_to(village_center)
-			if d < best:
-				best = d
-				village_trail = i
-	stretches = []
-	if village_trail >= 0:
-		var pts: PackedVector2Array = map.trails[village_trail].duplicate()
-		pts.reverse()
-		stretches.append(_stretch(&"village_path", "The path from the clearing", pts,
-				ProcgenMap.TRAIL_HALF_WIDTH, true))
-	var titles: Dictionary[String, int] = {}
-	for i in map.trails.size():
-		if i != village_trail:
-			var t := _place_name(map, map.trails[i][map.trails[i].size() - 1])
-			titles[t] = titles.get(t, 0) + 1
-	for i in map.trails.size():
-		if i == village_trail:
-			continue
-		var end: Vector2 = map.trails[i][map.trails[i].size() - 1]
-		var title := "The path to %s" % _place_name(map, end)
-		if titles[_place_name(map, end)] > 1:  # two ways into one big forest: say which
-			title += ", %s" % _compass(end - map.hub)
-		var same := 1
-		for s in stretches:
-			if (s["title"] as String).begins_with(title):
-				same += 1
-		if same > 1:
-			title += " (%d)" % same
-		stretches.append(_stretch(StringName("trail_%d" % i), title, map.trails[i], ProcgenMap.TRAIL_HALF_WIDTH))
-
-
-static func _place_name(map: ProcgenMap, at: Vector2) -> String:
-	for w in map.waters:
-		if at.distance_to(w["center"]) < float(w["radius"]) + 8.0:
-			return "the lake" if w["lake"] else "a pond"
-	return map.kind_name(map.biome_at(at))
-
-
-## "north", "south-east"...: which way `dir` (world XZ, -Z north) points.
-static func _compass(dir: Vector2) -> String:
-	const NAMES := ["east", "south-east", "south", "south-west", "west", "north-west", "north", "north-east"]
-	return NAMES[posmod(roundi(dir.angle() / (TAU / 8.0)), 8)]
 
 
 static func _stretch(id: StringName, title: String, pts: PackedVector2Array, half_width: float,

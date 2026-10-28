@@ -2,9 +2,8 @@ class_name MapData
 extends Node
 ## What the maps draw (Minimap, WorldMapScreen), read from the world once it's loaded: a grid of
 ## samples over the terrain's regions, packed into two small textures for the parchment shader
-## (shaders/map_parchment.gdshader), plus where each biome's name goes. Works the same in the
-## hand-built world and a generated one, since it only asks the Terrain3D data, the water bodies
-## and Biome what's where. The HUD makes one per world (group "map_data"); it samples a slice
+## (shaders/map_parchment.gdshader), plus where each biome's name goes. It only asks the Terrain3D
+## data, the water bodies and Biome what's where. The HUD makes one per world (group "map_data"); it samples a slice
 ## every frame (BUDGET_MS) so loading in doesn't hitch, and says `built` when done.
 ##
 ##   heights: RGF   R ground height (m), G water depth (m, 0 on land)
@@ -61,7 +60,7 @@ func _process(_delta: float) -> void:
 ## Loaded: the player's in and no loading screen is up.
 func _world_ready() -> bool:
 	var tree := get_tree()
-	if tree.get_first_node_in_group("loading_screen") != null or tree.get_first_node_in_group("player") == null:
+	if tree.get_first_node_in_group("player") == null:
 		return false
 	var t := tree.get_first_node_in_group("terrain") as Terrain3D
 	return t != null and t.data != null and not t.data.get_region_locations().is_empty()
@@ -173,10 +172,8 @@ func _place_labels() -> void:
 				"pos": rect.position + (Vector2(best) + Vector2(0.5, 0.5)) * step})
 
 
-## A biome's name on the map: its kind in a generated world ("Birch Grove"), else its own.
+## A biome's name on the map.
 static func biome_name(id: StringName) -> String:
-	if Biome.kind_names.has(id):
-		return Biome.kind_names[id]
 	var mood: BiomeMood = Biome.MOODS.get(id)
 	return mood.display_name if mood and mood.display_name != "" else String(id).capitalize()
 

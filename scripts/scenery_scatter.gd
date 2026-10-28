@@ -44,13 +44,10 @@ var _keep_out_grid: Dictionary[Vector2i, Array] = {}
 var _highest_water := -INF
 
 
-## Milliseconds of scattering per frame before it waits for the next (a generated world's loading
-## screen); 0 = all at once. The same scenery either way.
+## Milliseconds of scattering per frame before it waits for the next; 0 = all at once. The same
+## scenery either way.
 var frame_budget_ms := 0.0
 var done := false
-## Optional func(p: Vector2) -> bool: where scenery may go at all, checked before anything costly
-## (a large generated world: only this scatter's own biome cell).
-var accept := Callable()
 
 
 func _ready() -> void:
@@ -84,7 +81,7 @@ func _scatter() -> void:
 				var p := centre + (off if layer.cluster.y > 1 else Vector2.ZERO)
 				var s := rng.randf_range(layer.scale_range.x, layer.scale_range.y)
 				var yaw := rng.randf() * TAU
-				if _thinned(p, rng) or (accept.is_valid() and not accept.call(p)):
+				if _thinned(p, rng):
 					continue
 				var xform: Variant = _place(terrain, layer, p, s, yaw)
 				if xform == null:

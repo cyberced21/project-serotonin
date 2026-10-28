@@ -15,8 +15,6 @@ extends SceneTree
 ##   --set=projects   the village projects' views (plans/projects.md): the square with none done
 ##                    and with all, at dusk, the noticeboard open, the footbridge over the gully
 ##   --look=k=v,k=v   override SkyLook values for this run (numbers only), e.g. --look=water_mist=0.3
-##   --procgen=SEED   instead: a generated world, three views from its spawn (its save is thrown
-##                    away afterwards unless it was already there)
 ## The game is played on a throwaway save, so the real one is never touched.
 
 const VIEWS := [
@@ -79,7 +77,6 @@ var projects := false
 var out_dir := "res://docs/images/graphics/latest"
 var preset := ""
 var only: PackedStringArray = PackedStringArray()
-var procgen_seed := -1
 
 
 func _initialize() -> void:
@@ -102,8 +99,6 @@ func _initialize() -> void:
 		elif arg == "--set=projects":
 			views = PROJECT_VIEWS
 			projects = true
-		elif arg.begins_with("--procgen="):
-			procgen_seed = arg.trim_prefix("--procgen=").to_int()
 	_run.call_deferred()
 
 
@@ -123,10 +118,6 @@ func _run() -> void:
 		gfx.call("apply_preset", StringName(preset))
 	var day_night := root.get_node("DayNight")
 	day_night.set("frozen", true)  # each view at exactly its time
-	if procgen_seed >= 0:
-		await _procgen_tour(day_night)
-		quit()
-		return
 	var p := get_first_node_in_group("player") as Node3D
 	if lamps:
 		root.get_node("Lamps").call("light_all", true)
@@ -166,21 +157,6 @@ func _run() -> void:
 			board_panel.call("close")
 		print("VIEW %-16s %5.1f fps   at %s yaw %.2f" % [v[0], fps, p.global_position.snapped(Vector3.ONE * 0.1), p.rotation.y])
 	quit()
-
-
-func _procgen_tour(day_night: Node) -> void:
-	root.get_node("Worlds").call("play_scratch", procgen_seed)  # a scratch world: never the player's
-	await _wait(12.0)  # generation takes a few seconds
-	day_night.set("time", 0.4)
-	var p := get_first_node_in_group("player") as Node3D
-	var at := p.global_position
-	for i in 3:
-		var yaw := i * TAU / 3.0
-		_go(p, at, at + Vector3(sin(yaw), 0.0, cos(yaw)) * 10.0)
-		await _wait(2.0)
-		var fps := await _measure_fps(2.0)
-		await _shot("procgen_%d_%d" % [procgen_seed, i])
-		print("VIEW procgen %d/%d %5.1f fps" % [procgen_seed, i, fps])
 
 
 func _wait(seconds: float) -> void:

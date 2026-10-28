@@ -27,15 +27,9 @@ const SAMPLE_EVERY := 0.2
 ## Fog in the quarry thickens toward the floor: up to this many times its mood's at the bottom.
 const QUARRY_DEPTH_FOG := 2.0
 
-## Replaces WorldMap's shapes when set: func(at: Vector3) -> StringName. A procgen world sets it.
-var locator := Callable()
-## The quarry pit the depth fog measures from: its rim's height and how deep it goes. The
-## hand-built Greystone Quarry's unless a procgen world sets its own (see reset_quarry()).
+## The quarry pit the depth fog measures from: its rim's height and how deep it goes.
 var quarry_rim_height := WorldMap.QUARRY_RIM_HEIGHT
 var quarry_depth := WorldMap.QUARRY_LEVEL_DROP * WorldMap.QUARRY_WALLS.size()
-## The kind of each biome in a procgen world ("Birch Grove"), shown on its card in place of the
-## mood's subtitle. Empty in the hand-built world.
-var kind_names: Dictionary[StringName, String] = {}
 ## The biome you're in (&"" between them, in the wild hills: plain light, no card).
 var current: StringName = &""
 var discovered: Dictionary[StringName, bool] = {}
@@ -66,13 +60,6 @@ func _ready() -> void:
 	_build_card()
 
 
-## Back to the hand-built world: its quarry (for the depth fog), and no biome kinds.
-func reset_quarry() -> void:
-	quarry_rim_height = WorldMap.QUARRY_RIM_HEIGHT
-	quarry_depth = WorldMap.QUARRY_LEVEL_DROP * WorldMap.QUARRY_WALLS.size()
-	kind_names.clear()
-
-
 func _process(delta: float) -> void:
 	var player := get_tree().get_first_node_in_group("player") as Node3D
 	if player == null:
@@ -90,10 +77,8 @@ func _process(delta: float) -> void:
 	_blend(delta, player.global_position)
 
 
-## Which biome a world position is in, by WorldMap's shapes (first match wins), or the locator's.
+## Which biome a world position is in, by WorldMap's shapes (first match wins).
 func biome_at(p: Vector3) -> StringName:
-	if locator.is_valid():
-		return locator.call(p)
 	var w := Vector2(p.x, p.z)
 	if w.distance_to(WorldMap.QUARRY_CENTER) < WorldMap.QUARRY_WALLS[0] + WorldMap.QUARRY_APRON + 8.0:
 		return &"quarry"
@@ -121,10 +106,10 @@ func _enter(id: StringName) -> void:
 	if not discovered.has(id):
 		discovered[id] = true
 		SaveGame.mark_dirty()
-		_show_card(MOODS[id], true, kind_names.get(id, ""))
+		_show_card(MOODS[id], true)
 		_last_card[id] = now
 	elif now - _last_card.get(id, -INF) > REPEAT_COOLDOWN:
-		_show_card(MOODS[id], false, kind_names.get(id, ""))
+		_show_card(MOODS[id], false)
 		_last_card[id] = now
 
 
@@ -188,11 +173,10 @@ func hide_card() -> void:
 	_card.modulate.a = 0.0
 
 
-func _show_card(mood: BiomeMood, first: bool, kind := "") -> void:
+func _show_card(mood: BiomeMood, first: bool) -> void:
 	_title.text = mood.display_name
 	_title.add_theme_font_size_override("font_size", 46 if first else 34)
-	var what: String = kind if kind != "" else mood.subtitle
-	_subtitle.text = (what + "  ·  Discovered" if kind != "" else "Discovered") if first else what
+	_subtitle.text = "Discovered" if first else mood.subtitle
 	_subtitle.add_theme_font_size_override("font_size", 24 if first else 18)
 	if first:
 		Music.play_cue(&"discovery")

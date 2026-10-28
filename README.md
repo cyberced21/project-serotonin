@@ -54,7 +54,7 @@ whatever you hit.
   - **Cast:** hold to swing the rod back, release on the forward stroke's whip. On it, the float lands on your aim point with a soft *plip*; off it, it scatters and sploshes, spooking fish nearby. Cast right on top of a school and it bolts anyway: lead the fish.
   - **Bite:** a real fish from the water notices the float, leaves its school and swims over. It nibbles (little twitches: fake-outs), taps twice, then takes: the big moment. The float is dragged under with a plunge and a bell, the water bursts, a "!" pops up and the rod bends hard. Click to pull inside that window (about half a second); pull on a nibble and it's gone, too late and it spits the hook. Each species has its own rhythm (trout nibble fast, pike sit still under it and slam it with no warning).
   - **Yank:** pull on time and the fish tears out of the water with a hit-stop and a spray, sails over in a tumbling arc on the end of the line, slaps down on the bank beside you and flops about. Walk up to it to pick it up ("Salmon, 7.4 kg"); a perfect cast plus a quick pull is **Perfect!** (+50% XP).
-  - The rod reaches deep and far water from the bank: **Arctic char** in the middle of the lake, and in generated worlds' rivers **grayling** (Fishing 15) holding station in the current (cast upstream and let the float drift down to them) and **salmon** (Fishing 40) in the deep pools at the bends. Pond fish bite it too.
+  - The rod reaches deep and far water from the bank: **Arctic char** in the middle of the lake. Pond fish bite it too. (Grayling and salmon lived in the generated worlds' rivers; they come back with Hearthvale's creek, [plans/world.md](plans/world.md).)
 - **Biomes.** Each has its own ground colour, light, fog and ambience, and a title card when you arrive (the first visit says *Discovered*, and it's saved). Night still falls in all of them.
   - **The Pinewood** (north): a dense forest of about 100 pines and birches you can chop, among several hundred scenery trees you can bump into and wall-run off. A dirt trail runs from the clearing past three open glades to the ring road. Ferns, mushrooms, birdsong.
   - **Greystone Quarry** (west, past the peak): a five-level pit about 25 m deep.
@@ -63,37 +63,21 @@ whatever you hit.
     - A crane on the rim, scaffold steps, ladders, and haze that thickens as you go down.
   - **Goldmeadow** (south-east): rolling farmland. Crop squares of wheat and barley between dirt tracks, a windmill with turning sails (wall-run it), a fenced pasture with hay bales, a hay cart, lone oaks, and crickets.
   - **Hearthvale** (the village), **Stillwater** (the lake), **The Clearing** and **Frostpeak** have moods of their own too.
-- **A main menu and your worlds.** The game opens on a menu over a slowly drifting view of the clearing's pond. **Continue** goes straight back into the world you played last (on a first launch it's **Play**, into the hand-built valley).
-  - **Worlds:** every world is a card with a picture (taken when you last saved and quit), what it is, when you last played and for how long. Play, rename, duplicate (same seed and settings, fresh start) or delete one; the hand-built valley, *Hearthvale (classic)*, is always there and can only be reset. Each world has its own character, skills, inventory and village.
-  - **New World:** a name, a seed (type one, any word works, or reroll), the size, resources, water and terrain, and a kind for each biome or Random, beside a map of the world that redraws as you change them.
+- **A main menu and your worlds.** The game opens on a menu over a slowly drifting view of the clearing's pond. **Continue** goes straight back into the world you played last (on a first launch it's **Play**). There's one world, Hearthvale ([plans/world.md](plans/world.md): generated worlds were removed).
+  - **Worlds:** Hearthvale's card, with a picture (taken when you last saved and quit), when you last played and for how long. Play, rename or reset it.
   - **Esc pauses** (the whole world holds still): Resume, Settings, Controls, Save & Quit to Menu, Quit to Desktop.
   - **Settings:** graphics (presets and each effect), display (window, size, VSync, frame cap), audio (master, effects, ambience, footsteps) and controls (mouse sensitivity, invert Y, field of view, how much the camera kicks and shakes).
 
-  | The main menu | New World |
-  |---|---|
-  | ![The main menu](docs/images/menus/main_menu.png) | ![New World](docs/images/menus/new_world.png) |
-  | **Worlds** | **Settings** |
-  | ![Worlds](docs/images/menus/worlds.png) | ![Settings](docs/images/menus/settings.png) |
+  | The main menu | Worlds | Settings |
+  |---|---|---|
+  | ![The main menu](docs/images/menus/main_menu.png) | ![Worlds](docs/images/menus/worlds.png) | ![Settings](docs/images/menus/settings.png) |
 
-- **Generated worlds.** Make one from the menu's *New World* and step into a world built from a seed, behind a loading screen (about 5 s for a normal world, 20 for a large one), with its own character and save.
-  - **World settings:** Small (384 m: one ring of biomes round the clearing, no Frostpeak), Normal (512 m) or Large (1 km: two more rings out to the edge, the biomes repeated with kinds you haven't seen yet); resources lean, normal or rich; water dry, normal or wet (more ponds, two rivers); terrain gentle, normal or rugged; and any biome's kind picked instead of rolled. Normal everything builds exactly what the seed always did.
-  - A clearing to start in (somewhere near the middle), a ring of biomes round it with wandering borders, gentler ones near the start and harder ones further out, and mountains round the edge. Every biome is there on every seed, since progression needs them all.
-  - **Every biome rolls a kind**, named on its arrival card: a Pine Forest, Birch Grove or Old Growth; Grainfields, Orchard Downs or Rolling Downs; a Great Lake, a Marsh or an Island Lake; a Terraced, Deep or Broken quarry pit; a Lone Peak, Twin Peaks or a Ridge; a Meadow or a Hollow to start in. A kind changes the ground, the trees and rocks, and the scenery.
-  - **Hearthvale**, a village on every seed: the six buildings, their villagers and the upgrades (saved with that seed), round a square with lanes, in a valley or by its own pond.
-  - **Water:** ponds and a lake with fish, and a river (sometimes two) winding down from the mountains into the lake; trails ford it.
-  - **Out in the wilds:** ruins to climb (a Broken Tower or an Old Colonnade, an ore rock waiting on top), abandoned camps, and rare spots (a crystal outcrop or gold vein in the mountains, a ring of ancient oaks, a pond full of pike, a flower meadow).
-  - **Rich and lean:** each seed has twice as much of one resource and half as much of another; the debug menu's *Procgen* tab says which.
-  - Dirt trails wind from the clearing to every biome and shore. Each tree, rock, bush and boulder may be one of four baked variants of its model, so no two look alike.
-  - **Every place dresses its trees and rocks** (`data/themes/`): deep moss in the Old Growth, snow caps on Frostpeak, pale dust in the quarry, sun-bleached stone and warm leaves in Goldmeadow, wet dark feet at Stillwater, gold patches in a Birch Grove or Orchard Downs. The ore, the fresh breaks and the cut wood never change, so copper always reads as copper. Rocks and trees come in eight shapes each, four families of proportions (squat or tall, lumpy or smooth, wide or narrow crowns); nodes growing close together share a family and a look, so they read as siblings. The scenery round them wears the same theme.
-  - **Rare looks:** one to three nodes a seed are Ancient moss, Lightning-scorched, Frost-touched or Gilded. They glint, and give an extra drop and half as much XP again (the *Procgen* tab says where).
+- **Every place dresses its trees and rocks** (`data/themes/`): deep moss in the Old Growth, snow caps on Frostpeak, pale dust in the quarry, sun-bleached stone and warm leaves in Goldmeadow, wet dark feet at Stillwater, gold patches in a Birch Grove or Orchard Downs. The ore, the fresh breaks and the cut wood never change, so copper always reads as copper. Rocks and trees come in eight shapes each, four families of proportions (squat or tall, lumpy or smooth, wide or narrow crowns); nodes growing close together share a family and a look, so they read as siblings. The scenery round them wears the same theme.
 
   | Each place's theme on the five ores (struck twice: the insides stay clean) | And on the trees |
   |---|---|
   | ![Rocks by theme](docs/images/themes/rocks.png) | ![Trees by theme](docs/images/themes/trees.png) |
 
-  | A generated world (before rivers, villages and landmarks) | Seed 42 from above (`tools/procgen_preview.gd`: ruins magenta, camps orange, rare spots yellow) |
-  |---|---|
-  | ![A generated world](docs/images/procgen.png) | ![Its map](docs/images/procgen_map.png) |
 
 - **The ring road and its time trial.** A 1 km gravel loop, graded smooth, with banked bends, rock cuttings to wall-run along, spurs into every area, and a gully you can bridge or leap.
   - An obstacle course runs all the way round: log piles to hop, low walls, crate steps to mantle, wall-run panels and side-to-side alleys, ramps, low beams to slide under. Every piece leaves part of the road clear.
@@ -162,7 +146,7 @@ whatever you hit.
 | Rod: bow when a hooked fish jumps | Right mouse or Q |
 | Talk to a villager | E |
 | Pause menu | Esc |
-| Debug menu: items, skill levels, tool tiers, building tiers, time of day and speed, pause, teleports (buildings, biomes, ponds, nodes), fly mode, a live readout (with the biome), save wipe, generated worlds (enter a seed, a new random one, back to the main world), graphics presets and effects | F1 (debug builds and playtest exports) |
+| Debug menu: items, skill levels, tool tiers, building tiers, time of day and speed, pause, teleports (buildings, biomes, ponds, nodes), fly mode, a live readout (with the biome), save wipe, graphics presets and effects | F1 (debug builds and playtest exports) |
 | Debug: skip ahead 3 hours / give 50 of every item / upgrade every building (wraps back to tier 1) | F6 / F7 / F8 (debug builds and playtest exports) |
 | Debug: give XP / reset save | F9 / F10 (debug builds and playtest exports) |
 
@@ -173,12 +157,11 @@ whatever you hit.
 3. Press **Play** (F5). The game starts on the main menu (`scenes/menu/main_menu.tscn`).
 
 Each world lives in its own folder, `user://worlds/<id>/` (`world.json`, `save.json`, `thumb.png`);
-the hand-built world's is `user://worlds/classic/`. Saves from before the menu (`user://save.json`,
-`user://procgen_<seed>.json`) move into folders on first start. Press F10 in a debug build to wipe
+the hand-built world's is `user://worlds/classic/`. A save from before the menu (`user://save.json`)
+moves into its folder on first start. Press F10 in a debug build to wipe
 the current world's save. Settings live apart from the worlds, in `user://settings.cfg`.
 
-Skip the menu from the command line (after `--`): `--classic`, `--world=<id>`, or `--procgen
-[--seed=N]` (a scratch world, wiped each time). Add `--save-root=user://<dir>` to keep every world
+Skip the menu from the command line (after `--`): `--classic` or `--world=<id>`. Add `--save-root=user://<dir>` to keep every world
 somewhere else, as the test tools do.
 
 ## Project layout
@@ -195,7 +178,7 @@ data/fish/           FishSpecies resources (perch, trout, pike, char)
 docs/                design notes, TODO list, README images
 materials/           shared node / palette / terrain-asset materials
 models/              .glb models generated by the Blender scripts (rocks, trees, tools, fish, scenery, items, village/, quarry/, field/, road/)
-scenes/              main.tscn (the hand-built world), procgen.tscn (a generated one), menu/ (the main menu and its backdrop), player.tscn, resource nodes (rocks, trees, crystal, wheat, barley), pickup; village/ holds one scene per building, biomes/ the Pinewood, the quarry, Goldmeadow and the road
+scenes/              main.tscn (Hearthvale, the world), menu/ (the main menu and its backdrop), player.tscn, resource nodes (rocks, trees, crystal, wheat, barley), pickup; village/ holds one scene per building, biomes/ the Pinewood, the quarry, Goldmeadow and the road
 scripts/             gameplay code; autoload/ holds the global systems
 shaders/             terrain, water, sky, grass, ripples, node surface (+ foliage, detail), fish, sway,
                      ghost outline
@@ -212,7 +195,6 @@ Key scripts:
 - **World:** `world_map.gd` (where the biomes, roads and landmarks are, shared with the terrain generator), `day_night_sky.gd`, `footsteps.gd`, `pond_dressing.gd`, `scenery_scatter.gd` + `scatter_layer.gd`, `node_spawner.gd` + `spawn_entry.gd` (seeded gatherable nodes with stable save ids), `windmill.gd`
 - **Looks:** `grass_field.gd` (the grass round the player), `color_grade.gd` (the colour-grading table), `palette_material.gd` (plain or leaf-card material per mesh). Plan and decisions: [plans/graphics.md](plans/graphics.md)
 - **Menus and worlds:** `autoload/worlds.gd` (the world folders, playing and leaving, the command line), `autoload/pause_menu.gd`, `autoload/settings.gd` (display, audio, controls), `menu/` (`main_menu.gd`, `worlds_screen.gd`, `new_world_screen.gd`, `settings_screen.gd`, `controls_screen.gd`, `loading_screen.gd`, `menu_ui.gd` the shared look). Plan and decisions: [plans/menus.md](plans/menus.md)
-- **Generated worlds:** `procgen/world_settings.gd` (what a world is made from), `procgen/procgen_map.gd` (the seed's heights, surfaces, biome cells, water, quarry and trails, as plain arrays, at any size and resolution; generates on a worker thread), `procgen/procgen_world.gd` (builds `scenes/procgen.tscn` from it behind the loading screen), `procgen/procgen_population.gd` (the spawners and scenery per biome cell, by kind), `procgen/procgen_landmarks.gd` (ruins, camps, rare spots). Plans and decisions: [plans/procgen.md](plans/procgen.md), [plans/procgen-variety.md](plans/procgen-variety.md)
 - **The road:** `road_course.gd` (set pieces by metres along the road), `time_trial.gd`
 - **Autoloads:** `Skills`, `Tools` (the tool tiers you own, Greta's recipes), `Inventory`, `SaveGame`, `Worlds`, `PauseMenu`, `Settings`, `Village` (building tiers, the town-hall cap, perks), `DayNight` (the clock), `Biome` (where you are, the mood, cards and ambience), `GraphicsSettings` (quality presets), `Juice` (hit-stop and shake), `Sfx`, `GameInput`
 
@@ -229,13 +211,12 @@ Most content is generated by scripts, so it's easy to tweak and regenerate. Run 
 | Item icons → `art/icons/*.png` | `blender -b -P tools/blender/render_icons.py -- models art/palette.png art/icons`, then `python tools/outline_icons.py` (name item ids after either to do only those) |
 | Ore design candidates → `models/designs/` (not used by the game; two looks per ore) | `blender -b -P tools/blender/make_models.py -- models art/palette.json designs` |
 | Tree design candidates → `models/designs/` (two looks per tree; the picked ones also build `tree`, `birch`, `oak` and `pine`) | `blender -b -P tools/blender/make_models.py -- models art/palette.json tree_designs` |
-| Model variants for generated worlds → `models/variants/` (8 of each ore rock and choppable tree over four shape families, see `recipe()`; 4 of each bush, boulder and background tree; from shifted seeds) | `blender -b -P tools/blender/make_models.py -- models art/palette.json variants` (`ore_variants` / `tree_variants`: just those) |
+| Model variants → `models/variants/` (8 of each ore rock and choppable tree over four shape families, see `recipe()`; 4 of each bush, boulder and background tree; from shifted seeds) | `blender -b -P tools/blender/make_models.py -- models art/palette.json variants` (`ore_variants` / `tree_variants`: just those) |
 | Theme gallery: nodes lined up in the main world, a row per theme (`data/themes/`), on a throwaway save → `docs/images/themes/<label>.png` | `godot --path . --screen 1 -s res://tools/theme_gallery.gd -- --nodes=rock,oak_tree [--themes=plain,pinewood] [--looks] [--hit=2]` |
-| A contact sheet of those, one tile per theme (or per node with `--per-node`, or a procgen seed's biomes and rare looks with `--tour SEED`) | `python tools/theme_sheet.py --godot <console exe> --nodes rock,iron_rock --label rocks [--tour 7]` (needs Pillow) |
+| A contact sheet of those, one tile per theme (or per node with `--per-node`) | `python tools/theme_sheet.py --godot <console exe> --nodes rock,iron_rock --label rocks` (needs Pillow) |
 | Close-ups of an ore rock being mined, a screenshot a hit → `docs/images/ores/<label>/` | `godot --path . -s res://tools/ore_closeup.gd -- --ore=rock [--fault] [--angle=30]` |
 | Gathering sounds, woodcutting and mining → `audio/gathering/` (synthesized: every clip, plus a voice per species and ore), and the stacks the scenes play in `audio/woodcutting/` and `audio/mining/` | `python tools/synth_gathering.py` |
-| Graphics tour: screenshots of fixed views (or a generated world's) and the frame rate at each, on a throwaway save | `godot --path . -s res://tools/graphics_tour.gd -- --label=NAME [--preset=high] [--only=pond,...] [--procgen=SEED]` (saves to `docs/images/graphics/NAME/`) |
-| A top-down picture of a generated world (biomes, water, the quarry, trails), and how long it took | `godot --headless --path . -s res://tools/procgen_preview.gd -- --seed=42 [--seed=7 ...] [--out=dir]` |
+| Graphics tour: screenshots of fixed views and the frame rate at each, on a throwaway save | `godot --path . -s res://tools/graphics_tour.gd -- --label=NAME [--preset=high] [--only=pond,...] ` (saves to `docs/images/graphics/NAME/`) |
 | Screenshots of the menus (and a check of play / pause / save and quit) on a throwaway save root → `docs/images/menus/` | `godot --path . --screen 1 --resolution 1280x720 -s res://tools/menu_shots.gd -- --save-root=user://menu_shots` |
 | Tests: world folders and migration; the generator (normal settings unchanged, each knob, each size); a world loading the same spread over frames | `godot --headless --path . -s res://tools/test_worlds.gd -- --save-root=user://test_worlds`, `... -s res://tools/test_generator.gd`, `... -s res://tools/test_loading.gd -- --save-root=user://test_loading` |
 | Check the mining mix without listening (how loud each event comes out, and how much that varies hit to hit) | `blender -b -P tools/measure_mix.py --` |
@@ -247,7 +228,7 @@ Most content is generated by scripts, so it's easy to tweak and regenerate. Run 
 | Rod fishing's sounds (cast whip, plip, nibble, bloop, reel, creak, hiss, jump, snap, ...) → `audio/fishing/` | `python tools/synth_fishing.py` (needs numpy) |
 | Fishing's pure logic: the cast's judging, level scaling and catch chance, sizes, every species' strike window and bite rhythm | `godot --headless --path . -s res://tools/test_fishing.gd` |
 | Spear vs rod balance: a bot fishes the same water with each tool for a few game minutes and prints fish and XP per minute (throwaway save, fresh world per run) | `godot --path . --screen 1 -s res://tools/fishing_bench.gd -- [--minutes=4] [--level=30] [--tier=3] [--water=0,1]` |
-| Rod fishing end to end in the real game: a bot casts, waits for a bite, pulls, and picks up the fish where it lands, saving screenshots to `user://fishing_playtest/` (throwaway save) | `godot --path . --screen 1 -s res://tools/fishing_playtest.gd -- [--casts=3] [--level=30] [--procgen=SEED]` |
+| Rod fishing end to end in the real game: a bot casts, waits for a bite, pulls, and picks up the fish where it lands, saving screenshots to `user://fishing_playtest/` (throwaway save) | `godot --path . --screen 1 -s res://tools/fishing_playtest.gd -- [--casts=3] [--level=30]` |
 | The forge cutscene's sounds (flare, drone, three blows, quench hiss, reveal, thunder, bell, beam, first-swing shockwave, ...) → `audio/forge/` | `python tools/synth_forge.py` (needs numpy) |
 | The forge moment in the real game: Greta forges a tool (tier 1 copper, 2 iron, 3 crystal), screenshots of every beat and the first swing after → `user://forge_playtest/` (throwaway save) | `godot --path . --screen 1 --resolution 1280x720 -s res://tools/forge_playtest.gd -- [--tier=1] [--tool=pickaxe] [--skip]` |
 | Placeholder biome ambience (forest, field, quarry) | `python tools/synth_ambience.py` (needs numpy) |

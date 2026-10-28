@@ -50,17 +50,10 @@ func _run() -> void:
 	_check(saved["done"].has("benches") and saved["done"].has("well"), "done projects save")
 	projects.call("from_dict", {})
 	_check(not projects.call("is_done", &"benches"), "a fresh save has none")
-	# the noticeboard, in Hearthvale and in a generated village
+	# the noticeboard
 	await _check_board("Hearthvale", projects)
 	await _check_build(projects, inventory)
 	await _check_life(projects)
-	worlds.call("play_scratch", 42)
-	for i in 3:
-		await process_frame
-	while get_first_node_in_group("loading_screen") != null or get_first_node_in_group("player") == null:
-		await process_frame
-	await _frames(5)
-	await _check_board("seed 42", projects)
 	print("test_projects: %s" % ("PASS" if _fails == 0 else "%d FAILED" % _fails))
 	quit(1 if _fails else 0)
 

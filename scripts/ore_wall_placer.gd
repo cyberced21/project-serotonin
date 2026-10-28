@@ -5,7 +5,7 @@ extends Node3D
 ## (OreWallRun: panels, pillars, a cap rock), each block of rock in front of the wall on the level
 ## below, its cap flush with the level above. Wherever the wall isn't a clean step (the haul road's
 ## ramps, the mantle stairs) or a prop stands against it (ladders, scaffolds), the run breaks.
-## Works on any stepped pit: Greystone (scenes/biomes/quarry.tscn) and a procgen world's quarry.
+## Works on Greystone's stepped pit (scenes/biomes/quarry.tscn).
 
 ## The pit's middle (world XZ) and its walls' radii, outermost first.
 @export var center := Vector2.ZERO

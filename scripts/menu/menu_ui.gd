@@ -177,10 +177,6 @@ static func ago(unix: float) -> String:
 	return "%d %s" % [d["day"], MONTHS[int(d["month"]) - 1]]
 
 
-## A world's one-line description: "Generated · seed 4821 · Normal" or "The hand-built valley".
-static func world_kind(m: Dictionary) -> String:
-	if m.get("kind") != "generated":
-		return "The hand-built valley"
-	var s := WorldSettings.normalized(m.get("settings", {}))
-	var extra := WorldSettings.summary(s)
-	return "Generated · seed %d%s" % [s["seed"], " · " + extra if extra != "" else ""]
+## A world's one-line description.
+static func world_kind(_m: Dictionary) -> String:
+	return "The valley of Hearthvale"
