@@ -2,7 +2,7 @@ extends Node
 ## Which biome you're in, and what that does: blends the light toward its BiomeMood (DayNightSky
 ## reads fog_density, fog_tint, ambient and sun_tint from here and multiplies the time of day's
 ## values by them, and grades the image with its mist and tints; saturation is set here),
-## crossfades its ambience loop, and announces it with a title card. The first visit says "Discovered" (saved); later ones get a smaller card, at
+## and announces it with a title card (its ambience bed is played by the Ambience autoload). The first visit says "Discovered" (saved); later ones get a smaller card, at
 ## most once a minute per biome. You have to be in a new biome for HOLD seconds before it counts,
 ## so walking along a border doesn't flicker.
 ## Biomes are told apart by where you are (WorldMap's shapes), not by the ground under you, so
@@ -20,7 +20,7 @@ const MOODS := {
 	&"frostpeak": preload("res://data/biomes/frostpeak.tres"),
 }
 const HOLD := 1.5
-## Seconds for the light and the ambience to settle into a new biome.
+## Seconds for the light to settle into a new biome.
 const BLEND := 3.0
 const REPEAT_COOLDOWN := 60.0
 const SAMPLE_EVERY := 0.2
@@ -53,8 +53,7 @@ var _candidate: StringName = &""
 var _candidate_time := 0.0
 var _sample := 0.0
 var _last_card: Dictionary[StringName, float] = {}
-var _beds: Dictionary[StringName, AudioStreamPlayer] = {}
-## 0..1: how loud the ambience plays (a cutscene ducks it to hush the world).
+## 0..1: how loud the ambience plays (a cutscene ducks it to hush the world; Ambience reads it).
 var ambience_duck := 1.0
 var _card: Control
 var _title: Label
@@ -64,10 +63,6 @@ var _card_tween: Tween
 
 func _ready() -> void:
 	SaveGame.register(&"biomes", self)
-	for id in MOODS:
-		var mood: BiomeMood = MOODS[id]
-		if mood.ambience:
-			_beds[id] = _make_bed(mood.ambience)
 	_build_card()
 
 
@@ -133,7 +128,7 @@ func _enter(id: StringName) -> void:
 		_last_card[id] = now
 
 
-## Eases the light and the ambience toward the current biome's.
+## Eases the light toward the current biome's.
 func _blend(delta: float, at: Vector3) -> void:
 	var target: BiomeMood = MOODS.get(current)
 	var k := 1.0 - exp(-delta * 3.0 / BLEND)  # most of the way there in BLEND seconds
@@ -154,26 +149,6 @@ func _blend(delta: float, at: Vector3) -> void:
 	if env:
 		env.adjustment_enabled = true
 		env.adjustment_saturation = saturation
-	for id in _beds:
-		var bed := _beds[id]
-		var full := db_to_linear((MOODS[id] as BiomeMood).ambience_db) * ambience_duck
-		var level := lerpf(db_to_linear(bed.volume_db), full if id == current else 0.0, k)
-		bed.volume_db = linear_to_db(maxf(level, 0.0001))
-
-
-func _make_bed(stream: AudioStream) -> AudioStreamPlayer:
-	var wav := stream as AudioStreamWAV
-	if wav:  # a seamless loop; loop it without needing import settings
-		wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
-		wav.loop_begin = 0
-		wav.loop_end = int(wav.get_length() * wav.mix_rate)
-	var bed := AudioStreamPlayer.new()
-	bed.bus = &"Ambience"
-	bed.stream = stream
-	bed.volume_db = -80.0
-	add_child(bed)
-	bed.play()
-	return bed
 
 
 # --- the card -----------------------------------------------------------------------------------

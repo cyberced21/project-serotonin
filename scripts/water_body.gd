@@ -20,6 +20,18 @@ func _ready() -> void:
 	add_to_group("water")
 	monitoring = false  # nothing tracks overlaps; queries go through contains()
 	monitorable = false
+	_add_sound()
+
+
+## The water's own sound: lapping at a pond or lake, babbling on a river stretch (Ambience's beds,
+## loudest near the middle, carrying a little past the shore).
+func _add_sound() -> void:
+	var half := (_box.shape as BoxShape3D).size / 2.0
+	var r := maxf(half.x, half.z)
+	var bed := Ambience.water_bed(&"stream" if flow != Vector3.ZERO else &"lapping", maxf(r * 0.6, 3.0), r + 25.0)
+	bed.name = "Sound"
+	add_child(bed)
+	bed.position = Vector3(_box.position.x, surface_height - global_position.y, _box.position.z)
 
 
 ## True if `pos` (XZ) is over this water's volume.

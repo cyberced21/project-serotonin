@@ -26,6 +26,9 @@ extends Resource
 @export var shadow_tint := Color.WHITE
 @export var highlight_tint := Color.WHITE
 @export_group("Sound")
-## A seamless loop, played while you're here (crossfaded in and out).
+## The bed played here by day (Ambience loops it without a seam and crossfades it in and out).
 @export var ambience: AudioStream
 @export var ambience_db := -14.0
+## Weather rather than wildlife (wind on the peak, the quarry's hollow air): plays at night too,
+## under the night bed, instead of giving way to it.
+@export var ambience_always := false
