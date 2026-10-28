@@ -38,6 +38,7 @@ func open() -> void:
 		return
 	_title.text = Worlds.current_meta.get("name", "The World") if not Worlds.current.is_empty() else "The World"
 	_shade.visible = true
+	Sfx.play_ui(&"map")
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_fitted = false
@@ -49,6 +50,7 @@ func close() -> void:
 	if not is_open():
 		return
 	_shade.visible = false
+	Sfx.play_ui(&"map", 0.85)  # the same rustle, folded away a touch lower
 	_dragging = false
 	get_tree().paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED

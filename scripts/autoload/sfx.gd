@@ -3,6 +3,9 @@ extends Node
 ## "combo" when pickups happen in quick succession, a classic satisfying trick, and the player's
 ## own tool sounds) and a pool of positional ones for layered world sounds (SoundLayers), so a
 ## node doesn't need a player per layer.
+## Interface sounds (wood and paper, CC0 recordings: audio/ui/SOURCES.md) go through play_ui(id):
+## every button clicks and every tab bar turns a page by itself (see _on_node_added); panels and
+## the map play their own open / close.
 
 const VOICES := 12
 const VOICES_3D := 32  # the gathering sounds ring and boom on for a second or two
@@ -15,6 +18,14 @@ const DEBRIS_MAX := 3
 const DEBRIS_WINDOW_MS := 120
 
 var pickup_stream: AudioStream = preload("res://audio/pickup.tres")
+## Interface sounds by id, and how loud each plays (dB): quiet, under everything else.
+const UI := {
+	&"click": [preload("res://audio/ui/click.wav"), -12.0],
+	&"open": [preload("res://audio/ui/open.wav"), -8.0],
+	&"close": [preload("res://audio/ui/close.wav"), -10.0],
+	&"page": [preload("res://audio/ui/page.wav"), -9.0],
+	&"map": [preload("res://audio/ui/map.wav"), -7.0],
+}
 
 var _players: Array[AudioStreamPlayer] = []
 var _players_3d: Array[AudioStreamPlayer3D] = []
@@ -49,11 +60,27 @@ func play(stream: AudioStream, pitch := 1.0, volume_db := 0.0, bus := &"Effects"
 
 ## Players left on Master go to Effects, so the Effects volume reaches every sound effect;
 ## ambience and movement sounds pick their own buses (Ambience, Movement), as does a SoundLayers.
+## Also: every button clicks when pressed, and every tab bar turns a page when a tab is clicked
+## (not the debug menu's).
 func _on_node_added(n: Node) -> void:
-	if n is AudioStreamPlayer and (n as AudioStreamPlayer).bus == &"Master":
+	if n is BaseButton or n is TabContainer:
+		var debug := get_node_or_null("/root/DebugMenu")
+		if debug and debug.is_ancestor_of(n):
+			return
+		if n is BaseButton:
+			(n as BaseButton).pressed.connect(play_ui.bind(&"click"))
+		else:
+			(n as TabContainer).tab_clicked.connect(func(_t: int) -> void: play_ui(&"page"))
+	elif n is AudioStreamPlayer and (n as AudioStreamPlayer).bus == &"Master":
 		(n as AudioStreamPlayer).bus = &"Effects"
 	elif n is AudioStreamPlayer3D and (n as AudioStreamPlayer3D).bus == &"Master":
 		(n as AudioStreamPlayer3D).bus = &"Effects"
+
+## Plays an interface sound by id (&"click", &"open", &"close", &"page", &"map"), with a hair of
+## pitch variation so repeats don't sound stamped out.
+func play_ui(id: StringName, pitch := 1.0) -> void:
+	var entry: Array = UI[id]
+	play(entry[0], pitch * randf_range(0.97, 1.03), entry[1])
 
 func play_pickup() -> void:
 	var now := Time.get_ticks_msec()

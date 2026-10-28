@@ -10,7 +10,6 @@ extends CanvasLayer
 ## forge moment (ForgeCutscene). A third tab, Talents, resets one skill's talent picks (respec,
 ## plans/levels.md L8): the first ever is free, after that it costs that skill's goods.
 
-const OPEN_SFX := preload("res://audio/pickup.tres")
 const WIDTH := 460.0
 const ICON_SIZE := 34.0
 ## Walk further than this from the villager and the panel closes.
@@ -79,7 +78,7 @@ func open(v: Villager) -> void:
 	t.tween_property(_panel, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	t.tween_property(_panel, "modulate:a", 1.0, 0.12)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	Sfx.play(OPEN_SFX, 0.75, -8.0)
+	Sfx.play_ui(&"open")
 
 
 func close() -> void:
@@ -88,6 +87,7 @@ func close() -> void:
 	villager = null
 	_closed_msec = Time.get_ticks_msec()
 	_panel.visible = false
+	Sfx.play_ui(&"close")
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 

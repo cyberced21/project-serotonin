@@ -13,7 +13,7 @@ extends Node3D
 
 signal upgraded(tier: int)
 
-const TOK_SFX := preload("res://audio/wood_hit.tres")
+const TOK_SFX := preload("res://audio/ui/tok.wav")
 const THUD_SFX := preload("res://audio/wood_break.tres")
 const WORLD_LAYER := 1
 ## Pieces smaller than this (m³ of bounding box) get no collision: flowers, handles, notices.
