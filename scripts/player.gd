@@ -5,7 +5,7 @@ extends CharacterBody3D
 ## instead (left-click never swings at villagers). Water within reach brings out the spear
 ## (SpearFishing); water further out, the rod (RodFishing), which has the buttons while it's out.
 ## Esc frees the mouse; clicking the game captures it again.
-## Mouse-look runs in _unhandled_input (raw events), so it stays smooth during hit-stop.
+## Mouse-look runs in _unhandled_input (raw events).
 ## Physics interpolation is on for the body; the eye (Head) is placed every rendered frame from the
 ## body's interpolated position plus the current look angles, so the view is smooth at any frame
 ## rate and mouse look never lags a tick. Head bob, landing dip and strafe lean are added there, and
@@ -13,7 +13,7 @@ extends CharacterBody3D
 ## Movement is calm (plans/calm-feel.md): you ease into a stroll or a jog and settle to a stop,
 ## no rush, no momentum tricks. See _move.
 ## The node is hit on the *impact frame* of the swing, not when the button is pressed —
-## lining sound + hit-stop up with the animation is what makes it feel solid.
+## lining the sound and the tool biting in up with the animation is what makes it feel solid.
 
 @export_group("Look")
 @export var mouse_sensitivity := 0.0025
@@ -103,16 +103,15 @@ extends CharacterBody3D
 @export_group("Bite")
 ## How far the tool sinks into the node on impact (m, viewmodel space).
 @export var bite_depth := 0.07
-## How long the tool stays stuck in the node after the hit-stop.
-@export var bite_hold := 0.06
+## How long the tool stays stuck in the node.
+@export var bite_hold := 0.1
 ## How long the yank back out takes. The chunk tears out at the end of it.
 @export var yank_time := 0.09
 ## How far the tool's edge is buried in the node while it's stuck (m, world space).
 @export var stick_depth := 0.1
-## On impact the view kicks up (degrees) and away from the hit, the FOV narrows (degrees), and
-## the tool quivers (radians) — all scaled by how big the hit was (ResourceNode.last_impact).
-@export var impact_kick := 0.6
-@export var impact_fov_punch := 1.0
+## On impact the view nudges up (degrees) and away from the hit, and the tool quivers (radians),
+## both scaled by how big the hit was (ResourceNode.last_impact). A soft thunk, no FOV punch.
+@export var impact_kick := 0.3
 @export var tool_buzz := 0.03
 
 ## How each tool is swung. "rest" / "windup" / "strike": the tool pivot's rotation around X
@@ -947,13 +946,12 @@ func _swing(tool: StringName, power := false) -> void:
 func _impact_feel(info: HitInfo, strength: float, buzz_scale := 1.0) -> void:
 	var side := camera.global_basis.x.dot((info.position - camera.global_position).normalized())
 	var yaw := clampf(side * 4.0, -1.0, 1.0) * impact_kick * 0.6 * strength + randf_range(-0.15, 0.15)
-	camera.kick(impact_kick * strength, yaw, impact_fov_punch * strength)
+	camera.kick(impact_kick * strength, yaw, 0.0)
 	_buzz = tool_buzz * strength * buzz_scale
 	_buzz_us = Time.get_ticks_usec()
 
 
-## The quiver right now (radians): a fast decaying wobble, in real time so it runs through the
-## hit-stop.
+## The quiver right now (radians): a fast decaying wobble, in real time.
 func _buzz_angle() -> float:
 	if _buzz <= 0.0:
 		return 0.0
@@ -964,7 +962,7 @@ func _buzz_angle() -> float:
 	return _buzz * exp(-t / BUZZ_DECAY) * sin(TAU * BUZZ_HZ * t)
 
 
-## The tool bites in and sticks (the hit-stop freezes it there), then gets yanked back out with a
+## The tool bites in and sticks for a moment, then gets yanked back out with a
 ## jerk — the moment the chunk comes free. Sticking: see _stick_in_world.
 func _bite(tool: StringName, info: HitInfo) -> void:
 	var pose := _swing_pose(tool)
@@ -973,7 +971,7 @@ func _bite(tool: StringName, info: HitInfo) -> void:
 	if stuck == null:  # no world copy for this tool: just shove the held one forward
 		tool_pivot.position = strike + Vector3(0, -bite_depth * 0.4, -bite_depth)
 	var t := create_tween()
-	t.tween_interval(bite_hold)  # (stretched by the hit-stop)
+	t.tween_interval(bite_hold)
 	await t.finished
 	if stuck:
 		await _unstick(stuck, tool)
@@ -988,8 +986,7 @@ func _bite(tool: StringName, info: HitInfo) -> void:
 ## itself in the node (the node's surface hides the part that's inside). The copy starts exactly
 ## where the held tool is on screen — its pose in viewmodel-camera space, widened for the main
 ## camera's wider FOV and scaled out from the eye until the edge is at the hit's depth — so the
-## swap can't be seen; then it drives the last few centimetres in (in real time, so it happens
-## even during the hit-stop). _unstick reverses it.
+## swap can't be seen; then it drives the last few centimetres in. _unstick reverses it.
 func _stick_in_world(tool: StringName, info: HitInfo) -> Node3D:
 	var slot := tools[tool]
 	if not TOOL_HEADS.has(tool):
