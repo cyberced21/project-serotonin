@@ -2,7 +2,21 @@
 
 Chunk 4 of [cozy.md](cozy.md) (its section 3). Grilled 2026-10-28. Branch `lamps` off `main`.
 
-Status: **grilled, nothing built.**
+Status: **phases 1-5 built** 2026-10-28 on branch `lamps` (headless tests: `tools/test_lamps.gd`,
+`test_lantern.gd`, `test_gift.gd`; night shots in `docs/images/graphics/lamps/`, the darker night
+approved from them). **Not played.** Next: phase 6, sounds (pick).
+
+### Built, and what changed on the way
+
+- Generated worlds have no roads, only trails from the hub, so their trails are the stretches
+  (L2's "trails stay dark" holds for Hearthvale's forest trail and field tracks).
+- A new world lights the path from the clearing to the village (not only the lanes): otherwise
+  a new game had no path lamps at all.
+- The wave spreads by straight distance from the village, not along the road: it looks the same.
+- The lantern lights itself on the same darkness as the lamps (`DayNight.darkness()`), not at
+  full night. The gift starts about a minute before sunset (`Lamps.GIFT_BEFORE_SUNSET`); with
+  no player home yet, "your doorstep" is the town hall step.
+- Night: moon 0.36 -> 0.26, night ambient 0.45 -> 0.3, night sky 0.6 -> 0.5 (`sky_look.gd`).
 
 ## Where we start (2026-10-28)
 
