@@ -88,8 +88,10 @@ func _toggle_skills() -> void:
 
 ## The upgrade panel and debug menu close on Esc themselves (their _input runs before this one).
 func _other_menu_open() -> bool:
-	var upgrade := get_tree().get_first_node_in_group("upgrade_panel") as UpgradePanel
-	return upgrade != null and upgrade.villager != null
+	for panel in get_tree().get_nodes_in_group("modal_panel"):  # a villager's panel, the noticeboard
+		if panel.is_open():
+			return true
+	return false
 
 
 func _show_panel() -> void:

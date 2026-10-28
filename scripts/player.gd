@@ -212,7 +212,9 @@ var _crouch := 0.0  # 0 = standing, 1 = fully crouched
 var _stand_probe := CapsuleShape3D.new()
 
 var _target: ResourceNode
-var _talk_target: Villager
+## What E talks to: a villager, or anything else with prompt() / interact() / set_highlighted()
+## (the noticeboard).
+var _talk_target: Node
 ## "Q: rod" when you aim at water only the other fishing tool takes; the swap's name, briefly.
 var _swap_hint := ""
 var _swap_shown := 0.0
@@ -713,7 +715,8 @@ func _update_target() -> void:
 		return
 	# one ray out to the further reach: villagers can be talked to a bit further than you can swing
 	var hit := _aim(maxf(reach, interact_reach))
-	var talk := hit.get("collider") as Villager
+	var collider: Object = hit.get("collider")
+	var talk: Node = collider as Node if collider and collider.has_method("interact") else null
 	var node: ResourceNode = null
 	if talk == null and not hit.is_empty() and camera.global_position.distance_to(hit["position"]) <= reach:
 		node = _node_under_crosshair(hit)
@@ -846,14 +849,18 @@ func equip_now(tool: StringName) -> void:
 
 
 func _panel_open() -> bool:
-	var panel := get_tree().get_first_node_in_group("upgrade_panel") as UpgradePanel
-	return panel != null and panel.is_open()
+	for panel in get_tree().get_nodes_in_group("modal_panel"):  # a villager's, the noticeboard
+		if panel.is_open():
+			return true
+	return false
 
 
 ## The E that closed the upgrade panel mustn't open it again straight away.
 func _panel_just_closed() -> bool:
-	var panel := get_tree().get_first_node_in_group("upgrade_panel") as UpgradePanel
-	return panel != null and panel.just_closed()
+	for panel in get_tree().get_nodes_in_group("modal_panel"):
+		if panel.just_closed():
+			return true
+	return false
 
 
 func _equip(tool: StringName) -> void:

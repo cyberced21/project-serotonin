@@ -209,6 +209,11 @@ func _build_village() -> void:
 		prop.position = Vector3(p[1].x, y, p[1].y)
 		prop.rotation.y = p[2]
 		root.add_child(prop)
+	var decor := VillageDecor.new()  # the noticeboard, and the projects as they're done
+	decor.name = "Decor"
+	decor.center = map.village["center"]
+	decor.angle = map.village["angle"]
+	root.add_child(decor)
 
 
 func _build_water() -> void:

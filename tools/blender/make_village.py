@@ -1086,6 +1086,28 @@ def lamp_post_rustic():
     export(os.path.join("village", "props", "lamp_post_rustic"))
 
 
+def noticeboard():
+    """The village noticeboard (plans/projects.md): a plank board on two posts under a little
+    shingle roof, a few paper notes pinned on it. Faces Blender -Y (Godot +Z)."""
+    reset()
+    k = Kit("", 608)
+    for x in (-0.85, 0.85):
+        k.post("Post", 0.07, 0, 2.3, x, 0, ("wood.3", "wood.3", "wood.2"))
+    k.box("Board", (1.75, 0.07, 1.05), (0, 0, 1.45), ("wood.5", "wood.4", "wood.3"), jit=0.004)
+    k.box("Frame", (1.85, 0.09, 0.08), (0, 0, 2.0), "wood.2")
+    k.box("Frame", (1.85, 0.09, 0.08), (0, 0, 0.9), "wood.2")
+    for x, side in ((0, 1), (0, -1)):
+        k.box("Roof", (2.1, 0.42, 0.04), (0, side * 0.19, 2.42), ("wood.2", "wood.1", "wood.1"), rot=(side * 0.55, 0, 0))
+    k.box("Ridge", (2.15, 0.07, 0.07), (0, 0, 2.53), "wood.1")
+    notes = ((-0.55, 1.68, 0.36, 0.28, 0.05), (-0.05, 1.62, 0.3, 0.38, -0.08), (0.48, 1.7, 0.34, 0.26, 0.1),
+             (-0.42, 1.18, 0.32, 0.3, -0.06), (0.22, 1.2, 0.4, 0.3, 0.04), (0.66, 1.14, 0.22, 0.28, -0.12))
+    for i, (x, z, w, h, rot) in enumerate(notes):
+        paper = ("neutral.7", "neutral.6", "neutral.6") if i % 2 else ("wood.7", "wood.6", "wood.6")
+        k.box("Note", (w, 0.01, h), (x, -0.045, z), paper, rot=(0, rot, 0))
+        k.box("Pin", (0.025, 0.02, 0.025), (x, -0.055, z + h * 0.4), "accent.3")
+    export(os.path.join("village", "props", "noticeboard"))
+
+
 def lantern():
     """The lantern you carry (models/lantern.glb): a small iron-framed lantern, origin at the top
     of its handle ring, where it hangs from the belt (or the hand) and swings from."""
@@ -1138,6 +1160,6 @@ only = sys.argv[sys.argv.index("--") + 3:]  # optional: names of the builders to
 for build in (woodcutter, smithy, fisher, town_hall, baker_cottage, prospector_cottage,
               woodcutter_villager, smith_villager, fisher_villager, mayor_villager,
               baker_villager, prospector_villager,
-              bench, lamp_post, lamp_post_rustic, lantern, barrel_prop, crate_prop, signpost):
+              bench, lamp_post, lamp_post_rustic, lantern, noticeboard, barrel_prop, crate_prop, signpost):
     if not only or build.__name__ in only:
         build()

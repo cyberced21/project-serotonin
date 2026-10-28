@@ -82,9 +82,8 @@ func is_open() -> bool:
 
 
 func open() -> void:
-	var upgrade := get_tree().get_first_node_in_group("upgrade_panel") as UpgradePanel
-	if upgrade:
-		upgrade.close()
+	for panel in get_tree().get_nodes_in_group("modal_panel"):  # a villager's panel, the noticeboard
+		panel.close()
 	_rebuild_village()  # buildings register when the scene loads, after this autoload
 	_rebuild_lamps()
 	_rebuild_teleports()

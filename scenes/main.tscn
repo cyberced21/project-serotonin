@@ -57,6 +57,7 @@
 [ext_resource type="PackedScene" path="res://scenes/gold_rock.tscn" id="53_gold"]
 [ext_resource type="Script" path="res://scripts/grass_field.gd" id="90_grass_field"]
 [ext_resource type="Script" path="res://scripts/path_lamps.gd" id="91_path_lamps"]
+[ext_resource type="Script" path="res://scripts/village_decor.gd" id="92_village_decor"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
@@ -667,6 +668,9 @@ script = ExtResource("18_prop")
 model = ExtResource("22_crates")
 
 [node name="Pinewood" parent="." instance=ExtResource("57_pinewood")]
+
+[node name="Decor" type="Node3D" parent="Village"]
+script = ExtResource("92_village_decor")
 
 [node name="Quarry" parent="." instance=ExtResource("58_quarry")]
 

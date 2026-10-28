@@ -50,8 +50,40 @@ func _run() -> void:
 	_check(saved["done"].has("benches") and saved["done"].has("well"), "done projects save")
 	projects.call("from_dict", {})
 	_check(not projects.call("is_done", &"benches"), "a fresh save has none")
+	# the noticeboard, in Hearthvale and in a generated village
+	await _check_board("Hearthvale", projects)
+	worlds.call("play_scratch", 42)
+	for i in 3:
+		await process_frame
+	while get_first_node_in_group("loading_screen") != null or get_first_node_in_group("player") == null:
+		await process_frame
+	await _frames(5)
+	await _check_board("seed 42", projects)
 	print("test_projects: %s" % ("PASS" if _fails == 0 else "%d FAILED" % _fails))
 	quit(1 if _fails else 0)
+
+
+func _check_board(world: String, projects: Node) -> void:
+	var board := get_first_node_in_group("noticeboard") as Node3D
+	var decor := get_first_node_in_group("village_decor") as Node3D
+	_check(board != null, "%s has a noticeboard" % world)
+	if board == null:
+		return
+	var center: Vector2 = decor.get("center")
+	var off := Vector2(board.global_position.x, board.global_position.z).distance_to(center)
+	print("%s: the board stands %.1f m from the middle of the square, prompt: %s" % [world, off, board.call("prompt")])
+	_check(off > 7.0 and off < 16.0, "%s: by the square, not on it" % world)
+	var player := get_first_node_in_group("player") as Node3D
+	player.global_position = board.global_position + board.global_basis.z * 2.0 + Vector3.UP
+	await _frames(3)
+	board.call("interact")
+	await _frames(3)
+	var panel := get_first_node_in_group("noticeboard_panel")
+	var notes: int = (panel.get("_grid") as Node).get_child_count() if panel else 0
+	_check(panel != null and panel.call("is_open") and notes == (projects.call("all") as Array).size(),
+			"%s: E opens it, a note per project (%d)" % [world, notes])
+	if panel:
+		panel.call("close")
 
 
 func _frames(n: int) -> void:

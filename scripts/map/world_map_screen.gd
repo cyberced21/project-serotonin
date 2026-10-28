@@ -75,8 +75,10 @@ func _can_open() -> bool:
 	var tree := get_tree()
 	if Worlds.current.is_empty() or tree.paused or tree.get_first_node_in_group("loading_screen") != null:
 		return false
-	var panel := tree.get_first_node_in_group("upgrade_panel") as UpgradePanel
-	return not (panel and panel.is_open())
+	for panel in tree.get_nodes_in_group("modal_panel"):  # a villager's panel, the noticeboard
+		if panel.is_open():
+			return false
+	return true
 
 
 func _process(_delta: float) -> void:
