@@ -107,7 +107,7 @@ func _build_xp_bar() -> void:
 
 
 func _build_banner() -> void:
-	_banner = _make_label(56)
+	_banner = _make_label(44)
 	_banner.anchor_right = 1.0
 	_banner.anchor_top = 0.25
 	_banner.anchor_bottom = 0.25
@@ -164,8 +164,8 @@ func _on_changed(item: StringName, count: int) -> void:
 		_add_row(item)
 	_labels[item].text = str(count)
 	var row := _rows[item]
-	row.scale = Vector2(1.4, 1.4)
-	create_tween().tween_property(row, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	row.scale = Vector2(1.12, 1.12)
+	create_tween().tween_property(row, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
 func _on_xp_gained(skill: StringName, _amount: int, _total: int) -> void:
@@ -201,11 +201,10 @@ func _on_leveled_up(skill: StringName, lvl: int) -> void:
 	_perk_line.text = "%s: %s" % [perk["name"], perk["text"]] if not perk.is_empty() else ""
 	if _banner_tween:
 		_banner_tween.kill()
-	_banner.modulate.a = 1.0
-	_banner.scale = Vector2(0.3, 0.3)
-	_banner_tween = create_tween()
-	_banner_tween.tween_property(_banner, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	_banner_tween.tween_interval(2.5)  # long enough to read the perk line
-	_banner_tween.tween_property(_banner, "modulate:a", 0.0, 0.4)
-	Sfx.play(LEVEL_UP_SFX, 1.0, -3.0)
-	Juice.shake(2.0)  # no hitstop: it would stack with the break hitstop and feel laggy
+	_banner.modulate.a = 0.0
+	_banner.scale = Vector2.ONE
+	_banner_tween = create_tween()  # a soft fade in and out, no pop (plans/calm-feel.md)
+	_banner_tween.tween_property(_banner, "modulate:a", 1.0, 0.5).set_trans(Tween.TRANS_SINE)
+	_banner_tween.tween_interval(3.0)  # long enough to read the perk line
+	_banner_tween.tween_property(_banner, "modulate:a", 0.0, 0.8).set_trans(Tween.TRANS_SINE)
+	Sfx.play(LEVEL_UP_SFX, 1.0, -8.0)

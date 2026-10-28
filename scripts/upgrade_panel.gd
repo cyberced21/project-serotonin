@@ -73,11 +73,11 @@ func open(v: Villager) -> void:
 	_refresh()
 	_panel.visible = true
 	_panel.pivot_offset = _panel.size / 2.0
-	_panel.scale = Vector2(0.85, 0.85)
+	_panel.scale = Vector2(0.97, 0.97)
 	_panel.modulate.a = 0.0
 	var t := create_tween().set_parallel()
-	t.tween_property(_panel, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	t.tween_property(_panel, "modulate:a", 1.0, 0.12)
+	t.tween_property(_panel, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	t.tween_property(_panel, "modulate:a", 1.0, 0.2)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Sfx.play(OPEN_SFX, 0.75, -8.0)
 
