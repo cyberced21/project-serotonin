@@ -1,4 +1,7 @@
-"""Synthesizes the forge cutscene's sounds (needs numpy):
+"""HISTORY: every forge sound but settle.wav is now a CC0 recording (audio/forge/SOURCES.md);
+running this would write the old synthesized ones back over them. Don't.
+
+Synthesizes the forge cutscene's sounds (needs numpy):
 
     python tools/synth_forge.py
 
