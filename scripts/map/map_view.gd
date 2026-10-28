@@ -98,18 +98,34 @@ func _draw_ink() -> void:
 		var px := world_to_px(Vector2(n.global_position.x, n.global_position.z))
 		if _visible_px(px, house):
 			_draw_house(px, house)
-	# the biomes' names
+	var player := tree.get_first_node_in_group("player") as Node3D
+	var me := world_to_px(Vector2(player.global_position.x, player.global_position.z)) if player else Vector2.INF
+	# the biomes' names, each moved a line up or down if it would cover another or you, else left out
 	if show_labels and data and data.is_built:
+		var taken: Array[Rect2] = []
+		if player:
+			taken.append(Rect2(me - Vector2(14, 14), Vector2(28, 28)))
 		for l in data.labels:
 			var px := world_to_px(l["pos"])
-			if _visible_px(px, 20.0):
-				_draw_label(String(l["text"]).to_upper(), px, label_size)
+			if not _visible_px(px, 20.0):
+				continue
+			var text := _spaced(String(l["text"]).to_upper())
+			var w := _font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, label_size).x
+			for dy: float in [0.0, label_size * 1.3, -label_size * 1.3]:
+				var box := Rect2(px + Vector2(-w / 2.0, dy - label_size * 0.7), Vector2(w, label_size * 1.2))
+				if taken.all(func(r: Rect2) -> bool: return not r.intersects(box)):
+					taken.append(box)
+					_draw_label(text, px + Vector2(0, dy), label_size)
+					break
 	# you
-	var player := tree.get_first_node_in_group("player") as Node3D
 	if player:
-		var px := world_to_px(Vector2(player.global_position.x, player.global_position.z))
 		var fwd := -player.global_basis.z
-		_draw_arrow(px, atan2(fwd.x, -fwd.z), 9.0 if circular else 11.0)
+		_draw_arrow(me, atan2(fwd.x, -fwd.z), 9.0 if circular else 11.0)
+
+
+## Capitals spaced out a little, as an engraver would letter a region (thin spaces between).
+static func _spaced(text: String) -> String:
+	return " ".join(text.split(""))
 
 
 func _draw_house(at: Vector2, s: float) -> void:
@@ -120,13 +136,12 @@ func _draw_house(at: Vector2, s: float) -> void:
 	_ink.draw_colored_polygon(roof, INK)
 
 
-## Letter-spaced capitals in ink, with a haze of paper round them so they read over any ground.
+## A name in ink (already spaced: _spaced), with a haze of paper round it so it reads over any ground.
 func _draw_label(text: String, at: Vector2, font_size: int) -> void:
-	var spaced := " ".join(text.split(""))
-	var w := _font.get_string_size(spaced, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	var w := _font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 	var pos := at - Vector2(w / 2.0, -font_size * 0.35)
-	_ink.draw_string_outline(_font, pos, spaced, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 5, Color(PAPER, 0.8))
-	_ink.draw_string(_font, pos, spaced, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, INK)
+	_ink.draw_string_outline(_font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 5, Color(PAPER, 0.8))
+	_ink.draw_string(_font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, INK)
 
 
 ## The player: a gold arrowhead pointing the way you face (`angle`: 0 = north, clockwise).

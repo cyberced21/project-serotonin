@@ -33,6 +33,9 @@ const vec3 FOREST = vec3(0.58, 0.64, 0.42);
 const vec3 FIELD = vec3(0.92, 0.80, 0.50);
 const vec3 ROCK = vec3(0.72, 0.64, 0.52);
 const vec3 SNOW = vec3(0.95, 0.93, 0.88);
+const vec3 DIRT = vec3(0.80, 0.68, 0.50);
+const vec3 TABLE = vec3(0.16, 0.10, 0.06);
+const float PLAZA_REACH = 4.0;  // texels
 
 float hash(vec2 p) {
 	p = fract(p * vec2(123.34, 456.21));
@@ -59,10 +62,12 @@ float fbm(vec2 p) {
 }
 
 // A line `width_px` screen pixels wide where `v` crosses whole multiples of `every`.
+// None on flat ground (a plateau that sits exactly on a multiple would be all line).
 float iso_line(float v, float every, float width_px) {
 	float d = abs(fract(v / every + 0.5) - 0.5) * every;
-	float w = fwidth(v) * width_px;
-	return 1.0 - smoothstep(w * 0.5, w, d);
+	float fw = fwidth(v);
+	float w = max(fw, 1e-6) * width_px;
+	return (1.0 - smoothstep(w * 0.5, w, d)) * smoothstep(0.0005, 0.003, fw);
 }
 
 void fragment() {
@@ -138,13 +143,28 @@ void fragment() {
 		float shore = iso_line(depth - 0.02, 1000.0, 1.6 * ink_scale);
 		col = mix(col, INK, shore * 0.8 * step(0.0005, fwidth(depth)));
 
-		// roads and paths
+		// roads and paths; a broad patch of path ground (the Clearing, a village square) is a plaza:
+		// a pale dirt wash, not a blot of ink. It's a plaza if the path goes on PLAZA_REACH out
+		// every way.
 		float road = smooth_kind.b;
-		col = mix(col, INK * 0.9, smoothstep(0.55, 0.8, road) * 0.85);
-		col = mix(col, INK * 1.3, smoothstep(0.3, 0.45, road) * (1.0 - smoothstep(0.55, 0.8, road)) * 0.45);
-	} else {
-		col = mix(col, PAPER_DARK, 0.35);  // past the edge of the world: blank, older paper
+		vec2 o = e * PLAZA_REACH;
+		float around = min(min(texture(kind_smooth, uv + vec2(o.x, 0.0)).b, texture(kind_smooth, uv - vec2(o.x, 0.0)).b),
+				min(texture(kind_smooth, uv + vec2(0.0, o.y)).b, texture(kind_smooth, uv - vec2(0.0, o.y)).b));
+		float plaza = smoothstep(0.3, 0.45, around) * smoothstep(0.3, 0.45, road);
+		col = mix(col, DIRT * (0.9 + 0.1 * fibres), plaza * 0.5);
+		road *= 1.0 - plaza;
+		col = mix(col, INK * 0.9, smoothstep(0.6, 0.85, road) * 0.85);
+		col = mix(col, INK * 1.3, smoothstep(0.32, 0.48, road) * (1.0 - smoothstep(0.6, 0.85, road)) * 0.45);
 	}
+
+	// past the edge of the world: the dark table under the map, the sheet's edge burnt
+	vec2 ow = max(world_rect.xy - world, world - (world_rect.xy + world_rect.zw));
+	float out_m = max(ow.x, ow.y) + (fbm(world * 0.08) - 0.5) * 10.0;
+	if (!(hd.r > -999.0) && out_m < 0.0) {
+		out_m = 0.0;  // (inside the rectangle but no ground: count as the edge)
+	}
+	col = mix(col, vec3(0.32, 0.2, 0.1), smoothstep(-6.0, 0.0, out_m) * 0.7);
+	col = mix(col, TABLE * (0.85 + 0.3 * fbm(world * 0.02)), smoothstep(0.0, 3.0, out_m));
 
 	// the big map's burnt edges
 	if (vignette > 0.0) {

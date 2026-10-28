@@ -93,7 +93,7 @@ func _fit() -> void:
 		return
 	view.center = d.rect.get_center()
 	view.metres_per_px = maxf(d.rect.size.x / view.size.x, d.rect.size.y / view.size.y) * 1.02
-	view.label_size = clampi(roundi(view.size.y / 34.0), 14, 30)
+	view.label_size = clampi(roundi(view.size.y / 42.0), 12, 24)
 	_fitted = true
 
 
@@ -131,7 +131,7 @@ func _on_view_input(event: InputEvent) -> void:
 			var f := 1.0 / ZOOM_STEP if mb.button_index == MOUSE_BUTTON_WHEEL_UP else ZOOM_STEP
 			view.metres_per_px = clampf(view.metres_per_px * f, MIN_MPP, _max_mpp())
 			view.center += before - view.px_to_world(mb.position)  # zoom toward the mouse
-			view.label_size = clampi(roundi(view.size.y / 34.0), 14, 30)
+			view.label_size = clampi(roundi(view.size.y / 42.0), 12, 24)
 		elif mb.button_index == MOUSE_BUTTON_LEFT or mb.button_index == MOUSE_BUTTON_RIGHT:
 			_dragging = mb.pressed
 		view.accept_event()
