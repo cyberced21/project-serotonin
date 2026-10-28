@@ -60,6 +60,18 @@ func _run() -> void:
 	_check(not lamps.get("lantern_lit") and not light.visible, "put out by hand, it stays out at the next dusk")
 	var swing: Vector2 = lantern.get("_swing")
 	_check(is_finite(swing.x) and is_finite(swing.y) and swing.length() <= 0.56, "its swing stays in bounds (%s)" % swing)
+	# walking: it swings, fast enough now and then to creak
+	Input.action_press("move_up")
+	var from: Vector3 = player.global_position
+	var fastest := 0.0
+	for i in 240:
+		await process_frame
+		var speed: float = (lantern.get("_swing_speed") as Vector2).length()
+		fastest = maxf(fastest, speed)
+		player.rotation.y += 0.004
+	Input.action_release("move_up")
+	print("walking %.1f m: fastest swing %.2f rad/s" % [player.global_position.distance_to(from), fastest])
+	_check(fastest > float(lantern.get("CREAK_SPEED")) and fastest < 8.0, "walking swings it enough to creak, not wildly")
 	lamps.call("from_dict", {})
 	await _frames(3)
 	_check(not lantern.visible, "a fresh save takes it back")

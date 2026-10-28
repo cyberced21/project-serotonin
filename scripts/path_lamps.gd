@@ -42,6 +42,15 @@ const CATCH: Array[Vector2] = [Vector2(0.0, 0.0), Vector2(0.05, 0.7), Vector2(0.
 	Vector2(0.18, 0.85), Vector2(0.27, 0.3), Vector2(0.4, 0.6), Vector2(0.8, 1.0)]
 ## Going out at dawn takes this long.
 const FADE_OUT := 1.5
+## Sounds (audio/lamps/SOURCES.md): a soft whoomp as a lamp within CATCH_RANGE catches, and the
+## crackle of the flame of the lit lamp nearest you, heard only right beside it.
+const CATCHES: Array[AudioStream] = [preload("res://audio/lamps/catch_1.wav"),
+	preload("res://audio/lamps/catch_2.wav"), preload("res://audio/lamps/catch_3.wav"),
+	preload("res://audio/lamps/catch_4.wav")]
+const CRACKLE := preload("res://audio/lamps/crackle.wav")
+const CATCH_RANGE := 35.0
+const CATCH_DB := -12.0
+const CRACKLE_DB := -16.0
 
 ## {id: StringName, title: String, pts: PackedVector2Array (world XZ, from the village end),
 ## half_width: float, village: bool}
@@ -56,10 +65,20 @@ var _terrain: Terrain3D
 ## on: bool, since: float (seconds since it last caught or went out), level: float}
 var _lamps: Array[Dictionary] = []
 var _first := true  # the first frame sets every lamp as it should be, no wave
+var _crackle: LoopBed
 
 
 func _ready() -> void:
 	add_to_group("path_lamps")
+	_crackle = LoopBed.new()
+	_crackle.name = "Crackle"
+	_crackle.stream = CRACKLE
+	_crackle.positional = true
+	_crackle.unit_size = 1.2
+	_crackle.max_distance = 7.0
+	_crackle.trim_db = CRACKLE_DB
+	_crackle.top_level = true
+	add_child(_crackle)
 	_terrain = get_tree().get_first_node_in_group("terrain") as Terrain3D
 	if stretches.is_empty():
 		hearthvale()
@@ -86,8 +105,9 @@ func posts() -> Array[Prop]:
 
 func _rebuild() -> void:
 	for c in get_children():
-		remove_child(c)
-		c.queue_free()
+		if c != _crackle:
+			remove_child(c)
+			c.queue_free()
 	_lamps.clear()
 	var avoid := _obstacles()
 	var placed := PackedVector2Array()
@@ -111,8 +131,8 @@ func _process(delta: float) -> void:
 		if on != lamp["on"]:
 			lamp["on"] = on
 			lamp["since"] = 0.0
-			if on and not _first:
-				lamp_caught.emit((lamp["lights"][0] as Light3D).global_position if not (lamp["lights"] as Array).is_empty() else Vector3.ZERO)
+			if on and not _first and not (lamp["lights"] as Array).is_empty():
+				_caught((lamp["lights"][0] as Light3D).global_position)
 		var level: float
 		if _first:
 			level = 1.0 if on else 0.0
@@ -133,6 +153,43 @@ func _process(delta: float) -> void:
 			light.visible = level > 0.01
 			light.light_energy = level * float(light.get_meta("night_energy", 1.0)) * flicker
 	_first = false
+	_place_crackle()
+
+
+func _caught(at: Vector3) -> void:
+	lamp_caught.emit(at)
+	var cam := get_viewport().get_camera_3d()
+	if cam == null or cam.global_position.distance_to(at) > CATCH_RANGE:
+		return
+	var p := AudioStreamPlayer3D.new()
+	p.stream = CATCHES.pick_random()
+	p.pitch_scale = randf_range(0.9, 1.08)
+	p.volume_db = CATCH_DB
+	p.bus = &"SFX"
+	p.unit_size = 4.0
+	p.max_distance = CATCH_RANGE
+	p.top_level = true
+	add_child(p)
+	p.global_position = at
+	p.finished.connect(p.queue_free)
+	p.play()
+
+
+## The crackle sits on the lit lamp nearest you, as loud as that lamp burns.
+func _place_crackle() -> void:
+	var cam := get_viewport().get_camera_3d()
+	var best: Dictionary = {}
+	var best_d := INF
+	if cam:
+		for lamp in _lamps:
+			if float(lamp["level"]) > 0.0 and not (lamp["lights"] as Array).is_empty():
+				var d := cam.global_position.distance_squared_to((lamp["lights"][0] as Light3D).global_position)
+				if d < best_d:
+					best_d = d
+					best = lamp
+	_crackle.level = float(best.get("level", 0.0))
+	if not best.is_empty():
+		_crackle.global_position = (best["lights"][0] as Light3D).global_position
 
 
 ## How bright a lamp is `t` seconds after it catches.

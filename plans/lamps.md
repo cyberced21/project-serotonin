@@ -2,9 +2,10 @@
 
 Chunk 4 of [cozy.md](cozy.md) (its section 3). Grilled 2026-10-28. Branch `lamps` off `main`.
 
-Status: **phases 1-5 built** 2026-10-28 on branch `lamps` (headless tests: `tools/test_lamps.gd`,
+Status: **all 6 phases built** 2026-10-28 on branch `lamps` (headless tests: `tools/test_lamps.gd`,
 `test_lantern.gd`, `test_gift.gd`; night shots in `docs/images/graphics/lamps/`, the darker night
-approved from them). **Not played.** Next: phase 6, sounds (pick).
+approved from them; sounds picked on https://claude.ai/artifact/MY4wztTjzKM4pV9VYznzHH,
+`audio/lamps/SOURCES.md`). **Not played, and the sounds' levels not heard in game.**
 
 ### Built, and what changed on the way
 

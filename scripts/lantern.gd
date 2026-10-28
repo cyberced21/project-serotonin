@@ -29,6 +29,17 @@ const FLAME := Vector3(0, -0.19, 0)
 ## The light sits a little nearer you than the flame, so the iron facing you catches it
 ## (lit from right inside, the lantern's own frame showed black).
 const LIGHT_AT := FLAME + Vector3(0, 0, 0.14)
+## Sounds (audio/lamps/SOURCES.md): the handle creaks when it swings this fast (rad/s), at most
+## every CREAK_GAP seconds, very quietly; a match strike when it's lit, the lid (a creak, lower)
+## when it's put out.
+const CREAKS: Array[AudioStream] = [preload("res://audio/lamps/creak_1.wav"),
+	preload("res://audio/lamps/creak_2.wav"), preload("res://audio/lamps/creak_3.wav"),
+	preload("res://audio/lamps/creak_4.wav")]
+const LIGHT_SOUND := preload("res://audio/lamps/light.wav")
+const CREAK_SPEED := 0.25
+const CREAK_GAP := Vector2(0.7, 1.4)
+const CREAK_DB := -24.0
+const LIGHT_DB := -9.0
 
 ## The player (set before it enters the tree; untyped: player.gd makes the lantern).
 var player: Node3D
@@ -41,6 +52,8 @@ var _swing := Vector2.ZERO  # tilt about the frame's X (forward) and Z (sideways
 var _swing_speed := Vector2.ZERO
 var _last_pos := Vector3.ZERO
 var _last_vel := Vector3.ZERO
+var _creak_wait := 0.0
+var _was_lit := false
 
 
 func _ready() -> void:
@@ -66,6 +79,7 @@ func _ready() -> void:
 	_model.add_child(_light)
 	_light.position = LIGHT_AT
 	_level = 1.0 if Lamps.lantern_lit else 0.0
+	_was_lit = Lamps.lantern_lit  # (no strike for a lantern already burning in the save)
 	_place(0.0)
 	_last_pos = global_position
 
@@ -85,6 +99,22 @@ func _process(delta: float) -> void:
 	_light.light_energy = LIGHT_ENERGY * _level * flicker
 	for m in _meshes:
 		m.set_instance_shader_parameter("glow", _level * (0.6 + 0.1 * flicker))
+	_sounds(delta)
+
+
+func _sounds(delta: float) -> void:
+	if Lamps.lantern_lit != _was_lit:
+		_was_lit = Lamps.lantern_lit
+		if visible and _was_lit:
+			Sfx.play(LIGHT_SOUND, randf_range(0.95, 1.05), LIGHT_DB)
+		elif visible:
+			Sfx.play(CREAKS[0], randf_range(0.8, 0.86), LIGHT_DB - 8.0)
+	_creak_wait -= delta
+	var speed := _swing_speed.length()
+	if visible and speed > CREAK_SPEED and _creak_wait <= 0.0:
+		_creak_wait = randf_range(CREAK_GAP.x, CREAK_GAP.y)
+		var loud := linear_to_db(clampf(speed / (CREAK_SPEED * 6.0), 0.4, 1.0))
+		Sfx.play(CREAKS.pick_random(), randf_range(0.92, 1.08), CREAK_DB + loud, &"Movement")
 
 
 ## Hangs it from the eye (belt or raised) and swings it like a pendulum from there.
