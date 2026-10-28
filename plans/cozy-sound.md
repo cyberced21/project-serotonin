@@ -40,6 +40,17 @@ for a pick by ear: I can measure sounds, not hear them.
 | S14 | Review | **A takes page per batch**: A/B/C/D renders to play side by side; you pick, I refine from your pick. |
 | S15 | Mix | **Ambience > effects > music**: the world is the bed, actions sit just above it, music is a soft layer under all; a **Music** volume slider in Settings. |
 
+### Change of direction (2026-10-27, during phase 3)
+
+The user is wary of synthesis: past synthesized sounds came out rough, high-pitched and strident.
+So **effects come from free CC0 sound packs first** (Kenney, OpenGameArt, ...), medieval/fantasy
+in feel, picked by ear on a listening page like the music. Synthesis only where no pack has a
+fitting sound, and only with the user's go-ahead. This replaces S6 (cues), S7/S8 (gathering and
+fishing reworks), S9's heel thud, S10 (UI) and S12's "synthesis for everything percussive".
+Phase 3's cue candidates are on https://claude.ai/artifact/ArHc9iicrEwvrQJg5hi1bx (Fupi's Win
+Jingle on 12 instruments, its first notes as short cuts, wobbleboxx's 13 level-up sounds).
+Kenney's Music Jingles couldn't be downloaded (its signed link had expired).
+
 ## Phases
 
 One commit each; phases marked **(pick)** stop for your choice.
