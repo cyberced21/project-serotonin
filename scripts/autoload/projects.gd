@@ -7,6 +7,7 @@ extends Node
 ##     lit, so that's where a road project's "done" lives).
 ## A project opens with the town hall's tier (`hall`) and costs gathered goods.
 
+## Paid for (not ticked off in the debug menu): VillageDecor builds it in view.
 signal completed(id: StringName)
 signal changed
 
@@ -83,7 +84,7 @@ func can_pay(id: StringName) -> bool:
 func pay(id: StringName) -> bool:
 	if not can_pay(id) or not Inventory.spend(get_project(id)["cost"]):
 		return false
-	_finish(id, true)
+	_finish(id, true, true)
 	SaveGame.save()  # progress worth keeping right away
 	return true
 
@@ -94,7 +95,7 @@ func set_done(id: StringName, on: bool) -> void:
 		_finish(id, on)
 
 
-func _finish(id: StringName, on: bool) -> void:
+func _finish(id: StringName, on: bool, paid := false) -> void:
 	if String(id).begins_with(ROAD_PREFIX):
 		Lamps.set_lit(StringName(String(id).trim_prefix(ROAD_PREFIX)), on)
 	elif on:
@@ -102,7 +103,7 @@ func _finish(id: StringName, on: bool) -> void:
 	else:
 		_done.erase(id)
 	SaveGame.mark_dirty()
-	if on:
+	if paid:
 		completed.emit(id)
 	changed.emit()
 

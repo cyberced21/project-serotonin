@@ -52,6 +52,7 @@ func _run() -> void:
 	_check(not projects.call("is_done", &"benches"), "a fresh save has none")
 	# the noticeboard, in Hearthvale and in a generated village
 	await _check_board("Hearthvale", projects)
+	await _check_build(projects, inventory)
 	worlds.call("play_scratch", 42)
 	for i in 3:
 		await process_frame
@@ -104,6 +105,54 @@ func _check_board(world: String, projects: Node) -> void:
 		projects.call("set_done", id, false)
 		await _frames(2)
 		_check((decor.call("props_of", id) as Array).is_empty(), "%s: undone, %s is gone" % [world, id])
+
+
+## Paid for at the board (by day, villagers out): pieces hidden at first, a villager walks over
+## and hammers, every piece up by the end, the builder free again; a paid road's posts rise one
+## by one.
+func _check_build(projects: Node, inventory: Node) -> void:
+	var day_night := root.get_node("DayNight")
+	day_night.set("frozen", true)
+	day_night.set("time", 0.4)
+	await _frames(20)
+	var decor := get_first_node_in_group("village_decor")
+	inventory.call("add", &"wood", 20)
+	_check(projects.call("pay", &"benches"), "build: paid for the benches")
+	await _frames(1)
+	var pieces: Array = decor.call("props_of", &"benches")
+	_check(not pieces.is_empty() and not (pieces[0] as Node3D).visible, "build: the benches aren't there yet")
+	Engine.time_scale = 3.0
+	var builder: Node = null
+	var t := 0.0
+	while t < 40.0:
+		await physics_frame
+		t += 1.0 / 60.0  # (a physics tick is 1/60 of game time, whatever the time scale)
+		for b in get_nodes_in_group("building"):
+			for c in b.get_children():
+				if c.get("scripted") == true:
+					builder = c
+		var up := pieces.all(func(p: Node3D) -> bool: return p.visible and p.scale.x > 0.95)
+		if up and builder and builder.get("scripted") == false:
+			break
+	Engine.time_scale = 1.0
+	print("build: done in %.1f s, builder %s" % [t, builder.name if builder else "none"])
+	_check(builder != null, "build: a villager came to build them")
+	_check(pieces.all(func(p: Node3D) -> bool: return p.visible and p.scale.x > 0.95), "build: both benches up")
+	_check(builder == null or builder.get("scripted") == false, "build: the builder goes back to work")
+	# a road
+	var roads: Array = (projects.call("all") as Array).filter(func(p: Dictionary) -> bool: return p["road"] != &"" and not p["done"] and p["hall"] == 1)
+	inventory.call("add", &"wood", 20); inventory.call("add", &"ore", 10); inventory.call("add", &"coal", 10)
+	_check(not roads.is_empty() and projects.call("pay", roads[0]["id"]), "build: paid for a road's lamps")
+	await _frames(2)
+	var lamps: Array = get_first_node_in_group("path_lamps").get("_lamps")
+	var new := lamps.filter(func(l: Dictionary) -> bool: return (l["prop"] as Node).get_meta("stretch") == roads[0]["road"])
+	var hidden := new.filter(func(l: Dictionary) -> bool: return (l["prop"] as Node3D).scale.x < 0.1).size()
+	_check(new.size() > 0 and hidden == new.size(), "build: its posts start down (%d of %d)" % [hidden, new.size()])
+	for i in 60 * (2 + int(new.size() * 0.35) + 1):
+		await process_frame
+	var up := new.filter(func(l: Dictionary) -> bool: return (l["prop"] as Node3D).scale.x > 0.95).size()
+	_check(up == new.size(), "build: and rise one by one along it (%d up)" % up)
+	day_night.set("frozen", false)
 
 
 func _frames(n: int) -> void:
