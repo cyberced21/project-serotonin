@@ -13,7 +13,7 @@ signal changed
 ## The decorations, in the board's order: [id, title, what it adds, cost, town hall tier].
 const SPOTS := [
 	[&"benches", "Benches round the square", "Two more benches by the square: somewhere to sit when the lamps come on.", {&"wood": 10}, 1],
-	[&"flower_boxes", "Flower boxes", "Window boxes and planters on the cottages, full of flowers.", {&"birch": 8, &"wheat": 6}, 1],
+	[&"flower_boxes", "Flower boxes", "Planters full of flowers round the square.", {&"birch": 8, &"wheat": 6}, 1],
 	[&"well", "A well in the square", "A stone well with a bucket on a rope. Someone will always be drawing water.", {&"ore": 20, &"wood": 15}, 2],
 	[&"bunting", "Bunting", "Strings of little flags between the houses.", {&"birch": 10, &"barley": 8}, 2],
 	[&"fountain", "A fountain", "A little fountain in the middle of the square, splashing away.", {&"iron": 30, &"gold": 10, &"oak": 20}, 3],

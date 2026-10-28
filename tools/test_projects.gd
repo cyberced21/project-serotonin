@@ -84,6 +84,26 @@ func _check_board(world: String, projects: Node) -> void:
 			"%s: E opens it, a note per project (%d)" % [world, notes])
 	if panel:
 		panel.call("close")
+	# every decoration, done: its props stand on the ground, clear of the buildings; undone, gone
+	var buildings := get_nodes_in_group("building")
+	var terrain := get_first_node_in_group("terrain") as Terrain3D
+	for id in [&"benches", &"flower_boxes", &"well", &"bunting", &"fountain"]:
+		projects.call("set_done", id, true)
+		await _frames(2)
+		var props: Array = decor.call("props_of", id)
+		var bad := 0
+		for p in props:
+			var n := p as Node3D
+			var h := terrain.data.get_height(n.global_position)
+			if id != &"bunting" and (is_nan(h) or absf(n.global_position.y - h) > 0.2):
+				bad += 1
+			for b in buildings:
+				if id != &"bunting" and Vector2(n.global_position.x - b.global_position.x, n.global_position.z - b.global_position.z).length() < 4.5:
+					bad += 1
+		_check(props.size() > 0 and bad == 0, "%s: %s stands (%d pieces, %d misplaced)" % [world, id, props.size(), bad])
+		projects.call("set_done", id, false)
+		await _frames(2)
+		_check((decor.call("props_of", id) as Array).is_empty(), "%s: undone, %s is gone" % [world, id])
 
 
 func _frames(n: int) -> void:
