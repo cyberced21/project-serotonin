@@ -52,6 +52,10 @@ const CREEK_VALE := 48.0
 const CREEK_DEPTH := 0.55
 const CREEK_POOL_DEPTH := 1.2
 const CREEK_BANK := 8.0
+## Biome borders: each biome's ground thins out into the plain grass over this wide a belt.
+const BORDER_BELT := 22.0
+## Goldmeadow's swells ease into the hills over this much.
+const FIELD_RAMP := 60.0
 ## The world's edge rises into higher hills so the valley feels closed in, not cut off.
 const RIM_WIDTH := 95.0
 const RIM_HEIGHT := 24.0
@@ -352,8 +356,9 @@ func _biomes(w: Vector2, h: float) -> float:
 		h = _quarry_height(w, d)
 	elif d < outer + WorldMap.QUARRY_SLOPE:
 		h = lerpf(WorldMap.QUARRY_RIM_HEIGHT, h, smoothstep(outer, outer + WorldMap.QUARRY_SLOPE, d))
-	var fd := w.distance_to(WorldMap.FIELD_CENTER) + _edge.get_noise_2dv(w) * 8.0
-	var inside := 1.0 - smoothstep(WorldMap.FIELD_RADIUS, WorldMap.FIELD_RADIUS + WorldMap.FIELD_RAMP, fd)
+	var fd := _biome_warp(w).distance_to(WorldMap.FIELD_CENTER)
+	var inside := 1.0 - smoothstep(WorldMap.FIELD_RADIUS - 10.0, WorldMap.FIELD_RADIUS + FIELD_RAMP, fd)
+	inside *= smoothstep(VILLAGE_RADIUS + FLAT_GROW, VILLAGE_RADIUS + FLAT_GROW + 25.0, w.distance_to(VILLAGE_CENTER))  # (not on the village's flat)
 	if inside > 0.0:
 		h = lerpf(h, 0.8 + (_swell.get_noise_2dv(w) * 0.5 + 0.5) * 3.5, inside)
 	return h
@@ -413,34 +418,60 @@ func _on_haul_road(w: Vector2) -> bool:
 
 ## Which surface a cell gets from the biome it's in (roads and paths are painted on top later).
 func _biome_id(w: Vector2) -> int:
-	var ragged := _edge.get_noise_2dv(w)
-	var qd := w.distance_to(WorldMap.QUARRY_CENTER)
+	var q := _biome_warp(w)
 	var pit: float = WorldMap.QUARRY_WALLS[0]
-	if qd < pit + WorldMap.QUARRY_APRON + 4.0 + ragged * 4.0:
-		return PATH_TEXTURE if qd < pit + 1.0 and _on_haul_road(w) else WorldMap.TEX_QUARRY
-	var fd := w.distance_to(WorldMap.FIELD_CENTER) + ragged * 8.0
-	if fd < WorldMap.FIELD_RADIUS - 4.0:
-		return _crop_id(w)
-	if fd < WorldMap.FIELD_RADIUS + 10.0:
+	var qd := q.distance_to(WorldMap.QUARRY_CENTER)
+	var apron := pit + WorldMap.QUARRY_APRON
+	if w.distance_to(WorldMap.QUARRY_CENTER) < pit + 1.0:
+		return PATH_TEXTURE if _on_haul_road(w) else WorldMap.TEX_QUARRY
+	if _dither(w, qd, apron, apron + BORDER_BELT):
+		return WorldMap.TEX_QUARRY
+	var fd := q.distance_to(WorldMap.FIELD_CENTER)
+	if fd < WorldMap.FIELD_RADIUS - 6.0:
+		return _crop_id(w, q)
+	if _dither(w, fd, WorldMap.FIELD_RADIUS + 6.0, WorldMap.FIELD_RADIUS + 6.0 + BORDER_BELT):
 		return WorldMap.TEX_FIELD
-	var f := (w - WorldMap.FOREST_CENTER) / WorldMap.FOREST_RADII
-	if f.length_squared() + ragged * 0.3 < 1.0 and qd > pit + WorldMap.QUARRY_APRON + WorldMap.QUARRY_SLOPE \
-			and w.distance_to(Vector2(-92, -92)) > 35.0:
+	var f := ((q - WorldMap.FOREST_CENTER) / WorldMap.FOREST_RADII).length() * WorldMap.FOREST_RADII.y
+	var r := WorldMap.FOREST_RADII.y
+	if _dither(w, f, r - BORDER_BELT * 0.6, r + BORDER_BELT * 0.4) and qd > apron + WorldMap.QUARRY_SLOPE \
+			and w.distance_to(PEAK_CENTER) > 35.0:
 		return WorldMap.TEX_FOREST
 	return WorldMap.TEX_DEFAULT
 
 
-## The field's patchwork: a tilted grid of squares, most sown, split by dirt tracks.
-func _crop_id(w: Vector2) -> int:
+## Where the biomes' outlines are measured from: pushed around by two sizes of noise, so no border
+## is an ellipse or a circle.
+func _biome_warp(w: Vector2) -> Vector2:
+	return w + Vector2(_warp_x.get_noise_2dv(w * 2.0), _warp_y.get_noise_2dv(w * 2.0)) * 24.0 \
+			+ Vector2(_edge.get_noise_2dv(w), _edge.get_noise_2dv(w + Vector2(91, 37))) * 6.0
+
+
+## True inside `inner`, false past `outer`, and in between a scatter of cells that thins out
+## (clumped a little, so the edge breaks into patches rather than noise).
+func _dither(w: Vector2, d: float, inner: float, outer: float) -> bool:
+	if d <= inner:
+		return true
+	if d >= outer:
+		return false
+	var t := (d - inner) / (outer - inner)
+	var clump := _edge.get_noise_2dv(w * 2.3) * 0.35 + _hash(w.floor()) * 0.65
+	return clump > t * 0.9 + 0.05
+
+
+## The field's patchwork: squares on a gently curving grid (the tracks bend with the land), most
+## sown, some left to meadow; the outer ring of squares only partly sown.
+func _crop_id(w: Vector2, q: Vector2) -> int:
 	const CELL := 22.0
 	const TRACK := 3.0
 	var local := (w - WorldMap.FIELD_CENTER).rotated(0.35)
+	local += Vector2(_swell.get_noise_2dv(w * 0.4), _swell.get_noise_2dv(w * 0.4 + Vector2(40, 0))) * 7.0
 	var fu := fposmod(local.x, CELL)
 	var fv := fposmod(local.y, CELL)
 	if fu < TRACK or fv < TRACK:
 		return PATH_TEXTURE
 	var square := Vector2(floorf(local.x / CELL), floorf(local.y / CELL))
-	return WorldMap.TEX_CROP if _hash(square) < 0.7 else WorldMap.TEX_FIELD
+	var edge := smoothstep(WorldMap.FIELD_RADIUS - 30.0, WorldMap.FIELD_RADIUS - 6.0, q.distance_to(WorldMap.FIELD_CENTER))
+	return WorldMap.TEX_CROP if _hash(square) < 0.75 - edge * 0.5 else WorldMap.TEX_FIELD
 
 
 func _hash(p: Vector2) -> float:
