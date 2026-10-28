@@ -19,9 +19,13 @@ extends Resource
 @export_group("Later")
 ## Heard from the tavern at night (cozy chunk 8); not picked by the Music autoload yet.
 @export var tavern: Array[AudioStream] = []
+@export_group("Moment cues")
+## Short cues played over the music by Music.play_cue(id): level_up, discovery, return, upgrade
+## (CC0 recordings: audio/cues/SOURCES.md).
+@export var cues: Dictionary[StringName, AudioStream] = {}
 @export_group("Levels")
-## Every piece plays this much louder or quieter (dB), so tracks from different sources sit
-## together: keyed by the stream's resource path.
+## Every piece (and cue) plays this much louder or quieter (dB), so sounds from different sources
+## sit together: keyed by the stream's resource path (tools/measure_music.gd measures them).
 @export var trim_db: Dictionary[String, float] = {}
 ## Short pieces play this many times back to back (a 45 s loop would barely register), keyed
 ## like trim_db. Missing: once.

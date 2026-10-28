@@ -15,7 +15,6 @@ signal upgraded(tier: int)
 
 const TOK_SFX := preload("res://audio/wood_hit.tres")
 const THUD_SFX := preload("res://audio/wood_break.tres")
-const FANFARE_SFX := preload("res://audio/level_up.wav")
 const WORLD_LAYER := 1
 ## Pieces smaller than this (m³ of bounding box) get no collision: flowers, handles, notices.
 const MIN_COLLIDER_VOLUME := 0.004
@@ -253,7 +252,7 @@ func _play_upgrade(from: int, to: int) -> void:
 	create_tween().tween_property(group, "scale", Vector3.ONE, 0.5).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	_confetti.restart()
 	Juice.shake(shake_done * _falloff())
-	Sfx.play(FANFARE_SFX, 1.0, -4.0)
+	Music.play_cue(&"upgrade")
 	var top := _top_of(fresh)
 	var tier_res := def.get_tier(to)
 	if tier_res:

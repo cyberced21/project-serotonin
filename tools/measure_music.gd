@@ -3,9 +3,9 @@ extends SceneTree
 ## in dBFS), decoded offline through AudioStreamPlayback.mix_audio, so it runs headless in
 ## seconds. Prints the trim (dB) that brings each to TARGET_DB without its peak passing
 ## PEAK_CEILING, for data/music/library.tres:
-##     godot --headless --path . -s res://tools/measure_music.gd
+##     godot --headless --path . -s res://tools/measure_music.gd [-- --dir=res://audio/cues/]
 
-const DIR := "res://audio/music/"
+const DIR := "res://audio/music/"  # or another folder: -- --dir=res://audio/cues/
 ## The loudness every piece is trimmed to (RMS dBFS). Quiet, so pieces sit as a soft bed.
 const TARGET_DB := -20.0
 const PEAK_CEILING := -1.0
@@ -14,10 +14,14 @@ const CHUNK := 4096
 
 
 func _initialize() -> void:
-	for file in DirAccess.get_files_at(DIR):
+	var dir := DIR
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--dir="):
+			dir = a.trim_prefix("--dir=")
+	for file in DirAccess.get_files_at(dir):
 		if not (file.ends_with(".ogg") or file.ends_with(".mp3")):
 			continue
-		var stream := load(DIR + file) as AudioStream
+		var stream := load(dir + file) as AudioStream
 		var pb := stream.instantiate_playback()
 		pb.start(0.0)
 		var sum := 0.0

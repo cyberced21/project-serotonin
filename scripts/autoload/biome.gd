@@ -19,8 +19,6 @@ const MOODS := {
 	&"goldmeadow": preload("res://data/biomes/goldmeadow.tres"),
 	&"frostpeak": preload("res://data/biomes/frostpeak.tres"),
 }
-const FIRST_STING := preload("res://audio/level_up.wav")
-const STING := preload("res://audio/pickup.tres")
 const HOLD := 1.5
 ## Seconds for the light and the ambience to settle into a new biome.
 const BLEND := 3.0
@@ -222,9 +220,9 @@ func _show_card(mood: BiomeMood, first: bool, kind := "") -> void:
 	_subtitle.text = (what + "  ·  Discovered" if kind != "" else "Discovered") if first else what
 	_subtitle.add_theme_font_size_override("font_size", 24 if first else 18)
 	if first:
-		Sfx.play(FIRST_STING, 0.8, -8.0)
+		Music.play_cue(&"discovery")
 	else:
-		Sfx.play(STING, 0.6, -12.0)
+		Music.play_cue(&"return")
 	if _card_tween:
 		_card_tween.kill()
 	_card.modulate.a = 0.0

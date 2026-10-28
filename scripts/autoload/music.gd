@@ -5,8 +5,8 @@ extends Node
 ## data/music/library.tres. A piece always plays to its end; moving somewhere else only changes the
 ## next one. The main menu plays its own slot without gaps.
 ## Plays on the Music bus (its own volume slider in Settings), under ambience and effects.
-## Moment cues (level-up, discovery) go through cue(), which ducks the music under them; cutscenes
-## duck it with `duck`.
+## Moment cues (level-up, discovery, return to a biome, a building upgrade) go through play_cue(),
+## which ducks the music under them; cutscenes duck it with `duck`.
 
 const LIBRARY := preload("res://data/music/library.tres")
 ## Silence between pieces (seconds), at random; the first piece of a session comes sooner.
@@ -17,6 +17,8 @@ const FIRST_GAP_MAX := 60.0
 ## Fades: a piece eases in, and out when it has to stop early (leaving to the menu).
 const FADE_IN := 4.0
 const FADE_OUT := 2.5
+## Cues sit this much above the music (both are trimmed to the same loudness first).
+const CUE_LIFT_DB := 6.0
 ## How far the music dips under a moment cue, and how long it takes to come back.
 const CUE_DUCK_DB := -12.0
 const CUE_RECOVER := 1.5
@@ -129,7 +131,14 @@ func skip() -> void:
 	_after_piece()
 
 
-## Plays a short moment cue (level-up, discovery) on the Music bus, dipping the music under it.
+## Plays one of the library's moment cues by id (&"level_up", &"discovery", &"return", &"upgrade").
+func play_cue(id: StringName) -> void:
+	var stream: AudioStream = LIBRARY.cues.get(id)
+	if stream:
+		cue(stream, LIBRARY.trim_db.get(stream.resource_path, 0.0) + CUE_LIFT_DB)
+
+
+## Plays a short cue on the Music bus, dipping the music under it.
 func cue(stream: AudioStream, volume_db := 0.0) -> void:
 	_cue_player.stream = stream
 	_cue_player.volume_db = MIX_DB + volume_db
