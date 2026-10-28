@@ -16,10 +16,16 @@ extends Resource
 @export var mine: Array[AudioStream] = []
 @export_group("Menu")
 @export var menu: Array[AudioStream] = []
+@export_group("Later")
+## Heard from the tavern at night (cozy chunk 8); not picked by the Music autoload yet.
+@export var tavern: Array[AudioStream] = []
 @export_group("Levels")
 ## Every piece plays this much louder or quieter (dB), so tracks from different sources sit
 ## together: keyed by the stream's resource path.
 @export var trim_db: Dictionary[String, float] = {}
+## Short pieces play this many times back to back (a 45 s loop would barely register), keyed
+## like trim_db. Missing: once.
+@export var repeats: Dictionary[String, int] = {}
 
 
 ## The pieces in `slot` (&"morning", &"village", ...), or none.

@@ -39,6 +39,7 @@ var _cue_player: AudioStreamPlayer
 var _gap := 0.0
 var _last: AudioStream
 var _level_db := 0.0  # the playing piece's trim
+var _plays_left := 0  # more times the playing piece repeats
 var _fade := 0.0  # 0..1, the playing piece's fade
 var _fading_out := false
 var _cue_duck := 0.0  # dB, back to 0 after a cue
@@ -114,6 +115,7 @@ func play_next() -> void:
 			pick = choices.pick_random()
 	_last = pick
 	_level_db = LIBRARY.trim_db.get(pick.resource_path, 0.0)
+	_plays_left = LIBRARY.repeats.get(pick.resource_path, 1) - 1
 	_fade = 0.0
 	_fading_out = false
 	_player.stream = pick
@@ -136,7 +138,12 @@ func cue(stream: AudioStream, volume_db := 0.0) -> void:
 
 
 func _on_finished() -> void:
-	if not _fading_out:
+	if _fading_out:
+		return
+	if _plays_left > 0:  # a short piece goes round again
+		_plays_left -= 1
+		_player.play()
+	else:
 		_after_piece()
 
 
