@@ -3,7 +3,19 @@
 Chunk 5 of [cozy.md](cozy.md) (its section 5, without the café, landslide and market). Grilled
 2026-10-28. Branch `projects` off `lamps` (it uses the road stretches from [lamps.md](lamps.md)).
 
-Status: **grilled, nothing built.**
+Status: **phases 1-6 built** 2026-10-28 on branch `projects` (headless: `tools/test_projects.gd`
+in Hearthvale and seed 42). Phase 7's sound page is up (https://claude.ai/artifact/Ngv1vQo5zdteCHPooUhDF2),
+waiting for picks; then phase 8's screenshots. **Not seen in a window or played.**
+
+### Built, and what changed on the way
+
+- Projects are a table in the `Projects` autoload, not .tres resources (short, and no editor
+  re-save churn). Ticking one in the debug menu doesn't play the build moment; paying does.
+- The flower boxes are planters round the square (window boxes would need each cottage's windows).
+- The bunting hangs between the square's three lamp posts; the fountain sits in the middle of the
+  square, the well by the west benches.
+- Most generated worlds' trails don't wade a river (2 of 12 seeds tried), so the footbridge
+  project is only on the board where there's a ford (and always in Hearthvale: the gully).
 
 ## Where we start (2026-10-28)
 
