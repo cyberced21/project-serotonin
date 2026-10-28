@@ -19,9 +19,10 @@ const FADE_IN := 4.0
 const FADE_OUT := 2.5
 ## Cues sit this much above the music (both are trimmed to the same loudness first).
 const CUE_LIFT_DB := 6.0
-## How far the music dips under a moment cue, and how long it takes to come back.
-const CUE_DUCK_DB := -12.0
-const CUE_RECOVER := 1.5
+## Under a moment cue the music fades right out (s), stays out while the cue plays, then eases
+## back in where it was: the two never play over each other.
+const CUE_FADE_OUT := 0.5
+const CUE_FADE_IN := 3.0
 ## Music sits under ambience and effects (Settings' slider sets the Music bus itself).
 const MIX_DB := -8.0
 ## An area's own pieces get this share of the picks there; the rest follow the time of day.
@@ -44,7 +45,7 @@ var _level_db := 0.0  # the playing piece's trim
 var _plays_left := 0  # more times the playing piece repeats
 var _fade := 0.0  # 0..1, the playing piece's fade
 var _fading_out := false
-var _cue_duck := 0.0  # dB, back to 0 after a cue
+var _cue_fade := 1.0  # 0..1: the music's share while a cue plays (0) and after
 var _in_menu := false
 
 
@@ -74,8 +75,11 @@ func _process(delta: float) -> void:
 			_fading_out = false
 	elif _player.playing:
 		_fade = move_toward(_fade, 1.0, delta / FADE_IN)
-	_cue_duck = move_toward(_cue_duck, 0.0, -CUE_DUCK_DB / CUE_RECOVER * delta)
-	_player.volume_db = MIX_DB + _level_db + linear_to_db(maxf(_fade * duck, 0.0001)) + _cue_duck
+	if _cue_player.playing:
+		_cue_fade = move_toward(_cue_fade, 0.0, delta / CUE_FADE_OUT)
+	else:
+		_cue_fade = move_toward(_cue_fade, 1.0, delta / CUE_FADE_IN)
+	_player.volume_db = MIX_DB + _level_db + linear_to_db(maxf(_fade * duck * _cue_fade, 0.0001))
 	if _player.playing or _fading_out:
 		status = "playing %s" % _player.stream.resource_path.get_file()
 		return
@@ -138,12 +142,11 @@ func play_cue(id: StringName) -> void:
 		cue(stream, LIBRARY.trim_db.get(stream.resource_path, 0.0) + CUE_LIFT_DB)
 
 
-## Plays a short cue on the Music bus, dipping the music under it.
+## Plays a short cue on the Music bus, the music fading out for it and back in after.
 func cue(stream: AudioStream, volume_db := 0.0) -> void:
 	_cue_player.stream = stream
 	_cue_player.volume_db = MIX_DB + volume_db
 	_cue_player.play()
-	_cue_duck = CUE_DUCK_DB
 
 
 func _on_finished() -> void:

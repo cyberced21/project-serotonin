@@ -105,6 +105,9 @@ const HIT_DUCK_TIP := -6.0
 const HIT_DUCK_SPLIT := -9.0
 ## A crack creaking on (a hit on the cracked piece, not on a tip) plays this much quieter (dB).
 const CRACK_CREAK_DB := -12.0
+## A tree groans once at a time: the lean doesn't start a second groan while the second-to-last
+## hit's is still sounding (ms; the creak recordings run ~2.7 s).
+const GROAN_MS := 2500
 ## What the crack did on this hit, for _hit_sounds.
 enum { CRACK_NONE, CRACK_CREAK, CRACK_TIP }
 ## Render layer 11: a piece being cracked, with seam_crack_on_piece_only (its decals draw only there).
@@ -326,6 +329,7 @@ var _canopy := {}  # canopy mesh -> its rest position (carve_notch trees shake i
 var _leaves: CPUParticles3D
 var _shake_tween: Tween
 var _sway_tween: Tween
+var _groan_ms := -100000  # when this tree last started groaning
 
 
 func _ready() -> void:
@@ -1047,7 +1051,8 @@ func _lean_on_hinge(felled: RigidBody3D, away: Vector3, hinge: float) -> void:
 	var pivot := global_transform * Vector3(0.0, hinge, 0.0)
 	var start := felled.global_transform
 	var axis := Vector3.UP.cross(away).normalized()
-	Sfx.play_at(creak_layers, pivot, 0.8)
+	if Time.get_ticks_msec() - _groan_ms > GROAN_MS:  # (else the last groan carries the lean)
+		_groan(pivot, 0.8, 0.0)
 	var lean := func(angle: float) -> void:
 		var turn := Transform3D(Basis(axis, angle), pivot) * Transform3D(Basis.IDENTITY, -pivot)
 		felled.global_transform = turn * start
@@ -1087,7 +1092,12 @@ func _tree_reacts(info: HitInfo, stress: float) -> void:
 			visual.quaternion = Quaternion(local_axis, big * sin(t * 7.0) * exp(-t * 2.2)), 0.0, 1.6, 1.6)
 		_sway_tween.tween_callback(func() -> void: visual.quaternion = Quaternion.IDENTITY)
 		if hits_left == 1:
-			Sfx.play_at(creak_layers, global_position + Vector3.UP * 2.0, 0.9 + randf() * 0.2, -3.0 + 6.0 * (stress - sway_after))
+			_groan(global_position + Vector3.UP * 2.0, 0.9 + randf() * 0.2, -3.0 + 6.0 * (stress - sway_after))
+
+
+func _groan(at: Vector3, pitch: float, volume_db: float) -> void:
+	_groan_ms = Time.get_ticks_msec()
+	Sfx.play_at(creak_layers, at, pitch, volume_db)
 
 
 ## Leaves shaken loose from the canopy: a few at a time, fluttering down.
