@@ -3,7 +3,20 @@
 Chunk 2 of [cozy.md](cozy.md). Grilled 2026-10-27. Branch `calm` off `main` (doesn't need the mood
 pass).
 
-Status: **decided, not built.**
+Status: **all 7 phases built** 2026-10-27 on branch `calm`; checked headless only (the test suite
+passes; a headless walk in the main world measures stroll 3.8 m/s reached in 0.28 s, stopping in
+0.22 s; jog 5.5 m/s in 0.42 s, stopping in 0.32 s; a jump is 0.52 s in the air). **Not played**: feel
+is judged by hand.
+
+### Notes from building
+
+- Fishing had its own hit-stops and shakes; folded into phase 4 (light shake on a catch only).
+- The ring road's whole obstacle course went with the trial (it was built for wall runs and hops);
+  the gully bridge stays. Road models kept in `models/road/` for possible decoration later.
+- Without hit-stop stretching it, the tool's stuck moment is now `bite_hold` 0.1 s (was 0.06).
+- Removing `Juice.hitstop` also fixes it silently resetting the debug menu's time scale.
+- `tools/talent_model.gd` and the bench bots use `walk_speed` for travel time, so their yields per
+  minute shift a little with the slower stroll; re-run before tuning talents again.
 
 ## Where we start (2026-10-27)
 

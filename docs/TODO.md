@@ -3,6 +3,10 @@
 Everything we decided to come back to, in one place. Tick items off (`- [x]`) as they're done.
 Design background for most of these is in [3d-research-notes.md](3d-research-notes.md).
 
+## Calm feel ([plans/calm-feel.md](../plans/calm-feel.md))
+
+- [ ] **Play the calm feel**: stroll/jog speeds and the glide (`player.gd` *Ground*), whether gathering still feels satisfying without hit-stop (the stuck tool's `bite_hold`, `impact_kick`, `shake_break`), gentler popups. Checked headless only.
+
 ## Fishing
 
 - [x] **Pike as a predator:** every 25–45 s it stalks the nearest perch, lunges (ripple, the school scatters) and catches one half the time, then glides back to cover. Spooking it calls the hunt off (`FishSpecies` *Hunting* group).
