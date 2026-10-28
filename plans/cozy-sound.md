@@ -3,7 +3,10 @@
 Chunk 3 of [cozy.md](cozy.md) (its section 9, plus section 2's night ambiance). Grilled
 2026-10-27. Branch `cozy-sound` off `main`.
 
-Status: **decided, not built.** Most phases stop for a pick by ear: I can measure sounds, not hear
+Status: **phase 1 built** 2026-10-27 (Music bus + slider, the `Music` autoload playing in waves,
+empty library). **Phase 2 waiting on picks**: the shortlist page is up
+(https://claude.ai/artifact/KFsWkG9bSzt6AWRfhzDy6H, 25 CC0 candidates over 10 slots; picks land
+in its `picks` collection). Most phases stop for a pick by ear: I can measure sounds, not hear
 them.
 
 ## Where we start (2026-10-27)
