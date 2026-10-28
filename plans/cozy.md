@@ -4,7 +4,9 @@ Written 2026-10-27 from an idea dump. **Cozy beats everything else.** When a fea
 between calm and punchy, calm wins. This file is the umbrella design: every section below becomes
 its own plan (and branch) when we start it, after a grill session on its open questions.
 
-Status: **design only, nothing built.** Open questions at the end of each section.
+Status: **chunks 1–3 built, merged, released v0.3 and playtested** (2026-10-28):
+[mood-pass.md](mood-pass.md), [calm-feel.md](calm-feel.md), [cozy-sound.md](cozy-sound.md).
+Chunk 4 grilled 2026-10-28 → [lamps.md](lamps.md). Open questions at the end of each section.
 
 ## The pillars
 
@@ -72,6 +74,9 @@ Open: do we want weather at all (soft rain on roofs is very cozy; storms aren't)
 Open: seasons (fireflies and cicadas are summer things)? Or a permanent late summer?
 
 ## 3. Lamps, torches and your lantern
+
+**Grilled 2026-10-28 → [lamps.md](lamps.md)** (decisions and phases there; this section is the
+original pitch).
 
 - **Lampposts and torches along the paths** (the roads come from `road_course.gd`, so posts can be
   placed along them at a spacing). They light at dusk with a small flicker-on, one after another.

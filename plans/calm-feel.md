@@ -5,8 +5,8 @@ pass).
 
 Status: **all 7 phases built** 2026-10-27 on branch `calm`; checked headless only (the test suite
 passes; a headless walk in the main world measures stroll 3.8 m/s reached in 0.28 s, stopping in
-0.22 s; jog 5.5 m/s in 0.42 s, stopping in 0.32 s; a jump is 0.52 s in the air). **Not played**: feel
-is judged by hand.
+0.22 s; jog 5.5 m/s in 0.42 s, stopping in 0.32 s; a jump is 0.52 s in the air). Merged to main and
+released v0.3; **playtested 2026-10-28**, approved.
 
 ### Notes from building
 

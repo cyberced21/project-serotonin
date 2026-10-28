@@ -3,11 +3,11 @@
 Chunk 3 of [cozy.md](cozy.md) (its section 9, plus section 2's night ambiance). Grilled
 2026-10-27. Branch `cozy-sound` off `main`.
 
-Status: **phases 1 and 2 built** 2026-10-27: the Music bus and wave system, and ten picked CC0
-tracks, one per slot (audio/music/SOURCES.md; levels from `tools/measure_music.gd`). **Not heard
-in game yet.** The shortlist page (https://claude.ai/artifact/KFsWkG9bSzt6AWRfhzDy6H) holds 46
-candidates if a slot wants more variety later. Next: phase 3, moment cues (pick). Most phases stop
-for a pick by ear: I can measure sounds, not hear them.
+Status: **all 10 phases built** 2026-10-27/28, plus playtest fixes; merged to main and released
+v0.3. **Playtested 2026-10-28**, approved: it sounds great. Music is ten CC0 tracks, one per slot
+(audio/music/SOURCES.md; levels from `tools/measure_music.gd`). The shortlist page
+(https://claude.ai/artifact/KFsWkG9bSzt6AWRfhzDy6H) holds 46 candidates if a slot wants more
+variety later.
 
 ## Where we start (2026-10-27)
 
