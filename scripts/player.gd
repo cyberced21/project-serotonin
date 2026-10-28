@@ -20,16 +20,18 @@ extends CharacterBody3D
 @export_range(1.0, 89.0) var max_pitch_deg := 88.0
 
 @export_group("Ground")
-@export var walk_speed := 4.5
-@export var sprint_speed := 7.0
-@export var ground_accel := 45.0
-@export var ground_friction := 55.0
+## An unhurried stroll, and the relaxed jog Shift gives (named sprint for the input action).
+@export var walk_speed := 3.8
+@export var sprint_speed := 5.5
+## Easing into a stroll (about 0.3 s to full speed) and settling to a stop (about 0.25 s).
+@export var ground_accel := 13.0
+@export var ground_friction := 18.0
 
 @export_group("Air")
-@export var air_accel := 12.0
-@export var jump_velocity := 5.2
-## Gravity is multiplied by this while falling, for a snappier arc.
-@export var fall_gravity_mult := 1.6
+@export var air_accel := 6.0
+@export var jump_velocity := 5.0
+## Gravity is multiplied by this while falling (a little: a soft, unhurried arc).
+@export var fall_gravity_mult := 1.3
 ## Releasing jump early multiplies upward speed by this (short hop vs. full jump).
 @export_range(0.0, 1.0) var jump_cut := 0.5
 ## Jump still works this long after walking off a ledge.
@@ -38,8 +40,8 @@ extends CharacterBody3D
 @export var jump_buffer := 0.12
 
 @export_group("View feel")
-## Gentle up-and-down of the eye with your steps (m at full sprint; 0 = off).
-@export var head_bob := 0.035
+## Gentle up-and-down of the eye with your steps (m at a full jog; 0 = off).
+@export var head_bob := 0.03
 ## How much the view dips when you land (per m/s of fall speed).
 @export var landing_dip := 0.012
 ## Roll toward the side you strafe (degrees).

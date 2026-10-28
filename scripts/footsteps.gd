@@ -29,8 +29,8 @@ const SHADER_DEFAULTS := {
 	&"dirt_slope": 0.86, &"rock_slope": 0.68, &"sand_height": -2.0, &"snow_height": 40.0,
 }
 
-@export var walk_stride := 1.8
-@export var sprint_stride := 2.6
+@export var walk_stride := 1.9
+@export var sprint_stride := 2.4
 @export var crouch_stride := 1.1
 @export var walk_db := -4.0
 @export var sprint_db := 0.0
