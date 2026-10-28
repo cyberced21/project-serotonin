@@ -56,13 +56,14 @@ static var _active: SkyLook
 @export var sunset_grade_bright := Color(1.08, 0.93, 0.92)
 
 @export_group("Night")
-@export var night_top := Color(0.03, 0.05, 0.11)
-@export var night_horizon := Color(0.11, 0.15, 0.25)
-@export var moon_light := Color(0.58, 0.68, 1.0)
-@export_range(0.0, 1.0, 0.01) var moon_energy := 0.24
-@export_range(0.0, 2.0, 0.01) var night_ambient := 0.32
+## Moonlit and readable: paths and silhouettes show without a lantern; lamps are warm pools.
+@export var night_top := Color(0.05, 0.08, 0.17)
+@export var night_horizon := Color(0.15, 0.2, 0.32)
+@export var moon_light := Color(0.66, 0.74, 1.0)
+@export_range(0.0, 1.0, 0.01) var moon_energy := 0.36
+@export_range(0.0, 2.0, 0.01) var night_ambient := 0.45
 ## Sky brightness at night (the background's energy).
-@export_range(0.0, 1.0, 0.01) var night_sky := 0.45
+@export_range(0.0, 1.0, 0.01) var night_sky := 0.6
 @export var night_grade_dark := Color(0.84, 0.92, 1.14)
 @export var night_grade_bright := Color(0.92, 0.98, 1.08)
 
