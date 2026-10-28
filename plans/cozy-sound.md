@@ -78,6 +78,10 @@ One commit each; phases marked **(pick)** stop for your choice.
    drifting away from you (cozy section 2's visual half). *Done:* the `Fireflies` autoload, 100
    glowing billboards in one MultiMesh round the player, likelier by still water and in the
    Pinewood; fade in through the evening, gone by about 1 a.m.; `tools/test_fireflies.gd`.
+   *Playtest 2026-10-28:* too many, and tied to you. Now small clusters (3-7) tied to world spots
+   (`NatureSpots`: shores, tree and crop edges), only those within 70 m drawn. The night's crickets
+   likewise: a faint wash plus cricket spots that sing and rest on their own, the nearest few
+   heard through positional voices.
 10. **Reverb per place and a final mix.** Reverb zones per biome (forest, hills, mine/quarry;
     indoors waits for interiors), levels balanced in the real buses (`tools/record_sfx_chain.gd`),
     then an in-game listen. *Done (bar the listen):* the `Acoustics` autoload, one reverb on SFX
