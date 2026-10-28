@@ -187,7 +187,7 @@ func _process(delta: float) -> void:
 ## A new road's post rising out of the ground after `delay` seconds, with a wooden tok.
 func _pop_in(prop: Prop, delay: float) -> void:
 	prop.scale = Vector3.ONE * 0.01
-	var t := create_tween()
+	var t := prop.create_tween()  # (dies with the post, if the road is rebuilt meanwhile)
 	t.tween_interval(delay)
 	t.tween_callback(func() -> void:
 		var tok := AudioStreamPlayer3D.new()

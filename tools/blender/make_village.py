@@ -1139,7 +1139,7 @@ def well():
         a = i * math.tau / n
         k.box("Stone", (0.42, 0.24, 0.7), (math.cos(a) * 0.62, math.sin(a) * 0.62, 0.35),
               ("stone.5", "stone.4", "stone.3"), rot=(0, 0, a + math.pi / 2), jit=0.02)
-    k.add("Water", prism(10, 0.52, 0.52, 0.02), ("accent.0", "accent.0", "accent.0"), (0, 0, 0.45))
+    k.add("Water", prism(10, 0.52, 0.52, 0.02), ("accent.4", "accent.4", "accent.4"), (0, 0, 0.45))
     for x in (-0.72, 0.72):
         k.post("Post", 0.06, 0.6, 2.0, x, 0, ("wood.3", "wood.3", "wood.2"))
     k.box("Crank", (1.5, 0.08, 0.08), (0, 0, 1.55), "wood.2")
@@ -1162,7 +1162,7 @@ def fountain():
         a = i * math.tau / n
         k.box("Basin", (0.95, 0.22, 0.5), (math.cos(a) * 1.25, math.sin(a) * 1.25, 0.25),
               ("stone.6", "stone.5", "stone.4"), rot=(0, 0, a + math.pi / 2), jit=0.01)
-    k.add("Water", prism(8, 1.2, 1.2, 0.03), ("accent.0", "accent.0", "accent.0"), (0, 0, 0.38), (0, 0, math.pi / 8))
+    k.add("Water", prism(8, 1.2, 1.2, 0.03), ("accent.5", "accent.4", "accent.4"), (0, 0, 0.38), (0, 0, math.pi / 8))
     k.add("Column", prism(8, 0.18, 0.14, 1.1), ("stone.5", "stone.4", "stone.3"), (0, 0, 0.75))
     k.add("Bowl", prism(8, 0.25, 0.5, 0.18), ("stone.6", "stone.5", "stone.4"), (0, 0, 1.36))
     k.add("Spout", prism(6, 0.06, 0.04, 0.25), ("stone.6", "stone.5", "stone.4"), (0, 0, 1.55))
