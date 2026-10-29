@@ -5,13 +5,15 @@ extends Node
 ##     bunting, a fountain) and the mended footbridge; done ones are saved here, per world;
 ##   road lamps: one per road stretch not lit from the start (the Lamps autoload keeps which are
 ##     lit, so that's where a road project's "done" lives).
-## A project opens with the town hall's tier (`hall`) and costs gathered goods.
+## A project opens with the town hall's tier (`hall`) and costs gathered goods. Some wait for
+## something first (a SPOTS entry's sixth field, `needs`): another project done (so the doghouse
+## grows in steps, plans/dog.md), or &"dog" for having a dog; until then they aren't on the board.
 
 ## Paid for (not ticked off in the debug menu): VillageDecor builds it in view.
 signal completed(id: StringName)
 signal changed
 
-## The decorations, in the board's order: [id, title, what it adds, cost, town hall tier].
+## The decorations, in the board's order: [id, title, what it adds, cost, town hall tier, needs].
 const SPOTS := [
 	[&"benches", "Benches round the square", "Two more benches by the square: somewhere to sit when the lamps come on.", {&"wood": 10}, 1],
 	[&"flower_boxes", "Flower boxes", "Planters full of flowers round the square.", {&"birch": 8, &"wheat": 6}, 1],
@@ -19,6 +21,9 @@ const SPOTS := [
 	[&"bunting", "Bunting", "Strings of little flags between the square's lamps.", {&"birch": 10, &"barley": 8}, 2],
 	[&"fountain", "A fountain", "A little fountain in the middle of the square, splashing away.", {&"iron": 30, &"gold": 10, &"oak": 20}, 3],
 	[&"footbridge", "Mend the footbridge", "Planks across the water, so you stop wading.", {&"oak": 30, &"iron": 10}, 3],
+	[&"kennel", "A kennel for your dog", "A little wooden house by the square: somewhere of his own to sleep at night.", {&"wood": 15}, 1, &"dog"],
+	[&"kennel_paint", "Paint it and hang his name", "Cream walls, a red roof and a sign over the door with his name on it.", {&"birch": 10, &"wheat": 6, &"barley": 4}, 1, &"kennel"],
+	[&"kennel_porch", "A bowl, a blanket and a porch", "A deck out front with a rail, a water bowl and a checked blanket to flop on.", {&"oak": 12, &"iron": 4}, 2, &"kennel_paint"],
 ]
 ## Road lamps: a stretch near the village (one that comes within NEAR_VILLAGE m of the square)
 ## is cheaper and opens at once; the far roads wait for the town hall's second tier.
@@ -36,6 +41,7 @@ var footbridge_here := false
 func _ready() -> void:
 	SaveGame.register(&"projects", self)
 	Lamps.changed.connect(changed.emit)
+	Companion.adopted.connect(changed.emit)  # (the kennel goes up on the board)
 
 
 ## Every project of this world, in the board's order: {id, title, blurb, cost, hall, done, road}
@@ -44,6 +50,8 @@ func all() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for s in SPOTS:
 		if s[0] == &"footbridge" and not footbridge_here:
+			continue
+		if s.size() > 5 and not _needs_met(s[5]):
 			continue
 		out.append({"id": s[0], "title": s[1], "blurb": s[2], "cost": s[3], "hall": s[4],
 				"done": _done.has(s[0]), "road": &""})
@@ -55,6 +63,10 @@ func all() -> Array[Dictionary]:
 				"blurb": "Lamp posts all along it, lit at dusk.", "cost": ROAD_NEAR if near else ROAD_FAR,
 				"hall": 1 if near else 2, "done": Lamps.is_lit(s["id"]), "road": s["id"]})
 	return out
+
+
+func _needs_met(need: StringName) -> bool:
+	return Companion.has_dog if need == &"dog" else _done.has(need)
 
 
 static func _lower_first(t: String) -> String:

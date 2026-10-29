@@ -25,7 +25,15 @@ const PROPS := {
 		[&"planter", Vector2(8.6, 3.4), -1.2], [&"planter", Vector2(-3.5, 7.6), 2.7]],
 	&"well": [[&"well", Vector2(-4.2, 1.8), 0.9]],
 	&"fountain": [[&"fountain", Vector2(0.0, 0.0), 0.0]],
+	# the doghouse (plans/dog.md), south of the square facing it: plain, then painted (it takes the
+	# plain one's place, his name on the sign), then a porch, a bowl and a blanket in front
+	&"kennel": [[&"doghouse", Vector2(-1.0, 13.0), 3.06]],
+	&"kennel_paint": [[&"doghouse_painted", Vector2(-1.0, 13.0), 3.06]],
+	&"kennel_porch": [[&"doghouse_porch", Vector2(-0.96, 11.95), 3.06], [&"dog_bowl", Vector2(0.4, 11.5), 0.0],
+		[&"dog_blanket", Vector2(-1.9, 11.6), 2.6]],
 }
+## Where your dog sleeps at night (Dog asks kennel_door()): in the doghouse's doorway, facing out.
+const KENNEL_DOOR := [Vector2(-0.98, 12.55), 3.06]
 ## Bunting: strings between the square's three lamp posts (their offsets, as the village has
 ## them), hung from just under the lamps.
 const BUNTING := [[Vector2(-5.5, -6.5), Vector2(6.5, -5.5)], [Vector2(6.5, -5.5), Vector2(2.0, 7.5)],
@@ -213,6 +221,15 @@ func frame(offset: Vector2, facing: float) -> Transform3D:
 	return Transform3D(Basis(Vector3.UP, facing - angle), Vector3(at.x, 0.0, at.y))
 
 
+## Your dog's bed for the night: the kennel's doorway, facing out (+Z), or null with no kennel.
+func kennel_door() -> Variant:
+	if not _built.has(&"kennel"):
+		return null
+	var t := frame(KENNEL_DOOR[0], KENNEL_DOOR[1])
+	t.origin = _ground(KENNEL_DOOR[0])
+	return t
+
+
 ## Puts up what's done and isn't standing yet; takes down what isn't done (the debug menu).
 func _sync() -> void:
 	for id in PROPS.keys() + [&"bunting", &"footbridge"]:
@@ -228,6 +245,9 @@ func _sync() -> void:
 			for n in _built[id]:
 				(n as Node).queue_free()
 			_built.erase(id)
+	# the painted doghouse takes the plain one's place
+	for n in _built.get(&"kennel", []):
+		(n as Node3D).visible = not _built.has(&"kennel_paint")
 
 
 ## Hides the pieces, fetches a builder, and pops them in on the blows.
@@ -348,6 +368,8 @@ func _make(id: StringName) -> Array[Node3D]:
 		prop.transform = frame(p[1], p[2])
 		add_child(prop)
 		out.append(prop)
+		if p[0] == &"doghouse_painted":  # his name on the sign
+			_name_sign.call_deferred(prop)
 		if id == &"fountain":  # its splash, close by
 			var bed := LoopBed.new()
 			bed.stream = FOUNTAIN_SOUND
@@ -360,6 +382,22 @@ func _make(id: StringName) -> Array[Node3D]:
 			prop.add_child(bed)
 			bed.position = Vector3.UP * 1.0
 	return out
+
+
+## Writes your dog's name on the painted doghouse's sign (the model's SignText marker).
+func _name_sign(prop: Node3D) -> void:
+	var mark := prop.find_child("SignText", true, false) as Node3D
+	if mark == null:
+		return
+	var label := Label3D.new()
+	label.name = "Name"
+	label.text = Companion.dog_name
+	label.pixel_size = 0.0022
+	label.font_size = 48
+	label.modulate = Color(0.24, 0.15, 0.08)
+	label.outline_size = 0
+	label.double_sided = false
+	mark.add_child(label)
 
 
 ## Where the village path crosses the creek: [from, to], reaching past its banks each side.

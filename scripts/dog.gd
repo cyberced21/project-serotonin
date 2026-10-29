@@ -14,6 +14,9 @@ extends AnimatableBody3D
 ## At night, once you have the lantern and it's lit, he carries it in his mouth and walks a little
 ## ahead of you to light the way (your belt lantern hides: Lantern asks carrying()). Hold the raise
 ## key and it's back in your hand; let go and he takes it again after a moment.
+## At night: standing still, he lies down at your feet and dozes. With a kennel built and you in
+## the village he goes to sleep in its doorway (VillageDecor.kennel_door()), and in the morning he's
+## waiting there until you come by.
 ## Before you have a dog, three strays nap by the clearing's pond (DogHome): a stray lifts his head
 ## and wags when you come close; pet one (E) and DogHome asks his name; the others wander off.
 ## Physics layer 9 only: you walk through him (the player's mask leaves it out), only the
@@ -59,6 +62,13 @@ const LIGHT_AHEAD := 3.2
 const RETAKE := 1.2
 const CARRY_RANGE := 20.0
 const LANTERN_MODEL := preload("res://models/lantern.glb")
+## At night he dozes this close to your feet once you've stood still DOZE_AFTER seconds.
+const AT_FEET := 0.9
+const DOZE_AFTER := 2.5
+## In the village (this close to the square) at night, he sleeps in the kennel; in the morning he
+## waits by it until you come this close.
+const VILLAGE_RANGE := 65.0
+const GREET := 9.0
 
 var breed: StringName = &"shepherd"
 var coat: StringName = &"saddle"
@@ -98,6 +108,9 @@ var _lantern_light: OmniLight3D
 var _lantern_glass: Array[MeshInstance3D] = []
 var _lantern_level := 0.0
 var _retake := 0.0
+var _home := false      # sleeping in (or, by day, waiting at) the kennel
+var _sleeping := false  # dozing: head right down, slow breaths
+var _face := INF        # a yaw to settle to where he stops (the kennel door), else he faces you
 var _phase := 0.0    # gait
 var _t := 0.0
 var _last_state := State.FOLLOW
@@ -320,6 +333,10 @@ func _think(delta: float) -> void:
 	var vel := Vector3(_player.velocity.x, 0.0, _player.velocity.z)
 	var moving := vel.length() > 0.6
 	_still = 0.0 if moving else _still + delta
+	_face = INF
+	_sleeping = false
+	if _kennel(pp):
+		return
 	var rod: Node = _player.get("rodfishing")
 	var lure: Node3D = rod.get("lure") if rod else null
 	_watch = lure.global_position if rod and rod.call("is_busy") and is_instance_valid(lure) else Vector3.INF
@@ -343,6 +360,9 @@ func _think(delta: float) -> void:
 			_goal = pp - dir * FOLLOW_DIST + Vector3(-dir.z, 0.0, dir.x) * _side * SIDE
 	elif _busy > 0.0:  # out to the side of what you're hitting, a little behind
 		_goal = pp + right * _side * GATHER_SIDE - look * 0.8
+	elif DayNight.is_night() and _still > DOZE_AFTER:  # at your feet, dozing (no sniffing about)
+		_goal = pp + right * _side * AT_FEET - look * 0.3
+		_sniff_at = Vector3.INF
 	else:
 		_goal = pp - look * FOLLOW_DIST * 0.6 + right * _side * SIDE * 1.4
 		_sniff(delta, pp)
@@ -357,10 +377,37 @@ func _think(delta: float) -> void:
 		state = State.FOLLOW
 	elif _sniff_at != Vector3.INF:
 		state = State.SNIFF
-	elif _gathering > LIE_AFTER or _still > SNIFF_AFTER * 3.0:
+	elif _gathering > LIE_AFTER or _still > SNIFF_AFTER * 3.0 or (DayNight.is_night() and _still > DOZE_AFTER):
 		state = State.LIE
+		_sleeping = DayNight.is_night() and _busy <= 0.0
 	elif _still > SIT_AFTER or _busy > 0.0:
 		state = State.SIT
+
+
+## Night in the village with a kennel: off to bed in its doorway; by day, still there until you
+## come close. True while that's where he is (or is going).
+func _kennel(pp: Vector3) -> bool:
+	var night := DayNight.is_night()
+	var decor := get_tree().get_first_node_in_group("village_decor")
+	var door: Variant = decor.call("kennel_door") if decor else null
+	var in_village := _flat(pp - Vector3(WorldMap.VILLAGE_CENTER.x, 0.0, WorldMap.VILLAGE_CENTER.y)) < VILLAGE_RANGE
+	if door == null or (night and not in_village):
+		_home = false
+	elif night:
+		_home = true
+	elif _home and _flat(pp - global_position) < GREET:
+		_home = false  # good morning
+	if not _home:
+		return false
+	var t := door as Transform3D
+	_goal = t.origin
+	_face = atan2(t.basis.z.x, t.basis.z.z)
+	if _flat(_goal - global_position) > ARRIVE:
+		state = State.FOLLOW
+	else:
+		state = State.LIE if night else State.SIT
+		_sleeping = night
+	return true
 
 
 ## Wet: counts time in the water; out of it after a while, he shakes himself dry.
@@ -433,6 +480,8 @@ func _move(delta: float) -> void:
 		var step := minf(_speed * delta, dist)
 		pos += to / dist * step
 		_turn_to(atan2(to.x, to.z), delta, 8.0)
+	elif _face != INF:
+		_turn_to(_face, delta, 4.0)
 	elif state == State.SIT or state == State.LIE:
 		var face := _player.global_position - pos
 		if face.length() > 0.5 and state == State.SIT:
@@ -560,13 +609,19 @@ func _animate(delta: float) -> void:
 			_pose(&"Head", -tilt * 0.8 + sin(_t * 0.7) * 0.05, 0.0, _head_turn(sin(_t * 0.4) * 0.25))
 			_pose(&"Jaw", 0.08 + sin(_t * 6.0) * 0.04)
 		State.LIE:
-			_pose(&"Body", 0.0, 0.0, 0.0, Vector3(0, -_leg * 0.82, 0))
 			_pose(&"LegFL", -1.45)
 			_pose(&"LegFR", -1.45)
 			_pose(&"LegBL", -1.25, 0.35)
 			_pose(&"LegBR", -1.25, -0.35)
-			_pose(&"Head", 0.3, 0.0, sin(_t * 0.3) * 0.2, Vector3(0, -0.03, 0))
+			var breath := sin(_t * (1.6 if _sleeping else 2.6)) * 0.008
+			_pose(&"Body", 0.0, 0.0, 0.0, Vector3(0, -_leg * 0.82 + breath, 0))
+			if _sleeping:  # chin on his paws
+				_pose(&"Head", 0.55, 0.0, 0.0, Vector3(0, -0.07, 0.02))
+			else:
+				_pose(&"Head", 0.3, 0.0, sin(_t * 0.3) * 0.2, Vector3(0, -0.03, 0))
 			_pose(&"Jaw", 0.0)
+			if _sleeping:
+				wag = sin(_t * 0.8) * 0.05
 	_pose(&"Tail", 0.0, 0.0, wag)
 	var ear := sin(_phase * 2.0) * 0.08 * gait
 	_pose(&"EarL", ear)

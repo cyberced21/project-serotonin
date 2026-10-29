@@ -46,6 +46,7 @@ func _run() -> void:
 	await _pet()
 	await _water()
 	await _carry_lantern()
+	await _night_and_kennel()
 	await _night_strays()
 	_finish()
 
@@ -157,6 +158,48 @@ func _carry_lantern() -> void:
 	day_night.set("time", 0.4)
 	await _frames(5)
 	_check(not dog.call("carrying"), "put out, he doesn't carry it")
+	day_night.set("frozen", false)
+
+
+## Dozing at your feet at night; the doghouse projects, one after another; sleeping in its doorway,
+## waiting there in the morning.
+func _night_and_kennel() -> void:
+	var day_night := root.get_node("DayNight")
+	var projects := root.get_node("Projects")
+	day_night.set("frozen", true)
+	day_night.set("time", 0.95)
+	_place(Vector3(-20, 0, 40), Vector2(0, -1))
+	await _seconds(14.0)
+	var gap := Vector2(dog.global_position.x - player.global_position.x, dog.global_position.z - player.global_position.z).length()
+	_check(dog.get("state") == 2 and dog.get("_sleeping") and gap < 1.8, "at night, standing still: he dozes at your feet (%.1f m)" % gap)
+	var ids: Array = (projects.call("all") as Array).map(func(p: Dictionary) -> StringName: return p["id"])
+	_check(ids.has(&"kennel") and not ids.has(&"kennel_paint") and not ids.has(&"kennel_porch"), "with a dog, the kennel is on the board (and not the next steps yet)")
+	projects.call("set_done", &"kennel", true)
+	ids = (projects.call("all") as Array).map(func(p: Dictionary) -> StringName: return p["id"])
+	_check(ids.has(&"kennel_paint") and not ids.has(&"kennel_porch"), "kennel built: painting it comes up")
+	projects.call("set_done", &"kennel_paint", true)
+	projects.call("set_done", &"kennel_porch", true)
+	await _frames(5)
+	var decor := get_first_node_in_group("village_decor")
+	var sign := decor.find_child("Name", true, false) as Label3D
+	_check(sign != null and sign.text == "Rex", "the painted doghouse has his name on the sign")
+	var plain: Array = decor.call("props_of", &"kennel")
+	_check(not plain.is_empty() and not (plain[0] as Node3D).visible, "the painted one takes the plain one's place")
+	_check((decor.call("props_of", &"kennel_porch") as Array).size() == 3, "the porch, the bowl and the blanket")
+	# night in the village: off to bed
+	var door: Transform3D = decor.call("kennel_door")
+	_place(Vector3(100, 0, 40), Vector2(0, 1))
+	await _seconds(25.0)  # (he runs over from where you were)
+	gap = Vector2(dog.global_position.x - door.origin.x, dog.global_position.z - door.origin.z).length()
+	_check(gap < 1.0 and dog.get("state") == 2 and dog.get("_sleeping"), "night in the village: asleep in the kennel's doorway (%.1f m off)" % gap)
+	day_night.set("time", 0.3)
+	_place(Vector3(100, 0, 25), Vector2(0, -1))
+	await _seconds(3.0)
+	gap = Vector2(dog.global_position.x - door.origin.x, dog.global_position.z - door.origin.z).length()
+	_check(gap < 1.0 and dog.get("state") == 1, "in the morning he waits there (%.1f m off)" % gap)
+	_place(Vector3(door.origin.x + 4, 0, door.origin.z - 4), Vector2(0, -1))
+	await _seconds(2.0)
+	_check(not dog.get("_home"), "...until you come by")
 	day_night.set("frozen", false)
 
 

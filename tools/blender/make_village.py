@@ -1361,6 +1361,78 @@ def dog(breed, coat_name):
     export(os.path.join("dogs", f"dog_{breed}_{coat_name}"))
 
 
+def _doghouse(name, walls, roof, trim, sign=False):
+    """A doghouse big enough for the big fluffy dog: plank walls with a door hole in the front
+    (Blender -Y), a pitched roof. `sign`: a board over the door, with a SignText empty where the
+    game writes his name."""
+    reset()
+    k = Kit("", 640 + len(name))
+    w, d, h = 1.1, 1.3, 0.8      # width, depth, wall height
+    door_w, door_h = 0.5, 0.62
+    t = 0.06                      # plank thickness
+    k.box("Floor", (w, d, 0.06), (0, 0, 0.03), (trim, trim, trim))
+    k.box("Back", (w, t, h), (0, d / 2 - t / 2, h / 2), walls, jit=0.004)
+    for sx in (-1, 1):
+        k.box("Side", (t, d, h), (sx * (w / 2 - t / 2), 0, h / 2), walls, jit=0.004)
+        side_w = (w - door_w) / 2
+        k.box("Front", (side_w, t, h), (sx * (door_w / 2 + side_w / 2), -d / 2 + t / 2, h / 2), walls, jit=0.004)
+    k.box("Lintel", (door_w, t, h - door_h), (0, -d / 2 + t / 2, door_h + (h - door_h) / 2), walls)
+    for sy in (-1, 1):  # gable ends: wedges filling the roof's triangle front and back
+        bm = box((w, t, 0.4))
+        for v in bm.verts:
+            if v.co.z > 0:
+                v.co.x = 0.0
+        k.add("Gable", bm, walls, (0, sy * (d / 2 - t / 2), h + 0.2))
+    for sx in (-1, 1):  # two roof slabs meeting over the ridge
+        k.box("Roof", (w * 0.62, d + 0.2, 0.05), (sx * w * 0.25, 0, h + 0.22), (roof, roof, trim),
+              rot=(0, sx * math.radians(34), 0))
+    k.box("Ridge", (0.08, d + 0.22, 0.08), (0, 0, h + 0.4), (trim, trim, trim))
+    if sign:
+        k.box("Sign", (0.62, 0.04, 0.16), (0, -d / 2 - 0.03, h + 0.12), ("wood.6", "wood.6", "wood.5"))
+        mark = bpy.data.objects.new("SignText", None)
+        bpy.context.collection.objects.link(mark)
+        mark.location = (0, -d / 2 - 0.06, h + 0.12)
+    export(os.path.join("village", "props", name))
+
+
+def doghouse():
+    _doghouse("doghouse", ("wood.4", "wood.3", "wood.2", "wood.5"), "wood.2", "wood.1")
+
+
+def doghouse_painted():
+    _doghouse("doghouse_painted", ("wood.7", "wood.6", "wood.5"), "accent.0", "wood.3", sign=True)
+
+
+def doghouse_porch():
+    """A little deck in front of the doghouse's door, with a post at each front corner."""
+    reset()
+    k = Kit("", 646)
+    for i in range(4):
+        k.box("Board", (1.2, 0.14, 0.05), (0, -0.3 + i * 0.16, 0.06), ("wood.5", "wood.4", "wood.3"), jit=0.006)
+    for sx in (-1, 1):
+        k.post("Post", 0.035, 0, 0.5, sx * 0.55, -0.3, ("wood.4", "wood.3", "wood.2"))
+    k.box("Rail", (1.15, 0.05, 0.05), (0, -0.3, 0.5), ("wood.4", "wood.3", "wood.2"))
+    export(os.path.join("village", "props", "doghouse_porch"))
+
+
+def dog_bowl():
+    reset()
+    k = Kit("", 647)
+    k.add("Bowl", prism(8, 0.16, 0.2, 0.08), ("accent.1", "accent.0", "accent.0"), (0, 0, 0.04))
+    k.add("Water", prism(8, 0.16, 0.16, 0.01), ("accent.5", "accent.5", "accent.5"), (0, 0, 0.07))
+    export(os.path.join("village", "props", "dog_bowl"))
+
+
+def dog_blanket():
+    """A folded, checked blanket for him to lie on."""
+    reset()
+    k = Kit("", 648)
+    bm = box((0.8, 0.62, 0.06))
+    paint(bm, lambda f: "accent.6" if int((f.calc_center_median().x + 0.4) / 0.2) % 2 else "neutral.6")
+    make_object("Blanket", bm, (0, 0, 0.03))
+    export(os.path.join("village", "props", "dog_blanket"))
+
+
 def dogs():
     os.makedirs(os.path.join(OUT_DIR, "dogs"), exist_ok=True)
     for breed, coats in DOG_COATS.items():
@@ -1373,6 +1445,7 @@ only = sys.argv[sys.argv.index("--") + 3:]  # optional: names of the builders to
 for build in (woodcutter, smithy, fisher, town_hall, baker_cottage, prospector_cottage,
               woodcutter_villager, smith_villager, fisher_villager, mayor_villager,
               baker_villager, prospector_villager,
-              bench, lamp_post, lamp_post_rustic, lantern, noticeboard, planter, well, fountain, barrel_prop, crate_prop, signpost, dogs):
+              bench, lamp_post, lamp_post_rustic, lantern, noticeboard, planter, well, fountain, barrel_prop, crate_prop, signpost, dogs,
+              doghouse, doghouse_painted, doghouse_porch, dog_bowl, dog_blanket):
     if not only or build.__name__ in only:
         build()
