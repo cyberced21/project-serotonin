@@ -33,8 +33,10 @@ func _ready() -> void:
 	box.set_corner_radius_all(6)
 	box.set_content_margin_all(14)
 	frame.add_theme_stylebox_override("panel", box)
-	frame.set_anchors_preset(Control.PRESET_CENTER)
-	_shade.add_child(frame)
+	var middle := CenterContainer.new()
+	middle.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_shade.add_child(middle)
+	middle.add_child(frame)
 	var col := VBoxContainer.new()
 	frame.add_child(col)
 	_title = Label.new()
@@ -51,7 +53,6 @@ func _ready() -> void:
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_color_override("font_color", Color(0.85, 0.75, 0.6))
 	col.add_child(hint)
-	frame.resized.connect(func() -> void: frame.position = -frame.size / 2)
 	_shade.visible = false
 
 

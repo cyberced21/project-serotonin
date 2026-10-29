@@ -27,7 +27,6 @@ const SEAM_EVERY := 3
 const ROUGH := 0.13
 const GRID := 0.5
 const FLOOR_UV := Vector2(0.3125, 0.5625)  # terrain.dirt
-const WATER := preload("res://shaders/water.gdshader")
 const LAMP_COLOR := Color(1.0, 0.72, 0.44)
 ## The lamp room's chalk marks on a dig face: what's behind it.
 const HINTS := {"C": "a chamber", "L": "the old shaft", "R": "a rail stop", "X": "loose roof!", "F": "water",
@@ -362,8 +361,8 @@ func _lamp(at: Vector3, model: PackedScene) -> void:
 	_prop("lamp_hanging", model, at, Vector3.FORWARD)
 	var light := OmniLight3D.new()
 	light.light_color = LAMP_COLOR
-	light.light_energy = 1.5
-	light.omni_range = 7.5
+	light.light_energy = 2.0
+	light.omni_range = 8.0
 	light.omni_attenuation = 1.4
 	light.shadow_enabled = false
 	light.position = at + Vector3.DOWN * 0.45
@@ -392,9 +391,7 @@ func _flood(c: Vector2i, o: Vector3) -> void:
 	var water := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(CELL, CELL)
-	var mat := ShaderMaterial.new()
-	mat.shader = WATER
-	plane.material = mat
+	plane.material = _cave_water()
 	water.mesh = plane
 	water.position = o + Vector3.UP * (0.05 if drained else HEIGHT - 0.4)
 	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -422,9 +419,7 @@ func _stream(_c: Vector2i, o: Vector3) -> void:
 	var water := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(CELL, 1.1)
-	var mat := ShaderMaterial.new()
-	mat.shader = WATER
-	plane.material = mat
+	plane.material = _cave_water()
 	water.mesh = plane
 	water.position = o + Vector3(0, 0.04, 0.9)
 	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -478,6 +473,15 @@ func _crystals(c: Vector2i, o: Vector3, h: int) -> void:
 
 
 ## A looped sound heard near one spot (the stream, the pump, the crystals' hum), in the dressing.
+## Water down here: dark, glossy, catching the lamps.
+static func _cave_water() -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color(0.07, 0.11, 0.13)
+	m.metallic = 0.4
+	m.roughness = 0.08
+	return m
+
+
 func _bed(stream: AudioStream, at: Vector3, trim_db: float) -> void:
 	var bed := LoopBed.new()
 	bed.stream = stream

@@ -60,6 +60,16 @@ func _build() -> void:
 	dark.mesh = box
 	dark.position = Vector3(0, 1.42, -2.4)
 	add_child(dark)
+	var mouth := MeshInstance3D.new()  # (the quarry's wall stands in front of that box: a dark
+	var quad := QuadMesh.new()  # face across the frame reads as the way in going back)
+	quad.size = Vector2(2.9, 2.8)
+	var shade := StandardMaterial3D.new()
+	shade.albedo_color = Color(0.03, 0.025, 0.02)
+	shade.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	quad.material = shade
+	mouth.mesh = quad
+	mouth.position = Vector3(0, 1.4, -0.05)
+	add_child(mouth)
 	_prop(FRAME, Vector3.ZERO, 0.0, false, true)
 	for side in [-1.0, 1.0]:
 		_prop(RUBBLE, Vector3(side * 2.3, 0.0, 0.5), side * 40.0, false, false)

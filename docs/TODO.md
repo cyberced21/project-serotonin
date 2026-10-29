@@ -291,7 +291,7 @@ Generated worlds are gone (the procgen items above are history); Hearthvale is t
 - [x] The mine under it: three hand-drawn levels of cells, dig faces that give way two layers in, seams that grow back, shoring and lamps (fresh cells the next morning), the way in and out, the lift, the pump, the roof-fall supports, the rails and the minecart ride, the mine map (M), Edda's notes, fossils and geodes, its sounds (`test_mine`).
 - [x] The second add-on slots and every building's forks, the tavern from the kit, walk-in camps, trophy hints (`test_forks`, `test_camps`).
 - [ ] **Play it:** bot-tested only, never seen in a game window. Guesses: how long a dig face takes (two layers, ~30 swings each with a stone pick), the seams' regrowth (15 minutes), the trophy chance per face (1 in 10), every project and add-on cost, the ride's 20 s, the lamp light, the mine's darkness and its fog, the sound levels.
-- [ ] **Screenshots** of the quarry, each mine level, the ride, the tavern and the new add-ons in the game.
+- [x] **Screenshots** of the quarry, the mine's levels, the map, the ride, the tavern and some add-ons (`tools/mine_shots.gd` -> docs/images/mine/). The mine reads dark but warm; the prospector's add-ons are half hidden in their shot.
 - [ ] **The pick hardness moved down a tier** from the plan: level 2's rock needs a copper pick, level 3's an iron pick (the crystal pick needs the crystal that's only on level 3).
 - [ ] **Edda doesn't go down the mine** herself: she shores your fresh cells overnight and writes about what you find. Villagers can't walk the mine (no paths, a teleport in).
 - [ ] **The fossil** has one look, not picked on a page, and hasn't been seen on the wall.
