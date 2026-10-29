@@ -32,6 +32,8 @@ const PROPS := {
 	&"kennel_porch": [[&"doghouse_porch", Vector2(-0.96, 11.95), 3.06], [&"dog_bowl", Vector2(0.4, 11.5), 0.0],
 		[&"dog_blanket", Vector2(-1.9, 11.6), 2.6]],
 }
+## The market stall (plans/market.md): west of the square, its counter facing it.
+const MARKET := [Vector2(-11.0, -2.0), 1.57]
 ## Where your dog sleeps at night (Dog asks kennel_door()): in the doghouse's doorway, facing out.
 const KENNEL_DOOR := [Vector2(-0.98, 12.55), 3.06]
 ## Bunting: strings between the square's three lamp posts (their offsets, as the village has
@@ -232,7 +234,7 @@ func kennel_door() -> Variant:
 
 ## Puts up what's done and isn't standing yet; takes down what isn't done (the debug menu).
 func _sync() -> void:
-	for id in PROPS.keys() + [&"bunting", &"footbridge"]:
+	for id in PROPS.keys() + [&"bunting", &"footbridge", &"market"]:
 		var done := Projects.is_done(id)
 		if done and not _built.has(id):
 			var made: Array[Node3D] = _make(id)
@@ -351,6 +353,13 @@ func _make(id: StringName) -> Array[Node3D]:
 		bridge.to = _ground_at(footbridge_site[1])
 		add_child(bridge)
 		out.append(bridge)
+		return out
+	if id == &"market":  # the stall, with its keeper (MarketStall)
+		var stall := MarketStall.new()
+		stall.name = "MarketStall"
+		stall.transform = frame(MARKET[0], MARKET[1])
+		add_child(stall)
+		out.append(stall)
 		return out
 	if id == &"bunting":
 		for pair in BUNTING:

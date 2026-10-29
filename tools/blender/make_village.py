@@ -1474,6 +1474,53 @@ def retaining_wall():
     export(os.path.join("village", "props", "retaining_wall"))
 
 
+def market_stall():
+    """The market stall in the square (plans/market.md): a plank counter on trestles, four posts
+    holding a striped awning, crates of goods on the counter and beside it. Faces Blender -Y (Godot
+    +Z, the customer's side); the stallkeeper stands behind it, at +Y. 3 m wide."""
+    reset()
+    k = Kit("", 670)
+    w, d = 3.0, 1.0
+    wood = ("wood.5", "wood.4", "wood.3")
+    k.box("Counter", (w, d * 0.7, 0.08), (0, -0.1, 0.95), ("wood.6", "wood.5", "wood.4"), jit=0.004)
+    k.box("Front", (w, 0.05, 0.85), (0, -0.45, 0.5), ("wood.4", "wood.4", "wood.3", "wood.5"), jit=0.004)
+    for sx in (-1, 1):
+        k.box("Trestle", (0.08, d * 0.6, 0.9), (sx * (w / 2 - 0.15), -0.1, 0.45), wood)
+    for sx in (-1, 1):
+        for sy, h in ((-1, 2.3), (1, 2.6)):
+            k.post("Post", 0.05, 0, h, sx * (w / 2 - 0.05), sy * (d / 2 + 0.1), ("wood.3", "wood.3", "wood.2"))
+    for i in range(8):  # the awning: alternating stripes, sloping down toward the customer
+        x = -w / 2 + (i + 0.5) * (w / 8)
+        c = "accent.1" if i % 2 == 0 else "neutral.6"
+        k.box("Awning", (w / 8 + 0.005, d + 0.6, 0.03), (x, -0.05, 2.47), (c, c, c), rot=(math.radians(-10), 0, 0))
+    for i in range(8):  # scalloped edge
+        x = -w / 2 + (i + 0.5) * (w / 8)
+        c = "accent.1" if i % 2 == 0 else "neutral.6"
+        k.box("Flap", (w / 8 - 0.02, 0.02, 0.16), (x, -0.86, 2.27), (c, c, c))
+    goods = [("Apples", "accent.0"), ("Bread", "wood.6"), ("Fish", "stone.5"), ("Ore", "ore.copper")]
+    for i, (name, col) in enumerate(goods):  # crates of goods on the counter
+        x = -1.05 + i * 0.7
+        k.box("Crate", (0.5, 0.4, 0.22), (x, -0.05, 1.1), ("wood.4", "wood.3", "wood.2"))
+        for j in range(5):
+            k.add(name, blob(0.07, k.rng, 0.2, (1, 1, 0.8)), (col, col, col),
+                  (x + k.rng.uniform(-0.16, 0.16), -0.05 + k.rng.uniform(-0.1, 0.1), 1.24))
+    k.barrel((1.9, 0.2, 0))
+    k.crate((-2.0, 0.1, 0), 0.55)
+    k.crate((-1.95, 0.15, 0.5), 0.4)
+    export(os.path.join("village", "props", "market_stall"))
+
+
+def stallkeeper_villager():
+    def hat(k, p):  # a headscarf
+        attach(k, p["Head"], "Scarf", box((0.4, 0.38, 0.14)), "accent.2", (0, 0.01, 1.4))
+        attach(k, p["Head"], "Knot", box((0.1, 0.08, 0.1)), "accent.2", (0, 0.2, 1.36))
+
+    def extra(k, p):  # a green apron
+        attach(k, p["Body"], "Apron", box((0.44, 0.04, 0.5)), "leaves.3", (0, -0.17, 0.72))
+
+    villager("stallkeeper", "accent.5", "accent.5", "wood.2", hat=hat, extra=extra)
+
+
 def dogs():
     os.makedirs(os.path.join(OUT_DIR, "dogs"), exist_ok=True)
     for breed, coats in DOG_COATS.items():
@@ -1488,6 +1535,6 @@ for build in (woodcutter, smithy, fisher, town_hall, baker_cottage, prospector_c
               baker_villager, prospector_villager,
               bench, lamp_post, lamp_post_rustic, lantern, noticeboard, planter, well, fountain, barrel_prop, crate_prop, signpost, dogs,
               doghouse, doghouse_painted, doghouse_porch, dog_bowl, dog_blanket,
-              landslide_mud, retaining_wall):
+              landslide_mud, retaining_wall, market_stall, stallkeeper_villager):
     if not only or build.__name__ in only:
         build()
