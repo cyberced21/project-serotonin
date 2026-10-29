@@ -33,7 +33,7 @@ const CLEARING_RADIUS := 28.0
 const HILL_RAMP := 55.0                 # metres over which the hills rise out of the clearing
 ## The flats' edges wander outward by up to this much (never inward: what's placed on them stays
 ## on flat ground).
-const FLAT_GROW := 14.0
+const FLAT_GROW := 24.0
 ## The hills: broad, rounded, warped so nothing reads as a circle. Height = HILL_BASE + up to
 ## HILL_RANGE, eased down to the flats.
 const HILL_BASE := 3.0
@@ -61,8 +61,8 @@ const RIM_WIDTH := 95.0
 const RIM_HEIGHT := 24.0
 ## Frostpeak: one broad mountain, not a cone.
 const PEAK_CENTER := Vector2(-92, -92)
-const PEAK_RADIUS := 80.0
-const PEAK_HEIGHT := 40.0
+const PEAK_RADIUS := 76.0
+const PEAK_HEIGHT := 64.0
 ## Steepest rise per metre the relax pass leaves between neighbouring cells, along x or z (so
 ## diagonally at most ~0.64, about 32°). Not in the quarry pit; Frostpeak's top may be steeper by
 ## up to PEAK_SLOPE.
@@ -177,6 +177,7 @@ func _run() -> void:
 	var baked := _baked_points()
 	var laid := _lay_roads(h, ids, baked)
 	_relax(h)  # again: smooths any seam where two roads' banks (or a hairpin's legs) meet
+	_peak_ridges(h)
 
 	var img := Image.create_empty(SIZE, SIZE, false, Image.FORMAT_RF)
 	for y in SIZE:
@@ -263,7 +264,8 @@ func _height(w: Vector2) -> float:
 
 ## 0 on a place's flat (its edge wandering out by up to FLAT_GROW), easing to 1 over `ramp`.
 func _rise(w: Vector2, center: Vector2, radius: float, ramp: float) -> float:
-	var grow := (_warp_x.get_noise_2dv(w * 2.5) * 0.5 + 0.5) * FLAT_GROW
+	var lobes := _warp_x.get_noise_2dv(w * 6.0) * 0.6 + _warp_y.get_noise_2dv(w * 2.5) * 0.4  # big lobes and smaller ones
+	var grow := clampf(lobes * 0.5 + 0.5, 0.0, 1.0) * FLAT_GROW
 	var t := clampf((w.distance_to(center) - radius - grow) / ramp, 0.0, 1.0)
 	return t * t * t * (t * (t * 6.0 - 15.0) + 10.0)  # smootherstep: no crease at either end
 
@@ -290,6 +292,16 @@ func _peak(w: Vector2) -> float:
 	return PEAK_HEIGHT * t * t * (3.0 - 2.0 * t) * (0.85 + 0.15 * _noise.get_noise_2dv(w * 3.0))
 
 
+## Ridges and gullies down Frostpeak's flanks, after the relax (which would plane them into a
+## cone): strongest near the top, gone at its foot.
+func _peak_ridges(h: PackedFloat32Array) -> void:
+	_for_pixels_near(PEAK_CENTER, PEAK_RADIUS, func(i: int, w: Vector2) -> void:
+		var t := 1.0 - w.distance_to(PEAK_CENTER) / PEAK_RADIUS
+		var a := (w - PEAK_CENTER).angle()
+		var ridge := 1.0 - absf(_noise.get_noise_2d(a * 40.0, t * 6.0))  # runs downhill
+		h[i] += (ridge - 0.6) * 9.0 * t * t * (3.0 - 2.0 * t))
+
+
 ## The edge of the world rising into high hills (wandering, so it isn't a straight wall).
 func _rim(w: Vector2) -> float:
 	var half := SIZE * 0.5
@@ -309,7 +321,7 @@ func _relax(h: PackedFloat32Array) -> void:
 	for y in SIZE:
 		for x in SIZE:
 			var w := _world(x, y)
-			var crags := 1.0 - smoothstep(PEAK_RADIUS * 0.15, PEAK_RADIUS * 0.6, w.distance_to(PEAK_CENTER))
+			var crags := 1.0 - smoothstep(PEAK_RADIUS * 0.25, PEAK_RADIUS * 0.85, w.distance_to(PEAK_CENTER))
 			var keep := _in_pit(w) or (not _creek_mask.is_empty() and _creek_mask[y * SIZE + x] == 1)
 			limit[y * SIZE + x] = 0.0 if keep else MAX_SLOPE + crags * PEAK_SLOPE
 	for pass_i in RELAX_PASSES:

@@ -235,7 +235,8 @@ Generated worlds are gone (the procgen items above are history); Hearthvale is t
 - [x] Biome borders warped and frayed; Goldmeadow's fields on a curving grid.
 - [x] The quarry keeps its stone faces (the ore walls), loses the mantle stairs; its mountainside is gentle.
 - [ ] **Walk it:** nothing here is played yet; only slope maps and headless checks. Look for odd road bends, the creek's banks, where the biomes fray, and the view from the rim hills.
-- [ ] **In-game screenshots** of the new land (`graphics_tour.gd`), the minimap and world map (`map_shots.gd`).
+- [x] **In-game screenshots:** `graphics_tour.gd --set=world` (docs/images/graphics/world/, sheet in docs/images/world/tour.jpg), the maps (docs/images/world/classic_*.png). They caught Frostpeak too low for its snow (raised to 64 m) and the rim hills being called Frostpeak by height (`Biome.biome_at` now goes by distance only).
+- [ ] **Frostpeak reads as a smooth cone:** the relax pass planes its flanks; the ridges added after it barely show. Wants a hand-shaped mountain (spurs, a shoulder, rock bands).
 - [ ] **Biome cards vs ground:** `Biome.biome_at` still uses the plain shapes (ellipse, discs); the painted ground now uses warped ones, so a card can come a few metres early or late.
 - [x] **Saves:** a saved position under the new ground loads on top of it (`Player.from_dict`); one in the air just lands.
 - [ ] **Flaky tests:** `test_lamps` (lamps catching by full night, timing) and `test_fireflies` (a cricket voice fading in) fail now and then; both did on `main` before this.

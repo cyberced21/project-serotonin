@@ -14,6 +14,8 @@ extends SceneTree
 ##                    given, at dusk and night, a dark trail by lantern alone, the lantern raised
 ##   --set=projects   the village projects' views (plans/projects.md): the square with none done
 ##                    and with all, at dusk, the noticeboard open, the footbridge over the creek
+##   --set=world      the world revamp's views (plans/world.md): the creek, the valleys, the roads
+##                    on the land, the quarry's slopes, the valley from the rim hills
 ##   --look=k=v,k=v   override SkyLook values for this run (numbers only), e.g. --look=water_mist=0.3
 ## The game is played on a throwaway save, so the real one is never touched.
 
@@ -71,6 +73,21 @@ const PROJECT_VIEWS := [
 	["footbridge", Vector3(22, 0, 9), Vector3(28, 0, 0), 0.42, "all"],
 ]
 
+const WORLD_VIEWS := [
+	["creek_spring", Vector3(42, 0, -82), Vector3(33, 0, -55), 0.4],
+	["creek_clearing", Vector3(34, 0, -26), Vector3(26, 0, 6), 0.45],
+	["creek_footbridge", Vector3(22, 0, 9), Vector3(28, 0, 0), 0.42],
+	["creek_to_lake", Vector3(16, 0, 30), Vector3(0, 0, 56), 0.55],
+	["valley_to_village", Vector3(30, 0, 2), Vector3(100, 0, 40), 0.4],
+	["village_from_road", Vector3(150, 0, -40), Vector3(110, 0, 30), 0.6],
+	["quarry_road", Vector3(-39, 0, 36), Vector3(-115, 0, 10), 0.35],
+	["quarry_slopes", Vector3(-95, 0, 30), Vector3(-160, 0, -10), 0.45],
+	["lake_road", Vector3(-90, 0, 57), Vector3(-30, 0, 74), 0.6],
+	["goldmeadow_edge", Vector3(150, 0, 88), Vector3(180, 0, 150), 0.33],
+	["pinewood_edge", Vector3(70, 0, -40), Vector3(40, 0, -100), 0.4],
+	["from_the_rim", Vector3(200, 0, -170), Vector3(40, 0, 0), 0.38],
+	["frostpeak", Vector3(-22, 0, -14), Vector3(-92, 30, -92), 0.45],
+]
 var views: Array = VIEWS
 var lamps := false
 var projects := false
@@ -96,6 +113,8 @@ func _initialize() -> void:
 		elif arg == "--set=lamps":
 			views = LAMP_VIEWS
 			lamps = true
+		elif arg == "--set=world":
+			views = WORLD_VIEWS
 		elif arg == "--set=projects":
 			views = PROJECT_VIEWS
 			projects = true

@@ -86,6 +86,9 @@ whatever you hit.
   | The land's slopes before (black: sheer) | And after |
   |---|---|
   | ![Before](docs/images/world/slope_before.png) | ![After](docs/images/world/slope_after.png) |
+
+  ![The creek, the valley to the village, the roads, the quarry's slopes, Goldmeadow, Frostpeak](docs/images/world/tour.jpg)
+  (`graphics_tour.gd -- --set=world`; the world map: [docs/images/world/classic_map.png](docs/images/world/classic_map.png))
 - **A village to build up.** East of the clearing, a dirt path leads along a shallow valley to the village and its four villagers: a woodcutter, a smith, a fisher and the mayor.
   - Talk to a villager (E) to see what their building's next tier costs, then pay with the logs, ore and fish you've gathered.
   - **Greta forges tools.** Her panel has a Forge tab: the next pick, axe and sickle, what each opens and what it costs. Each is made from what the tool before it can gather, and her smithy's tier caps the best she can make (the Stone Forge does copper, the Smithy iron, the Crystal Forge crystal).

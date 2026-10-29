@@ -82,7 +82,7 @@ func biome_at(p: Vector3) -> StringName:
 	var w := Vector2(p.x, p.z)
 	if w.distance_to(WorldMap.QUARRY_CENTER) < WorldMap.QUARRY_WALLS[0] + WorldMap.QUARRY_APRON + 8.0:
 		return &"quarry"
-	if w.distance_to(WorldMap.PEAK_CENTER) < 45.0 or p.y > 32.0:
+	if w.distance_to(WorldMap.PEAK_CENTER) < 55.0:  # (not by height: the rim hills climb as high)
 		return &"frostpeak"
 	if w.distance_to(WorldMap.FIELD_CENTER) < WorldMap.FIELD_RADIUS + 12.0:
 		return &"goldmeadow"
