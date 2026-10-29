@@ -689,6 +689,7 @@ func _break(info: HitInfo) -> void:
 		burst.restart()
 		_spawn_drops(info)
 	depleted.emit(self)
+	Trophies.roll(self)  # (now and then a trophy for your wall: plans/trophies.md)
 	SaveGame.mark_dirty()
 	var regrow := _regrow_time()
 	if skill == &"woodcutting":
@@ -2714,7 +2715,7 @@ func _show_knot() -> void:
 func _felled_by_talents(regrow: float) -> float:
 	var t := Skills.talents
 	if _old_growth_active():
-		_bonus_items.append(&"trophy_log")
+		Trophies.found(&"log", global_position)  # (a record for your wall now, not an item)
 		regrow *= OLD_GROWTH_REGROW
 	var player := get_tree().get_first_node_in_group("player")
 	if player and player.has_method("note_felled"):

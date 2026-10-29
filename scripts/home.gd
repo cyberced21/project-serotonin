@@ -46,6 +46,13 @@ const VISIT_NEAR := 14.0  # you're "there" this close
 const PORCH_CHANCE := 0.5
 ## The porch swing (an add-on): the day goes by this many times faster while you sit on it.
 const SWING_SPEED := 4.0
+## Trophies (plans/trophies.md): days between a feather (or a shell) and the next, the shell gone
+## by noon, the dog's stick a few days after he's yours (and now and then after that).
+const FIND_EVERY := Vector2i(2, 3)
+const SHELL_GONE := 12.0
+const STICK_AFTER := 5
+const STICK_AGAIN := 0.05
+const STICK_NEAR := 6.0
 const REACT := {
 	2: "A cabin! Four walls and a roof. Look at you.",
 	3: "A hearth and a desk, and that wall's begging for something to hang on it. You're one of us now.",
@@ -78,12 +85,20 @@ var _seen: Dictionary = {}  # villager (building id) -> the home's tier they las
 var _harvest: Dictionary = {}  # the garden's morning pickings, waiting in the crate (saved)
 var _harvest_node: DeskNote
 var _swinging := false
+## Trophies out in the world (plans/trophies.md): the peak's feather and the lake's shell where
+## they lie (kind -> [x, y, z], saved), the days the next ones come, and the dog's stick.
+var _finds: Dictionary = {}
+var _find_nodes: Dictionary = {}
+var _next_find := {"feather": 1, "shell": 1}
+var _dog_day := -1  # the first day you had your dog
+var _stick_due := false
 
 
 func _ready() -> void:
 	super()
 	add_to_group("home")
 	rested = false  # (a static: not carried over from another world)
+	Trophies.clear()  # (so are the trophies)
 	SaveGame.register(&"home", self)
 	slept.connect(_on_slept)
 	upgraded.connect(func(_t: int) -> void:  # (the desk and the step move with the tier)
@@ -97,7 +112,8 @@ func _ready() -> void:
 
 func to_dict() -> Dictionary:
 	return {"rested": rested, "note": _note, "doorstep": _doorstep, "day": _day, "next_visit": _next_visit,
-			"porch_day": _porch_day, "seen": _seen, "harvest": _harvest}
+			"porch_day": _porch_day, "seen": _seen, "harvest": _harvest, "trophies": Trophies.to_dict(),
+			"finds": _finds, "next_find": _next_find, "dog_day": _dog_day, "stick_due": _stick_due}
 
 
 func from_dict(d: Dictionary) -> void:
@@ -109,6 +125,13 @@ func from_dict(d: Dictionary) -> void:
 	_porch_day = int(d.get("porch_day", -1))
 	_seen = d.get("seen", {})
 	_harvest = d.get("harvest", {})
+	Trophies.from_dict(d.get("trophies", {}))
+	_finds = d.get("finds", {})
+	_next_find = d.get("next_find", _next_find)
+	_dog_day = int(d.get("dog_day", -1))
+	_stick_due = bool(d.get("stick_due", false))
+	_place_finds.call_deferred()
+	Trophies.adopt_old_logs.call_deferred()
 	_place_note.call_deferred()
 	_place_harvest.call_deferred()
 	_place_doorstep.call_deferred()
@@ -117,6 +140,7 @@ func from_dict(d: Dictionary) -> void:
 func _process(delta: float) -> void:
 	super(delta)
 	_swing()
+	_trophy_errands()
 	if tier_shown < 2 or sleeping:
 		return
 	var h := VillagerDay.hours(DayNight.time)
@@ -362,9 +386,19 @@ func _fade() -> CanvasLayer:
 
 # --- the home's add-ons (plans/home.md) ------------------------------------------------------
 
-## The garden's pickings each morning, and a new day for the visits.
+## The garden's pickings each morning, a new day for the visits, and the trophies out in the
+## world: a feather at the peak, a shell on the shore (every 2-3 days each).
 func _on_morning() -> void:
 	_day += 1
+	for kind in [&"feather", &"shell"]:
+		if _day >= int(_next_find.get(String(kind), 1)) and not _finds.has(String(kind)):
+			_next_find[String(kind)] = _day + randi_range(FIND_EVERY.x, FIND_EVERY.y)
+			var at := _find_spot(kind)
+			if at != Vector3.INF:
+				_finds[String(kind)] = [at.x, at.y, at.z]
+	if _dog_day >= 0 and not _stick_due and _day > _dog_day + STICK_AFTER and randf() < STICK_AGAIN:
+		_stick_due = true  # (now and then another)
+	_place_finds()
 	if Village.addon(def.id, 1) == &"garden" and Village.slot_open(def.id, 1) and _harvest.is_empty():
 		_harvest = {"from": "your garden", "text": "Beans, a few heads of wheat, and a carrot the dog has his eye on.",
 				"gift": {&"wheat": 3, &"barley": 2}, "prompt": "E  Pick what's ready in the garden"}
@@ -393,3 +427,61 @@ func _swing() -> void:
 	if on != _swinging:
 		_swinging = on
 		DayNight.speed = SWING_SPEED if on else 1.0
+
+
+# --- trophies out in the world (plans/trophies.md) ----------------------------------------------
+
+## Where a feather (Frostpeak, near the summit) or a shell (on Stillwater's shore) turns up.
+func _find_spot(kind: StringName) -> Vector3:
+	var terrain := get_tree().get_first_node_in_group("terrain")
+	if terrain == null or terrain.get("data") == null:
+		return Vector3.INF
+	var data: Object = terrain.get("data")
+	var a := randf() * TAU
+	var dir := Vector2(cos(a), sin(a))
+	if kind == &"feather":
+		var p := WorldMap.PEAK_CENTER + dir * randf_range(8.0, 30.0)
+		return Vector3(p.x, data.call("get_height", Vector3(p.x, 0, p.y)), p.y)
+	for step in range(4, 120):  # out from the middle of the lake till the water's gone: the shore
+		var p := WorldMap.LAKE_CENTER + dir * float(step)
+		var at := Vector3(p.x, data.call("get_height", Vector3(p.x, 0, p.y)), p.y)
+		if WaterBody.depth_at(get_tree(), at + Vector3.UP * 0.05) <= 0.0:
+			return at + Vector3(dir.x, 0.0, dir.y) * 0.6
+	return Vector3.INF
+
+
+## The finds that are out, in the world (and gone once picked up).
+func _place_finds() -> void:
+	for kind in _finds:
+		if is_instance_valid(_find_nodes.get(kind)):
+			continue
+		var p: Array = _finds[kind]
+		var f := TrophyFind.make(Vector3(p[0], p[1], p[2]), StringName(kind))
+		get_parent().add_child(f)
+		_find_nodes[kind] = f
+		f.picked.connect(func() -> void:
+			_finds.erase(kind)
+			SaveGame.mark_dirty())
+
+
+## The shell's gone by noon; the dog's stick, once he's been yours a few days.
+func _trophy_errands() -> void:
+	if _finds.has("shell") and VillagerDay.hours(DayNight.time) >= SHELL_GONE and VillagerDay.hours(DayNight.time) < 20.0:
+		_finds.erase("shell")
+		if is_instance_valid(_find_nodes.get("shell")):
+			_find_nodes["shell"].queue_free()
+	if not Companion.has_dog:
+		return
+	if _dog_day < 0:
+		_dog_day = _day
+		_stick_due = true
+	if not _stick_due or _day < _dog_day + STICK_AFTER or DayNight.is_night():
+		return
+	var dog := get_tree().get_first_node_in_group("dog") as Node3D
+	var player := get_tree().get_first_node_in_group("player") as Node3D
+	if dog and player and dog.global_position.distance_to(player.global_position) < STICK_NEAR:
+		_stick_due = false
+		Trophies.found(&"stick", dog.global_position)
+		PopupText.spawn(get_parent(), dog.global_position + Vector3.UP * 0.6, "He won't let go till you take it",
+				Trophies.FOUND_COLOR, 8, 1.0)
+		SaveGame.mark_dirty()

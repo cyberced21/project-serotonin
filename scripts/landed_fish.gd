@@ -222,6 +222,7 @@ func _pull(delta: float) -> void:
 	var to := target - global_position
 	if to.length() < 0.35:
 		Inventory.add(item, count)
+		Trophies.fish(item, count, global_position)  # (a Huge one's a trophy too)
 		Sfx.play_pickup()
 		queue_free()
 		return

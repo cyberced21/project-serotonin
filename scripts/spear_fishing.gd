@@ -297,6 +297,7 @@ func _fling_to_inventory() -> void:
 		t.tween_property(fish, "scale", Vector3.ONE * 0.1, 0.2).set_delay(i * 0.08)
 		t.chain().tween_callback(func() -> void:
 			Inventory.add(fish.get_meta("item"), fish.get_meta("count", 1))
+			Trophies.fish(fish.get_meta("item"), fish.get_meta("count", 1), fish.global_position)
 			Sfx.play_pickup()
 			fish.queue_free())
 	_on_spear.clear()
