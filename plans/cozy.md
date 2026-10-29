@@ -185,6 +185,11 @@ real 3D dice, played for fun.
 Open: seamless interiors (walk in, same scene) or a loading fade? *Recommendation: seamless for
 small ones, it keeps the calm.* A player home, yes or no?
 
+**Grilled 2026-10-29 → [home.md](home.md)**: a home that starts as a tent on the village rim (4 tiers
+up to a Homestead: sleep through the night, well rested, a desk with villagers' notes and gifts, a
+trophy wall), villagers who visit and sit on your porch, every building rebuilt bigger and walk-in,
+and add-on slots with a fork of two in each. Art: CC0 furniture packs picked on a page first.
+
 ## 9. Sound and music overhaul (gated: needs a grill session)
 
 The whole soundscape gets redone around **satisfaction and coziness**. We don't design this here:
@@ -236,5 +241,7 @@ The rest of the sound overhaul runs alongside from step 3 on, once the grill has
 ## Next step
 
 Grill each chunk before its own plan; the open questions in each section are the starting list.
-Next: chunk 9 (interiors, add-ons, a player home), which reuses the tavern's walk-in room and
-seats. Chunk 8 waits on a playtest before merging.
+Chunk 9 is built on branch `home` ([home.md](home.md)), unplayed. Next: chunk 10 (the mine).
+
+After cozy: **a world pass**. The world feels too tight and too sparse, rocks sit out of place and
+the village looks randomly laid out; make it bigger, fill it in, lay the village out on purpose.

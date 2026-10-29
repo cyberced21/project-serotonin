@@ -1,7 +1,8 @@
 extends CanvasLayer
 ## Inventory counters (top-left, one row per item you hold, in Items order) that pop when they
 ## change, a controls hint, a context XP bar (bottom-centre) for the skill you just trained, and
-## a level-up banner, and the time of day (top-right).
+## a level-up banner, and the time of day (top-right). Bottom-right, how many trophies you're
+## carrying home for your wall (Trophies, plans/trophies.md).
 
 
 const ICON_SIZE := 40.0
@@ -27,6 +28,7 @@ var _xp_fill_tween: Tween
 var _banner: Label
 var _perk_line: Label  # under the banner: the perk this level brought (Perks)
 var _banner_tween: Tween
+var _trophies: Label
 
 
 
@@ -57,9 +59,25 @@ func _ready() -> void:
 	add_child(WorldMapScreen.new())
 	add_child(TalentCards.new())
 
+	_trophies = _make_label(20)
+	_trophies.modulate = Trophies.FOUND_COLOR
+	add_child(_trophies)
+	_trophies.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_KEEP_SIZE, 18)
+	_trophies.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_trophies.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	add_to_group("trophies_listener")
+	trophies_changed.call_deferred()
+
 	Inventory.changed.connect(_on_changed)
 	Skills.xp_gained.connect(_on_xp_gained)
 	Skills.leveled_up.connect(_on_leveled_up)
+
+
+## Trophies changed: the count of the ones you're carrying (hidden with none).
+func trophies_changed() -> void:
+	var n := Trophies.carried.size()
+	_trophies.visible = n > 0
+	_trophies.text = "%d troph%s to hang at home" % [n, "y" if n == 1 else "ies"]
 
 
 func _make_label(font_size: int) -> Label:

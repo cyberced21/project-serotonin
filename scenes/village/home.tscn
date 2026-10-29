@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/home.gd" id="1_home"]
+[ext_resource type="Resource" path="res://data/buildings/home.tres" id="2_def"]
+
+[node name="Home" type="Node3D"]
+script = ExtResource("1_home")
+def = ExtResource("2_def")

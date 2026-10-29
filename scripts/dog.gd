@@ -86,6 +86,8 @@ const DOZE_AFTER := 2.5
 ## In the village (this close to the square) at night, he sleeps in the kennel; in the morning he
 ## waits by it until you come this close.
 const VILLAGE_RANGE := 65.0
+## This close to your home at night, he sleeps in his spot there instead (Home's DogBed).
+const HOME_RANGE := 18.0
 const GREET := 9.0
 ## Hints: how near something must be (m), at most one this often (s), and how long he lingers.
 const HINT_RANGE := 9.0
@@ -454,12 +456,19 @@ func _think(delta: float) -> void:
 
 
 ## Night in the village with a kennel: off to bed in its doorway; by day, still there until you
-## come close. True while that's where he is (or is going).
+## come close. At night by your home (plans/home.md) his own spot there comes first: the fur patch
+## by the fire, then the basket by the stove. True while that's where he is (or is going).
 func _kennel(pp: Vector3) -> bool:
 	var night := DayNight.is_night()
 	var decor := get_tree().get_first_node_in_group("village_decor")
 	var door: Variant = decor.call("kennel_door") if decor else null
-	var in_village := _flat(pp - Vector3(WorldMap.VILLAGE_CENTER.x, 0.0, WorldMap.VILLAGE_CENTER.y)) < VILLAGE_RANGE
+	var home := get_tree().get_first_node_in_group("home") as Home
+	if home and _flat(pp - home.global_position) < HOME_RANGE and (night or _home):
+		var bed := home.mark("DogBed")
+		if bed:
+			door = bed.global_transform
+	var in_village := _flat(pp - Vector3(WorldMap.VILLAGE_CENTER.x, 0.0, WorldMap.VILLAGE_CENTER.y)) < VILLAGE_RANGE \
+			or (home != null and _flat(pp - home.global_position) < HOME_RANGE)
 	if door == null or (night and not in_village):
 		_home = false
 	elif night:

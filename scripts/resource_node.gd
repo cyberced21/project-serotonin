@@ -689,6 +689,7 @@ func _break(info: HitInfo) -> void:
 		burst.restart()
 		_spawn_drops(info)
 	depleted.emit(self)
+	Trophies.roll(self)  # (now and then a trophy for your wall: plans/trophies.md)
 	SaveGame.mark_dirty()
 	var regrow := _regrow_time()
 	if skill == &"woodcutting":
@@ -708,6 +709,12 @@ func _show_depleted() -> void:
 func respawn_now() -> void:
 	if _respawn_timer:
 		_respawn_timer.time_left = 0.01
+
+
+## Time passes while you sleep (Home.skip_to_morning): if depleted, `seconds` nearer growing back.
+func fast_forward(seconds: float) -> void:
+	if _respawn_timer:
+		_respawn_timer.time_left = maxf(_respawn_timer.time_left - seconds, 0.01)
 
 
 ## respawn_time, shortened for rocks by Edda's assay office.
@@ -2708,7 +2715,7 @@ func _show_knot() -> void:
 func _felled_by_talents(regrow: float) -> float:
 	var t := Skills.talents
 	if _old_growth_active():
-		_bonus_items.append(&"trophy_log")
+		Trophies.found(&"log", global_position)  # (a record for your wall now, not an item)
 		regrow *= OLD_GROWTH_REGROW
 	var player := get_tree().get_first_node_in_group("player")
 	if player and player.has_method("note_felled"):

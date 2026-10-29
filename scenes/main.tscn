@@ -63,6 +63,7 @@
 [ext_resource type="Script" path="res://scripts/trader.gd" id="96_trader"]
 [ext_resource type="Script" path="res://scripts/village_paths.gd" id="97_village_paths"]
 [ext_resource type="PackedScene" path="res://scenes/village/tavern.tscn" id="98_tavern"]
+[ext_resource type="PackedScene" path="res://scenes/village/home.tscn" id="99_home"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
@@ -614,6 +615,10 @@ rotation = Vector3(0, 3.1416, 0)
 position = Vector3(81, 0, 45)
 rotation = Vector3(0, 1.5708, 0)
 
+[node name="Home" parent="Village" instance=ExtResource("99_home")]
+position = Vector3(64, 0, 44)
+rotation = Vector3(0, -1.5708, 0)
+
 [node name="Props" type="Node3D" parent="Village"]
 
 [node name="BenchA" type="StaticBody3D" parent="Village/Props"]
@@ -713,7 +718,8 @@ sun = NodePath("../Sun")
 environment = NodePath("../WorldEnvironment")
 
 [node name="Player" parent="." instance=ExtResource("1_player")]
-position = Vector3(0, 0.1, 2)
+position = Vector3(57, 0.1, 44)
+rotation = Vector3(0, -1.5708, 0)
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("2_hud")

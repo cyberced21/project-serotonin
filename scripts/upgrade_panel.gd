@@ -20,9 +20,10 @@ const DIM := Color(1, 1, 1, 0.6)
 const ACCENT := Color("ffd27a")
 const PERK_COLOR := Color("a9d8ff")
 
-enum Tab { UPGRADE, FORGE, TALENTS }
+enum Tab { UPGRADE, FORGE, TALENTS, ADDONS }
 
-var villager: Villager
+## Who opened it: a Villager, or your home's plans (HomePlans). Anything with a `building`.
+var villager: Node3D
 var _closed_msec := -100000
 
 var _panel: PanelContainer
@@ -40,6 +41,7 @@ var _tab_buttons: Array[Button] = []
 var _upgrade_box: VBoxContainer
 var _forge_box: VBoxContainer
 var _talents_box: VBoxContainer
+var _addons_box: VBoxContainer
 var _tab := Tab.UPGRADE
 
 
@@ -51,6 +53,7 @@ func _ready() -> void:
 	_panel.visible = false
 	Inventory.changed.connect(func(_i: StringName, _c: int) -> void: _refresh())
 	Village.tier_changed.connect(func(_id: StringName, _t: int) -> void: _refresh())
+	Village.addon_changed.connect(func(_id: StringName, _s: int, _a: StringName) -> void: _refresh())
 	Tools.changed.connect(func(_t: StringName, _tier: int) -> void: _refresh())
 	Skills.talents.changed.connect(func(_s: StringName) -> void: _refresh())
 
@@ -64,9 +67,9 @@ func just_closed() -> bool:
 	return Time.get_ticks_msec() - _closed_msec < 250
 
 
-func open(v: Villager) -> void:
+func open(v: Node3D) -> void:
 	villager = v
-	var def := v.building.def
+	var def := _building().def
 	_name.text = def.villager_name
 	_line.text = "“%s”" % _pick_line()
 	_tab = Tab.UPGRADE
@@ -80,6 +83,11 @@ func open(v: Villager) -> void:
 	t.tween_property(_panel, "modulate:a", 1.0, 0.2)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Sfx.play_ui(&"open")
+
+
+## The building whose upgrades this shows.
+func _building() -> Building:
+	return villager.get("building") as Building
 
 
 func close() -> void:
@@ -113,7 +121,7 @@ func _process(_delta: float) -> void:
 
 
 func _pick_line() -> String:
-	var def := villager.building.def
+	var def := _building().def
 	if Village.is_capped(def.id):
 		return def.capped_line
 	if DayNight.is_night() and not def.night_lines.is_empty():
@@ -127,19 +135,27 @@ func _pick_line() -> String:
 func _refresh() -> void:
 	if villager == null:
 		return
-	var def := villager.building.def
-	_tabs.visible = def.id == Tools.SMITHY
-	if not _tabs.visible:
+	var def := _building().def
+	var smithy := def.id == Tools.SMITHY
+	var addons := not def.addons.is_empty()
+	_tab_buttons[Tab.FORGE].visible = smithy
+	_tab_buttons[Tab.TALENTS].visible = smithy
+	_tab_buttons[Tab.ADDONS].visible = addons
+	_tabs.visible = smithy or addons
+	if not _tab_buttons[_tab].visible:
 		_tab = Tab.UPGRADE
 	for i in _tab_buttons.size():
 		_tab_buttons[i].button_pressed = i == _tab
 	_upgrade_box.visible = _tab == Tab.UPGRADE
 	_forge_box.visible = _tab == Tab.FORGE
 	_talents_box.visible = _tab == Tab.TALENTS
+	_addons_box.visible = _tab == Tab.ADDONS
 	if _tab == Tab.FORGE:
 		_refresh_forge()
 	elif _tab == Tab.TALENTS:
 		_refresh_talents()
+	elif _tab == Tab.ADDONS:
+		_refresh_addons()
 	var tier_now := Village.tier(def.id)
 	var current := def.get_tier(tier_now)
 	_role.text = "%s  ·  %s  ·  %s" % [def.villager_role, def.display_name, current.name if current else "?"]
@@ -260,10 +276,61 @@ func _refresh_forge() -> void:
 		_forge_box.add_child(HSeparator.new())
 
 
+## The Add-ons tab (plans/home.md, AddonDef): per slot, locked till its tier, else its two
+## choices side by side: what each does, its cost, and Build (or Swap, once the other's there).
+func _refresh_addons() -> void:
+	for c in _addons_box.get_children():
+		c.queue_free()
+	var def := _building().def
+	for slot in range(1, def.addon_slots.size() + 1):
+		var head := _label(19)
+		head.add_theme_color_override("font_color", ACCENT)
+		_addons_box.add_child(head)
+		var opens := def.get_tier(def.addon_slots[slot - 1])
+		if not Village.slot_open(def.id, slot):
+			head.text = "Slot %d: opens with the %s" % [slot, opens.name if opens else "next tier"]
+			head.add_theme_color_override("font_color", NEED_COLOR)
+			_addons_box.add_child(HSeparator.new())
+			continue
+		head.text = "Slot %d: choose one (you can swap later)" % slot
+		var built := Village.addon(def.id, slot)
+		for a in def.addons:
+			if a.slot != slot:
+				continue
+			var title := _label(18)
+			title.text = "%s%s" % [a.name, "  ✓ built" if a.id == built else ""]
+			title.add_theme_color_override("font_color", HAVE_COLOR if a.id == built else Color.WHITE)
+			_addons_box.add_child(title)
+			var blurb := _label(15)
+			blurb.text = "%s %s" % [a.blurb, "  ·  ".join(PackedStringArray(a.effects.map(func(e: TierEffect) -> String: return e.text)))]
+			blurb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			blurb.add_theme_color_override("font_color", PERK_COLOR)
+			_addons_box.add_child(blurb)
+			if a.id == built:
+				continue
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", 8)
+			_addons_box.add_child(row)
+			_add_cost_row(row, a.cost)
+			var button := _make_button("Swap" if built != &"" else "Build")
+			button.custom_minimum_size = Vector2(96, 34)
+			button.size_flags_horizontal = Control.SIZE_SHRINK_END | Control.SIZE_EXPAND
+			button.add_theme_font_size_override("font_size", 17)
+			button.disabled = not Village.can_build_addon(def.id, a.id)
+			button.pressed.connect(_on_addon_pressed.bind(a.id))
+			row.add_child(button)
+		_addons_box.add_child(HSeparator.new())
+
+
+func _on_addon_pressed(addon_id: StringName) -> void:
+	if villager and Village.build_addon(_building().def.id, addon_id):
+		close()  # step back and watch it go up
+
+
 func _on_forge_pressed(tool: StringName) -> void:
 	if villager == null:
 		return
-	var greta := villager
+	var greta := villager as Villager
 	if Tools.forge(tool):
 		close()
 		ForgeCutscene.play(greta, tool)  # Greta makes it, then hands it over
@@ -351,7 +418,7 @@ func _perk_lines(tier: BuildingTier, prefix: String, except: BuildingTier = null
 func _on_upgrade_pressed() -> void:
 	if villager == null:
 		return
-	var id := villager.building.def.id
+	var id := _building().def.id
 	if Village.upgrade(id):
 		close()  # step back and watch it go up
 
@@ -393,6 +460,7 @@ func _build() -> void:
 	_make_tab("Upgrade", Tab.UPGRADE)
 	_make_tab("Forge", Tab.FORGE)
 	_make_tab("Talents", Tab.TALENTS)
+	_make_tab("Add-ons", Tab.ADDONS)
 	box.add_child(_tabs)
 
 	var tabs := VBoxContainer.new()  # whichever tab is open, in one scroll area
@@ -406,6 +474,9 @@ func _build() -> void:
 	_talents_box = VBoxContainer.new()
 	_talents_box.add_theme_constant_override("separation", 6)
 	tabs.add_child(_talents_box)
+	_addons_box = VBoxContainer.new()
+	_addons_box.add_theme_constant_override("separation", 6)
+	tabs.add_child(_addons_box)
 
 	_perks_now = _label(16)
 	_perks_now.add_theme_color_override("font_color", HAVE_COLOR)

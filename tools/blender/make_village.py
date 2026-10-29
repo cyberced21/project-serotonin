@@ -2024,14 +2024,15 @@ def dogs():
             dog(breed, coat_name)
 
 
-os.makedirs(os.path.join(VILLAGE_DIR, "props"), exist_ok=True)
-only = sys.argv[sys.argv.index("--") + 3:]  # optional: names of the builders to run (e.g. `smithy`)
-for build in (woodcutter, smithy, fisher, town_hall, baker_cottage, prospector_cottage,
-              woodcutter_villager, smith_villager, fisher_villager, mayor_villager,
-              baker_villager, prospector_villager,
-              bench, lamp_post, lamp_post_rustic, lantern, noticeboard, planter, well, fountain, barrel_prop, crate_prop, signpost, dogs,
-              doghouse, doghouse_painted, doghouse_porch, dog_bowl, dog_blanket,
-              landslide_mud, retaining_wall, market_stall, stallkeeper_villager,
-              trader_cart, trader_villager, flower_basket, weathervane, painted_cart, terrace, tavern, keeper_villager):
-    if not only or build.__name__ in only:
-        build()
+if __name__ == "__main__":  # (kit_buildings.py imports this for Kit without building everything)
+    os.makedirs(os.path.join(VILLAGE_DIR, "props"), exist_ok=True)
+    only = sys.argv[sys.argv.index("--") + 3:]  # optional: names of the builders to run (e.g. `smithy`)
+    for build in (woodcutter, smithy, fisher, town_hall, baker_cottage, prospector_cottage,
+                  woodcutter_villager, smith_villager, fisher_villager, mayor_villager,
+                  baker_villager, prospector_villager,
+                  bench, lamp_post, lamp_post_rustic, lantern, noticeboard, planter, well, fountain, barrel_prop, crate_prop, signpost, dogs,
+                  doghouse, doghouse_painted, doghouse_porch, dog_bowl, dog_blanket,
+                  landslide_mud, retaining_wall, market_stall, stallkeeper_villager,
+                  trader_cart, trader_villager, flower_basket, weathervane, painted_cart, terrace, tavern, keeper_villager):
+        if not only or build.__name__ in only:
+            build()

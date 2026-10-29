@@ -23,6 +23,11 @@ const POPUP_COLOR := Color("ffd27a")
 const CRYSTAL_GLOW := Color(0.7, 0.5, 1.0)
 ## Seconds for the windows to light up or go dark.
 const WINDOW_FADE := 1.2
+## A kit door leaf swings this far (radians, about its hinge) to stand open, over DOOR_SWING s.
+const DOOR_OPEN_ANGLE := -1.7
+const DOOR_SWING := 0.9
+## How high a room reaches above its floor (two storeys and the roof space).
+const ROOM_HEIGHT := 7.5
 
 @export var def: BuildingDef
 ## Builds itself when the town hall reaches this tier (0 = always there).
@@ -53,6 +58,18 @@ var _heading := 0  # the tier being shown, or being built (mid-animation)
 var _windows: Array[MeshInstance3D] = []
 var _lit := 0.0
 var _lit_shown := -1.0
+## Walk-in interiors (plans/home.md): each tier's room (its kit floor, in the building's frame),
+## its door leaves (swung open by day, shut while its villager sleeps) and its look-at objects.
+var _rooms: Dictionary[int, AABB] = {}
+var _doors: Dictionary[int, Array] = {}
+var _door_shapes: Dictionary[MeshInstance3D, CollisionShape3D] = {}
+var _looks: Dictionary[int, Array] = {}
+var _door_open := 1.0  # 0 shut .. 1 open
+## Add-ons (plans/home.md, AddonDef): each one's pieces in a node of their own, with their own
+## collision, shown while it's built in its slot and the slot is open.
+var _addon_nodes: Dictionary[StringName, Node3D] = {}
+var _addon_bodies: Dictionary[StringName, StaticBody3D] = {}
+var _upgrading := false
 
 
 func _ready() -> void:
@@ -66,11 +83,17 @@ func _ready() -> void:
 		bench.set_meta(&"home", self)
 	_build_tiers()
 	_build_effects()
+	if not _rooms.is_empty():
+		add_to_group("interior")  # (Acoustics: indoors while has_player())
 	_show_tier(Village.tier(def.id) if is_unlocked() else 0)
 	Village.tier_changed.connect(_on_tier_changed)
+	Village.addon_changed.connect(_on_addon_changed)
+	_show_addons(false)
 
 
 func _process(delta: float) -> void:
+	if not _door_shapes.is_empty():
+		_swing_doors(delta)
 	if _windows.is_empty():
 		return
 	_lit = move_toward(_lit, 1.0 if _windows_on() else 0.0, delta / WINDOW_FADE)
@@ -95,6 +118,48 @@ func marks(t: int) -> Array[Marker3D]:
 			if c is Marker3D:
 				out.append(c)
 	return out
+
+
+## The tier on show's marker named `mark_name` (a Bed, a Hearth...), or null.
+func mark(mark_name: String) -> Marker3D:
+	for m in marks(tier_shown):
+		if m.name == mark_name:
+			return m
+	return null
+
+
+## Where its villager sleeps, in the tier on show (a walk-in house), or null.
+func bed() -> Marker3D:
+	return mark("Bed")
+
+
+## The player is in the room of the tier on show (Acoustics; Tavern has its own rooms).
+func has_player() -> bool:
+	if not _rooms.has(tier_shown):
+		return false
+	var player := get_tree().get_first_node_in_group("player") as Node3D
+	return player != null and inside(player.global_position)
+
+
+## `p` (world) is within the room of the tier on show.
+func inside(p: Vector3) -> bool:
+	return _rooms.has(tier_shown) and _rooms[tier_shown].has_point(global_transform.affine_inverse() * p)
+
+
+## The doors stand open unless its villager is asleep inside (Villager.door_shut).
+func _doors_shut() -> bool:
+	var v := get_node_or_null("Villager")
+	return v != null and v.has_method("door_shut") and v.call("door_shut")
+
+
+func _swing_doors(delta: float) -> void:
+	_door_open = move_toward(_door_open, 0.0 if _doors_shut() else 1.0, delta / DOOR_SWING)
+	var eased := smoothstep(0.0, 1.0, _door_open)
+	for t in _doors:
+		for d: MeshInstance3D in _doors[t]:
+			if not _upgrading:
+				d.transform = _homes[d] * Transform3D(Basis(Vector3.UP, DOOR_OPEN_ANGLE * eased), Vector3.ZERO)
+			_door_shapes[d].set_deferred("disabled", t != tier_shown or _door_open > 0.05)
 
 
 ## Whether its windows are lit now (0..1, before the night's own fade-in).
@@ -122,8 +187,14 @@ func work_spot() -> Marker3D:
 
 # --- model ----------------------------------------------------------------------------------
 
+## Whether a mesh is a piece of the Medieval Village kit (named TN_Kit*, with its own material).
+static func _is_kit_piece(m: MeshInstance3D) -> bool:
+	return String(m.name).substr(3).begins_with("Kit") and m.mesh.get_surface_count() > 0 \
+			and m.mesh.surface_get_material(0) != null
+
+
 ## Sorts the model's meshes into one node per tier (by the TN_ name prefix), each with its own
-## static body of convex shapes, and finds the smoke empties.
+## static body of convex shapes (exact ones for kit pieces), and finds the smoke empties.
 func _build_tiers() -> void:
 	var inst := def.model.instantiate()
 	for t in range(1, def.max_tier() + 1):
@@ -141,6 +212,9 @@ func _build_tiers() -> void:
 		_smoke[t] = []
 
 	for n in inst.find_children("*", "Node3D", true, false):
+		if String(n.name).begins_with("AO-"):
+			_add_addon_piece(n, inst)
+			continue
 		var t := _tier_of(n.name)
 		if t == 0 or not _tiers.has(t):
 			continue
@@ -153,8 +227,19 @@ func _build_tiers() -> void:
 				m.remove_child(c)
 			_tiers[t].add_child(m)
 			m.transform = xform
-			m.material_override = PaletteMaterial.for_mesh(m.mesh)  # (weathered stonework: the rock material)
+			var kit := _is_kit_piece(m)
+			if not kit:  # kit pieces (tools/blender/kit_buildings.py) keep their own textured materials
+				m.material_override = PaletteMaterial.for_mesh(m.mesh)  # (weathered stonework: the rock material)
 			_homes[m] = xform
+			var piece := String(m.name).substr(3)
+			if kit and piece.begins_with("KitFloor"):
+				var floor_box := xform * m.get_aabb()
+				floor_box = AABB(Vector3(floor_box.position.x, floor_box.position.y - 0.5, floor_box.position.z),
+						Vector3(floor_box.size.x, ROOM_HEIGHT, floor_box.size.z))
+				_rooms[t] = _rooms[t].merge(floor_box) if _rooms.has(t) else floor_box
+			if kit and piece.begins_with("KitDoor") and not piece.begins_with("KitDoorFrame"):
+				_add_door(t, m)
+				continue
 			_mark_night_glow(m)
 			if String(m.name).to_lower().contains("windowglass"):  # lit by who's home, not the sky
 				m.remove_from_group("night_glow")
@@ -162,7 +247,9 @@ func _build_tiers() -> void:
 			var aabb := m.get_aabb()
 			if aabb.size.x * aabb.size.y * aabb.size.z >= MIN_COLLIDER_VOLUME:
 				var shape := CollisionShape3D.new()
-				shape.shape = m.mesh.create_convex_shape(true, false)  # simplify=true takes seconds per building
+				# a kit wall's hull would close its doorway and windows: kit pieces collide as they are
+				shape.shape = m.mesh.create_trimesh_shape() if kit \
+						else m.mesh.create_convex_shape(true, false)  # simplify=true takes seconds per building
 				shape.transform = xform
 				_bodies[t].add_child(shape)
 		elif n.name.to_lower().contains("smoke"):
@@ -175,7 +262,129 @@ func _build_tiers() -> void:
 			mark.name = String(n.name).substr(3)  # (without the TN_)
 			_tiers[t].add_child(mark)
 			mark.transform = xform
+			_use_mark(t, mark)
 	inst.free()
+
+
+## A piece of an add-on ("AO-<id>_..."): into that add-on's node (a mesh, with collision) or a
+## marker in it (TerraceSeat*/PorchSeat* seats; the rest found by name, addon_mark()).
+func _add_addon_piece(n: Node, inst: Node) -> void:
+	var id := StringName(String(n.name).substr(3).get_slice("_", 0))
+	if not _addon_nodes.has(id):
+		var group := Node3D.new()
+		group.name = "Addon_%s" % id
+		group.visible = false
+		add_child(group)
+		_addon_nodes[id] = group
+		var body := StaticBody3D.new()
+		body.collision_layer = WORLD_LAYER
+		body.collision_mask = 0
+		add_child(body)
+		_addon_bodies[id] = body
+	var xform := _model_transform(n, inst)
+	if n is MeshInstance3D:
+		var m := n as MeshInstance3D
+		m.get_parent().remove_child(m)
+		m.owner = null
+		for c in m.get_children():
+			m.remove_child(c)
+		_addon_nodes[id].add_child(m)
+		m.transform = xform
+		if m.mesh.get_surface_count() > 0 and m.mesh.surface_get_material(0) == null:
+			m.material_override = PaletteMaterial.for_mesh(m.mesh)
+		_homes[m] = xform
+		_mark_night_glow(m)
+		var aabb := m.get_aabb()
+		if aabb.size.x * aabb.size.y * aabb.size.z >= MIN_COLLIDER_VOLUME:
+			var shape := CollisionShape3D.new()
+			shape.shape = m.mesh.create_convex_shape(true, false)
+			shape.transform = xform
+			shape.disabled = true
+			_addon_bodies[id].add_child(shape)
+	elif n.name.to_lower().contains("smoke"):
+		var smoke := _make_smoke()
+		_addon_nodes[id].add_child(smoke)
+		smoke.transform = Transform3D(Basis.IDENTITY, xform.origin)
+	else:
+		var mark := Marker3D.new()
+		mark.name = String(n.name).substr(3).get_slice("_", 1)
+		_addon_nodes[id].add_child(mark)
+		mark.transform = xform
+		for kind in [&"terrace", &"porch"]:
+			if String(mark.name).to_lower().begins_with(String(kind) + "seat"):
+				mark.add_to_group("seat")
+				mark.set_meta(&"kind", kind)
+				mark.set_meta(&"home", self)
+
+
+## The marker `mark_name` in whichever built add-on has one (a swing seat, a harvest), or null.
+func addon_mark(mark_name: String) -> Marker3D:
+	for id in _addon_nodes:
+		if _addon_nodes[id].visible:
+			var m := _addon_nodes[id].get_node_or_null(mark_name) as Marker3D
+			if m:
+				return m
+	return null
+
+
+## Shows the built add-ons (in open slots), hides the rest; `pop` springs a new one up.
+func _show_addons(pop: bool) -> void:
+	for id in _addon_nodes:
+		var a := def.get_addon(id)
+		var on: bool = a != null and tier_shown > 0 and Village.slot_open(def.id, a.slot) and Village.addon(def.id, a.slot) == id
+		var group := _addon_nodes[id]
+		var was := group.visible
+		group.visible = on
+		for c in _addon_bodies[id].get_children():
+			(c as CollisionShape3D).set_deferred("disabled", not on)
+		if on and not was and pop:
+			for c in group.get_children():
+				var p := c as MeshInstance3D
+				if p and _homes.has(p):
+					p.scale = Vector3.ONE * 0.001
+					p.create_tween().tween_property(p, "scale", _homes[p].basis.get_scale(), piece_pop * 1.4) \
+						.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			_play(_thud, THUD_SFX, 1.1)
+
+
+func _on_addon_changed(id: StringName, _slot: int, _addon: StringName) -> void:
+	if id == def.id:
+		_show_addons(true)
+
+
+## A door leaf (hinged at its origin): it gets its own collision, on only while it's shut.
+func _add_door(t: int, m: MeshInstance3D) -> void:
+	if not _doors.has(t):
+		_doors[t] = []
+	_doors[t].append(m)
+	var body := StaticBody3D.new()
+	body.collision_layer = WORLD_LAYER
+	body.collision_mask = 0
+	var shape := CollisionShape3D.new()
+	shape.shape = m.mesh.create_trimesh_shape()
+	shape.disabled = true
+	body.add_child(shape)
+	m.add_child(body)
+	_door_shapes[m] = shape
+
+
+## What a walk-in house's markers are for: Seat* a chair anyone may sit on (its villager's first),
+## PorchSeat* a seat on your porch where a villager sits some evenings (plans/home.md), Look*
+## something to look at (BuildingDef.looks). Bed and the rest are found by name (mark()).
+func _use_mark(t: int, mark: Marker3D) -> void:
+	var n := String(mark.name)
+	if (n.begins_with("Seat") or n.begins_with("PorchSeat")) and not mark.has_meta(&"kind"):
+		mark.add_to_group("seat")
+		mark.set_meta(&"kind", &"porch" if n.begins_with("PorchSeat") else &"home")
+		mark.set_meta(&"home", self)
+	elif n.begins_with("Look"):
+		var words := def.look(n.get_slice(".", 0), t)
+		if words.size() == 2:
+			var look := LookObject.make(mark.transform, words[0], words[1])
+			_tiers[t].add_child(look)
+			if not _looks.has(t):
+				_looks[t] = []
+			_looks[t].append(look)
 
 
 ## Lamps and lanterns glow and light up after dark; window glass glows as if lit inside. Crystal
@@ -215,6 +424,9 @@ static func _model_transform(n: Node, root: Node) -> Transform3D:
 func _show_tier(t: int) -> void:
 	tier_shown = t
 	_heading = t
+	_upgrading = false
+	if not _addon_nodes.is_empty():
+		_show_addons.call_deferred(false)
 	for k in _tiers:
 		_tiers[k].visible = k == t
 		_tiers[k].scale = Vector3.ONE
@@ -228,6 +440,8 @@ func _show_tier(t: int) -> void:
 func _set_collision(t: int, on: bool) -> void:
 	for c in _bodies[t].get_children():
 		(c as CollisionShape3D).set_deferred("disabled", not on)
+	for look: StaticBody3D in _looks.get(t, []):  # (look-at things, and your home's trophy places)
+		look.get_child(0).set_deferred("disabled", not on)
 
 
 # --- the upgrade ----------------------------------------------------------------------------
@@ -247,6 +461,7 @@ func _play_upgrade(from: int, to: int) -> void:
 	var run := _run
 	_show_tier(from)  # snap any half-played animation to a clean start
 	_heading = to
+	_upgrading = true  # (the doors leave their pieces to the animation)
 
 	# 1. out with the old: top pieces first, squashing down into the dust
 	var old: Array[Node3D] = []
@@ -276,6 +491,7 @@ func _play_upgrade(from: int, to: int) -> void:
 
 	# 2. in with the new: bottom pieces first, each springing up out of the ground
 	tier_shown = to
+	_show_addons(false)  # (a slot may open with this tier)
 	_tiers[to].visible = true
 	_set_collision(to, true)
 	var fresh := _pieces(to)
@@ -298,6 +514,7 @@ func _play_upgrade(from: int, to: int) -> void:
 	await get_tree().create_timer(build_time + piece_pop).timeout
 	if run != _run:
 		return
+	_upgrading = false
 	for s in _smoke[to]:
 		(s as CPUParticles3D).emitting = true
 

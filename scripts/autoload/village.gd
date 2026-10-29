@@ -7,12 +7,16 @@ extends Node
 ## Saved by building id (BuildingDef.id), not by scene path, so moving buildings is safe.
 
 signal tier_changed(id: StringName, tier: int)
+## An add-on was built (or swapped) in a slot (plans/home.md, AddonDef); `addon` is &"" if cleared.
+signal addon_changed(id: StringName, slot: int, addon: StringName)
 
 const TOWN_HALL := &"town_hall"
 ## Debug (F7): how many of every item to hand out.
 const DEBUG_ITEMS := 50
 
 var _tiers: Dictionary[StringName, int] = {}
+## Built add-ons: building id -> {slot -> add-on id} (saved under "addons", beside the tiers).
+var _addons: Dictionary[StringName, Dictionary] = {}
 var _defs: Dictionary[StringName, BuildingDef] = {}
 
 
@@ -56,7 +60,59 @@ func stat(name: StringName) -> float:
 			for e in t.effects:
 				if e.stat == name:
 					total += e.value
+		for slot in _addons.get(id, {}):
+			var a := _defs[id].get_addon(_addons[id][slot])
+			if a and slot_open(id, int(slot)):
+				for e in a.effects:
+					if e.stat == name:
+						total += e.value
 	return total
+
+
+# --- add-ons (plans/home.md) -----------------------------------------------------------------
+
+## The add-on built in a building's slot, or &"".
+func addon(id: StringName, slot: int) -> StringName:
+	return StringName(_addons.get(id, {}).get(slot, &""))
+
+
+## Whether a building's slot is open yet (its tier has reached the one the slot opens at).
+func slot_open(id: StringName, slot: int) -> bool:
+	var def: BuildingDef = _defs.get(id)
+	if def == null or slot < 1 or slot > def.addon_slots.size():
+		return false
+	return tier(id) >= def.addon_slots[slot - 1]
+
+
+## Whether `addon` can be built (or swapped to) now: its slot's open, it isn't already there, and
+## you can pay for it.
+func can_build_addon(id: StringName, addon_id: StringName) -> bool:
+	var def: BuildingDef = _defs.get(id)
+	var a := def.get_addon(addon_id) if def else null
+	return a != null and slot_open(id, a.slot) and addon(id, a.slot) != addon_id and Inventory.has_all(a.cost)
+
+
+## Pays for and builds `addon` in its slot (the other one there comes down). False if not allowed.
+func build_addon(id: StringName, addon_id: StringName) -> bool:
+	if not can_build_addon(id, addon_id) or not Inventory.spend(_defs[id].get_addon(addon_id).cost):
+		return false
+	set_addon(id, addon_id)
+	return true
+
+
+## Puts `addon` in its slot for free (debug, tests), or clears `slot` with &"".
+func set_addon(id: StringName, addon_id: StringName, slot := 0) -> void:
+	var def: BuildingDef = _defs.get(id)
+	var a := def.get_addon(addon_id) if def else null
+	var s := a.slot if a else slot
+	if not _addons.has(id):
+		_addons[id] = {}
+	if addon_id == &"":
+		_addons[id].erase(s)
+	else:
+		_addons[id][s] = addon_id
+	SaveGame.mark_dirty()
+	addon_changed.emit(id, s, addon_id)
 
 
 func can_upgrade(id: StringName) -> bool:
@@ -95,13 +151,29 @@ func _set_tier(id: StringName, t: int) -> void:
 
 
 func to_dict() -> Dictionary:
-	return _tiers.duplicate()
+	var d := {}  # (untyped: the tiers by id, and the add-ons beside them)
+	for id in _tiers:
+		d[id] = _tiers[id]
+	var built := {}
+	for id in _addons:
+		built[String(id)] = {}
+		for slot in _addons[id]:
+			built[String(id)][str(slot)] = String(_addons[id][slot])
+	d["addons"] = built  # (no building has that id)
+	return d
 
 
 func from_dict(d: Dictionary) -> void:
 	_tiers.clear()
+	_addons.clear()
 	for key in d:
-		_tiers[StringName(key)] = maxi(int(d[key]), 1)  # JSON stores numbers as floats
+		if key == "addons":
+			for id in d[key]:
+				_addons[StringName(id)] = {}
+				for slot in d[key][id]:
+					_addons[StringName(id)][int(slot)] = StringName(d[key][id][slot])
+		else:
+			_tiers[StringName(key)] = maxi(int(d[key]), 1)  # JSON stores numbers as floats
 
 
 func _unhandled_input(event: InputEvent) -> void:

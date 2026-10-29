@@ -18,15 +18,18 @@ CELL = 8
 GRID = 8
 OUT = os.path.join(os.path.dirname(__file__), "..", "art")
 
+# Colours taken from the Quaternius CC0 packs' textures (plans/home.md, 2026-10-29, the "gentle"
+# pick): their hue and saturation at our old lightness steps; greens moved halfway, sapphire and
+# amethyst kept so the ores stay apart.
 ROWS = [
-    ("stone", ["#2f2f33", "#45454b", "#5a5a61", "#727279", "#8a8a90", "#a3a3a8", "#bdbdc1", "#d6d6d9"]),
-    ("ore", ["#b0643a", "#d98a52", "#8f8f99", "#b9bac6", "#e2b53b", "#262629", "#6fa0d8", "#7a5ec9"]),
-    ("wood", ["#3b2618", "#4f3322", "#5f4029", "#734f33", "#8a6142", "#a37a55", "#c2996c", "#dcbc8f"]),
-    ("leaves", ["#1f3d22", "#2a5230", "#356a3b", "#3f7f45", "#4f9452", "#64a860", "#7fbd72", "#a3d18c"]),
-    ("terrain", ["#5c8c4d", "#6b9a50", "#85674c", "#787573", "#cdbd8c", "#ebeff5", "#4a6b3c", "#a18566"]),
-    ("metal", ["#2b3138", "#3c4550", "#525d6b", "#6c7886", "#8994a2", "#a9b2bd", "#c9d0d8", "#e8ecf0"]),
-    ("accent", ["#9e2b25", "#d0453a", "#e88a2c", "#f2cf4a", "#3d7fc4", "#64b5e8", "#8d4fb0", "#e66fa1"]),
-    ("neutral", ["#0d0d0f", "#232326", "#3a3a3e", "#5e5e63", "#8c8c91", "#b8b8bc", "#e0e0e3", "#ffffff"]),
+    ("stone", ["#362e26", "#4a453e", "#615951", "#7d7163", "#95897a", "#aea293", "#c9bbab", "#e3d4c2"]),
+    ("ore", ["#b26336", "#e78252", "#8f8f99", "#b9bac6", "#edb04a", "#262629", "#6fa0d8", "#7a5ec9"]),
+    ("wood", ["#442207", "#543113", "#663d1c", "#794d29", "#8e5f39", "#ab774d", "#cc9568", "#f0b583"]),
+    ("leaves", ["#283c12", "#38511b", "#486826", "#577c30", "#69913d", "#7ca54b", "#94ba5b", "#b0cf70"]),
+    ("terrain", ["#678b36", "#74993c", "#866749", "#787573", "#d1bc85", "#ebeff5", "#516b20", "#9f8666"]),
+    ("metal", ["#372e33", "#48424a", "#605a62", "#7b757d", "#979199", "#b6afb7", "#d3cdd6", "#eceaf5"]),
+    ("accent", ["#94371d", "#bf5634", "#e38c48", "#ffc660", "#647cae", "#99afc5", "#66678b", "#da7998"]),
+    ("neutral", ["#100c0c", "#272221", "#3f393a", "#645c62", "#928a8d", "#c2b6ad", "#e7dfdc", "#fffff7"]),
 ]
 
 NAMES = {

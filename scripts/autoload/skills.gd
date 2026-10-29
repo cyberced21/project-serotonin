@@ -44,7 +44,7 @@ func add_xp(skill: StringName, amount: int) -> int:
 	if not SKILLS.has(skill):
 		push_warning("Skills: unknown skill '%s'" % skill)
 		return 0
-	amount = roundi(amount * (1.0 + Village.stat(&"xp_bonus")))
+	amount = roundi(amount * (1.0 + Village.stat(&"xp_bonus") + Home.rested_bonus()))  # (well rested: plans/home.md)
 	var old: int = xp.get(skill, 0)
 	var total := mini(old + amount, xp_for_level(MAX_LEVEL))
 	if total == old:

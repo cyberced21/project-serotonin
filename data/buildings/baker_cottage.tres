@@ -2,8 +2,9 @@
 
 [ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
-[ext_resource type="PackedScene" path="res://models/village/baker_cottage.glb" id="3_model"]
+[ext_resource type="PackedScene" path="res://models/village/baker_cottage.gltf" id="3_model"]
 [ext_resource type="Script" path="res://scripts/tier_effect.gd" id="4_effect"]
+[ext_resource type="Script" path="res://scripts/addon_def.gd" id="9_addon"]
 
 [sub_resource type="Resource" id="Effect_2_0"]
 script = ExtResource("4_effect")
@@ -45,6 +46,40 @@ cost = Dictionary[StringName, int]({
 lines = PackedStringArray("A shop front! Folk come from the whole valley now. Well, all six of them.", "Coal in the oven, pine in the beams, iron on the door. Best bread this side of the peak.", "Take a roll for the road. Nobody ever ran slower for a bit of bread.")
 effects = Array[ExtResource("4_effect")]([SubResource("Effect_3_0")])
 
+[sub_resource type="Resource" id="AddonEffect_breadoven"]
+script = ExtResource("4_effect")
+stat = &"rested_hours"
+value = 2.0
+text = "Well rested lasts two hours longer"
+
+[sub_resource type="Resource" id="Addon_breadoven"]
+script = ExtResource("9_addon")
+id = &"breadoven"
+name = "Bread oven"
+blurb = "An oven out by the house. The lane smells of bread at dawn."
+cost = Dictionary[StringName, int]({
+&"ore": 15,
+&"wheat": 10
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_breadoven")])
+
+[sub_resource type="Resource" id="AddonEffect_awning"]
+script = ExtResource("4_effect")
+stat = &"breakfast_seats"
+value = 4.0
+text = "Four more seats at breakfast"
+
+[sub_resource type="Resource" id="Addon_awning"]
+script = ExtResource("9_addon")
+id = &"awning"
+name = "Terrace awning"
+blurb = "Striped shade over two little tables out front."
+cost = Dictionary[StringName, int]({
+&"wood": 15,
+&"wheat": 8
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_awning")])
+
 [resource]
 script = ExtResource("1_def")
 id = &"baker_cottage"
@@ -55,3 +90,6 @@ villager_name = "Rosa"
 villager_role = "Baker"
 capped_line = "No bakehouse until the town hall's finished, the mayor says. Can't have it smelling grander than his hall."
 night_lines = PackedStringArray("Shh, the dough's rising. Come back at dawn and you'll smell it.", "Oh! A visitor at this hour. Mind the flower bed.")
+looks = PackedStringArray("LookOven|the oven|Fire it at four, bread out by six. Mind the left side, it runs hot.", "LookRecipes|Rosa's recipe book|My mother's hand on every page. The honey loaf's smudged half away, I know it by heart anyway.", "LookFlour|a sack of flour|Wheat from Goldmeadow. Ground fine, the way Ollie says his gran liked it.", "LookFlour.3|a sack of flour|Three sacks a week now. I never thought this valley ate so much bread.")
+addons = Array[ExtResource("9_addon")]([SubResource("Addon_breadoven"), SubResource("Addon_awning")])
+addon_slots = PackedInt32Array(2)
