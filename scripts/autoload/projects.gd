@@ -28,7 +28,16 @@ const SPOTS := [
 	[&"market", "A market stall", "A stall in the square with a striped awning, where you can swap what you have plenty of for what you need.", {&"wood": 20, &"birch": 10, &"wheat": 8}, 1],
 	[&"retaining_wall", "Shore up the road east", "A timber wall to hold the slope back, so the landslide's road stays open and traders can come over the pass. Dig out the boulders first.", {&"wood": 25, &"pine": 15, &"iron": 6}, 2, &"slide"],
 	[&"kennel_porch", "A bowl, a blanket and a porch", "A deck out front with a rail, a water bowl and a checked blanket to flop on.", {&"oak": 12, &"iron": 4}, 2, &"kennel_paint"],
+	# the mine under the quarry (plans/mine.md): "mine:" needs are the Mine's (a shaft dug into,
+	# an obstacle seen)
 	[&"mine_shoring", "Shore up the old mine", "Timber frames and lamps at the boarded mouth on the quarry floor, so you can go in and dig.", {&"wood": 25, &"pine": 10, &"ore": 10}, 1],
+	[&"mine_supports", "Prop up the roof fall", "Timber supports under the fallen roof on the mine's first level, and the rubble cleared, so you can get past.", {&"wood": 30, &"pine": 15}, 1, &"mine:collapse"],
+	[&"mine_lift", "A lift down the shaft", "A winch, a rope and a wooden cage in the shaft you dug into, down to the mine's second level.", {&"wood": 40, &"iron": 15, &"coal": 10}, 2, &"mine:shaft"],
+	[&"mine_shoring_2", "Shore up the second level", "Frames and lamps all through the mine's second level.", {&"pine": 25, &"wood": 15, &"iron": 10}, 2, &"mine_lift"],
+	[&"mine_pump", "A pump for the flooded tunnel", "A hand pump and a pipe up the shaft to drain the flooded tunnel on the second level.", {&"iron": 25, &"wood": 20, &"ore": 15}, 2, &"mine:flood"],
+	[&"mine_lift_3", "Lengthen the lift", "More rope and a deeper shaft: the lift goes down to the third level.", {&"iron": 30, &"gold": 10, &"pine": 20}, 3, &"mine_pump"],
+	[&"mine_shoring_3", "Shore up the third level", "Frames and lamps through the deep level, among the crystals.", {&"pine": 30, &"iron": 12, &"gold": 6}, 3, &"mine_lift_3"],
+	[&"mine_rails", "Rails and a minecart", "Rails from the mine's way in down to the deepest level the lift reaches, and a cart to ride them.", {&"iron": 40, &"wood": 30, &"coal": 15}, 2, &"mine_lift"],
 ]
 ## Road lamps: a stretch near the village (one that comes within NEAR_VILLAGE m of the square)
 ## is cheaper and opens at once; the far roads wait for the town hall's second tier.
@@ -71,6 +80,9 @@ func all() -> Array[Dictionary]:
 
 
 func _needs_met(need: StringName) -> bool:
+	if String(need).begins_with("mine:"):
+		var mine := get_tree().get_first_node_in_group("mine")
+		return mine != null and mine.call("need_met", need)
 	if need == &"dog":
 		return Companion.has_dog
 	if need == &"slide":  # every boulder of the landslide broken

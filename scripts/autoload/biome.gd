@@ -18,7 +18,11 @@ const MOODS := {
 	&"quarry": preload("res://data/biomes/quarry.tres"),
 	&"goldmeadow": preload("res://data/biomes/goldmeadow.tres"),
 	&"frostpeak": preload("res://data/biomes/frostpeak.tres"),
+	&"mine": preload("res://data/biomes/mine.tres"),
 }
+## Anywhere below this height is the mine (plans/mine.md): its levels are built far under the
+## quarry (Mine.LEVEL_Y).
+const MINE_BELOW := -25.0
 const HOLD := 1.5
 ## Seconds for the light to settle into a new biome.
 const BLEND := 3.0
@@ -79,6 +83,8 @@ func _process(delta: float) -> void:
 
 ## Which biome a world position is in, by WorldMap's shapes (first match wins).
 func biome_at(p: Vector3) -> StringName:
+	if p.y < MINE_BELOW:
+		return &"mine"
 	var w := Vector2(p.x, p.z)
 	if w.distance_to(WorldMap.QUARRY_CENTER) < WorldMap.QUARRY_WALLS[0] + WorldMap.QUARRY_APRON + 8.0:
 		return &"quarry"
@@ -111,6 +117,17 @@ func _enter(id: StringName) -> void:
 	elif now - _last_card.get(id, -INF) > REPEAT_COOLDOWN:
 		_show_card(MOODS[id], false)
 		_last_card[id] = now
+
+
+## Straight into the biome at `at` with its light already settled (after a fade: into the mine
+## and back out), the card shown as usual.
+func settle(at: Vector3) -> void:
+	_candidate = biome_at(at)
+	_candidate_time = HOLD
+	if _candidate != current:
+		_enter(_candidate)
+	for i in 40:
+		_blend(1.0, at)
 
 
 ## Eases the light toward the current biome's.

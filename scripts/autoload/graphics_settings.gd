@@ -80,7 +80,12 @@ func _apply_all() -> void:
 
 func _on_node_added(n: Node) -> void:
 	if n is WorldEnvironment or n is DirectionalLight3D or n is OmniLight3D:
-		_apply_to.call_deferred(n)
+		var ref: WeakRef = weakref(n)  # (it may be gone by then: the mine rebuilds its lamps)
+		var later := func() -> void:
+			var node: Node = ref.get_ref()
+			if node:
+				_apply_to(node)
+		later.call_deferred()
 
 
 func _apply_globals() -> void:

@@ -21,6 +21,7 @@ const PLACES := {
 	&"stillwater": {"room": 0.6, "damp": 0.4, "wet": 0.1, "pre": 70.0, "hipass": 0.3},
 	&"frostpeak": {"room": 0.75, "damp": 0.45, "wet": 0.12, "pre": 130.0, "hipass": 0.3},
 	&"quarry": {"room": 0.75, "damp": 0.3, "wet": 0.2, "pre": 35.0, "hipass": 0.2},
+	&"mine": {"room": 0.6, "damp": 0.45, "wet": 0.3, "pre": 18.0, "hipass": 0.15},  # close tunnels of rock
 	&"indoors": {"room": 0.25, "damp": 0.75, "wet": 0.12, "pre": 6.0, "hipass": 0.15},  # timber and plaster
 }
 const BUSES: Array[StringName] = [&"SFX", &"Movement"]

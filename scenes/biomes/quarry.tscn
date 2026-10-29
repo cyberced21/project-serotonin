@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" path="res://models/scenery/boulder_flat.glb" id="12_boulder"]
 [ext_resource type="Script" path="res://scripts/quarry_dressing.gd" id="13_dressing"]
 [ext_resource type="Script" path="res://scripts/mine_mouth.gd" id="14_mouth"]
+[ext_resource type="Script" path="res://scripts/mine.gd" id="19_mine"]
 [ext_resource type="PackedScene" path="res://models/scenery/fern.glb" id="15_fern"]
 [ext_resource type="PackedScene" path="res://models/scenery/flowers_warm.glb" id="16_flowers_warm"]
 [ext_resource type="PackedScene" path="res://models/scenery/flowers_cool.glb" id="17_flowers_cool"]
@@ -201,6 +202,9 @@ script = ExtResource("13_dressing")
 
 [node name="MineMouth" type="Node3D" parent="."]
 script = ExtResource("14_mouth")
+
+[node name="Mine" type="Node3D" parent="."]
+script = ExtResource("19_mine")
 
 [node name="Props" type="Node3D" parent="."]
 

@@ -73,6 +73,21 @@ func _build() -> void:
 	for side in [-1.0, 1.0]:
 		var lamp := _prop(LAMP, Vector3(side * 1.25, 2.75, 0.35), 0.0, false, true)
 		_lamps.append(lamp)
+	var spot := MineSpot.make(Vector3(2.8, 2.8, 0.6), _prompt, _go_in)
+	spot.position = Vector3(0.0, 0.0, 0.5)
+	add_child(spot)
+
+
+func _prompt() -> String:
+	if is_open:
+		return "E  Go down into the mine"
+	return "Boarded up. Shore up the old mine first (the noticeboard)."
+
+
+func _go_in() -> void:
+	var mine := get_tree().get_first_node_in_group("mine") as Mine
+	if is_open and mine:
+		mine.enter()
 
 
 func _prop(model: PackedScene, at: Vector3, turn_deg: float, own: bool, collide: bool, parent: Node = self) -> Prop:

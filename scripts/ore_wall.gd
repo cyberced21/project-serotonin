@@ -53,6 +53,21 @@ const VEIN_CORE := 0.4
 ## The ring of the quarry it stands on (0 = the top) of how many: further down, richer ore.
 @export var ring := 0
 @export var rings := 1
+@export_group("In the mine")
+## The RICHNESS row its first layer reads (-1: worked out from its ring, as in the quarry).
+@export var richness_base := -1
+## The pick tier its plain stone needs (the mine's rock gets harder further down).
+@export var stone_tier := 0
+## A dig face (plans/mine.md): once this many layers are out the rest gives way (gave_way), and
+## whoever placed it opens what's behind. 0 = never.
+@export var give_way_at := 0
+## A seam along an open tunnel: dug this many layers back it's spent (nothing more to take), and
+## regrow_time seconds later, once you're not watching, it's whole again. 0 = never.
+@export var spent_at := 0
+@export var regrow_time := 0.0
+
+signal gave_way
+signal spent
 
 ## The veins: [plane (normal, distance), wave (direction and tightness, how far it bows), width].
 var _veins: Array = []
@@ -72,6 +87,9 @@ var _near := false
 var _piece_shapes := {}  # layer * 1000 + index -> its CollisionShape3D, while near
 var _check_in := 0.0
 var _grit_in := 3.0
+var _gave := false
+## Seconds until a spent seam is whole again (0: not spent).
+var regrow_left := 0.0
 
 static var _cache := {}  # template -> its pieces (see _template)
 
@@ -94,6 +112,13 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if regrow_left > 0.0:
+		regrow_left -= delta
+		if regrow_left <= 0.0:
+			if _near:  # not while you're looking: try again in a bit
+				regrow_left = 5.0
+			else:
+				_regrow()
 	if _near:
 		_grit_in -= delta
 		if _grit_in <= 0.0:
@@ -235,7 +260,8 @@ func _layer_ore(k: int) -> PackedInt32Array:
 	if _ore.has(k):
 		return _ore[k]
 	var kinds := PackedInt32Array()
-	var richness := mini(k + roundi(RING_BONUS * float(ring) / maxf(rings - 1, 1)), RICHNESS.size() - 1)
+	var bonus := richness_base if richness_base >= 0 else roundi(RING_BONUS * float(ring) / maxf(rings - 1, 1))
+	var richness := mini(k + bonus, RICHNESS.size() - 1)
 	var vein_ore := []
 	for v in _veins.size():
 		var rng := RandomNumberGenerator.new()
@@ -265,8 +291,13 @@ func _ore_of(p: Array) -> int:
 ## The hit's needs (tool tier, Mining rating) are the piece's: ResourceNode's checks read them.
 func _rate(p: Array) -> void:
 	var kind := _ore_of(p)
-	tool_tier = ORES[kind]["tier"] if kind != STONE else 0
+	tool_tier = _tier_of(kind)
 	required_level = ORES[kind]["level"] if kind != STONE else 1
+
+
+## The pick tier a piece of this kind needs here.
+func _tier_of(kind: int) -> int:
+	return maxi(stone_tier, ORES[kind]["tier"] if kind != STONE else 0)
 
 
 func _layer_pieces(layer: int) -> Array:
@@ -493,7 +524,7 @@ func _show_aim() -> void:
 
 
 func is_available() -> bool:
-	return front < LAYERS
+	return front < LAYERS and not (spent_at > 0 and front >= spent_at) and not _gave
 
 
 func set_highlighted(on: bool) -> void:
@@ -583,7 +614,7 @@ func _slab_hardest(k: int, slab: PackedInt32Array) -> int:
 	var t := 0
 	for i in slab:
 		var kind := _ore_of([k, i])
-		t = maxi(t, ORES[kind]["tier"] if kind != STONE else 0)
+		t = maxi(t, _tier_of(kind))
 	return t
 
 
@@ -697,7 +728,7 @@ func _crumble(info: HitInfo) -> void:
 		for o in _piece(front, i)["links"]:
 			alone = alone and _is_gone(front, o)
 		var kind := _ore_of([front, i])
-		if (alone or all) and Tools.can_work(tool_type, ORES[kind]["tier"] if kind != STONE else 0):
+		if (alone or all) and Tools.can_work(tool_type, _tier_of(kind)):
 			_award_xp(ORES[kind]["xp"] if kind != STONE else xp_per_hit)
 			_pop_piece(front, i, info)
 
@@ -737,7 +768,7 @@ func _settle_grit() -> void:
 # --- digging ---------------------------------------------------------------------------------
 
 func hit(info: HitInfo) -> bool:
-	if front >= LAYERS:
+	if not is_available():
 		return false
 	var struck := _piece_at(info.position, info.normal)
 	if struck.is_empty():
@@ -792,7 +823,7 @@ func _knock_out_from(struck: Array, info: HitInfo, extra: int) -> Array:
 	var near: Array = []
 	for o in _piece(k, struck[1])["links"]:  # (not a vein your pick can't take: it stays put)
 		var kind := _ore_of([k, o])
-		if not _is_gone(k, o) and Tools.can_work(tool_type, ORES[kind]["tier"] if kind != STONE else 0) 				and _slab_holding([k, o]).is_empty():  # (a loose slab comes down whole, or not at all)
+		if not _is_gone(k, o) and Tools.can_work(tool_type, _tier_of(kind)) 				and _slab_holding([k, o]).is_empty():  # (a loose slab comes down whole, or not at all)
 			near.append(o)
 	near.sort_custom(func(a: int, b: int) -> bool:
 		return (_piece(k, a)["centre"] as Vector3).distance_squared_to(at) < (_piece(k, b)["centre"] as Vector3).distance_squared_to(at))
@@ -844,6 +875,7 @@ func _dug(info: HitInfo) -> void:
 	while front < LAYERS and _gone[front].size() >= _layer_pieces(front).size():
 		front += 1
 		_layer_cleared()
+	_check_depth()
 	_aimed = []
 	_refresh_layers()
 	if _near:
@@ -887,6 +919,31 @@ func dig_layers(n: int) -> void:
 	_refresh_layers()
 	_rebuild_shapes()
 	SaveGame.mark_dirty()
+	_check_depth()
+
+
+## Dug back far enough: a dig face gives way, a seam is spent (and starts growing back).
+func _check_depth() -> void:
+	if give_way_at > 0 and front >= give_way_at and not _gave:
+		_gave = true
+		gave_way.emit()
+	if spent_at > 0 and front >= spent_at and regrow_left <= 0.0:
+		regrow_left = maxf(regrow_time * (1.0 - Village.stat(&"rock_regrow")), 1.0)
+		spent.emit()
+
+
+## A spent seam whole again: every piece back, its veins as they were.
+func _regrow() -> void:
+	regrow_left = 0.0
+	for k in LAYERS:
+		_gone[k].clear()
+	front = 0
+	for k in LAYERS:
+		if _layer_mesh[k]:
+			_layer_mesh[k].visible = true
+	_refresh_layers()
+	_fit_box()
+	SaveGame.mark_dirty()
 
 
 ## Tools: how many pieces of each ore (ORES index -> count) layer k holds.
@@ -903,11 +960,12 @@ func to_dict() -> Dictionary:
 	var gone := []
 	for k in LAYERS:
 		gone.append(_gone[k].keys())
-	return {"gone": gone}
+	return {"gone": gone, "regrow": regrow_left} if regrow_left > 0.0 else {"gone": gone}
 
 
 func from_dict(d: Dictionary) -> void:
 	var gone: Array = d.get("gone", [])
+	regrow_left = float(d.get("regrow", 0.0))
 	for k in mini(gone.size(), LAYERS):
 		_gone[k].clear()
 		for i in gone[k]:

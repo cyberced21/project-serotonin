@@ -41,7 +41,7 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	_start_gift()
-	var dark := DayNight.darkness() > LANTERN_DARK
+	var dark := DayNight.darkness() > LANTERN_DARK or Biome.current == &"mine"  # (always dark down there)
 	if dark == _dark:
 		return
 	_dark = dark

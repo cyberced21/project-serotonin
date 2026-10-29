@@ -30,7 +30,7 @@ const AREA_SHARE := 0.6
 ## Where an empty time-of-day slot borrows from, nearest in mood first.
 const FALLBACKS := {&"morning": [&"day", &"evening", &"night"], &"day": [&"morning", &"evening", &"night"],
 	&"evening": [&"night", &"day", &"morning"], &"night": [&"evening", &"morning", &"day"]}
-const AREAS := {&"hearthvale": &"village", &"pinewood": &"forest", &"stillwater": &"lake", &"quarry": &"mine"}
+const AREAS := {&"hearthvale": &"village", &"pinewood": &"forest", &"stillwater": &"lake", &"quarry": &"mine", &"mine": &"mine"}
 
 ## 0..1: how loud the music plays (a cutscene lowers it).
 var duck := 1.0

@@ -25,7 +25,7 @@ func _run() -> void:
 	var walls := 0
 	for n in root.find_children("*", "", true, false):
 		var s: Script = n.get_script()
-		if s and (s.resource_path.ends_with("ore_wall.gd") or s.resource_path.ends_with("ore_wall_placer.gd")):
+		if s and (s.resource_path.ends_with("ore_wall.gd") or s.resource_path.ends_with("ore_wall_placer.gd")) 				and (n as Node3D).global_position.y > -20.0:  # (the mine's, far below, are its own)
 			walls += 1
 	_check(walls == 0, "no ore walls in the quarry (%d)" % walls)
 
