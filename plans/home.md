@@ -3,7 +3,9 @@
 Chunk 9 of [cozy.md](cozy.md) (its section 8: interiors and add-ons). Grilled 2026-10-29. Branch `home`
 off `main`.
 
-Status (2026-10-29): grilled, nothing built.
+Status (2026-10-29): grilled. Phase 1 pick page is up, waiting on picks:
+https://claude.ai/artifact/Pkbpyd4N1Uy3LUT9EyLG1R (113 renders; saved to its db, `picks/main`).
+Packs and renders are in `E:\Godot\downloads\art-packs` and `art-pick` (C: is low on space).
 
 ## Where we start (2026-10-29)
 
