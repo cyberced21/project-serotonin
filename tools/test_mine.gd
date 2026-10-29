@@ -77,11 +77,16 @@ func _run() -> void:
 			break
 	_check(face != null, "a dig face to dig")
 	var before: int = mine.call("open_count", 0)
-	face.call("dig_layers", 2)
+	_dig_hole(face, 2, 0.3)
+	await process_frame
+	_check(mine.call("open_count", 0) == before, "a small hole in a face isn't through yet")
+	_dig_hole(face, 2, 0.45)
+	var whole_layers: int = face.get("front")
 	await process_frame
 	await process_frame
 	var after: int = mine.call("open_count", 0)
-	_check(after == before + 1, "digging two layers in, it gives way: %d -> %d cells open" % [before, after])
+	_check(after == before + 1 and whole_layers == 0,
+			"a hole dug into it (no layer cleared whole), it gives way: %d -> %d cells open" % [before, after])
 	_check(not is_instance_valid(face) or face.is_queued_for_deletion(), "the face that gave way is gone")
 	var fresh := 0
 	for c in _cells(0):
@@ -103,8 +108,8 @@ func _run() -> void:
 			seam = p
 			break
 	if seam:
-		seam.call("dig_layers", 4)
-		_check(not seam.call("is_available"), "a seam dug four layers in is spent")
+		_dig_hole(seam, 4, 0.3)
+		_check(not seam.call("is_available"), "a seam dug well into is spent")
 		seam.set("regrow_left", 0.01)
 		seam.set("_near", false)
 		await _settle(3)
@@ -199,6 +204,22 @@ func _run() -> void:
 	_check(player.global_position.distance_to(mouth.global_position) < 4.0, "back up by the mouth")
 	_check(biome.get("current") == &"quarry", "in the quarry's light again (%s)" % biome.get("current"))
 	_finish()
+
+
+## Digs out `share` of the pieces of a panel's first `layers` layers, nearest its middle first
+## (a hole, the way a pick goes in), then lets it check how far in it is.
+func _dig_hole(panel: Node, layers: int, share: float) -> void:
+	var gone: Array = panel.get("_gone")
+	for k in layers:
+		var pieces: Array = panel.call("_layer_pieces", k)
+		var order := range(pieces.size())
+		order.sort_custom(func(a: int, b: int) -> bool:
+			var ca: Vector3 = pieces[a]["centre"]
+			var cb: Vector3 = pieces[b]["centre"]
+			return Vector2(ca.x, ca.y - 2.0).length() < Vector2(cb.x, cb.y - 2.0).length())
+		for i in order.slice(0, int(pieces.size() * share)):
+			(gone[k] as Dictionary)[i] = true
+	panel.call("_check_depth")
 
 
 func _press_map() -> void:

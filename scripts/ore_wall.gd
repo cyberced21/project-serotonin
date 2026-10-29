@@ -58,16 +58,21 @@ const VEIN_CORE := 0.4
 @export var richness_base := -1
 ## The pick tier its plain stone needs (the mine's rock gets harder further down).
 @export var stone_tier := 0
-## A dig face (plans/mine.md): once this many layers are out the rest gives way (gave_way), and
-## whoever placed it opens what's behind. 0 = never.
+## A dig face (plans/mine.md): once GIVE_WAY_SHARE of the pieces of its first this-many layers
+## are out (dug anywhere in them: a hole counts, not only whole layers) the rest gives way
+## (gave_way), and whoever placed it opens what's behind. 0 = never.
 @export var give_way_at := 0
-## A seam along an open tunnel: dug this many layers back it's spent (nothing more to take), and
-## regrow_time seconds later, once you're not watching, it's whole again. 0 = never.
+## A seam along an open tunnel: once SPENT_SHARE of its first this-many layers are dug out it's
+## spent (it takes no more hits), and regrow_time seconds later, once you're not watching, it's
+## whole again. 0 = never.
 @export var spent_at := 0
 @export var regrow_time := 0.0
 
 signal gave_way
 signal spent
+
+const GIVE_WAY_SHARE := 0.4
+const SPENT_SHARE := 0.25
 
 ## The veins: [plane (normal, distance), wave (direction and tightness, how far it bows), width].
 var _veins: Array = []
@@ -524,7 +529,7 @@ func _show_aim() -> void:
 
 
 func is_available() -> bool:
-	return front < LAYERS and not (spent_at > 0 and front >= spent_at) and not _gave
+	return front < LAYERS and not (spent_at > 0 and regrow_left > 0.0) and not _gave
 
 
 func set_highlighted(on: bool) -> void:
@@ -941,12 +946,22 @@ func _dig_scale() -> float:
 
 ## Dug back far enough: a dig face gives way, a seam is spent (and starts growing back).
 func _check_depth() -> void:
-	if give_way_at > 0 and front >= give_way_at and not _gave:
+	if give_way_at > 0 and not _gave and _dug_share(give_way_at) >= GIVE_WAY_SHARE:
 		_gave = true
 		gave_way.emit()
-	if spent_at > 0 and front >= spent_at and regrow_left <= 0.0:
+	if spent_at > 0 and regrow_left <= 0.0 and _dug_share(spent_at) >= SPENT_SHARE:
 		regrow_left = maxf(regrow_time * (1.0 - Village.stat(&"rock_regrow")), 1.0)
 		spent.emit()
+
+
+## The share of the pieces in the first `layers` layers that are dug out.
+func _dug_share(layers: int) -> float:
+	var gone := 0
+	var all := 0
+	for k in mini(layers, LAYERS):
+		gone += _gone[k].size()
+		all += _layer_pieces(k).size()
+	return float(gone) / maxf(all, 1.0)
 
 
 ## A spent seam whole again: every piece back, its veins as they were.
@@ -983,6 +998,7 @@ func to_dict() -> Dictionary:
 func from_dict(d: Dictionary) -> void:
 	var gone: Array = d.get("gone", [])
 	regrow_left = float(d.get("regrow", 0.0))
+	_check_depth.call_deferred()  # (a face dug far enough in an older version gives way now)
 	for k in mini(gone.size(), LAYERS):
 		_gone[k].clear()
 		for i in gone[k]:
