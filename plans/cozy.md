@@ -104,8 +104,8 @@ Belt or hand?
 - Maybe later: he notices things (barks at a fault in a rock, points at a fish school), small help,
   never required.
 
-Open: how do you get the dog (found at the start, adopted from a villager, a reward for something)?
-Name it yourself? Breed/look options?
+**Grilled 2026-10-29 → [dog.md](dog.md)** (a stray met on the first morning, three breeds, you
+name him, hints only, the doghouse as three chained projects).
 
 ## 5. A world that grows with what you spend
 
