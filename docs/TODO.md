@@ -270,3 +270,16 @@ Generated worlds are gone (the procgen items above are history); Hearthvale is t
 - [ ] **Villagers on the dice seat** play only against you; two villagers could play each other.
 - [ ] **The keeper and Ollie have no house of their own** at the tavern (Maud "lives upstairs": she goes in at the door).
 - [ ] **test_lamps and test_lantern fail on main too** (found on this branch): "all burning by full night (48 of 52)" and "walking swings it enough to creak".
+
+## Your home, interiors and add-ons ([plans/home.md](../plans/home.md), branch `home`)
+
+- [x] The village's houses from the Quaternius kits (own colours), walk-in, furnished; your home (tent to homestead), sleeping, well rested, desk notes, head home; villagers' visits and porch evenings; add-on slots (slot 1 for five buildings). The palette from the packs. Tests: `test_home`, `test_interiors`, `test_visits`, `test_addons`, `test_kit_building`.
+- [ ] **Play it:** bot-tested and Blender-rendered only, never seen in a game window. Costs, the visit rate, the note chance, well rested's size are guesses.
+- [ ] **The trophy wall** is six empty plaques (`TrophySlot1..6` markers in the Cottage and Homestead): what goes on them gets its own grill.
+- [ ] **Second add-on slots** (each building's top tier) and forks for the town hall, the prospector and the tavern: still to design. Villagers only react to your home's add-ons.
+- [ ] **The tavern** is still the old model (it was already walk-in); restyle it with the kit to match.
+- [ ] **Interiors are smaller than planned** (6 x 6 to 8 x 10, not up to 10 x 12) to fit the village's plots; the world pass after cozy can give them room.
+- [ ] **The old `.glb` models** of the six rebuilt houses are no longer used; `make_village.py` still builds them.
+- [ ] **Painted texture tiles** for our own models (grain, wear), so they sit closer to the packs' look.
+- [ ] **The camps** (woodcutter's lean-to, the smithy's fire pit, the fisher's tent, the meeting hut) aren't walk-in; villagers there still vanish at the door at night.
+

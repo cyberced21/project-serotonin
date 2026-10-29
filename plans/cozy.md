@@ -241,8 +241,7 @@ The rest of the sound overhaul runs alongside from step 3 on, once the grill has
 ## Next step
 
 Grill each chunk before its own plan; the open questions in each section are the starting list.
-Chunk 9 is grilled ([home.md](home.md)); building it starts with the art spike. Then chunk 10
-(the mine).
+Chunk 9 is built on branch `home` ([home.md](home.md)), unplayed. Next: chunk 10 (the mine).
 
 After cozy: **a world pass**. The world feels too tight and too sparse, rocks sit out of place and
 the village looks randomly laid out; make it bigger, fill it in, lay the village out on purpose.

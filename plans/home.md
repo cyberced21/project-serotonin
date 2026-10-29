@@ -3,8 +3,9 @@
 Chunk 9 of [cozy.md](cozy.md) (its section 8: interiors and add-ons). Grilled 2026-10-29. Branch `home`
 off `main`.
 
-Status (2026-10-29): grilled. Phase 1 pick page is up, waiting on picks:
-https://claude.ai/artifact/Pkbpyd4N1Uy3LUT9EyLG1R (113 renders; saved to its db, `picks/main`).
+Status (2026-10-29): **all 9 phases built** on branch `home` (phases 7 and 8 in one commit),
+bot-tested and Blender-rendered only, never seen in a game window. Screenshots: docs/images/home/.
+Open items: docs/TODO.md, "Your home, interiors and add-ons". Phase 1's pick page: https://claude.ai/artifact/Pkbpyd4N1Uy3LUT9EyLG1R (113 renders; saved to its db, `picks/main`).
 Packs and renders are in `E:\Godot\downloads\art-packs` and `art-pick` (C: is low on space).
 
 **Picked 2026-10-29: A, every pack piece in its own colours, never snapped to our palette.**
