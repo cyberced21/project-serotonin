@@ -234,6 +234,7 @@ Generated worlds are gone (the procgen items above are history); Hearthvale is t
 - [x] Roads routed over the land and graded from both ends (`scripts/world_roads.gd` is written by the generator).
 - [x] Biome borders warped and frayed; Goldmeadow's fields on a curving grid.
 - [x] The quarry keeps its stone faces (the ore walls), loses the mantle stairs; its mountainside is gentle.
+- [ ] **The land feels barren** (user, 2026-10-29): smooth now, but sparse. Later: more scenery and life between the places (groves, hedgerows, wildflowers along the creek, stone walls, lone trees on the hills, animals).
 - [ ] **Walk it:** nothing here is played yet; only slope maps and headless checks. Look for odd road bends, the creek's banks, where the biomes fray, and the view from the rim hills.
 - [x] **In-game screenshots:** `graphics_tour.gd --set=world` (docs/images/graphics/world/, sheet in docs/images/world/tour.jpg), the maps (docs/images/world/classic_*.png). They caught Frostpeak too low for its snow (raised to 64 m) and the rim hills being called Frostpeak by height (`Biome.biome_at` now goes by distance only).
 - [x] **Frostpeak shaped:** a summit, three spurs and a high western shoulder (`PEAK_RIDGES`), rounded crests, steep flanks that read as rock bands, snow on the gentler high ground, gullies down the sides; the relax pass leaves its faces alone.
