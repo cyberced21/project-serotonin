@@ -180,6 +180,8 @@ func _build_model() -> void:
 	var first := true
 	for g in inst.find_children("*", "GeometryInstance3D", true, false):
 		var gi := g as GeometryInstance3D
+		if gi is MeshInstance3D:  # the palette's colours (as Prop does)
+			(gi as MeshInstance3D).material_override = PaletteMaterial.for_mesh((gi as MeshInstance3D).mesh)
 		_surfaces.append(gi)
 		var b := (global_transform.affine_inverse() * gi.global_transform) * gi.get_aabb()  # (in our own space)
 		box = b if first else box.merge(b)
