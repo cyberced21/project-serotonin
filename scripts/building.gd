@@ -122,8 +122,14 @@ func work_spot() -> Marker3D:
 
 # --- model ----------------------------------------------------------------------------------
 
+## Whether a mesh is a piece of the Medieval Village kit (named TN_Kit*, with its own material).
+static func _is_kit_piece(m: MeshInstance3D) -> bool:
+	return String(m.name).substr(3).begins_with("Kit") and m.mesh.get_surface_count() > 0 \
+			and m.mesh.surface_get_material(0) != null
+
+
 ## Sorts the model's meshes into one node per tier (by the TN_ name prefix), each with its own
-## static body of convex shapes, and finds the smoke empties.
+## static body of convex shapes (exact ones for kit pieces), and finds the smoke empties.
 func _build_tiers() -> void:
 	var inst := def.model.instantiate()
 	for t in range(1, def.max_tier() + 1):
@@ -153,7 +159,9 @@ func _build_tiers() -> void:
 				m.remove_child(c)
 			_tiers[t].add_child(m)
 			m.transform = xform
-			m.material_override = PaletteMaterial.for_mesh(m.mesh)  # (weathered stonework: the rock material)
+			var kit := _is_kit_piece(m)
+			if not kit:  # kit pieces (tools/blender/kit_buildings.py) keep their own textured materials
+				m.material_override = PaletteMaterial.for_mesh(m.mesh)  # (weathered stonework: the rock material)
 			_homes[m] = xform
 			_mark_night_glow(m)
 			if String(m.name).to_lower().contains("windowglass"):  # lit by who's home, not the sky
@@ -162,7 +170,9 @@ func _build_tiers() -> void:
 			var aabb := m.get_aabb()
 			if aabb.size.x * aabb.size.y * aabb.size.z >= MIN_COLLIDER_VOLUME:
 				var shape := CollisionShape3D.new()
-				shape.shape = m.mesh.create_convex_shape(true, false)  # simplify=true takes seconds per building
+				# a kit wall's hull would close its doorway and windows: kit pieces collide as they are
+				shape.shape = m.mesh.create_trimesh_shape() if kit \
+						else m.mesh.create_convex_shape(true, false)  # simplify=true takes seconds per building
 				shape.transform = xform
 				_bodies[t].add_child(shape)
 		elif n.name.to_lower().contains("smoke"):

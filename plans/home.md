@@ -14,7 +14,21 @@ textures and repaint our own models with it. Two candidates (gentle, strong: our
 the packs' hue and saturation, greens only half-moved, sapphire/amethyst kept) are on a second
 page: https://claude.ai/artifact/Ey15NnqxzJkRrzeP2oujAf. **Picked "gentle"; applied 2026-10-29** in
 `tools/make_palette.py` (art/palette.png + icons regenerated). Still open: painted tiles (grain,
-wear) instead of flat swatches, and whether the shells are built from the village kit's modules.
+wear) instead of flat swatches.
+
+**Phase 2 built 2026-10-29: shells from the village kit** (the user's pick). The bakery went first
+instead of the lodge: the kit is plaster, timber, stone and tile, and has no log walls.
+- `tools/blender/kit_buildings.py`: kit pieces on the 2 m grid (`storey` with a wall pattern per
+  side, `gable_roof`), our own pieces alongside (oven, sign), exported as `.gltf` with textures
+  shared in `models/village/textures/`. Kit sources in `art/kit/village/` (`tools/import_kit.py`).
+- The bakery: Cottage 6 × 8 m, Bakery 8 × 10 m with a stone shop front and the oven, Bakehouse
+  two storeys with a stair up to Rosa's rooms.
+- `Building` leaves kit pieces' materials alone and gives them exact (trimesh) collision, so
+  doorways and windows stay open. `tools/test_kit_building.gd` checks it (18/18).
+- Before/after: docs/images/home/bakery_t*_before_after.jpg (`tools/blender/render_building.py`).
+- **Not in the game yet**: `data/buildings/baker_cottage.tres` still uses the old `.glb`. The
+  new one is 3.4× the floor area and would sit on the terrace; it goes in with the re-layout
+  (phase 5).
 Palette files: `E:\Godot\downloads\art-pick\newpal`, `strongpal`.
 
 ## Where we start (2026-10-29)
