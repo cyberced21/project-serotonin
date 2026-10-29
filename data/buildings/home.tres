@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
 [ext_resource type="PackedScene" path="res://models/village/home.gltf" id="3_model"]
 [ext_resource type="Script" path="res://scripts/tier_effect.gd" id="4_effect"]
+[ext_resource type="Script" path="res://scripts/addon_def.gd" id="9_addon"]
 
 [sub_resource type="Resource" id="Effect_1_0"]
 script = ExtResource("4_effect")
@@ -89,6 +90,40 @@ hall_tier = 3
 lines = PackedStringArray("Two storeys, a porch and a loft to sleep in. You built this.", "On a clear evening you can see the whole valley go gold from the porch.", "Home. Just home.")
 effects = Array[ExtResource("4_effect")]([SubResource("Effect_4_0"), SubResource("Effect_3_1"), SubResource("Effect_3_2"), SubResource("Effect_4_3")])
 
+[sub_resource type="Resource" id="AddonEffect_swing"]
+script = ExtResource("4_effect")
+stat = &"home_swing"
+value = 1.0
+text = "Sit on it and the day goes by four times as fast"
+
+[sub_resource type="Resource" id="Addon_swing"]
+script = ExtResource("9_addon")
+id = &"swing"
+name = "Porch swing"
+blurb = "Sit a while and the evening goes by."
+cost = Dictionary[StringName, int]({
+&"oak": 10,
+&"wood": 10
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_swing")])
+
+[sub_resource type="Resource" id="AddonEffect_garden"]
+script = ExtResource("4_effect")
+stat = &"home_garden"
+value = 1.0
+text = "A little harvest every morning"
+
+[sub_resource type="Resource" id="Addon_garden"]
+script = ExtResource("9_addon")
+id = &"garden"
+name = "Garden plot"
+blurb = "A fenced vegetable bed. Something to pick every morning."
+cost = Dictionary[StringName, int]({
+&"wood": 15,
+&"wheat": 5
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_garden")])
+
 [resource]
 script = ExtResource("1_def")
 id = &"home"
@@ -99,3 +134,5 @@ villager_name = "Your home"
 villager_role = "Home"
 capped_line = "The mayor wants the town hall bigger before anyone builds bigger. Even you."
 night_lines = PackedStringArray("The fire's low and the stars are out. Time for bed, maybe.")
+addons = Array[ExtResource("9_addon")]([SubResource("Addon_swing"), SubResource("Addon_garden")])
+addon_slots = PackedInt32Array(4)

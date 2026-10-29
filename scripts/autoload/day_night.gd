@@ -21,6 +21,8 @@ const DEBUG_SKIP := 0.125
 var time := START_TIME
 ## Debug: holds the time of day still (the Sky tab, while tuning the look).
 var frozen := false
+## How fast the day goes by (1 = as usual). Your porch swing turns it up while you sit (Home).
+var speed := 1.0
 var _was_night := false
 
 
@@ -32,7 +34,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if frozen:
 		return
-	time = fmod(time + delta / DAY_LENGTH, 1.0)
+	time = fmod(time + delta * speed / DAY_LENGTH, 1.0)
 	var night := is_night()
 	if night != _was_night:
 		_was_night = night

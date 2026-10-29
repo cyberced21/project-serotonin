@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
 [ext_resource type="PackedScene" path="res://models/village/woodcutter.gltf" id="3_model"]
 [ext_resource type="Script" path="res://scripts/tier_effect.gd" id="4_effect"]
+[ext_resource type="Script" path="res://scripts/addon_def.gd" id="9_addon"]
 
 [sub_resource type="Resource" id="Effect_2_0"]
 script = ExtResource("4_effect")
@@ -41,6 +42,40 @@ cost = Dictionary[StringName, int]({
 lines = PackedStringArray("A chimney! Warm feet all winter. You've made an old woodcutter very happy.", "Sit on the porch a while. The best sound in the world is someone else chopping.", "That woodpile? That's art, that is.")
 effects = Array[ExtResource("4_effect")]([SubResource("Effect_3_0")])
 
+[sub_resource type="Resource" id="AddonEffect_dryingrack"]
+script = ExtResource("4_effect")
+stat = &"extra_logs"
+value = 1.0
+text = "+1 log from every tree"
+
+[sub_resource type="Resource" id="Addon_dryingrack"]
+script = ExtResource("9_addon")
+id = &"dryingrack"
+name = "Drying rack"
+blurb = "Split logs stacked to dry under a little roof."
+cost = Dictionary[StringName, int]({
+&"wood": 20,
+&"birch": 10
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_dryingrack")])
+
+[sub_resource type="Resource" id="AddonEffect_whetbench"]
+script = ExtResource("4_effect")
+stat = &"double_hit_chance"
+value = 0.05
+text = "5% more double hits"
+
+[sub_resource type="Resource" id="Addon_whetbench"]
+script = ExtResource("9_addon")
+id = &"whetbench"
+name = "Sharpening bench"
+blurb = "A whetstone and a grinding wheel by the door."
+cost = Dictionary[StringName, int]({
+&"wood": 15,
+&"ore": 10
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_whetbench")])
+
 [resource]
 script = ExtResource("1_def")
 id = &"woodcutter"
@@ -52,3 +87,5 @@ villager_role = "Woodcutter"
 capped_line = "I've the logs for it, but the mayor wants the town hall done first. Rules are rules."
 night_lines = PackedStringArray("Hm? Oh, it's you. Trees are asleep, you know. So was I.", "Night's for sharpening axes and resting arms. What is it?")
 looks = PackedStringArray("LookAxe|the old axe|Grandad's. Still the best edge in the valley, if you keep it honed.", "LookBench|the workbench|Every axe handle in Hearthvale started on this bench. Ash, mostly. Oak if you're lucky.")
+addons = Array[ExtResource("9_addon")]([SubResource("Addon_dryingrack"), SubResource("Addon_whetbench")])
+addon_slots = PackedInt32Array(2)

@@ -1,10 +1,11 @@
 """Renders a village building, every tier, outside and cut away (plans/home.md): Eevee, a warm sun,
 kit pieces in their own materials and our pieces in the palette.
 
-    blender -b -P tools/blender/render_building.py -- models/village/baker_cottage.gltf art/palette.png OUT_DIR
+    blender -b -P tools/blender/render_building.py -- models/village/baker_cottage.gltf art/palette.png OUT_DIR [addon ...]
 
 Writes OUT_DIR/<name>_t<tier>_out.png (front-left, outside) and _t<tier>_cut.png (roof and the front
-half lifted off, looking in from above).
+half lifted off, looking in from above). Add-ons named after OUT_DIR (AddonDef ids) are shown
+with every tier (their pieces are "AO-<id>_..."), and the files get "_<ids>" on the end.
 """
 import math
 import os
@@ -15,7 +16,8 @@ from mathutils import Vector
 
 argv = sys.argv[sys.argv.index("--") + 1:]
 MODEL, PALETTE, OUT = argv[0], argv[1], argv[2]
-NAME = os.path.splitext(os.path.basename(MODEL))[0]
+ADDONS = argv[3:]
+NAME = os.path.splitext(os.path.basename(MODEL))[0] + "".join("_" + a for a in ADDONS)
 os.makedirs(OUT, exist_ok=True)
 
 
@@ -69,15 +71,18 @@ scene = scene_setup()
 bpy.ops.import_scene.gltf(filepath=os.path.abspath(MODEL))
 pal = palette_material()
 meshes = [o for o in scene.objects if o.type == "MESH" and o.name[:1] == "T" and o.name[2:3] == "_"]
-for o in meshes:  # the kit's materials are all MI_*; anything else is ours, painted from the palette
+extras = [o for o in scene.objects if o.type == "MESH" and any(o.name.startswith(f"AO-{a}_") for a in ADDONS)]
+for o in [o for o in scene.objects if o.type == "MESH" and o.name.startswith("AO-") and o not in extras]:
+    o.hide_render = True
+for o in meshes + extras:  # the kit's materials are all MI_*; anything else is ours, painted from the palette
     m = o.data.materials[0] if o.data.materials else None
     if m is None or not m.name.startswith("MI_"):
         o.data.materials.clear()
         o.data.materials.append(pal)
 tiers = sorted({int(o.name[1]) for o in meshes})
 for t in tiers:
-    mine = [o for o in meshes if int(o.name[1]) == t]
-    for o in meshes:
+    mine = [o for o in meshes if int(o.name[1]) == t] + extras
+    for o in meshes + extras:  # (the cutaway hid some of the add-on's pieces: back on)
         o.hide_render = o not in mine
     cs = [o.matrix_world @ Vector(c) for o in mine for c in o.bound_box]
     lo = Vector([min(c[i] for c in cs) for i in range(3)])

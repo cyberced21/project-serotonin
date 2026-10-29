@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
 [ext_resource type="PackedScene" path="res://models/village/fisher.gltf" id="3_model"]
 [ext_resource type="Script" path="res://scripts/tier_effect.gd" id="4_effect"]
+[ext_resource type="Script" path="res://scripts/addon_def.gd" id="9_addon"]
 
 [sub_resource type="Resource" id="Effect_2_0"]
 script = ExtResource("4_effect")
@@ -56,6 +57,40 @@ cost = Dictionary[StringName, int]({
 lines = PackedStringArray("Pike from the other pond, in my hut! You're a legend.", "Come sit on the dock. Fish don't bite any better, but the view's nice.", "Got a boat now, too. Haven't worked out where to row it.", "Char live in the deep middle of the lake. A rod reaches them, or wade in at dawn or dusk when they come up to feed.")
 effects = Array[ExtResource("4_effect")]([SubResource("Effect_3_0"), SubResource("Effect_3_1"), SubResource("Effect_3_2")])
 
+[sub_resource type="Resource" id="AddonEffect_smokehouse"]
+script = ExtResource("4_effect")
+stat = &"bonus_fish_chance"
+value = 0.1
+text = "+10% chance a speared fish counts twice"
+
+[sub_resource type="Resource" id="Addon_smokehouse"]
+script = ExtResource("9_addon")
+id = &"smokehouse"
+name = "Smokehouse"
+blurb = "A little plank shed, smoke curling out of it."
+cost = Dictionary[StringName, int]({
+&"wood": 20,
+&"oak": 10
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_smokehouse")])
+
+[sub_resource type="Resource" id="AddonEffect_lookout"]
+script = ExtResource("4_effect")
+stat = &"fish_calm"
+value = 0.1
+text = "Fish are 10% calmer"
+
+[sub_resource type="Resource" id="Addon_lookout"]
+script = ExtResource("9_addon")
+id = &"lookout"
+name = "Lookout perch"
+blurb = "Up on its legs, Ollie can see where the fish are."
+cost = Dictionary[StringName, int]({
+&"pine": 15,
+&"wood": 10
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_lookout")])
+
 [resource]
 script = ExtResource("1_def")
 id = &"fisher"
@@ -67,3 +102,5 @@ villager_role = "Fisher"
 capped_line = "Can't build bigger than the town hall, the mayor says. Something about appearances."
 night_lines = PackedStringArray("Night fishing? Ha. The fish are smarter than that. What's up?", "Lantern's lit if you need it. Mind the dock in the dark.")
 looks = PackedStringArray("LookRod|the old willow rod|My first rod. Caught a perch the size of my hand with it and cried with joy. I was nine. Or thirty.")
+addons = Array[ExtResource("9_addon")]([SubResource("Addon_smokehouse"), SubResource("Addon_lookout")])
+addon_slots = PackedInt32Array(2)

@@ -35,7 +35,7 @@ static func make(at: Vector3, n: Dictionary) -> DeskNote:
 
 
 func prompt() -> String:
-	return "E  Read the note from %s" % note.get("from", "someone")
+	return note.get("prompt", "E  Read the note from %s" % note.get("from", "someone"))
 
 
 func interact() -> void:

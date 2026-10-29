@@ -29,6 +29,8 @@ const NPC_LAYER := 1 << 6
 const WAYPOINT_REACH := 0.6
 ## Seats further than this are too far to bother with.
 const SEAT_RANGE := 45.0
+## Your porch is further out than that, on the west rim (plans/home.md).
+const PORCH_RANGE := 120.0
 ## A stroll round the square goes through these of the network's points, in order.
 const SQUARE_ROUND: Array[StringName] = [&"sq_n", &"sq_ne", &"sq_e", &"sq_se", &"sq_s", &"sq_sw", &"sq_nw"]
 
@@ -88,6 +90,11 @@ var _drinking := false
 var _fiddle: MeshInstance3D  # on the stage (its bow is the "bow" meta)
 var _lights_out := 0.0  # evening hour (VillagerDay.evening_hours) their lamp goes out
 var _indoor_walk := false  # walking inside their house (_walk_inside): heights from the route
+var _home_visit: Marker3D  # walking over to your home to see how it's coming on (Home.send_visitor)
+## This evening's dusk is on your porch (Home.ask_to_porch), not a bench on the square.
+var porch_tonight := false
+var _visit_left := -1.0  # seconds left at your door, once there
+var _said: Label3D
 ## A cutscene is posing this villager (script_pose): no walking, working or talking of its own.
 var scripted := false
 
@@ -310,6 +317,9 @@ func _tick(delta: float) -> void:
 
 	if _night_routine(delta, talking):
 		return
+	if _home_visit and _at_visit(delta, talking):
+		_look(delta)
+		return
 	if talking and state != State.TALK and not _watching:
 		state = State.TALK
 	match state:
@@ -369,6 +379,9 @@ func _tavern_open() -> bool:
 func _change_part(part: VillagerDay.Part, talking: bool) -> void:
 	var was := _part
 	_part = part
+	_home_visit = null  # (a visit lasts no longer than the part of the day it began in)
+	if was == VillagerDay.Part.DUSK:
+		porch_tonight = false
 	if part == VillagerDay.Part.DUSK and was != VillagerDay.Part.DUSK:
 		_skip_tonight = randf() < float(VillagerDay.person(building.def.id).get("skips_tavern", 0.0))
 		_part = _day_part()
@@ -570,6 +583,8 @@ func _next_spot() -> Marker3D:
 			if tavern:  # full: a drink on the step
 				return tavern.spot("Door")
 		VillagerDay.Part.DUSK:
+			if porch_tonight and (_seat or _claim_seat(&"porch", "seat", PORCH_RANGE)):
+				return _seat
 			if not VillagerDay.has_quirk(building.def.id, "strolls"):
 				if _seat == null:
 					_claim_seat(&"bench")
@@ -592,10 +607,65 @@ func _pick_spot() -> Marker3D:
 	return options.pick_random() if not options.is_empty() else _target
 
 
-## Busy with their own day (sitting somewhere, out for the evening, asleep): not free to be sent
-## to the well and the like.
+## Busy with their own day (sitting somewhere, out for the evening, asleep, visiting you): not
+## free to be sent to the well and the like.
 func busy() -> bool:
-	return _seat != null or _part != VillagerDay.Part.WORK
+	return _seat != null or _part != VillagerDay.Part.WORK or _home_visit != null
+
+
+## Off to see your home (plans/home.md, Home.send_visitor): walk over to `spot` by its door.
+func visit_home(spot: Marker3D) -> void:
+	_home_visit = spot
+	_visit_left = -1.0
+	_leave_seat()
+	_walk_to(spot)
+
+
+## At your door: a chat if you're there (and something to say about what's new), else a little
+## gift left on the step; then back to work. True while the visit has the frame.
+func _at_visit(delta: float, talking: bool) -> bool:
+	if _target != _home_visit or global_position.distance_to(_ground(_home_visit.global_position)) > 0.4:
+		return false
+	state = State.IDLE
+	var home := get_tree().get_first_node_in_group("home") as Home
+	if _visit_left < 0.0:  # just got here
+		_visit_left = Home.VISIT_TIME
+		if home:
+			home.visited(self)
+	_visit_left -= delta
+	if talking and _player:  # (you're there: they face you)
+		_turn_toward(_player.global_position, delta, 5.0)
+	else:
+		_turn_to_yaw(_marker_yaw(_home_visit), delta, 4.0)
+	_animate_idle()
+	if _visit_left <= 0.0:
+		_home_visit = null
+		_walk_to(_next_spot())
+	return true
+
+
+## A few words above their head for a while (a visit's greeting).
+func say(text: String) -> void:
+	if is_instance_valid(_said):
+		_said.queue_free()
+	var l := Label3D.new()
+	l.text = text
+	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	l.pixel_size = 0.004
+	l.font_size = 40
+	l.outline_size = 12
+	l.width = 900.0
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.modulate = LookObject.LINE_COLOR
+	l.outline_modulate = Color(0, 0, 0, 0.55)
+	add_child(l)
+	l.position = Vector3.UP * 2.3
+	_said = l
+	var t := l.create_tween()
+	t.tween_property(l, "modulate:a", 1.0, 0.25).from(0.0)
+	t.tween_interval(LookObject.HOLD + 1.0)
+	t.tween_property(l, "modulate:a", 0.0, 0.6)
+	t.tween_callback(l.queue_free)
 
 
 ## Free to come and play dice (DiceGame): out at the tavern and settled in, nothing else on.
@@ -684,9 +754,9 @@ func _stroll_spot() -> Marker3D:
 
 ## Takes the nearest free seat of `kind` (markers in the "seat" group: benches, terrace, tavern;
 ## or another `group`'s, like the tavern's places to stand), preferring their own building's.
-func _claim_seat(kind: StringName, group := "seat") -> Marker3D:
+func _claim_seat(kind: StringName, group := "seat", reach := SEAT_RANGE) -> Marker3D:
 	var best: Marker3D = null
-	var best_d := SEAT_RANGE
+	var best_d := reach
 	for s in get_tree().get_nodes_in_group(group):
 		var m := s as Marker3D
 		if m == null or m.get_meta(&"kind", &"") != kind or not m.is_visible_in_tree() or _taken(m):

@@ -92,6 +92,35 @@ the same downstairs with a long table, a loft bedroom up the stair, a porch (`Ar
   away: a fade and you're on the porch with the dog.
 - The tiers' perks are listed in the upgrade panel (home_* TierEffect stats, text only).
 - `test_home.gd` covers all four tiers (32 checks).
+
+**Phase 7 built 2026-10-29: villagers come to you.** `Home._process` schedules: every 2-3 mornings
+(`_day`, counted on `day_broke`) between 09:00 and 15:00, `send_visitor()` sends a free villager
+(`Villager.visit_home`) to the `Visit` marker by your door (Cabin up); there, with you within
+14 m, they say something (`Villager.say`, a line over their head: the new tier the first time
+they see it, `REACT`, else `HELLO`), without you they leave their trade's gift (`HomeNotes.GIFTS`)
+as a `DeskNote` on the `Doorstep` marker; 25 s later they go back to work. From the Homestead,
+half the evenings `ask_to_porch()` gives a villager `porch_tonight`: at dusk they claim a
+`PorchSeat*` (seat kind &"porch") on the porch bench, then go on to the tavern. A lane out to
+the home in `VillagePaths` (hm_east, hm_bend, hm_north, hm_front). `test_visits.gd` passes.
+
+**Phase 8 built 2026-10-29: add-on slots.** `AddonDef` (id, slot, name, blurb, cost, effects);
+`BuildingDef.addons` + `addon_slots` (the tier each slot opens at). `Village` keeps the built
+ones (`addon`, `slot_open`, `can_build_addon`, `build_addon` (swapping pays for the other),
+`set_addon`, `addon_changed`), saves them under "addons" beside the tiers, and adds their
+effects into `stat()`. Their pieces are `AO-<id>_*` in the building's model; `Building` keeps
+each in its own node with its own collision, pops it up when built, and reads markers in it
+(`TerraceSeat*`, `PorchSeat*` seats; `addon_mark()`). The upgrade panel's Add-ons tab shows each
+slot's fork with Build / Swap.
+- Built: slot 1 for the woodcutter (drying rack: +1 log / sharpening bench: +5% double hits),
+  the fisher (smokehouse: +10% double speared fish / lookout perch: fish 10% calmer), the
+  smithy (quench trough: +1 ore / big bellows: rocks 10% faster), the bakery (bread oven: well
+  rested 2 h longer / terrace awning: four breakfast seats), all opening at tier 2; your home
+  (porch swing: the day goes 4× faster while you sit on it, `DayNight.speed` / garden plot: a
+  harvest of wheat and barley in its crate each morning), opening at the Homestead.
+- **Not done**: second slots (every building was to have one at its top tier; no forks for
+  them yet), add-ons for the town hall, the prospector and the tavern, and villagers'
+  reactions to add-ons other than your home's.
+- `test_addons.gd` passes (open, build, effect, swap, save, the tab, garden, swing).
 Palette files: `E:\Godot\downloads\art-pick\newpal`, `strongpal`.
 
 ## Where we start (2026-10-29)

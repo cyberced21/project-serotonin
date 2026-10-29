@@ -300,6 +300,8 @@ def baker_cottage():
     k.empty("Smoke", (1.6, 2.4, 2 * WALL_TOP + 4.3))
     mv.hanging_sign(k, -2.0, -4.1, 2.4, lambda k, x, y, z: mv.loaves(k, x, y, z - 0.08, 3, 0.16))
     house.back(1.0)
+    street_oven(4.4, 1.0)
+    awning(1.8, -4.4)
     export_kit_building("baker_cottage")
 
 
@@ -362,6 +364,8 @@ def woodcutter():
     k.box("WoodpileRoof", (1.4, 2.0, 0.08), (-3.8, 0.6, 1.2), ("wood.2", "wood.2", "wood.1"), rot=(0, 0.25, 0))
     k.box("Lantern", (0.16, 0.16, 0.22), (0.95, -2.3, 2.0), ("accent.3", "accent.3", "neutral.1"))
     k.chopping_block((-3.6, -4.5, 0))
+    drying_rack_logs(4.6, 1.2)
+    whet_bench(4.6, 1.2)
     export_kit_building("woodcutter")
 
 
@@ -434,6 +438,8 @@ def fisher():
     mv.drying_rack(k, 2.5, 4.0, -0.4)
     k.barrel((-2.6, -1.9, 0), 0.28, 0.7)
     k.barrel((-2.0, -2.4, 0), 0.25, 0.6)
+    smokehouse(-3.4, 2.9)
+    lookout(3.7, 2.7)
     export_kit_building("fisher")
 
 
@@ -685,6 +691,8 @@ def smithy():
               (x * 2.82, -2.62, 2.3))
     k.add("SignCrystal", mv.prism(6, 0.07, 0.01, 0.26), ("ore.amethyst", "accent.6", "accent.6"), (3.15, -3.1, 2.15),
           (0, 0.4, 0))
+    quench_trough(-4.2, 0.6)
+    big_bellows(4.2, 1.6)
     export_kit_building("smithy")
 
 
@@ -758,6 +766,7 @@ def cabin(k):
     marker(k, "Plans", -2.0, -1.2, 0.9)
     prop(k, "Peg_Rack", 1.2, -2.85, 1.6)
     prop(k, "Lantern_Wall", -2.85, 0.4, 1.0, facing="+x")
+    visitors(k, 0.0, -3.0)
 
 
 def hearth(k, x, y, z=0.0, facing="-y"):
@@ -798,6 +807,13 @@ def trophy_wall(k, x, y, z=0.0, along="y", n=6):
         marker(k, f"TrophySlot{i + 1}", px, py, pz)
 
 
+def visitors(k, door_x, front_y):
+    """Where a visiting villager stands (a step out from the door, facing it) and where they leave
+    a gift if you're out (beside the door)."""
+    marker(k, "Visit", door_x + 0.8, front_y - 1.4, 0.0, (0, 1))
+    marker(k, "Doorstep", door_x - 0.75, front_y - 0.45, 0.02)
+
+
 def cottage(k):
     """Tier 3: a 6 x 8 m cottage: the hearth, a kitchen corner, a desk with the plans (and the
     villagers' notes), the trophy wall, the dog's basket by the fire."""
@@ -824,6 +840,7 @@ def cottage(k):
     trophy_wall(k, -2.65, 0.9)
     marker(k, "Wake", -1.0, 1.2, 0.0, (1, -1))
     prop(k, "Chandelier", 0, 0, WALL_TOP - 0.1)
+    visitors(k, 0.0, -4.0)
 
 
 def homestead(k):
@@ -872,6 +889,12 @@ def homestead(k):
     k.box("PorchRoof", (8.3, 2.3, 0.1), (0, -6.15, 2.75), ("wood.2", "wood.2", "wood.1"), rot=(0.17, 0, 0))
     k.box("Step", (1.4, 0.4, 0.18), (1.0, -7.4, 0.09), ("wood.5", "wood.4", "wood.3"))
     marker(k, "Arrive", 1.0, -8.4, 0.0, (0, 1))
+    # a bench on the porch, where a villager sits some evenings (and you can sit beside them)
+    prop(k, "Bench", -2.2, -5.75, 0.34)
+    marker(k, "PorchSeat1", -2.75, -5.75, 0.34, (0, -1))
+    marker(k, "PorchSeat2", -1.65, -5.75, 0.34, (0, -1))
+    marker(k, "Visit", 0.0, -7.9, 0.0, (0, 1))
+    marker(k, "Doorstep", 1.9, -5.5, 0.38)
 
 
 def home():
@@ -882,7 +905,135 @@ def home():
     cottage(k)
     marker(k, "Arrive", 0.0, -5.4, 0.0, (0, 1))
     homestead(mv.Kit("T4", 304))
+    porch_swing(2.9, -6.0, 0.34)
+    garden_plot(-6.2, 0.5)
     export_kit_building("home")
+
+
+# --- add-ons (plans/home.md, scripts/addon_def.gd) ------------------------------------------------
+# Each add-on's pieces go in with the building's, prefixed "AO-<id>" (no tier: Building shows them
+# while the add-on's built). Positions are in the building's own frame, clear of every tier.
+
+def addon(addon_id):
+    return mv.Kit(f"AO-{addon_id}", sum(map(ord, addon_id)))  # (a seed that stays put between runs)
+
+
+def drying_rack_logs(x, y):
+    """Woodcutter: split logs drying on a rack under a little roof (more logs from every tree)."""
+    k = addon("dryingrack")
+    for dy in (-0.9, 0.9):
+        for dx in (-0.5, 0.5):
+            k.post("RackPost", 0.06, 0, 1.6, x + dx, y + dy)
+    for z in (0.3, 0.8, 1.3):
+        for i in range(5):
+            k.log("SplitLog", 0.9, 0.11, (x, y - 0.8 + i * 0.4, z), "x", sides=("wood.5", "wood.6", "wood.4"))
+    k.box("RackRoof", (1.4, 2.3, 0.07), (x, y, 1.72), ("wood.2", "wood.2", "wood.1"), rot=(0, 0.15, 0))
+
+
+def whet_bench(x, y):
+    """Woodcutter: a bench with a whetstone and a grinding wheel (more double hits)."""
+    k = addon("whetbench")
+    prop(k, "Workbench", x, y, facing="-x")
+    prop(k, "Whetstone", x, y - 0.4, 0.9)
+    for dy in (-0.3, 0.3):
+        k.post("WheelFrame", 0.04, 0, 0.8, x - 0.9, y + 1.4 + dy)
+    k.add("Wheel", mv.prism(12, 0.32, 0.32, 0.1), ("stone.5", "stone.4", "stone.3"), (x - 0.9, y + 1.4, 0.7),
+          (math.pi / 2, 0, 0))
+
+
+def smokehouse(x, y):
+    """Fisher: a little plank smokehouse, smoke curling out (speared fish count twice more often)."""
+    k = addon("smokehouse")
+    k.plank_walls(x - 0.65, x + 0.65, y - 0.65, y + 0.65, 0.0, 1.5, 0.0, ["wood.3", "wood.4", "wood.2"], plank=0.33)
+    k.box("SmokeRoof", (1.6, 1.6, 0.08), (x, y, 1.62), ("wood.2", "wood.2", "wood.1"), rot=(0.12, 0, 0))
+    k.box("SmokeDoor", (0.6, 0.05, 1.1), (x, y - 0.68, 0.55), "wood.1")
+    k.empty("Smoke", (x, y, 1.75))
+
+
+def lookout(x, y):
+    """Fisher: a lookout perch on tall legs, a ladder up (calmer fish: Ollie spots them first)."""
+    k = addon("lookout")
+    for dx in (-0.55, 0.55):
+        for dy in (-0.55, 0.55):
+            k.post("PerchLeg", 0.06, 0, 2.5, x + dx, y + dy)
+    k.box("PerchFloor", (1.4, 1.4, 0.08), (x, y, 2.5), ("wood.5", "wood.4", "wood.3"))
+    for dx, dy, sx, sy in ((0, -0.68, 1.4, 0.05), (0, 0.68, 1.4, 0.05), (-0.68, 0, 0.05, 1.4), (0.68, 0, 0.05, 1.4)):
+        k.box("PerchRail", (sx, sy, 0.06), (x + dx, y + dy, 3.0), "wood.4")
+    for i in range(6):
+        k.box("Rung", (0.5, 0.05, 0.05), (x, y - 0.75, 0.35 + i * 0.4), "wood.5")
+    for dx in (-0.25, 0.25):
+        k.box("LadderSide", (0.05, 0.05, 2.6), (x + dx, y - 0.75, 1.3), "wood.3")
+
+
+def quench_trough(x, y):
+    """Smithy: a long stone trough of quench water (extra ore from every rock)."""
+    k = addon("quench")
+    for i in range(3):
+        k.stone("TroughStone", (0.75, 0.75, 0.6), (x, y - 0.75 + i * 0.75, 0.3))
+    k.box("QuenchWater", (0.5, 2.0, 0.04), (x, y, 0.58), "accent.4")
+    prop(k, "Bucket_Metal", x + 0.6, y + 1.2)
+
+
+def big_bellows(x, y):
+    """Smithy: great bellows on a frame by the forge, a pipe through the wall (rocks grow back faster)."""
+    k = addon("bellows")
+    k.box("BigBellowsLow", (1.0, 1.6, 0.08), (x, y, 0.7), "wood.3")
+    k.box("BigBellowsLeather", (0.95, 1.4, 0.42), (x, y + 0.05, 0.95), ("wood.1", "wood.1", "wood.0"))
+    k.box("BigBellowsTop", (1.0, 1.6, 0.08), (x, y, 1.2), "wood.3", rot=(0.12, 0, 0))
+    for dy in (-0.7, 0.7):
+        k.post("BellowsLeg", 0.07, 0, 0.7, x, y + dy)
+    k.add("BellowsPipe", mv.prism(8, 0.1, 0.1, 1.4), "metal.2", (x - 0.9, y, 0.95), (0, math.pi / 2, 0))
+    k.box("BellowsLever", (0.08, 1.2, 0.08), (x, y - 1.2, 1.5), "wood.5", rot=(0.4, 0, 0))
+
+
+def street_oven(x, y):
+    """Bakery: a bread oven out by the house (well rested lasts longer: the smell of new bread)."""
+    k = addon("breadoven")
+    mv.bread_oven(k, x, y, big=False)
+    mv.loaves(k, x + 0.9, y - 0.3, 0.05, 3, 0.25)
+
+
+def awning(x, y):
+    """Bakery: a striped awning over two little tables out front (more at breakfast)."""
+    k = addon("awning")
+    for dx in (-1.4, 1.4):
+        k.post("AwningPost", 0.06, 0, 2.4, x + dx, y - 1.0)
+    for i in range(6):
+        k.box("Awning", (0.48, 2.0, 0.04), (x - 1.2 + i * 0.48, y - 0.1, 2.3),
+              ("accent.0" if i % 2 else "neutral.6",) * 3, rot=(0.25, 0, 0))
+    n = 0
+    for tx, ty in ((x - 0.75, y - 0.6), (x + 0.75, y - 0.6)):
+        mv.cafe_table(k, tx, ty)
+        for sx in (-0.55, 0.55):
+            n += 1
+            mv.stool(k, tx + sx, ty, f"{k.prefix}_TerraceSeat{n}", (-sx, 0))
+
+
+def porch_swing(x, y, z):
+    """Home: a swing on the porch, hung from the porch roof (time goes by faster while you sit)."""
+    k = addon("swing")
+    for dx in (-0.75, 0.75):
+        k.box("SwingRope", (0.03, 0.03, 1.8), (x + dx, y, z + 1.45), "neutral.5")
+    k.box("SwingSeat", (1.6, 0.5, 0.08), (x, y, z + 0.5), ("wood.6", "wood.5", "wood.4"))
+    k.box("SwingBack", (1.6, 0.06, 0.45), (x, y + 0.25, z + 0.78), ("wood.6", "wood.5", "wood.4"), rot=(-0.2, 0, 0))
+    marker(k, "PorchSeatSwing", x, y - 0.1, z, (0, -1))
+
+
+def garden_plot(x, y):
+    """Home: a fenced vegetable bed beside the house (something to harvest every morning)."""
+    k = addon("garden")
+    k.box("GardenBed", (2.6, 3.4, 0.2), (x, y, 0.1), ("terrain.dirt", "wood.2", "wood.1"))
+    rows = ("leaves.5", "leaves.4", "accent.2", "leaves.6")
+    for r in range(4):
+        for i in range(5):
+            k.add("Plant", mv.blob(0.14, k.rng, jitter_amount=0.3, squash=(1.0, 1.0, 0.8)), rows[r],
+                  (x - 0.9 + r * 0.6, y - 1.3 + i * 0.65, 0.3))
+    for side in (-1, 1):
+        for i in range(5):
+            k.post("FencePost", 0.04, 0, 0.6, x + side * 1.45, y - 1.75 + i * 0.875, ("wood.5", "wood.4", "wood.3"))
+        k.box("FenceRail", (0.05, 3.6, 0.06), (x + side * 1.45, y, 0.45), "wood.5")
+    prop(k, "FarmCrate_Empty", x, y - 2.1)
+    marker(k, "Harvest", x, y - 2.1, 0.3)
 
 
 def export_kit_building(name):

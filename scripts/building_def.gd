@@ -26,6 +26,11 @@ extends Resource
 ])
 
 
+## Add-ons (plans/home.md): the two forks of each slot, and the tier each slot opens at (slot 1
+## first; a PackedInt32Array default for the same reason as night_lines).
+@export var addons: Array[AddonDef] = []
+@export var addon_slots := PackedInt32Array()
+
 ## Things worth a look inside (plans/home.md), one entry per Look* marker in the model:
 ## "<marker>|<what it is>|<the line>", e.g. "LookAxe|the old axe|Grandad's. Still the best edge
 ## in the valley." A marker name with ".<tier>" ("LookAxe.3") is that tier's own line for it.
@@ -49,6 +54,14 @@ func look(look: String, tier: int) -> PackedStringArray:
 		if parts[0] == look:
 			plain = PackedStringArray([parts[1], parts[2]])
 	return plain
+
+
+## The add-on `addon_id`, or null.
+func get_addon(addon_id: StringName) -> AddonDef:
+	for a in addons:
+		if a.id == addon_id:
+			return a
+	return null
 
 
 ## The tier resource for `tier` (1-based), or null.

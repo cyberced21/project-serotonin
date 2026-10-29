@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
 [ext_resource type="PackedScene" path="res://models/village/smithy.gltf" id="3_model"]
 [ext_resource type="Script" path="res://scripts/tier_effect.gd" id="4_effect"]
+[ext_resource type="Script" path="res://scripts/addon_def.gd" id="9_addon"]
 
 [sub_resource type="Resource" id="Effect_2_0"]
 script = ExtResource("4_effect")
@@ -69,6 +70,40 @@ hall_tier = 3
 lines = PackedStringArray("Crystal in the quench, crystal on the edge. Listen to it ring!", "Down at the bottom of the quarry, you said? Worth every step back up.", "No more pretty words from me. Go and hit something.")
 effects = Array[ExtResource("4_effect")]([SubResource("Effect_4_0"), SubResource("Effect_4_1")])
 
+[sub_resource type="Resource" id="AddonEffect_quench"]
+script = ExtResource("4_effect")
+stat = &"extra_ore"
+value = 1.0
+text = "+1 ore from every rock"
+
+[sub_resource type="Resource" id="Addon_quench"]
+script = ExtResource("9_addon")
+id = &"quench"
+name = "Quench trough"
+blurb = "A long stone trough of cold water."
+cost = Dictionary[StringName, int]({
+&"ore": 20,
+&"wood": 10
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_quench")])
+
+[sub_resource type="Resource" id="AddonEffect_bellows"]
+script = ExtResource("4_effect")
+stat = &"rock_regrow"
+value = 0.1
+text = "Rocks grow back 10% faster"
+
+[sub_resource type="Resource" id="Addon_bellows"]
+script = ExtResource("9_addon")
+id = &"bellows"
+name = "Big bellows"
+blurb = "Great bellows on a frame, a pipe through the wall."
+cost = Dictionary[StringName, int]({
+&"iron": 8,
+&"wood": 15
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_bellows")])
+
 [resource]
 script = ExtResource("1_def")
 id = &"smithy"
@@ -80,3 +115,5 @@ villager_role = "Smith"
 capped_line = "Town hall's not grand enough yet, says the mayor. Can't have the smithy outshining it."
 night_lines = PackedStringArray("Forge is banked for the night, but I'm up. What do you need?", "Can't sleep with the smell of iron in my nose. Come in, come in.")
 looks = PackedStringArray("LookHammer|Greta's first hammer|Cracked clean through the head. I keep it to remind me to temper the next one properly.")
+addons = Array[ExtResource("9_addon")]([SubResource("Addon_quench"), SubResource("Addon_bellows")])
+addon_slots = PackedInt32Array(2)

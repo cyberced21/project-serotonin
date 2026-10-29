@@ -65,6 +65,10 @@ var _doors: Dictionary[int, Array] = {}
 var _door_shapes: Dictionary[MeshInstance3D, CollisionShape3D] = {}
 var _looks: Dictionary[int, Array] = {}
 var _door_open := 1.0  # 0 shut .. 1 open
+## Add-ons (plans/home.md, AddonDef): each one's pieces in a node of their own, with their own
+## collision, shown while it's built in its slot and the slot is open.
+var _addon_nodes: Dictionary[StringName, Node3D] = {}
+var _addon_bodies: Dictionary[StringName, StaticBody3D] = {}
 var _upgrading := false
 
 
@@ -83,6 +87,8 @@ func _ready() -> void:
 		add_to_group("interior")  # (Acoustics: indoors while has_player())
 	_show_tier(Village.tier(def.id) if is_unlocked() else 0)
 	Village.tier_changed.connect(_on_tier_changed)
+	Village.addon_changed.connect(_on_addon_changed)
+	_show_addons(false)
 
 
 func _process(delta: float) -> void:
@@ -206,6 +212,9 @@ func _build_tiers() -> void:
 		_smoke[t] = []
 
 	for n in inst.find_children("*", "Node3D", true, false):
+		if String(n.name).begins_with("AO-"):
+			_add_addon_piece(n, inst)
+			continue
 		var t := _tier_of(n.name)
 		if t == 0 or not _tiers.has(t):
 			continue
@@ -257,6 +266,92 @@ func _build_tiers() -> void:
 	inst.free()
 
 
+## A piece of an add-on ("AO-<id>_..."): into that add-on's node (a mesh, with collision) or a
+## marker in it (TerraceSeat*/PorchSeat* seats; the rest found by name, addon_mark()).
+func _add_addon_piece(n: Node, inst: Node) -> void:
+	var id := StringName(String(n.name).substr(3).get_slice("_", 0))
+	if not _addon_nodes.has(id):
+		var group := Node3D.new()
+		group.name = "Addon_%s" % id
+		group.visible = false
+		add_child(group)
+		_addon_nodes[id] = group
+		var body := StaticBody3D.new()
+		body.collision_layer = WORLD_LAYER
+		body.collision_mask = 0
+		add_child(body)
+		_addon_bodies[id] = body
+	var xform := _model_transform(n, inst)
+	if n is MeshInstance3D:
+		var m := n as MeshInstance3D
+		m.get_parent().remove_child(m)
+		m.owner = null
+		for c in m.get_children():
+			m.remove_child(c)
+		_addon_nodes[id].add_child(m)
+		m.transform = xform
+		if m.mesh.get_surface_count() > 0 and m.mesh.surface_get_material(0) == null:
+			m.material_override = PaletteMaterial.for_mesh(m.mesh)
+		_homes[m] = xform
+		_mark_night_glow(m)
+		var aabb := m.get_aabb()
+		if aabb.size.x * aabb.size.y * aabb.size.z >= MIN_COLLIDER_VOLUME:
+			var shape := CollisionShape3D.new()
+			shape.shape = m.mesh.create_convex_shape(true, false)
+			shape.transform = xform
+			shape.disabled = true
+			_addon_bodies[id].add_child(shape)
+	elif n.name.to_lower().contains("smoke"):
+		var smoke := _make_smoke()
+		_addon_nodes[id].add_child(smoke)
+		smoke.transform = Transform3D(Basis.IDENTITY, xform.origin)
+	else:
+		var mark := Marker3D.new()
+		mark.name = String(n.name).substr(3).get_slice("_", 1)
+		_addon_nodes[id].add_child(mark)
+		mark.transform = xform
+		for kind in [&"terrace", &"porch"]:
+			if String(mark.name).to_lower().begins_with(String(kind) + "seat"):
+				mark.add_to_group("seat")
+				mark.set_meta(&"kind", kind)
+				mark.set_meta(&"home", self)
+
+
+## The marker `mark_name` in whichever built add-on has one (a swing seat, a harvest), or null.
+func addon_mark(mark_name: String) -> Marker3D:
+	for id in _addon_nodes:
+		if _addon_nodes[id].visible:
+			var m := _addon_nodes[id].get_node_or_null(mark_name) as Marker3D
+			if m:
+				return m
+	return null
+
+
+## Shows the built add-ons (in open slots), hides the rest; `pop` springs a new one up.
+func _show_addons(pop: bool) -> void:
+	for id in _addon_nodes:
+		var a := def.get_addon(id)
+		var on: bool = a != null and tier_shown > 0 and Village.slot_open(def.id, a.slot) and Village.addon(def.id, a.slot) == id
+		var group := _addon_nodes[id]
+		var was := group.visible
+		group.visible = on
+		for c in _addon_bodies[id].get_children():
+			(c as CollisionShape3D).set_deferred("disabled", not on)
+		if on and not was and pop:
+			for c in group.get_children():
+				var p := c as MeshInstance3D
+				if p and _homes.has(p):
+					p.scale = Vector3.ONE * 0.001
+					p.create_tween().tween_property(p, "scale", _homes[p].basis.get_scale(), piece_pop * 1.4) \
+						.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			_play(_thud, THUD_SFX, 1.1)
+
+
+func _on_addon_changed(id: StringName, _slot: int, _addon: StringName) -> void:
+	if id == def.id:
+		_show_addons(true)
+
+
 ## A door leaf (hinged at its origin): it gets its own collision, on only while it's shut.
 func _add_door(t: int, m: MeshInstance3D) -> void:
 	if not _doors.has(t):
@@ -274,12 +369,13 @@ func _add_door(t: int, m: MeshInstance3D) -> void:
 
 
 ## What a walk-in house's markers are for: Seat* a chair anyone may sit on (its villager's first),
-## Look* something to look at (BuildingDef.looks). Bed and the rest are found by name (mark()).
+## PorchSeat* a seat on your porch where a villager sits some evenings (plans/home.md), Look*
+## something to look at (BuildingDef.looks). Bed and the rest are found by name (mark()).
 func _use_mark(t: int, mark: Marker3D) -> void:
 	var n := String(mark.name)
-	if n.begins_with("Seat") and not mark.has_meta(&"kind"):
+	if (n.begins_with("Seat") or n.begins_with("PorchSeat")) and not mark.has_meta(&"kind"):
 		mark.add_to_group("seat")
-		mark.set_meta(&"kind", &"home")
+		mark.set_meta(&"kind", &"porch" if n.begins_with("PorchSeat") else &"home")
 		mark.set_meta(&"home", self)
 	elif n.begins_with("Look"):
 		var words := def.look(n.get_slice(".", 0), t)
@@ -329,6 +425,8 @@ func _show_tier(t: int) -> void:
 	tier_shown = t
 	_heading = t
 	_upgrading = false
+	if not _addon_nodes.is_empty():
+		_show_addons.call_deferred(false)
 	for k in _tiers:
 		_tiers[k].visible = k == t
 		_tiers[k].scale = Vector3.ONE
@@ -393,6 +491,7 @@ func _play_upgrade(from: int, to: int) -> void:
 
 	# 2. in with the new: bottom pieces first, each springing up out of the ground
 	tier_shown = to
+	_show_addons(false)  # (a slot may open with this tier)
 	_tiers[to].visible = true
 	_set_collision(to, true)
 	var fresh := _pieces(to)

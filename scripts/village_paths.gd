@@ -26,6 +26,9 @@ const POINTS := {
 	# the tavern (plans/tavern.md): across from the benches, in at its door, the middle of the room
 	&"tv_east": Vector2(91.4, 45.6), &"tv_front": Vector2(85.6, 45.0), &"tv_in": Vector2(83.6, 45.0),
 	&"tv_mid": Vector2(80.8, 45.2),
+	# out to your home on the west rim (plans/home.md): between the terrace and the tavern, round
+	# the north of the tavern, along your home's north side, to its front (it faces west)
+	&"hm_east": Vector2(80.0, 38.6), &"hm_bend": Vector2(74.0, 37.0), &"hm_north": Vector2(64.0, 36.0), &"hm_front": Vector2(55.5, 40.0),
 }
 const LINKS := [
 	[&"sq_n", &"sq_ne"], [&"sq_ne", &"sq_e"], [&"sq_e", &"sq_se"], [&"sq_se", &"sq_s"],
@@ -41,6 +44,7 @@ const LINKS := [
 	[&"sq_sw", &"tv_east"], [&"fi_lane", &"tv_east"], [&"tv_east", &"tv_front"], [&"tv_front", &"tv_in"],
 	[&"tv_in", &"tv_mid"], [&"tv_front", &"terrace"],
 	[&"terrace", &"tr_east"], [&"tr_east", &"bk_bend"], [&"tr_east", &"bk_lane"],
+	[&"terrace", &"hm_east"], [&"hm_east", &"hm_bend"], [&"hm_bend", &"hm_north"], [&"hm_north", &"hm_front"],
 ]
 ## Somewhere closer than this is walked to straight, when nothing's in the way.
 const DIRECT := 8.0
