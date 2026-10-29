@@ -137,7 +137,7 @@ Plan and decisions: [plans/biomes.md](../plans/biomes.md).
 - [x] **Crystal and the Crystal Forge:** Mining 40 on the quarry floor; the smithy's fourth tier (`BuildingTier.hall_tier` lets it need only town hall tier 3).
 - [x] **Farming lite:** the Farming skill, a sickle, wheat and barley in Goldmeadow.
 - [x] **Time trial** round the ring road: gate, eight checkpoints, splits, saved bests, medal banners on the gate.
-- [ ] **Mining tunnels** off the quarry's levels. Cut them into any level wall away from the haul road and the mantle stairs (see the generator's `_ramp_t` / `_stair_angles`).
+- [ ] **Mining tunnels** off the quarry's levels. Cut them into any level wall away from the haul road (see the generator's `_ramp_t`).
 - [ ] **Full farming:** planting and growing, seasons, a farmer villager and building, Rosa baking with wheat, a farming perk, and something to spend wheat and barley on.
 - [ ] **Tune the medal times** (170 / 125 / 95 s are first guesses; `TimeTrial` exports in `scenes/biomes/road.tscn`) after some real laps.
 - [ ] **Lap ghost:** a see-through figure replaying your best lap.
@@ -171,7 +171,6 @@ Plans and decisions: [plans/procgen.md](../plans/procgen.md), [plans/procgen-var
 - [x] **Variety:** a kind per biome, Hearthvale (the village) on every seed, rivers, ruins, camps and rare spots, rich and lean resources, an off-centre start (`plans/procgen-variety.md`).
 - [ ] **New screenshots:** `docs/images/procgen.png` predates the village, rivers and landmarks (skipped while a game was using the GPU; take them with the shots script when the machine's free).
 - [ ] **Walk the new pieces:** climb both ruins to their reward, wade a river and its fords, check the Lakeside Village's fisher meets the pond, see each kind's ground in person.
-- [ ] **The ring road / time trial in generated worlds:** still left out (hand-placed with baked heights).
 - [ ] **Hand-sculpting a seed:** a seed you like could be baked to `terrain_data`-style files and edited.
 - [x] **Themed nodes** ([plans/themed-nodes.md](../plans/themed-nodes.md), branch `themes`): a theme per biome kind dressing rocks, trees and scenery; shape families; rare looks.
 - [ ] **Themed nodes, playtest:** walk a few seeds and judge each theme in person (only screenshots so far: `docs/images/themes/`). Wet (Stillwater, Marsh) is the faintest; the trees' dressing is gentler than the rocks'.
@@ -224,3 +223,21 @@ Plans and decisions: [plans/procgen.md](../plans/procgen.md), [plans/procgen-var
 - [x] **Terrain collision range:** Terrain3D now builds collision for the whole map up front (`collision_mode` Full/Game, ~0.1 s at 512 m). Revisit if the world gets much bigger.
 - [x] **Saved node keys:** every placed node has a `save_id`. Saves keyed by the old scene path carry over automatically.
 - [ ] **GPU driver resets:** on 2026-10-16 the game lost its graphics device on Direct3D 12 (GTX 1080 Ti; Windows logged a TDR, `0x141`), and again on 2026-10-19 a moment after a generated world appeared (`nvlddmkm` event 153, `0x887a0005`). Switched to Vulkan (`rendering/rendering_device/driver.windows`) the same day; watch whether it comes back.
+
+## World ([plans/world.md](../plans/world.md), branch `world`)
+
+Generated worlds are gone (the procgen items above are history); Hearthvale is the one world.
+
+- [x] Procgen removed; old generated worlds deleted on startup.
+- [x] One rolling land: warped hills, organic flats, valleys between places, a rim of hills, slopes relaxed to ~30°.
+- [x] The creek, with grayling and salmon, and the footbridge over it.
+- [x] Roads routed over the land and graded from both ends (`scripts/world_roads.gd` is written by the generator).
+- [x] Biome borders warped and frayed; Goldmeadow's fields on a curving grid.
+- [x] The quarry keeps its stone faces (the ore walls), loses the mantle stairs; its mountainside is gentle.
+- [ ] **The land feels barren** (user, 2026-10-29): smooth now, but sparse. Later: more scenery and life between the places (groves, hedgerows, wildflowers along the creek, stone walls, lone trees on the hills, animals).
+- [ ] **Walk it:** nothing here is played yet; only slope maps and headless checks. Look for odd road bends, the creek's banks, where the biomes fray, and the view from the rim hills.
+- [x] **In-game screenshots:** `graphics_tour.gd --set=world` (docs/images/graphics/world/, sheet in docs/images/world/tour.jpg), the maps (docs/images/world/classic_*.png). They caught Frostpeak too low for its snow (raised to 64 m) and the rim hills being called Frostpeak by height (`Biome.biome_at` now goes by distance only).
+- [x] **Frostpeak shaped:** a summit, three spurs and a high western shoulder (`PEAK_RIDGES`), rounded crests, steep flanks that read as rock bands, snow on the gentler high ground, gullies down the sides; the relax pass leaves its faces alone.
+- [ ] **Biome cards vs ground:** `Biome.biome_at` still uses the plain shapes (ellipse, discs); the painted ground now uses warped ones, so a card can come a few metres early or late.
+- [x] **Saves:** a saved position under the new ground loads on top of it (`Player.from_dict`); one in the air just lands.
+- [ ] **Flaky tests:** `test_lamps` (lamps catching by full night, timing) and `test_fireflies` (a cricket voice fading in) fail now and then; both did on `main` before this.

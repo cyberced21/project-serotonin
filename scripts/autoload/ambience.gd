@@ -192,7 +192,7 @@ func _process(delta: float) -> void:
 ## to another, so nothing jumps.
 func _crickets_sing(delta: float, at: Vector3, night: float) -> void:
 	var scene := get_tree().current_scene
-	if scene and scene.get_instance_id() != _cricket_world and not get_tree().get_first_node_in_group("loading_screen"):
+	if scene and scene.get_instance_id() != _cricket_world:
 		_cricket_world = scene.get_instance_id()
 		_crickets = NatureSpots.find(get_tree(), CRICKET_SPACING, CRICKET_SPOTS, 0.3, 2)
 		_singing.clear(); _song_left.clear(); _song.clear()

@@ -2,8 +2,7 @@ class_name VillageDecor
 extends Node3D
 ## The village's projects in the world (plans/projects.md): the noticeboard in the square, and each
 ## decoration's props at their set spots once it's done. Spots are offsets from the middle of the
-## square (`center`), turned with the village (`angle`, as a generated village is), so Hearthvale
-## and every generated village share one layout. Facings are in the same village frame (a prop's
+## square (`center`), turned with the village (`angle`). Facings are in the same village frame (a prop's
 ## front, +Z, toward the square). The spots keep off the lanes to the houses.
 ## A project paid for just now is built where you can see it (P7): the nearest villager walks
 ## over and hammers, and each piece pops up out of the ground with a wooden tok, then a cheer.
@@ -61,10 +60,9 @@ const WELL_TIME := 4.0
 ## Middle of the square (world XZ) and how far the village is turned (radians).
 var center := HEARTHVALE_CENTER
 var angle := 0.0
-## Where the footbridge goes: [from, to] (world XZ), or [] for none. Hearthvale's spans the gully's
-## open gap (found in _ready); a generated world passes its ford (Footbridge.find_ford).
+## Where the footbridge goes: [from, to] (world XZ), or [] for none: where the village path
+## crosses the creek (found in _ready).
 var footbridge_site: Array = []
-var hearthvale := true
 var board: Noticeboard
 var _built: Dictionary[StringName, Array] = {}  # project -> its props
 var _paid: Dictionary[StringName, bool] = {}  # paid for this session: build it in view
@@ -79,8 +77,8 @@ func _ready() -> void:
 	board.name = "Noticeboard"
 	board.transform = frame(NOTICEBOARD[0], NOTICEBOARD[1])
 	add_child(board)
-	if hearthvale and footbridge_site.is_empty():
-		footbridge_site = _gully_gap()
+	if footbridge_site.is_empty():
+		footbridge_site = _creek_crossing()
 	Projects.footbridge_here = not footbridge_site.is_empty()
 	Projects.completed.connect(func(id: StringName) -> void: _paid[id] = true)
 	Projects.changed.connect(_sync)
@@ -364,19 +362,22 @@ func _make(id: StringName) -> Array[Node3D]:
 	return out
 
 
-## Hearthvale's gully: the half of the ring road with no earth under it, GAP m along the road
-## (tools/generate_test_terrain.gd _gully: the earth bridge is on the road's left).
-func _gully_gap() -> Array:
-	const GAP := 6.0
-	var ring := WorldMap.ring()
-	var at := 0
-	for i in ring.size():
-		if ring[i].distance_squared_to(WorldMap.GULLY_NEAR) < ring[at].distance_squared_to(WorldMap.GULLY_NEAR):
-			at = i
-	var along := (ring[(at + 1) % ring.size()] - ring[at]).normalized()
-	var left := Vector2(-along.y, along.x)
-	var mid := ring[at] - left * WorldMap.ROAD_HALF_WIDTH * 0.5
-	return [mid - along * (GAP * 0.5 + 1.5), mid + along * (GAP * 0.5 + 1.5)]
+## Where the village path crosses the creek: [from, to], reaching past its banks each side.
+func _creek_crossing() -> Array:
+	const REACH := 3.6  # past the channel's middle, each side
+	var path := WorldMap.spline(WorldMap.VILLAGE_PATH, false)
+	var creek := WorldMap.creek()
+	var best := [0, 0]
+	var best_d := INF
+	for i in path.size():
+		for k in creek.size():
+			var d := path[i].distance_squared_to(creek[k])
+			if d < best_d:
+				best_d = d
+				best = [i, k]
+	var along := (path[mini(best[0] + 1, path.size() - 1)] - path[maxi(best[0] - 1, 0)]).normalized()
+	var mid: Vector2 = creek[best[1]]
+	return [mid - along * REACH, mid + along * REACH]
 
 
 func _ground_at(p: Vector2) -> Vector3:

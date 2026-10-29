@@ -4,25 +4,25 @@ extends SceneTree
 ## Add `-- --preview=<file.png>` to also write a top-down map of the result (surface ids, shaded).
 ## WARNING: overwrites any sculpting you've done in res://terrain_data.
 ##
-## Layout: a flat clearing around the gathering area (where the trees, rocks and ruins sit, all
-## at height 0), hills rising outside it, a shallow wading pond just off the clearing (its water
-## surface lives in main.tscn at WATER_LEVEL), and one tall peak in a corner so every colour band
-## of the low-poly shader shows up.
-## Over the hills to the east lies the village: a second flat valley with its own pond, joined
-## to the clearing by a dirt path that cuts a pass through the hills. The path (and the village
-## square and the lanes to each house) is painted as texture id PATH_TEXTURE in the control map;
-## the terrain shader colours it and the footsteps sound like dirt on it.
-## South of the clearing a second path climbs over the hills to a lake in its own basin: wider and
-## deeper than the ponds (still wadeable), where the deep-water fish live.
+## Layout (plans/world.md): one rolling land, broad warped hills with soft crests, that eases
+## down into the places instead of having them stamped on. The clearing (where the trees, rocks
+## and ruins sit, at height 0), the village to the east and the lake basin to the south are
+## flats whose edges wander outward, joined by shallow valleys along the dirt paths between them.
+## The clearing and village have wading ponds, the lake is wider and deeper (still wadeable);
+## their water surfaces live in main.tscn at WATER_LEVEL. Frostpeak is one broad mountain in the
+## north-west, and the world's edge rises into high hills all round so the valley feels closed in.
+## A relax pass eases anything steeper than about 30° (the peak's top may be steeper).
+## The path (and the village square and the lanes to each house) is painted as texture id
+## PATH_TEXTURE in the control map; the terrain shader colours it and the footsteps sound like
+## dirt on it.
 ##
 ## Around all that sit the biomes (shapes in scripts/world_map.gd): the Pinewood over the northern
 ## hills, Greystone Quarry (a five-level pit) on a mountain shoulder to the west, Goldmeadow's
 ## swells and crop squares in the south-east, and a graded gravel ring road joining them, with
 ## spurs into each area. Each biome paints its own control-map texture id (WorldMap.TEX_*).
 ##
-## Everything above the old layout is added on top of it, and the ground under every hand-placed
-## node in main.tscn is pinned to the old heights (their Y is baked into the scene). The run ends
-## by listing any node whose ground still moved.
+## Hand-placed buildings, props and ruins in main.tscn stand on the flats (the run lists any whose
+## ground isn't at 0); the resource nodes under "Nodes" get their Y rewritten to the new ground.
 
 const WorldMap := preload("res://scripts/world_map.gd")
 
@@ -30,7 +30,57 @@ const SIZE := 512                       # heightmap pixels = metres (vertex spac
 const ORIGIN := Vector3(-256, 0, -256)  # world position of pixel (0, 0) — must sit on the region grid
 const CLEARING_CENTER := Vector2(0, -4)
 const CLEARING_RADIUS := 28.0
-const HILL_RAMP := 40.0                 # metres over which the hills rise out of the clearing
+const HILL_RAMP := 55.0                 # metres over which the hills rise out of the clearing
+## The flats' edges wander outward by up to this much (never inward: what's placed on them stays
+## on flat ground).
+const FLAT_GROW := 24.0
+## The hills: broad, rounded, warped so nothing reads as a circle. Height = HILL_BASE + up to
+## HILL_RANGE, eased down to the flats.
+const HILL_BASE := 3.0
+const HILL_RANGE := 17.0
+const WARP := 38.0                      # how far (m) the hills' noise is pushed around
+## Between the places the paths run along valleys: the hills keep this share of their height on
+## the valley floor, easing back to full over VALLEY_RAMP.
+const VALLEY_FLOOR := 0.22
+const VALLEY_HALF := 5.0
+const VALLEY_RAMP := 42.0
+## The creek (WorldMap.CREEK) runs down a vale of its own: the hills keep this share of their
+## height along it, easing back over CREEK_VALE. Its channel is CREEK_DEPTH deep under the water
+## (CREEK_POOL_DEPTH in the pools), and its banks ease up over CREEK_BANK.
+const CREEK_VALE_FLOOR := 0.05
+const CREEK_VALE := 48.0
+const CREEK_DEPTH := 0.55
+const CREEK_POOL_DEPTH := 1.2
+const CREEK_BANK := 8.0
+## Biome borders: each biome's ground thins out into the plain grass over this wide a belt.
+const BORDER_BELT := 22.0
+## Goldmeadow's swells ease into the hills over this much.
+const FIELD_RAMP := 60.0
+## The world's edge rises into higher hills so the valley feels closed in, not cut off.
+const RIM_WIDTH := 95.0
+const RIM_HEIGHT := 24.0
+## Frostpeak: a summit with spurs running down from it and a high shoulder to the west, each a
+## ridge with a rounded crest and steep flanks (rock where steeper than ~47°, snow on the gentler
+## high ground: shaders/terrain.gdshader), gullies cut down its sides.
+const PEAK_CENTER := Vector2(-92, -92)
+const PEAK_RADIUS := 76.0
+const PEAK_HEIGHT := 66.0
+## [from, to, crest height at each end, flank steepness at each end (rise per metre)]
+const PEAK_RIDGES := [
+	[Vector2(-92, -92), Vector2(-92, -92), 66.0, 66.0, 1.0, 1.0],     # the summit
+	[Vector2(-92, -92), Vector2(-50, -64), 64.0, 10.0, 1.3, 0.55],    # the north-east spur
+	[Vector2(-92, -92), Vector2(-98, -42), 62.0, 12.0, 1.25, 0.55],   # the south spur
+	[Vector2(-92, -92), Vector2(-84, -150), 62.0, 8.0, 1.2, 0.5],     # the north spur
+	[Vector2(-92, -92), Vector2(-126, -104), 60.0, 44.0, 1.4, 0.9],   # up to the shoulder
+	[Vector2(-126, -104), Vector2(-152, -132), 44.0, 10.0, 0.9, 0.5], # and down off it
+]
+const PEAK_CREST := 5.0  # how rounded the crests are (m)
+## Steepest rise per metre the relax pass leaves between neighbouring cells, along x or z (so
+## diagonally at most ~0.64, about 32°). Not in the quarry pit; Frostpeak may be steeper by up to
+## PEAK_SLOPE (its rock faces).
+const MAX_SLOPE := 0.45
+const PEAK_SLOPE := 1.2
+const RELAX_PASSES := 80
 const DATA_DIR := "res://terrain_data"
 const WATER_LEVEL := -0.15     # keep in sync with the ponds' WaterBody nodes in main.tscn
 ## Ponds: centre, radius (roughly where the bed rises to the water line), deepest point below
@@ -41,13 +91,13 @@ const PONDS := [
 	{"center": Vector2(-16, 76), "radius": 14.0, "depth": 1.35},  # the lake
 ]
 ## The lake's flat basin (hills ease up beyond radius over the ramp).
-const LAKE_BASIN := {"center": Vector2(-16, 74), "radius": 26.0, "ramp": 30.0}
+const LAKE_BASIN := {"center": Vector2(-16, 74), "radius": 26.0, "ramp": 50.0}
 ## The path from the clearing south over the hills to the lake shore.
 const LAKE_PATH := [Vector2(-3, 16), Vector2(-6, 32), Vector2(-11, 48), Vector2(-15, 59)]
 
 const VILLAGE_CENTER := Vector2(100, 40)  # the middle of the village square
 const VILLAGE_RADIUS := 36.0
-const VILLAGE_RAMP := 30.0
+const VILLAGE_RAMP := 50.0
 ## Control-map texture id that marks the path (see shaders/terrain.gdshader, footsteps.gd).
 const PATH_TEXTURE := WorldMap.TEX_PATH
 ## The path from the clearing over the pass into the village square.
@@ -62,44 +112,44 @@ const LANES := [
 const SQUARE_RADIUS := 7.5
 const PATH_HALF_WIDTH := 1.6
 const LANE_HALF_WIDTH := 1.0
-## Where the path crosses the hills it's cut down to at most this height, with sloping
-## shoulders either side: the pass you crest before seeing the village below.
-const PASS_HEIGHT := 6.0
-const PASS_SHOULDER := 9.0
 
 ## The quarry's haul road: each ramp runs along the inside of a wall, this wide, climbing one
 ## level over RAMP_LENGTH metres; the next ramp down starts RAMP_GAP metres further round.
 const RAMP_WIDTH := 4.5
 const RAMP_LENGTH := 38.0
 const RAMP_GAP := 4.0
-## Mantle stairs: two places on every wall where it drops in three steps instead of one, each
-## step LEDGE deep (5 m / 3 = 1.67 m high, within a mantle's reach), STAIR_WIDTH wide.
-const LEDGE := 1.6
-const STAIR_WIDTH := 6.0
 
-## The ring road: steepest grade, and how far the outer edge is raised on the tightest bends.
-const ROAD_GRADE := 0.08
-const BANK := 0.5          # each edge moves this far (m) from the centre line
-const BANK_RADIUS := 60.0  # bends tighter than this get banked, fully by half of it
-## Where a road cuts this deep into a hill, its sides are sheer (wall-runnable) instead of sloped.
-const WALL_CUT := 2.5
-const GULLY_DEPTH := 4.0
-const GULLY_GAP := 6.0     # length of the gap along the road
-const GULLY_REACH := 30.0  # how far the gully runs out to either side before it's level again
+## Roads and paths: steepest grade, how far their shoulders reach and over how much they ease
+## into the ground. No sheer cuttings: a road that cuts into a hill gets sloped sides.
+const ROAD_GRADE := 0.10
+const PATH_GRADE := 0.14
+const ROAD_SHOULDER := 26.0
+const PATH_SHOULDER := 16.0
+## Where the road router (a least-cost path over a ROUTE_CELL m grid) prefers to go: cost grows
+## with the slope squared; water, the quarry pit and hand-placed things are all but walls.
+const ROUTE_CELL := 4
+const ROUTE_SLOPE_COST := 160.0
+const ROUTE_WATER_COST := 300.0
+## The lines the roads were laid on, for the game (WorldMap.roads()).
+const ROADS_OUT := "res://scripts/world_roads.gd"
 
-## Ground under hand-placed nodes is pinned within PROTECT_INNER m and eased back by PROTECT_OUTER.
-const PROTECT_INNER := 3.0
-const PROTECT_OUTER := 10.0
+## Hand-placed things other than the resource nodes (buildings, props, ruins) stand on the flats
+## at height 0; the run lists any whose ground is off by more than this.
 const MOVED_TOLERANCE := 0.05
-## Scenes placed on the new terrain (quarry props, spawners...): never pinned to the old ground.
+## Scenes placed on the terrain at runtime (quarry props, spawners...): not checked.
 const BIOME_SCENES := "res://scenes/biomes/"
+## main.tscn's resource nodes (children of "Nodes"): their Y is rewritten to the new ground.
+const MAIN_SCENE := "res://scenes/main.tscn"
 
 var _noise := FastNoiseLite.new()
-var _bumps := FastNoiseLite.new()
+var _warp_x := FastNoiseLite.new()  # push the hills' noise around, so ridges wander
+var _warp_y := FastNoiseLite.new()
+var _fine := FastNoiseLite.new()    # a gentle swell, nothing like lumps
 var _shore := FastNoiseLite.new()  # makes the pond outlines irregular
 var _rings := FastNoiseLite.new()  # makes the quarry's walls wander
 var _swell := FastNoiseLite.new()  # the field's rolling swells
 var _edge := FastNoiseLite.new()   # ragged biome borders
+var _creek_mask := PackedByteArray()  # 1 on the creek's channel and inner banks
 var _ramp_top: Array[float] = []   # per quarry wall: angle of its ramp's top end
 var _ramp_span: Array[float] = []  # per quarry wall: angle its ramp covers
 
@@ -124,33 +174,21 @@ func _run() -> void:
 		for x in SIZE:
 			var w := _world(x, y)
 			var i := y * SIZE + x
-			base[i] = _height(w, _noise, _bumps, _shore)
-			h[i] = _biomes(w, base[i])
+			base[i] = _height(w)
 			ids[i] = _biome_id(w + Vector2(0.5, 0.5))  # the cell's centre
 			if _on_path(w + Vector2(0.5, 0.5)):
 				ids[i] = PATH_TEXTURE
+	for y in SIZE:
+		for x in SIZE:
+			var w := _world(x, y)
+			h[y * SIZE + x] = _biomes(w, base[y * SIZE + x]) + (_peak(w) + _rim(w)) * _off_quarry(w)
 	_glades(h)
-
-	var ring := _make_route(WorldMap.RING, true, WorldMap.ROAD_HALF_WIDTH, ROAD_GRADE, 40.0, h)
-	_bank(ring)
-	var gully := _nearest_sample(ring, WorldMap.GULLY_NEAR)
-	_widen(ring, gully)
-	_apply_route(ring, h, ids, WorldMap.TEX_ROAD, 20.0, WALL_CUT, 6.0, true)
-	_gully(ring, gully, h, ids)
-	for spur in WorldMap.SPURS:
-		var pts: Array = spur.duplicate()
-		pts[0] = ring["pts"][_nearest_sample(ring, pts[0])]
-		_apply_route(_make_route(pts, false, 2.0, 0.10, 20.0, h), h, ids, WorldMap.TEX_ROAD, 16.0, WALL_CUT, 6.0, true)
-	var q := WorldMap.QUARRY_CENTER
-	var rim := q + Vector2.from_angle(WorldMap.QUARRY_ROAD_ANGLE) * (WorldMap.QUARRY_WALLS[0] + 2.0)
-	var to_quarry := [ring["pts"][_nearest_sample(ring, rim)], rim]
-	_apply_route(_make_route(to_quarry, false, 2.0, 0.10, 6.0, h), h, ids, WorldMap.TEX_ROAD, 8.0, WALL_CUT, 4.0, false)
-	var trail: Array = WorldMap.TRAIL.duplicate()
-	trail[trail.size() - 1] = ring["pts"][_nearest_sample(ring, trail[trail.size() - 1])]
-	_apply_route(_make_route(trail, false, 1.5, 0.15, 14.0, h), h, ids, PATH_TEXTURE, 8.0, 99.0, 5.0, true)
+	_relax(h)
+	_carve_creek(h)
 
 	var baked := _baked_points()
-	_protect(h, base, baked)
+	var laid := _lay_roads(h, ids, baked)
+	_relax(h)  # again: smooths any seam where two roads' banks (or a hairpin's legs) meet
 
 	var img := Image.create_empty(SIZE, SIZE, false, Image.FORMAT_RF)
 	for y in SIZE:
@@ -169,9 +207,10 @@ func _run() -> void:
 				var w := _world(x, y)
 				terrain.data.set_control_base_id(Vector3(w.x, 0, w.y), id)
 				painted += 1
-	_report_path_slope(terrain)
-	_report_ring(ring)
-	_report_moved(baked, h, base)
+	_write_roads(laid)
+	_report_moved(baked, h)
+	_report_slopes(h, ids)
+	_rebake_nodes(h)
 
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DATA_DIR))
 	terrain.data.save_directory(DATA_DIR)
@@ -184,10 +223,16 @@ func _run() -> void:
 
 func _setup() -> void:
 	_noise.seed = 7
-	_noise.frequency = 0.012
-	_noise.fractal_octaves = 4
-	_bumps.seed = 21
-	_bumps.frequency = 0.06
+	_noise.frequency = 0.0065
+	_noise.fractal_octaves = 3
+	_noise.fractal_gain = 0.42
+	_warp_x.seed = 31
+	_warp_x.frequency = 0.004
+	_warp_y.seed = 32
+	_warp_y.frequency = 0.004
+	_fine.seed = 21
+	_fine.frequency = 0.02
+	_fine.fractal_octaves = 1
 	_shore.seed = 5
 	_shore.frequency = 0.15
 	_rings.seed = 11
@@ -211,23 +256,109 @@ func _world(x: int, y: int) -> Vector2:
 	return Vector2(x + ORIGIN.x, y + ORIGIN.z)
 
 
-## The original layout's height: the clearing, village, lake, hills, passes, ponds and the peak.
-func _height(w: Vector2, noise: FastNoiseLite, bumps: FastNoiseLite, shore: FastNoiseLite) -> float:
-	# 0 inside the clearing and the village, easing up to 1 over the ramps
-	var outside := minf(minf(
-		smoothstep(CLEARING_RADIUS, CLEARING_RADIUS + HILL_RAMP, w.distance_to(CLEARING_CENTER)),
-		smoothstep(VILLAGE_RADIUS, VILLAGE_RADIUS + VILLAGE_RAMP, w.distance_to(VILLAGE_CENTER))),
-		smoothstep(LAKE_BASIN["radius"], LAKE_BASIN["radius"] + LAKE_BASIN["ramp"], w.distance_to(LAKE_BASIN["center"])))
-	var hills := outside * ((noise.get_noise_2dv(w) * 0.5 + 0.5) * 18.0 + 4.0)
-	var h := hills + outside * bumps.get_noise_2dv(w) * 1.5  # small lumps, not on the flats
-	# the pass: the path cuts the hills down to PASS_HEIGHT (and smooths the lumps away)
+## The land before the biomes (Frostpeak and the rim go on after them): rolling hills that ease
+## down to the clearing, the village and the lake basin, valleys along the paths between them,
+## and the ponds.
+func _height(w: Vector2) -> float:
+	# a product, not a min: where two places' rims meet there's no crease
+	var outside := _rise(w, CLEARING_CENTER, CLEARING_RADIUS, HILL_RAMP) 			* _rise(w, VILLAGE_CENTER, VILLAGE_RADIUS, VILLAGE_RAMP) 			* _rise(w, LAKE_BASIN["center"], LAKE_BASIN["radius"], LAKE_BASIN["ramp"])
 	for path in [PATH, LAKE_PATH]:
-		var cut := 1.0 - smoothstep(PATH_HALF_WIDTH, PATH_HALF_WIDTH + PASS_SHOULDER, _polyline_distance(w, path))
-		h = lerpf(h, minf(hills, PASS_HEIGHT), cut)
+		var v := smoothstep(VALLEY_HALF, VALLEY_HALF + VALLEY_RAMP, _polyline_distance(w, path))
+		outside *= lerpf(VALLEY_FLOOR, 1.0, v)
+	var c := smoothstep(WorldMap.CREEK_HALF_WIDTH, CREEK_VALE, _polyline_distance(w, WorldMap.CREEK))
+	outside *= lerpf(CREEK_VALE_FLOOR, 1.0, c)
+	var h := outside * _hills(w)
 	for pond in PONDS:
-		h = _pond(w, h, pond, shore)
-	h += _bump(w, Vector2(-92, -92), 30.0) * 38.0        # the snowy peak
+		h = _pond(w, h, pond, _shore)
 	return h
+
+
+## 0 on a place's flat (its edge wandering out by up to FLAT_GROW), easing to 1 over `ramp`.
+func _rise(w: Vector2, center: Vector2, radius: float, ramp: float) -> float:
+	var lobes := _warp_x.get_noise_2dv(w * 6.0) * 0.6 + _warp_y.get_noise_2dv(w * 2.5) * 0.4  # big lobes and smaller ones
+	var grow := clampf(lobes * 0.5 + 0.5, 0.0, 1.0) * FLAT_GROW
+	var t := clampf((w.distance_to(center) - radius - grow) / ramp, 0.0, 1.0)
+	return t * t * t * (t * (t * 6.0 - 15.0) + 10.0)  # smootherstep: no crease at either end
+
+
+## The open hills: warped low-frequency noise with soft crests and hollows.
+func _hills(w: Vector2) -> float:
+	var q := w + Vector2(_warp_x.get_noise_2dv(w), _warp_y.get_noise_2dv(w)) * WARP
+	var n := clampf(_noise.get_noise_2dv(q) * 0.5 + 0.5, 0.0, 1.0)
+	n = n * n * (3.0 - 2.0 * n)
+	return HILL_BASE + n * HILL_RANGE + _fine.get_noise_2dv(w) * 0.6
+
+
+## 0 in the quarry and on its apron, easing to 1 down its mountainside: the peak and the rim
+## don't tilt the pit.
+func _off_quarry(w: Vector2) -> float:
+	var outer: float = WorldMap.QUARRY_WALLS[0] + WorldMap.QUARRY_APRON
+	return smoothstep(outer, outer + WorldMap.QUARRY_SLOPE, w.distance_to(WorldMap.QUARRY_CENTER))
+
+
+## Frostpeak: its ridges (PEAK_RIDGES) melted together, over a broad base so the valleys between
+## the spurs don't fall to nothing, with gullies down the flanks; faded out at its foot.
+func _peak(w: Vector2) -> float:
+	var d0 := w.distance_to(PEAK_CENTER)
+	if d0 > PEAK_RADIUS * 1.3:
+		return 0.0
+	var h := 26.0 * (1.0 - smoothstep(0.0, PEAK_RADIUS, d0))  # the massif under it all
+	for r in PEAK_RIDGES:
+		var a: Vector2 = r[0]
+		var b: Vector2 = r[1]
+		var ab := b - a
+		var t := 0.0 if ab.length_squared() < 0.01 else clampf((w - a).dot(ab) / ab.length_squared(), 0.0, 1.0)
+		var d := w.distance_to(a + ab * t)
+		var crest := lerpf(r[2], r[3], t)
+		var side := lerpf(r[4], r[5], t)
+		var ridge := crest - side * (sqrt(d * d + PEAK_CREST * PEAK_CREST) - PEAK_CREST)
+		h = h + log(1.0 + exp(0.35 * (ridge - h))) / 0.35  # a soft max: ridges merge without creases
+	# gullies running down the flanks, deepest high up
+	var dir := (w - PEAK_CENTER) / maxf(d0, 0.001)  # (by direction, not angle: no seam where it wraps)
+	var down := _noise.get_noise_3d(dir.x * 900.0, dir.y * 900.0, d0 * 1.5)
+	h -= absf(down) * 6.0 * clampf(h / PEAK_HEIGHT, 0.0, 1.0)
+	return maxf(h, 0.0) * (1.0 - smoothstep(PEAK_RADIUS * 0.85, PEAK_RADIUS * 1.3, d0))
+
+
+## The edge of the world rising into high hills (wandering, so it isn't a straight wall).
+func _rim(w: Vector2) -> float:
+	var half := SIZE * 0.5
+	var inner := half - RIM_WIDTH
+	var c := (w - Vector2(ORIGIN.x + half, ORIGIN.z + half)).abs()
+	var past := Vector2(maxf(c.x - inner, 0.0), maxf(c.y - inner, 0.0)).length()  # rounded corners
+	past += _warp_x.get_noise_2dv(w * 1.3) * 18.0
+	var t := clampf(past / RIM_WIDTH, 0.0, 1.0)
+	return RIM_HEIGHT * t * t
+
+
+## Eases every slope steeper than MAX_SLOPE back toward it, a little at a time from both sides, so
+## the hills keep their shape but lose their ledges. The flats stay put: nothing there is steep.
+func _relax(h: PackedFloat32Array) -> void:
+	var limit := PackedFloat32Array()  # per cell; 0 = leave it alone
+	limit.resize(SIZE * SIZE)
+	for y in SIZE:
+		for x in SIZE:
+			var w := _world(x, y)
+			var crags := 1.0 - smoothstep(PEAK_RADIUS * 0.6, PEAK_RADIUS * 1.0, w.distance_to(PEAK_CENTER))
+			var keep := _in_pit(w) or (not _creek_mask.is_empty() and _creek_mask[y * SIZE + x] == 1)
+			limit[y * SIZE + x] = 0.0 if keep else MAX_SLOPE + crags * PEAK_SLOPE
+	for pass_i in RELAX_PASSES:
+		var changed := 0
+		for y in SIZE - 1:
+			for x in SIZE - 1:
+				var i := y * SIZE + x
+				if limit[i] == 0.0:
+					continue
+				for j in [i + 1, i + SIZE]:
+					var d: float = h[j] - h[i]
+					var excess := absf(d) - limit[i]
+					if excess > 0.0:
+						var move := signf(d) * excess * 0.5
+						h[i] += move
+						h[j] -= move
+						changed += 1
+		if changed == 0:
+			break
 
 
 ## No hills right next to the water, then a shallow bowl with a gently sloping shore.
@@ -251,10 +382,13 @@ func _biomes(w: Vector2, h: float) -> float:
 	var d := w.distance_to(q)
 	if d < outer:
 		h = _quarry_height(w, d)
-	elif d < outer + WorldMap.QUARRY_SLOPE:
-		h = lerpf(WorldMap.QUARRY_RIM_HEIGHT, h, smoothstep(outer, outer + WorldMap.QUARRY_SLOPE, d))
-	var fd := w.distance_to(WorldMap.FIELD_CENTER) + _edge.get_noise_2dv(w) * 8.0
-	var inside := 1.0 - smoothstep(WorldMap.FIELD_RADIUS, WorldMap.FIELD_RADIUS + WorldMap.FIELD_RAMP, fd)
+	elif d < outer + WorldMap.QUARRY_SLOPE + 30.0:
+		# the mountainside falls away from the apron over a wandering distance, not a ring
+		var dw := d + (_biome_warp(w).distance_to(q) - d) * smoothstep(outer, outer + 15.0, d)
+		h = lerpf(WorldMap.QUARRY_RIM_HEIGHT, h, smoothstep(outer, outer + WorldMap.QUARRY_SLOPE, dw))
+	var fd := _biome_warp(w).distance_to(WorldMap.FIELD_CENTER)
+	var inside := 1.0 - smoothstep(WorldMap.FIELD_RADIUS - 10.0, WorldMap.FIELD_RADIUS + FIELD_RAMP, fd)
+	inside *= smoothstep(VILLAGE_RADIUS + FLAT_GROW, VILLAGE_RADIUS + FLAT_GROW + 25.0, w.distance_to(VILLAGE_CENTER))  # (not on the village's flat)
 	if inside > 0.0:
 		h = lerpf(h, 0.8 + (_swell.get_noise_2dv(w) * 0.5 + 0.5) * 3.5, inside)
 	return h
@@ -271,7 +405,7 @@ func _quarry_height(w: Vector2, d: float) -> float:
 	return WorldMap.QUARRY_RIM_HEIGHT - WorldMap.QUARRY_LEVEL_DROP * (walls.size() - above)
 
 
-## 1 on the outer side of wall i, 0 on the inner side; in between on its ramp and stairs.
+## 1 on the outer side of wall i, 0 on the inner side; in between on its ramp.
 func _wall_step(i: int, dn: float, theta: float) -> float:
 	var b: float = WorldMap.QUARRY_WALLS[i]
 	var s := _sharp(dn - b)
@@ -279,13 +413,10 @@ func _wall_step(i: int, dn: float, theta: float) -> float:
 		var t := _ramp_t(i, theta)
 		if t >= 0.0:
 			return t
-	for a in _stair_angles(i):
-		if absf(angle_difference(theta, a)) * b < STAIR_WIDTH * 0.5:
-			return (_sharp(dn - b + 2.0 * LEDGE) + _sharp(dn - b + LEDGE) + s) / 3.0
 	return s
 
 
-## A drop over a single vertex, so walls come out sheer enough to wall-run.
+## A drop over a single vertex: the pit's walls are cut stone faces (the ore walls stand on them).
 func _sharp(x: float) -> float:
 	return smoothstep(-0.2, 0.2, x)
 
@@ -294,12 +425,6 @@ func _sharp(x: float) -> float:
 func _ramp_t(i: int, theta: float) -> float:
 	var a := fposmod(theta - (_ramp_top[i] - _ramp_span[i]), TAU)
 	return a / _ramp_span[i] if a <= _ramp_span[i] else -1.0
-
-
-## The two mantle stairs on wall i, spread round the part of the wall the ramp doesn't use.
-func _stair_angles(i: int) -> Array[float]:
-	var rest := TAU - _ramp_span[i]
-	return [_ramp_top[i] + rest / 3.0, _ramp_top[i] + rest * 2.0 / 3.0]
 
 
 func _on_haul_road(w: Vector2) -> bool:
@@ -314,34 +439,60 @@ func _on_haul_road(w: Vector2) -> bool:
 
 ## Which surface a cell gets from the biome it's in (roads and paths are painted on top later).
 func _biome_id(w: Vector2) -> int:
-	var ragged := _edge.get_noise_2dv(w)
-	var qd := w.distance_to(WorldMap.QUARRY_CENTER)
+	var q := _biome_warp(w)
 	var pit: float = WorldMap.QUARRY_WALLS[0]
-	if qd < pit + WorldMap.QUARRY_APRON + 4.0 + ragged * 4.0:
-		return PATH_TEXTURE if qd < pit + 1.0 and _on_haul_road(w) else WorldMap.TEX_QUARRY
-	var fd := w.distance_to(WorldMap.FIELD_CENTER) + ragged * 8.0
-	if fd < WorldMap.FIELD_RADIUS - 4.0:
-		return _crop_id(w)
-	if fd < WorldMap.FIELD_RADIUS + 10.0:
+	var qd := q.distance_to(WorldMap.QUARRY_CENTER)
+	var apron := pit + WorldMap.QUARRY_APRON
+	if w.distance_to(WorldMap.QUARRY_CENTER) < pit + 1.0:
+		return PATH_TEXTURE if _on_haul_road(w) else WorldMap.TEX_QUARRY
+	if _dither(w, qd, apron, apron + BORDER_BELT):
+		return WorldMap.TEX_QUARRY
+	var fd := q.distance_to(WorldMap.FIELD_CENTER)
+	if fd < WorldMap.FIELD_RADIUS - 6.0:
+		return _crop_id(w, q)
+	if _dither(w, fd, WorldMap.FIELD_RADIUS + 6.0, WorldMap.FIELD_RADIUS + 6.0 + BORDER_BELT):
 		return WorldMap.TEX_FIELD
-	var f := (w - WorldMap.FOREST_CENTER) / WorldMap.FOREST_RADII
-	if f.length_squared() + ragged * 0.3 < 1.0 and qd > pit + WorldMap.QUARRY_APRON + WorldMap.QUARRY_SLOPE \
-			and w.distance_to(Vector2(-92, -92)) > 35.0:
+	var f := ((q - WorldMap.FOREST_CENTER) / WorldMap.FOREST_RADII).length() * WorldMap.FOREST_RADII.y
+	var r := WorldMap.FOREST_RADII.y
+	if _dither(w, f, r - BORDER_BELT * 0.6, r + BORDER_BELT * 0.4) and qd > apron + WorldMap.QUARRY_SLOPE \
+			and w.distance_to(PEAK_CENTER) > 35.0:
 		return WorldMap.TEX_FOREST
 	return WorldMap.TEX_DEFAULT
 
 
-## The field's patchwork: a tilted grid of squares, most sown, split by dirt tracks.
-func _crop_id(w: Vector2) -> int:
+## Where the biomes' outlines are measured from: pushed around by two sizes of noise, so no border
+## is an ellipse or a circle.
+func _biome_warp(w: Vector2) -> Vector2:
+	return w + Vector2(_warp_x.get_noise_2dv(w * 2.0), _warp_y.get_noise_2dv(w * 2.0)) * 24.0 \
+			+ Vector2(_edge.get_noise_2dv(w), _edge.get_noise_2dv(w + Vector2(91, 37))) * 6.0
+
+
+## True inside `inner`, false past `outer`, and in between a scatter of cells that thins out
+## (clumped a little, so the edge breaks into patches rather than noise).
+func _dither(w: Vector2, d: float, inner: float, outer: float) -> bool:
+	if d <= inner:
+		return true
+	if d >= outer:
+		return false
+	var t := (d - inner) / (outer - inner)
+	var clump := _edge.get_noise_2dv(w * 2.3) * 0.35 + _hash(w.floor()) * 0.65
+	return clump > t * 0.9 + 0.05
+
+
+## The field's patchwork: squares on a gently curving grid (the tracks bend with the land), most
+## sown, some left to meadow; the outer ring of squares only partly sown.
+func _crop_id(w: Vector2, q: Vector2) -> int:
 	const CELL := 22.0
 	const TRACK := 3.0
 	var local := (w - WorldMap.FIELD_CENTER).rotated(0.35)
+	local += Vector2(_swell.get_noise_2dv(w * 0.4), _swell.get_noise_2dv(w * 0.4 + Vector2(40, 0))) * 7.0
 	var fu := fposmod(local.x, CELL)
 	var fv := fposmod(local.y, CELL)
 	if fu < TRACK or fv < TRACK:
 		return PATH_TEXTURE
 	var square := Vector2(floorf(local.x / CELL), floorf(local.y / CELL))
-	return WorldMap.TEX_CROP if _hash(square) < 0.7 else WorldMap.TEX_FIELD
+	var edge := smoothstep(WorldMap.FIELD_RADIUS - 30.0, WorldMap.FIELD_RADIUS - 6.0, q.distance_to(WorldMap.FIELD_CENTER))
+	return WorldMap.TEX_CROP if _hash(square) < 0.75 - edge * 0.5 else WorldMap.TEX_FIELD
 
 
 func _hash(p: Vector2) -> float:
@@ -377,12 +528,24 @@ func _make_route(ctrl: Array, loop: bool, half: float, grade: float, smooth_m: f
 		var side := Vector2(-dirs[i].y, dirs[i].x) * half
 		ground[i] = (_sample(h, pts[i]) + _sample(h, pts[i] + side) + _sample(h, pts[i] - side)) / 3.0
 	var heights := _smooth(ground, int(smooth_m), loop)
-	_limit_grade(heights, pts, grade, loop)
+	var g := grade
+	if loop:
+		_limit_grade(heights, pts, grade, loop)
+	else:
+		# both ends on the ground; a road that must climb further than its grade allows climbs
+		# evenly a little steeper, instead of meeting the ground in a step
+		var length := 0.0
+		for i in range(1, n):
+			length += pts[i].distance_to(pts[i - 1])
+		g = maxf(grade, absf(ground[n - 1] - ground[0]) / maxf(length, 1.0) * 1.25)
+		heights[0] = ground[0]
+		heights[n - 1] = ground[n - 1]
+		_clamp_grade(heights, pts, g)
 	heights = _smooth(heights, 4, loop)
 	if not loop:  # meet the ground (or the road it starts from) exactly at both ends
-		for i in n:
-			var from_end := minf(i, n - 1 - i)
-			heights[i] = lerpf(ground[i], heights[i], smoothstep(0.0, 8.0, from_end))
+		heights[0] = ground[0]
+		heights[n - 1] = ground[n - 1]
+		_clamp_grade(heights, pts, g * 1.1)
 	var halfs := PackedFloat32Array()
 	halfs.resize(n)
 	halfs.fill(half)
@@ -410,6 +573,25 @@ func _smooth(a: PackedFloat32Array, radius: int, loop: bool) -> PackedFloat32Arr
 	return out
 
 
+## Keeps every step along an open route within `grade`, up or down, from its two pinned ends
+## inward: hills are cut and hollows filled about evenly.
+func _clamp_grade(a: PackedFloat32Array, pts: PackedVector2Array, grade: float) -> void:
+	var n := a.size()
+	for _pass in 64:
+		var changed := false
+		for dir in [1, -1]:
+			for k in range(1, n - 1):
+				var i: int = k if dir == 1 else n - 1 - k
+				var prev: int = i - dir
+				var d := grade * pts[i].distance_to(pts[prev])
+				var v := clampf(a[i], a[prev] - d, a[prev] + d)
+				if absf(v - a[i]) > 0.001:
+					a[i] = v
+					changed = true
+		if not changed:
+			return
+
+
 ## Lowers the route wherever it climbs faster than `grade` in either direction: hills become
 ## cuttings, and valleys keep their depth with the road easing down into them.
 func _limit_grade(a: PackedFloat32Array, pts: PackedVector2Array, grade: float, loop: bool) -> void:
@@ -428,32 +610,6 @@ func _limit_grade(a: PackedFloat32Array, pts: PackedVector2Array, grade: float, 
 					changed = true
 		if not changed:
 			return
-
-
-## Banks the tight bends: the outer edge up, the inner edge down.
-func _bank(r: Dictionary) -> void:
-	var dirs: PackedVector2Array = r["dirs"]
-	var n := dirs.size()
-	var bank: PackedFloat32Array = r["bank"]
-	for i in n:
-		var turn := angle_difference(dirs[posmod(i - 6, n)].angle(), dirs[(i + 6) % n].angle()) / 12.0
-		var radius := 1.0 / absf(turn) if absf(turn) > 0.0001 else INF
-		# lateral offsets are measured to the left; a left turn (turn > 0) raises the right edge
-		bank[i] = -signf(turn) * clampf((BANK_RADIUS - radius) / (BANK_RADIUS * 0.5), 0.0, 1.0) * BANK
-	r["bank"] = _smooth(bank, 10, true)
-
-
-## Doubles the road's width around the gully, so there's room for both the bridge and the gap.
-func _widen(r: Dictionary, at: int) -> void:
-	var half: PackedFloat32Array = r["half"]
-	var bank: PackedFloat32Array = r["bank"]
-	var n := half.size()
-	for i in n:
-		var k := absi(i - at)
-		k = mini(k, n - k)
-		var t := 1.0 - smoothstep(8.0, 18.0, k)
-		half[i] += WorldMap.ROAD_HALF_WIDTH * t
-		bank[i] *= 1.0 - t
 
 
 ## Lays the route into the terrain: flat (or banked) across its width, with shoulders that ease
@@ -481,8 +637,8 @@ func _apply_route(r: Dictionary, h: PackedFloat32Array, ids: PackedByteArray, te
 		var hw := half[s]
 		var road := heights[s] + bank[s] * clampf(v.z / hw, -1.0, 1.0)
 		var w := _world(i % SIZE, i / SIZE)
-		if _in_pit(w):
-			continue  # the quarry keeps its walls
+		if _in_pit(w) or _creek_mask[i] == 1:
+			continue  # the quarry keeps its walls; the creek runs on under a path (a ford)
 		if v.x <= hw:
 			h[i] = road
 			if tex == WorldMap.TEX_ROAD or ids[i] != WorldMap.TEX_ROAD:
@@ -492,32 +648,12 @@ func _apply_route(r: Dictionary, h: PackedFloat32Array, ids: PackedByteArray, te
 		var diff := h[i] - road
 		if diff < 0.0 and not fill:
 			continue
-		var width := (1.0 if diff > wall_cut else gentle) if diff > 0.0 else clampf(-diff * 1.5, 2.0, shoulder)
+		var width := (1.0 if diff > wall_cut else clampf(diff * 2.4, gentle, shoulder)) if diff > 0.0 				else clampf(-diff * 1.5, 2.0, shoulder)
 		h[i] = lerpf(road, h[i], smoothstep(0.0, width, e))
 
 
 func _in_pit(w: Vector2) -> bool:
 	return w.distance_to(WorldMap.QUARRY_CENTER) < WorldMap.QUARRY_WALLS[0] + 2.0
-
-
-## A gully across the road: the left half of the road stays on an earth bridge, the right half
-## is a sheer-sided gap to jump or dash. Fall in and the gully floor rises out at either end.
-func _gully(r: Dictionary, at: int, h: PackedFloat32Array, ids: PackedByteArray) -> void:
-	var p: Vector2 = r["pts"][at]
-	var along_dir: Vector2 = r["dirs"][at]
-	var left := Vector2(-along_dir.y, along_dir.x)
-	var road: float = r["h"][at]
-	var bridge: float = r["half"][at]
-	_for_pixels_near(p, GULLY_REACH + 2.0, func(i: int, w: Vector2) -> void:
-		var off := w - p
-		var lat := off.dot(left)
-		if absf(off.dot(along_dir)) > GULLY_GAP * 0.5 or (lat >= 0.0 and lat <= bridge + 0.2):
-			return
-		var depth := GULLY_DEPTH * (1.0 - smoothstep(GULLY_REACH * 0.5, GULLY_REACH, absf(lat)))
-		if depth > 0.0 and h[i] > road - depth:
-			h[i] = road - depth
-			if ids[i] == WorldMap.TEX_ROAD:
-				ids[i] = WorldMap.TEX_DEFAULT)
 
 
 func _nearest_sample(r: Dictionary, to: Vector2) -> int:
@@ -531,8 +667,8 @@ func _nearest_sample(r: Dictionary, to: Vector2) -> int:
 
 # --- protecting hand-placed nodes -------------------------------------------------------------
 
-## Where everything placed by hand in main.tscn stands (nodes, ruins, buildings, props, water),
-## leaving out the biome scenes.
+## Where everything placed by hand in main.tscn stands (ruins, buildings, props, water), leaving
+## out the biome scenes and the resource nodes.
 func _baked_points() -> Array[Vector2]:
 	var scene := load("res://scenes/main.tscn") as PackedScene
 	var main := scene.instantiate()
@@ -546,24 +682,177 @@ func _collect(node: Node, xform: Transform3D, depth: int, out: Array[Vector2]) -
 	for child in node.get_children():
 		if not child is Node3D or child is Terrain3D or child is Light3D or child.name == "Scenery":
 			continue
-		if child.scene_file_path.begins_with(BIOME_SCENES):
-			continue  # the biomes are built on the new ground, not the old
+		if child.scene_file_path.begins_with(BIOME_SCENES) or child.name == "Nodes":
+			continue  # built on the new ground at runtime / moved onto it by _rebake_nodes
 		var t := xform * (child as Node3D).transform
 		out.append(Vector2(t.origin.x, t.origin.z))
 		if depth < 2:
 			_collect(child, t, depth + 1, out)
 
 
-## Puts the old ground back under (and eases it in around) every hand-placed node.
-func _protect(h: PackedFloat32Array, base: PackedFloat32Array, points: Array[Vector2]) -> void:
-	var keep := PackedFloat32Array()
-	keep.resize(SIZE * SIZE)
-	for p in points:
-		_for_pixels_near(p, PROTECT_OUTER, func(i: int, w: Vector2) -> void:
-			keep[i] = maxf(keep[i], 1.0 - smoothstep(PROTECT_INNER, PROTECT_OUTER, w.distance_to(p))))
-	for i in h.size():
-		if keep[i] > 0.0:
-			h[i] = lerpf(h[i], base[i], keep[i])
+## The creek's channel along its vale: a rounded bed under the water (deeper in the pools), soft
+## banks easing up to the ground. Level water the whole way, so the bed only ever goes down.
+func _carve_creek(h: PackedFloat32Array) -> void:
+	var pts := WorldMap.creek()
+	var half := WorldMap.CREEK_HALF_WIDTH
+	var nearest: Dictionary[int, float] = {}
+	for p in pts:
+		_for_pixels_near(p, half + CREEK_BANK, func(i: int, w: Vector2) -> void:
+			var d := w.distance_to(p)
+			if d < nearest.get(i, INF):
+				nearest[i] = d)
+	_creek_mask.resize(SIZE * SIZE)
+	for i in nearest:
+		var d: float = nearest[i]
+		var w := _world(i % SIZE, i / SIZE)
+		if d < half + 2.5:
+			_creek_mask[i] = 1
+		if d < half:
+			var depth := CREEK_DEPTH
+			for pool in WorldMap.CREEK_POOLS:
+				depth = lerpf(depth, CREEK_POOL_DEPTH, 1.0 - smoothstep(0.0, WorldMap.CREEK_POOL_RADIUS, w.distance_to(pool)))
+			var u := d / half
+			h[i] = minf(h[i], WATER_LEVEL - depth * (1.0 - u * u))
+		else:
+			var t := smoothstep(half, half + CREEK_BANK, d)
+			var bank := WATER_LEVEL + 0.1 + (d - half) * 0.15
+			h[i] = minf(h[i], lerpf(bank, h[i], t))
+
+
+## Lays WorldMap.ROADS in order: each along its fixed line or a least-cost route over the land,
+## graded, then pressed into the ground with sloped shoulders. Returns {id: laid route}.
+func _lay_roads(h: PackedFloat32Array, ids: PackedByteArray, baked: Array[Vector2]) -> Dictionary:
+	var grid := _road_grid(h, baked)
+	var laid := {}
+	for spec in WorldMap.ROADS:
+		var ctrl: Array = spec.get("ctrl", [])
+		if ctrl.is_empty():
+			var from: Vector2 = spec["from"]
+			var to: Vector2 = spec["to"]
+			if spec.has("join"):
+				from = _nearest_on(laid[spec["join"]], from)
+			if spec.has("join_end"):
+				to = _nearest_on(laid[spec["join_end"]], to)
+			var stops: Array = [from] + spec.get("via", []) + [to]
+			ctrl = []
+			for k in stops.size() - 1:
+				var leg := _route(grid, stops[k], stops[k + 1])
+				ctrl.append_array(leg if k == 0 else leg.slice(1))
+		var road: bool = spec["kind"] == &"road"
+		var half := WorldMap.ROAD_HALF_WIDTH if road else WorldMap.PATH_HALF_WIDTH
+		var before := h.duplicate()
+		var r := _make_route(ctrl, false, half, ROAD_GRADE if road else PATH_GRADE, 24.0 if road else 10.0, h)
+		_apply_route(r, h, ids, WorldMap.TEX_ROAD if road else PATH_TEXTURE,
+				ROAD_SHOULDER if road else PATH_SHOULDER, 99.0, 10.0 if road else 6.0, true)
+		laid[spec["id"]] = r
+		_report_road(spec, r, before)
+	return laid
+
+
+## The router's grid: one cell per ROUTE_CELL m, weighted by how hard the ground is to build on.
+func _road_grid(h: PackedFloat32Array, baked: Array[Vector2]) -> AStarGrid2D:
+	var n := SIZE / ROUTE_CELL
+	var grid := AStarGrid2D.new()
+	grid.region = Rect2i(0, 0, n, n)
+	grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+	grid.update()
+	for cy in n:
+		for cx in n:
+			var w := _cell_world(Vector2i(cx, cy))
+			var r := ROUTE_CELL * 0.5
+			var g := Vector2(_sample(h, w + Vector2(r, 0)) - _sample(h, w - Vector2(r, 0)),
+					_sample(h, w + Vector2(0, r)) - _sample(h, w - Vector2(0, r))).length() / ROUTE_CELL
+			var cost := 1.0 + ROUTE_SLOPE_COST * g * g
+			if _sample(h, w) < WATER_LEVEL + 0.25 or _creek_mask[_pixel(w)] == 1:
+				cost += ROUTE_WATER_COST
+			if w.distance_to(WorldMap.QUARRY_CENTER) < WorldMap.QUARRY_WALLS[0] + 1.0:
+				cost += ROUTE_WATER_COST
+			cost += _rim(w) * 4.0
+			grid.set_point_weight_scale(Vector2i(cx, cy), cost)
+	for p in baked:
+		var c := _world_cell(p)
+		if grid.is_in_boundsv(c):
+			grid.set_point_weight_scale(c, grid.get_point_weight_scale(c) + ROUTE_WATER_COST)
+	return grid
+
+
+## The cheapest way from `from` to `to`, as spline control points about three cells apart, with
+## both ends exact.
+func _route(grid: AStarGrid2D, from: Vector2, to: Vector2) -> Array:
+	var cells := grid.get_id_path(_world_cell(from), _world_cell(to))
+	var ctrl: Array = [from]
+	for k in range(3, cells.size() - 2, 3):
+		ctrl.append(_cell_world(cells[k]))
+	ctrl.append(to)
+	return ctrl
+
+
+func _cell_world(c: Vector2i) -> Vector2:
+	return Vector2(ORIGIN.x + (c.x + 0.5) * ROUTE_CELL, ORIGIN.z + (c.y + 0.5) * ROUTE_CELL)
+
+
+func _world_cell(w: Vector2) -> Vector2i:
+	return Vector2i(floori((w.x - ORIGIN.x) / ROUTE_CELL), floori((w.y - ORIGIN.z) / ROUTE_CELL))
+
+
+func _pixel(w: Vector2) -> int:
+	return clampi(int(w.y - ORIGIN.z), 0, SIZE - 1) * SIZE + clampi(int(w.x - ORIGIN.x), 0, SIZE - 1)
+
+
+func _nearest_on(r: Dictionary, to: Vector2) -> Vector2:
+	return r["pts"][_nearest_sample(r, to)]
+
+
+## The roads' lines as laid, for the game: a GDScript file of constants (exports leave out plain
+## data files), WorldMap.roads() reads it.
+func _write_roads(laid: Dictionary) -> void:
+	var lines := PackedStringArray()
+	lines.append("extends RefCounted")
+	lines.append("## Written by tools/generate_test_terrain.gd: the lines the roads were laid on (WorldMap.roads()).")
+	lines.append("## Don't edit by hand; change WorldMap.ROADS and regenerate.")
+	lines.append("")
+	lines.append("const LINES := {")
+	for spec in WorldMap.ROADS:
+		var pts: PackedVector2Array = laid[spec["id"]]["pts"].duplicate()
+		if spec.get("reverse", false):
+			pts.reverse()
+		var nums := PackedStringArray()
+		for p in pts:
+			nums.append("Vector2(%.2f, %.2f)" % [p.x, p.y])
+		lines.append("\t&\"%s\": [%s]," % [spec["id"], ", ".join(nums)])
+	lines.append("}")
+	lines.append("")
+	var f := FileAccess.open(ROADS_OUT, FileAccess.WRITE)
+	f.store_string("\n".join(lines))
+	f.close()
+
+
+## Rewrites the Y of main.tscn's resource nodes (children of "Nodes") to the new ground: a text
+## edit of their `position` lines only, so nothing else in the scene is touched.
+func _rebake_nodes(h: PackedFloat32Array) -> void:
+	const KEY := "\nposition = Vector3("
+	var blocks := FileAccess.get_file_as_string(MAIN_SCENE).split("\n[node ")
+	var moved := 0
+	for b in range(1, blocks.size()):
+		var block := blocks[b]
+		var at := block.find(KEY)
+		if not block.contains("parent=\"Nodes\"") or at < 0:
+			continue
+		var start := at + KEY.length()
+		var end := block.find(")", start)
+		var xyz := block.substr(start, end - start).split(",")
+		var x := xyz[0].strip_edges()
+		var z := xyz[2].strip_edges()
+		var y := snappedf(_sample(h, Vector2(x.to_float(), z.to_float())), 0.01)
+		if absf(y - xyz[1].strip_edges().to_float()) < 0.005:
+			continue
+		moved += 1
+		var ys := str(int(y)) if y == roundf(y) else str(y)
+		blocks[b] = block.substr(0, start) + "%s, %s, %s" % [x, ys, z] + block.substr(end)
+	var f := FileAccess.open(MAIN_SCENE, FileAccess.WRITE)
+	f.store_string("\n[node ".join(blocks))
+	f.close()
+	print("Resource nodes in main.tscn: %d moved onto the new ground" % moved)
 
 
 # --- helpers ----------------------------------------------------------------------------------
@@ -595,8 +884,6 @@ func _sample(h: PackedFloat32Array, w: Vector2) -> float:
 func _on_path(w: Vector2) -> bool:
 	if w.distance_to(VILLAGE_CENTER) < SQUARE_RADIUS:
 		return true
-	if _polyline_distance(w, PATH) < PATH_HALF_WIDTH or _polyline_distance(w, LAKE_PATH) < PATH_HALF_WIDTH:
-		return true
 	for lane in LANES:
 		if _polyline_distance(w, lane) < LANE_HALF_WIDTH:
 			return true
@@ -618,51 +905,61 @@ func _bump(w: Vector2, center: Vector2, radius: float) -> float:
 
 # --- reports ----------------------------------------------------------------------------------
 
-## Prints the steepest stretch along the path, to check it stays walkable.
-func _report_path_slope(terrain: Terrain3D) -> void:
-	var steepest := 0.0
-	var top := -INF
-	for i in PATH.size() - 1:
-		var a: Vector2 = PATH[i]
-		var b: Vector2 = PATH[i + 1]
-		var steps := int(a.distance_to(b))
-		for s in steps:
-			var p := a.lerp(b, float(s) / steps)
-			var q := a.lerp(b, float(s + 1) / steps)
-			var hp: float = terrain.data.get_height(Vector3(p.x, 0, p.y))
-			var hq: float = terrain.data.get_height(Vector3(q.x, 0, q.y))
-			steepest = maxf(steepest, absf(hq - hp) / p.distance_to(q))
-			top = maxf(top, hp)
-	print("Path: highest point %.1f m, steepest grade %.2f" % [top, steepest])
-
-
-func _report_ring(r: Dictionary) -> void:
+## A road's length, steepest grade and deepest cutting (how far below the old ground it runs).
+func _report_road(spec: Dictionary, r: Dictionary, before: PackedFloat32Array) -> void:
 	var pts: PackedVector2Array = r["pts"]
 	var heights: PackedFloat32Array = r["h"]
-	var bank: PackedFloat32Array = r["bank"]
 	var length := 0.0
 	var steepest := 0.0
-	var banked := 0
-	var n := pts.size()
-	for i in n:
-		var j := (i + 1) % n
-		var d := pts[i].distance_to(pts[j])
-		length += d
-		steepest = maxf(steepest, absf(heights[j] - heights[i]) / maxf(d, 0.01))
-		banked += 1 if absf(bank[i]) > 0.05 else 0
-	print("Ring road: %.0f m long, %.1f to %.1f m high, steepest grade %.3f, %d m banked" % [
-			length, Array(heights).min(), Array(heights).max(), steepest, banked])
+	var cut := 0.0
+	for i in pts.size():
+		cut = maxf(cut, _sample(before, pts[i]) - heights[i])
+		if i > 0:
+			var d := pts[i].distance_to(pts[i - 1])
+			length += d
+			steepest = maxf(steepest, absf(heights[i] - heights[i - 1]) / maxf(d, 0.01))
+	print("%-14s %4.0f m, steepest grade %.3f, deepest cut %.1f m" % [spec["id"], length, steepest, cut])
 
 
-## Lists hand-placed nodes whose ground moved (it shouldn't: _protect pins it).
-func _report_moved(points: Array[Vector2], h: PackedFloat32Array, base: PackedFloat32Array) -> void:
+## Lists hand-placed things (not the resource nodes: _rebake_nodes moves those) whose ground isn't
+## at height 0: they were placed on the flats.
+func _report_moved(points: Array[Vector2], h: PackedFloat32Array) -> void:
 	var moved := 0
 	for p in points:
-		var delta := absf(_sample(h, p) - _sample(base, p))
-		if delta > MOVED_TOLERANCE:
+		var g := _sample(h, p)
+		if absf(g) > MOVED_TOLERANCE and not _in_water(p):
 			moved += 1
-			print("  ground moved %.2f m under the node at (%.1f, %.1f)" % [delta, p.x, p.y])
-	print("Hand-placed nodes: %d checked, %d with moved ground" % [points.size(), moved])
+			print("  ground at %.2f m under the thing at (%.1f, %.1f)" % [g, p.x, p.y])
+	print("Hand-placed things: %d checked, %d off the flats" % [points.size(), moved])
+
+
+func _in_water(p: Vector2) -> bool:
+	for pond in PONDS:
+		if p.distance_to(pond["center"]) < float(pond["radius"]) + 2.0:
+			return true
+	return false
+
+
+## How steep the land is, leaving out the peak and the rim: shares of the cells by slope, and
+## the sheer ones off the roads and the quarry pit.
+func _report_slopes(h: PackedFloat32Array, ids: PackedByteArray) -> void:
+	var counts := [0, 0, 0, 0]  # < 15°, < 30°, < 45°, steeper
+	var sheer := 0
+	var total := 0
+	for y in SIZE - 1:
+		for x in SIZE - 1:
+			var w := _world(x, y)
+			if w.distance_to(PEAK_CENTER) < PEAK_RADIUS or _rim(w) > 2.0:
+				continue
+			var i := y * SIZE + x
+			var g := Vector2(h[i + 1] - h[i], h[i + SIZE] - h[i]).length()
+			counts[0 if g < 0.268 else 1 if g < 0.577 else 2 if g < 1.0 else 3] += 1
+			total += 1
+			if g > 2.0 and ids[i] != WorldMap.TEX_ROAD and not _in_pit(w):
+				sheer += 1
+	print("Slopes (outside peak and rim): %.1f%% under 15°, %.1f%% 15-30°, %.1f%% 30-45°, %.1f%% steeper; %d sheer cells off the roads and the pit" % [
+			100.0 * counts[0] / total, 100.0 * counts[1] / total, 100.0 * counts[2] / total,
+			100.0 * counts[3] / total, sheer])
 
 
 ## A top-down picture of the result: one colour per surface id, shaded by slope.

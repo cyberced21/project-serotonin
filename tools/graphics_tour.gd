@@ -13,10 +13,10 @@ extends SceneTree
 ##   --set=lamps      the lamps' views (plans/lamps.md): every road stretch lit and the lantern
 ##                    given, at dusk and night, a dark trail by lantern alone, the lantern raised
 ##   --set=projects   the village projects' views (plans/projects.md): the square with none done
-##                    and with all, at dusk, the noticeboard open, the footbridge over the gully
+##                    and with all, at dusk, the noticeboard open, the footbridge over the creek
+##   --set=world      the world revamp's views (plans/world.md): the creek, the valleys, the roads
+##                    on the land, the quarry's slopes, the valley from the rim hills
 ##   --look=k=v,k=v   override SkyLook values for this run (numbers only), e.g. --look=water_mist=0.3
-##   --procgen=SEED   instead: a generated world, three views from its spawn (its save is thrown
-##                    away afterwards unless it was already there)
 ## The game is played on a throwaway save, so the real one is never touched.
 
 const VIEWS := [
@@ -70,16 +70,31 @@ const PROJECT_VIEWS := [
 	["square_after_west", Vector3(86, 0, 32), Vector3(104, 0, 44), 0.45, "all"],
 	["square_dusk", Vector3(100, 0, 53), Vector3(100, 0, 38), 0.865, "all"],
 	["noticeboard", Vector3(107.2, 0, 34.0), Vector3(109, 0, 32), 0.4, "none", "board"],
-	["footbridge", Vector3(182, 0, -22), Vector3(190.2, 0, -21), 0.42, "all"],
+	["footbridge", Vector3(22, 0, 9), Vector3(28, 0, 0), 0.42, "all"],
 ]
 
+const WORLD_VIEWS := [
+	["creek_spring", Vector3(42, 0, -82), Vector3(33, 0, -55), 0.4],
+	["creek_clearing", Vector3(34, 0, -26), Vector3(26, 0, 6), 0.45],
+	["creek_footbridge", Vector3(22, 0, 9), Vector3(28, 0, 0), 0.42],
+	["creek_to_lake", Vector3(16, 0, 30), Vector3(0, 0, 56), 0.55],
+	["valley_to_village", Vector3(30, 0, 2), Vector3(100, 0, 40), 0.4],
+	["village_from_road", Vector3(150, 0, -40), Vector3(110, 0, 30), 0.6],
+	["quarry_road", Vector3(-39, 0, 36), Vector3(-115, 0, 10), 0.35],
+	["quarry_slopes", Vector3(-95, 0, 30), Vector3(-160, 0, -10), 0.45],
+	["lake_road", Vector3(-90, 0, 57), Vector3(-30, 0, 74), 0.6],
+	["goldmeadow_edge", Vector3(150, 0, 88), Vector3(180, 0, 150), 0.33],
+	["pinewood_edge", Vector3(70, 0, -40), Vector3(40, 0, -100), 0.4],
+	["from_the_rim", Vector3(200, 0, -170), Vector3(40, 0, 0), 0.38],
+	["frostpeak", Vector3(-22, 0, -14), Vector3(-92, 30, -92), 0.45],
+	["frostpeak_shoulder", Vector3(-118, 0, -52), Vector3(-112, 38, -100), 0.4],
+]
 var views: Array = VIEWS
 var lamps := false
 var projects := false
 var out_dir := "res://docs/images/graphics/latest"
 var preset := ""
 var only: PackedStringArray = PackedStringArray()
-var procgen_seed := -1
 
 
 func _initialize() -> void:
@@ -99,11 +114,11 @@ func _initialize() -> void:
 		elif arg == "--set=lamps":
 			views = LAMP_VIEWS
 			lamps = true
+		elif arg == "--set=world":
+			views = WORLD_VIEWS
 		elif arg == "--set=projects":
 			views = PROJECT_VIEWS
 			projects = true
-		elif arg.begins_with("--procgen="):
-			procgen_seed = arg.trim_prefix("--procgen=").to_int()
 	_run.call_deferred()
 
 
@@ -123,10 +138,6 @@ func _run() -> void:
 		gfx.call("apply_preset", StringName(preset))
 	var day_night := root.get_node("DayNight")
 	day_night.set("frozen", true)  # each view at exactly its time
-	if procgen_seed >= 0:
-		await _procgen_tour(day_night)
-		quit()
-		return
 	var p := get_first_node_in_group("player") as Node3D
 	if lamps:
 		root.get_node("Lamps").call("light_all", true)
@@ -166,21 +177,6 @@ func _run() -> void:
 			board_panel.call("close")
 		print("VIEW %-16s %5.1f fps   at %s yaw %.2f" % [v[0], fps, p.global_position.snapped(Vector3.ONE * 0.1), p.rotation.y])
 	quit()
-
-
-func _procgen_tour(day_night: Node) -> void:
-	root.get_node("Worlds").call("play_scratch", procgen_seed)  # a scratch world: never the player's
-	await _wait(12.0)  # generation takes a few seconds
-	day_night.set("time", 0.4)
-	var p := get_first_node_in_group("player") as Node3D
-	var at := p.global_position
-	for i in 3:
-		var yaw := i * TAU / 3.0
-		_go(p, at, at + Vector3(sin(yaw), 0.0, cos(yaw)) * 10.0)
-		await _wait(2.0)
-		var fps := await _measure_fps(2.0)
-		await _shot("procgen_%d_%d" % [procgen_seed, i])
-		print("VIEW procgen %d/%d %5.1f fps" % [procgen_seed, i, fps])
 
 
 func _wait(seconds: float) -> void:

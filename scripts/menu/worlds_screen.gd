@@ -1,11 +1,10 @@
 class_name WorldsScreen
 extends PanelContainer
 ## The Worlds screen: every world as a card (picture, name, what it is, when it was last played and
-## for how long), the most recent first. Pick one, then Play, Rename, Duplicate, Delete (Reset for
-## the classic world, which can't go), or make a New World.
+## for how long), the most recent first. Pick one, then Play, Rename or Reset. Today that's just
+## Hearthvale: generated worlds went with plans/world.md.
 
 signal closed
-signal new_world_requested
 
 const THUMB := Vector2(160, 90)
 
@@ -14,7 +13,6 @@ var _cards: Dictionary[String, PanelContainer] = {}
 var _selected := ""
 var _play: Button
 var _rename: Button
-var _duplicate: Button
 var _delete: Button
 var _delete_armed := false
 var _rename_row: HBoxContainer
@@ -31,7 +29,6 @@ func _init() -> void:
 	var t := MenuUI.title("Worlds", 30)
 	t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(t)
-	head.add_child(MenuUI.button("New World", func() -> void: new_world_requested.emit()))
 	box.add_child(head)
 
 	var scroll := ScrollContainer.new()
@@ -60,9 +57,6 @@ func _init() -> void:
 	row.add_child(_play)
 	_rename = MenuUI.button("Rename", _start_rename, 16)
 	row.add_child(_rename)
-	_duplicate = MenuUI.button("Duplicate", _on_duplicate, 16)
-	_duplicate.tooltip_text = "A fresh world with the same seed and settings"
-	row.add_child(_duplicate)
 	_delete = MenuUI.button("Delete", _on_delete, 16)
 	row.add_child(_delete)
 	var gap := Control.new()
@@ -128,10 +122,6 @@ func _card(m: Dictionary) -> PanelContainer:
 	var when := "Not played yet" if played <= 0.0 else "Played %s · %s in all" % [MenuUI.ago(played),
 			MenuUI.duration(float(m.get("playtime", 0.0)))]
 	text.add_child(MenuUI.label(when, 14, MenuUI.DIM))
-	if Worlds.outdated(m) and Worlds.has_save(id):
-		var warn := MenuUI.label("Made with an older generator: the land may have changed", 13, MenuUI.WARN)
-		warn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		text.add_child(warn)
 	for c in text.get_children():
 		(c as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return card
@@ -173,21 +163,14 @@ func _select(id: String) -> void:
 	var classic: bool = m.get("kind") == "classic"
 	_play.disabled = m.is_empty()
 	_rename.disabled = m.is_empty()
-	_duplicate.disabled = m.is_empty() or classic
 	_delete.disabled = m.is_empty() or (classic and not Worlds.has_save(id))
 	_delete.text = "Reset" if classic else "Delete"
-	_delete.tooltip_text = "Start the classic world over" if classic else ""
+	_delete.tooltip_text = "Start Hearthvale over" if classic else ""
 
 
 func _on_play() -> void:
 	if not _selected.is_empty():
 		Worlds.play(_selected)
-
-
-func _on_duplicate() -> void:
-	var id := Worlds.duplicate_world(_selected)
-	if not id.is_empty():
-		refresh(id)
 
 
 func _on_delete() -> void:

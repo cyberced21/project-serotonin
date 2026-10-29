@@ -2,7 +2,7 @@ class_name Footbridge
 extends StaticBody3D
 ## The mended footbridge (plans/projects.md P10): a plank deck on two stringers between `from`
 ## and `to` (points on the ground at either end), a gentle arch, a rail each side on posts. Built
-## in code so it fits whatever it spans: Hearthvale's gully gap, or a generated world's ford.
+## in code so it fits whatever it spans: the creek where the village path crosses it.
 ## You walk on it (one box collider along the deck); standing on it you're out of the water
 ## (on_bridge(): player.gd's wading and Footsteps ask).
 
@@ -13,8 +13,6 @@ const PLANK := 0.24
 const RAIL_HEIGHT := 0.95
 const WOOD := Color(0.55, 0.38, 0.22)
 const WOOD_DARK := Color(0.36, 0.24, 0.14)
-## A ford's bridge reaches this far past the water each side.
-const FORD_MARGIN := 2.0
 
 var from := Vector3.ZERO
 var to := Vector3.ZERO
@@ -92,33 +90,6 @@ static func on_bridge(tree: SceneTree, pos: Vector3) -> bool:
 		if side < WIDTH * 0.5 + 0.2 and pos.y > deck - 0.4 and pos.y < deck + 1.0:
 			return true
 	return false
-
-
-## A generated world's ford to bridge: where a trail wades a river, the one nearest the village.
-## [from, to] in world XZ (FORD_MARGIN m past the water each side), or [] (not every world's
-## trails cross a river: then there's no footbridge project there).
-static func find_ford(map: ProcgenMap) -> Array:
-	var village: Vector2 = map.village.get("center", map.hub)
-	var best: Array = []
-	var best_d := INF
-	for trail in map.trails:
-		var run_start := -1
-		for i in trail.size() + 1:
-			var wet := i < trail.size() and map.river_mask[map.pixel_index(trail[i])] == 1
-			wet = wet and map.height_at(trail[i]) < ProcgenMap.WATER_LEVEL + 0.1  # in the water, not on its banks
-			if wet and run_start < 0:
-				run_start = i
-			elif not wet and run_start >= 0:
-				var a: Vector2 = trail[maxi(run_start - 1, 0)]
-				var b: Vector2 = trail[mini(i, trail.size() - 1)]
-				var dir := (b - a).normalized()
-				var span := a.distance_to(b) + 2.0 * FORD_MARGIN
-				var d := ((a + b) * 0.5).distance_to(village)
-				if span < 16.0 and d < best_d:
-					best_d = d
-					best = [a - dir * FORD_MARGIN, b + dir * FORD_MARGIN]
-				run_start = -1
-	return best
 
 
 func _slope(t: float) -> float:

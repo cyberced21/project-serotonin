@@ -1,5 +1,5 @@
 extends SceneTree
-## Ore wall tour: opens the main world (or a generated one), reports how many ore wall panels the
+## Ore wall tour: opens the main world, reports how many ore wall panels the
 ## quarry's placer (OreWallPlacer) stood on each ring and how fast it draws, and saves screenshots
 ## from the rim and from each level, looking along its wall.
 ##
@@ -8,13 +8,10 @@ extends SceneTree
 ## Options (after `--`):
 ##   --label=NAME    sub-folder of docs/images/walls/ to save into (default "tour")
 ##   --night         at night instead of mid-morning
-##   --procgen=SEED  a generated world (scenes/procgen.tscn) instead of the hand-built one
-## The game is played on a throwaway save, so the real one is never touched (a generated world's
-## too: it never switches to that seed's own file).
+## The game is played on a throwaway save, so the real one is never touched.
 
 var out_dir := "res://docs/images/walls/tour"
 var time := 0.42
-var procgen := 0
 
 
 func _initialize() -> void:
@@ -23,8 +20,6 @@ func _initialize() -> void:
 			out_dir = "res://docs/images/walls/" + arg.get_slice("=", 1)
 		elif arg == "--night":
 			time = 0.9
-		elif arg.begins_with("--procgen="):
-			procgen = arg.get_slice("=", 1).to_int()
 	_run.call_deferred()
 
 
@@ -32,14 +27,8 @@ func _run() -> void:
 	root.get_node("SaveGame").set("path", "user://wall_tour_save.json")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://wall_tour_save.json"))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(out_dir))
-	if procgen > 0:
-		var world: Variant = load("res://scripts/procgen/procgen_world.gd")
-		world.world_seed = procgen
-		change_scene_to_file("res://scenes/procgen.tscn")
-		await _wait(12.0)  # (it generates first)
-	else:
-		change_scene_to_file("res://scenes/main.tscn")
-		await _wait(3.0)
+	change_scene_to_file("res://scenes/main.tscn")
+	await _wait(3.0)
 	var gfx := root.get_node_or_null("GraphicsSettings")
 	if gfx:
 		gfx.set("persist", false)

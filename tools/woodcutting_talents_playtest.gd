@@ -20,9 +20,9 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	root.get_node("Worlds").call("play_scratch", 42)
+	root.get_node("Worlds").call("play_fresh")
 	await process_frame
-	while get_first_node_in_group("loading_screen") != null or get_first_node_in_group("player") == null:
+	while get_first_node_in_group("player") == null:
 		await process_frame
 	var cards := get_first_node_in_group("talent_cards")
 	if cards:

@@ -8,7 +8,6 @@ extends CanvasLayer
 ##             node, restock every pond
 ##   Teleport  to each building, biome landmark, pond and kind of resource node (the nearest one)
 ##   Player    fly mode, a live readout (can stay pinned on screen), save / wipe the save
-##   Procgen   a scratch generated world by seed, or a new random one, and back to the main menu
 ##   Graphics  Low / Medium / High presets and each costly effect on its own (GraphicsSettings)
 ##   Sky       the sky's look (SkyLook) live: time scrub and hold, every colour and number, save
 ## The old F6–F10 keys still work. Toggles that stay on (fly, pause, time scale) show as a tag at
@@ -50,8 +49,6 @@ var _fly: CheckBox
 var _pin: CheckBox
 var _reset_button: Button
 var _reset_armed := false
-var _procgen_status: Label
-var _seed_edit: LineEdit
 var _gfx_preset: Label
 var _gfx_checks: Dictionary[StringName, CheckBox] = {}
 var _gfx_sliders: Dictionary[StringName, HSlider] = {}
@@ -90,7 +87,6 @@ func open() -> void:
 	_refresh_items()
 	_refresh_skills()
 	_disarm_reset()
-	_refresh_procgen()
 	_fly.set_pressed_no_signal(_player() != null and _player().debug_fly)
 	_pause.set_pressed_no_signal(get_tree().paused)
 	_panel.visible = true
@@ -200,51 +196,6 @@ func _on_reset_pressed() -> void:
 	get_tree().paused = false
 	Engine.time_scale = 1.0
 	SaveGame.reset()
-
-
-func _procgen_world() -> ProcgenWorld:
-	return get_tree().get_first_node_in_group("procgen_world") as ProcgenWorld
-
-
-func _enter_procgen(s: int) -> void:
-	close()
-	get_tree().paused = false
-	Engine.time_scale = 1.0
-	Worlds.play_scratch(s)
-
-
-func _enter_typed_seed() -> void:
-	var text := _seed_edit.text.strip_edges()
-	_enter_procgen(text.to_int() if text.is_valid_int() else ProcgenMap.random_seed())
-
-
-func _leave_procgen() -> void:
-	close()
-	get_tree().paused = false
-	Engine.time_scale = 1.0
-	Worlds.leave()
-
-
-func _refresh_procgen() -> void:
-	var world := _procgen_world()
-	if world == null or world.map == null:
-		_procgen_status.text = "In %s" % Worlds.current_meta.get("name", "no world")
-		return
-	var map := world.map
-	var kinds: PackedStringArray = []
-	for biome in map.kinds:
-		kinds.append(map.kind_name(biome))
-	var rares: PackedStringArray = []
-	for r: Dictionary in map.rares:
-		var theme := load("res://data/themes/rare/%s.tres" % r["theme"]) as NodeTheme
-		rares.append("%s (%s)" % [theme.title, String(map.sites[r["site"]]["biome"]).capitalize()])
-	_procgen_status.text = "In %s, seed %d
-%s
-Rich in %s, lean on %s
-Rare: %s" % [Worlds.current_meta.get("name", "?"),
-			world.world_seed, ", ".join(kinds), Items.display_name(map.rich), Items.display_name(map.lean), ", ".join(rares)]
-	if _seed_edit.text.is_empty():
-		_seed_edit.text = str(world.world_seed)
 
 
 func _disarm_reset() -> void:
@@ -380,35 +331,17 @@ func _rebuild_teleports() -> void:
 
 	_teleport_box.add_child(_heading("Biomes"))
 	grid = _grid(3)
-	var world := _procgen_world()
-	if world:
-		for site in (world.map.sites if world.map else []):
-			var mood: BiomeMood = Biome.MOODS[site["biome"]]
-			var at := Vector3(site["pos"].x, 0, site["pos"].y)
-			var b := _button(mood.display_name.trim_prefix("The "), _teleport.bind(at, at + Vector3.FORWARD))
-			b.tooltip_text = "Tier %d" % site["tier"]
-			grid.add_child(b)
-	else:
-		for place in WorldMap.LANDMARKS:
-			var spot: Array = WorldMap.LANDMARKS[place]
-			grid.add_child(_button(place, _teleport.bind(spot[0], spot[1])))
+	for place in WorldMap.LANDMARKS:
+		var spot: Array = WorldMap.LANDMARKS[place]
+		grid.add_child(_button(place, _teleport.bind(spot[0], spot[1])))
 	_teleport_box.add_child(grid)
-
-	var landmarks := get_tree().get_nodes_in_group("landmark")
-	if not landmarks.is_empty():  # a procgen world's ruins, camps and rare spots
-		_teleport_box.add_child(_heading("Landmarks"))
-		grid = _grid(2)
-		for l in landmarks:
-			var at := (l as Node3D).global_position + Vector3(0, 0, 10).rotated(Vector3.UP, (l as Node3D).rotation.y)
-			grid.add_child(_button(l.get_meta("landmark"), _teleport.bind(at, (l as Node3D).global_position)))
-		_teleport_box.add_child(grid)
 
 	_teleport_box.add_child(_heading("Water"))
 	grid = _grid(3)
 	for w in get_tree().get_nodes_in_group("water"):
 		var water := w as Node3D
 		var label := String(water.name).capitalize()
-		if String(water.name).begins_with("Stretch"):  # a procgen river: one button, its first stretch
+		if String(water.name).begins_with("Stretch"):  # the creek: one button, its first stretch
 			if water.name != &"Stretch1":
 				continue
 			label = String(water.get_parent().name).capitalize()
@@ -473,7 +406,6 @@ func _build() -> void:
 	_teleport_box = VBoxContainer.new()
 	_tabs.add_child(_scroll("Teleport", _teleport_box))
 	_tabs.add_child(_scroll("Player", _build_player()))
-	_tabs.add_child(_scroll("Procgen", _build_procgen()))
 	_tabs.add_child(_scroll("Graphics", _build_graphics()))
 	_tabs.add_child(_scroll("Sky", _build_sky()))
 
@@ -689,29 +621,6 @@ func _build_player() -> Control:
 	keys.text = "Keys: F6 skip time  ·  F7 +50 items  ·  F8 village tiers\nF9 +500 XP (last skill)  ·  F10 wipe save"
 	keys.modulate = DIM
 	box.add_child(keys)
-	return box
-
-
-func _build_procgen() -> Control:
-	var box := VBoxContainer.new()
-	_procgen_status = _label(16)
-	box.add_child(_procgen_status)
-	box.add_child(_heading("Generated world"))
-	var row := HBoxContainer.new()
-	_seed_edit = LineEdit.new()
-	_seed_edit.placeholder_text = "seed"
-	_seed_edit.custom_minimum_size = Vector2(120, 0)
-	_seed_edit.text_submitted.connect(func(_t: String) -> void: _enter_typed_seed())
-	row.add_child(_seed_edit)
-	row.add_child(_button("Enter this seed", _enter_typed_seed))
-	box.add_child(row)
-	box.add_child(_button("New seed (random)", func() -> void: _enter_procgen(ProcgenMap.random_seed())))
-	box.add_child(_button("Back to the main menu", _leave_procgen))
-	var note := _label(13)
-	note.text = "Seeds entered here go into a scratch world (worlds/_scratch), wiped each time.
-Your own worlds are never touched."
-	note.modulate = DIM
-	box.add_child(note)
 	return box
 
 

@@ -1,6 +1,6 @@
 extends SceneTree
-## Checks the path lamps (scripts/path_lamps.gd, scripts/autoload/lamps.gd) in Hearthvale and in a
-## generated world: a new world lights only the village path; lighting every stretch puts posts
+## Checks the path lamps (scripts/path_lamps.gd, scripts/autoload/lamps.gd) in Hearthvale: a new
+## world lights only the village path; lighting every stretch puts posts
 ## along each, none in water, on steep ground or crowding each other; the lit list saves.
 ##   godot --headless --path . -s res://tools/test_lamps.gd -- --save-root=user://tool_worlds
 
@@ -18,9 +18,6 @@ func _run() -> void:
 	worlds.call("play", worlds.get("CLASSIC"))
 	await _world_ready()
 	await _check_world("Hearthvale")
-	worlds.call("play_scratch", 42)
-	await _world_ready()
-	await _check_world("seed 42")
 	print("test_lamps: %s" % ("PASS" if _fails == 0 else "%d FAILED" % _fails))
 	quit(1 if _fails else 0)
 
@@ -28,7 +25,7 @@ func _run() -> void:
 func _world_ready() -> void:
 	for i in 3:
 		await process_frame
-	while get_first_node_in_group("loading_screen") != null or get_first_node_in_group("path_lamps") == null:
+	while get_first_node_in_group("path_lamps") == null:
 		await process_frame
 	for i in 3:
 		await process_frame

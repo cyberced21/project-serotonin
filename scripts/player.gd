@@ -292,6 +292,12 @@ func from_dict(d: Dictionary) -> void:
 	if not d.has("z"):
 		return  # save from the 2D version — spawn at the default position instead
 	global_position = Vector3(float(d["x"]), float(d["y"]), float(d["z"]))
+	# saved before the land was reshaped (plans/world.md)? never load under the ground (above it, you
+	# just land: you may be on a roof or a scaffold)
+	var terrain := get_tree().get_first_node_in_group("terrain") as Terrain3D
+	var ground: float = terrain.data.get_height(global_position) if terrain and terrain.data else NAN
+	if not is_nan(ground) and global_position.y < ground - 0.2:
+		global_position.y = ground + 0.1
 	rotation.y = float(d.get("yaw", 0.0))
 	_pitch = float(d.get("pitch", 0.0))
 	reset_physics_interpolation()  # a teleport, not a move

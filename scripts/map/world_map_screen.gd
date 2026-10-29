@@ -73,7 +73,7 @@ func _input(event: InputEvent) -> void:
 
 func _can_open() -> bool:
 	var tree := get_tree()
-	if Worlds.current.is_empty() or tree.paused or tree.get_first_node_in_group("loading_screen") != null:
+	if Worlds.current.is_empty() or tree.paused:
 		return false
 	for panel in tree.get_nodes_in_group("modal_panel"):  # a villager's panel, the noticeboard
 		if panel.is_open():

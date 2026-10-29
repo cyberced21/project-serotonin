@@ -55,7 +55,7 @@ func _start_gift() -> void:
 	if t > DayNight.SUNRISE and t < DayNight.SUNSET - GIFT_BEFORE_SUNSET:
 		return
 	var player := get_tree().get_first_node_in_group("player")
-	if player == null or not player.can_process() or get_tree().get_first_node_in_group("loading_screen"):
+	if player == null or not player.can_process():
 		return
 	_gift = LanternGift.new()
 	_gift.name = "LanternGift"

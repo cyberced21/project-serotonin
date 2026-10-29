@@ -50,17 +50,10 @@ func _run() -> void:
 	_check(saved["done"].has("benches") and saved["done"].has("well"), "done projects save")
 	projects.call("from_dict", {})
 	_check(not projects.call("is_done", &"benches"), "a fresh save has none")
-	# the noticeboard, in Hearthvale and in a generated village
+	# the noticeboard
 	await _check_board("Hearthvale", projects)
 	await _check_build(projects, inventory)
 	await _check_life(projects)
-	worlds.call("play_scratch", 42)
-	for i in 3:
-		await process_frame
-	while get_first_node_in_group("loading_screen") != null or get_first_node_in_group("player") == null:
-		await process_frame
-	await _frames(5)
-	await _check_board("seed 42", projects)
 	print("test_projects: %s" % ("PASS" if _fails == 0 else "%d FAILED" % _fails))
 	quit(1 if _fails else 0)
 
@@ -150,9 +143,11 @@ func _check_build(projects: Node, inventory: Node) -> void:
 	var new := lamps.filter(func(l: Dictionary) -> bool: return (l["prop"] as Node).get_meta("stretch") == roads[0]["road"])
 	var hidden := new.filter(func(l: Dictionary) -> bool: return (l["prop"] as Node3D).scale.x < 0.1).size()
 	_check(new.size() > 0 and hidden == new.size(), "build: its posts start down (%d of %d)" % [hidden, new.size()])
-	for i in 60 * (2 + int(new.size() * 0.35) + 1):
+	var until := Time.get_ticks_msec() + int((3.0 + new.size() * 0.35) * 1500.0)  # (time, not frames)
+	var up := 0
+	while Time.get_ticks_msec() < until and up < new.size():
 		await process_frame
-	var up := new.filter(func(l: Dictionary) -> bool: return (l["prop"] as Node3D).scale.x > 0.95).size()
+		up = new.filter(func(l: Dictionary) -> bool: return (l["prop"] as Node3D).scale.x > 0.95).size()
 	_check(up == new.size(), "build: and rise one by one along it (%d up)" % up)
 	day_night.set("frozen", false)
 

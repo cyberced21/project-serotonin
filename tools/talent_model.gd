@@ -81,11 +81,11 @@ func _initialize() -> void:
 
 # --- measuring a world ----------------------------------------------------------------------
 
-## Loads a generated world and writes where its trees stand (scene, save id, height).
+## Loads Hearthvale and writes where its trees stand (scene, save id, height).
 func _measure() -> void:
-	root.get_node("Worlds").call("play_scratch", world_seed)
+	root.get_node("Worlds").call("play_fresh")
 	await process_frame
-	while get_first_node_in_group("loading_screen") != null or get_first_node_in_group("player") == null:
+	while get_first_node_in_group("player") == null:
 		await process_frame
 	var out := []
 	for n in get_nodes_in_group("gatherable"):

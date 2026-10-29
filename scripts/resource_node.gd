@@ -309,7 +309,7 @@ var _last_hit_msec := -100000
 var _surfaces: Array[GeometryInstance3D] = []
 ## The place's dressing (NodeTheme.look()): set by the spawner before the node enters the tree.
 var look: Array[Vector4] = []
-## A rare look (ProcgenMap.rares), if this is the one: its bonus drops and XP.
+## A rare look, if this is the one: its bonus drops and XP.
 var rare: NodeTheme
 var _flash_tween: Tween
 var _nudge_tween: Tween

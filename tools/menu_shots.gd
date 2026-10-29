@@ -2,7 +2,7 @@ extends SceneTree
 ## Screenshots of the menus, on a throwaway save root (never the player's worlds):
 ##   godot --path . --screen 1 --resolution 1280x720 -s res://tools/menu_shots.gd -- --save-root=user://menu_shots [--out=dir] [--only=a,b]
 ## Seeds a few worlds, then shoots the main menu, the Worlds, Controls and Settings screens, the
-## pause menu, the Worlds screen with a picture taken, and a generated world loading and loaded.
+## pause menu and the Worlds screen with a picture taken.
 
 const ROOT := "user://menu_shots"
 
@@ -39,13 +39,6 @@ func _run() -> void:
 	menu.call("_open", &"controls")
 	await _wait(0.5)
 	await _shot("controls")
-	menu.call("_open", &"new_world")
-	var nw: Control = menu.get("_new_world_screen")
-	(nw.get("_seed") as LineEdit).text = "4821"
-	(nw.get("_name") as LineEdit).text = "Mossy Hollow"
-	nw.call("_changed")
-	await _wait(3.0)
-	await _shot("new_world")
 	var settings: Control = menu.get("_settings")
 	menu.call("_open", &"settings")
 	for tab in 4:
@@ -72,21 +65,6 @@ func _run() -> void:
 	await _wait(1.0)
 	await _shot("worlds_after")
 
-	# a generated world: its loading screen, then in and out again
-	var mossy := ""
-	for m: Dictionary in worlds.call("list"):
-		if m["name"] == "Mossy Hollow":
-			mossy = m["id"]
-	worlds.call("play", mossy)
-	await _wait(1.5)
-	await _shot("loading")
-	_check(get_first_node_in_group("loading_screen") != null, "a generated world shows its loading screen")
-	while get_first_node_in_group("loading_screen") != null:
-		await process_frame
-	await _wait(1.0)
-	await _shot("generated")
-	worlds.call("leave")
-	await _wait(1.0)
 	_remove_tree(ProjectSettings.globalize_path(ROOT))
 	quit()
 
@@ -138,19 +116,13 @@ func _check(ok: bool, what: String) -> void:
 	print(("ok   " if ok else "FAIL ") + what)
 
 
-## A played classic world and two generated ones, so the cards have something to show.
+## A played Hearthvale, so its card has something to show.
 func _seed_worlds(worlds: Node) -> void:
 	var now := Time.get_unix_time_from_system()
 	var classic: Dictionary = worlds.call("meta", "classic")
 	classic["last_played"] = now - 3600.0 * 3
 	classic["playtime"] = 3600.0 * 5.4
 	worlds.call("_write_meta", "classic", classic)
-	for spec in [["Mossy Hollow", 4821, 900.0, 7800.0], ["Frostbite Ridge", 77, 86400.0 * 3, 1500.0]]:
-		var id: String = worlds.call("create", spec[0], {"seed": spec[1]})
-		var m: Dictionary = worlds.call("meta", id)
-		m["last_played"] = now - spec[2]
-		m["playtime"] = spec[3]
-		worlds.call("_write_meta", id, m)
 
 
 func _shot(name: String) -> void:

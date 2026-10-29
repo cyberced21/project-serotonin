@@ -1,17 +1,15 @@
 extends Node
 ## The player's worlds: one folder each under `root` (user://worlds/ unless `--save-root=<dir>`):
-##   <id>/world.json   name, kind (classic / generated), seed and settings, generator version,
-##                     created, last played, playtime
+##   <id>/world.json   name, kind, created, last played, playtime
 ##   <id>/save.json    what SaveGame writes while the world is played
 ##   <id>/thumb.png    a screenshot, taken on Save & Quit
-## "classic" is the hand-built world (scenes/main.tscn): always there, never deleted, only reset.
-## "_scratch" is the throwaway generated world the debug menu and `--procgen` use; never listed.
-## Starting up, the old flat saves (user://save.json, user://procgen_<seed>.json) move into folders.
+## "classic" is Hearthvale (scenes/main.tscn), the one world: always there, never deleted, only
+## reset. Generated worlds are gone (plans/world.md); starting up deletes their old folders.
+## Starting up, the old flat save (user://save.json) moves into the classic world's folder.
 ##
 ## Command line (after `--`), skipping the menu:
-##   --classic                  the hand-built world
+##   --classic                  Hearthvale
 ##   --world=<id>               any world by its folder name
-##   --procgen [--seed=N]       the scratch world, a random seed if none is given
 ##   --save-root=<dir>          keep every world under <dir> instead (tests: never the real saves)
 ## A `-s` tool script without --save-root gets TOOLS_ROOT, so it can never touch (or migrate) the
 ## player's worlds by accident.
@@ -21,12 +19,10 @@ signal list_changed
 const DEFAULT_ROOT := "user://worlds"
 const TOOLS_ROOT := "user://tool_worlds"
 const CLASSIC := "classic"
-const SCRATCH := "_scratch"
 const META_VERSION := 1
 const CLASSIC_SCENE := "res://scenes/main.tscn"
-const PROCGEN_SCENE := "res://scenes/procgen.tscn"
 const MENU_SCENE := "res://scenes/menu/main_menu.tscn"
-## Where the old flat saves were (save.json, procgen_<seed>.json).
+## Where the old flat save was (save.json).
 const OLD_SAVES := "user://"
 
 var root := DEFAULT_ROOT
@@ -51,24 +47,22 @@ func _ready() -> void:
 	if root == DEFAULT_ROOT:
 		migrate(OLD_SAVES)
 	_ensure_classic()
+	_remove_generated()
 	SaveGame.saved.connect(_on_saved)
 	for arg in args:
-		if arg in ["--classic", "--procgen"] or arg.begins_with("--world="):
+		if arg == "--classic" or arg.begins_with("--world="):
 			skip_menu = true
 	_start_from_cmdline.call_deferred(args)
 
 
 # --- queries ----------------------------------------------------------------------------------
 
-## Every listed world's meta (not the scratch world), the most recently played first; classic is
-## always among them.
+## Every world's meta, the most recently played first; classic is always among them.
 func list() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for id in DirAccess.get_directories_at(_abs(root)):
-		if id == SCRATCH:
-			continue
 		var m := meta(id)
-		if not m.is_empty():
+		if not m.is_empty() and m.get("kind") != "generated":  # (in case one's left mid-startup)
 			out.append(m)
 	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return float(a.get("last_played", 0)) > float(b.get("last_played", 0)))
@@ -116,21 +110,7 @@ func has_save(id: String) -> bool:
 	return FileAccess.file_exists(save_path(id))
 
 
-## Whether a generated world was made by an older generator, so its land may have changed.
-func outdated(m: Dictionary) -> bool:
-	return m.get("kind") == "generated" and int(m.get("generator", 0)) != ProcgenMap.GENERATOR_VERSION
-
-
 # --- changes ----------------------------------------------------------------------------------
-
-## A new generated world; returns its id. `settings` is a WorldSettings dictionary (seed included).
-func create(world_name: String, settings: Dictionary) -> String:
-	var id := _new_id()
-	DirAccess.make_dir_recursive_absolute(_abs(folder(id)))
-	_write_meta(id, _new_meta(world_name, settings))
-	list_changed.emit()
-	return id
-
 
 func rename(id: String, world_name: String) -> void:
 	var m := meta(id)
@@ -141,14 +121,6 @@ func rename(id: String, world_name: String) -> void:
 	if id == current:
 		current_meta = m
 	list_changed.emit()
-
-
-## A fresh world with the same seed and settings (not the classic world: there's only one).
-func duplicate_world(id: String) -> String:
-	var m := meta(id)
-	if m.is_empty() or m.get("kind") != "generated":
-		return ""
-	return create("%s (copy)" % m["name"], m.get("settings", {}))
 
 
 func delete(id: String) -> void:
@@ -169,7 +141,6 @@ func reset(id: String) -> void:
 	if not m.is_empty():
 		m["playtime"] = 0.0
 		m["last_played"] = 0.0
-		m["generator"] = ProcgenMap.GENERATOR_VERSION if m.get("kind") == "generated" else 0
 		_write_meta(id, m)
 	list_changed.emit()
 
@@ -187,34 +158,21 @@ func play(id: String) -> void:
 	Engine.time_scale = 1.0
 	current = id
 	current_meta = m
-	var was_outdated := outdated(m) and has_save(id)
 	m["last_played"] = Time.get_unix_time_from_system()
-	if m.get("kind") == "generated":
-		m["generator"] = ProcgenMap.GENERATOR_VERSION  # it's today's land from now on
 	_write_meta(id, m)
 	SaveGame.use_file(save_path(id))
 	_session_start = Time.get_ticks_msec()
-	if m.get("kind") == "generated":
-		ProcgenWorld.world_name = m.get("name", "")
-		ProcgenWorld.settings = m.get("settings", {})
-		ProcgenWorld.regenerated = was_outdated
-		get_tree().change_scene_to_file(PROCGEN_SCENE)
-	else:
-		get_tree().change_scene_to_file(CLASSIC_SCENE)
+	get_tree().change_scene_to_file(CLASSIC_SCENE)
 
 
-## A new scratch world on seed `s` (the old one wiped), then play it.
-func play_scratch(s: int) -> void:
-	if current == SCRATCH:
-		SaveGame.use_file("")  # let go of its file before it's deleted
+## Hearthvale from the start (its save wiped), then play it: for tools and benches, which run
+## under their own root (TOOLS_ROOT or --save-root), never the player's worlds.
+func play_fresh() -> void:
+	if current == CLASSIC:
+		SaveGame.use_file("")  # let go of its file before it's wiped
 		current = ""
-	if exists(SCRATCH):
-		_remove_tree(_abs(folder(SCRATCH)))
-	DirAccess.make_dir_recursive_absolute(_abs(folder(SCRATCH)))
-	var settings := WorldSettings.defaults()
-	settings["seed"] = s
-	_write_meta(SCRATCH, _new_meta("Scratch, seed %d" % s, settings))
-	play(SCRATCH)
+	reset(CLASSIC)
+	play(CLASSIC)
 
 
 ## Saves, lets go of the world and changes to `scene` (the main menu by default).
@@ -249,15 +207,8 @@ func _on_saved() -> void:
 	_bank_playtime()
 
 
-## `-- --classic`, `--world=<id>`, `--procgen [--seed=N]`: straight into a world.
+## `-- --classic`, `--world=<id>`: straight into a world.
 func _start_from_cmdline(args: PackedStringArray) -> void:
-	if args.has("--procgen"):
-		var s := ProcgenMap.random_seed()
-		for arg in args:
-			if arg.begins_with("--seed="):
-				s = arg.trim_prefix("--seed=").to_int()
-		play_scratch(s)
-		return
 	for arg in args:
 		if arg.begins_with("--world="):
 			play(arg.trim_prefix("--world="))
@@ -267,14 +218,6 @@ func _start_from_cmdline(args: PackedStringArray) -> void:
 
 
 # --- files ------------------------------------------------------------------------------------
-
-func _new_meta(world_name: String, settings: Dictionary) -> Dictionary:
-	var now := Time.get_unix_time_from_system()
-	return {
-		"version": META_VERSION, "name": world_name, "kind": "generated", "settings": WorldSettings.to_json(settings),
-		"generator": ProcgenMap.GENERATOR_VERSION, "created": now, "last_played": 0.0, "playtime": 0.0,
-	}
-
 
 func _write_meta(id: String, m: Dictionary) -> void:
 	var data := m.duplicate()
@@ -288,15 +231,26 @@ func _write_meta(id: String, m: Dictionary) -> void:
 
 func _ensure_classic() -> void:
 	if exists(CLASSIC):
+		var m := meta(CLASSIC)
+		if m.get("name") == "Hearthvale (classic)":  # from when there were generated worlds too
+			m["name"] = "Hearthvale"
+			_write_meta(CLASSIC, m)
 		return
 	DirAccess.make_dir_recursive_absolute(_abs(folder(CLASSIC)))
 	var now := Time.get_unix_time_from_system()
-	_write_meta(CLASSIC, {"version": META_VERSION, "name": "Hearthvale (classic)", "kind": "classic",
+	_write_meta(CLASSIC, {"version": META_VERSION, "name": "Hearthvale", "kind": "classic",
 			"created": now, "last_played": 0.0, "playtime": 0.0})
 
 
-## The old flat saves in `from` into folders: save.json becomes the classic world's, and each
-## procgen_<seed>.json a world of its own, "Seed <seed>" on default settings.
+## Deletes the worlds made by the old generator: only Hearthvale is played now.
+func _remove_generated() -> void:
+	for id in DirAccess.get_directories_at(_abs(root)):
+		if meta(id).get("kind") == "generated" and id != current:
+			_remove_tree(_abs(folder(id)))
+			print("Worlds: deleted the generated world %s" % id)
+
+
+## The old flat save in `from` (save.json) becomes the classic world's.
 func migrate(from: String) -> void:
 	var old_main := from.path_join("save.json")
 	if FileAccess.file_exists(old_main) and not has_save(CLASSIC):
@@ -309,29 +263,6 @@ func migrate(from: String) -> void:
 			print("Worlds: moved the old save into the classic world")
 		else:
 			push_warning("Worlds: can't move the old save (%s)" % error_string(err))
-	for file in DirAccess.get_files_at(from):
-		if not (file.begins_with("procgen_") and file.ends_with(".json")):
-			continue
-		var s := file.trim_prefix("procgen_").trim_suffix(".json")
-		if not s.is_valid_int():
-			continue
-		var settings := WorldSettings.defaults()
-		settings["seed"] = s.to_int()
-		var id := create("Seed %s" % s, settings)
-		var old := from.path_join(file)
-		var m := meta(id)
-		m["last_played"] = FileAccess.get_modified_time(_abs(old))
-		_write_meta(id, m)
-		DirAccess.rename_absolute(_abs(old), _abs(save_path(id)))
-		print("Worlds: moved %s into world %s" % [file, id])
-
-
-func _new_id() -> String:
-	while true:
-		var id := "%d_%04d" % [int(Time.get_unix_time_from_system()), randi() % 10000]
-		if not DirAccess.dir_exists_absolute(_abs(folder(id))):
-			return id
-	return ""
 
 
 static func _abs(path: String) -> String:

@@ -1,5 +1,5 @@
 extends SceneTree
-## Screenshots of the maps (scripts/map) in the hand-built world and a generated one: the HUD with
+## Screenshots of the maps (scripts/map) in Hearthvale: the HUD with
 ## the minimap, the world map fitted, and zoomed in on you. Prints how long the map data took.
 ##   godot --path . --audio-driver Dummy --screen 1 --resolution 1280x720 -s res://tools/map_shots.gd -- --save-root=user://map_shots [--out=dir]
 ## (No game class names here: an -s script compiles before the autoloads exist.)
@@ -21,14 +21,12 @@ func _run() -> void:
 	var worlds := root.get_node("Worlds")
 	worlds.call("play", "classic")
 	await _world("classic")
-	worlds.call("play_scratch", 42)
-	await _world("generated")
 	quit()
 
 
 func _world(tag: String) -> void:
 	await process_frame
-	while get_first_node_in_group("loading_screen") != null or get_first_node_in_group("player") == null:
+	while get_first_node_in_group("player") == null:
 		await process_frame
 	var started := Time.get_ticks_msec()
 	var data: Node = null
