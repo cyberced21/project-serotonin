@@ -276,11 +276,24 @@ Generated worlds are gone (the procgen items above are history); Hearthvale is t
 - [x] The village's houses from the Quaternius kits (own colours), walk-in, furnished; your home (tent to homestead), sleeping, well rested, desk notes, head home; villagers' visits and porch evenings; add-on slots (slot 1 for five buildings). The palette from the packs. Tests: `test_home`, `test_interiors`, `test_visits`, `test_addons`, `test_kit_building`.
 - [ ] **Play it:** bot-tested and Blender-rendered only, never seen in a game window. Costs, the visit rate, the note chance, well rested's size are guesses.
 - [x] **The trophy wall** ([plans/trophies.md](../plans/trophies.md)): trophies as labelled records, the seven finds, the picked models, hanging, the mantel, visitor remarks, the mayor's framed note. `test_trophies`, `test_trophy_wall`.
-- [ ] **Trophies, play them:** the rates are guesses (one about every hour or two); the feather and shell glint is a plain emissive mesh; nothing yet tells you a feather or shell is out there.
-- [ ] **Second add-on slots** (each building's top tier) and forks for the town hall, the prospector and the tavern: still to design. Villagers only react to your home's add-ons.
-- [ ] **The tavern** is still the old model (it was already walk-in); restyle it with the kit to match.
+- [ ] **Trophies, play them:** the rates are guesses (one about every hour or two); the feather and shell glint is a plain emissive mesh. (They now chime when you come near, and the dog finds them: plans/mine.md.)
+- [ ] **`test_trophy_wall` fails one check** ("swap: the pike up, the log back in your pack", a call on a null node); it failed before the mine work too.
+- [x] **Second add-on slots** and forks for every building, the town hall's, the prospector's and the tavern's too (plans/mine.md phase 9). Villagers still only react to your home's add-ons.
+- [x] **The tavern** rebuilt from the kit as the long hall (plans/mine.md phase 10); its top tier is 8 x 12, not the 8 x 14 picked, to stay clear of your home.
 - [ ] **Interiors are smaller than planned** (6 x 6 to 8 x 10, not up to 10 x 12) to fit the village's plots; the world pass after cozy can give them room.
-- [ ] **The old `.glb` models** of the six rebuilt houses are no longer used; `make_village.py` still builds them.
-- [ ] **Painted texture tiles** for our own models (grain, wear), so they sit closer to the packs' look.
-- [ ] **The camps** (woodcutter's lean-to, the smithy's fire pit, the fisher's tent, the meeting hut) aren't walk-in; villagers there still vanish at the door at night.
+- [x] **The old `.glb` models** of the rebuilt houses and the tavern, and their `make_village.py` builders, are gone.
+- [x] **Painted texture tiles:** our stone, wood and plaster take the kit's own grain (look D, plans/mine.md phase 8). Not yet seen in a game window.
+- [x] **The camps** have bedrolls now: villagers sleep in sight at the lean-to, the forge camp, the open forge, the fisher's tent and the meeting hut (`test_camps`).
 
+## The mine ([plans/mine.md](../plans/mine.md), branch `mine`)
+
+- [x] Greystone as a working quarry: ore walls out, copper, coal and iron rocks on every level, the CC0 mine packs' pieces as dressing, greenery, a puddle, the boarded mine mouth (`test_quarry`).
+- [x] The mine under it: three hand-drawn levels of cells, dig faces that give way two layers in, seams that grow back, shoring and lamps (fresh cells the next morning), the way in and out, the lift, the pump, the roof-fall supports, the rails and the minecart ride, the mine map (M), Edda's notes, fossils and geodes, its sounds (`test_mine`).
+- [x] The second add-on slots and every building's forks, the tavern from the kit, walk-in camps, trophy hints (`test_forks`, `test_camps`).
+- [ ] **Play it:** bot-tested only, never seen in a game window. Guesses: how long a dig face takes (two layers, ~30 swings each with a stone pick), the seams' regrowth (15 minutes), the trophy chance per face (1 in 10), every project and add-on cost, the ride's 20 s, the lamp light, the mine's darkness and its fog, the sound levels.
+- [ ] **Screenshots** of the quarry, each mine level, the ride, the tavern and the new add-ons in the game.
+- [ ] **The pick hardness moved down a tier** from the plan: level 2's rock needs a copper pick, level 3's an iron pick (the crystal pick needs the crystal that's only on level 3).
+- [ ] **Edda doesn't go down the mine** herself: she shores your fresh cells overnight and writes about what you find. Villagers can't walk the mine (no paths, a teleport in).
+- [ ] **The fossil** has one look, not picked on a page, and hasn't been seen on the wall.
+- [ ] **The tools `wall_tour.gd` / `wall_closeup.gd`** still look for ore walls in the quarry; point them at the mine.
+- [ ] **The mine's lights:** every shored cell can have a lamp (an OmniLight3D); only the level you're on is shown, but a fully open, shored level has ~15 lights. Watch the frame rate.

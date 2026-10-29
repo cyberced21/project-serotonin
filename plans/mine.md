@@ -128,3 +128,22 @@ Each phase is a commit on `mine`. Stop after phase 1 for the user's picks; then 
 10. **Tavern restyle, walk-in camps, trophy hints, old `.glb`s gone.** Done: screenshots; a bot
     follows a camp villager to bed.
 11. **Sounds, screenshots, README, TODO, the plan as built.**
+
+## As built (2026-10-29, branch `mine`)
+
+All eleven phases, one commit each, bot-tested (`test_quarry`, `test_mine`, `test_forks`,
+`test_camps`, plus the old suites), never seen in a game window. Where it differs from the above:
+
+- **Hardness one tier down:** level 1 any pick, level 2 a copper pick, level 3 an iron pick (the
+  crystal pick needs crystal, which is only on level 3).
+- **Sizes:** 28, 26 and 28 cells (`MineLayout`), 4 m each, a little over the 12-15 planned.
+- **The prospector** doesn't walk down the mine (villagers keep to the village's paths): she
+  shores the fresh cells overnight and writes about what you find (desk notes).
+- **The mine trophy:** a fossil (new, one look, not picked) or a geode, 1 in 10 dig faces.
+- **The tavern's top tier** is 8 x 12, not 8 x 14, to stay clear of your home behind it.
+- **The clock-tower add-on** is a big clock face over the door (the hall already has its bell
+  tower), and **the notice-board one** a lamp post and a bench (the board's already roofed).
+- **The second musician** on the bigger stage is Bram.
+- **Code:** `Mine`, `MineLevel`, `MineLayout`, `MineSpot`, `MineMouth`, `MineMap`, `MineRide`,
+  `QuarryDressing`; `OreWall` gained richness, stone hardness, give-way and seams; the mine is
+  its own biome (`Biome.MINE_BELOW`). Pack pieces: `tools/blender/mine_kit.py` -> `models/mine/`.

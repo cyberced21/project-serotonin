@@ -40,7 +40,7 @@ whatever you hit.
     - Birch (stone axe, Woodcutting 8) grows west of the clearing.
     - Oak (copper axe, 15) grows around the village, and iron rocks (copper pick, Mining 15) sit east of the smithy. The village's top tiers ask for them.
     - Pine (iron axe, 25) is on the northern hills, coal (copper pick, Mining 20) by the pass, and gold (iron pick, 30) in the foothills of the peak. The newcomers' cottages are built from them, and the smithy and town hall want coal and gold for their top tiers.
-    - Crystal (iron pick, Mining 40) grows only on the floor of Greystone Quarry. The smithy's fourth tier is forged with it.
+    - Gold and crystal are the old Greystone mine's (below): gold from its second level down, crystal (iron pick, Mining 40) in its crystal caverns. The smithy's fourth tier is forged with crystal.
     - Wheat (stone sickle, Farming 1) and barley (copper sickle, Farming 15) stand in Goldmeadow's crop squares. You cut them with a sickle, which comes out when you aim at grain. There's nothing to spend them on yet.
 - **Two ways to fish, neither stronger.** **Q** swaps the spear for the rod (and back); the one you pick takes any water it can reach. The spear is active and bursty, the rod patient and far-reaching; at the same tier and level a skilled player earns about the same either way (`tools/fishing_bench.gd` measures it).
   - **Fish come in sizes** you can see in the school. Bigger pays up to +50% XP, a **Big** one (about 1 in 8) counts as 2 fish and a **Huge** one (1 in 25) as 3.
@@ -58,9 +58,15 @@ whatever you hit.
 - **Biomes.** Each has its own ground colour, light, fog and ambience, and a title card when you arrive (the first visit says *Discovered*, and it's saved). Night still falls in all of them.
   - **The Pinewood** (north): a dense forest of about 100 pines and birches you can chop, among several hundred scenery trees. A dirt trail runs from the clearing past three open glades into the woods, and the village road climbs in from the east. Ferns, mushrooms, birdsong.
   - **Greystone Quarry** (west, past the peak): a five-level pit about 25 m deep.
-    - A haul road spirals to the floor between cut stone faces, lined with ore walls to dig into. The mountainside round it falls gently away into the hills.
-    - Copper, iron, coal and gold on the levels, crystal on the floor glowing violet after dark.
-    - A crane on the rim, scaffold steps, ladders, and haze that thickens as you go down.
+    - A haul road spirals to the floor between cut stone faces. The mountainside round it falls gently away into the hills.
+    - Copper rocks up top, coal and iron further down, growing back as everywhere else.
+    - A working quarry: a crane on the rim, crates and barrels, a cart on a stretch of rail, lamp posts, tools left about, ferns and flowers in the cracks, a puddle on the floor, and haze that thickens as you go down.
+  - **The old Greystone mine** ([plans/mine.md](plans/mine.md)), under the quarry. Its mouth on the quarry floor is boarded up till you shore it (a noticeboard project); then three levels of tunnels lie under the pit, and you dig your way through them.
+    - **Dig faces:** wherever a tunnel ends in rock there's a face of ore wall. Dig a couple of layers in (about half a minute) and the rest gives way: the next stretch of tunnel opens for good, sometimes a chamber, now and then with a fossil or a geode in it for your wall.
+    - **Seams** along the open tunnels give ore and grow back after a while, so the mine stays worth a visit once it's all open. Its ore is richer than the quarry's, and it's the only place for gold and crystal.
+    - **Three levels:** earthy tunnels with copper and coal; rusty rock with iron and gold, an underground stream behind a flooded tunnel; the crystal caverns, glowing softly, with gold and crystal. The rock gets harder further down (a copper pick, then an iron one).
+    - **Upgrades** on the noticeboard as you find what needs them: timber supports for a roof fall, a lift down the shaft you dig into, a pump for the flood, frames and lamps for each level, and rails with a minecart: a calm ride down a long lamplit tunnel to the deepest level you've opened.
+    - Down there it's dim and warm where the tunnels are shored (fresh ones get their frames the next morning: Edda sees to it overnight) and dark beyond, but for your lantern. M shows the level's map. Edda writes to you about what you find.
   - **Goldmeadow** (south-east): rolling farmland. Crop squares of wheat and barley between dirt tracks, a windmill with turning sails, a fenced pasture with hay bales, a hay cart, lone oaks, and crickets.
   - **Hearthvale** (the village), **Stillwater** (the lake), **The Clearing** and **Frostpeak** have moods of their own too.
 - **A main menu and your worlds.** The game opens on a menu over a slowly drifting view of the clearing's pond. **Continue** goes straight back into the world you played last (on a first launch it's **Play**). There's one world, Hearthvale ([plans/world.md](plans/world.md): generated worlds were removed, and old ones are deleted on startup).
@@ -107,7 +113,7 @@ whatever you hit.
 
 - **The villagers' day and the Sleepy Hound** ([plans/tavern.md](plans/tavern.md)). Villagers keep a day now: breakfast, work, the square at dusk, the tavern after dark, then home to bed, staggered so they never move as a herd. Each has a quirk or two (Ollie fishes at dawn, the mayor strolls round the square, Greta skips the tavern some nights). They walk the lanes, not through houses, and their windows light up when they get home and go dark one by one at bedtime.
   - **Rosa's bakery terrace** (a noticeboard project, town hall tier 2): tables under a striped awning where the village has breakfast while Rosa serves.
-  - **The tavern** stands boarded up on the west of the square. Talk to Maud, its keeper, to restore it in three tiers: a taproom, then a fireplace and a stage (Ollie fiddles of an evening, and the background music holds off near it), then the full Sleepy Hound with an annex, bunting and dancing. It's open from dark to about one in the morning, and you can walk right in.
+  - **The tavern** stands boarded up on the west of the square. Talk to Maud, its keeper, to restore it in three tiers: a taproom, then a fireplace and a stage (Ollie fiddles of an evening, and the background music holds off near it), then the full Sleepy Hound, a long timbered hall with bunting and room to dance. It's open from dark to about one in the morning, and you can walk right in. Its add-ons: a beer garden or a bigger stage, then a fireside snug or a guest room.
   - **Sit down** on any free seat (E): benches, the terrace, the tavern's stools. A movement key stands you up.
   - **Dice:** sit at the tavern's dice table of an evening and a villager comes over to play Hound's Luck. Roll five dice; 1s and 5s and three of a kind score and are set aside; roll the rest or stop and bank, but a roll that scores nothing loses the turn. First to 2000. It's played for fun: a chalkboard keeps the tally against each villager.
 
@@ -145,7 +151,7 @@ whatever you hit.
   - **The dog** sleeps on his fur patch by the fire, then in his basket by the stove.
   - **Villagers come to you:** every few days one walks over to see how the place is coming on (and says so, the first time they see a new tier); if you're out, they leave a gift on the step. Some evenings one sits on your porch before the tavern.
   - **Every house can be entered**, built from Quaternius' CC0 Medieval Village and Fantasy Props kits in their own colours: a room that grows with the tier, furniture, chairs to sit on, and a few things to look at (E: a line in the villager's voice). Villagers come home at dusk, sit by the fire till their lamp goes out, then climb the stair to bed and sleep in sight behind a shut door.
-  - **Add-ons:** from the second tier, a building's slot offers a fork of two add-ons with different effects (a drying rack or a sharpening bench at the lodge, a smokehouse or a lookout perch at the fisher's...). Build one from the upgrade panel's Add-ons tab, swap later for the other's cost. Your home's: a porch swing (the day goes by faster while you sit) or a garden (a harvest every morning).
+  - **Add-ons:** from the second tier, a building's slot offers a fork of two add-ons with different effects (a drying rack or a sharpening bench at the lodge, a smokehouse or a lookout perch at the fisher's...), and its top tier opens a second slot with another fork. Build one from the upgrade panel's Add-ons tab, swap later for the other's cost. Your home's: a porch swing (the day goes by faster while you sit) or a garden (a harvest every morning), then a reading nook or a hearth. Many of the second forks help in the mine (a timber slide, a tool rack, Rosa's pasties, the prospector's ore cart, lamp room, assay table and survey board).
 
     ![The add-on forks](docs/images/home/addon_forks.jpg)
 - **Fast, expressive movement (Ghostrunner-ish).** Sprint, jump (with coyote time and jump buffering), crouch, slide down slopes, and mantle up ledges.
