@@ -24,7 +24,7 @@ const POINTS := {
 	# Rosa's terrace, in front of it and round toward the lane to the bakery
 	&"terrace": Vector2(87.4, 34.4), &"tr_east": Vector2(91.0, 34.2),
 	# the tavern (plans/tavern.md): across from the benches, in at its door, the middle of the room
-	&"tv_east": Vector2(91.4, 45.6), &"tv_front": Vector2(85.6, 45.0), &"tv_in": Vector2(83.6, 45.0),
+	&"tv_east": Vector2(91.4, 45.6), &"tv_front": Vector2(85.6, 46.0), &"tv_in": Vector2(83.6, 46.0),
 	&"tv_mid": Vector2(80.8, 45.2),
 	# out to your home on the west rim (plans/home.md): between the terrace and the tavern, round
 	# the north of the tavern, along your home's north side, to its front (it faces west)

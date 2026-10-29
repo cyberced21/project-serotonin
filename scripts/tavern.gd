@@ -112,6 +112,7 @@ func _process(delta: float) -> void:
 			l.visible = level > 0.01
 	_band(delta)
 	_dance(delta)
+	_snug()
 	_murmur.level = _lamp_level * clampf(float(_crowd()) / FULL_ROOM, 0.0, 1.0)
 	_fire.level = _lamp_level if tier_shown >= 3 else 0.0
 	if level > 0.01:  # firelight flickers, each lamp out of step
@@ -259,6 +260,19 @@ func has_player() -> bool:
 		return false
 	var p := global_transform.affine_inverse() * player.global_position
 	return HALL.has_point(p) or (tier_shown >= 4 and ANNEX.has_point(p))
+
+
+## The fireside snug (an add-on): sitting in it, the evening goes by faster, like the porch swing.
+var _snugged := false
+
+
+func _snug() -> void:
+	var player := get_tree().get_first_node_in_group("player") as Node3D
+	var seat: Node = player.get("seat") if player else null
+	var on: bool = seat != null and seat.get_meta(&"kind", &"") == &"snug" and seat.is_visible_in_tree()
+	if on != _snugged:
+		_snugged = on
+		DayNight.speed = Home.SWING_SPEED if on else 1.0
 
 
 ## The windows glow while it's open.

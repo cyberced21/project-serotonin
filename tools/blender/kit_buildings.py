@@ -191,6 +191,18 @@ def bed(k, x, y, z=0.0, pillow="+y", piece="Bed_Twin1"):
     marker(k, "Bed", x - d[0] * 0.95, y - d[1] * 0.95, z + 0.45, d)
 
 
+def bedroll(k, x, y, facing=(0, 1), make=True):
+    """A bedroll on the ground for a camp (plans/mine.md: the camps are walk-in at night too), its
+    Bed marker at the foot, the pillow toward `facing`. make=False: only the marker (one's there)."""
+    if make:
+        along = facing[0] != 0
+        k.box("Bedroll", (1.5, 0.75, 0.12) if along else (0.75, 1.5, 0.12),
+              (x + facing[0] * 0.75, y + facing[1] * 0.75, 0.06), ("accent.0", "accent.0", "wood.1"))
+        k.box("Pillow", (0.3, 0.55, 0.12) if along else (0.55, 0.3, 0.12),
+              (x + facing[0] * 1.3, y + facing[1] * 1.3, 0.16), ("neutral.6", "neutral.6", "neutral.5"))
+    marker(k, "Bed", x, y, 0.0, facing)
+
+
 def chair(k, name, x, y, z=0.0, facing="+x"):
     """A chair whose sitter faces `facing`, with its Seat marker."""
     prop(k, "Chair_1", x, y, z, facing=BACK[facing])
@@ -315,6 +327,7 @@ def woodcutter():
     reset()
     k = mv.Kit("T1", 101)
     mv.lean_to(k)  # the lean-to camp, as it was
+    bedroll(k, 0.55, -0.7, make=False)  # (its bedroll's already there)
 
     # Log Cabin: 6 x 6 m of timber and plaster, the chopping block and firewood outside
     k = mv.Kit("T2", 102)
@@ -409,6 +422,7 @@ def fisher():
     k.crate((-2.4, -1.2, 0), 0.55)
     k.box("Rod", (0.03, 0.03, 2.4), (1.0, 0.9, 1.1), "wood.5", rot=(0.4, 0, 0.2))
     k.add("Bucket", mv.prism(8, 0.18, 0.2, 0.3), ("accent.4", "wood.3", "wood.2"), (0.3, -1.4, 0.15))
+    bedroll(k, -1.0, -0.6)  # in the tent
 
     k = mv.Kit("T2", 302)
     stilt_hut(k)
@@ -581,6 +595,7 @@ def town_hall():
         k.post("BellPost", 0.07, 0, 2.3, x, -2.4)
     k.box("BellBar", (1.1, 0.08, 0.08), (2.25, -2.4, 2.25), "wood.3")
     k.add("Bell", mv.prism(8, 0.22, 0.1, 0.32), ("ore.copper", "ore.copper", "ore.copper_dark"), (2.25, -2.4, 1.95))
+    bedroll(k, 0.0, -0.4)  # the mayor's, straight in from the door
 
     # Town Hall: 8 x 8 m, plaster and timber, the meeting hall inside, the mayor's bed at the back
     k = mv.Kit("T2", 402)
@@ -672,6 +687,7 @@ def smithy():
         k.post("TarpPole", 0.05, 0, 1.9 if x < 0 else 1.6, x, -0.9)
     k.box("Tarp", (3.2, 1.6, 0.04), (0, -0.25, 1.65), ("neutral.4", "neutral.3", "neutral.3"), rot=(-0.35, 0.06, 0))
     k.crate((-1.9, -0.9, 0), 0.55)
+    bedroll(k, 2.3, -0.15)
 
     k = mv.Kit("T2", 202)
     for x in (-2.4, 2.4):
@@ -685,6 +701,7 @@ def smithy():
     mv.forge(k, 1.4, 4.4)
     k.anvil((0.4, -0.6, 0))
     k.barrel((-1.7, -0.5, 0), 0.3, 0.7)
+    bedroll(k, 0.85, -1.5, (1, 0))
     k.add("Water", mv.prism(10, 0.27, 0.27, 0.03), "accent.4", (-1.7, -0.5, 0.69))
     k.box("ToolRack", (0.08, 0.9, 0.6), (2.32, 0.6, 1.4), "wood.4")
     for i in range(3):
@@ -1248,6 +1265,143 @@ def survey_board(x, y):
         k.box("Chalk", (0.9 - i * 0.15, 0.01, 0.04), (x - 0.1 + i * 0.05, y - 0.13, 1.0 + i * 0.2), "neutral.7")
 
 
+# --- the Sleepy Hound (plans/tavern.md; restyled from the kit, plans/mine.md) ----------------------
+# The long hall picked on the mine's page: one tall timbered storey of plaster, windows down the
+# sides, the kit's tiled roof. 8 x 8 m for the ruin, the taproom and the stage, 8 x 12 m at the top
+# (the room for dancing, where the old annex was). The front (the door, Door spot at y = -4.3)
+# stays put; the room inside is make_village's, half a metre further back to meet the kit's walls.
+# Markers as Tavern reads them: Seat*, SeatBar*, Stand1, DiceSeat1/2, Tally, Stage, Dance*.
+
+TAVERN_IN = 0.5  # make_village's room moved back by this
+
+
+def tavern_shell(k, ny, ruin):
+    """The walls and roof: 8 m wide, 2*ny m deep, front at y = -4."""
+    house = built(k)
+    sides = "".join("wo"[i % 2] for i in range(ny))
+    storey(k, 4, ny, "plaster", front="tdot", back="wnnw" if not ruin else "wwww", left=sides, right=sides[::-1])
+    gable_roof(k, 4, ny, WALL_TOP)
+    house.back(ny - 4)
+    for x in (-1.6, 1.6):  # tie beams for the lanterns
+        k.box("Beam", (0.2, 2 * ny, 0.2), (x, ny - 4, WALL_TOP - 0.1), ("wood.3", "wood.2", "wood.2"))
+
+
+def tavern_dice(k, tier):
+    """The dice table by the front right window, its two stools and the tally board."""
+    k.box("TableTop", (0.8, 0.8, 0.07), (2.6, -2.0, 0.78), ("wood.6", "wood.5", "wood.4"))
+    k.post("TableLeg", 0.06, 0, 0.75, 2.6, -2.0, "wood.3")
+    for x, n, face in ((1.95, 1, (1, 0)), (3.25, 2, (-1, 0))):
+        k.add("StoolSeat", mv.prism(8, 0.19, 0.19, 0.05), ("wood.6", "wood.5", "wood.4"), (x, -2.0, 0.46))
+        k.add("StoolLeg", mv.prism(6, 0.05, 0.05, 0.44), "wood.3", (x, -2.0, 0.24))
+        mv.mark(f"T{tier}_DiceSeat{n}", (x, -2.0, mv.TAVERN_FLOOR), face)
+    k.box("Chalkboard", (0.04, 0.9, 0.7), (3.75, -2.3, 1.75), ("wood.1", "wood.1", "wood.1"))
+    for z in (1.39, 2.11):
+        k.box("BoardFrame", (0.05, 0.98, 0.05), (3.75, -2.3, z), "wood.5")
+    mv.mark(f"T{tier}_Tally", (3.72, -2.3, 1.75), (-1, 0))
+
+
+def tavern():
+    reset()
+    for tier in (1, 2, 3, 4):
+        k = mv.Kit(f"T{tier}", 820 + tier)
+        ruin = tier == 1
+        tavern_shell(k, 6 if tier == 4 else 4, ruin)
+        mv.hanging_sign(k, -2.3, -4.1, 2.6, lambda k, x, y, z: k.add("SignMug", mv.prism(8, 0.1, 0.1, 0.18), ("accent.3", "wood.6", "wood.5"), (x, y, z)))
+        if ruin:  # boarded up, junk out front
+            for x0 in (-1.0,):
+                for i in range(4):
+                    k.box("Board", (1.5, 0.06, 0.18), (x0, -4.2, 0.5 + i * 0.5), ("wood.3", "wood.2", "wood.2"),
+                          rot=(0, k.rng.uniform(-0.15, 0.15), 0))
+            for x0 in (-3.0, 1.0):
+                for i in range(3):
+                    k.box("Board", (1.6, 0.06, 0.16), (x0, -4.2, 1.1 + i * 0.4), ("wood.3", "wood.2", "wood.2"),
+                          rot=(0, k.rng.uniform(-0.2, 0.2), 0))
+            room = built(k)
+            mv.tavern_junk(k)
+            room.back(-0.5)
+            continue
+        room = built(k)
+        mv.tavern_bar(k, tier)
+        k.n = 0
+        mv.tavern_table(k, -2.4, -1.4, ("x-", "x+") if tier == 2 else ("x-", "x+", "y-", "y+"), "Seat")
+        k.n = 0
+        mv.tavern_table(k, 1.0, 0.9, ("x-", "x+") if tier == 2 else ("x-", "x+", "y+"), "SeatB")
+        tavern_dice(k, tier)
+        for x in (-1.6, 1.6):
+            mv.tavern_lantern(k, x, -1.2)
+        if tier >= 3:
+            mv.tavern_fireplace(k)
+            k.box("Stage", (1.5, 1.4, 0.24), (3.15, 2.65, 0.12), ("wood.5", "wood.4", "wood.3", "wood.6"))
+            mv.mark(f"T{tier}_Stage", (3.1, 2.7, 0.24), (-0.6, -1))
+            k.box("Rug", (2.0, 1.4, 0.02), (2.6, -0.4, mv.TAVERN_FLOOR + 0.01), ("accent.0", "accent.0", "accent.0"))
+            mv.tavern_lantern(k, 1.6, 1.6)
+        if tier == 4:  # the far end of the long hall: two more tables, and room to dance
+            k.n = 0
+            mv.tavern_table(k, -2.2, 6.0, ("x-", "x+", "y+"), "SeatC")
+            k.n = 0
+            mv.tavern_table(k, 2.0, 6.4, ("x-", "x+", "y+"), "SeatD")
+            for i, (x, y) in enumerate(((-0.3, 3.7), (0.3, 4.3), (-0.4, 4.5), (0.45, 3.55))):
+                mv.mark(f"T4_Dance{i + 1}", (x, y, mv.TAVERN_FLOOR), (-x, 4.0 - y))
+            for x in (-1.6, 1.6):  # bunting along the tie beams
+                for j in range(15):
+                    c = ("accent.1", "accent.3", "accent.4", "accent.7")[j % 4]
+                    k.box("Flag", (0.02, 0.16, 0.2), (x, -3.4 + j * 0.72, WALL_TOP - 0.33), (c, c, c))
+            for y in (4.0, 6.2):
+                mv.tavern_lantern(k, -1.6, y)
+                mv.tavern_lantern(k, 1.6, y)
+        room.back(TAVERN_IN)
+    beer_garden(6.2, -1.0)
+    big_stage(1.9, 3.3)
+    snug(2.4, -0.1)
+    guest_room(-5.4, 2.0)
+    export_kit_building("tavern")
+
+
+def beer_garden(x, y):
+    """Tavern: tables under a vine-hung pergola beside the hall (evening seats outdoors)."""
+    k = addon("beergarden")
+    for dx in (-1.2, 1.2):
+        for dy in (-2.0, 2.0):
+            k.post("PergolaPost", 0.06, 0, 2.5, x + dx, y + dy, ("wood.3", "wood.2", "wood.4"))
+    for i in range(6):
+        k.box("Slat", (2.7, 0.08, 0.06), (x, y - 2.0 + i * 0.8, 2.5), ("wood.4", "wood.3", "wood.5"))
+        k.add("Vine", mv.blob(0.3, k.rng, squash=(1.4, 0.8, 0.5)), ("leaves.4", "leaves.3", "leaves.5"), (x - 0.8 + (i % 3) * 0.8, y - 2.0 + i * 0.8, 2.6))
+    k.n = 0
+    mv.tavern_table(k, x, y - 1.0, ("x-", "x+"), "TavernSeatG")
+    mv.tavern_table(k, x, y + 1.0, ("x-", "x+"), "TavernSeatG")
+    prop(k, "lamp_hanging_plain", x, y, 2.45)
+
+
+def big_stage(x, y):
+    """Tavern: a wider raised stage with a second stool (a second musician on busy nights)."""
+    k = addon("stage")
+    k.box("Stage2", (1.4, 1.2, 0.3), (x, y + TAVERN_IN, 0.15), ("wood.5", "wood.4", "wood.3", "wood.6"))
+    k.add("StoolSeat", mv.prism(8, 0.19, 0.19, 0.05), ("wood.6", "wood.5", "wood.4"), (x, y + TAVERN_IN, 0.76))
+    k.add("StoolLeg", mv.prism(6, 0.05, 0.05, 0.44), "wood.3", (x, y + TAVERN_IN, 0.52))
+    marker(k, "Stage2", x, y + TAVERN_IN, 0.3, (0.3, -1))
+
+
+def snug(x, y):
+    """Tavern: a deep chair by the fire with a footstool (sit, and the evening goes by faster)."""
+    k = addon("snug")
+    prop(k, "Chair_1", x, y + TAVERN_IN, facing="+x")
+    prop(k, "Stool", x + 0.6, y + TAVERN_IN + 0.3)
+    k.box("Blanket", (0.5, 0.5, 0.04), (x, y + TAVERN_IN, 0.5), ("accent.1", "accent.1", "accent.0"))
+    marker(k, "SnugSeat", x, y + TAVERN_IN, 0.0, (1, 0))
+
+
+def guest_room(x, y):
+    """Tavern: a little timbered room built on at the side, its window lit (the trader stays over)."""
+    k = addon("guestroom")
+    k.box("GuestWalls", (2.6, 3.0, 2.6), (x, y, 1.3), ("neutral.6", "neutral.5", "neutral.6", "wood.7"))
+    k.box("GuestRoof", (3.0, 3.4, 0.14), (x, y, 2.75), ("accent.0", "accent.0", "wood.1"), rot=(0, -0.25, 0))
+    for dy in (-1.5, 1.5):
+        k.box("GuestBeam", (2.7, 0.12, 0.12), (x, y + dy, 2.55), ("wood.3", "wood.2", "wood.2"))
+    k.box("LanternGuestWindow", (0.06, 0.8, 0.7), (x - 1.32, y, 1.6), "accent.3")
+    k.box("GuestShutter", (0.05, 0.4, 0.75), (x - 1.34, y - 0.62, 1.6), ("wood.2", "wood.2", "wood.1"))
+    k.box("GuestShutter", (0.05, 0.4, 0.75), (x - 1.34, y + 0.62, 1.6), ("wood.2", "wood.2", "wood.1"))
+
+
 def export_kit_building(name):
     """models/village/<name>.gltf with its textures in models/village/textures/ (shared)."""
     weather_stonework()
@@ -1259,7 +1413,8 @@ def export_kit_building(name):
 
 
 BUILDERS = {"baker_cottage": baker_cottage, "woodcutter": woodcutter, "fisher": fisher,
-            "prospector_cottage": prospector_cottage, "town_hall": town_hall, "smithy": smithy, "home": home}
+            "prospector_cottage": prospector_cottage, "town_hall": town_hall, "smithy": smithy, "home": home,
+            "tavern": tavern}
 
 if __name__ == "__main__":
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []

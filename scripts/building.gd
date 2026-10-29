@@ -310,7 +310,9 @@ func _add_addon_piece(n: Node, inst: Node) -> void:
 		mark.name = String(n.name).substr(3).get_slice("_", 1)
 		_addon_nodes[id].add_child(mark)
 		mark.transform = xform
-		for kind in [&"terrace", &"porch"]:
+		if String(mark.name).begins_with("Stage"):  # (the tavern's bigger stage: a second musician)
+			mark.add_to_group("stage")
+		for kind in [&"terrace", &"porch", &"tavern", &"snug"]:  # (the beer garden, the fireside snug)
 			if String(mark.name).to_lower().begins_with(String(kind) + "seat"):
 				mark.add_to_group("seat")
 				mark.set_meta(&"kind", kind)

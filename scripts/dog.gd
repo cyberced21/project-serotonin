@@ -510,6 +510,18 @@ func _hints(delta: float, moving: bool) -> void:
 	if moving or _busy > 0.0 or _watch != Vector3.INF or DayNight.is_night() or _hint_wait > 0.0 or _hint_scan > 0.0:
 		return
 	_hint_scan = 1.0
+	for f in get_tree().get_nodes_in_group("trophy_find"):  # a feather or a shell: he's found it first
+		var find := f as Node3D
+		if _hinted.has(find.get_instance_id()) or _flat(find.global_position - global_position) > HINT_RANGE * 1.5:
+			continue
+		_hinted[find.get_instance_id()] = true
+		var away := global_position - find.global_position
+		away.y = 0.0
+		_hint_at = find.global_position + (away.normalized() if away.length() > 0.1 else Vector3.BACK) * 0.9
+		_hint_look = find.global_position
+		_hint_left = HINT_TIME
+		_is_fish_hint = false
+		return
 	for n in get_tree().get_nodes_in_group("gatherable"):
 		var node := n as Node3D
 		if node == null or _hinted.has(node.get_instance_id()) or _flat(node.global_position - global_position) > HINT_RANGE:

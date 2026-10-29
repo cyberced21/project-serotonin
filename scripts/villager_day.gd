@@ -77,6 +77,8 @@ static func person(id: StringName) -> Dictionary:
 
 
 static func has_quirk(id: StringName, quirk: String) -> bool:
+	if quirk == "plays" and id == &"woodcutter" and Village.stat(&"tavern_stage") > 0.0:
+		return true  # (Bram brings his whistle once there's room on the stage for two)
 	return person(id).has(quirk)
 
 

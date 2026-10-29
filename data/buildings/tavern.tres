@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
-[ext_resource type="PackedScene" path="res://models/village/tavern.glb" id="3_model"]
+[ext_resource type="PackedScene" path="res://models/village/tavern.gltf" id="3_model"]
 [ext_resource type="Script" path="res://scripts/addon_def.gd" id="90_addon"]
 [ext_resource type="Script" path="res://scripts/tier_effect.gd" id="91_effect"]
 
