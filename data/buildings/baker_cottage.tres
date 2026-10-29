@@ -55,3 +55,4 @@ villager_name = "Rosa"
 villager_role = "Baker"
 capped_line = "No bakehouse until the town hall's finished, the mayor says. Can't have it smelling grander than his hall."
 night_lines = PackedStringArray("Shh, the dough's rising. Come back at dawn and you'll smell it.", "Oh! A visitor at this hour. Mind the flower bed.")
+looks = PackedStringArray("LookRecipes|Rosa's recipe book|My mother's hand on every page. The honey loaf's smudged half away, I know it by heart anyway.", "LookFlour|a sack of flour|Wheat from Goldmeadow. Ground fine, the way Ollie says his gran liked it.", "LookFlour.3|a sack of flour|Three sacks a week now. I never thought this valley ate so much bread.")

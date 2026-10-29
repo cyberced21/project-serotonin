@@ -26,7 +26,8 @@ import bpy  # noqa: E402
 from make_models import OUT_DIR, swatch_uv, weather_stonework  # noqa: E402
 import make_village as mv  # noqa: E402
 
-KIT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "art", "kit", "village")
+KIT_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "art", "kit")
+KIT_DIRS = [os.path.join(KIT_ROOT, "village"), os.path.join(KIT_ROOT, "props")]  # walls etc., then furniture
 GLASS = "MI_WindowGlass"
 WALL_TOP = 3.0  # where a wall's trim ends and the next storey or roof starts
 
@@ -38,7 +39,8 @@ def _load(piece):
     if piece in _cache:
         return _cache[piece]
     before = set(bpy.data.objects)
-    bpy.ops.import_scene.gltf(filepath=os.path.join(KIT_DIR, piece + ".gltf"))
+    path = next(p for p in (os.path.join(d, piece + ".gltf") for d in KIT_DIRS) if os.path.exists(p))
+    bpy.ops.import_scene.gltf(filepath=path)
     new = [o for o in bpy.data.objects if o not in before]
     parts = []
     for o in new:
@@ -116,6 +118,11 @@ def wall_run(k, style, pattern, start, step, out_rot, z0):
                     place(k, shutters, (x, y, z0), out_rot)
             if c == "d":
                 place(k, "DoorFrame_Round_WoodDark", (x, y, z0), out_rot)
+                # the leaf, hinged at the doorway's left edge (Building swings it about its origin)
+                a = math.radians(out_rot)
+                hx, hy = -0.53, 0.1
+                place(k, "Door_1_Round", (x + hx * math.cos(a) - hy * math.sin(a), y + hx * math.sin(a) + hy * math.cos(a), z0),
+                      out_rot)
         x += step[0]
         y += step[1]
 
@@ -146,7 +153,68 @@ def gable_roof(k, nx, ny, z0, gables="Roof_Front_Brick"):
         place(k, f"{gables}{w}", (0, y, z0), r)
 
 
+# --- furniture and the places it makes ---------------------------------------------------------
+# Markers (empties the game reads as Marker3Ds, see make_village.mark): Bed (foot of the mattress,
+# facing the pillow), Seat* (a chair: anyone sits, the villager first), Look* (something to look
+# at: BuildingDef.looks), Stair0/Stair1 (the stair's foot and head, for villagers going up).
+
+DIRS = {"-y": 0, "+x": 90, "+y": 180, "-x": -90}  # a prop's front (its -Y) turned to face this way
+
+
+def prop(k, piece, x, y, z=0.0, facing="-y"):
+    return place(k, piece, (x, y, z), DIRS[facing])
+
+
+def marker(k, name, x, y, z=0.0, facing=(0.0, -1.0)):
+    return mv.mark(f"{k.prefix}_{name}", (x, y, z), facing)
+
+
+VEC = {"+y": (0, 1), "-y": (0, -1), "+x": (1, 0), "-x": (-1, 0)}
+BACK = {"+y": "-y", "-y": "+y", "+x": "-x", "-x": "+x"}
+
+
+def bed(k, x, y, z=0.0, pillow="+y", piece="Bed_Twin1"):
+    """A bed centred at x, y with its pillow toward `pillow`, and the Bed marker at its foot."""
+    prop(k, piece, x, y, z, facing=BACK[pillow])
+    d = VEC[pillow]
+    marker(k, "Bed", x - d[0] * 0.95, y - d[1] * 0.95, z + 0.45, d)
+
+
+def chair(k, name, x, y, z=0.0, facing="+x"):
+    """A chair whose sitter faces `facing`, with its Seat marker."""
+    prop(k, "Chair_1", x, y, z, facing=BACK[facing])
+    marker(k, name, x, y, z, VEC[facing])
+
+
+def look(k, name, x, y, z):
+    marker(k, "Look" + name, x, y, z)
+
+
 # --- the bakery ---------------------------------------------------------------------------------
+
+def bakery_home(k, hw, hd, z=0.0, shelves=True):
+    """Rosa's room at the back of a storey hw x hd metres from the centre: bed, table, shelves
+    (not by the oven)."""
+    bed(k, -hw + 1.1, hd - 1.45, z)
+    prop(k, "Nightstand_Shelf", -hw + 2.45, hd - 0.35, z)
+    prop(k, "Table_Large", hw - 1.6, 0.2, z, facing="+x")
+    chair(k, "Seat1", hw - 2.4, -0.5, z)
+    chair(k, "Seat2", hw - 2.4, 0.9, z)
+    if shelves:
+        prop(k, "Bookcase_2", hw - 1.1, hd - 0.35, z)
+        look(k, "Recipes", hw - 1.1, hd - 0.5, z + 1.4)
+    prop(k, "Chandelier", 0, 0, z + WALL_TOP - 0.1)
+
+
+def bakery_shop(k, hw, hd):
+    """The shop at the front: a counter facing the door, bread on shelves, flour and crates."""
+    prop(k, "Table_Large", 0.6, -hd + 2.6)
+    prop(k, "Shelf_Simple", hw - 1.0, -hd + 0.35, 1.6)
+    mv.loaves(k, hw - 1.0, -hd + 0.55, 1.63, 3, 0.25)
+    prop(k, "Bag", -hw + 0.8, -hd + 0.7)
+    prop(k, "FarmCrate_Empty", -hw + 0.8, -hd + 1.5)
+    prop(k, "Barrel", hw - 0.6, -hd + 3.4)
+    look(k, "Flour", -hw + 0.8, -hd + 0.7, 0.5)
 
 def baker_cottage():
     mv.reset()
@@ -154,6 +222,9 @@ def baker_cottage():
     k = mv.Kit("T1", 201)
     storey(k, 3, 4, "plaster", front="odo", back="wnw", left="wowo", right="owow")
     gable_roof(k, 3, 4, WALL_TOP)
+    bakery_home(k, 3, 4)
+    prop(k, "Bag", -2.4, -3.3)
+    look(k, "Flour", -2.4, -3.3, 0.5)
     place(k, "Prop_Chimney", (1.8, 2.0, WALL_TOP + 0.6), 0)
     k.empty("Smoke", (1.8, 2.0, WALL_TOP + 3.9))
 
@@ -161,6 +232,8 @@ def baker_cottage():
     k = mv.Kit("T2", 202)
     storey(k, 4, 5, "brick", front="odoo", back="wwnw", left="wowow", right="owowo")
     gable_roof(k, 4, 5, WALL_TOP)
+    bakery_home(k, 4, 5, shelves=False)
+    bakery_shop(k, 4, 5)
     mv.bread_oven(k, 2.4, 3.6, big=True)
     place(k, "Prop_Chimney", (2.4, 3.0, WALL_TOP + 1.2), 0)
     k.empty("Smoke", (2.4, 3.0, WALL_TOP + 4.5))
@@ -172,7 +245,11 @@ def baker_cottage():
     storey(k, 4, 5, "plaster", front="toot", back="tnnt", left="totot", right="totot", z0=WALL_TOP,
            floor="Floor_WoodLight", holes={(0, 1), (0, 2)})
     place(k, "Stair_Interior_Solid", (-3.0, -3.0, 0.0), 0)
+    marker(k, "Stair0", -3.0, -3.6, 0.0, (0, 1))
+    marker(k, "Stair1", -3.0, 1.6, WALL_TOP, (0, 1))
     gable_roof(k, 4, 5, 2 * WALL_TOP)
+    bakery_shop(k, 4, 5)
+    bakery_home(k, 4, 5, WALL_TOP)  # upstairs: Rosa's rooms
     mv.bread_oven(k, 2.4, 3.6, big=True)
     place(k, "Prop_Chimney", (2.4, 3.0, 2 * WALL_TOP + 1.2), 0)
     k.empty("Smoke", (2.4, 3.0, 2 * WALL_TOP + 4.5))

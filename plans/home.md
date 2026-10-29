@@ -29,6 +29,24 @@ instead of the lodge: the kit is plaster, timber, stone and tile, and has no log
 - **Not in the game yet**: `data/buildings/baker_cottage.tres` still uses the old `.glb`. The
   new one is 3.4× the floor area and would sit on the terrace; it goes in with the re-layout
   (phase 5).
+
+**Phase 3 built 2026-10-29: the interior framework.**
+- `Building`: each tier's room is its kit floor (has_player / inside, the "interior" group for
+  Acoustics); kit door leaves (`Door_1_Round`, hinged at their origin) swing open by day and shut
+  while the villager sleeps (`Villager.door_shut`), with collision only when shut; markers
+  `Seat*` become seats (kind &"home", the villager's own first), `Look*` become `LookObject`s
+  (E shows a line above it for 4.5 s, words from `BuildingDef.looks`: "marker|what|line", with
+  "marker.<tier>" overrides), `Bed` and `Stair0/1` are found by name (`Building.mark`).
+- `Villager` in a house with a bed: in through the door at dark, sits in their own seat till
+  lights out, then walks to bed (by the stair if it's upstairs; heights follow the route
+  indoors) and lies down, breathing; a knock at the door wakes them out as before; out through
+  the door in the morning. Houses without a bed keep the old vanish-at-the-door.
+- `kit_buildings.py`: props from the Fantasy Props kit (`art/kit/props`, all 94), helpers `prop`,
+  `bed`, `chair`, `look`, `marker`; the bakery furnished (bed, table and chairs, shelves, counter,
+  flour, loaves) with Rosa's look lines.
+- Tested: `test_kit_building.gd` 36/36 (bed, seats, looks, door leaf, indoors or not);
+  `test_day` and `test_paths` still pass. Not yet seen: a villager going to bed for real (the
+  bakery isn't in the world till phase 5).
 Palette files: `E:\Godot\downloads\art-pick\newpal`, `strongpal`.
 
 ## Where we start (2026-10-29)

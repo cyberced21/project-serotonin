@@ -26,8 +26,29 @@ extends Resource
 ])
 
 
+## Things worth a look inside (plans/home.md), one entry per Look* marker in the model:
+## "<marker>|<what it is>|<the line>", e.g. "LookAxe|the old axe|Grandad's. Still the best edge
+## in the valley." A marker name with ".<tier>" ("LookAxe.3") is that tier's own line for it.
+## (PackedStringArray default for the same reason as night_lines.)
+@export_multiline var looks := PackedStringArray()
+
+
 func max_tier() -> int:
 	return tiers.size()
+
+
+## The look entry for marker `look` (without its TN_) at tier `tier`: [what it is, the line], or [].
+func look(look: String, tier: int) -> PackedStringArray:
+	var plain := PackedStringArray()
+	for entry in looks:
+		var parts := entry.split("|", true, 2)
+		if parts.size() < 3:
+			continue
+		if parts[0] == "%s.%d" % [look, tier]:
+			return PackedStringArray([parts[1], parts[2]])
+		if parts[0] == look:
+			plain = PackedStringArray([parts[1], parts[2]])
+	return plain
 
 
 ## The tier resource for `tier` (1-based), or null.

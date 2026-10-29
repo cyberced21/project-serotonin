@@ -87,6 +87,7 @@ var _laughing := false  # (for a laugh's sound at its start)
 var _drinking := false
 var _fiddle: MeshInstance3D  # on the stage (its bow is the "bow" meta)
 var _lights_out := 0.0  # evening hour (VillagerDay.evening_hours) their lamp goes out
+var _indoor_walk := false  # walking inside their house (_walk_inside): heights from the route
 ## A cutscene is posing this villager (script_pose): no walking, working or talking of its own.
 var scripted := false
 
@@ -239,8 +240,15 @@ func _start() -> void:
 		_inside = true
 		if VillagerDay.hours(DayNight.time) >= 12.0:  # (an evening: still up for a while)
 			_lights_out = VillagerDay.lights_out(building.def.id, VillagerDay.evening_hours(DayNight.time))
-		_model.visible = false
-		_shape.set_deferred("disabled", true)
+		var bed := building.bed()
+		if bed:  # a walk-in house: there, in bed (or by the fire)
+			var at := _home_seat() if lights_on() else bed
+			global_position = _ground(at.global_position)
+			_face_marker(at)
+			_target = at
+		else:
+			_model.visible = false
+			_shape.set_deferred("disabled", true)
 	elif _part != VillagerDay.Part.WORK:
 		_walk_to.call_deferred(_next_spot())
 
@@ -257,7 +265,7 @@ func _enter(s: State) -> void:
 
 func _physics_process(delta: float) -> void:
 	_tick(delta)
-	if not _away and not _inside:
+	if not _away and (not _inside or _model.visible):
 		_apply_poses(delta)
 
 
@@ -379,7 +387,15 @@ func _night_routine(delta: float, talking: bool) -> bool:
 	var night := _part == VillagerDay.Part.SLEEP
 	var at_door := _player != null and _player.global_position.distance_to(door.global_position) < door_call_radius
 	if _inside:
-		if night and not at_door:
+		if building.bed():  # a walk-in house: up by the fire, then in bed; a knock wakes them
+			if not night or lights_on() or not at_door:
+				if _indoors(delta, night):
+					return true
+				_inside = false  # back at the door in the morning: out for the day
+				_set_lying(false)
+				_enter(State.IDLE)
+				return false
+		elif night and not at_door:
 			return true  # asleep
 		_come_out(door)
 		_visiting = night
@@ -410,9 +426,16 @@ func lights_on() -> bool:
 	return _visiting or (_inside and VillagerDay.evening_hours(DayNight.time) < _lights_out)
 
 
+## Asleep at home: their door is shut (Building).
+func door_shut() -> bool:
+	return _inside and not lights_on()
+
+
 func _go_inside() -> void:
 	_inside = true
 	_lights_out = VillagerDay.lights_out(building.def.id, VillagerDay.evening_hours(DayNight.time))
+	if building.bed():  # a walk-in house: they stay in sight, and in their room (_indoors)
+		return
 	_shape.set_deferred("disabled", true)
 	set_highlighted(false)
 	var t := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)  # interpolated body
@@ -420,8 +443,82 @@ func _go_inside() -> void:
 	t.tween_callback(func() -> void: _model.visible = false)
 
 
+## An evening at home in a walk-in house (plans/home.md): by the fire (their own seat) while the
+## lamp's lit, then to bed; in the morning back to the door. False once they're at the door to
+## go out (morning).
+func _indoors(delta: float, night: bool) -> bool:
+	var goal: Marker3D = building.spot("Door")
+	if night:
+		goal = _home_seat() if lights_on() else building.bed()
+	if state == State.WALK:
+		if _target != goal:
+			_walk_inside(goal)
+		_set_lying(false)
+		_walk(delta)
+		return true
+	if global_position.distance_to(_ground(goal.global_position)) > 0.3:
+		_walk_inside(goal)
+		return true
+	if not night:
+		return false
+	_turn_to_yaw(_marker_yaw(goal), delta, 6.0)
+	if goal == building.bed():
+		_set_lying(true)
+		_animate_sleep()
+	elif _seated():
+		_animate_sit()
+	else:
+		_animate_idle()
+	_look(delta)
+	return true
+
+
+## Their seat at home (a Seat* in their house), else the bed.
+func _home_seat() -> Marker3D:
+	if _seat == null or not is_instance_valid(_seat) or _seat.get_meta(&"home", null) != building:
+		_leave_seat()
+		_claim_seat(&"home")
+		if _seat and _seat.get_meta(&"home", null) != building:  # (someone else's house's)
+			_leave_seat()
+	return _seat if _seat else building.bed()
+
+
+## Straight across the room (no village paths indoors), by the stair (Stair0 at its foot, Stair1
+## at its head) when `m` is on another floor; heights follow the line between the points.
+func _walk_inside(m: Marker3D) -> void:
+	_target = m
+	_route = PackedVector3Array([m.global_position])
+	var foot := building.mark("Stair0")
+	var head := building.mark("Stair1")
+	if foot and head and absf(m.global_position.y - global_position.y) > 1.5:
+		var up := m.global_position.y > global_position.y
+		_route = PackedVector3Array([(foot if up else head).global_position, (head if up else foot).global_position,
+				m.global_position])
+	_walk_from = global_position
+	_speed = 0.0
+	_indoor_walk = true
+	state = State.WALK
+
+
+## Lying in bed: the whole model tipped back along the bed (its marker sits at the foot of the
+## mattress, +Z toward the pillow).
+func _set_lying(on: bool) -> void:
+	_model.rotation.x = PI / 2 if on else 0.0
+	_model.position.y = 0.12 if on else 0.0
+
+
+func _animate_sleep() -> void:
+	var breathe := sin(_phase * 1.1)
+	_pose(&"Body", 0.0, 0.0, 0.0, Vector3(0, breathe * 0.01, 0))
+	_pose(&"ArmL", 0.0, -0.05)
+	_pose(&"ArmR", 0.0, 0.05)
+	_pose(&"LegL", 0.0)
+	_pose(&"LegR", 0.0)
+
+
 func _come_out(door: Marker3D) -> void:
 	_inside = false
+	_set_lying(false)
 	global_position = _ground(door.global_position)
 	_face_marker(door)
 	_target = door
@@ -621,6 +718,7 @@ func _walk_to(m: Marker3D) -> void:
 	if m == null or m == _target and global_position.distance_to(_ground(m.global_position)) < 0.3:
 		_enter(State.IDLE)
 		return
+	_indoor_walk = false
 	_target = m
 	_route = _route_to(m.global_position)
 	_walk_from = global_position
@@ -660,9 +758,12 @@ func _walk(delta: float) -> void:
 	var step := minf(_speed * delta, dist)
 	var next := global_position + flat / dist * step
 	# height: the ground, but on the last stretch never below the straight line between spots
-	# (docks, porches)
+	# (docks, porches); indoors, the line between the points (floors, the stair)
 	next.y = _ground_height(next)
-	if last:
+	if _indoor_walk:
+		var leg := Vector2(goal.x - _walk_from.x, goal.z - _walk_from.z).length()
+		next.y = lerpf(_walk_from.y, goal.y, clampf(1.0 - (dist - step) / maxf(leg, 0.001), 0.0, 1.0))
+	elif last:
 		var total := Vector2(goal.x - _walk_from.x, goal.z - _walk_from.z).length()
 		var t := 1.0 - (dist - step) / maxf(total, 0.001)
 		next.y = maxf(next.y, lerpf(_walk_from.y, goal.y, clampf(t, 0.0, 1.0)))

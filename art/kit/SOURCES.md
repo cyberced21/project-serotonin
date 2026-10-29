@@ -8,5 +8,7 @@ Only the pieces `tools/blender/kit_buildings.py` uses are copied, by `tools/impo
 their textures converted to JPEG. Godot ignores this folder (`.gdignore`): the game loads the
 buildings exported from it, in `models/village/` (textures in `models/village/textures/`).
 
-The **Fantasy Props MegaKit** (Standard, same author and licence) is picked for the interiors
-(plans/home.md); its pieces come in with the interiors phase.
+`props/` holds all 94 pieces of the **Fantasy Props MegaKit** (Standard, free), same author and
+licence: https://quaternius.com/packs/fantasypropsmegakit.html (downloaded from
+https://opengameart.org/content/fantasy-props-megakit on 2026-10-29), textures shrunk to 1024 px
+JPEGs. Furniture and things for the interiors, in their own colours (plans/home.md).

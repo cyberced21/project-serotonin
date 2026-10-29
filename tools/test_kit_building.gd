@@ -13,6 +13,7 @@ const FRONT := {1: {"door": 0.0, "wall_z": 4.0}, 2: {"door": -1.0, "wall_z": 5.0
 const AT := Vector3(400, 0, 400)  # well away from the village
 
 var _fails := 0
+var _player: Node3D
 
 
 func _initialize() -> void:
@@ -20,6 +21,9 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	_player = Node3D.new()  # stands in for the player, for "are you inside"
+	_player.add_to_group("player")
+	root.add_child(_player)
 	var def: Resource = load(DEF).duplicate()
 	def.set("model", load(MODEL))
 	var b := Node3D.new()
@@ -68,6 +72,25 @@ func _tier(b: Node3D, t: int) -> void:
 	_check(not _ray(b, Vector3(wall_x, 0.5, z + 2.0), Vector3(wall_x, 0.5, z - 2.0)).is_empty(),
 			"tier %d: the front wall is solid" % t)
 	_check(not _ray(b, Vector3(0.5, 1.5, 0.5), Vector3(0.5, -0.5, 0.5)).is_empty(), "tier %d has a floor inside" % t)
+	# the walk-in house (phase 3): a bed, seats, things to look at, a door that swings, a room
+	_check(b.call("bed") != null, "tier %d has a bed" % t)
+	var seats := 0
+	var looks := 0
+	var doors := 0
+	for c in group.get_children():
+		if c is Marker3D and c.is_in_group("seat") and c.get_meta(&"kind", &"") == &"home":
+			seats += 1
+		if c.has_method("prompt") and String(c.call("prompt")).begins_with("E  Look at"):
+			looks += 1
+		if c is MeshInstance3D and String(c.name).substr(3).begins_with("KitDoor1"):
+			doors += 1
+	_check(seats >= 2, "tier %d has seats at home (%d)" % [t, seats])
+	_check(looks >= 1, "tier %d has something to look at (%d)" % [t, looks])
+	_check(doors >= 1, "tier %d has a door leaf (%d)" % [t, doors])
+	_player.global_position = b.to_global(Vector3(0.5, 0.2, 0.5))
+	_check(b.call("has_player"), "tier %d: standing inside counts as indoors" % t)
+	_player.global_position = b.to_global(Vector3(0.0, 0.2, 12.0))
+	_check(not b.call("has_player"), "tier %d: outside doesn't" % t)
 
 
 func _ray(b: Node3D, from: Vector3, to: Vector3) -> Dictionary:
