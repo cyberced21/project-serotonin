@@ -47,6 +47,7 @@ var _thud: AudioStreamPlayer3D
 var _dust: CPUParticles3D
 var _confetti: CPUParticles3D
 var _run := 0  # bumped on every upgrade, so an interrupted animation stops
+var _heading := 0  # the tier being shown, or being built (mid-animation)
 ## Window glass, and how lit it is (0..1): lit while the villager is home and awake after dark
 ## (Villager.lights_on()), fading on and off.
 var _windows: Array[MeshInstance3D] = []
@@ -72,14 +73,28 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _windows.is_empty():
 		return
-	var v := get_node_or_null("Villager")
-	var on: bool = v != null and v.call("lights_on")
-	_lit = move_toward(_lit, 1.0 if on else 0.0, delta / WINDOW_FADE)
+	_lit = move_toward(_lit, 1.0 if _windows_on() else 0.0, delta / WINDOW_FADE)
 	var glow := _lit * DayNightSky.glow_level
 	if absf(glow - _lit_shown) > 0.005:
 		_lit_shown = glow
 		for w in _windows:
 			w.set_instance_shader_parameter("glow", glow)
+
+
+## Whether the windows should be lit: its villager is home and up.
+func _windows_on() -> bool:
+	var v := get_node_or_null("Villager")
+	return v != null and v.call("lights_on")
+
+
+## The markers of tier `t` (empties in the model other than smoke: Tavern's seats and so on).
+func marks(t: int) -> Array[Marker3D]:
+	var out: Array[Marker3D] = []
+	if _tiers.has(t):
+		for c in _tiers[t].get_children():
+			if c is Marker3D:
+				out.append(c)
+	return out
 
 
 ## Whether its windows are lit now (0..1, before the night's own fade-in).
@@ -155,6 +170,11 @@ func _build_tiers() -> void:
 			_tiers[t].add_child(smoke)
 			smoke.transform = Transform3D(Basis.IDENTITY, xform.origin)
 			_smoke[t].append(smoke)
+		else:  # any other empty: a marker shown with its tier (the tavern's seats: Tavern)
+			var mark := Marker3D.new()
+			mark.name = String(n.name).substr(3)  # (without the TN_)
+			_tiers[t].add_child(mark)
+			mark.transform = xform
 	inst.free()
 
 
@@ -194,6 +214,7 @@ static func _model_transform(n: Node, root: Node) -> Transform3D:
 
 func _show_tier(t: int) -> void:
 	tier_shown = t
+	_heading = t
 	for k in _tiers:
 		_tiers[k].visible = k == t
 		_tiers[k].scale = Vector3.ONE
@@ -217,7 +238,7 @@ func _on_tier_changed(id: StringName, t: int) -> void:
 			_play_upgrade(0, Village.tier(def.id))  # the town hall grew: move in
 		elif not is_unlocked() and tier_shown > 0:
 			_show_tier(0)  # (debug: the hall went back down)
-	elif id == def.id and t != tier_shown and is_unlocked():
+	elif id == def.id and t != _heading and is_unlocked():  # (heading: a change mid-animation counts)
 		_play_upgrade(tier_shown, t)
 
 
@@ -225,6 +246,7 @@ func _play_upgrade(from: int, to: int) -> void:
 	_run += 1
 	var run := _run
 	_show_tier(from)  # snap any half-played animation to a clean start
+	_heading = to
 
 	# 1. out with the old: top pieces first, squashing down into the dust
 	var old: Array[Node3D] = []

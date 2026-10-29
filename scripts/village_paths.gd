@@ -23,6 +23,9 @@ const POINTS := {
 	&"nb_front": Vector2(108.0, 35.4),
 	# Rosa's terrace, in front of it and round toward the lane to the bakery
 	&"terrace": Vector2(87.4, 34.4), &"tr_east": Vector2(91.0, 34.2),
+	# the tavern (plans/tavern.md): across from the benches, in at its door, the middle of the room
+	&"tv_east": Vector2(91.4, 45.6), &"tv_front": Vector2(85.6, 45.0), &"tv_in": Vector2(83.6, 45.0),
+	&"tv_mid": Vector2(80.8, 45.2),
 }
 const LINKS := [
 	[&"sq_n", &"sq_ne"], [&"sq_ne", &"sq_e"], [&"sq_e", &"sq_se"], [&"sq_se", &"sq_s"],
@@ -35,6 +38,8 @@ const LINKS := [
 	[&"sq_se", &"sm_lane"], [&"sm_lane", &"sm_front"],
 	[&"sq_s", &"pr_lane"], [&"pr_lane", &"pr_front"],
 	[&"sq_ne", &"nb_front"],
+	[&"sq_sw", &"tv_east"], [&"fi_lane", &"tv_east"], [&"tv_east", &"tv_front"], [&"tv_front", &"tv_in"],
+	[&"tv_in", &"tv_mid"], [&"tv_front", &"terrace"],
 	[&"terrace", &"tr_east"], [&"tr_east", &"bk_bend"], [&"tr_east", &"bk_lane"],
 ]
 ## Somewhere closer than this is walked to straight, when nothing's in the way.

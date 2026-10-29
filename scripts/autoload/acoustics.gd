@@ -4,7 +4,8 @@ extends Node
 ## barely at all in the open meadows, soft and close under the pines, a long slap off the far
 ## shore at Stillwater, a late echo off the mountain at Frostpeak, and hard stone at the quarry.
 ## Interface sounds, pickups and fishing (the Effects bus) stay dry, as do ambience (already
-## recorded in its place) and music. Indoor reverb waits for interiors.
+## recorded in its place) and music. Indoors (an "interior" group node whose has_player() says so:
+## the tavern) it's a small, warm, wooden room.
 ## Each bus gets one AudioEffectReverb ahead of its other effects; its settings ease to the
 ## place's over BLEND seconds, and go dry in the menus.
 
@@ -20,6 +21,7 @@ const PLACES := {
 	&"stillwater": {"room": 0.6, "damp": 0.4, "wet": 0.1, "pre": 70.0, "hipass": 0.3},
 	&"frostpeak": {"room": 0.75, "damp": 0.45, "wet": 0.12, "pre": 130.0, "hipass": 0.3},
 	&"quarry": {"room": 0.75, "damp": 0.3, "wet": 0.2, "pre": 35.0, "hipass": 0.2},
+	&"indoors": {"room": 0.25, "damp": 0.75, "wet": 0.12, "pre": 6.0, "hipass": 0.15},  # timber and plaster
 }
 const BUSES: Array[StringName] = [&"SFX", &"Movement"]
 ## Footsteps sit close to you: a little less of the room on them.
@@ -50,6 +52,9 @@ static func target() -> Dictionary:
 	var player := (Engine.get_main_loop() as SceneTree).get_first_node_in_group("player")
 	if player == null:
 		return {"room": 0.0, "damp": 0.5, "wet": 0.0, "pre": 20.0, "hipass": 0.2}
+	for room in player.get_tree().get_nodes_in_group("interior"):
+		if room.call("has_player"):
+			return PLACES[&"indoors"]
 	return PLACES.get(Biome.current, PLACES[&""])
 
 

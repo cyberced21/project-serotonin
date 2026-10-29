@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="BuildingDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
+[ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
+[ext_resource type="PackedScene" path="res://models/village/tavern.glb" id="3_model"]
+
+[sub_resource type="Resource" id="Tier_1"]
+script = ExtResource("2_tier")
+name = "Boarded-up Tavern"
+lines = PackedStringArray("This was the Sleepy Hound, once. Best tavern this side of the pass. Look at it now.", "Mend the roof, pull the boards off, and I'll have the taps running by nightfall.", "Folk go home at dark and sit alone. A village needs somewhere to be together of an evening.")
+
+[sub_resource type="Resource" id="Tier_2"]
+script = ExtResource("2_tier")
+name = "Taproom"
+cost = Dictionary[StringName, int]({
+&"wood": 30,
+&"ore": 10
+})
+hall_tier = 1
+lines = PackedStringArray("Open again! Come by after dark, there's always a stool for you.", "Fancy a game of dice? The table by the window. Nobody plays for coin here, mind.", "A fire would be nice. And someone to play us a tune.")
+
+[sub_resource type="Resource" id="Tier_3"]
+script = ExtResource("2_tier")
+name = "Fireside Tavern"
+cost = Dictionary[StringName, int]({
+&"wood": 40,
+&"pine": 20,
+&"ore": 25,
+&"coal": 8
+})
+hall_tier = 2
+lines = PackedStringArray("Hear that fire crackle? Nights don't get better than this.", "Ollie's taken to playing of an evening. Don't tell him he's good, it'll go to his head.", "If only the room were bigger. Folk would dance, if there were room to.")
+
+[sub_resource type="Resource" id="Tier_4"]
+script = ExtResource("2_tier")
+name = "The Sleepy Hound"
+cost = Dictionary[StringName, int]({
+&"oak": 30,
+&"birch": 20,
+&"iron": 15,
+&"barley": 12
+})
+hall_tier = 3
+lines = PackedStringArray("The Sleepy Hound, as it was meant to be. Thank you.", "There's dancing most nights now. Even the mayor's been seen to tap a foot.", "Sit down, warm up, stay as long as you like.")
+
+[resource]
+script = ExtResource("1_def")
+id = &"tavern"
+display_name = "The Sleepy Hound"
+model = ExtResource("3_model")
+tiers = Array[ExtResource("2_tier")]([SubResource("Tier_1"), SubResource("Tier_2"), SubResource("Tier_3"), SubResource("Tier_4")])
+villager_name = "Maud"
+villager_role = "Tavern keeper"
+capped_line = "The mayor says no bigger till the town hall is. Can't have the tavern grander than the town."
+night_lines = PackedStringArray("Closing up, love. Come back tomorrow night, I'll keep a stool warm.", "Still up? Mind how you go, the lamps only light so much.")

@@ -14,7 +14,7 @@ extends AnimatableBody3D
 ## standstill and slows into each stop.
 
 enum State { IDLE, WALK, WORK, TALK, CHEER }
-enum Work { CHOP, HAMMER, FISH, ORATE, TEND }
+enum Work { CHOP, HAMMER, FISH, ORATE, TEND, WIPE }
 
 const PALETTE := preload("res://materials/node_palette.tres")
 const CHOP_SFX := preload("res://audio/wood_hit.tres")
@@ -78,6 +78,7 @@ var _seat: Marker3D
 var _skip_tonight := false
 var _stroll: Marker3D  # where they're strolling to next
 var _stroll_i := 0
+var _mug: MeshInstance3D  # carried at the tavern
 var _lights_out := 0.0  # evening hour (VillagerDay.evening_hours) their lamp goes out
 ## A cutscene is posing this villager (script_pose): no walking, working or talking of its own.
 var scripted := false
@@ -277,6 +278,7 @@ func _tick(delta: float) -> void:
 	var part := _day_part()
 	if part != _part:
 		_change_part(part, talking)
+	_show_mug(_part == VillagerDay.Part.TAVERN and not building is Tavern)
 
 	if state == State.CHEER:
 		_cheer_time += delta
@@ -298,14 +300,18 @@ func _tick(delta: float) -> void:
 				_enter(State.IDLE)
 		State.IDLE:
 			var seated := _seated()
-			if seated:
+			var settled := _seat != null and _target == _seat  # (got to their seat: stay put)
+			if seated or settled:
 				_turn_to_yaw(_marker_yaw(_target), delta, 6.0)
+			if settled and _part == VillagerDay.Part.TAVERN:
+				_animate_chat(seated)
+			elif seated:
 				_animate_sit()
 			else:
 				_animate_idle()
 			if _watching:
 				_turn_toward(building.global_position, delta, 5.0)
-			elif not (seated and _target == _seat):  # on a seat they've claimed: stay put
+			elif not settled:
 				_timer -= delta
 				if _timer <= 0.0:
 					_walk_to(_next_spot())
@@ -427,6 +433,16 @@ func _next_spot() -> Marker3D:
 					_claim_seat(&"terrace")
 				if _seat:
 					return _seat
+		VillagerDay.Part.TAVERN:
+			if building is Tavern:  # the keeper, behind the bar
+				return building.work_spot()
+			if _seat == null and _claim_seat(&"tavern") == null:
+				_claim_seat(&"tavern", "stand_spot")
+			if _seat:
+				return _seat
+			var tavern := get_tree().get_first_node_in_group("tavern") as Building
+			if tavern:  # full: a drink on the step
+				return tavern.spot("Door")
 		VillagerDay.Part.DUSK:
 			if not VillagerDay.has_quirk(building.def.id, "strolls"):
 				if _seat == null:
@@ -475,12 +491,12 @@ func _stroll_spot() -> Marker3D:
 	return _stroll
 
 
-## Takes the nearest free seat of `kind` (markers in the "seat" group: benches, terrace, tavern),
-## preferring their own building's.
-func _claim_seat(kind: StringName) -> Marker3D:
+## Takes the nearest free seat of `kind` (markers in the "seat" group: benches, terrace, tavern;
+## or another `group`'s, like the tavern's places to stand), preferring their own building's.
+func _claim_seat(kind: StringName, group := "seat") -> Marker3D:
 	var best: Marker3D = null
 	var best_d := SEAT_RANGE
-	for s in get_tree().get_nodes_in_group("seat"):
+	for s in get_tree().get_nodes_in_group(group):
 		var m := s as Marker3D
 		if m == null or m.get_meta(&"kind", &"") != kind or not m.is_visible_in_tree() or _taken(m):
 			continue
@@ -644,6 +660,49 @@ func _animate_sit() -> void:
 	_pose(&"ArmR", -0.55, 0.12)
 
 
+## At the tavern, settled in (sitting, or standing at the bar): chatting with their hands, a
+## drink now and then, and the odd laugh. Each villager out of step with the others.
+func _animate_chat(seated: bool) -> void:
+	var me := float(get_instance_id() % 97)
+	if seated:
+		_animate_sit()
+	else:
+		_animate_idle()
+	var talk := maxf(sin(_phase * 0.55 + me), 0.0)  # in a spell of talking: hands about
+	var drink := maxf(sin(_phase * 0.31 + me * 1.7) - 0.7, 0.0) / 0.3  # the mug up to the mouth
+	var laugh := maxf(sin(_phase * 0.19 + me * 0.6) - 0.88, 0.0) / 0.12
+	_pose(&"ArmR", lerpf(-0.6, -2.3, drink) + sin(_phase * 3.1) * 0.15 * talk, 0.12)
+	_pose(&"ArmL", -0.55 - talk * (0.45 + sin(_phase * 2.3 + 1.0) * 0.3), -0.12 - talk * 0.2)
+	var bounce := absf(sin(_phase * 14.0)) * 0.03 * laugh
+	if seated:
+		_pose(&"Body", -0.08 - laugh * 0.15, 0.0, 0.0, Vector3(0, 0.02 + bounce, -0.05))
+	else:
+		_pose(&"Body", -laugh * 0.12, 0.0, 0.0, Vector3(0, bounce, 0))
+
+
+## A mug in the right hand while they're out at the tavern.
+func _show_mug(on: bool) -> void:
+	if not on and _mug == null:
+		return
+	if _mug == null:
+		if not _parts.has(&"ArmR"):
+			return
+		var mesh := CylinderMesh.new()
+		mesh.top_radius = 0.055
+		mesh.bottom_radius = 0.05
+		mesh.height = 0.13
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color("a37a55")
+		mat.roughness = 0.85
+		mesh.material = mat
+		_mug = MeshInstance3D.new()
+		_mug.name = "Mug"
+		_mug.mesh = mesh
+		_parts[&"ArmR"].add_child(_mug)
+		_mug.position = Vector3(0.0, -0.5, 0.08)  # (in the hand, a little forward)
+	_mug.visible = on
+
+
 func _animate_walk() -> void:
 	var s := sin(_walk_cycle)
 	var a := clampf(_speed / walk_speed, 0.25, 1.3)  # small steps when slow, big when hurrying
@@ -715,6 +774,14 @@ func _animate_work() -> void:
 			_pose(&"ArmR", -1.1 + a * 0.35, 0.1)
 			_pose(&"ArmL", -1.1 - a * 0.35, -0.1)
 			_pose(&"Body", -0.35, 0.0, 0.0, Vector3(0, -0.03, 0))
+		Work.WIPE:
+			# behind the bar: polishing a mug, round and round, now and then holding it up to look
+			var c := _phase * 3.2
+			var look := maxf(sin(_phase * 0.37), 0.0)
+			look = look * look * look
+			_pose(&"ArmL", lerpf(-1.0, -1.6, look), -0.15)
+			_pose(&"ArmR", -1.05 + sin(c) * 0.12, 0.12 + cos(c) * 0.1)
+			_pose(&"Body", -0.05, 0.0, 0.0, Vector3(0, sin(_phase * 1.7) * 0.006, 0))
 		Work.ORATE:
 			# hands behind the back, now and then a grand gesture
 			var g := maxf(sin(_phase * 0.9), 0.0)

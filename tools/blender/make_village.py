@@ -1709,6 +1709,309 @@ def terrace():
     export(os.path.join("village", "props", "terrace"))
 
 
+TAVERN_W, TAVERN_D, TAVERN_H = 4.0, 3.5, 3.0  # half width (X), half depth (Y), wall height
+TAVERN_FLOOR = 0.08
+
+
+def tavern_wall(k, x0, x1, y, holes, colors, z1=TAVERN_H, t=0.22):
+    """A wall along X from x0 to x1 at y, with holes [(xa, xb, za, zb)]: the wall around them is
+    separate boxes, so the holes are real (doors and windows you can see through)."""
+    xs = sorted({x0, x1} | {h[0] for h in holes} | {h[1] for h in holes})
+    for a, b in zip(xs, xs[1:]):
+        mid = (a + b) / 2
+        hole = next((h for h in holes if h[0] <= mid <= h[1]), None)
+        if hole is None:
+            k.box("Wall", (b - a, t, z1), (mid, y, z1 / 2), colors, jit=0.005)
+            continue
+        if hole[2] > 0.01:
+            k.box("Wall", (b - a, t, hole[2]), (mid, y, hole[2] / 2), colors, jit=0.005)
+        if hole[3] < z1 - 0.01:
+            k.box("Wall", (b - a, t, z1 - hole[3]), (mid, y, (hole[3] + z1) / 2), colors, jit=0.005)
+
+
+def tavern_side(k, x, y0, y1, holes, colors, z1=TAVERN_H, t=0.22):
+    """tavern_wall() for a wall along Y at x (holes in Y)."""
+    ys = sorted({y0, y1} | {h[0] for h in holes} | {h[1] for h in holes})
+    for a, b in zip(ys, ys[1:]):
+        mid = (a + b) / 2
+        hole = next((h for h in holes if h[0] <= mid <= h[1]), None)
+        if hole is None:
+            k.box("Wall", (t, b - a, z1), (x, mid, z1 / 2), colors, jit=0.005)
+            continue
+        if hole[2] > 0.01:
+            k.box("Wall", (t, b - a, hole[2]), (x, mid, hole[2] / 2), colors, jit=0.005)
+        if hole[3] < z1 - 0.01:
+            k.box("Wall", (t, b - a, z1 - hole[3]), (x, mid, (hole[3] + z1) / 2), colors, jit=0.005)
+
+
+def tavern_window(k, x, y, ruin, facing="y"):
+    """A window in a wall hole: glass that glows when the tavern's open, or boards across it."""
+    if ruin:
+        for i, a in enumerate((0.5, -0.45)):
+            size = (1.3, 0.05, 0.16) if facing == "y" else (0.05, 1.3, 0.16)
+            rot = (0, a, 0) if facing == "y" else (a, 0, 0)
+            off = (0, -0.14, 0) if facing == "y" else (0.14, 0, 0)
+            k.box("Board", size, (x + off[0], y + off[1], 1.5 + i * 0.05), ("wood.3", "wood.2", "wood.2"), rot=rot)
+        return
+    if facing == "y":
+        k.box("WindowGlass", (1.0, 0.04, 1.0), (x, y, 1.5), "neutral.2")
+        k.box("WindowFrame", (1.12, 0.26, 0.08), (x, y, 1.0), "wood.6")
+        k.box("WindowFrame", (1.12, 0.26, 0.08), (x, y, 2.0), "wood.6")
+        k.box("WindowBar", (0.05, 0.08, 1.0), (x, y, 1.5), "wood.6")
+    else:
+        k.box("WindowGlass", (0.04, 1.0, 1.0), (x, y, 1.5), "neutral.2")
+        k.box("WindowFrame", (0.26, 1.12, 0.08), (x, y, 1.0), "wood.6")
+        k.box("WindowFrame", (0.26, 1.12, 0.08), (x, y, 2.0), "wood.6")
+        k.box("WindowBar", (0.08, 0.05, 1.0), (x, y, 1.5), "wood.6")
+
+
+def tavern_table(k, x, y, seats, prefix, w=1.1, d=0.8):
+    """A plank table with stools round it. seats: which sides get a stool ("x-", "x+", "y-", "y+");
+    each stool gets a <prefix><n> empty facing the table."""
+    k.box("TableTop", (w, d, 0.07), (x, y, 0.78), ("wood.5", "wood.4", "wood.3", "wood.6"), jit=0.005)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            k.box("TableLeg", (0.07, 0.07, 0.74), (x + sx * (w / 2 - 0.1), y + sy * (d / 2 - 0.1), 0.38), "wood.3")
+    k.add("Mug", prism(8, 0.05, 0.05, 0.12), ("wood.6", "wood.4", "wood.4"), (x - 0.2, y + 0.1, 0.875))
+    k.add("Mug", prism(8, 0.05, 0.05, 0.12), ("wood.6", "wood.4", "wood.4"), (x + 0.25, y - 0.12, 0.875))
+    n = 0
+    for side in seats:
+        n += 1
+        if side[0] == "x":
+            sx = -1 if side[1] == "-" else 1
+            sxy, face = (x + sx * (w / 2 + 0.28), y), (-sx, 0)
+        else:
+            sy = -1 if side[1] == "-" else 1
+            sxy, face = (x, y + sy * (d / 2 + 0.28)), (0, -sy)
+        k.add("StoolSeat", prism(8, 0.19, 0.19, 0.05), ("wood.6", "wood.5", "wood.4"), (sxy[0], sxy[1], 0.46))
+        k.add("StoolLeg", prism(6, 0.05, 0.05, 0.44), "wood.3", (sxy[0], sxy[1], 0.24))
+        mark(f"{k.prefix}_{prefix}{n}", (sxy[0], sxy[1], TAVERN_FLOOR), face)
+
+
+def tavern():
+    """The tavern on the square (plans/tavern.md): an 8 x 7 m timber-framed hall, door at the front
+    (-Y) between two windows, a gable roof along X, a room you walk into. Pieces named *Lantern*
+    glow and light the room (only those: the lantern's frame is "Cage"). Tiers:
+      T1  the boarded-up ruin: holes in the roof, boards over the door and windows, junk about
+      T2  the taproom: a bar along the back, three bar stools, two tables, the dice table, lanterns
+      T3  + a fireplace and chimney (+X wall), a little stage, more stools, a rug
+      T4  + an annex through an arch in the -X wall with two more tables, more lanterns, bunting
+          and room to dance
+    Empties (the game makes them Marker3Ds, shown with their tier): Seat* (stools, facing their
+    table), DiceSeat1/2 (you, and whoever plays you), Stand* (a place at the bar), Stage (the
+    musician), Dance* (the dancers' spots). Spots (Door, Work*) are in scenes/village/tavern.tscn."""
+    reset()
+    stone = ("stone.5", "stone.3", "stone.2", "stone.4")
+    for tier in (1, 2, 3, 4):
+        k = Kit(f"T{tier}", 720 + tier)
+        ruin = tier == 1
+        W, D, H = TAVERN_W, TAVERN_D, TAVERN_H
+        plaster = ("neutral.4", "neutral.4", "neutral.3", "wood.3") if ruin else ("neutral.6", "neutral.6", "neutral.5", "wood.7")
+        timber = ("wood.2", "wood.2", "wood.1") if ruin else ("wood.3", "wood.2", "wood.2")
+        roof = ("wood.3", "wood.2", "wood.1", "wood.4") if ruin else ("accent.0", "accent.0", "wood.1", "accent.1")
+        # footing and floor
+        k.stone("Footing", (2 * W + 0.3, 0.4, 0.3), (0, -D, 0.15), stone)
+        k.stone("Footing", (2 * W + 0.3, 0.4, 0.3), (0, D, 0.15), stone)
+        k.box("Floor", (2 * W - 0.2, 2 * D - 0.2, TAVERN_FLOOR), (0, 0, TAVERN_FLOOR / 2),
+              ("wood.4", "wood.3", "wood.3", "wood.5"))
+        # walls: the front with the door and two windows; the sides (the -X one opens into the
+        # annex at tier 4); the back
+        windows = [(-2.9, -1.9, 1.0, 2.0), (1.9, 2.9, 1.0, 2.0)]
+        tavern_wall(k, -W, W, -D, windows + [(-0.65, 0.65, 0.0, 2.25)], plaster)
+        tavern_wall(k, -W, W, D, [(0.4, 1.4, 1.0, 2.0)] if tier >= 2 else [], plaster)
+        tavern_side(k, W, -D + 0.11, D - 0.11, [], plaster)
+        tavern_side(k, -W, -D + 0.11, D - 0.11, [(-1.6, 1.6, 0.0, 2.4)] if tier == 4 else [], plaster)
+        for x in (-W, -1.9, -0.75, 0.75, 1.9, W):  # the timber frame on the front
+            k.box("Beam", (0.16, 0.08, H), (x, -D - 0.13, H / 2), timber)
+        k.box("Beam", (2 * W, 0.08, 0.16), (0, -D - 0.13, H - 0.08), timber)
+        for sx in (-1, 1):  # (not across the door)
+            k.box("Beam", (W - 0.75, 0.08, 0.14), (sx * (W + 0.75) / 2, -D - 0.13, 0.95), timber)
+        for x in (-1.6, 1.6):  # tie beams inside
+            k.box("Beam", (0.2, 2 * D, 0.2), (x, 0, H - 0.1), timber)
+        for sx in (-1, 1):
+            k.gable("Gable", D + 0.1, H, H + 2.0, sx * W, 0.22, plaster)
+        for x in tavern_windows_x():
+            tavern_window(k, x, -D, ruin)
+        if tier >= 2:
+            tavern_window(k, 0.9, D, False)
+        # the roof (the ruin's is missing a few strips)
+        a = math.atan2(2.0, D)
+        rows = 4
+        slope_len = (D + 0.45) / math.cos(a)
+        strip = slope_len / rows
+        for side in (-1, 1):
+            for i in range(rows):
+                if ruin and (side, i) in ((-1, 1), (1, 2)):
+                    continue
+                d = (i + 0.5) * strip
+                y = side * math.cos(a) * d
+                z = H + 2.0 - math.sin(a) * d + 0.06
+                k.box("Roof", (2 * W + 0.9, strip + 0.04, 0.12), (0, y, z), roof, rot=(side * -a, 0, 0))
+        # the door: boarded in the ruin, open (swung in against the wall) after
+        if ruin:
+            for i in range(4):
+                k.box("Board", (1.5, 0.06, 0.18), (0, -D - 0.16, 0.5 + i * 0.5), ("wood.3", "wood.2", "wood.2"),
+                      rot=(0, k.rng.uniform(-0.15, 0.15), 0))
+            k.box("DoorShut", (1.3, 0.08, 2.25), (0, -D + 0.02, 1.12), "wood.1")
+        else:
+            k.box("Door", (0.08, 1.2, 2.15), (0.6, -D + 0.75, 1.15), "wood.2")
+            k.box("Step", (1.6, 0.4, 0.12), (0, -D - 0.35, 0.06), ("stone.5", "stone.4", "stone.3"))
+        # the sign: a mug on a board over the door
+        def mug(k, x, y, z):
+            k.add("SignMug", prism(8, 0.1, 0.1, 0.18), ("accent.3", "wood.6", "wood.5"), (x, y, z))
+        hanging_sign(k, 1.3, -D - 0.1, 2.6, mug)
+        if ruin:
+            tavern_junk(k)
+            continue
+        tavern_bar(k, tier)
+        tavern_table(k, -1.4, -1.5, ("x-", "x+") if tier == 2 else ("x-", "x+", "y-", "y+"), "Seat")
+        k.n = 0  # (keep the empty names' numbers in their own run per table)
+        tavern_table(k, 1.0, 0.9, ("x-", "x+") if tier == 2 else ("x-", "x+", "y+"), "SeatB")
+        # the dice table, by the right-hand window
+        k.box("TableTop", (0.8, 0.8, 0.07), (2.6, -2.0, 0.78), ("wood.6", "wood.5", "wood.4"))
+        k.post("TableLeg", 0.06, 0, 0.75, 2.6, -2.0, "wood.3")
+        k.add("DiceCup", prism(8, 0.07, 0.06, 0.14), ("wood.2", "wood.1", "wood.1"), (2.75, -1.8, 0.885))
+        for x, n, face in ((1.95, 1, (1, 0)), (3.25, 2, (-1, 0))):
+            k.add("StoolSeat", prism(8, 0.19, 0.19, 0.05), ("wood.6", "wood.5", "wood.4"), (x, -2.0, 0.46))
+            k.add("StoolLeg", prism(6, 0.05, 0.05, 0.44), "wood.3", (x, -2.0, 0.24))
+            mark(f"T{tier}_DiceSeat{n}", (x, -2.0, TAVERN_FLOOR), face)
+        for x in (-1.6, 1.6):  # lanterns from the tie beams
+            tavern_lantern(k, x, -1.2)
+        if tier >= 3:
+            tavern_fireplace(k)
+            k.box("Stage", (1.5, 1.4, 0.24), (3.15, 2.65, 0.12), ("wood.5", "wood.4", "wood.3", "wood.6"))
+            mark(f"T{tier}_Stage", (3.1, 2.7, 0.24), (-0.6, -1))
+            k.box("Rug", (2.0, 1.4, 0.02), (2.6, -0.4, TAVERN_FLOOR + 0.01), ("accent.0", "accent.0", "accent.0"))
+            tavern_lantern(k, 1.6, 1.6)
+        if tier == 4:
+            tavern_annex(k, plaster, timber, roof, stone)
+            for i, (x, y) in enumerate(((-0.3, -0.3), (0.3, 0.3), (-0.4, 0.5), (0.45, -0.45))):
+                mark(f"T4_Dance{i + 1}", (x, y, TAVERN_FLOOR), (-x, -y))
+            for x in (-1.6, 1.6):  # bunting along the tie beams
+                for j in range(9):
+                    c = ("accent.1", "accent.3", "accent.4", "accent.7")[j % 4]
+                    k.box("Flag", (0.02, 0.16, 0.2), (x, -D + 0.6 + j * 0.72, H - 0.33), (c, c, c))
+            tavern_lantern(k, -1.6, 1.6)
+    export_building("tavern")
+
+
+def tavern_windows_x():
+    return (-2.4, 2.4)
+
+
+def tavern_bar(k, tier):
+    """The bar along the back wall, left of the middle, with shelves of bottles behind it and the
+    keeper's place; three bar stools (Seat empties) in front and a Stand at its end."""
+    x0, x1, y = -3.6, -0.6, 2.0
+    k.box("Counter", (x1 - x0, 0.6, 0.08), ((x0 + x1) / 2, y, 1.08), ("wood.6", "wood.5", "wood.4"), jit=0.004)
+    k.box("BarFront", (x1 - x0, 0.08, 1.04), ((x0 + x1) / 2, y - 0.26, 0.56), ("wood.3", "wood.3", "wood.2", "wood.4"))
+    k.box("BarEnd", (0.08, 0.6, 1.04), (x1, y, 0.56), ("wood.3", "wood.3", "wood.2"))
+    for z in (1.4, 2.0):
+        k.box("Shelf", (2.8, 0.3, 0.05), (-2.1, 3.3, z), "wood.4")
+        for i in range(7):
+            c = ("leaves.2", "accent.0", "wood.2", "accent.4")[(i + int(z * 10)) % 4]
+            k.add("Bottle", prism(6, 0.045, 0.03, 0.26), (c, c, c), (-3.3 + i * 0.4, 3.3, z + 0.16))
+    for i in range(2 if tier == 2 else 3):  # casks on their sides by the back wall
+        k.log("Cask", 0.6, 0.27, (-0.2 + 0, 2.95 - i * 0.0, 0.32 + i * 0.55), axis="x",
+              sides=("wood.4", "wood.3", "wood.5"), ends="wood.6")
+    for i in range(4):
+        k.add("Mug", prism(8, 0.05, 0.05, 0.12), ("wood.6", "wood.4", "wood.4"), (-3.3 + i * 0.25, y + 0.1, 1.18))
+    for n, x in enumerate((-3.0, -2.1, -1.2)):
+        k.add("StoolSeat", prism(8, 0.19, 0.19, 0.05), ("wood.6", "wood.5", "wood.4"), (x, y - 0.75, 0.7))
+        k.add("StoolLeg", prism(6, 0.05, 0.05, 0.68), "wood.3", (x, y - 0.75, 0.36))
+        # (raised to the stool's height above an ordinary seat's, so they sit on it)
+        mark(f"{k.prefix}_SeatBar{n + 1}", (x, y - 0.75, TAVERN_FLOOR + 0.24), (0, 1))
+    mark(f"{k.prefix}_Stand1", (-0.25, 1.35, TAVERN_FLOOR), (-1, 0.4))
+
+
+def tavern_lantern(k, x, y):
+    """A lantern hanging on a chain from a tie beam (glows and lights the room after dark)."""
+    k.box("Chain", (0.02, 0.02, 0.45), (x, y, TAVERN_H - 0.42), "metal.1")
+    k.box("Cage", (0.2, 0.2, 0.04), (x, y, TAVERN_H - 0.66), "metal.1")
+    k.box("Lantern", (0.15, 0.15, 0.22), (x, y, TAVERN_H - 0.8), "accent.3")
+    k.box("Cage", (0.2, 0.2, 0.04), (x, y, TAVERN_H - 0.93), "metal.1")
+
+
+def tavern_fireplace(k):
+    """A stone fireplace against the +X wall with a fire in it, and its chimney outside."""
+    W = TAVERN_W
+    y = 0.6
+    k.stone("Hearth", (0.9, 1.8, 0.14), (W - 0.55, y, 0.07))
+    for sy in (-1, 1):
+        k.stone("Jamb", (0.5, 0.35, 1.2), (W - 0.36, y + sy * 0.72, 0.6))
+    k.stone("Mantel", (0.6, 1.8, 0.3), (W - 0.38, y, 1.35))
+    k.stone("Breast", (0.45, 1.3, 1.5), (W - 0.33, y, 2.25))
+    k.box("FireBack", (0.08, 1.1, 1.1), (W - 0.15, y, 0.6), "stone.1")
+    k.log("FireLog", 0.7, 0.07, (W - 0.45, y - 0.08, 0.2), axis="y")
+    k.log("FireLog", 0.7, 0.07, (W - 0.5, y + 0.1, 0.27), axis="y")
+    k.add("LanternFire", blob(0.16, k.rng, jitter_amount=0.3, squash=(1.0, 1.6, 0.9)), "accent.2", (W - 0.48, y, 0.36))
+    k.add("Ember", blob(0.1, k.rng, jitter_amount=0.3, squash=(1.2, 1.2, 0.5)), "accent.1", (W - 0.42, y - 0.2, 0.18))
+    for i in range(16):  # the chimney, outside
+        k.stone("Chimney", (0.55, 0.9, 0.45), (W + 0.4, y, 0.25 + i * 0.4), ("stone.4", "stone.3", "stone.2", "stone.5"))
+    k.empty("Smoke", (W + 0.4, y, 6.8))
+
+
+def tavern_annex(k, plaster, timber, roof, stone):
+    """Tier 4's annex past an arch in the -X wall: 3 m more room with two tables and a window."""
+    W, D, H = TAVERN_W, TAVERN_D, TAVERN_H
+    x0, x1, y0, y1 = -W - 3.0, -W, -D + 1.0, D
+    k.stone("Footing", (3.3, 0.4, 0.3), ((x0 + x1) / 2, y0, 0.15), stone)
+    k.stone("Footing", (3.3, 0.4, 0.3), ((x0 + x1) / 2, y1, 0.15), stone)
+    k.box("Floor", (3.0, y1 - y0 - 0.2, TAVERN_FLOOR), ((x0 + x1) / 2, (y0 + y1) / 2, TAVERN_FLOOR / 2),
+          ("wood.4", "wood.3", "wood.3", "wood.5"))
+    tavern_wall(k, x0, x1 - 0.11, y0, [(-6.0, -5.0, 1.0, 2.0)], plaster, z1=H - 0.4)
+    tavern_wall(k, x0, x1 - 0.11, y1, [], plaster, z1=H - 0.4)
+    tavern_side(k, x0, y0, y1, [], plaster, z1=H - 0.4)
+    tavern_window(k, -5.5, y0, False)
+    k.box("Arch", (0.3, 3.4, 0.25), (x1, 0, 2.5), timber)
+    a = math.atan2(0.7, 3.0)
+    k.box("Roof", (3.5, y1 - y0 + 0.8, 0.12), ((x0 + x1) / 2 - 0.05, (y0 + y1) / 2, H - 0.05), roof, rot=(0, a, 0))
+    for y in (y0, y1):  # the triangles under the lean-to roof
+        bm = bmesh.new()
+        pts = [(x0, H - 0.4), (x1, H - 0.4), (x1, H + 0.35)]
+        a_ = [bm.verts.new((x, y - 0.1, z)) for x, z in pts]
+        b_ = [bm.verts.new((x, y + 0.1, z)) for x, z in pts]
+        bm.faces.new(a_)
+        bm.faces.new(b_[::-1])
+        for i in range(3):
+            j = (i + 1) % 3
+            bm.faces.new((a_[i], b_[i], b_[j], a_[j]))
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        k.add("Gable", bm, plaster, (0, 0, 0))
+    k.n = 0
+    tavern_table(k, -5.5, -0.8, ("x-", "x+"), "SeatC")
+    k.n = 0
+    tavern_table(k, -5.5, 1.8, ("x-", "x+", "y+"), "SeatD")
+    tavern_lantern(k, -5.5, 0.5)
+
+
+def tavern_junk(k):
+    """The ruin's mess: fallen planks, a tipped barrel, weeds against the walls."""
+    D = TAVERN_D
+    for i in range(3):
+        k.box("Plank", (1.6, 0.18, 0.05), (-2.0 + i * 0.5, -D - 0.9 - i * 0.25, 0.03 + i * 0.04),
+              ("wood.3", "wood.2", "wood.2"), rot=(0, 0, k.rng.uniform(-0.6, 0.6)))
+    k.add("Barrel", prism(10, 0.3, 0.3, 0.75), ("wood.4", "wood.3", "wood.2"), (2.9, -D - 0.8, 0.3), (math.pi / 2, 0, 0.4))
+    for i in range(10):
+        x = k.rng.uniform(-3.8, 3.8)
+        k.box("Weed", (0.25, 0.2, k.rng.uniform(0.25, 0.5)), (x, -D - 0.3, 0.2), ("leaves.3", "leaves.2", "leaves.2"), jit=0.05)
+
+
+def keeper_villager():
+    def hat(k, p):  # a flat cap
+        attach(k, p["Head"], "Cap", box((0.42, 0.42, 0.08)), "wood.2", (0, -0.02, 1.47))
+        attach(k, p["Head"], "Peak", box((0.34, 0.16, 0.04)), "wood.2", (0, -0.26, 1.45))
+
+    def extra(k, p):  # a long apron and a cloth over the shoulder
+        attach(k, p["Body"], "Apron", box((0.46, 0.04, 0.7)), ("neutral.6", "neutral.5", "neutral.5"), (0, -0.18, 0.6))
+        attach(k, p["Body"], "Cloth", box((0.12, 0.34, 0.06)), "accent.4", (0.2, 0, 1.06))
+
+    def prop(k, p):  # a tankard
+        attach(k, p["ArmR"], "PropMug", prism(8, 0.07, 0.07, 0.14), ("wood.6", "wood.4", "wood.4"), (0.32, -0.1, 0.48))
+
+    villager("keeper", "accent.0", "neutral.6", "wood.1", hat=hat, extra=extra, prop=prop)
+
+
 def dogs():
     os.makedirs(os.path.join(OUT_DIR, "dogs"), exist_ok=True)
     for breed, coats in DOG_COATS.items():
@@ -1724,6 +2027,6 @@ for build in (woodcutter, smithy, fisher, town_hall, baker_cottage, prospector_c
               bench, lamp_post, lamp_post_rustic, lantern, noticeboard, planter, well, fountain, barrel_prop, crate_prop, signpost, dogs,
               doghouse, doghouse_painted, doghouse_porch, dog_bowl, dog_blanket,
               landslide_mud, retaining_wall, market_stall, stallkeeper_villager,
-              trader_cart, trader_villager, flower_basket, weathervane, painted_cart, terrace):
+              trader_cart, trader_villager, flower_basket, weathervane, painted_cart, terrace, tavern, keeper_villager):
     if not only or build.__name__ in only:
         build()

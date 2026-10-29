@@ -62,6 +62,7 @@
 [ext_resource type="Script" path="res://scripts/landslide.gd" id="95_landslide"]
 [ext_resource type="Script" path="res://scripts/trader.gd" id="96_trader"]
 [ext_resource type="Script" path="res://scripts/village_paths.gd" id="97_village_paths"]
+[ext_resource type="PackedScene" path="res://scenes/village/tavern.tscn" id="98_tavern"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
@@ -608,6 +609,10 @@ rotation = Vector3(0, 1.5708, 0)
 [node name="ProspectorCottage" parent="Village" instance=ExtResource("56_prospector")]
 position = Vector3(106, 0, 63)
 rotation = Vector3(0, 3.1416, 0)
+
+[node name="Tavern" parent="Village" instance=ExtResource("98_tavern")]
+position = Vector3(81, 0, 45)
+rotation = Vector3(0, 1.5708, 0)
 
 [node name="Props" type="Node3D" parent="Village"]
 

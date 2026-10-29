@@ -37,6 +37,8 @@ const PEOPLE := {
 	&"fisher": {"wake": -1.0, "breakfast_from": 7.0, "dusk": -0.1, "tavern": 0.0, "bed": 0.3},
 	&"baker_cottage": {"wake": -0.6, "dusk": -0.3, "tavern": 0.4, "bed": -0.6, "serves": true},
 	&"prospector_cottage": {"wake": 0.4, "dusk": 0.1, "tavern": 0.25, "bed": 0.0},
+	# Maud keeps the tavern: up late, at it till dusk getting ready, there before anyone, last to bed
+	&"tavern": {"wake": 1.5, "dusk": 1.5, "tavern": -0.3, "bed": 0.6},
 }
 
 
