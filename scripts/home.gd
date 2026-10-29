@@ -166,7 +166,7 @@ func _process(delta: float) -> void:
 		return
 	var h := VillagerDay.hours(DayNight.time)
 	if _day >= _next_visit and h >= _visit_hour and h < VISIT_HOURS.y + 1.0:
-		_next_visit = _day + randi_range(VISIT_EVERY.x, VISIT_EVERY.y)
+		_next_visit = _day + (1 if Village.stat(&"visit_more") > 0.0 else randi_range(VISIT_EVERY.x, VISIT_EVERY.y))
 		_visit_hour = randf_range(VISIT_HOURS.x, VISIT_HOURS.y)
 		send_visitor()
 	if tier_shown >= 4 and _porch_day != _day and h >= VillagerDay.DUSK_FROM - 1.0 and h < VillagerDay.DUSK_FROM:
@@ -265,12 +265,12 @@ static func rested_bonus() -> float:
 func _on_slept(full_night: bool) -> void:
 	if tier_shown < 3:
 		return
-	if full_night:
+	if full_night or Village.stat(&"nap_rested") > 0.0:  # (the hearth: any sleep will do)
 		rested = true
 		var wake := mark("Wake")
 		PopupText.spawn(get_parent(), (wake.global_position if wake else global_position) + Vector3.UP * 2.0,
 				"Well rested", Color("ffe08a"), 12, FADE_IN)
-	if _note.is_empty() and randf() < NOTE_CHANCE:
+	if _note.is_empty() and randf() < NOTE_CHANCE + Village.stat(&"note_more"):
 		_note = HomeNotes.write(get_tree())
 		_place_note()
 
@@ -427,17 +427,34 @@ func _on_morning() -> void:
 	_day += 1
 	for kind in [&"feather", &"shell"]:
 		if _day >= int(_next_find.get(String(kind), 1)) and not _finds.has(String(kind)):
-			_next_find[String(kind)] = _day + randi_range(FIND_EVERY.x, FIND_EVERY.y)
+			var every := FIND_EVERY / 2 if kind == &"feather" and Village.stat(&"feather_more") > 0.0 else FIND_EVERY
+			_next_find[String(kind)] = _day + randi_range(maxi(every.x, 1), maxi(every.y, 1))
 			var at := _find_spot(kind)
 			if at != Vector3.INF:
 				_finds[String(kind)] = [at.x, at.y, at.z]
 	if _dog_day >= 0 and not _stick_due and _day > _dog_day + STICK_AFTER and randf() < STICK_AGAIN:
 		_stick_due = true  # (now and then another)
 	_place_finds()
+	_eel_trap()
 	if Village.addon(def.id, 1) == &"garden" and Village.slot_open(def.id, 1) and _harvest.is_empty():
 		_harvest = {"from": "your garden", "text": "Beans, a few heads of wheat, and a carrot the dog has his eye on.",
 				"gift": {&"wheat": 3, &"barley": 2}, "prompt": "E  Pick what's ready in the garden"}
 		_place_harvest()
+
+
+## Ollie's eel traps (the fisher's add-on): a fish in them each morning, by his jetty.
+func _eel_trap() -> void:
+	if Village.stat(&"eel_trap") <= 0.0:
+		return
+	for b in get_tree().get_nodes_in_group("building"):
+		if b.get("def") and (b.get("def") as BuildingDef).id == &"fisher" and b.has_method("addon_mark"):
+			var m: Marker3D = b.call("addon_mark", "Harvest")
+			if m and m.get_child_count() == 0:
+				var fish: StringName = [&"perch", &"trout", &"perch", &"pike"].pick_random()
+				var note := DeskNote.make(Vector3.ZERO, {"from": "the eel traps", "text": "Something in the traps this morning.",
+						"gift": {fish: 1}, "prompt": "E  Take what's in the traps"})
+				m.add_child(note)
+				note.read.connect(note.queue_free)
 
 
 func _place_harvest() -> void:

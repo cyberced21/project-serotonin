@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
 [ext_resource type="PackedScene" path="res://models/village/town_hall.gltf" id="3_model"]
 [ext_resource type="Script" path="res://scripts/tier_effect.gd" id="4_effect"]
+[ext_resource type="Script" path="res://scripts/addon_def.gd" id="90_addon"]
 
 [sub_resource type="Resource" id="Effect_2_0"]
 script = ExtResource("4_effect")
@@ -47,6 +48,80 @@ cost = Dictionary[StringName, int]({
 lines = PackedStringArray("A bell tower and a clock! Nobody will ever be late again. Probably.", "Every house may now build as grand as it likes. Within reason. Mine is still the grandest.", "Look at this village. A prospector, even! Edda arrived the day the bell went up. You did this, you know.")
 effects = Array[ExtResource("4_effect")]([SubResource("Effect_3_0")])
 
+[sub_resource type="Resource" id="AddonEffect_noticeroof"]
+script = ExtResource("4_effect")
+stat = &"project_discount"
+value = 0.1
+text = "Projects cost 10% less"
+
+[sub_resource type="Resource" id="Addon_noticeroof"]
+script = ExtResource("90_addon")
+id = &"noticeroof"
+slot = 1
+name = "Notice board lamp"
+blurb = "A lamp post and a bench by the notice board."
+cost = Dictionary[StringName, int]({
+&"wood": 20,
+&"iron": 6
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_noticeroof")])
+
+[sub_resource type="Resource" id="AddonEffect_flagstones"]
+script = ExtResource("4_effect")
+stat = &"trader_sooner"
+value = 1.0
+text = "The trader comes a day sooner"
+
+[sub_resource type="Resource" id="Addon_flagstones"]
+script = ExtResource("90_addon")
+id = &"flagstones"
+slot = 1
+name = "Market flagstones"
+blurb = "The square out front paved, a trough for the trader's mule."
+cost = Dictionary[StringName, int]({
+&"ore": 30,
+&"wood": 10
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_flagstones")])
+
+[sub_resource type="Resource" id="AddonEffect_clocktower"]
+script = ExtResource("4_effect")
+stat = &"clock"
+value = 1.0
+text = "The time of day on your map"
+
+[sub_resource type="Resource" id="Addon_clocktower"]
+script = ExtResource("90_addon")
+id = &"clocktower"
+slot = 2
+name = "Clock face"
+blurb = "A big clock over the hall's door."
+cost = Dictionary[StringName, int]({
+&"iron": 15,
+&"gold": 4,
+&"oak": 10
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_clocktower")])
+
+[sub_resource type="Resource" id="AddonEffect_lamplighter"]
+script = ExtResource("4_effect")
+stat = &"lamps_longer"
+value = 1.0
+text = "Lamps light earlier and burn till dawn"
+
+[sub_resource type="Resource" id="Addon_lamplighter"]
+script = ExtResource("90_addon")
+id = &"lamplighter"
+slot = 2
+name = "Lamplighter's post"
+blurb = "A rack for the lamplighter's ladder, a can of oil."
+cost = Dictionary[StringName, int]({
+&"wood": 20,
+&"coal": 10,
+&"iron": 5
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_lamplighter")])
+
 [resource]
 script = ExtResource("1_def")
 id = &"town_hall"
@@ -58,3 +133,5 @@ villager_role = "Mayor"
 capped_line = ""
 night_lines = PackedStringArray("The mayor never sleeps! Well. The mayor was merely resting the eyes.", "Official business at this hour? Splendid. Let's hear it.")
 looks = PackedStringArray("LookCharter|the town charter|Hearthvale's charter. Mostly it says be kind and mend your fences. I wrote the second part.")
+addons = Array[ExtResource("90_addon")]([SubResource("Addon_noticeroof"), SubResource("Addon_flagstones"), SubResource("Addon_clocktower"), SubResource("Addon_lamplighter")])
+addon_slots = PackedInt32Array(2, 3)

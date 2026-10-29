@@ -99,7 +99,9 @@ func _player(stream: AudioStream, db: float, reach: float) -> AudioStreamPlayer3
 func visiting() -> bool:
 	if _open_day < 0:
 		return false
-	var since := _day - _open_day
+	var since := _day - _open_day + (1 if Village.stat(&"trader_sooner") > 0.0 else 0)  # (the flagstones)
+	if Village.stat(&"trader_daily") > 0.0:  # (she stays at the inn's guest room)
+		return since >= 1
 	return since >= 1 and since % 2 == 1
 
 

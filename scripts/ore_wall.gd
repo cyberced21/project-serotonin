@@ -787,7 +787,7 @@ func hit(info: HitInfo) -> bool:
 	if not can_gather():  # a vein your pick can't take yet: it rings off it
 		_deflect(info)
 		return false
-	_cut += (1.0 + Tools.tiers_above(tool_type, tool_tier)) * _power_scale()
+	_cut += (1.0 + Tools.tiers_above(tool_type, tool_tier)) * _power_scale() * _dig_scale()
 	var cuts := int(_cut)
 	_cut -= cuts
 	var double := cuts > 0 and randf() < Village.stat(&"double_hit_chance")
@@ -862,6 +862,13 @@ func _pop_piece(k: int, i: int, info: HitInfo) -> void:
 		p.icon = Items.icon(p.item)
 		get_parent().add_child(p)
 		p.launch(c + global_basis.z * 0.3, vel, 0.05)
+		if spent_at > 0 and randf() < Village.stat(&"mine_ore"):  # (the smithy's ore sorter: a bit more)
+			var extra := PICKUP_SCENE.instantiate()
+			extra.item = ORES[kind]["item"]
+			extra.skill = &"mining"
+			extra.icon = Items.icon(extra.item)
+			get_parent().add_child(extra)
+			extra.launch(c + global_basis.z * 0.3, vel * 0.9 + Vector3(0.4, 0, 0), 0.05)
 
 
 ## After pieces come out: any loose slab they undercut falls, the layers drawn, the face moving
@@ -920,6 +927,16 @@ func dig_layers(n: int) -> void:
 	_rebuild_shapes()
 	SaveGame.mark_dirty()
 	_check_depth()
+
+
+## A dig face in the mine goes faster with the smithy's tool rack (dig_speed) and twice as fast
+## with Rosa's pasties in you (the first face each day: Mine.pasty_ready).
+func _dig_scale() -> float:
+	if give_way_at <= 0:
+		return 1.0
+	var mine := get_tree().get_first_node_in_group("mine")
+	var pasty: bool = mine != null and mine.call("pasty_ready")
+	return (1.0 + Village.stat(&"dig_speed")) * (2.0 if pasty else 1.0)
 
 
 ## Dug back far enough: a dig face gives way, a seam is spent (and starts growing back).

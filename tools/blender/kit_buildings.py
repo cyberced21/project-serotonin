@@ -39,7 +39,9 @@ def _load(piece):
     if piece in _cache:
         return _cache[piece]
     before = set(bpy.data.objects)
-    path = next(p for p in (os.path.join(d, piece + ".gltf") for d in KIT_DIRS) if os.path.exists(p))
+    # the kit's pieces, else the mine's (models/mine/, tools/blender/mine_kit.py: add-ons use them)
+    paths = [os.path.join(d, piece + ".gltf") for d in KIT_DIRS] + [os.path.join(OUT_DIR, "mine", piece + ".glb")]
+    path = next(p for p in paths if os.path.exists(p))
     bpy.ops.import_scene.gltf(filepath=path)
     new = [o for o in bpy.data.objects if o not in before]
     parts = []
@@ -302,6 +304,8 @@ def baker_cottage():
     house.back(1.0)
     street_oven(4.4, 1.0)
     awning(1.8, -4.4)
+    pie_window(-1.8, -3.25, 1.0)
+    pasty_basket(-0.6, -3.5)
     export_kit_building("baker_cottage")
 
 
@@ -366,6 +370,8 @@ def woodcutter():
     k.chopping_block((-3.6, -4.5, 0))
     drying_rack_logs(4.6, 1.2)
     whet_bench(4.6, 1.2)
+    timber_slide(-4.6, 1.2)
+    bird_feeder(-4.6, 1.2)
     export_kit_building("woodcutter")
 
 
@@ -440,6 +446,8 @@ def fisher():
     k.barrel((-2.0, -2.4, 0), 0.25, 0.6)
     smokehouse(-3.4, 2.9)
     lookout(3.7, 2.7)
+    eel_traps(-3.6, -2.6)
+    jetty_lantern(-3.6, -2.6)
     export_kit_building("fisher")
 
 
@@ -513,6 +521,10 @@ def prospector_cottage():
     place(k, "Prop_Chimney", (-1.8, 2.4, 2 * WALL_TOP + 1.0), 0)
     k.empty("Smoke", (-1.8, 2.4, 2 * WALL_TOP + 4.3))
     house.back(2.0)
+    ore_cart_stop(4.6, 1.0)
+    lamp_room(4.6, 1.0)
+    assay_table(-4.6, 1.0)
+    survey_board(-4.6, 1.0)
     export_kit_building("prospector_cottage")
 
 
@@ -606,6 +618,10 @@ def town_hall():
         k.box("BannerTrim", (0.62, 0.06, 0.12), (sx * 1.9, -3.27, 1.2), "accent.3")
         k.post("LampPost", 0.06, 0, 2.5, sx * 3.0, -5.2, ("metal.1", "metal.1", "metal.0"))
         k.box("Lamp", (0.26, 0.26, 0.32), (sx * 3.0, -5.2, 2.65), ("neutral.1", "accent.3", "neutral.1"))
+    notice_lamp(-6.3, -3.4)
+    flagstones(0.0, -6.5)
+    clock_face(0.0, -5.2, 6.4)
+    lamplighter_post(4.3, 1.0)
     export_kit_building("town_hall")
 
 
@@ -693,6 +709,8 @@ def smithy():
           (0, 0.4, 0))
     quench_trough(-4.2, 0.6)
     big_bellows(4.2, 1.6)
+    ore_sorter(0.0, 6.4)
+    tool_rack(0.0, 6.4)
     export_kit_building("smithy")
 
 
@@ -919,6 +937,8 @@ def home():
     homestead(mv.Kit("T4", 304))
     porch_swing(2.9, -6.0, 0.34)
     garden_plot(-6.2, 0.5)
+    reading_nook(-2.4, -5.8)
+    hearth_addon(6.4, 1.0)
     export_kit_building("home")
 
 
@@ -1046,6 +1066,186 @@ def garden_plot(x, y):
         k.box("FenceRail", (0.05, 3.6, 0.06), (x + side * 1.45, y, 0.45), "wood.5")
     prop(k, "FarmCrate_Empty", x, y - 2.1)
     marker(k, "Harvest", x, y - 2.1, 0.3)
+
+
+# The second add-on slots and the town hall's and the prospector's forks (plans/mine.md): a few
+# pieces each, from the kit and the mine's packs.
+
+BRASS_RIM = "accent.3"
+
+
+def timber_slide(x, y):
+    """Woodcutter: a log chute down from the yard, mine props stacked by it (the mine's timber cheaper)."""
+    k = addon("timberslide")
+    for dy in (-0.45, 0.45):
+        k.box("Chute", (0.1, 0.12, 3.2), (x + dy, y, 0.9), ("wood.4", "wood.3", "wood.2"), rot=(0.55, 0, 0))
+    for i in range(3):
+        k.log("Prop", 2.4, 0.1, (x - 0.9, y - 0.8 + i * 0.25, 0.12 + (i % 2) * 0.18), "y", sides=("wood.5", "wood.4", "wood.6"))
+    prop(k, "frame_braced", x + 1.0, y + 1.2, facing="-x")
+
+
+def bird_feeder(x, y):
+    """Woodcutter: a feeder and a nest box on a post (rare feathers turn up more often)."""
+    k = addon("birdfeeder")
+    k.post("FeederPost", 0.05, 0, 1.9, x, y, ("wood.4", "wood.3", "wood.2"))
+    k.box("FeederTray", (0.5, 0.5, 0.04), (x, y, 1.6), ("wood.5", "wood.4", "wood.3"))
+    k.add("FeederRoof", mv.prism(4, 0.42, 0.02, 0.28), ("accent.0", "accent.0", "wood.1"), (x, y, 1.92), (0, 0, math.pi / 4))
+    k.box("NestBox", (0.25, 0.22, 0.32), (x + 0.6, y, 1.3), ("wood.3", "wood.3", "wood.2"))
+    k.add("Seeds", mv.blob(0.12, k.rng, squash=(1.2, 1.2, 0.3)), ("terrain.sand", "wood.6", "accent.7"), (x, y, 1.64))
+
+
+def eel_traps(x, y):
+    """Fisher: wicker traps on a rope by the water (a fish waiting each morning)."""
+    k = addon("eeltraps")
+    for i in range(3):
+        k.add("Trap", mv.prism(8, 0.18, 0.08, 0.6), ("wood.6", "wood.5", "wood.4"), (x + i * 0.5, y, 0.18), (math.pi / 2, 0, 0.2 * i))
+    prop(k, "Rope_1", x + 0.5, y - 0.6)
+    marker(k, "Harvest", x + 0.5, y - 0.4, 0.3)
+
+
+def jetty_lantern(x, y):
+    """Fisher: a lantern on a tall pole (calmer fish at night)."""
+    k = addon("jettylantern")
+    k.post("LanternPole", 0.06, 0, 3.0, x, y, ("wood.3", "wood.2", "wood.4"))
+    k.box("LanternArm", (0.7, 0.06, 0.06), (x + 0.3, y, 2.95), ("wood.3", "wood.2", "wood.4"))
+    prop(k, "lamp_hanging", x + 0.6, y, 2.92)
+
+
+def ore_sorter(x, y):
+    """Smithy: a sloped sorting table and sieves, a cart of ore (extra ore from the mine's seams)."""
+    k = addon("oresorter")
+    k.box("SortTable", (1.8, 0.9, 0.08), (x, y, 0.9), ("wood.4", "wood.3", "wood.2"), rot=(0.18, 0, 0))
+    for dx in (-0.8, 0.8):
+        for dy in (-0.35, 0.35):
+            k.post("SortLeg", 0.04, 0, 0.9, x + dx, y + dy, ("wood.3", "wood.2", "wood.4"))
+    for i in range(2):
+        k.add("Sieve", mv.prism(10, 0.25, 0.25, 0.06), ("metal.3", "wood.4", "metal.2"), (x - 0.4 + i * 0.8, y + 0.9, 0.05))
+    prop(k, "cart_low", x + 1.6, y + 0.4, facing="-x")
+
+
+def tool_rack(x, y):
+    """Smithy: picks hung by size and a grindstone (dig faces break sooner)."""
+    k = addon("toolrack")
+    prop(k, "Peg_Rack", x, y, 0.9)
+    for i, z in enumerate((1.3, 1.0, 0.7)):
+        prop(k, "pickaxe", x - 0.4 + i * 0.4, y - 0.08, z)
+    k.add("Grindstone", mv.prism(12, 0.3, 0.3, 0.1), ("stone.5", "stone.4", "stone.3"), (x + 1.1, y, 0.55), (math.pi / 2, 0, 0))
+
+
+def pie_window(x, y, z):
+    """Bakery: a hatch onto the lane, pies cooling on the sill (villagers visit you more)."""
+    k = addon("piewindow")
+    k.box("Sill", (1.0, 0.3, 0.06), (x, y, z), ("wood.5", "wood.4", "wood.3"))
+    for i in range(3):
+        k.add("Pie", mv.prism(10, 0.13, 0.12, 0.05), ("wood.7", "accent.7", "wood.6"), (x - 0.3 + i * 0.3, y - 0.02, z + 0.05))
+    k.box("Hatch", (1.0, 0.04, 0.5), (x, y + 0.05, z + 0.62), ("wood.3", "wood.3", "wood.2"), rot=(-0.6, 0, 0))
+
+
+def pasty_basket(x, y):
+    """Bakery: a basket of miners' pasties by the door (the first dig face each day goes faster)."""
+    k = addon("pasty")
+    prop(k, "Bucket_Wooden_1", x, y)
+    for i in range(4):
+        k.add("Pasty", mv.blob(0.08, k.rng, squash=(1.4, 0.8, 0.5)), ("wood.6", "wood.7", "wood.5"), (x - 0.08 + (i % 2) * 0.16, y - 0.06 + (i // 2) * 0.12, 0.3))
+
+
+def reading_nook(x, y):
+    """Home: a window seat on the porch with a shelf of books (desk notes come more often)."""
+    k = addon("nook")
+    prop(k, "Bench", x, y, facing="+y")
+    prop(k, "Shelf_Small_Bottles", x + 1.1, y + 0.2)
+    prop(k, "Book_Stack_1", x - 0.3, y, 0.45)
+    k.box("Cushion", (0.9, 0.35, 0.06), (x, y, 0.48), ("accent.1", "accent.1", "accent.0"))
+
+
+def hearth_addon(x, y):
+    """Home: a wide stone fireplace and chimney against the side wall (a short nap still rests you)."""
+    k = addon("hearth")
+    k.box("HearthStack", (0.9, 1.8, 2.4), (x, y, 1.2), ("stone.4", "stone.3", "stone.5"))
+    k.box("HearthChimney", (0.6, 0.9, 3.4), (x, y, 4.1), ("stone.4", "stone.3", "stone.5"))
+    k.box("HearthMouth", (0.1, 1.0, 0.8), (x - 0.42, y, 0.4), "neutral.0")
+    k.add("Embers", mv.blob(0.2, k.rng, squash=(1.2, 1.0, 0.3)), ("accent.2", "accent.3", "accent.2"), (x - 0.5, y, 0.1))
+    k.empty("Smoke", (x, y, 6.0))
+
+
+def notice_lamp(x, y):
+    """Town hall: a lamp post and a bench by the notice board (projects cost less)."""
+    k = addon("noticeroof")
+    k.post("NoticeLampPost", 0.06, 0, 2.6, x, y, ("wood.2", "wood.1", "wood.3"))
+    prop(k, "lamp_hanging_plain", x, y, 2.6)
+    prop(k, "Bench", x + 1.1, y - 0.9, facing="-y")
+
+
+def flagstones(x, y):
+    """Town hall: the square in front paved, a trough for the trader's mule (the trader a day sooner)."""
+    k = addon("flagstones")
+    for i in range(6):
+        for j in range(3):
+            k.box("Flagstone", (0.95, 0.95, 0.06), (x - 2.5 + i, y - j, 0.03), ("stone.5", "stone.4", "stone.3"),
+                  rot=(0, 0, 0.05 * ((i + j) % 3)))
+    k.box("Trough", (1.6, 0.5, 0.45), (x + 3.6, y - 1.0, 0.22), ("stone.4", "stone.3", "stone.2"))
+    k.box("TroughWater", (1.45, 0.38, 0.02), (x + 3.6, y - 1.0, 0.42), "accent.5")
+
+
+def clock_face(x, y, z):
+    """Town hall: a big clock over the door (the time on the map)."""
+    k = addon("clocktower")
+    k.add("BigClock", mv.prism(16, 0.75, 0.75, 0.08), "neutral.6", (x, y, z), (math.pi / 2, 0, 0))
+    k.add("BigClockRim", mv.prism(16, 0.82, 0.82, 0.06), (BRASS_RIM, BRASS_RIM, "ore.copper_dark"), (x, y + 0.02, z), (math.pi / 2, 0, 0))
+    k.box("BigClockHand", (0.06, 0.04, 0.6), (x, y - 0.06, z + 0.22), "neutral.1")
+    k.box("BigClockHand", (0.42, 0.04, 0.06), (x + 0.18, y - 0.06, z), "neutral.1")
+
+
+def lamplighter_post(x, y):
+    """Town hall: a rack for the lamplighter's ladder, a can of oil (lamps earlier, till dawn)."""
+    k = addon("lamplighter")
+    for dz in (0.9, 1.9):
+        k.box("LadderPeg", (0.08, 0.3, 0.08), (x, y, dz), ("wood.2", "wood.1", "wood.3"))
+    for dy in (-0.25, 0.25):
+        k.box("Ladder", (0.06, 0.06, 2.8), (x + 0.1, y + dy, 1.45), ("wood.4", "wood.3", "wood.5"), rot=(0, -0.12, 0))
+    for i in range(7):
+        k.box("Rung", (0.04, 0.5, 0.04), (x + 0.1 + i * 0.045, y, 0.35 + i * 0.38), ("wood.4", "wood.3", "wood.5"))
+    prop(k, "Bucket_Metal", x - 0.4, y + 0.7)
+
+
+def ore_cart_stop(x, y):
+    """Prospector: a cart and a short run of rail by the door, heaped with ore (seams grow back faster)."""
+    k = addon("orecart")
+    for dy in (-2.0, 0.0, 2.0):
+        prop(k, "rail", x, y + dy, facing="-x")
+    prop(k, "cart_tall", x, y, facing="-y")
+    for i in range(5):
+        k.add("OreHeap", mv.blob(0.14, k.rng), ("ore.copper", "stone.3", "ore.iron"), (x - 0.25 + (i % 3) * 0.25, y - 0.3 + (i // 3) * 0.4, 1.05))
+
+
+def lamp_room(x, y):
+    """Prospector: a lean-to of hanging lamps over a charging bench (a dig face shows what's behind it)."""
+    k = addon("lamproom")
+    for dx in (-0.9, 0.9):
+        k.post("LeanPost", 0.06, 0, 2.3, x + dx, y - 0.6, ("wood.3", "wood.2", "wood.4"))
+    k.box("LeanRoof", (2.2, 1.6, 0.06), (x, y, 2.4), ("wood.2", "wood.2", "wood.1"), rot=(0.25, 0, 0))
+    prop(k, "Workbench", x, y + 0.3, facing="-y")
+    for i in range(3):
+        prop(k, "lamp_hanging_plain", x - 0.6 + i * 0.6, y - 0.3, 2.3)
+
+
+def assay_table(x, y):
+    """Prospector: scales, loupes and labelled jars of samples (geodes and fossils more often)."""
+    k = addon("assay")
+    prop(k, "Table_Large", x, y, facing="+x")
+    prop(k, "SmallBottles_1", x - 0.3, y - 0.4, 0.82)
+    prop(k, "jar", x + 0.2, y + 0.5, 0.82)
+    k.add("Scales", mv.prism(8, 0.12, 0.12, 0.3), ("metal.4", BRASS_RIM, "metal.3"), (x, y, 0.82))
+
+
+def survey_board(x, y):
+    """Prospector: a big chalk map of the mine on an easel (unopened cells show their ore)."""
+    k = addon("survey")
+    for dx in (-0.6, 0.6):
+        k.box("EaselLeg", (0.06, 0.06, 2.0), (x + dx, y, 1.0), ("wood.3", "wood.2", "wood.4"), rot=(0.12, 0, 0))
+    k.box("SurveyBoard", (1.5, 0.05, 1.1), (x, y - 0.1, 1.3), "neutral.1")
+    for i in range(4):  # chalked tunnels
+        k.box("Chalk", (0.9 - i * 0.15, 0.01, 0.04), (x - 0.1 + i * 0.05, y - 0.13, 1.0 + i * 0.2), "neutral.7")
 
 
 def export_kit_building(name):

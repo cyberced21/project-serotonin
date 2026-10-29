@@ -71,7 +71,8 @@ func _spawn_fish(at: Vector3) -> Fish:
 func disturb(pos: Vector3, loudness: float) -> void:
 	var spooked := false
 	# calmer with the fisher's hut upgraded, and dozy around dawn and dusk
-	var calm := Village.stat(&"fish_calm") + DUSK_CALM * DayNight.twilight()
+	var calm := Village.stat(&"fish_calm") + DUSK_CALM * DayNight.twilight() \
+			+ Village.stat(&"fish_calm_night") * DayNight.darkness()  # (the jetty lantern)
 	var radius := species.scare_radius * maxf(1.0 - calm, 0.1)
 	for f in fish:
 		var d := f.global_position.distance_to(pos)

@@ -46,6 +46,7 @@ var _news: Array[String] = []
 var _told: Dictionary[String, bool] = {}
 var map: MineMap
 var _travelling := false
+var _pasty_eaten := false
 ## The ride under way (tests and tools watch it), or null.
 var riding: MineRide
 
@@ -145,6 +146,11 @@ func open_count(n: int) -> int:
 	return count
 
 
+## Rosa's pasty basket: the first dig face each day goes twice as fast (OreWall reads it).
+func pasty_ready() -> bool:
+	return Village.stat(&"pasty") > 0.0 and not _pasty_eaten
+
+
 ## How many layers a dig face gives way after.
 func give_way_layers() -> int:
 	return MineLevel.GIVE_WAY
@@ -153,6 +159,8 @@ func give_way_layers() -> int:
 ## A dig face gave way: the cell behind it is open (fresh until dawn).
 func on_broke_through(n: int, c: Vector2i, at: Vector3) -> void:
 	open_cell(n, c)
+	if pasty_ready():
+		_pasty_eaten = true
 	if randf() < FIND_CHANCE * (1.0 + Village.stat(&"mine_finds")):
 		Trophies.found(&"geode" if randf() < 0.3 + 0.3 * n else &"fossil", at)
 	var k := MineLayout.at(n, c)
@@ -217,6 +225,7 @@ func need_met(need: StringName) -> bool:
 
 
 func _shore_fresh() -> void:
+	_pasty_eaten = false  # (a new day, a new pasty)
 	var any := false
 	for f in _fresh:
 		any = any or not f.is_empty()

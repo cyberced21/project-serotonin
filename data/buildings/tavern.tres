@@ -3,6 +3,8 @@
 [ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
 [ext_resource type="PackedScene" path="res://models/village/tavern.glb" id="3_model"]
+[ext_resource type="Script" path="res://scripts/addon_def.gd" id="90_addon"]
+[ext_resource type="Script" path="res://scripts/tier_effect.gd" id="91_effect"]
 
 [sub_resource type="Resource" id="Tier_1"]
 script = ExtResource("2_tier")
@@ -43,6 +45,80 @@ cost = Dictionary[StringName, int]({
 hall_tier = 3
 lines = PackedStringArray("The Sleepy Hound, as it was meant to be. Thank you.", "There's dancing most nights now. Even the mayor's been seen to tap a foot.", "Sit down, warm up, stay as long as you like.")
 
+[sub_resource type="Resource" id="AddonEffect_beergarden"]
+script = ExtResource("91_effect")
+stat = &"tavern_garden"
+value = 1.0
+text = "Evening seats outdoors"
+
+[sub_resource type="Resource" id="Addon_beergarden"]
+script = ExtResource("90_addon")
+id = &"beergarden"
+slot = 1
+name = "Beer garden"
+blurb = "Tables under a vine outside; the music carries."
+cost = Dictionary[StringName, int]({
+&"wood": 25,
+&"oak": 10,
+&"barley": 10
+})
+effects = Array[ExtResource("91_effect")]([SubResource("AddonEffect_beergarden")])
+
+[sub_resource type="Resource" id="AddonEffect_stage"]
+script = ExtResource("91_effect")
+stat = &"tavern_stage"
+value = 1.0
+text = "A second musician on busy nights"
+
+[sub_resource type="Resource" id="Addon_stage"]
+script = ExtResource("90_addon")
+id = &"stage"
+slot = 1
+name = "Bigger stage"
+blurb = "A raised stage with a second stool."
+cost = Dictionary[StringName, int]({
+&"oak": 20,
+&"wood": 10
+})
+effects = Array[ExtResource("91_effect")]([SubResource("AddonEffect_stage")])
+
+[sub_resource type="Resource" id="AddonEffect_snug"]
+script = ExtResource("91_effect")
+stat = &"tavern_snug"
+value = 1.0
+text = "Sit by the fire and the evening goes by faster"
+
+[sub_resource type="Resource" id="Addon_snug"]
+script = ExtResource("90_addon")
+id = &"snug"
+slot = 2
+name = "Fireside snug"
+blurb = "A deep chair by the fire in a corner."
+cost = Dictionary[StringName, int]({
+&"oak": 15,
+&"wheat": 8
+})
+effects = Array[ExtResource("91_effect")]([SubResource("AddonEffect_snug")])
+
+[sub_resource type="Resource" id="AddonEffect_guestroom"]
+script = ExtResource("91_effect")
+stat = &"trader_daily"
+value = 1.0
+text = "The trader stays at the inn: her stall's open every day"
+
+[sub_resource type="Resource" id="Addon_guestroom"]
+script = ExtResource("90_addon")
+id = &"guestroom"
+slot = 2
+name = "Guest room"
+blurb = "A room upstairs with a lit window."
+cost = Dictionary[StringName, int]({
+&"oak": 25,
+&"wood": 15,
+&"gold": 4
+})
+effects = Array[ExtResource("91_effect")]([SubResource("AddonEffect_guestroom")])
+
 [resource]
 script = ExtResource("1_def")
 id = &"tavern"
@@ -53,3 +129,5 @@ villager_name = "Maud"
 villager_role = "Tavern keeper"
 capped_line = "The mayor says no bigger till the town hall is. Can't have the tavern grander than the town."
 night_lines = PackedStringArray("Closing up, love. Come back tomorrow night, I'll keep a stool warm.", "Still up? Mind how you go, the lamps only light so much.")
+addons = Array[ExtResource("90_addon")]([SubResource("Addon_beergarden"), SubResource("Addon_stage"), SubResource("Addon_snug"), SubResource("Addon_guestroom")])
+addon_slots = PackedInt32Array(2, 4)

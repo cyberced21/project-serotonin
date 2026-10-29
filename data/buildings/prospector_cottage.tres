@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
 [ext_resource type="PackedScene" path="res://models/village/prospector_cottage.gltf" id="3_model"]
 [ext_resource type="Script" path="res://scripts/tier_effect.gd" id="4_effect"]
+[ext_resource type="Script" path="res://scripts/addon_def.gd" id="90_addon"]
 
 [sub_resource type="Resource" id="Effect_2_0"]
 script = ExtResource("4_effect")
@@ -51,6 +52,81 @@ cost = Dictionary[StringName, int]({
 lines = PackedStringArray("Scales, crucible, the lot! I can read a hillside like a book now.", "I've marked the best seams on my map. Knock one out and there's always another coming through.", "Gold in the village! The mayor keeps coming by to 'inspect' it.")
 effects = Array[ExtResource("4_effect")]([SubResource("Effect_3_0"), SubResource("Effect_3_1")])
 
+[sub_resource type="Resource" id="AddonEffect_orecart"]
+script = ExtResource("4_effect")
+stat = &"mine_regrow"
+value = 0.2
+text = "Mine seams grow back 20% faster"
+
+[sub_resource type="Resource" id="Addon_orecart"]
+script = ExtResource("90_addon")
+id = &"orecart"
+slot = 1
+name = "Ore cart"
+blurb = "A cart and a short run of rail by the door, heaped with ore."
+cost = Dictionary[StringName, int]({
+&"iron": 12,
+&"wood": 15
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_orecart")])
+
+[sub_resource type="Resource" id="AddonEffect_lamproom"]
+script = ExtResource("4_effect")
+stat = &"mine_hint"
+value = 1.0
+text = "A dig face shows what's behind it"
+
+[sub_resource type="Resource" id="Addon_lamproom"]
+script = ExtResource("90_addon")
+id = &"lamproom"
+slot = 1
+name = "Lamp room"
+blurb = "A lean-to of hanging lamps over a charging bench."
+cost = Dictionary[StringName, int]({
+&"wood": 15,
+&"coal": 8,
+&"iron": 4
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_lamproom")])
+
+[sub_resource type="Resource" id="AddonEffect_assay"]
+script = ExtResource("4_effect")
+stat = &"mine_finds"
+value = 1.0
+text = "Geodes and fossils turn up twice as often"
+
+[sub_resource type="Resource" id="Addon_assay"]
+script = ExtResource("90_addon")
+id = &"assay"
+slot = 2
+name = "Assay table"
+blurb = "Scales, loupes and labelled jars of samples."
+cost = Dictionary[StringName, int]({
+&"oak": 12,
+&"gold": 3,
+&"crystal": 2
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_assay")])
+
+[sub_resource type="Resource" id="AddonEffect_survey"]
+script = ExtResource("4_effect")
+stat = &"mine_survey"
+value = 1.0
+text = "Unopened cells show their ore on the mine map"
+
+[sub_resource type="Resource" id="Addon_survey"]
+script = ExtResource("90_addon")
+id = &"survey"
+slot = 2
+name = "Survey board"
+blurb = "A big chalk map of the mine on an easel."
+cost = Dictionary[StringName, int]({
+&"wood": 15,
+&"iron": 8,
+&"gold": 2
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_survey")])
+
 [resource]
 script = ExtResource("1_def")
 id = &"prospector_cottage"
@@ -62,3 +138,5 @@ villager_role = "Prospector"
 capped_line = ""
 night_lines = PackedStringArray("Lamp's still lit, I'm still sorting. What've you found?", "The stars are out. Good night for walking the hills, if you mind your footing.")
 looks = PackedStringArray("LookMaps|the maps|Every seam I've followed, every one that ran dry. The dry ones teach you more.", "LookSamples|the sample bottles|Copper, iron, a little gold dust. And that one's just a pretty pebble. I keep it anyway.", "LookLedger|the assay ledger|Weights, grades, dates. Dull to anyone but me, and I could read it all night.")
+addons = Array[ExtResource("90_addon")]([SubResource("Addon_orecart"), SubResource("Addon_lamproom"), SubResource("Addon_assay"), SubResource("Addon_survey")])
+addon_slots = PackedInt32Array(2, 3)

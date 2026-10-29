@@ -115,7 +115,8 @@ func _update() -> void:
 		_update_grade(env, look, morning, dusk, day)
 
 	# lamps, lanterns and windows
-	var glow := smoothstep(0.15, 0.85, night)
+	var early := 0.12 * minf(Village.stat(&"lamps_longer"), 1.0)  # (the lamplighter's post)
+	var glow := smoothstep(0.15 - early, 0.85 - early * 3.0, night)
 	glow_level = glow
 	if absf(glow - _glow) > 0.01:
 		_glow = glow

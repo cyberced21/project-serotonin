@@ -124,6 +124,43 @@ cost = Dictionary[StringName, int]({
 })
 effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_garden")])
 
+[sub_resource type="Resource" id="AddonEffect_nook"]
+script = ExtResource("4_effect")
+stat = &"note_more"
+value = 0.3
+text = "Desk notes come more often"
+
+[sub_resource type="Resource" id="Addon_nook"]
+script = ExtResource("9_addon")
+id = &"nook"
+slot = 2
+name = "Reading nook"
+blurb = "A window seat on the porch, a shelf of books."
+cost = Dictionary[StringName, int]({
+&"oak": 15,
+&"birch": 10
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_nook")])
+
+[sub_resource type="Resource" id="AddonEffect_hearth"]
+script = ExtResource("4_effect")
+stat = &"nap_rested"
+value = 1.0
+text = "Any sleep in your bed wakes you well rested"
+
+[sub_resource type="Resource" id="Addon_hearth"]
+script = ExtResource("9_addon")
+id = &"hearth"
+slot = 2
+name = "Hearth"
+blurb = "A wide stone fireplace and chimney."
+cost = Dictionary[StringName, int]({
+&"ore": 25,
+&"iron": 6,
+&"wood": 15
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_hearth")])
+
 [resource]
 script = ExtResource("1_def")
 id = &"home"
@@ -134,5 +171,5 @@ villager_name = "Your home"
 villager_role = "Home"
 capped_line = "The mayor wants the town hall bigger before anyone builds bigger. Even you."
 night_lines = PackedStringArray("The fire's low and the stars are out. Time for bed, maybe.")
-addons = Array[ExtResource("9_addon")]([SubResource("Addon_swing"), SubResource("Addon_garden")])
-addon_slots = PackedInt32Array(4)
+addons = Array[ExtResource("9_addon")]([SubResource("Addon_swing"), SubResource("Addon_garden"), SubResource("Addon_nook"), SubResource("Addon_hearth")])
+addon_slots = PackedInt32Array(4, 4)

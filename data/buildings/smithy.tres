@@ -104,6 +104,43 @@ cost = Dictionary[StringName, int]({
 })
 effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_bellows")])
 
+[sub_resource type="Resource" id="AddonEffect_oresorter"]
+script = ExtResource("4_effect")
+stat = &"mine_ore"
+value = 0.25
+text = "Seams in the mine give extra ore"
+
+[sub_resource type="Resource" id="Addon_oresorter"]
+script = ExtResource("9_addon")
+id = &"oresorter"
+slot = 2
+name = "Ore sorter"
+blurb = "A sloped sorting table, sieves and a cart of ore."
+cost = Dictionary[StringName, int]({
+&"wood": 20,
+&"iron": 12
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_oresorter")])
+
+[sub_resource type="Resource" id="AddonEffect_toolrack"]
+script = ExtResource("4_effect")
+stat = &"dig_speed"
+value = 0.2
+text = "Dig faces in the mine break 20% sooner"
+
+[sub_resource type="Resource" id="Addon_toolrack"]
+script = ExtResource("9_addon")
+id = &"toolrack"
+slot = 2
+name = "Tool rack"
+blurb = "Picks hung by size, and a grindstone."
+cost = Dictionary[StringName, int]({
+&"iron": 15,
+&"wood": 10,
+&"ore": 10
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_toolrack")])
+
 [resource]
 script = ExtResource("1_def")
 id = &"smithy"
@@ -115,5 +152,5 @@ villager_role = "Smith"
 capped_line = "Town hall's not grand enough yet, says the mayor. Can't have the smithy outshining it."
 night_lines = PackedStringArray("Forge is banked for the night, but I'm up. What do you need?", "Can't sleep with the smell of iron in my nose. Come in, come in.")
 looks = PackedStringArray("LookHammer|Greta's first hammer|Cracked clean through the head. I keep it to remind me to temper the next one properly.")
-addons = Array[ExtResource("9_addon")]([SubResource("Addon_quench"), SubResource("Addon_bellows")])
-addon_slots = PackedInt32Array(2)
+addons = Array[ExtResource("9_addon")]([SubResource("Addon_quench"), SubResource("Addon_bellows"), SubResource("Addon_oresorter"), SubResource("Addon_toolrack")])
+addon_slots = PackedInt32Array(2, 4)

@@ -76,6 +76,42 @@ cost = Dictionary[StringName, int]({
 })
 effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_whetbench")])
 
+[sub_resource type="Resource" id="AddonEffect_timberslide"]
+script = ExtResource("4_effect")
+stat = &"mine_timber"
+value = 0.25
+text = "The mine's timber costs a quarter less"
+
+[sub_resource type="Resource" id="Addon_timberslide"]
+script = ExtResource("9_addon")
+id = &"timberslide"
+slot = 2
+name = "Timber slide"
+blurb = "A log chute down from the yard, mine props stacked beside it."
+cost = Dictionary[StringName, int]({
+&"wood": 30,
+&"pine": 15
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_timberslide")])
+
+[sub_resource type="Resource" id="AddonEffect_birdfeeder"]
+script = ExtResource("4_effect")
+stat = &"feather_more"
+value = 1.0
+text = "Rare feathers turn up twice as often"
+
+[sub_resource type="Resource" id="Addon_birdfeeder"]
+script = ExtResource("9_addon")
+id = &"birdfeeder"
+slot = 2
+name = "Bird feeder"
+blurb = "A feeder and a nest box on a post. The birds come and go all day."
+cost = Dictionary[StringName, int]({
+&"birch": 12,
+&"wheat": 6
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_birdfeeder")])
+
 [resource]
 script = ExtResource("1_def")
 id = &"woodcutter"
@@ -87,5 +123,5 @@ villager_role = "Woodcutter"
 capped_line = "I've the logs for it, but the mayor wants the town hall done first. Rules are rules."
 night_lines = PackedStringArray("Hm? Oh, it's you. Trees are asleep, you know. So was I.", "Night's for sharpening axes and resting arms. What is it?")
 looks = PackedStringArray("LookAxe|the old axe|Grandad's. Still the best edge in the valley, if you keep it honed.", "LookBench|the workbench|Every axe handle in Hearthvale started on this bench. Ash, mostly. Oak if you're lucky.")
-addons = Array[ExtResource("9_addon")]([SubResource("Addon_dryingrack"), SubResource("Addon_whetbench")])
-addon_slots = PackedInt32Array(2)
+addons = Array[ExtResource("9_addon")]([SubResource("Addon_dryingrack"), SubResource("Addon_whetbench"), SubResource("Addon_timberslide"), SubResource("Addon_birdfeeder")])
+addon_slots = PackedInt32Array(2, 3)

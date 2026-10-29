@@ -80,6 +80,42 @@ cost = Dictionary[StringName, int]({
 })
 effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_awning")])
 
+[sub_resource type="Resource" id="AddonEffect_piewindow"]
+script = ExtResource("4_effect")
+stat = &"visit_more"
+value = 1.0
+text = "Villagers come by your home more often"
+
+[sub_resource type="Resource" id="Addon_piewindow"]
+script = ExtResource("9_addon")
+id = &"piewindow"
+slot = 2
+name = "Pie window"
+blurb = "A hatch onto the lane, pies cooling on the sill."
+cost = Dictionary[StringName, int]({
+&"wood": 15,
+&"wheat": 12
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_piewindow")])
+
+[sub_resource type="Resource" id="AddonEffect_pasty"]
+script = ExtResource("4_effect")
+stat = &"pasty"
+value = 1.0
+text = "Your first dig face each day goes twice as fast"
+
+[sub_resource type="Resource" id="Addon_pasty"]
+script = ExtResource("9_addon")
+id = &"pasty"
+slot = 2
+name = "Pasty basket"
+blurb = "A basket of miners' pasties by the door."
+cost = Dictionary[StringName, int]({
+&"wheat": 15,
+&"barley": 8
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_pasty")])
+
 [resource]
 script = ExtResource("1_def")
 id = &"baker_cottage"
@@ -91,5 +127,5 @@ villager_role = "Baker"
 capped_line = "No bakehouse until the town hall's finished, the mayor says. Can't have it smelling grander than his hall."
 night_lines = PackedStringArray("Shh, the dough's rising. Come back at dawn and you'll smell it.", "Oh! A visitor at this hour. Mind the flower bed.")
 looks = PackedStringArray("LookOven|the oven|Fire it at four, bread out by six. Mind the left side, it runs hot.", "LookRecipes|Rosa's recipe book|My mother's hand on every page. The honey loaf's smudged half away, I know it by heart anyway.", "LookFlour|a sack of flour|Wheat from Goldmeadow. Ground fine, the way Ollie says his gran liked it.", "LookFlour.3|a sack of flour|Three sacks a week now. I never thought this valley ate so much bread.")
-addons = Array[ExtResource("9_addon")]([SubResource("Addon_breadoven"), SubResource("Addon_awning")])
-addon_slots = PackedInt32Array(2)
+addons = Array[ExtResource("9_addon")]([SubResource("Addon_breadoven"), SubResource("Addon_awning"), SubResource("Addon_piewindow"), SubResource("Addon_pasty")])
+addon_slots = PackedInt32Array(2, 3)

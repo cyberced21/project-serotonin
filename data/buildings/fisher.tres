@@ -91,6 +91,43 @@ cost = Dictionary[StringName, int]({
 })
 effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_lookout")])
 
+[sub_resource type="Resource" id="AddonEffect_eeltraps"]
+script = ExtResource("4_effect")
+stat = &"eel_trap"
+value = 1.0
+text = "A fish waiting in the trap each morning"
+
+[sub_resource type="Resource" id="Addon_eeltraps"]
+script = ExtResource("9_addon")
+id = &"eeltraps"
+slot = 2
+name = "Eel traps"
+blurb = "Wicker traps on a rope off the jetty."
+cost = Dictionary[StringName, int]({
+&"birch": 15,
+&"wood": 10
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_eeltraps")])
+
+[sub_resource type="Resource" id="AddonEffect_jettylantern"]
+script = ExtResource("4_effect")
+stat = &"fish_calm_night"
+value = 0.3
+text = "Fish are calmer at night"
+
+[sub_resource type="Resource" id="Addon_jettylantern"]
+script = ExtResource("9_addon")
+id = &"jettylantern"
+slot = 2
+name = "Jetty lantern"
+blurb = "A lantern on a tall pole at the water's edge."
+cost = Dictionary[StringName, int]({
+&"wood": 12,
+&"iron": 6,
+&"coal": 4
+})
+effects = Array[ExtResource("4_effect")]([SubResource("AddonEffect_jettylantern")])
+
 [resource]
 script = ExtResource("1_def")
 id = &"fisher"
@@ -102,5 +139,5 @@ villager_role = "Fisher"
 capped_line = "Can't build bigger than the town hall, the mayor says. Something about appearances."
 night_lines = PackedStringArray("Night fishing? Ha. The fish are smarter than that. What's up?", "Lantern's lit if you need it. Mind the dock in the dark.")
 looks = PackedStringArray("LookRod|the old willow rod|My first rod. Caught a perch the size of my hand with it and cried with joy. I was nine. Or thirty.")
-addons = Array[ExtResource("9_addon")]([SubResource("Addon_smokehouse"), SubResource("Addon_lookout")])
-addon_slots = PackedInt32Array(2)
+addons = Array[ExtResource("9_addon")]([SubResource("Addon_smokehouse"), SubResource("Addon_lookout"), SubResource("Addon_eeltraps"), SubResource("Addon_jettylantern")])
+addon_slots = PackedInt32Array(2, 3)

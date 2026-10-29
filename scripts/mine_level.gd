@@ -29,6 +29,9 @@ const GRID := 0.5
 const FLOOR_UV := Vector2(0.3125, 0.5625)  # terrain.dirt
 const WATER := preload("res://shaders/water.gdshader")
 const LAMP_COLOR := Color(1.0, 0.72, 0.44)
+## The lamp room's chalk marks on a dig face: what's behind it.
+const HINTS := {"C": "a chamber", "L": "the old shaft", "R": "a rail stop", "X": "loose roof!", "F": "water",
+	"S": "the stream", "K": "crystal", ".": "more tunnel"}
 
 const FRAME := preload("res://models/mine/frame_square.glb")
 const LAMP := preload("res://models/mine/lamp_hanging.glb")
@@ -245,13 +248,22 @@ func _make_panel(id: String, c: Vector2i, i: int, seam: bool) -> OreWall:
 	p.stone_tier = int(MineLayout.LEVELS[n]["stone_tier"])
 	if seam:
 		p.spent_at = SEAM_LAYERS
-		p.regrow_time = SEAM_REGROW
+		p.regrow_time = SEAM_REGROW * (1.0 - Village.stat(&"mine_regrow"))  # (the prospector's ore cart)
 	else:
 		p.give_way_at = mine.give_way_layers()
 	p.transform = Transform3D(Basis(u, Vector3.UP, -d3), f[0])  # face into the cell, digging away from it
 	add_child(p)
 	if not seam:
 		p.gave_way.connect(_on_gave_way.bind(c + MineLayout.DIRS[i], p))
+		if Village.stat(&"mine_hint") > 0.0:  # the lamp room: a chalk mark says what's behind
+			var hint := Label3D.new()
+			hint.text = HINTS.get(kind(c + MineLayout.DIRS[i]), "more tunnel")
+			hint.pixel_size = 0.004
+			hint.font_size = 36
+			hint.modulate = Color(0.92, 0.9, 0.82, 0.85)
+			hint.outline_size = 6
+			hint.position = Vector3(0, HEIGHT * 0.78, 0.05)
+			p.add_child(hint)
 	return p
 
 

@@ -67,14 +67,14 @@ func all() -> Array[Dictionary]:
 			continue
 		if s.size() > 5 and not _needs_met(s[5]):
 			continue
-		out.append({"id": s[0], "title": s[1], "blurb": s[2], "cost": s[3], "hall": s[4],
+		out.append({"id": s[0], "title": s[1], "blurb": s[2], "cost": _cost(s[0], s[3]), "hall": s[4],
 				"done": _done.has(s[0]), "road": &""})
 	for s in Lamps.stretches:
 		if s["id"] in Lamps.DEFAULT_LIT:
 			continue
 		var near := float(s.get("closest", INF)) < NEAR_VILLAGE
 		out.append({"id": StringName(ROAD_PREFIX + String(s["id"])), "title": "Lamps along " + _lower_first(s["title"]),
-				"blurb": "Lamp posts all along it, lit at dusk.", "cost": ROAD_NEAR if near else ROAD_FAR,
+				"blurb": "Lamp posts all along it, lit at dusk.", "cost": _cost(&"", ROAD_NEAR if near else ROAD_FAR),
 				"hall": 1 if near else 2, "done": Lamps.is_lit(s["id"]), "road": s["id"]})
 	return out
 
@@ -89,6 +89,18 @@ func _needs_met(need: StringName) -> bool:
 		var slide := get_tree().get_first_node_in_group("landslide")
 		return slide != null and slide.call("cleared")
 	return _done.has(need)
+
+
+## What a project costs now: less with the town hall's notice-board lamp (project_discount), and
+## the mine's timber less again with the woodcutter's timber slide (mine_timber). Never below 1.
+func _cost(id: StringName, base: Dictionary) -> Dictionary:
+	var off := Village.stat(&"project_discount")
+	var timber := Village.stat(&"mine_timber") if String(id).begins_with("mine_") else 0.0
+	var out := {}
+	for item: StringName in base:
+		var k := 1.0 - off - (timber if item in [&"wood", &"pine", &"oak", &"birch"] else 0.0)
+		out[item] = maxi(roundi(base[item] * k), 1)
+	return out
 
 
 static func _lower_first(t: String) -> String:

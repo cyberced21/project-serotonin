@@ -272,7 +272,7 @@ func _splash_down() -> void:
 	var at := _flight_to
 	lure.add_to_group("lure")
 	lure.land(_land_water, at)
-	lure.calm = Village.stat(&"fish_calm")
+	lure.calm = Village.stat(&"fish_calm") + Village.stat(&"fish_calm_night") * DayNight.darkness()
 	lure.window_bonus = Village.stat(&"strike_window") + window_per_tier * Tools.tier(&"rod")
 	lure.tell.connect(_on_tell)
 	var q: int = _verdict["quality"]

@@ -38,6 +38,8 @@ func open() -> void:
 	if is_open() or get_tree().paused:
 		return
 	_title.text = Worlds.current_meta.get("name", "The World") if not Worlds.current.is_empty() else "The World"
+	if Village.stat(&"clock") > 0.0:  # (the town hall's clock face)
+		_title.text += "  ·  " + DayNight.clock_text()
 	_shade.visible = true
 	Sfx.play_ui(&"map")
 	get_tree().paused = true
