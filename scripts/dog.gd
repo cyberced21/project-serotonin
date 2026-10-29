@@ -17,6 +17,10 @@ extends AnimatableBody3D
 ## At night: standing still, he lies down at your feet and dozes. With a kennel built and you in
 ## the village he goes to sleep in its doorway (VillageDecor.kennel_door()), and in the morning he's
 ## waiting there until you come by.
+## Hints, never needed (plans/dog.md): now and then he trots over to a nearby rare-look node or
+## an ore fault and sniffs at it, wagging, with a soft woof; he stops to stare at a fish school; a
+## Big or Huge fish landing gets a happy wiggle and a woof; a far-off wolf howl at night pricks
+## his ears and gets a small woof back.
 ## Before you have a dog, three strays nap by the clearing's pond (DogHome): a stray lifts his head
 ## and wags when you come close; pet one (E) and DogHome asks his name; the others wander off.
 ## Physics layer 9 only: you walk through him (the player's mask leaves it out), only the
@@ -62,6 +66,11 @@ const LIGHT_AHEAD := 3.2
 const RETAKE := 1.2
 const CARRY_RANGE := 20.0
 const LANTERN_MODEL := preload("res://models/lantern.glb")
+## His sounds (audio/dog/SOURCES.md), per id; filled in when they're picked. Level per id (dB),
+## and the breeds' pitch (the terrier higher, the big fluffy one lower).
+const SOUNDS := {}
+const SOUND_DB := {}
+const BREED_PITCH := {&"terrier": 1.25, &"shepherd": 1.0, &"fluffy": 0.82}
 ## At night he dozes this close to your feet once you've stood still DOZE_AFTER seconds.
 const AT_FEET := 0.9
 const DOZE_AFTER := 2.5
@@ -69,6 +78,12 @@ const DOZE_AFTER := 2.5
 ## waits by it until you come this close.
 const VILLAGE_RANGE := 65.0
 const GREET := 9.0
+## Hints: how near something must be (m), at most one this often (s), and how long he lingers.
+const HINT_RANGE := 9.0
+const HINT_GAP := 40.0
+const HINT_TIME := 3.5
+## A fish this many counts or more (Big 2, Huge 3: LandedFish.count) is worth a woof.
+const BIG_FISH := 2
 
 var breed: StringName = &"shepherd"
 var coat: StringName = &"saddle"
@@ -111,6 +126,14 @@ var _retake := 0.0
 var _home := false      # sleeping in (or, by day, waiting at) the kennel
 var _sleeping := false  # dozing: head right down, slow breaths
 var _face := INF        # a yaw to settle to where he stops (the kennel door), else he faces you
+var _hint_at := Vector3.INF  # the node he's showing you, or (fish) where he stares from
+var _hint_look := Vector3.INF
+var _hint_left := 0.0
+var _hint_wait := 15.0
+var _hint_scan := 0.0
+var _hinted: Dictionary[int, bool] = {}
+var _listen := Vector3.INF  # a wolf howled from there
+var _listen_left := 0.0
 var _phase := 0.0    # gait
 var _t := 0.0
 var _last_state := State.FOLLOW
@@ -133,6 +156,8 @@ func _ready() -> void:
 	_build_model()
 	_side = 1.0 if randf() < 0.5 else -1.0
 	_yaw = rotation.y
+	get_tree().node_added.connect(_on_node_added)
+	Ambience.howled.connect(_on_howl)
 
 
 func _build_model() -> void:
@@ -311,6 +336,7 @@ func _physics_process(delta: float) -> void:
 		_think(delta)
 		_move(delta)
 	_lantern_tick(delta)
+	_listen_left = maxf(_listen_left - delta, 0.0)
 	_animate(delta)
 	_apply_poses(delta)
 
@@ -368,6 +394,9 @@ func _think(delta: float) -> void:
 		_sniff(delta, pp)
 	if _sniff_at != Vector3.INF:
 		_goal = _sniff_at
+	_hints(delta, moving)
+	if _hint_at != Vector3.INF:
+		_goal = _hint_at
 	# never in front of you while you're at work
 	if _busy > 0.0 and _in_front(_goal, pp, look):
 		_goal = pp + right * _side * GATHER_SIDE
@@ -375,6 +404,8 @@ func _think(delta: float) -> void:
 	var to_goal := _flat(_goal - global_position)
 	if to_goal > ARRIVE * (1.0 if state == State.FOLLOW else 2.2):
 		state = State.FOLLOW
+	elif _hint_at != Vector3.INF:
+		state = State.SIT if _hint_look != Vector3.INF and _is_fish_hint else State.SNIFF
 	elif _sniff_at != Vector3.INF:
 		state = State.SNIFF
 	elif _gathering > LIE_AFTER or _still > SNIFF_AFTER * 3.0 or (DayNight.is_night() and _still > DOZE_AFTER):
@@ -408,6 +439,93 @@ func _kennel(pp: Vector3) -> bool:
 		state = State.LIE if night else State.SIT
 		_sleeping = night
 	return true
+
+
+var _is_fish_hint := false
+
+
+## Now and then: over to a rare-look node or an ore fault near him, or a stare at a fish school.
+## Never while you walk on, gather or fish, never at night.
+func _hints(delta: float, moving: bool) -> void:
+	_hint_wait -= delta
+	if _hint_at != Vector3.INF:
+		var arrived := _flat(_hint_at - global_position) < ARRIVE * 1.5
+		if arrived:
+			if _hint_left == HINT_TIME:
+				say(&"woof")
+			_hint_left -= delta
+		if _hint_left <= 0.0 or moving or _busy > 0.0 or _flat(_hint_at - _player.global_position) > HINT_RANGE * 2.5:
+			_hint_at = Vector3.INF
+			_hint_look = Vector3.INF
+			_hint_wait = HINT_GAP
+		return
+	_hint_scan -= delta
+	if moving or _busy > 0.0 or _watch != Vector3.INF or DayNight.is_night() or _hint_wait > 0.0 or _hint_scan > 0.0:
+		return
+	_hint_scan = 1.0
+	for n in get_tree().get_nodes_in_group("gatherable"):
+		var node := n as Node3D
+		if node == null or _hinted.has(node.get_instance_id()) or _flat(node.global_position - global_position) > HINT_RANGE:
+			continue
+		if node.get("rare") != null or node.get("_fault_piece") != null:
+			_hinted[node.get_instance_id()] = true
+			var off := global_position - node.global_position
+			off.y = 0.0
+			_hint_at = node.global_position + (off.normalized() if off.length() > 0.1 else Vector3.BACK) * 1.3
+			_hint_look = node.global_position
+			_hint_left = HINT_TIME
+			_is_fish_hint = false
+			return
+	for sc in get_tree().get_nodes_in_group("fish_school"):
+		var fish: Array = sc.get("fish")
+		if fish.is_empty() or _hinted.has(sc.get_instance_id()):
+			continue
+		var at := (fish[0] as Node3D).global_position
+		if _flat(at - global_position) < HINT_RANGE:
+			_hinted[sc.get_instance_id()] = true
+			_hint_at = _shore(global_position, at)
+			_hint_look = at
+			_hint_left = HINT_TIME
+			_is_fish_hint = true
+			return
+
+
+## A fish landing: Big or Huge, he's delighted.
+func _on_node_added(n: Node) -> void:
+	if n is LandedFish and not stray:
+		(n as LandedFish).landed.connect(func(_at: Vector3) -> void:
+			if is_instance_valid(self) and (n as LandedFish).count >= BIG_FISH:
+				_pet_left = maxf(_pet_left, 1.2)
+				say(&"woof"))
+
+
+## A wolf far off at night: ears up, a look that way, then one small woof back.
+func _on_howl(at: Vector3) -> void:
+	if stray or not is_inside_tree():
+		return
+	_listen = at
+	_listen_left = 2.5
+	get_tree().create_timer(1.3).timeout.connect(func() -> void:
+		if is_instance_valid(self):
+			say(&"woof", 0.6))
+
+
+## Plays one of his sounds (scripts/dog.gd SOUNDS), positional, from his head.
+func say(id: StringName, loud := 1.0) -> void:
+	var streams: Array = SOUNDS.get(id, [])
+	if streams.is_empty():
+		return
+	var p := AudioStreamPlayer3D.new()
+	p.stream = streams.pick_random()
+	p.bus = &"Effects"
+	p.unit_size = 4.0
+	p.max_distance = 40.0
+	p.volume_db = float(SOUND_DB.get(id, -10.0)) + linear_to_db(loud)
+	p.pitch_scale = randf_range(0.95, 1.05) * BREED_PITCH.get(breed, 1.0)
+	add_child(p)
+	p.position = Vector3(0, _leg + 0.3, 0.3)
+	p.play()
+	p.finished.connect(p.queue_free)
 
 
 ## Wet: counts time in the water; out of it after a while, he shakes himself dry.
@@ -622,10 +740,23 @@ func _animate(delta: float) -> void:
 			_pose(&"Jaw", 0.0)
 			if _sleeping:
 				wag = sin(_t * 0.8) * 0.05
+	if _hint_at != Vector3.INF and _hint_look != Vector3.INF:  # showing you something: wagging, looking at it
+		wag = sin(_t * 14.0) * 0.6
+		if state == State.SIT:
+			_pose(&"Head", 0.15, 0.0, _turn_toward(_hint_look))
 	_pose(&"Tail", 0.0, 0.0, wag)
 	var ear := sin(_phase * 2.0) * 0.08 * gait
+	if _listen_left > 0.0:  # pricked up, listening that way
+		ear = -0.35
+		_pose(&"Head", -0.25, 0.0, _turn_toward(_listen))
 	_pose(&"EarL", ear)
-	_pose(&"EarR", -ear)
+	_pose(&"EarR", -ear if _listen_left <= 0.0 else ear)
+
+
+## Head yaw toward `at`, within what his neck allows.
+func _turn_toward(at: Vector3) -> float:
+	var local := to_local(at)
+	return clampf(atan2(local.x, local.z), -0.9, 0.9)
 
 
 ## Head yaw: toward the float while you fish (within what his neck allows), else `idle`.

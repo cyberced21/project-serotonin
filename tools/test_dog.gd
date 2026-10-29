@@ -46,6 +46,7 @@ func _run() -> void:
 	await _pet()
 	await _water()
 	await _carry_lantern()
+	await _hints()
 	await _night_and_kennel()
 	await _night_strays()
 	_finish()
@@ -159,6 +160,35 @@ func _carry_lantern() -> void:
 	await _frames(5)
 	_check(not dog.call("carrying"), "put out, he doesn't carry it")
 	day_night.set("frozen", false)
+
+
+## A rock with an ore fault near him: he goes and sniffs at it; a wolf howl pricks his ears.
+func _hints() -> void:
+	var rock: Node3D = null
+	for n in get_nodes_in_group("gatherable"):
+		var node := n as Node3D
+		if node.get("skill") == &"mining" and node.global_position.distance_to(Vector3(0, 0, -4)) < 30.0:
+			rock = node
+			break
+	_check(rock != null, "(a rock in the clearing to hint at)")
+	if rock == null:
+		return
+	var piece := rock.find_children("*", "MeshInstance3D", true, false)
+	if rock.get("_fault_piece") == null and not piece.is_empty():
+		rock.set("_fault_piece", piece[0])  # (as if a fault had opened on it)
+	_place(rock.global_position + Vector3(4, 0, 3), Vector2(-1, 0))
+	await _seconds(2.0)
+	dog.set("_hint_wait", 0.0)
+	var sniffed := false
+	for i in 60 * 8:
+		await physics_frame
+		var look: Vector3 = dog.get("_hint_look")  # (this rock, or another nearby with a fault of its own)
+		var near := look != Vector3.INF and Vector2(dog.global_position.x - look.x, dog.global_position.z - look.z).length() < 2.2
+		sniffed = sniffed or (near and dog.get("state") == 3)  # State.SNIFF
+	_check(sniffed, "an ore fault nearby: he goes and sniffs at it")
+	root.get_node("Ambience").emit_signal("howled", player.global_position + Vector3(200, 0, 0))
+	await _frames(5)
+	_check(float(dog.get("_listen_left")) > 0.0, "a far-off wolf howl: his ears prick up")
 
 
 ## Dozing at your feet at night; the doghouse projects, one after another; sleeping in its doorway,
