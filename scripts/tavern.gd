@@ -6,7 +6,8 @@ extends Building
 ## The model's markers (Building.marks) are its places, shown with their tier:
 ##   Seat*        stools round the tables and at the bar ("seat" group, kind &"tavern")
 ##   Stand*       a place to stand at the bar ("stand_spot" group, kind &"tavern")
-##   DiceSeat1/2  the dice table: you, and whoever plays you ("dice_seat" group)
+##   DiceSeat1/2  the dice table: you, and whoever plays you ("dice_seat" group; DiceGame)
+##   Tally        where the chalkboard's writing goes (DiceGame)
 ##   Stage        where the musician plays ("stage" group)
 ##   Dance*       where the dancers go ("dance_spot" group)
 ## Its lanterns and fire are lit while it's open (not just because it's dark), and so are its
@@ -22,6 +23,7 @@ const LAMP_FADE := 2.0
 const HALL := AABB(Vector3(-4.0, -0.5, -3.5), Vector3(8.0, 4.0, 7.0))
 const ANNEX := AABB(Vector3(-7.0, -0.5, -3.5), Vector3(3.0, 4.0, 6.0))
 
+var dice: DiceGame
 var _lamps: Array[GeometryInstance3D] = []
 var _lights: Array[Light3D] = []
 var _lamp_level := 0.0
@@ -44,6 +46,11 @@ func _ready() -> void:
 				l.remove_from_group("night_light")
 				_lights.append(l)
 				(l as Light3D).visible = false
+	dice = DiceGame.new()
+	dice.name = "Dice"
+	add_child(dice)
+	_place_dice()
+	upgraded.connect(func(_t: int) -> void: _place_dice())
 
 
 func _process(delta: float) -> void:
@@ -62,6 +69,18 @@ func _process(delta: float) -> void:
 			var ph := float(l.get_instance_id() % 997)
 			var flicker := 1.0 + 0.1 * sin(t * 8.3 + ph) + 0.06 * sin(t * 21.7 + ph * 1.7)
 			l.light_energy = level * float(l.get_meta("night_energy", 1.0)) * flicker
+
+
+## The dice game goes on the dice table of the tier on show (none in the ruin).
+func _place_dice() -> void:
+	var at: Dictionary = {}
+	for m in marks(tier_shown):
+		at[String(m.name)] = m
+	var on: bool = at.has("DiceSeat1") and at.has("DiceSeat2")
+	dice.visible = on
+	dice.process_mode = Node.PROCESS_MODE_INHERIT if on else Node.PROCESS_MODE_DISABLED
+	if on:
+		dice.place(at["DiceSeat1"], at["DiceSeat2"], at.get("Tally"))
 
 
 ## Open for the evening: restored (past the ruin) and within opening hours.

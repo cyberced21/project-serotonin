@@ -80,6 +80,7 @@ func _walk(paths: Node3D) -> void:
 	var door: Marker3D = smithy.call("spot", "Door")
 	DayNight_freeze(12.0 / 24.0)
 	v.global_position = v.get_parent().call("spot", "Door").global_position
+	v.set("_watching", true)  # busy: not to be sent off to the well on the way (VillageDecor)
 	v.call("_walk_to", door)
 	var legs: PackedVector3Array = PackedVector3Array([v.global_position])
 	legs.append_array(v.get("_route"))

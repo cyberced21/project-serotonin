@@ -1798,8 +1798,8 @@ def tavern():
       T4  + an annex through an arch in the -X wall with two more tables, more lanterns, bunting
           and room to dance
     Empties (the game makes them Marker3Ds, shown with their tier): Seat* (stools, facing their
-    table), DiceSeat1/2 (you, and whoever plays you), Stand* (a place at the bar), Stage (the
-    musician), Dance* (the dancers' spots). Spots (Door, Work*) are in scenes/village/tavern.tscn."""
+    table), DiceSeat1/2 (you, and whoever plays you), Tally (the chalkboard's writing), Stand* (a
+    place at the bar), Stage (the musician), Dance* (the dancers' spots). Spots (Door, Work*) are in scenes/village/tavern.tscn."""
     reset()
     stone = ("stone.5", "stone.3", "stone.2", "stone.4")
     for tier in (1, 2, 3, 4):
@@ -1875,6 +1875,11 @@ def tavern():
             k.add("StoolSeat", prism(8, 0.19, 0.19, 0.05), ("wood.6", "wood.5", "wood.4"), (x, -2.0, 0.46))
             k.add("StoolLeg", prism(6, 0.05, 0.05, 0.44), "wood.3", (x, -2.0, 0.24))
             mark(f"T{tier}_DiceSeat{n}", (x, -2.0, TAVERN_FLOOR), face)
+        # the chalkboard for the dice tally, on the right-hand wall by the dice table
+        k.box("Chalkboard", (0.04, 0.9, 0.7), (W - 0.13, -2.3, 1.75), ("wood.1", "wood.1", "wood.1"))
+        for z in (1.39, 2.11):
+            k.box("BoardFrame", (0.05, 0.98, 0.05), (W - 0.13, -2.3, z), "wood.5")
+        mark(f"T{tier}_Tally", (W - 0.16, -2.3, 1.75), (-1, 0))
         for x in (-1.6, 1.6):  # lanterns from the tie beams
             tavern_lantern(k, x, -1.2)
         if tier >= 3:

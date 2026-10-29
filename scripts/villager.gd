@@ -79,6 +79,7 @@ var _skip_tonight := false
 var _stroll: Marker3D  # where they're strolling to next
 var _stroll_i := 0
 var _mug: MeshInstance3D  # carried at the tavern
+var _throw_at := -10.0  # (_phase) when they last threw the dice
 var _lights_out := 0.0  # evening hour (VillagerDay.evening_hours) their lamp goes out
 ## A cutscene is posing this villager (script_pose): no walking, working or talking of its own.
 var scripted := false
@@ -472,6 +473,37 @@ func busy() -> bool:
 	return _seat != null or _part != VillagerDay.Part.WORK
 
 
+## Free to come and play dice (DiceGame): out at the tavern and settled in, nothing else on.
+func free_for_dice() -> bool:
+	return _part == VillagerDay.Part.TAVERN and not _inside and not scripted and not _watching 		and _seat != null and _target == _seat and state == State.IDLE and not _seat.is_in_group("dice_seat")
+
+
+## Comes over to the dice table and sits at `seat`.
+func join_dice(seat: Marker3D) -> void:
+	_leave_seat()
+	_seat = seat
+	seat.set_meta(&"taken_by", self)
+	_walk_to(seat)
+
+
+## Sat at the seat they were going to.
+func at_seat() -> bool:
+	return _seat != null and _target == _seat and state == State.IDLE 		and Vector2(global_position.x - _seat.global_position.x, global_position.z - _seat.global_position.z).length() < 0.2
+
+
+## The game's over: back to a seat of their own.
+func leave_dice() -> void:
+	if _seat and _seat.is_in_group("dice_seat"):
+		_leave_seat()
+		if not _inside and not scripted:
+			_walk_to(_next_spot())
+
+
+## A throw of the dice: the right arm swings forward over the table.
+func gesture_throw() -> void:
+	_throw_at = _phase
+
+
 ## A round of the square: the next of the network's square points, facing the middle.
 func _stroll_spot() -> Marker3D:
 	if _paths == null:
@@ -673,6 +705,10 @@ func _animate_chat(seated: bool) -> void:
 	var laugh := maxf(sin(_phase * 0.19 + me * 0.6) - 0.88, 0.0) / 0.12
 	_pose(&"ArmR", lerpf(-0.6, -2.3, drink) + sin(_phase * 3.1) * 0.15 * talk, 0.12)
 	_pose(&"ArmL", -0.55 - talk * (0.45 + sin(_phase * 2.3 + 1.0) * 0.3), -0.12 - talk * 0.2)
+	var since_throw := _phase - _throw_at
+	if since_throw < 0.7:  # throwing the dice: back, then a flick forward over the table
+		var k := since_throw / 0.7
+		_pose(&"ArmR", lerpf(-0.7, -1.9, sin(k * PI * 0.5)) if k < 0.6 else lerpf(-1.9, -1.1, (k - 0.6) / 0.4), 0.1)
 	var bounce := absf(sin(_phase * 14.0)) * 0.03 * laugh
 	if seated:
 		_pose(&"Body", -0.08 - laugh * 0.15, 0.0, 0.0, Vector3(0, 0.02 + bounce, -0.05))

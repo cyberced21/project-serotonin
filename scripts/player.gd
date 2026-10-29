@@ -176,6 +176,11 @@ const WIDE_BLADE_PER_BONUS := 1.0
 const STAND_HEIGHT := 1.8
 const CROUCH_HEIGHT := 1.0
 const STAND_EYE := 1.6
+## Sitting (plans/tavern.md): the eye above the seat's marker (the floor), how far off a free seat
+## can be to sit on, and how close to the crosshair it must be (radians).
+const SIT_EYE := 1.12
+const SEAT_REACH := 2.6
+const SEAT_AIM := 0.2
 const CROUCH_EYE := 0.9
 
 enum State { NORMAL, MANTLE }
@@ -217,6 +222,10 @@ var _target: ResourceNode
 ## What E talks to: a villager, or anything else with prompt() / interact() / set_highlighted()
 ## (the noticeboard).
 var _talk_target: Node
+## The seat you're sitting on (sit / stand), or null; where you stood before sitting down.
+var seat: Marker3D
+var _stand_at := Vector3.ZERO
+var _seat_prompt: SeatPrompt
 ## "Q: rod" when you aim at water only the other fishing tool takes; the swap's name, briefly.
 var _swap_hint := ""
 var _swap_shown := 0.0
@@ -255,6 +264,9 @@ var _equip_dip := 0.0
 
 func _ready() -> void:
 	add_to_group("player")
+	_seat_prompt = SeatPrompt.new()
+	_seat_prompt.name = "SeatPrompt"
+	add_child(_seat_prompt)
 	for a: Node in [mantle_audio, footsteps]:
 		a.set("bus", &"Movement")
 	_base_fov = Settings.fov()
@@ -414,6 +426,9 @@ func _physics_process(delta: float) -> void:
 		return
 	if debug_fly:
 		_fly(delta)
+		return
+	if seat:
+		_sit_tick(delta)
 		return
 	if _state != State.MANTLE:
 		_move(delta)
@@ -735,6 +750,10 @@ func _update_target() -> void:
 		node = _node_under_crosshair(_blade_aim(hit))
 	if talk == null and node == null:
 		talk = _villager_behind_clutter()
+	if talk == null and node == null and seat == null:
+		_seat_prompt.seat = _seat_under_crosshair()
+		if _seat_prompt.seat:
+			talk = _seat_prompt
 	if talk != _talk_target:
 		if is_instance_valid(_talk_target):
 			_talk_target.set_highlighted(false)
@@ -828,6 +847,84 @@ func _villager_behind_clutter() -> Villager:
 		if space.intersect_ray(look).is_empty():
 			return v
 	return null
+
+
+# --- sitting -------------------------------------------------------------------------------
+
+## A free seat near the crosshair and in plain sight (markers in the "seat" and "dice_seat"
+## groups that nobody's taken), or null.
+func _seat_under_crosshair() -> Marker3D:
+	var from := camera.global_position
+	var forward := -camera.global_basis.z
+	var best: Marker3D = null
+	var best_angle := SEAT_AIM
+	for group in ["seat", "dice_seat"]:
+		for s in get_tree().get_nodes_in_group(group):
+			var m := s as Marker3D
+			if m == null or not m.is_visible_in_tree() or m.has_meta(&"taken_by") and is_instance_valid(m.get_meta(&"taken_by")):
+				continue
+			var at := m.global_position + Vector3.UP * 0.55
+			if at.distance_to(from) > SEAT_REACH:
+				continue
+			var angle := forward.angle_to(at - from)
+			if angle >= best_angle:
+				continue
+			var q := PhysicsRayQueryParameters3D.create(from, at, WORLD_MASK, [get_rid()])
+			var hit := get_world_3d().direct_space_state.intersect_ray(q)
+			if hit.is_empty() or (hit["position"] as Vector3).distance_to(at) < 0.3:
+				best_angle = angle
+				best = m
+	return best
+
+
+## Sits you down on `on` (a seat marker), facing the way it faces; the hands put away.
+func sit(on: Marker3D) -> void:
+	if seat or cutscene:
+		return
+	_clear_targets()
+	seat = on
+	on.set_meta(&"taken_by", self)
+	_stand_at = global_position
+	velocity = Vector3.ZERO
+	body_collision.set_deferred("disabled", true)
+	$Viewmodel.visible = false
+	var f := on.global_basis.z
+	var t := create_tween().set_parallel().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	t.tween_property(self, "global_position", on.global_position, 0.4)
+	t.tween_property(self, "rotation:y", rotation.y + wrapf(atan2(f.x, f.z) + PI - rotation.y, -PI, PI), 0.4)
+	t.tween_property(self, "_pitch", -0.15, 0.4)
+	Sfx.play_ui(&"open")
+
+
+## Up off the seat, back where you stood before sitting.
+func stand() -> void:
+	if seat == null:
+		return
+	if seat.has_meta(&"taken_by") and seat.get_meta(&"taken_by") == self:
+		seat.remove_meta(&"taken_by")
+	seat = null
+	global_position = _stand_at
+	reset_physics_interpolation()
+	body_collision.set_deferred("disabled", false)
+	$Viewmodel.visible = true
+	_crouch = clampf((STAND_EYE - SIT_EYE) / (STAND_EYE - CROUCH_EYE), 0.0, 1.0)  # (rises from the seat)
+
+
+## Sitting: still, the eye low; looking about and talking still work. Any movement stands you up.
+func _sit_tick(delta: float) -> void:
+	velocity = Vector3.ZERO
+	_move_input = Vector2.ZERO
+	_eye = lerpf(_eye, SIT_EYE, 1.0 - exp(-6.0 * delta))
+	if not is_instance_valid(seat) or not seat.is_visible_in_tree():
+		stand()
+		return
+	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	if input.length() > 0.3 or Input.is_action_just_pressed("jump"):
+		stand()
+		return
+	_update_target()
+	if _talk_target and Input.is_action_just_pressed("interact") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED 			and not _panel_just_closed():
+		_talk_target.interact()
 
 
 ## Turns the view to look at `point` over `duration` seconds (a cutscene's camera move).

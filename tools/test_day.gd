@@ -110,6 +110,23 @@ func _tavern_night(village: Node) -> void:
 	_check(there >= 4 and settled >= 4, "21:48: the village is at the tavern, sat down")
 	_check(maud.get("_target").name == "Work2" and not maud.get("_inside"), "...Maud behind the bar")
 	_check(tavern.call("windows_lit") > 0.5, "...the windows lit")
+	# a game of dice: sit at the table, and someone comes over to play
+	var dice: Node3D = tavern.get("dice")
+	var player := get_first_node_in_group("player") as Node3D
+	_dn.set("frozen", true)
+	player.call("sit", dice.get("_seat1"))
+	var waited := 0
+	while not dice.get("playing") and waited < 60 * 20:
+		await physics_frame
+		waited += 1
+	var who: Node = dice.get("opponent")
+	print("  dice: %s sat down to play after %.1f s" % [who.call("display_name") if who else "nobody", waited / 60.0])
+	_check(dice.get("playing"), "21:48: sit at the dice table and someone comes to play")
+	player.call("stand")
+	for i in 3:
+		await process_frame
+	_check(not dice.get("playing") and who != null and who.get("_seat") != dice.get("_seat2"), "...stand up and they go back to their seat")
+	_dn.set("frozen", false)
 	await _run_until(0.7)
 	var rosa := _villager(&"baker_cottage")
 	var bram := _villager(&"woodcutter")
