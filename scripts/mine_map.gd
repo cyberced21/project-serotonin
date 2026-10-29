@@ -17,6 +17,7 @@ var mine: Mine
 var _shade: ColorRect
 var _sheet: Control
 var _title: Label
+var _level := 0  # the level on show
 
 
 func _ready() -> void:
@@ -61,9 +62,11 @@ func is_open() -> bool:
 
 
 func open() -> void:
-	if is_open() or get_tree().paused or mine.here < 0:
+	var n := mine.nearest_level()
+	if is_open() or get_tree().paused or n < 0:
 		return
-	_title.text = "%s · %s" % [MineLayout.LEVELS[mine.here]["title"], "The Old Greystone Mine"]
+	_level = n
+	_title.text = "%s · %s" % [MineLayout.LEVELS[n]["title"], "The Old Greystone Mine"]
 	_shade.visible = true
 	Sfx.play_ui(&"map")
 	get_tree().paused = true
@@ -80,32 +83,25 @@ func close() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
+## (M is routed here by the world map screen, which has the key: WorldMapScreen._input.)
 func _input(event: InputEvent) -> void:
-	if mine == null or (mine.here < 0 and not is_open()):
-		return
-	if event.is_action_pressed("map"):
-		if is_open():
-			close()
-		elif not Worlds.current.is_empty():
-			open()
-		get_viewport().set_input_as_handled()
-	elif is_open() and event.is_action_pressed("ui_cancel"):
+	if is_open() and event.is_action_pressed("ui_cancel"):
 		close()
 		get_viewport().set_input_as_handled()
 
 
 ## The cell size and corner the level's drawn at, to fit the sheet.
 func _layout() -> Array:
-	var size := MineLayout.size(mine.here)
+	var size := MineLayout.size(_level)
 	var s := floorf(minf(_sheet.size.x / (size.x + 1), _sheet.size.y / (size.y + 1)))
 	var corner := (_sheet.size - Vector2(size) * s) / 2
 	return [s, corner]
 
 
 func _draw_sheet() -> void:
-	if mine == null or mine.here < 0:
+	if mine == null:
 		return
-	var n := mine.here
+	var n := _level
 	_sheet.draw_rect(Rect2(Vector2.ZERO, _sheet.size), PAPER)
 	var l := _layout()
 	var s: float = l[0]

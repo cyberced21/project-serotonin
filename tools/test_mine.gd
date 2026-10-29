@@ -53,10 +53,21 @@ func _run() -> void:
 	_check(get_nodes_in_group("mine_lamp").size() > 0, "lamps are lit on the shored level")
 	var sheet: Node = mine.get("map")
 	_check(not get_first_node_in_group("world_map").call("_can_open"), "the world map stands aside down here")
-	sheet.call("open")
+	_press_map()
+	await process_frame
+	await process_frame
 	_check(sheet.call("is_open") and paused, "M shows the level's map (and pauses)")
-	sheet.call("close")
-	_check(not paused, "and puts it away")
+	_check(not get_first_node_in_group("world_map").call("is_open"), "not the world map")
+	_press_map()
+	await process_frame
+	await process_frame
+	_check(not sheet.call("is_open") and not paused, "M again puts it away")
+	var chalk := 0
+	for p: Node in l1.call("panels"):
+		for c in p.get_children():
+			if c is Label3D and String(c.text) == "dig here":
+				chalk += 1
+	_check(chalk >= 3, "the way in's faces say dig here (%d)" % chalk)
 
 	# dig through a face: the cell behind opens, fresh
 	var face: Node = null
@@ -188,6 +199,17 @@ func _run() -> void:
 	_check(player.global_position.distance_to(mouth.global_position) < 4.0, "back up by the mouth")
 	_check(biome.get("current") == &"quarry", "in the quarry's light again (%s)" % biome.get("current"))
 	_finish()
+
+
+func _press_map() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	var ev := InputEventAction.new()
+	ev.action = &"map"
+	ev.pressed = true
+	Input.parse_input_event(ev)
+	var up := InputEventAction.new()
+	up.action = &"map"
+	Input.parse_input_event(up)
 
 
 func _cells(n: int) -> Array:

@@ -63,6 +63,15 @@ func close() -> void:
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("map"):
+		var mine := get_tree().get_first_node_in_group("mine") as Mine
+		var sheet: MineMap = mine.map if mine else null
+		if not is_open() and sheet and (sheet.is_open() or mine.underground()):  # down the mine: its level's map
+			if sheet.is_open():
+				sheet.close()
+			elif _can_open_here():
+				sheet.open()
+			get_viewport().set_input_as_handled()
+			return
 		if is_open():
 			close()
 		elif _can_open():
@@ -76,12 +85,23 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-func _can_open() -> bool:
+## Nothing else in the way of a map: a world, not paused, no villager's panel or noticeboard open.
+func _can_open_here() -> bool:
 	var tree := get_tree()
 	if Worlds.current.is_empty() or tree.paused:
 		return false
+	for panel in tree.get_nodes_in_group("modal_panel"):
+		if panel.is_open():
+			return false
+	return true
+
+
+func _can_open() -> bool:
+	var tree := get_tree()
+	if not _can_open_here():
+		return false
 	var mine := tree.get_first_node_in_group("mine") as Mine
-	if mine and mine.here >= 0:  # (down the mine M shows the level instead: MineMap)
+	if mine and mine.underground():  # (down the mine M shows the level instead: MineMap)
 		return false
 	for panel in tree.get_nodes_in_group("modal_panel"):  # a villager's panel, the noticeboard
 		if panel.is_open():

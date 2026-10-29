@@ -126,6 +126,26 @@ func _process(_delta: float) -> void:
 			_drip(player.global_position)
 
 
+## Whether you're down the mine at all (anywhere under the world, wherever exactly).
+func underground() -> bool:
+	var player := get_tree().get_first_node_in_group("player") as Node3D
+	return player != null and player.global_position.y < Biome.MINE_BELOW
+
+
+## The level you're on, or the nearest one if you're somewhere between (-1: not down the mine).
+func nearest_level() -> int:
+	if here >= 0:
+		return here
+	var player := get_tree().get_first_node_in_group("player") as Node3D
+	if player == null or not underground():
+		return -1
+	var best := 0
+	for i in LEVEL_Y.size():
+		if absf(player.global_position.y - LEVEL_Y[i]) < absf(player.global_position.y - LEVEL_Y[best]):
+			best = i
+	return best
+
+
 ## Which level a world position is on (-1: not in the mine).
 func level_at(p: Vector3) -> int:
 	for i in LEVEL_Y.size():

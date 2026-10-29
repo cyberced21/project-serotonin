@@ -258,9 +258,10 @@ func _make_panel(id: String, c: Vector2i, i: int, seam: bool) -> OreWall:
 	add_child(p)
 	if not seam:
 		p.gave_way.connect(_on_gave_way.bind(c + MineLayout.DIRS[i], p))
-		if Village.stat(&"mine_hint") > 0.0:  # the lamp room: a chalk mark says what's behind
+		var first: bool = n == 0 and mine.open_count(0) == 1  # (just the way in: show where to dig)
+		if Village.stat(&"mine_hint") > 0.0 or first:  # the lamp room: a chalk mark says what's behind
 			var hint := Label3D.new()
-			hint.text = HINTS.get(kind(c + MineLayout.DIRS[i]), "more tunnel")
+			hint.text = "dig here" if first and Village.stat(&"mine_hint") <= 0.0 else HINTS.get(kind(c + MineLayout.DIRS[i]), "more tunnel")
 			hint.pixel_size = 0.004
 			hint.font_size = 36
 			hint.modulate = Color(0.92, 0.9, 0.82, 0.85)
