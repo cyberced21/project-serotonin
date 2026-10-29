@@ -263,7 +263,7 @@ Generated worlds are gone (the procgen items above are history); Hearthvale is t
 ## Villager days and the tavern ([plans/tavern.md](../plans/tavern.md), branch `tavern`)
 
 - [x] The walking network (`VillagePaths`), the villagers' day (`VillagerDay`), windows by who's home, Rosa's terrace, the Sleepy Hound (ruin + 3 tiers, Maud, the walk-in room), sitting, Hound's Luck dice (`DiceRules`, `Die`, `DiceGame`), Ollie's fiddle and dancing, the room's sounds. `tools/test_paths.gd`, `tools/test_day.gd` (~2 min), `tools/test_dice.gd`.
-- [ ] **Pick the sounds by ear:** audio/tavern/ holds provisional first choices; the candidates are on the Sleepy Hound Sounds page (https://claude.ai/artifact/SsVfYHdugLLt1r2gyZyHsZ), and more tavern tunes for the band there too.
+- [x] **Sounds picked by ear** on the Sleepy Hound Sounds page (audio/tavern/SOURCES.md). The band has one tune for now, "Rejoicing", so it repeats: more could go in the library's "tavern" slot.
 - [x] **In-game screenshots:** docs/images/tavern/ (`tools/tavern_shots.gd`). They caught a villager coming over to play dice who stopped to chat with you on the way (and then never sat down), and the seated view aiming before you'd reached the stool.
 - [ ] **Play it:** bot-tested only. Tier and terrace prices, the dice styles, how long the evening runs, night walks home (an hour of night is ~36 s, so the walk takes most of one) are all guesses.
 - [ ] **Saves while sitting:** a save taken seated puts you back on the seat's spot standing (inside the stool); harmless, but could stand you up first.

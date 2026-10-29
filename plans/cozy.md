@@ -9,7 +9,7 @@ Status: **chunks 1–3 built, merged, released v0.3 and playtested** (2026-10-28
 Chunks 4–7 merged and released: lamps v0.4 ([lamps.md](lamps.md)), projects v0.5
 ([projects.md](projects.md)), the dog v0.7 ([dog.md](dog.md)), the market v0.8
 ([market.md](market.md)); mostly unplayed. Chunk 8 (villager days + the tavern) grilled and
-built 2026-10-29 on branch `tavern` → [tavern.md](tavern.md); sounds still to pick by ear. Open questions at the end of each section.
+built 2026-10-29 on branch `tavern` → [tavern.md](tavern.md), sounds picked; unplayed. Open questions at the end of each section.
 
 ## The pillars
 
@@ -237,4 +237,4 @@ The rest of the sound overhaul runs alongside from step 3 on, once the grill has
 
 Grill each chunk before its own plan; the open questions in each section are the starting list.
 Next: chunk 9 (interiors, add-ons, a player home), which reuses the tavern's walk-in room and
-seats. Chunk 8 waits on its sound picks and a playtest before merging.
+seats. Chunk 8 waits on a playtest before merging.

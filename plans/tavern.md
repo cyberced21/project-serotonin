@@ -3,9 +3,8 @@
 Chunk 8 of [cozy.md](cozy.md) (its section 7: villager life). Grilled 2026-10-29. Branch `tavern`
 off `main`.
 
-Status (2026-10-29): **all phases built** on branch `tavern`, except picking the sounds by ear
-(provisional first choices are in; the candidates are on
-https://claude.ai/artifact/SsVfYHdugLLt1r2gyZyHsZ). Screenshots: docs/images/tavern/
+Status (2026-10-29): **all phases built** on branch `tavern`, sounds picked by ear
+(https://claude.ai/artifact/SsVfYHdugLLt1r2gyZyHsZ; the band plays "Rejoicing"). Screenshots: docs/images/tavern/
 (`tools/tavern_shots.gd`). Bot-tested only: `tools/test_paths.gd`, `tools/test_day.gd`, `tools/test_dice.gd`. Open
 items: docs/TODO.md, "Villager days and the tavern".
 

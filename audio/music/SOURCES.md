@@ -2,7 +2,8 @@
 
 Every track here is **CC0** (public domain): no credit required. Picked 2026-10-27 from the
 shortlist page (plans/cozy-sound.md, phase 2). The files are OpenGameArt's own preview copies
-(Ogg Vorbis, about 112 kbps), except Deep Humidity (the original file); the originals on each
+(Ogg Vorbis, about 112 kbps), except Deep Humidity and Rejoicing (the original files; Rejoicing picked 2026-10-29 on the Sleepy
+Hound Sounds page, plans/tavern.md); the originals on each
 page can replace them if higher quality is wanted.
 
 | File | Title | Author | Slot | Source |
@@ -16,7 +17,8 @@ page can replace them if higher quality is wanted.
 | first_light.ogg | First Light Particles | Yoiyami | lake | https://opengameart.org/content/first-light-particles-%E2%80%93-cc0-atmospheric-pianoambient-track |
 | deep_humidity.ogg | Deep Humidity | TinyWorlds | mine | https://opengameart.org/content/deep-humidity |
 | just_you.ogg | Just you and me | Pro Sensory (Alex McCulloch) | main menu | https://opengameart.org/content/just-you-and-me-guitar |
-| tower_inn.ogg | Medieval: The Old Tower Inn | RandomMind | tavern (later) | https://opengameart.org/content/medieval-the-old-tower-inn |
+| tower_inn.ogg | Medieval: The Old Tower Inn | RandomMind | (none: passed over for the tavern, 2026-10-29) | https://opengameart.org/content/medieval-the-old-tower-inn |
+| rejoicing.mp3 | Medieval: Rejoicing | RandomMind | tavern (the band, plans/tavern.md) | https://opengameart.org/content/medieval-rejoicing |
 
 cynicmusic asks for a credit to The Cynic Project and Alex McCulloch appreciates one; neither is
 required by the licence, but a credits line would be a kind touch.
