@@ -3,7 +3,10 @@
 The trophy wall from [home.md](home.md) (the Cottage's six empty plaques, `TrophySlot1..6`).
 Grilled 2026-10-29. Branch `home` (on top of chunk 9).
 
-Status (2026-10-29): grilled, nothing built.
+Status (2026-10-29): phases 1-2 built (`Trophies`, the finds, `test_trophies.gd`); phase 3's
+models made (`tools/blender/make_trophies.py` -> `models/trophies/`, two looks each, the fish per
+species) and waiting on picks: https://claude.ai/artifact/PNsWV5QD83YmXJdtMeRGHz (db `picks/main`).
+Phases 4-6 (hanging, villagers and the full wall, docs) after the picks.
 
 ## Where we start (2026-10-29)
 
