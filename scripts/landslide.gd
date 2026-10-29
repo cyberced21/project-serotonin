@@ -12,12 +12,13 @@ signal changed
 const BOULDER := preload("res://scenes/rock.tscn")
 const MUD := preload("res://models/village/props/landslide_mud.glb")
 const WALL := preload("res://models/village/props/retaining_wall.glb")
-## Where the boulders sit in the fan (local XZ, m) and how big each is.
+## Where the boulders sit in the fan (local XZ, m: X along the road, Z across it, uphill +) and
+## how big each is: right across the road, a few spilling up the slope.
 const BOULDERS := [
-	[Vector2(-4.0, -1.0), 0.9], [Vector2(-2.2, 1.6), 1.1], [Vector2(-0.6, -1.8), 0.8],
-	[Vector2(0.8, 0.6), 1.2], [Vector2(2.4, -0.8), 0.9], [Vector2(3.8, 1.4), 1.0],
-	[Vector2(-3.2, 3.0), 0.85], [Vector2(1.6, 3.2), 0.9], [Vector2(4.6, -2.0), 0.75],
-	[Vector2(-1.4, 4.2), 0.8], [Vector2(-4.8, 1.8), 0.7], [Vector2(3.0, 4.4), 0.8],
+	[Vector2(-2.6, -2.4), 1.4], [Vector2(-0.6, -2.8), 1.2], [Vector2(1.6, -2.2), 1.5],
+	[Vector2(-1.8, -0.4), 1.6], [Vector2(0.6, 0.0), 1.8], [Vector2(2.8, -0.6), 1.4],
+	[Vector2(-3.4, 1.0), 1.2], [Vector2(-0.8, 1.8), 1.5], [Vector2(1.8, 1.6), 1.3],
+	[Vector2(-2.2, 3.2), 1.1], [Vector2(0.4, 3.6), 1.2], [Vector2(3.2, 2.8), 1.0],
 ]
 ## About where on the road east the slide came down.
 const NEAR := Vector2(198, 18)
@@ -33,6 +34,7 @@ func _ready() -> void:
 	add_to_group("landslide")
 	_place()
 	_mud = _prop(MUD, Vector3.ZERO)
+	_mud.rotation.y = PI * 1.5  # (the mud's long side across the road)
 	_mud.name = "Mud"
 	for i in BOULDERS.size():
 		var b := BOULDER.instantiate() as ResourceNode
