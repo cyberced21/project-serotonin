@@ -40,6 +40,10 @@ const POSTS := preload("res://models/mine/post_crossbraced.glb")
 const DOOR := preload("res://models/mine/door.glb")
 const STALACTITE := preload("res://models/mine/stalactite.glb")
 const STALACTITES := preload("res://models/mine/stalactite_cluster.glb")
+const PUMP_POST := preload("res://models/mine/post.glb")
+const PUMP_BUCKET := preload("res://models/mine/bucket.glb")
+const CHAIN := preload("res://models/mine/chain.glb")
+const BOARDWALK := preload("res://models/mine/boardwalk.glb")
 const PALETTE_PIECES := ["frame_square", "lamp_hanging", "lamp_hanging_plain", "rubble_pile", "boulder_small",
 	"planks", "post_crossbraced", "stalactite", "stalactite_cluster", "chest", "boardwalk", "post_cap", "gate_posts"]
 
@@ -370,7 +374,11 @@ func _flood(c: Vector2i, o: Vector3) -> void:
 	water.position = o + Vector3.UP * (0.05 if drained else HEIGHT - 0.4)
 	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_dress.add_child(water)
-	if not drained:
+	if drained:  # the pump that did it: a post, a bucket at its spout, the chain up the shaft
+		_prop("post", PUMP_POST, o + Vector3(1.4, 0, -1.4), Vector3.FORWARD)
+		_prop("bucket", PUMP_BUCKET, o + Vector3(1.1, 0, -1.0), Vector3.LEFT)
+		_prop("chain", CHAIN, o + Vector3(1.4, HEIGHT, -1.4), Vector3.FORWARD)
+	else:
 		_blocker(c, o, "Flooded to the roof. A pump would drain it (the noticeboard).")
 
 

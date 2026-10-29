@@ -123,6 +123,34 @@ func _run() -> void:
 	await _settle(10)
 	_check(player.global_position.y > -61.0 and player.global_position.y < -58.0, "standing on level 2's floor (y %.2f)" % player.global_position.y)
 
+	# the flood: seen, pumped dry, dug on past
+	var flood := Vector2i(4, 2)
+	mine.call("open_cell", 1, Vector2i(4, 3))
+	mine.call("open_cell", 1, flood)
+	await process_frame
+	await process_frame
+	listed = (projects.call("all") as Array).map(func(p: Dictionary) -> StringName: return p["id"])
+	_check(&"mine_pump" in listed, "the flooded tunnel puts the pump on the board")
+	_check(not mine.call("is_passable", 1, flood), "flooded: no way through")
+	var l2: Node3D = mine.get("levels")[1]
+	_check(l2.call("panel_at", flood, 3) == null, "no dig face beyond the water while it's flooded")
+	projects.call("set_done", &"mine_pump", true)
+	await process_frame
+	_check(mine.call("is_passable", 1, flood), "pumped dry: through")
+	_check(l2.call("panel_at", flood, 3) != null, "and a dig face on toward the stream")
+	# the roof fall
+	projects.call("set_done", &"mine_supports", true)
+	await process_frame
+	_check(mine.call("is_passable", 0, Vector2i(1, 4)), "the roof fall propped up: through")
+	# the lift on down to level 3
+	_check(not mine.call("lift_reaches", 2), "the lift stops at level 2 for now")
+	projects.call("set_done", &"mine_lift_3", true)
+	await process_frame
+	_check(mine.call("lift_reaches", 2), "lengthened, it reaches level 3")
+	mine.call("go_to", 2, Vector2i(5, 3))
+	await _until(func() -> bool: return mine.get("here") == 2 and not mine.get("_travelling"), 8.0)
+	_check(mine.get("here") == 2, "down on level 3")
+
 	# out again
 	mine.call("leave")
 	await _until(func() -> bool: return mine.get("here") == -1 and not mine.get("_travelling"), 8.0)

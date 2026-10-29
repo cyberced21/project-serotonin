@@ -203,11 +203,14 @@ func _add_spots(n: int) -> void:
 	for c in MineLayout.cells_of(n, "L"):
 		if not is_open(n, c) or not Projects.is_done(LIFT[1]):
 			continue
-		var cage := Prop.new()
-		cage.model = MineLevel.POSTS
-		cage.collide = false
-		cage.position = MineLevel.centre(c)
-		dress.add_child(cage)
+		for piece: Array in [[MineLevel.POSTS, Vector3.ZERO, false], [MineLevel.BOARDWALK, Vector3(0, 0.02, 0), false],
+				[MineLevel.CHAIN, Vector3(0, MineLayout.HEIGHT, 0), true]]:  # the cage, its floor, the rope up
+			var p := Prop.new()
+			p.model = piece[0]
+			p.own_materials = piece[2]
+			p.collide = false
+			p.position = MineLevel.centre(c) + piece[1]
+			dress.add_child(p)
 		var spot := MineSpot.make(Vector3(2.0, 2.4, 2.0), _lift_prompt.bind(n), _ride_lift.bind(n))
 		spot.position = MineLevel.centre(c)
 		spot.collision_layer = LookObject.LAYER  # (not solid: you stand in the cage)
