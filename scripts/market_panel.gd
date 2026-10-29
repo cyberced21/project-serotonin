@@ -7,6 +7,9 @@ extends CanvasLayer
 ## Frees the mouse while open; closes on E, Esc, clicking off it, or walking away.
 
 const CLOSE_DISTANCE := 5.0
+## Goods changing hands (audio/trader/SOURCES.md).
+const TRADE_SOUND := preload("res://audio/trader/trade.wav")
+const TRADE_DB := -10.0
 
 var stall: Node3D
 var _closed_msec := -100000
@@ -134,7 +137,7 @@ func _refresh() -> void:
 		b.add_theme_font_size_override("font_size", 17)
 		b.pressed.connect(func() -> void:
 			if Market.trade(item, _want, trader_in()):
-				Sfx.play_ui(&"page"))
+				Sfx.play(TRADE_SOUND, randf_range(0.95, 1.05), TRADE_DB))
 		_offers.add_child(b)
 	var trader := get_tree().get_first_node_in_group("trader")
 	for c in _specials.get_children():

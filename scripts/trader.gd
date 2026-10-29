@@ -18,6 +18,13 @@ const GONE := 0.87
 const PARK := Vector2(89.0, 32.0)
 const TOWN_WAY: Array[Vector2] = [Vector2(110, 28), Vector2(96, 31)]
 const CART := preload("res://models/village/props/trader_cart.glb")
+## Sounds (audio/trader/SOURCES.md): hooves and wheels while she drives (looped from the cart), the
+## horse snorting now and then while parked.
+const CART_SOUND := preload("res://audio/trader/cart.wav")
+const SNORT := preload("res://audio/trader/snort.wav")
+const CART_DB := -6.0
+const SNORT_DB := -8.0
+const SNORT_GAP := Vector2(9.0, 20.0)
 const PERSON := preload("res://models/village/villager_trader.glb")
 ## What she brings: [id, kind (dog / decoration / lantern), title, blurb, cost]. One of each kind
 ## per visit, in turn.
@@ -42,6 +49,9 @@ var _path := PackedVector2Array()  # the road east's end down to the parking spo
 var _parts: Dictionary[StringName, Node3D] = {}
 var _rest: Dictionary[StringName, Transform3D] = {}
 var _was_moving := 0.0
+var _rolling: AudioStreamPlayer3D
+var _snort: AudioStreamPlayer3D
+var _snort_in := 5.0
 
 
 func _ready() -> void:
@@ -65,7 +75,24 @@ func _ready() -> void:
 		if n:
 			_parts[part] = n
 			_rest[part] = n.transform
+	_rolling = _player(CART_SOUND, CART_DB, 50.0)
+	_rolling.finished.connect(func() -> void:
+		if _was_moving > 0.5 and _cart.visible:
+			_rolling.play())  # (a loop while she drives)
+	_snort = _player(SNORT, SNORT_DB, 30.0)
 	_check_open.call_deferred()
+
+
+func _player(stream: AudioStream, db: float, reach: float) -> AudioStreamPlayer3D:
+	var p := AudioStreamPlayer3D.new()
+	p.stream = stream
+	p.volume_db = db
+	p.unit_size = 5.0
+	p.max_distance = reach
+	p.bus = &"Effects"
+	_cart.add_child(p)
+	p.position = Vector3(0, 1.2, -2.0)  # (by the horse)
+	return p
 
 
 ## A visit today: the road's open, and it's the morning after it opened or every second one after.
@@ -142,7 +169,7 @@ func fill_specials(box: Control) -> void:
 		b.custom_minimum_size = Vector2(220, 0)
 		b.pressed.connect(func() -> void:
 			if buy(s[0]):
-				Sfx.play_ui(&"page")
+				Sfx.play(MarketPanel.TRADE_SOUND, randf_range(0.95, 1.05), MarketPanel.TRADE_DB)
 				var panel := get_tree().get_first_node_in_group("market_panel")
 				if panel:
 					panel.call("_refresh"))
@@ -173,6 +200,8 @@ func _process(delta: float) -> void:
 	_cart.visible = show
 	_person.visible = show
 	if not show:
+		if _rolling.playing:
+			_rolling.stop()
 		return
 	var k := 1.0  # along the path: 0 the road's end, 1 parked
 	if t < PARKED:
@@ -197,6 +226,15 @@ func _process(delta: float) -> void:
 		spot.y = _ground(Vector2(spot.x, spot.z))
 		_person.global_transform = Transform3D(Basis(Vector3.UP, yaw + PI * 0.5), spot)
 	_animate(delta, moving)
+	if moving and not _rolling.playing:
+		_rolling.play()
+	elif not moving and _rolling.playing:
+		_rolling.stop()
+	_snort_in -= delta
+	if not moving and _snort_in <= 0.0:
+		_snort_in = randf_range(SNORT_GAP.x, SNORT_GAP.y)
+		_snort.pitch_scale = randf_range(0.93, 1.05)
+		_snort.play()
 
 
 func _animate(delta: float, moving: bool) -> void:
