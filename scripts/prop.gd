@@ -15,6 +15,9 @@ const PALETTE := preload("res://materials/node_palette.tres")
 ## Stand on the terrain wherever it's placed (props out on uneven ground), sunk this far in.
 @export var snap_to_ground := false
 @export var sink := 0.05
+## Keep the model's own materials (the CC0 pack pieces with painted textures, models/mine/)
+## instead of the palette.
+@export var own_materials := false
 
 
 func _ready() -> void:
@@ -30,7 +33,8 @@ func _ready() -> void:
 	var first := true
 	for m in inst.find_children("*", "MeshInstance3D", true, false):
 		var mesh := m as MeshInstance3D
-		mesh.material_override = PaletteMaterial.for_mesh(mesh.mesh)
+		if not own_materials:
+			mesh.material_override = PaletteMaterial.for_mesh(mesh.mesh)
 		if String(mesh.name).begins_with("Lamp"):  # lamp posts light up after dark
 			DayNightSky.make_glow(mesh, true)
 		var box := global_transform.affine_inverse() * mesh.global_transform * mesh.get_aabb()

@@ -2,22 +2,49 @@
 
 [ext_resource type="Script" path="res://scripts/node_spawner.gd" id="1_spawner"]
 [ext_resource type="Script" path="res://scripts/spawn_entry.gd" id="2_entry"]
-[ext_resource type="PackedScene" path="res://scenes/crystal_rock.tscn" id="7_crystal"]
+[ext_resource type="PackedScene" path="res://scenes/rock.tscn" id="3_copper"]
+[ext_resource type="PackedScene" path="res://scenes/coal_rock.tscn" id="4_coal"]
+[ext_resource type="PackedScene" path="res://scenes/iron_rock.tscn" id="5_iron"]
 [ext_resource type="Script" path="res://scripts/prop.gd" id="8_prop"]
 [ext_resource type="Script" path="res://scripts/scenery_scatter.gd" id="9_scatter"]
-[ext_resource type="Script" path="res://scripts/ore_wall_placer.gd" id="13_walls"]
 [ext_resource type="Script" path="res://scripts/scatter_layer.gd" id="10_layer"]
 [ext_resource type="PackedScene" path="res://models/scenery/quarry_rubble.glb" id="11_rubble"]
 [ext_resource type="PackedScene" path="res://models/scenery/boulder_flat.glb" id="12_boulder"]
+[ext_resource type="Script" path="res://scripts/quarry_dressing.gd" id="13_dressing"]
+[ext_resource type="Script" path="res://scripts/mine_mouth.gd" id="14_mouth"]
+[ext_resource type="PackedScene" path="res://models/scenery/fern.glb" id="15_fern"]
+[ext_resource type="PackedScene" path="res://models/scenery/flowers_warm.glb" id="16_flowers_warm"]
+[ext_resource type="PackedScene" path="res://models/scenery/flowers_cool.glb" id="17_flowers_cool"]
+[ext_resource type="PackedScene" path="res://models/scenery/grass_tuft.glb" id="18_tuft"]
 [ext_resource type="PackedScene" path="res://models/quarry/crane.glb" id="m_crane"]
 [ext_resource type="PackedScene" path="res://models/quarry/ladder.glb" id="m_ladder"]
 [ext_resource type="PackedScene" path="res://models/quarry/scaffold_high.glb" id="m_scaffold_high"]
 [ext_resource type="PackedScene" path="res://models/quarry/scaffold_low.glb" id="m_scaffold_low"]
 
-[sub_resource type="Resource" id="Crystal"]
+[sub_resource type="Resource" id="Copper"]
 script = ExtResource("2_entry")
-scene = ExtResource("7_crystal")
+scene = ExtResource("3_copper")
 weight = 1.0
+
+[sub_resource type="Resource" id="CopperOften"]
+script = ExtResource("2_entry")
+scene = ExtResource("3_copper")
+weight = 3.0
+
+[sub_resource type="Resource" id="Coal"]
+script = ExtResource("2_entry")
+scene = ExtResource("4_coal")
+weight = 1.0
+
+[sub_resource type="Resource" id="Iron"]
+script = ExtResource("2_entry")
+scene = ExtResource("5_iron")
+weight = 1.0
+
+[sub_resource type="Resource" id="IronOften"]
+script = ExtResource("2_entry")
+scene = ExtResource("5_iron")
+weight = 2.0
 
 [sub_resource type="Resource" id="Layer_rubble"]
 script = ExtResource("10_layer")
@@ -41,28 +68,139 @@ allowed_ids = Array[int]([5])
 collide = true
 clearance = 1.5
 
+[sub_resource type="Resource" id="Layer_fern"]
+script = ExtResource("10_layer")
+model = ExtResource("15_fern")
+density = 0.35
+scale_range = Vector2(0.6, 1.1)
+cluster = Vector2i(2, 4)
+cluster_radius = 1.0
+min_normal_y = 0.8
+sway = 0.4
+allowed_ids = Array[int]([5])
+cast_shadow = false
+visible_distance = 70.0
+
+[sub_resource type="Resource" id="Layer_flowers_warm"]
+script = ExtResource("10_layer")
+model = ExtResource("16_flowers_warm")
+density = 0.25
+scale_range = Vector2(0.6, 1.0)
+cluster = Vector2i(2, 5)
+cluster_radius = 0.9
+min_normal_y = 0.85
+sway = 0.5
+allowed_ids = Array[int]([5])
+cast_shadow = false
+visible_distance = 60.0
+
+[sub_resource type="Resource" id="Layer_flowers_cool"]
+script = ExtResource("10_layer")
+model = ExtResource("17_flowers_cool")
+density = 0.15
+scale_range = Vector2(0.6, 1.0)
+cluster = Vector2i(2, 4)
+cluster_radius = 0.9
+min_normal_y = 0.85
+sway = 0.5
+allowed_ids = Array[int]([5])
+cast_shadow = false
+visible_distance = 60.0
+
+[sub_resource type="Resource" id="Layer_tufts"]
+script = ExtResource("10_layer")
+model = ExtResource("18_tuft")
+density = 0.9
+scale_range = Vector2(0.6, 1.1)
+cluster = Vector2i(2, 6)
+cluster_radius = 1.2
+min_normal_y = 0.8
+sway = 0.5
+allowed_ids = Array[int]([5])
+cast_shadow = false
+visible_distance = 50.0
+
 [node name="Quarry" type="Node3D"]
 
 [node name="Ores" type="Node3D" parent="."]
 
-[node name="Walls" type="Node3D" parent="Ores"]
-script = ExtResource("13_walls")
-center = Vector2(-175, -15)
-walls = Array[float]([55.0, 45.0, 35.0, 25.0, 15.0])
-save_prefix = "greystone_wall"
-seed = 7
-
-[node name="Floor" type="Node3D" parent="Ores"]
+[node name="Rim" type="Node3D" parent="Ores"]
 script = ExtResource("1_spawner")
-entries = Array[ExtResource("2_entry")]([SubResource("Crystal")])
-count = 2
-seed = 15
-save_prefix = "quarry_floor"
-ring = Vector4(-175, -15, 0, 9)
+entries = Array[ExtResource("2_entry")]([SubResource("Copper")])
+count = 6
+seed = 21
+save_prefix = "quarry_rim"
+ring = Vector4(-175, -15, 57, 63)
+allowed_ids = Array[int]([0, 5])
+spacing = 6.0
+min_normal_y = 0.85
+hotspot_share = 0.0
+
+[node name="Level1" type="Node3D" parent="Ores"]
+script = ExtResource("1_spawner")
+entries = Array[ExtResource("2_entry")]([SubResource("CopperOften"), SubResource("Coal")])
+count = 7
+seed = 22
+save_prefix = "quarry_l1"
+ring = Vector4(-175, -15, 45.8, 50.2)
 allowed_ids = Array[int]([5])
 spacing = 5.0
 min_normal_y = 0.85
 hotspot_share = 0.0
+
+[node name="Level2" type="Node3D" parent="Ores"]
+script = ExtResource("1_spawner")
+entries = Array[ExtResource("2_entry")]([SubResource("Copper"), SubResource("Coal"), SubResource("Iron")])
+count = 7
+seed = 23
+save_prefix = "quarry_l2"
+ring = Vector4(-175, -15, 35.8, 40.2)
+allowed_ids = Array[int]([5])
+spacing = 5.0
+min_normal_y = 0.85
+hotspot_share = 0.0
+
+[node name="Level3" type="Node3D" parent="Ores"]
+script = ExtResource("1_spawner")
+entries = Array[ExtResource("2_entry")]([SubResource("Coal"), SubResource("IronOften")])
+count = 6
+seed = 24
+save_prefix = "quarry_l3"
+ring = Vector4(-175, -15, 25.8, 30.2)
+allowed_ids = Array[int]([5])
+spacing = 5.0
+min_normal_y = 0.85
+hotspot_share = 0.0
+
+[node name="Level4" type="Node3D" parent="Ores"]
+script = ExtResource("1_spawner")
+entries = Array[ExtResource("2_entry")]([SubResource("Coal"), SubResource("IronOften")])
+count = 5
+seed = 25
+save_prefix = "quarry_l4"
+ring = Vector4(-175, -15, 15.8, 20.2)
+allowed_ids = Array[int]([5])
+spacing = 5.0
+min_normal_y = 0.85
+hotspot_share = 0.0
+
+[node name="Floor" type="Node3D" parent="Ores"]
+script = ExtResource("1_spawner")
+entries = Array[ExtResource("2_entry")]([SubResource("Coal"), SubResource("Iron")])
+count = 4
+seed = 26
+save_prefix = "quarry_floor_rocks"
+ring = Vector4(-175, -15, 2, 10)
+allowed_ids = Array[int]([5])
+spacing = 5.0
+min_normal_y = 0.85
+hotspot_share = 0.0
+
+[node name="Dressing" type="Node3D" parent="."]
+script = ExtResource("13_dressing")
+
+[node name="MineMouth" type="Node3D" parent="."]
+script = ExtResource("14_mouth")
 
 [node name="Props" type="Node3D" parent="."]
 
@@ -113,6 +251,6 @@ collide = false
 
 [node name="Scenery" type="Node3D" parent="."]
 script = ExtResource("9_scatter")
-layers = Array[ExtResource("10_layer")]([SubResource("Layer_rubble"), SubResource("Layer_boulders")])
+layers = Array[ExtResource("10_layer")]([SubResource("Layer_rubble"), SubResource("Layer_boulders"), SubResource("Layer_fern"), SubResource("Layer_flowers_warm"), SubResource("Layer_flowers_cool"), SubResource("Layer_tufts")])
 area = Rect2(-245, -85, 140, 140)
 seed = 3

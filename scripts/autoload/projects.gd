@@ -28,6 +28,7 @@ const SPOTS := [
 	[&"market", "A market stall", "A stall in the square with a striped awning, where you can swap what you have plenty of for what you need.", {&"wood": 20, &"birch": 10, &"wheat": 8}, 1],
 	[&"retaining_wall", "Shore up the road east", "A timber wall to hold the slope back, so the landslide's road stays open and traders can come over the pass. Dig out the boulders first.", {&"wood": 25, &"pine": 15, &"iron": 6}, 2, &"slide"],
 	[&"kennel_porch", "A bowl, a blanket and a porch", "A deck out front with a rail, a water bowl and a checked blanket to flop on.", {&"oak": 12, &"iron": 4}, 2, &"kennel_paint"],
+	[&"mine_shoring", "Shore up the old mine", "Timber frames and lamps at the boarded mouth on the quarry floor, so you can go in and dig.", {&"wood": 25, &"pine": 10, &"ore": 10}, 1],
 ]
 ## Road lamps: a stretch near the village (one that comes within NEAR_VILLAGE m of the square)
 ## is cheaper and opens at once; the far roads wait for the town hall's second tier.
