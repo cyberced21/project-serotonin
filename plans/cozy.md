@@ -132,8 +132,9 @@ Today's spending is building tiers (`Village` autoload, `BuildingDef` tiers). Th
   need, at rates that are a bit lossy (so gathering stays the main way). Visiting traders (after the
   landslide) bring better rates or rare goods on certain days.
 
-Open: currency, or barter only? Do visitors stay (new villagers moving in) or only pass through?
-Slot decorations vs free placement?
+**Chunk 7 grilled 2026-10-29 → [market.md](market.md)**: a road east blocked by a landslide you dig
+out and shore up, a barter market stall, a trader cart every second day (dog collars, decorations,
+lantern glass). Barter only; the trader passes through.
 
 ## 6. The mine (instead of the quarry)
 
