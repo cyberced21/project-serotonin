@@ -84,6 +84,36 @@ Each phase is a commit on `mine`. Stop after phase 1 for the user's picks; then 
    *Up 2026-10-29 on one page: https://claude.ai/artifact/XZMpnyVD8s7zMfH45Ajfg8. Packs:
    loafbrr_1's Mine Object collection and rubberduck's free mine assets (both CC0, OpenGameArt,
    in E:\Godot\downloads\mine-packs); 37 Freesound CC0 clips in E:\Godot\downloads\mine-sounds.*
+
+   **Picked 2026-10-29:**
+   - *Pieces, a mix:* rubberduck's timber (frames Wooden_01/02/04/09/14/16, planks 21, gate posts
+     29, boardwalk 33), lamps on posts (Lamp_01, Lamp_02), chest, boulder, rubble pile, stalactite
+     and cluster. loafbrr's rails (straight, curve, junction), carts (tall, low, chassis), stone
+     pillars (Post_1/2, half), wood post/beam/brace, rail fence, plank door, the hanging chain,
+     tools (pickaxe, shovel, hammer), tub, jar, stone basin, two rocks. Fantasy Props: wall
+     lantern, wall torch, pickaxe, crate, barrel, wooden bucket, rope and chain coils.
+     Skipped: rubberduck's rails and minecart, the wall lamp; loafbrr's barrier, metal bucket,
+     machinery, pipes, valve, post light; the hand cart.
+   - *Texture tiles:* **D**, cut from the village kit's own wood, stone and plaster textures.
+   - *Tavern:* **the long hall** (one tall timbered storey, windows down the sides, 8 x 14 m).
+   - *Forks:* all eleven as proposed (see below).
+   - *Sounds:* drips 162116, 177031, 753938; cave air 38963, 476318; stream 414167, 509547;
+     cart 465000, 739576; lift 394222; breaking through 381645, 389303; pump 588629, 815126;
+     crystal 839945.
+
+   | Building | Slot | Fork A | Fork B |
+   |---|---|---|---|
+   | Town hall | 1 | Notice board roof: projects cost 10% less | Market flagstones: the trader a day sooner |
+   | Prospector | 1 | Ore cart: mine seams regrow 20% faster | Lamp room: a dig face shows what's behind it |
+   | Tavern | 1 | Beer garden: evening seats outdoors | Bigger stage: a second musician |
+   | Woodcutter | 2 | Timber slide: mine timber 25% cheaper | Bird feeder: feathers twice as often |
+   | Fisher | 2 | Eel traps: a fish in the trap each morning | Jetty lantern: calmer fish at night |
+   | Smithy | 2 | Ore sorter: extra ore from seams | Tool rack: dig faces break 20% sooner |
+   | Bakery | 2 | Pie window: more visits | Pasty basket: first dig face each day twice as fast |
+   | Home | 2 | Reading nook: more desk notes | Hearth: a short nap still wakes you well rested |
+   | Town hall | 2 | Clock tower: the time on the map | Lamplighter's post: lamps earlier, till dawn |
+   | Prospector | 2 | Assay table: geodes and fossils more often | Survey board: unopened cells show their ore |
+   | Tavern | 2 | Fireside snug: time passes faster | Guest room: the market twice a week |
 2. **The quarry.** Ore walls out, rocks over every level, props, greenery, the boarded mouth, save
    migration. Done: screenshots of every level; a bot mines a rock on the floor.
 3. **The mine framework + level 1.** Cells, dig faces, seams, the space under the pit, the entrance
