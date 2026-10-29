@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
-[ext_resource type="PackedScene" path="res://models/village/town_hall.glb" id="3_model"]
+[ext_resource type="PackedScene" path="res://models/village/town_hall.gltf" id="3_model"]
 [ext_resource type="Script" path="res://scripts/tier_effect.gd" id="4_effect"]
 
 [sub_resource type="Resource" id="Effect_2_0"]
@@ -57,3 +57,4 @@ villager_name = "Mayor Hartwell"
 villager_role = "Mayor"
 capped_line = ""
 night_lines = PackedStringArray("The mayor never sleeps! Well. The mayor was merely resting the eyes.", "Official business at this hour? Splendid. Let's hear it.")
+looks = PackedStringArray("LookCharter|the town charter|Hearthvale's charter. Mostly it says be kind and mend your fences. I wrote the second part.")

@@ -47,6 +47,36 @@ instead of the lodge: the kit is plaster, timber, stone and tile, and has no log
 - Tested: `test_kit_building.gd` 36/36 (bed, seats, looks, door leaf, indoors or not);
   `test_day` and `test_paths` still pass. Not yet seen: a villager going to bed for real (the
   bakery isn't in the world till phase 5).
+
+**Phase 4 built 2026-10-29: the home, tent and cabin.** `Home` (a Building with no villager,
+`data/buildings/home.tres`, `scenes/village/home.tscn`) at (64, 0, 44) facing west; new games
+start beside it (main.tscn's Player). Tent: bedroll, fur patch, campfire, a log seat, the plans on
+a post. Cabin (kit, 6 × 6): bed, stove, the dog's basket, table with the plans. `HomePlans` opens
+the usual `UpgradePanel` (which now takes any node with a `building`). `SleepSpot` on the bed:
+bedroll from midnight, bed from dusk, never by day; `Home.sleep()` fades, jumps the clock to 06:00
+(`skip_to_morning`: `ResourceNode.fast_forward` by the same seconds; a night hour is ~36 s, so a
+whole night is ~3-4 min of regrowth), wakes you at Wake with the dog beside you, emits
+`slept(full_night)` and saves. The dog sleeps at the home's DogBed at night when you're within
+18 m. The home's windows: lit after dark till midnight or till you sleep. `test_home.gd` passes.
+
+**Phase 5 built 2026-10-29: the village from the kit.** Every house but the tavern (already a walk-in
+room, chunk 8) rebuilt in `kit_buildings.py`, keeping its front where it was and growing back
+(`built(k).back(dy)`), so spots and paths stay valid; the village wasn't re-laid (the world pass
+after cozy will). Smaller than the plan's 6 × 8 → 10 × 12: 6 × 6 to 8 × 10, to fit the plots.
+- Woodcutter: lean-to (as was), 6 × 6 cabin, 6 × 6 lodge with porch and woodpile.
+- Bakery: 6 × 6 cottage, 6 × 8 shop with the oven, 6 × 8 bakehouse with Rosa upstairs.
+- Fisher: tent (as was), a 4 × 4 hut on stilts, the same with dock and boat.
+- Prospector: 6 × 6 cottage, 6 × 8 assay shed, two-storey assay office.
+- Town hall: plank hut (as was), 8 × 8 hall with benches, two-storey grand hall with the tower.
+- Smithy: camp and open forge (as were), then stone walls on three sides round the old forge,
+  anvil and trough (ForgeCutscene still finds them), Greta's bed in the corner; crystals at T4.
+- Villagers come and go by their door (`Doorway` marker just inside, `Spots/Door` outside):
+  `Villager._route_to` and `_walk_inside` route through it; Rosa's work spots are now inside
+  (oven, counter), Edda's top one at her ledger.
+- Look lines for everyone (`BuildingDef.looks`).
+- Tested: `test_interiors.gd` (every house: room, bed, a look; 03:00 all six asleep in bed
+  in sight behind shut doors, three of them upstairs; 10:00 all out), `test_paths`, `test_day`,
+  `test_kit_building` pass. The old `.glb` models of these six are no longer used.
 Palette files: `E:\Godot\downloads\art-pick\newpal`, `strongpal`.
 
 ## Where we start (2026-10-29)

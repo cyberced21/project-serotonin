@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
-[ext_resource type="PackedScene" path="res://models/village/fisher.glb" id="3_model"]
+[ext_resource type="PackedScene" path="res://models/village/fisher.gltf" id="3_model"]
 [ext_resource type="Script" path="res://scripts/tier_effect.gd" id="4_effect"]
 
 [sub_resource type="Resource" id="Effect_2_0"]
@@ -66,3 +66,4 @@ villager_name = "Ollie"
 villager_role = "Fisher"
 capped_line = "Can't build bigger than the town hall, the mayor says. Something about appearances."
 night_lines = PackedStringArray("Night fishing? Ha. The fish are smarter than that. What's up?", "Lantern's lit if you need it. Mind the dock in the dark.")
+looks = PackedStringArray("LookRod|the old willow rod|My first rod. Caught a perch the size of my hand with it and cried with joy. I was nine. Or thirty.")

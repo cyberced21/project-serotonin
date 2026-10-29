@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
-[ext_resource type="PackedScene" path="res://models/village/smithy.glb" id="3_model"]
+[ext_resource type="PackedScene" path="res://models/village/smithy.gltf" id="3_model"]
 [ext_resource type="Script" path="res://scripts/tier_effect.gd" id="4_effect"]
 
 [sub_resource type="Resource" id="Effect_2_0"]
@@ -79,3 +79,4 @@ villager_name = "Greta"
 villager_role = "Smith"
 capped_line = "Town hall's not grand enough yet, says the mayor. Can't have the smithy outshining it."
 night_lines = PackedStringArray("Forge is banked for the night, but I'm up. What do you need?", "Can't sleep with the smell of iron in my nose. Come in, come in.")
+looks = PackedStringArray("LookHammer|Greta's first hammer|Cracked clean through the head. I keep it to remind me to temper the next one properly.")

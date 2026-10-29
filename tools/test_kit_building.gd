@@ -9,7 +9,7 @@ extends SceneTree
 const MODEL := "res://models/village/baker_cottage.gltf"
 const DEF := "res://data/buildings/baker_cottage.tres"
 ## Per tier, the doorway's centre and a stretch of plain wall on the front (Godot x; front faces +z).
-const FRONT := {1: {"door": 0.0, "wall_z": 4.0}, 2: {"door": -1.0, "wall_z": 5.0}, 3: {"door": -1.0, "wall_z": 5.0}}
+const FRONT := {1: {"door": 0.0, "wall_z": 3.0}, 2: {"door": 0.0, "wall_z": 3.0}, 3: {"door": 0.0, "wall_z": 3.0}}
 const AT := Vector3(400, 0, 400)  # well away from the village
 
 var _fails := 0

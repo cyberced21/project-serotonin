@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
-[ext_resource type="PackedScene" path="res://models/village/prospector_cottage.glb" id="3_model"]
+[ext_resource type="PackedScene" path="res://models/village/prospector_cottage.gltf" id="3_model"]
 [ext_resource type="Script" path="res://scripts/tier_effect.gd" id="4_effect"]
 
 [sub_resource type="Resource" id="Effect_2_0"]
@@ -61,3 +61,4 @@ villager_name = "Edda"
 villager_role = "Prospector"
 capped_line = ""
 night_lines = PackedStringArray("Lamp's still lit, I'm still sorting. What've you found?", "The stars are out. Good night for walking the hills, if you mind your footing.")
+looks = PackedStringArray("LookMaps|the maps|Every seam I've followed, every one that ran dry. The dry ones teach you more.", "LookSamples|the sample bottles|Copper, iron, a little gold dust. And that one's just a pretty pebble. I keep it anyway.", "LookLedger|the assay ledger|Weights, grades, dates. Dull to anyone but me, and I could read it all night.")

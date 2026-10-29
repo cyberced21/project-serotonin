@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
-[ext_resource type="PackedScene" path="res://models/village/woodcutter.glb" id="3_model"]
+[ext_resource type="PackedScene" path="res://models/village/woodcutter.gltf" id="3_model"]
 [ext_resource type="Script" path="res://scripts/tier_effect.gd" id="4_effect"]
 
 [sub_resource type="Resource" id="Effect_2_0"]
@@ -51,3 +51,4 @@ villager_name = "Bram"
 villager_role = "Woodcutter"
 capped_line = "I've the logs for it, but the mayor wants the town hall done first. Rules are rules."
 night_lines = PackedStringArray("Hm? Oh, it's you. Trees are asleep, you know. So was I.", "Night's for sharpening axes and resting arms. What is it?")
+looks = PackedStringArray("LookAxe|the old axe|Grandad's. Still the best edge in the valley, if you keep it honed.", "LookBench|the workbench|Every axe handle in Hearthvale started on this bench. Ash, mostly. Oak if you're lucky.")

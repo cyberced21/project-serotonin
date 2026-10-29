@@ -494,6 +494,9 @@ func _walk_inside(m: Marker3D) -> void:
 		var up := m.global_position.y > global_position.y
 		_route = PackedVector3Array([(foot if up else head).global_position, (head if up else foot).global_position,
 				m.global_position])
+	var doorway := building.mark("Doorway")
+	if doorway and building.inside(global_position) != building.inside(m.global_position):
+		_route.insert(0, doorway.global_position)  # in (or out) by the door, not through the wall
 	_walk_from = global_position
 	_speed = 0.0
 	_indoor_walk = true
@@ -727,10 +730,23 @@ func _walk_to(m: Marker3D) -> void:
 
 
 ## The way to `to`: along the village's paths (VillagePaths) when there are some, else straight.
-## The last point is always `to`.
+## In or out of their own walk-in house, by its door (the Doorway marker just inside it, and the
+## Door spot just outside). The last point is always `to`.
 func _route_to(to: Vector3) -> PackedVector3Array:
 	if _paths == null:
 		_paths = get_tree().get_first_node_in_group("village_paths") as VillagePaths
+	var doorway := building.mark("Doorway")
+	var door := building.spot("Door")
+	if doorway and door and building.inside(to) != building.inside(global_position):
+		if building.inside(to):  # going in: to the door, through it, across the room
+			var way := _paths.route(global_position, door.global_position) if _paths \
+					else PackedVector3Array([door.global_position])
+			way.append(doorway.global_position)
+			way.append(to)
+			return way
+		var out := PackedVector3Array([doorway.global_position, door.global_position])  # coming out
+		out.append_array(_paths.route(door.global_position, to) if _paths else PackedVector3Array([to]))
+		return out
 	if _paths:
 		return _paths.route(global_position, to)
 	return PackedVector3Array([to])
