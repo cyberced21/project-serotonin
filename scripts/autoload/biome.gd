@@ -6,7 +6,7 @@ extends Node
 ## most once a minute per biome. You have to be in a new biome for HOLD seconds before it counts,
 ## so walking along a border doesn't flicker.
 ## Biomes are told apart by where you are (WorldMap's shapes), not by the ground under you, so
-## the ring road and paths take on whichever biome they pass through.
+## the roads and paths take on whichever biome they pass through.
 
 signal changed(id: StringName)
 

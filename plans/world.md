@@ -4,6 +4,11 @@ Asked 2026-10-28: procedural worlds go; Hearthvale (the hand-built world, `scene
 the one map. Today its ground is jagged and it reads as pieces stamped onto each other. Grilled
 2026-10-28. Branch `world` off `main`.
 
+Status: **all 7 phases built** 2026-10-28 on branch `world` (one commit each). Checked headless
+only: slope maps (docs/images/world/), `tools/test_creek.gd` and the other tests (all pass but
+`test_lamps`' two timing checks, which failed on `main` too). **Not played; no in-game
+screenshots yet.** Open items: docs/TODO.md, "World".
+
 ## Where we start (2026-10-28)
 
 The terrain comes from `tools/generate_test_terrain.gd` (shapes in `scripts/world_map.gd`), 512 m

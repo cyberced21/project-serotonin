@@ -13,7 +13,7 @@ extends SceneTree
 ##   --set=lamps      the lamps' views (plans/lamps.md): every road stretch lit and the lantern
 ##                    given, at dusk and night, a dark trail by lantern alone, the lantern raised
 ##   --set=projects   the village projects' views (plans/projects.md): the square with none done
-##                    and with all, at dusk, the noticeboard open, the footbridge over the gully
+##                    and with all, at dusk, the noticeboard open, the footbridge over the creek
 ##   --look=k=v,k=v   override SkyLook values for this run (numbers only), e.g. --look=water_mist=0.3
 ## The game is played on a throwaway save, so the real one is never touched.
 
@@ -68,7 +68,7 @@ const PROJECT_VIEWS := [
 	["square_after_west", Vector3(86, 0, 32), Vector3(104, 0, 44), 0.45, "all"],
 	["square_dusk", Vector3(100, 0, 53), Vector3(100, 0, 38), 0.865, "all"],
 	["noticeboard", Vector3(107.2, 0, 34.0), Vector3(109, 0, 32), 0.4, "none", "board"],
-	["footbridge", Vector3(182, 0, -22), Vector3(190.2, 0, -21), 0.42, "all"],
+	["footbridge", Vector3(22, 0, 9), Vector3(28, 0, 0), 0.42, "all"],
 ]
 
 var views: Array = VIEWS

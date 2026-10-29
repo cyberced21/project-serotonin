@@ -1,8 +1,8 @@
 # Project Serotonin
 
 A first-person, low-poly gathering game made in **Godot 4.7**, with a Valheim-style look. Chop trees, mine rocks, cut
-grain, spearfish in shallow ponds and rod-fish the lake and rivers, across a forest, a quarry, farmland and a village, joined
-by a ring road built for fast movement. The game is about how gathering *feels*: impact-frame hits,
+grain, spearfish in shallow ponds and rod-fish the lake and the creek, across a forest, a quarry, farmland and a village, in
+one curated valley, Hearthvale, where every place eases into the next. The game is about how gathering *feels*: impact-frame hits,
 hit-stop, screen shake, positional audio, chunks flying off nodes, and a tool that bites into
 whatever you hit.
 
@@ -54,14 +54,14 @@ whatever you hit.
   - **Cast:** hold to swing the rod back, release on the forward stroke's whip. On it, the float lands on your aim point with a soft *plip*; off it, it scatters and sploshes, spooking fish nearby. Cast right on top of a school and it bolts anyway: lead the fish.
   - **Bite:** a real fish from the water notices the float, leaves its school and swims over. It nibbles (little twitches: fake-outs), taps twice, then takes: the big moment. The float is dragged under with a plunge and a bell, the water bursts, a "!" pops up and the rod bends hard. Click to pull inside that window (about half a second); pull on a nibble and it's gone, too late and it spits the hook. Each species has its own rhythm (trout nibble fast, pike sit still under it and slam it with no warning).
   - **Yank:** pull on time and the fish tears out of the water with a hit-stop and a spray, sails over in a tumbling arc on the end of the line, slaps down on the bank beside you and flops about. Walk up to it to pick it up ("Salmon, 7.4 kg"); a perfect cast plus a quick pull is **Perfect!** (+50% XP).
-  - The rod reaches deep and far water from the bank: **Arctic char** in the middle of the lake. Pond fish bite it too. (Grayling and salmon lived in the generated worlds' rivers; they come back with Hearthvale's creek, [plans/world.md](plans/world.md).)
+  - The rod reaches deep and far water from the bank: **Arctic char** in the middle of the lake. Pond fish bite it too. In the creek, **grayling** (Fishing 15) hold station in the current (cast upstream and let the float drift down to them) and **salmon** (Fishing 40) lie in its two deep pools.
 - **Biomes.** Each has its own ground colour, light, fog and ambience, and a title card when you arrive (the first visit says *Discovered*, and it's saved). Night still falls in all of them.
-  - **The Pinewood** (north): a dense forest of about 100 pines and birches you can chop, among several hundred scenery trees you can bump into and wall-run off. A dirt trail runs from the clearing past three open glades to the ring road. Ferns, mushrooms, birdsong.
+  - **The Pinewood** (north): a dense forest of about 100 pines and birches you can chop, among several hundred scenery trees. A dirt trail runs from the clearing past three open glades into the woods, and the village road climbs in from the east. Ferns, mushrooms, birdsong.
   - **Greystone Quarry** (west, past the peak): a five-level pit about 25 m deep.
-    - A haul road spirals to the floor. Each wall has two three-step mantle stairs and sheer faces to wall-run.
+    - A haul road spirals to the floor between cut stone faces, lined with ore walls to dig into. The mountainside round it falls gently away into the hills.
     - Copper, iron, coal and gold on the levels, crystal on the floor glowing violet after dark.
     - A crane on the rim, scaffold steps, ladders, and haze that thickens as you go down.
-  - **Goldmeadow** (south-east): rolling farmland. Crop squares of wheat and barley between dirt tracks, a windmill with turning sails (wall-run it), a fenced pasture with hay bales, a hay cart, lone oaks, and crickets.
+  - **Goldmeadow** (south-east): rolling farmland. Crop squares of wheat and barley between dirt tracks, a windmill with turning sails, a fenced pasture with hay bales, a hay cart, lone oaks, and crickets.
   - **Hearthvale** (the village), **Stillwater** (the lake), **The Clearing** and **Frostpeak** have moods of their own too.
 - **A main menu and your worlds.** The game opens on a menu over a slowly drifting view of the clearing's pond. **Continue** goes straight back into the world you played last (on a first launch it's **Play**). There's one world, Hearthvale ([plans/world.md](plans/world.md): generated worlds were removed, and old ones are deleted on startup).
   - **Worlds:** Hearthvale's card, with a picture (taken when you last saved and quit), when you last played and for how long. Play, rename or reset it.
@@ -79,11 +79,14 @@ whatever you hit.
   | ![Rocks by theme](docs/images/themes/rocks.png) | ![Trees by theme](docs/images/themes/trees.png) |
 
 
-- **The ring road and its time trial.** A 1 km gravel loop, graded smooth, with banked bends, rock cuttings to wall-run along, spurs into every area, and a gully you can bridge or leap.
-  - An obstacle course runs all the way round: log piles to hop, low walls, crate steps to mantle, wall-run panels and side-to-side alleys, ramps, low beams to slide under. Every piece leaves part of the road clear.
-  - Run through the start gate (where the forest trail meets the road) and the clock starts. Pass eight checkpoint arches in order: the next one's pennants light up, and each shows your split against your best.
-  - Best lap and splits are saved. Bronze, silver and gold times each hang a banner on the gate.
-- **A village to build up.** Over the hills, a dirt path leads to a valley with four villagers: a woodcutter, a smith, a fisher and the mayor.
+- **One valley, all of a piece** ([plans/world.md](plans/world.md)). Broad rolling hills ease down into the clearing, the village and the lake basin, joined by shallow valleys; nothing outside the quarry's stone faces is sheer, and almost all of it is gentler than 30°. The world's edge rises into high hills, so the valley feels closed in rather than cut off. Biomes fray into the grass at their edges instead of ending on a line.
+  - **The creek** runs from a spring at the foot of the Pinewood hills, down its own little vale, through the clearing's pond and into the lake. Wade it anywhere; mend the footbridge where the village path crosses it.
+  - **Roads that follow the land:** gravel roads to the quarry, round the lake, to Goldmeadow and from the village up into the Pinewood, and dirt paths to the lake, into the forest and up Frostpeak. Each was routed over the terrain the cheapest way (round hills, along valleys) and climbs gently.
+
+  | The land's slopes before (black: sheer) | And after |
+  |---|---|
+  | ![Before](docs/images/world/slope_before.png) | ![After](docs/images/world/slope_after.png) |
+- **A village to build up.** East of the clearing, a dirt path leads along a shallow valley to the village and its four villagers: a woodcutter, a smith, a fisher and the mayor.
   - Talk to a villager (E) to see what their building's next tier costs, then pay with the logs, ore and fish you've gathered.
   - **Greta forges tools.** Her panel has a Forge tab: the next pick, axe and sickle, what each opens and what it costs. Each is made from what the tool before it can gather, and her smithy's tier caps the best she can make (the Stone Forge does copper, the Smithy iron, the Crystal Forge crystal).
     - Forging plays **the forge moment**: the village hushes and the view darkens round the flaring forge, Greta strikes three ringing blows, quenches the blade in a burst of steam, and the new tool is revealed in a shaft of its colour before it swings into your hands while the villagers cheer. Iron adds thunder and the town hall's bell; crystal darkens the sky and sends a violet beam up out of the anvil. E skips to the reveal.
