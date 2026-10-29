@@ -21,6 +21,8 @@ const MIN_COLLIDER_VOLUME := 0.004
 const MAX_TOKS := 14
 const POPUP_COLOR := Color("ffd27a")
 const CRYSTAL_GLOW := Color(0.7, 0.5, 1.0)
+## Seconds for the windows to light up or go dark.
+const WINDOW_FADE := 1.2
 
 @export var def: BuildingDef
 ## Builds itself when the town hall reaches this tier (0 = always there).
@@ -45,6 +47,11 @@ var _thud: AudioStreamPlayer3D
 var _dust: CPUParticles3D
 var _confetti: CPUParticles3D
 var _run := 0  # bumped on every upgrade, so an interrupted animation stops
+## Window glass, and how lit it is (0..1): lit while the villager is home and awake after dark
+## (Villager.lights_on()), fading on and off.
+var _windows: Array[MeshInstance3D] = []
+var _lit := 0.0
+var _lit_shown := -1.0
 
 
 func _ready() -> void:
@@ -60,6 +67,24 @@ func _ready() -> void:
 	_build_effects()
 	_show_tier(Village.tier(def.id) if is_unlocked() else 0)
 	Village.tier_changed.connect(_on_tier_changed)
+
+
+func _process(delta: float) -> void:
+	if _windows.is_empty():
+		return
+	var v := get_node_or_null("Villager")
+	var on: bool = v != null and v.call("lights_on")
+	_lit = move_toward(_lit, 1.0 if on else 0.0, delta / WINDOW_FADE)
+	var glow := _lit * DayNightSky.glow_level
+	if absf(glow - _lit_shown) > 0.005:
+		_lit_shown = glow
+		for w in _windows:
+			w.set_instance_shader_parameter("glow", glow)
+
+
+## Whether its windows are lit now (0..1, before the night's own fade-in).
+func windows_lit() -> float:
+	return _lit
 
 
 func is_unlocked() -> bool:
@@ -116,6 +141,9 @@ func _build_tiers() -> void:
 			m.material_override = PaletteMaterial.for_mesh(m.mesh)  # (weathered stonework: the rock material)
 			_homes[m] = xform
 			_mark_night_glow(m)
+			if String(m.name).to_lower().contains("windowglass"):  # lit by who's home, not the sky
+				m.remove_from_group("night_glow")
+				_windows.append(m)
 			var aabb := m.get_aabb()
 			if aabb.size.x * aabb.size.y * aabb.size.z >= MIN_COLLIDER_VOLUME:
 				var shape := CollisionShape3D.new()

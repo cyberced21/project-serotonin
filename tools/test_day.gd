@@ -36,10 +36,24 @@ func _run() -> void:
 		root.get_node("Village").call("set_tier", b.get("def").get("id"), 3)
 	await _run_until(12.0)  # (the upgrades play out meanwhile)
 
-	await _run_until(21.5, 20.0)
+	await _run_until(19.6, 18.0)
+	_check(_lit() == _windowless(), "19:36: everyone's out, the windows are dark")
+	await _run_until(21.5)
 	_check(_all(func(v: Node) -> bool: return v.get("_inside")), "21:30, no tavern: everyone's home")
+	_check(_lit() == _villagers().size(), "...with the lamps lit (%d of %d)" % [_lit(), _villagers().size()])
+	await _run_until(22.4)
+	var early := _lit()
+	await _run_until(23.4)
+	print("  windows lit: %d at 22:24, %d at 23:24" % [early, _lit()])
+	_check(early > _lit() and early < _villagers().size(), "going dark one by one")
+	var windowless := []
+	for b in get_nodes_in_group("building"):
+		if (b.get("_windows") as Array).is_empty():
+			windowless.append(b.get("def").get("id"))
+	print("  (no windows: %s)" % [windowless])
 	await _run_until(3.0)
 	_check(_all(func(v: Node) -> bool: return v.get("_inside")), "03:00: everyone's in bed")
+	_check(_lit() == _windowless(), "...all dark")
 	await _run_until(6.0, 4.5)
 	var ollie := _villager(&"fisher")
 	var rosa := _villager(&"baker_cottage")
@@ -94,6 +108,25 @@ func _run_until(h: float, from := -1.0) -> void:
 		guard += 1
 	Engine.time_scale = 1.0
 	await physics_frame
+
+
+## How many houses (with windows) have their windows lit.
+func _lit() -> int:
+	var n := 0
+	for b in get_nodes_in_group("building"):
+		if (b.get("_windows") as Array).is_empty():
+			n += 1  # (no windows: counts as lit, so the count is always of all houses)
+		elif b.call("windows_lit") > 0.5:
+			n += 1
+	return n
+
+
+func _windowless() -> int:
+	var n := 0
+	for b in get_nodes_in_group("building"):
+		if (b.get("_windows") as Array).is_empty():
+			n += 1
+	return n
 
 
 func _villagers() -> Array:

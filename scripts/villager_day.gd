@@ -19,6 +19,10 @@ const DUSK_FROM := 18.6
 const DARK := 20.3
 ## Bedtime after the tavern, in hours past 24 (24.5 = half past midnight).
 const BED := 24.4
+## Bedtime after an evening at home (no tavern, or skipping it), and how long the lights stay on
+## after coming in late.
+const HOME_BED := 22.6
+const LIGHTS_AWAKE := 0.35
 ## Each villager (by their building's id): their offsets from the shared day, in hours, and
 ## quirks. Keys: wake, breakfast_from (until then they work: dawn fishing), dusk (work ends),
 ## tavern (how long after dark they get there), bed, and:
@@ -51,6 +55,18 @@ static func time_at(h: float) -> float:
 		return DayNight.SUNRISE + (h - 6.0) / 14.0 * (DayNight.SUNSET - DayNight.SUNRISE)
 	var night := fposmod(h - 20.0, 24.0) / 10.0
 	return fposmod(DayNight.SUNSET + night * (1.0 - (DayNight.SUNSET - DayNight.SUNRISE)), 1.0)
+
+
+## Clock hours with the small hours after midnight counted on from 24 (00:30 is 24.5), so an
+## evening reads in order.
+static func evening_hours(t: float) -> float:
+	var h := hours(t)
+	return h + 24.0 if h < 12.0 else h
+
+
+## When villager `id`, home at evening hour `came_in` (evening_hours), puts the lights out.
+static func lights_out(id: StringName, came_in: float) -> float:
+	return maxf(came_in + LIGHTS_AWAKE, HOME_BED + float(person(id).get("bed", 0.0)))
 
 
 static func person(id: StringName) -> Dictionary:

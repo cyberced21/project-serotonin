@@ -25,6 +25,9 @@ extends Node
 
 var _sky: ShaderMaterial
 var _glow := -1.0
+## How strongly things glow after dark now (0 by day, 1 at night): for glows driven elsewhere,
+## like windows that follow whether anyone's home (Building).
+static var glow_level := 0.0
 var _grade: Array[Color] = [Color.WHITE, Color.WHITE]
 
 
@@ -113,6 +116,7 @@ func _update() -> void:
 
 	# lamps, lanterns and windows
 	var glow := smoothstep(0.15, 0.85, night)
+	glow_level = glow
 	if absf(glow - _glow) > 0.01:
 		_glow = glow
 		for g in get_tree().get_nodes_in_group("night_glow"):

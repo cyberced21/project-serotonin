@@ -78,6 +78,7 @@ var _seat: Marker3D
 var _skip_tonight := false
 var _stroll: Marker3D  # where they're strolling to next
 var _stroll_i := 0
+var _lights_out := 0.0  # evening hour (VillagerDay.evening_hours) their lamp goes out
 ## A cutscene is posing this villager (script_pose): no walking, working or talking of its own.
 var scripted := false
 
@@ -228,6 +229,8 @@ func _start() -> void:
 		global_position = _ground(door.global_position)
 		_target = door
 		_inside = true
+		if VillagerDay.hours(DayNight.time) >= 12.0:  # (an evening: still up for a while)
+			_lights_out = VillagerDay.lights_out(building.def.id, VillagerDay.evening_hours(DayNight.time))
 		_model.visible = false
 		_shape.set_deferred("disabled", true)
 	elif _part != VillagerDay.Part.WORK:
@@ -380,8 +383,14 @@ func _night_routine(delta: float, talking: bool) -> bool:
 	return false
 
 
+## Their house's windows are lit: home after dark and not asleep yet, or up to answer the door.
+func lights_on() -> bool:
+	return _visiting or (_inside and VillagerDay.evening_hours(DayNight.time) < _lights_out)
+
+
 func _go_inside() -> void:
 	_inside = true
+	_lights_out = VillagerDay.lights_out(building.def.id, VillagerDay.evening_hours(DayNight.time))
 	_shape.set_deferred("disabled", true)
 	set_highlighted(false)
 	var t := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)  # interpolated body
