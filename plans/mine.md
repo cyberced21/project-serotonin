@@ -81,6 +81,9 @@ Each phase is a commit on `mine`. Stop after phase 1 for the user's picks; then 
 
 1. **Pick pages.** Mine art (tunnel rock, timber, lanterns, rails, cart, lift), painted texture
    tiles, the tavern's kit look, the add-on forks (text), mine sounds. Stop for picks.
+   *Up 2026-10-29 on one page: https://claude.ai/artifact/XZMpnyVD8s7zMfH45Ajfg8. Packs:
+   loafbrr_1's Mine Object collection and rubberduck's free mine assets (both CC0, OpenGameArt,
+   in E:\Godot\downloads\mine-packs); 37 Freesound CC0 clips in E:\Godot\downloads\mine-sounds.*
 2. **The quarry.** Ore walls out, rocks over every level, props, greenery, the boarded mouth, save
    migration. Done: screenshots of every level; a bot mines a rock on the floor.
 3. **The mine framework + level 1.** Cells, dig faces, seams, the space under the pit, the entrance
