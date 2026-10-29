@@ -1,5 +1,7 @@
 extends SceneTree
-## Checks the dog (scripts/dog.gd, plans/dog.md): walking the village path and sprinting over
+## Checks the dog (scripts/dog.gd, plans/dog.md): a new world has three strays by the clearing's
+## pond by day (none at night); petting one asks his name and coat, he's yours and the others
+## wander off. Then, walking the village path and sprinting over
 ## the hills he keeps up, stays on the ground and out of your way; he sits when you stop, lies
 ## down while you gather (never in front of you), and pops in behind you after a teleport.
 ## The player is moved by the test (its own physics off), as if walking.
@@ -24,8 +26,7 @@ func _run() -> void:
 	player = get_first_node_in_group("player") as CharacterBody3D
 	terrain = get_first_node_in_group("terrain") as Terrain3D
 	player.set_physics_process(false)
-	root.get_node("Companion").call("adopt", &"shepherd", &"saddle", "Tester")
-	await _frames(5)
+	await _meet()
 	dog = get_first_node_in_group("dog") as Node3D
 	_check(dog != null, "adopting puts a dog in the world")
 	if dog == null:
@@ -40,7 +41,54 @@ func _run() -> void:
 	# over the hills at a jog: the clearing west to the quarry's mountainside
 	await _walk(PackedVector2Array([Vector2(-20, -6), Vector2(-60, 10), Vector2(-95, 20)]), 5.5, "over the hills")
 	await _teleport()
+	await _night_strays()
 	_finish()
+
+
+func _meet() -> void:
+	await _frames(10)
+	var strays := get_nodes_in_group("stray_dog")
+	_check(strays.size() == 3, "a new world by day: three strays by the pond (%d)" % strays.size())
+	if strays.size() < 3:
+		return
+	var shepherd: Node3D = strays.filter(func(d: Node) -> bool: return d.get("breed") == &"shepherd")[0]
+	_place(shepherd.global_position + Vector3(2, 0, 0), Vector2(-1, 0))
+	await _frames(30)
+	_check(shepherd.get("state") == 1, "close by, a stray sits up and watches you")
+	print("prompt: %s" % shepherd.call("prompt"))
+	shepherd.call("interact")
+	var panel := get_first_node_in_group("dog_name_panel")
+	_check(panel != null and panel.call("is_open"), "petting a stray asks his name")
+	if panel == null:
+		return
+	panel.call("confirm", &"brown", "Rex")
+	await _frames(5)
+	var companion := root.get_node("Companion")
+	_check(companion.get("has_dog") and companion.get("breed") == &"shepherd" and companion.get("coat") == &"brown"
+			and companion.get("dog_name") == "Rex", "he's yours: a brown shepherd mutt called Rex")
+	_check(get_first_node_in_group("dog") == shepherd and get_nodes_in_group("dog").size() == 1, "the stray you petted is your dog")
+	var others := strays.filter(func(d: Node) -> bool: return d != shepherd)
+	var before: Array = others.map(func(d: Node3D) -> float: return d.global_position.distance_to(player.global_position))
+	await _seconds(3.0)
+	var after: Array = others.map(func(d: Node3D) -> float: return d.global_position.distance_to(player.global_position) if is_instance_valid(d) else 999.0)
+	_check(after[0] > before[0] + 3.0 and after[1] > before[1] + 3.0, "the other two wander off")
+	_check(not panel.call("is_open"), "the box is closed")
+
+
+func _night_strays() -> void:
+	var companion := root.get_node("Companion")
+	var day_night := root.get_node("DayNight")
+	companion.call("from_dict", {})
+	dog.queue_free()
+	var home := get_first_node_in_group("dog_home")
+	day_night.set("frozen", true)
+	day_night.set("time", 0.95)
+	await _frames(10)
+	_check(get_nodes_in_group("stray_dog").is_empty(), "no dog yet, at night: no strays yet")
+	day_night.set("time", 0.2)
+	await _frames(10)
+	_check(get_nodes_in_group("stray_dog").size() == 3, "...and at dawn there they are")
+	day_night.set("frozen", false)
 
 
 func _walk(pts: PackedVector2Array, speed: float, what: String) -> void:

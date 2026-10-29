@@ -7,6 +7,8 @@ extends AnimatableBody3D
 ## trots ahead of you along roads and paths, sits when you stop, lies down while you gather, and
 ## now and then sniffs about while you stand still. Fall more than CATCH_UP behind and he pops in
 ## trotting up behind you, out of view.
+## Before you have a dog, three strays nap by the clearing's pond (DogHome): a stray lifts his head
+## and wags when you come close; pet one (E) and DogHome asks his name; the others wander off.
 ## Physics layer 9 only: you walk through him (the player's mask leaves it out), only the
 ## crosshair finds him (player.gd PET_MASK).
 
@@ -43,6 +45,10 @@ var dog_name := ""
 var state := State.FOLLOW
 ## A cutscene, the meeting or a test drives him: no following of his own.
 var scripted := false
+## One of the strays: naps where he is until you pet him (or leave() sends him off).
+var stray := false
+## A stray who wasn't picked, on his way off over the hills.
+var _leaving := Vector3.INF
 
 var _player: CharacterBody3D  # (player.gd has no class_name)
 var _terrain: Terrain3D
@@ -75,7 +81,7 @@ func setup(b: StringName, c: StringName, n: String) -> void:
 
 
 func _ready() -> void:
-	add_to_group("dog")
+	add_to_group("stray_dog" if stray else "dog")
 	collision_layer = PET_LAYER
 	collision_mask = 0
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
@@ -99,21 +105,85 @@ func _build_model() -> void:
 			_parts[part] = n
 			_rest[part] = n.transform
 	if _parts.has(&"LegFL"):
-		_leg = maxf(_parts[&"LegFL"].global_position.y - global_position.y, 0.1)
+		_leg = maxf(to_local(_parts[&"LegFL"].global_position).y, 0.1)
 	var box := AABB()
 	var first := true
 	for g in inst.find_children("*", "GeometryInstance3D", true, false):
 		var gi := g as GeometryInstance3D
 		_surfaces.append(gi)
-		var b := gi.global_transform * gi.get_aabb()
+		var b := (global_transform.affine_inverse() * gi.global_transform) * gi.get_aabb()  # (in our own space)
 		box = b if first else box.merge(b)
 		first = false
 	var shape := CollisionShape3D.new()
 	var bs := BoxShape3D.new()
 	bs.size = box.size
 	shape.shape = bs
-	shape.position = box.get_center() - global_position
+	shape.position = box.get_center()
 	add_child(shape)
+
+
+## Shown under the crosshair.
+func prompt() -> String:
+	if stray:
+		return "E  Pet the %s" % Companion.BREED_NAMES.get(breed, "dog")
+	return "E  Pet %s" % dog_name
+
+
+func interact() -> void:
+	if stray:
+		var home := get_tree().get_first_node_in_group("dog_home") as DogHome
+		if home:
+			home.meet(self)
+
+
+## The stray you picked becomes your dog: his coat (the model swapped if it changed) and name.
+func adopt_as(c: StringName, n: String) -> void:
+	remove_from_group("stray_dog")
+	add_to_group("dog")
+	stray = false
+	dog_name = n
+	if c != coat:
+		coat = c
+		for child in get_children():
+			if child.name == "Model" or child is CollisionShape3D:
+				remove_child(child)
+				child.queue_free()
+		_parts.clear()
+		_rest.clear()
+		_targets.clear()
+		_surfaces.clear()
+		_build_model()
+	state = State.SIT
+
+
+## A stray who wasn't picked trots off over the hills, `away` from you, and is gone once far off.
+func leave(away: Vector3) -> void:
+	remove_from_group("stray_dog")
+	_leaving = global_position + away.normalized() * 200.0
+
+
+func _wander_off(delta: float) -> void:
+	_goal = _leaving
+	state = State.FOLLOW
+	var to := _goal - global_position
+	to.y = 0.0
+	_speed = move_toward(_speed, WALK * 1.8, ACCEL * delta)
+	var pos := global_position + to.normalized() * _speed * delta
+	_turn_to(atan2(to.x, to.z), delta, 6.0)
+	pos.y = _ground(pos)
+	global_transform = Transform3D(Basis(Vector3.UP, _yaw), pos)
+	if _flat(pos - _player.global_position) > 70.0:
+		queue_free()
+
+
+## Napping by the pond; with you near he sits up, watches you and wags.
+func _nap(delta: float) -> void:
+	var near := _flat(_player.global_position - global_position) < 7.0
+	state = State.SIT if near else State.LIE
+	if near:
+		var face := _player.global_position - global_position
+		_turn_to(atan2(face.x, face.z), delta, 2.0)
+		global_transform = Transform3D(Basis(Vector3.UP, _yaw), global_position)
 
 
 func set_highlighted(on: bool) -> void:
@@ -127,7 +197,11 @@ func _physics_process(delta: float) -> void:
 		_player = get_tree().get_first_node_in_group("player") as CharacterBody3D
 	if _terrain == null:
 		_terrain = get_tree().get_first_node_in_group("terrain") as Terrain3D
-	if _player and not scripted:
+	if _player and _leaving != Vector3.INF:
+		_wander_off(delta)
+	elif _player and stray:
+		_nap(delta)
+	elif _player and not scripted:
 		_think(delta)
 		_move(delta)
 	_animate(delta)
