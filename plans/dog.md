@@ -4,7 +4,7 @@ Chunk 6 of [cozy.md](cozy.md) (its section 4). Grilled 2026-10-29. Branch `dog` 
 `world` is merged (and released).
 
 Status (2026-10-29): **phases 1-7 built on branch `dog`, phase 8's pictures and docs done; the
-sounds are not picked yet** (Dog.SOUNDS is empty: the calls are wired). Bot-tested only
+sounds picked by ear** (https://claude.ai/artifact/JrjwYkzQz8V8HPKMutSGo6, audio/dog/SOURCES.md). Bot-tested only
 (`tools/test_dog.gd`), screenshots in docs/images/dog/ (`tools/dog_shots.gd`). Not played. Open
 items: docs/TODO.md, "The dog".
 

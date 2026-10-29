@@ -105,8 +105,7 @@ Belt or hand?
   never required.
 
 **Grilled 2026-10-29 → [dog.md](dog.md)** (a stray met on the first morning, three breeds, you
-name him, hints only, the doghouse as three chained projects). Built 2026-10-29 on branch `dog`
-except his sounds (to pick by ear).
+name him, hints only, the doghouse as three chained projects). Built 2026-10-29 on branch `dog`, sounds picked by ear.
 
 ## 5. A world that grows with what you spend
 

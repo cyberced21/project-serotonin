@@ -66,10 +66,19 @@ const LIGHT_AHEAD := 3.2
 const RETAKE := 1.2
 const CARRY_RANGE := 20.0
 const LANTERN_MODEL := preload("res://models/lantern.glb")
-## His sounds (audio/dog/SOURCES.md), per id; filled in when they're picked. Level per id (dB),
-## and the breeds' pitch (the terrier higher, the big fluffy one lower).
-const SOUNDS := {}
-const SOUND_DB := {}
+## His sounds (audio/dog/SOURCES.md, picked by ear 2026-10-29), per id; level per id (dB), and the
+## breeds' pitch (the terrier higher, the big fluffy one lower). Panting comes every PANT_GAP
+## seconds while he trots (quietly), sniffs every SNIFF_GAP while he's nosing about.
+const SOUNDS := {
+	&"pant": [preload("res://audio/dog/pant.wav")],
+	&"sniff": [preload("res://audio/dog/sniff.wav")],
+	&"whine": [preload("res://audio/dog/whine.wav")],
+	&"woof": [preload("res://audio/dog/woof.wav")],
+	&"shake": [preload("res://audio/dog/shake.wav")],
+}
+const SOUND_DB := {&"pant": -20.0, &"sniff": -16.0, &"whine": -12.0, &"woof": -9.0, &"shake": -12.0}
+const PANT_GAP := Vector2(2.5, 5.0)
+const SNIFF_GAP := Vector2(1.6, 3.0)
 const BREED_PITCH := {&"terrier": 1.25, &"shepherd": 1.0, &"fluffy": 0.82}
 ## At night he dozes this close to your feet once you've stood still DOZE_AFTER seconds.
 const AT_FEET := 0.9
@@ -214,6 +223,7 @@ func interact() -> void:
 func pet() -> void:
 	_pet_left = PET_TIME
 	_speed = 0.0
+	say(&"whine")
 
 
 ## The stray you picked becomes your dog: his coat (the model swapped if it changed) and name.
@@ -339,6 +349,7 @@ func _physics_process(delta: float) -> void:
 		_move(delta)
 	_lantern_tick(delta)
 	_listen_left = maxf(_listen_left - delta, 0.0)
+	_idle_sounds(delta)
 	_animate(delta)
 	_apply_poses(delta)
 
@@ -512,6 +523,24 @@ func _on_howl(at: Vector3) -> void:
 			say(&"woof", 0.6))
 
 
+var _pant_in := 3.0
+var _sniff_in := 0.0
+
+
+## Panting while he trots along with you, sniffs while he's nosing about.
+func _idle_sounds(delta: float) -> void:
+	if stray or _leaving != Vector3.INF:
+		return
+	_pant_in -= delta
+	_sniff_in -= delta
+	if state == State.FOLLOW and _speed > WALK * 1.3 and not _paddling and _pant_in <= 0.0:
+		_pant_in = randf_range(PANT_GAP.x, PANT_GAP.y)
+		say(&"pant")
+	if state == State.SNIFF and _speed < 0.2 and _sniff_in <= 0.0:
+		_sniff_in = randf_range(SNIFF_GAP.x, SNIFF_GAP.y)
+		say(&"sniff")
+
+
 ## Plays one of his sounds (scripts/dog.gd SOUNDS), positional, from his head.
 func say(id: StringName, loud := 1.0) -> void:
 	var streams: Array = SOUNDS.get(id, [])
@@ -545,6 +574,7 @@ func _water(delta: float) -> void:
 
 
 func _spray() -> void:
+	say(&"shake")
 	var at := global_position + Vector3.UP * (_leg + 0.15)
 	RodFishing.splash(get_parent(), at, 0.45)
 	get_tree().create_timer(0.35).timeout.connect(func() -> void:

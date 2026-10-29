@@ -93,7 +93,7 @@ whatever you hit.
   - He follows you at an easy distance, trots ahead on roads and paths, sits when you stop, lies down while you gather (never in front of what you're hitting), and sniffs about. Fall far behind and he trots up from out of view.
   - Pet him any time (E). He paddles after you into shallow water, waits on the bank where it's deep, and shakes himself dry. While you fish he watches the float.
   - At night he carries your lantern in his mouth, a little ahead of you, lighting the way (hold the raise key to take it back). Stand still and he dozes at your feet.
-  - Now and then he shows you something: an ore fault or a rare node to sniff at, a fish school to stare at. A big catch gets a happy wiggle; a far-off wolf gets an answer.
+  - Now and then he shows you something: an ore fault or a rare node to sniff at, a fish school to stare at. A big catch gets a happy wiggle; a far-off wolf gets an answer. He pants as he trots, sniffs, whines happily when petted and gives a soft woof now and then (real recordings, pitched higher for the terrier, lower for the big one).
   - **His doghouse** is three projects on the noticeboard, one after another: a kennel, then paint and his name on a sign, then a porch, a bowl and a blanket. He sleeps in its doorway at night when you're in the village and waits there in the morning.
 
   ![The dog: sitting, petted, trotting, with the lantern at night, and at his doghouse](docs/images/dog/sheet.jpg)
