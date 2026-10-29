@@ -259,7 +259,43 @@ def needles(rng, size=SIZE):
     return grey, alpha
 
 
-DETAIL = [stone, ore, wood, leaves, terrain_generic, metal, cloth, neutral]
+# --- cut from the CC0 kit's own textures (plans/mine.md: tiles picked on a page, look "D") -------
+# Our stone, wood and plaster share the grain of the Quaternius village kit's (art/kit/village/), so
+# our models sit beside the kit's houses: a patch of its texture, greyed, made to tile, posterized.
+
+KIT = os.path.join(os.path.dirname(__file__), "..", "art", "kit", "village")
+
+
+def tileable(a):
+    """Cross-fades a patch with itself shifted half a tile, so its edges meet."""
+    n = a.shape[0]
+    shifted = np.roll(np.roll(a, n // 2, 0), n // 2, 1)
+    ys, xs = np.mgrid[0:n, 0:n] / (n - 1)
+    w = np.minimum(np.minimum(xs, 1 - xs), np.minimum(ys, 1 - ys)) * 2  # 0 at the edges, 1 mid-tile
+    w = np.clip(w * 2.5, 0, 1)
+    return a * w + shifted * (1 - w)
+
+
+def from_kit(name, box, contrast, turn=False):
+    im = Image.open(os.path.join(KIT, name)).convert("L").crop(box).resize((SIZE, SIZE), Image.LANCZOS)
+    a = tileable(np.asarray(im, float) / 255.0)
+    a = a.T if turn else a  # (the kit's planks run across its sheet; our grain runs up)
+    return centre(posterize(norm(a), 8), contrast)
+
+
+def kit_stone(_rng):
+    return from_kit("T_RockTrim_BaseColor.jpg", (0, 330, 230, 560), 1.2)
+
+
+def kit_wood(_rng):
+    return from_kit("T_WoodTrim_BaseColor.jpg", (0, 0, 290, 290), 1.3, turn=True)
+
+
+def kit_plaster(_rng):
+    return from_kit("T_Plaster_BaseColor.jpg", (0, 0, 512, 512), 1.6)
+
+
+DETAIL = [kit_stone, ore, kit_wood, leaves, terrain_generic, metal, cloth, kit_plaster]
 GROUND = [grass, dirt, stone, sand, snow, forest_floor, path, field]
 
 
