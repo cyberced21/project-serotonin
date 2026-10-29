@@ -98,6 +98,67 @@ func _run() -> void:
 		var panel := get_first_node_in_group("upgrade_panel")
 		_check(panel.call("is_open"), "E on the plans opens the home's upgrades")
 		panel.call("close")
+
+	# the cottage: well rested after a full night, a note on the desk
+	village.call("set_tier", &"home", 3)
+	for i in 240:
+		await physics_frame
+	_check(home.get("tier_shown") == 3, "the plans build a cottage")
+	_check(home.call("mark", "Desk") != null and home.call("mark", "TrophySlot1") != null,
+			"...with a desk and an (empty) trophy wall")
+	day.set("time", _at(22.0))
+	home.call("sleep")
+	t0 = Time.get_ticks_msec()
+	while home.get("sleeping") and Time.get_ticks_msec() - t0 < 15000:
+		await process_frame
+	var home_script: GDScript = load("res://scripts/home.gd")
+	_check(home_script.get("rested") == true and home_script.call("rested_bonus") > 0.0,
+			"a full night in your own bed: well rested (+%d%% XP)" % roundi(home_script.call("rested_bonus") * 100.0))
+	var skills := root.get_node("Skills")
+	var before: int = skills.call("level_xp", &"woodcutting") if skills.has_method("level_xp") else int(skills.get("xp").get(&"woodcutting", 0))
+	skills.call("add_xp", &"woodcutting", 100)
+	var gained: int = int(skills.get("xp").get(&"woodcutting", 0)) - before
+	_check(gained == 115, "...and it shows: 100 XP comes in as %d" % gained)
+	day.set("time", _at(13.0))
+	_check(home_script.call("rested_bonus") == 0.0, "...till noon")
+	# a note, written and left on the desk (the morning's own is down to chance)
+	home.set("_note", load("res://scripts/home_notes.gd").write(self))
+	home.call("_place_note")
+	await process_frame
+	var note: Node = home.get("_note_node")
+	_check(note != null and String(note.call("prompt")).begins_with("E  Read the note"), "a note on the desk: %s"
+			% (note.call("prompt") if note else "none"))
+	if note:
+		var gift: Dictionary = note.get("note").get("gift", {})
+		var item: StringName = gift.keys()[0] if not gift.is_empty() else &""
+		var had: int = root.get_node("Inventory").call("count", item) if item != &"" else 0
+		note.call("interact")
+		await process_frame
+		_check(item == &"" or root.get_node("Inventory").call("count", item) == had + int(gift[item]),
+				"...reading it: %s" % (("the gift's in your pack (%s)" % item) if item != &"" else "no gift this time"))
+		_check(home.get("_note").is_empty(), "...and it's gone")
+
+	# the homestead: head home from the map, of an evening
+	village.call("set_tier", &"home", 4)
+	for i in 240:
+		await physics_frame
+	_check(home.get("tier_shown") == 4, "the plans build a homestead")
+	player.call("teleport", Vector3(100, 0, 40))
+	await physics_frame
+	day.set("time", _at(19.0))
+	_check(home.call("can_head_home"), "19:00, away in the village: you can head home")
+	day.set("time", _at(10.0))
+	_check(not home.call("can_head_home"), "...but not in the morning")
+	day.set("time", _at(19.0))
+	home.call("head_home")
+	t0 = Time.get_ticks_msec()
+	while bool(player.get("cutscene")) or Time.get_ticks_msec() - t0 < 400:
+		await process_frame
+		if Time.get_ticks_msec() - t0 > 15000:
+			break
+	var arrive := home.call("mark", "Arrive") as Node3D
+	_check(player.global_position.distance_to(arrive.global_position) < 1.5, "...and you're on the porch (%.1f m)"
+			% player.global_position.distance_to(arrive.global_position))
 	_finish()
 
 

@@ -77,6 +77,21 @@ after cozy will). Smaller than the plan's 6 × 8 → 10 × 12: 6 × 6 to 8 × 10
 - Tested: `test_interiors.gd` (every house: room, bed, a look; 03:00 all six asleep in bed
   in sight behind shut doors, three of them upstairs; 10:00 all out), `test_paths`, `test_day`,
   `test_kit_building` pass. The old `.glb` models of these six are no longer used.
+
+**Phase 6 built 2026-10-29: the Cottage and the Homestead.** Cottage (6 × 8; oak, copper ore, logs;
+town hall 2): a stone hearth (ours, `hearth()`), kitchen corner, the desk (the plans and the notes),
+the trophy wall (six empty plaques, `TrophySlot1..6` markers, waiting for the trophy grill), the
+dog's basket by the fire. Homestead (8 × 10, two storeys; pine, iron, crystal, oak; town hall 3):
+the same downstairs with a long table, a loft bedroom up the stair, a porch (`Arrive` marker).
+- Well rested: `Home.rested` (static, saved) after a full night (in bed by 01:00) from the
+  Cottage; `Home.rested_bonus()` +15% in `Skills.add_xp` till noon; "Well rested" pops on waking.
+- Notes: 60% of mornings from the Cottage, `HomeNotes.write()` (a villager's gift of their trade's
+  goods, a thank-you for a built project, or a hint at their next tier), left as a `DeskNote`
+  on the Desk marker (saved till read); reading it shows the note and puts the gift in your pack.
+- Head home: a button on the world map from the Homestead, 17:00 to midnight, more than 30 m
+  away: a fade and you're on the porch with the dog.
+- The tiers' perks are listed in the upgrade panel (home_* TierEffect stats, text only).
+- `test_home.gd` covers all four tiers (32 checks).
 Palette files: `E:\Godot\downloads\art-pick\newpal`, `strongpal`.
 
 ## Where we start (2026-10-29)

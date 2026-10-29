@@ -18,6 +18,7 @@ var _frame: PanelContainer
 var _title: Label
 var _hover: Label
 var _dragging := false
+var _home_button: Button
 var _fitted := false  # zoomed to the whole world once the map was built
 
 
@@ -42,6 +43,8 @@ func open() -> void:
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_fitted = false
+	var home := get_tree().get_first_node_in_group("home") as Home
+	_home_button.visible = home != null and home.can_head_home()
 	await get_tree().process_frame  # (the frame's laid out: fit to its size)
 	_fit()
 
@@ -191,8 +194,19 @@ func _build() -> void:
 	_hover.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_hover.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	foot.add_child(_hover)
+	_home_button = MenuUI.button("Head home", _on_head_home, 16)
+	_home_button.tooltip_text = "Home for the evening (from your Homestead, at dusk)"
+	foot.add_child(_home_button)
 	var hint := MenuUI.label("Wheel zoom  ·  drag to pan  ·  Space: find me  ·  M / Esc close", 15, Color(GOLD, 0.7))
 	foot.add_child(hint)
+
+
+## Home for the evening (plans/home.md): your Homestead, at dusk.
+func _on_head_home() -> void:
+	var home := get_tree().get_first_node_in_group("home") as Home
+	if home and home.can_head_home():
+		close()
+		home.head_home()
 
 
 func _label(font_size: int) -> Label:

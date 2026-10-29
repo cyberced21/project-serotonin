@@ -3,11 +3,55 @@
 [ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
 [ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
 [ext_resource type="PackedScene" path="res://models/village/home.gltf" id="3_model"]
+[ext_resource type="Script" path="res://scripts/tier_effect.gd" id="4_effect"]
+
+[sub_resource type="Resource" id="Effect_1_0"]
+script = ExtResource("4_effect")
+stat = &"home_sleep"
+value = 1.0
+text = "Sleep on the bedroll after midnight"
+
+[sub_resource type="Resource" id="Effect_2_0"]
+script = ExtResource("4_effect")
+stat = &"home_sleep"
+value = 2.0
+text = "A real bed: sleep through the night from dusk"
+
+[sub_resource type="Resource" id="Effect_3_0"]
+script = ExtResource("4_effect")
+stat = &"home_sleep"
+value = 2.0
+text = "Sleep through the night from dusk"
+
+[sub_resource type="Resource" id="Effect_3_1"]
+script = ExtResource("4_effect")
+stat = &"home_rested"
+value = 0.15
+text = "Well rested: +15% XP till noon after a full night in your own bed"
+
+[sub_resource type="Resource" id="Effect_3_2"]
+script = ExtResource("4_effect")
+stat = &"home_desk"
+value = 1.0
+text = "A desk: some mornings a note from the village, and now and then a little gift"
+
+[sub_resource type="Resource" id="Effect_4_0"]
+script = ExtResource("4_effect")
+stat = &"home_sleep"
+value = 2.0
+text = "Sleep through the night from dusk, in the loft"
+
+[sub_resource type="Resource" id="Effect_4_3"]
+script = ExtResource("4_effect")
+stat = &"home_head_home"
+value = 1.0
+text = "Head home from the map, any evening"
 
 [sub_resource type="Resource" id="Tier_1"]
 script = ExtResource("2_tier")
 name = "Tent"
 lines = PackedStringArray("A tent, a fire and a view of the sunset. It's a start.", "The canvas flaps all night. A real roof would be nice.", "Some logs and birch, and this could be a cabin.")
+effects = Array[ExtResource("4_effect")]([SubResource("Effect_1_0")])
 
 [sub_resource type="Resource" id="Tier_2"]
 script = ExtResource("2_tier")
@@ -18,13 +62,39 @@ cost = Dictionary[StringName, int]({
 })
 hall_tier = 1
 lines = PackedStringArray("Four walls, a stove and a proper bed. You sleep when the sun goes down now.", "The dog's taken the basket by the stove. Of course he has.", "The plaster's still drying. It smells like home already.")
+effects = Array[ExtResource("4_effect")]([SubResource("Effect_2_0")])
+
+[sub_resource type="Resource" id="Tier_3"]
+script = ExtResource("2_tier")
+name = "Cottage"
+cost = Dictionary[StringName, int]({
+&"oak": 30,
+&"ore": 20,
+&"wood": 20
+})
+hall_tier = 2
+lines = PackedStringArray("A hearth of your own. The dog hasn't moved from in front of it.", "That wall by the desk is crying out for something to hang on it.", "The kettle's on. Nobody's coming, but it's on.")
+effects = Array[ExtResource("4_effect")]([SubResource("Effect_3_0"), SubResource("Effect_3_1"), SubResource("Effect_3_2")])
+
+[sub_resource type="Resource" id="Tier_4"]
+script = ExtResource("2_tier")
+name = "Homestead"
+cost = Dictionary[StringName, int]({
+&"pine": 30,
+&"iron": 10,
+&"crystal": 3,
+&"oak": 20
+})
+hall_tier = 3
+lines = PackedStringArray("Two storeys, a porch and a loft to sleep in. You built this.", "On a clear evening you can see the whole valley go gold from the porch.", "Home. Just home.")
+effects = Array[ExtResource("4_effect")]([SubResource("Effect_4_0"), SubResource("Effect_3_1"), SubResource("Effect_3_2"), SubResource("Effect_4_3")])
 
 [resource]
 script = ExtResource("1_def")
 id = &"home"
 display_name = "Your home"
 model = ExtResource("3_model")
-tiers = Array[ExtResource("2_tier")]([SubResource("Tier_1"), SubResource("Tier_2")])
+tiers = Array[ExtResource("2_tier")]([SubResource("Tier_1"), SubResource("Tier_2"), SubResource("Tier_3"), SubResource("Tier_4")])
 villager_name = "Your home"
 villager_role = "Home"
 capped_line = "The mayor wants the town hall bigger before anyone builds bigger. Even you."

@@ -760,10 +760,128 @@ def cabin(k):
     prop(k, "Lantern_Wall", -2.85, 0.4, 1.0, facing="+x")
 
 
+def hearth(k, x, y, z=0.0, facing="-y"):
+    """A stone fireplace against a wall (its back toward the wall, opening toward `facing`), a fire in
+    it, a chimney piece above (the stack through the roof is the caller's). Rows of rough stones."""
+    d = VEC[facing]
+    side = (-d[1], d[0])
+    stone = ("stone.4", "stone.3", "stone.2", "stone.5")
+    for row, zz in enumerate((0.2, 0.6, 1.0)):
+        for i in (-1, 1):
+            k.stone("Hearth", (0.45, 0.6, 0.4), (x + side[0] * i * 0.62, y + side[1] * i * 0.62, z + zz), stone)
+    k.stone("HearthLintel", (1.7 if d[1] else 0.7, 0.7 if d[1] else 1.7, 0.35), (x, y, z + 1.38), stone)
+    for i in range(3):
+        k.stone("HearthStack", (1.2 if d[1] else 0.6, 0.6 if d[1] else 1.2, 0.5), (x - d[0] * 0.05, y - d[1] * 0.05, z + 1.8 + i * 0.5),
+                stone)
+    k.stone("Hearthstone", (1.6 if d[1] else 1.1, 1.1 if d[1] else 1.6, 0.08), (x + d[0] * 0.35, y + d[1] * 0.35, z + 0.04),
+            ("stone.5", "stone.4", "stone.3"))
+    k.fire((x + d[0] * 0.1, y + d[1] * 0.1, z + 0.05))
+    k.empty("Hearthfire", (x + d[0] * 0.1, y + d[1] * 0.1, z + 0.4))
+
+
+def dog_basket(k, x, y, z=0.0):
+    k.add("Basket", mv.prism(10, 0.42, 0.46, 0.18), ("wood.6", "wood.4", "wood.3", "wood.5"), (x, y, z + 0.09))
+    k.add("Cushion", mv.prism(10, 0.36, 0.36, 0.08), ("accent.0", "accent.0", "accent.0"), (x, y, z + 0.16))
+    marker(k, "DogBed", x, y, z + 0.12, (-1, 0))
+
+
+def trophy_wall(k, x, y, z=0.0, along="y", n=6):
+    """Empty plaques on a wall, waiting for trophies (what goes on them gets its own grill): markers
+    TrophySlot1.. where each one hangs."""
+    for i in range(n):
+        col, row = i % 3, i // 3
+        off = (col - 1) * 0.75
+        px, py = (x, y + off) if along == "y" else (x + off, y)
+        pz = z + 1.4 + row * 0.7
+        k.box("TrophyPlaque", (0.06, 0.5, 0.4) if along == "y" else (0.5, 0.06, 0.4), (px, py, pz),
+              ("wood.3", "wood.3", "wood.2", "wood.4"))
+        marker(k, f"TrophySlot{i + 1}", px, py, pz)
+
+
+def cottage(k):
+    """Tier 3: a 6 x 8 m cottage: the hearth, a kitchen corner, a desk with the plans (and the
+    villagers' notes), the trophy wall, the dog's basket by the fire."""
+    storey(k, 3, 4, "plaster", front="odt", back="tnt", left="toto", right="toto")
+    gable_roof(k, 3, 4, WALL_TOP)
+    hearth(k, 1.6, 3.35, facing="-y")
+    place(k, "Prop_Chimney", (1.6, 3.35, WALL_TOP + 0.8), 0)
+    k.empty("Smoke", (1.6, 3.35, WALL_TOP + 4.1))
+    dog_basket(k, 0.4, 2.7)
+    chair(k, "Seat1", 1.0, 1.5, facing="+y")
+    bed(k, -1.9, 2.55)
+    prop(k, "Nightstand_Shelf", -0.55, 3.65)
+    # the kitchen corner, front right
+    prop(k, "Cabinet", 2.65, -2.2, facing="-x")
+    prop(k, "Pot_1", 2.65, -2.2, 1.0)
+    prop(k, "Shelf_Simple", 2.65, -1.0, 1.7, facing="-x")
+    prop(k, "Table_Large", 1.5, -0.6, facing="+x")
+    chair(k, "Seat2", 0.7, -1.2)
+    # the desk, front left: the plans, and where the notes are left
+    prop(k, "Workbench_Drawers", -2.4, -1.2, facing="+x")
+    chair(k, "Seat3", -1.4, -1.2, facing="-x")
+    marker(k, "Plans", -2.4, -1.6, 1.0)
+    marker(k, "Desk", -2.4, -0.7, 0.95)
+    trophy_wall(k, -2.65, 0.9)
+    marker(k, "Wake", -1.0, 1.2, 0.0, (1, -1))
+    prop(k, "Chandelier", 0, 0, WALL_TOP - 0.1)
+
+
+def homestead(k):
+    """Tier 4: two storeys, 8 x 10 m, with a porch: downstairs the hearth, kitchen, desk, the
+    trophy wall and a long table; a loft bedroom up the stair."""
+    storey(k, 4, 5, "brick", front="oodo", back="wnnw", left="totot", right="totot")
+    storey(k, 4, 5, "plaster", front="toot", back="tnnt", left="totot", right="totot", z0=WALL_TOP,
+           floor="Floor_WoodLight", holes={(0, 3), (0, 4)})
+    place(k, "Stair_Interior_Solid", (-3.1, -0.4, 0.0), 0)
+    marker(k, "Stair0", -3.1, -1.0, 0.0, (0, 1))
+    marker(k, "Stair1", -3.1, 4.2, WALL_TOP, (0, 1))
+    gable_roof(k, 4, 5, 2 * WALL_TOP)
+    hearth(k, 2.0, 4.35, facing="-y")
+    place(k, "Prop_Chimney", (2.0, 4.35, 2 * WALL_TOP + 1.4), 0)
+    k.empty("Smoke", (2.0, 4.35, 2 * WALL_TOP + 4.7))
+    dog_basket(k, 0.6, 3.6)
+    chair(k, "Seat1", 1.2, 2.6, facing="+y")
+    chair(k, "Seat2", 2.8, 2.6, facing="+y")
+    prop(k, "Cabinet", 3.65, -3.0, facing="-x")
+    prop(k, "Pot_1", 3.65, -3.0, 1.0)
+    prop(k, "Shelf_Simple", 3.65, -1.6, 1.7, facing="-x")
+    prop(k, "Barrel_Apples", 3.3, -4.3)
+    prop(k, "Table_Large", 1.2, -0.2, facing="+x")
+    chair(k, "Seat3", 0.4, -0.9)
+    chair(k, "Seat4", 0.4, 0.5)
+    prop(k, "Workbench_Drawers", -3.4, -3.4, facing="+x")
+    chair(k, "Seat5", -2.4, -3.4, facing="-x")
+    marker(k, "Plans", -3.4, -3.8, 1.0)
+    marker(k, "Desk", -3.4, -2.9, 0.95)
+    trophy_wall(k, -0.6, -4.65, along="x")
+    prop(k, "Chandelier", 0.5, 0, WALL_TOP - 0.1)
+    # the loft bedroom
+    z = WALL_TOP
+    bed(k, 2.6, 3.5, z)
+    prop(k, "Nightstand_Shelf", 1.3, 4.45, z)
+    prop(k, "Bookcase_2", 0.2, 4.45, z)
+    marker(k, "Wake", 1.6, 2.2, z, (-1, -1))
+    prop(k, "Chandelier", 1.0, 1.0, z + WALL_TOP - 0.1)
+    # the porch along the front
+    for y in (-5.45, -6.6):
+        k.log("PorchBeam", 8.0, 0.12, (0, y, 0.12), "x")
+    for i in range(6):
+        k.box("PorchPlank", (8.0, 0.33, 0.08), (0, -5.3 - i * 0.35, 0.3), ("wood.6", "wood.5", "wood.4"), jit=0.01)
+    for sx in (-1, 1):
+        k.post("PorchPost", 0.09, 0.34, 2.7, sx * 3.8, -7.0)
+    k.box("PorchRoof", (8.3, 2.3, 0.1), (0, -6.15, 2.75), ("wood.2", "wood.2", "wood.1"), rot=(0.17, 0, 0))
+    k.box("Step", (1.4, 0.4, 0.18), (1.0, -7.4, 0.09), ("wood.5", "wood.4", "wood.3"))
+    marker(k, "Arrive", 1.0, -8.4, 0.0, (0, 1))
+
+
 def home():
     reset()
     tent(mv.Kit("T1", 301))
     cabin(mv.Kit("T2", 302))
+    k = mv.Kit("T3", 303)
+    cottage(k)
+    marker(k, "Arrive", 0.0, -5.4, 0.0, (0, 1))
+    homestead(mv.Kit("T4", 304))
     export_kit_building("home")
 
 
