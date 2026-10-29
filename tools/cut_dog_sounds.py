@@ -19,7 +19,8 @@ import numpy as np
 RATE = 48000
 LOUDNESS = -20.0  # dBFS RMS over the clip's loud part
 ## Longest clip per kind (s), and the fades (s).
-MAX_LEN = {"pant": 2.6, "sniff": 2.0, "whine": 2.2, "woof": 0.9, "shake": 1.8}
+MAX_LEN = {"pant": 2.6, "sniff": 2.0, "whine": 2.2, "woof": 0.9, "shake": 1.8,
+           "cart": 6.0, "snort": 2.5, "trade": 1.4}  # (the trader too: plans/market.md)
 FADE = 0.03
 
 argv = sys.argv[sys.argv.index("--") + 1:]

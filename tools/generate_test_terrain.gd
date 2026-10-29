@@ -262,7 +262,7 @@ func _world(x: int, y: int) -> Vector2:
 func _height(w: Vector2) -> float:
 	# a product, not a min: where two places' rims meet there's no crease
 	var outside := _rise(w, CLEARING_CENTER, CLEARING_RADIUS, HILL_RAMP) 			* _rise(w, VILLAGE_CENTER, VILLAGE_RADIUS, VILLAGE_RAMP) 			* _rise(w, LAKE_BASIN["center"], LAKE_BASIN["radius"], LAKE_BASIN["ramp"])
-	for path in [PATH, LAKE_PATH]:
+	for path in [PATH, LAKE_PATH, WorldMap.EAST_ROAD]:
 		var v := smoothstep(VALLEY_HALF, VALLEY_HALF + VALLEY_RAMP, _polyline_distance(w, path))
 		outside *= lerpf(VALLEY_FLOOR, 1.0, v)
 	var c := smoothstep(WorldMap.CREEK_HALF_WIDTH, CREEK_VALE, _polyline_distance(w, WorldMap.CREEK))
@@ -328,7 +328,9 @@ func _rim(w: Vector2) -> float:
 	var past := Vector2(maxf(c.x - inner, 0.0), maxf(c.y - inner, 0.0)).length()  # rounded corners
 	past += _warp_x.get_noise_2dv(w * 1.3) * 18.0
 	var t := clampf(past / RIM_WIDTH, 0.0, 1.0)
-	return RIM_HEIGHT * t * t
+	# the pass the road east climbs through: the rim dips to a saddle along it
+	var saddle := 1.0 - smoothstep(6.0, 45.0, _polyline_distance(w, WorldMap.EAST_ROAD))
+	return RIM_HEIGHT * t * t * (1.0 - 0.6 * saddle)
 
 
 ## Eases every slope steeper than MAX_SLOPE back toward it, a little at a time from both sides, so

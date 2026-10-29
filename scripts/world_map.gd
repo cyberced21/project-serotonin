@@ -71,7 +71,12 @@ const ROADS: Array[Dictionary] = [
 		"from": Vector2(128, 62), "to": Vector2(150, 130)},
 	{"id": &"village_road", "title": "The village road", "kind": &"road", "village": true,
 		"from": Vector2(112, 10), "to": Vector2(74, -86)},
+	{"id": &"east_road", "title": "The road east", "kind": &"road", "village": true, "ctrl": EAST_ROAD},
 ]
+## The road east (plans/market.md): from the village up through a pass in the eastern rim hills to
+## the world's edge, the way traders come. The terrain generator cuts the pass along it.
+const EAST_ROAD: Array[Vector2] = [Vector2(126, 34), Vector2(150, 30), Vector2(176, 22), Vector2(202, 18),
+	Vector2(226, 16), Vector2(252, 14)]
 
 ## The dirt paths from the clearing, as the terrain generator's valleys follow them (ROADS has
 ## the lines they were laid on): over to the village square, and south to the lake shore.

@@ -29,9 +29,17 @@ const PROPS := {
 	# plain one's place, his name on the sign), then a porch, a bowl and a blanket in front
 	&"kennel": [[&"doghouse", Vector2(-1.0, 13.0), 3.06]],
 	&"kennel_paint": [[&"doghouse_painted", Vector2(-1.0, 13.0), 3.06]],
+	# the trader's decorations (plans/market.md): baskets on the square's three lamp posts, a
+	# weathervane, a painted cart by the market stall
+	&"deco_baskets": [[&"flower_basket", Vector2(-5.5, -6.5), 0.7], [&"flower_basket", Vector2(6.5, -5.5), -0.8],
+		[&"flower_basket", Vector2(2.0, 7.5), 3.0]],
+	&"deco_weathervane": [[&"weathervane", Vector2(-8.0, -6.0), 0.0]],
+	&"deco_cart": [[&"painted_cart", Vector2(-11.2, 3.6), 2.2]],
 	&"kennel_porch": [[&"doghouse_porch", Vector2(-0.96, 11.95), 3.06], [&"dog_bowl", Vector2(0.4, 11.5), 0.0],
 		[&"dog_blanket", Vector2(-1.9, 11.6), 2.6]],
 }
+## The market stall (plans/market.md): west of the square, its counter facing it.
+const MARKET := [Vector2(-11.0, -2.0), 1.57]
 ## Where your dog sleeps at night (Dog asks kennel_door()): in the doghouse's doorway, facing out.
 const KENNEL_DOOR := [Vector2(-0.98, 12.55), 3.06]
 ## Bunting: strings between the square's three lamp posts (their offsets, as the village has
@@ -95,6 +103,11 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	for p in _built.get(&"deco_weathervane", []):  # the rooster swings slowly with the wind
+		var vane := (p as Node).find_child("Vane", true, false) as Node3D
+		if vane:
+			var t := Time.get_ticks_msec() / 1000.0
+			vane.rotation.y = 0.8 + sin(t * 0.13) * 0.9 + sin(t * 0.47) * 0.25
 	_bench_life()
 	_well_life(delta)
 
@@ -232,7 +245,7 @@ func kennel_door() -> Variant:
 
 ## Puts up what's done and isn't standing yet; takes down what isn't done (the debug menu).
 func _sync() -> void:
-	for id in PROPS.keys() + [&"bunting", &"footbridge"]:
+	for id in PROPS.keys() + [&"bunting", &"footbridge", &"market"]:
 		var done := Projects.is_done(id)
 		if done and not _built.has(id):
 			var made: Array[Node3D] = _make(id)
@@ -351,6 +364,13 @@ func _make(id: StringName) -> Array[Node3D]:
 		bridge.to = _ground_at(footbridge_site[1])
 		add_child(bridge)
 		out.append(bridge)
+		return out
+	if id == &"market":  # the stall, with its keeper (MarketStall)
+		var stall := MarketStall.new()
+		stall.name = "MarketStall"
+		stall.transform = frame(MARKET[0], MARKET[1])
+		add_child(stall)
+		out.append(stall)
 		return out
 	if id == &"bunting":
 		for pair in BUNTING:

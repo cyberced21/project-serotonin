@@ -98,6 +98,13 @@ whatever you hit.
 
   ![The dog: sitting, petted, trotting, with the lantern at night, and at his doghouse](docs/images/dog/sheet.jpg)
 
+- **The road east, the market and the trader** ([plans/market.md](plans/market.md)). A road climbs from the village through a pass in the eastern hills, but a landslide has buried it partway up.
+  - Break its boulders with your pick (they never grow back), then pay for a timber retaining wall on the noticeboard: the mud goes and the road is open.
+  - **The market stall** (a noticeboard project, west of the square): barter, no money. Pick what you want, then what you'll give; swaps within a family (logs, ore, crops, fish) are cheaper.
+  - **The trader** drives her horse and cart over the pass every second morning once the road's open, parks by the stall (kinder rates all day) and leaves at dusk. She brings one special of each kind per visit, in turn: a collar or bandana for your dog, a decoration (hanging flower baskets, a turning weathervane, a painted cart), or a colour of lantern glass.
+
+  ![The landslide, the retaining wall, the market stall, the trader parked by it with the weathervane and flower baskets](docs/images/market/sheet.jpg)
+
 - **A village to build up.** East of the clearing, a dirt path leads along a shallow valley to the village and its four villagers: a woodcutter, a smith, a fisher and the mayor.
   - Talk to a villager (E) to see what their building's next tier costs, then pay with the logs, ore and fish you've gathered.
   - **Greta forges tools.** Her panel has a Forge tab: the next pick, axe and sickle, what each opens and what it costs. Each is made from what the tool before it can gather, and her smithy's tier caps the best she can make (the Stone Forge does copper, the Smithy iron, the Crystal Forge crystal).

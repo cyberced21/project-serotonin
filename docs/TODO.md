@@ -250,3 +250,12 @@ Generated worlds are gone (the procgen items above are history); Hearthvale is t
 - [ ] **Strays screenshot:** `dog_shots.gd`'s first view faces the pond, not the strays.
 - [ ] **Small dogs in tall grass:** the terrier half disappears in the grass field.
 - [ ] **The test is slow** (about 4 minutes, all real time): could run the clock faster or split it.
+
+## The road east and the market ([plans/market.md](../plans/market.md), branch `market`)
+
+- [x] The road east through a pass; the landslide (boulders, mud) and the retaining wall project; the market stall and barter; the trader and her specials (dog collars, decorations, lantern glass); her sounds (audio/trader/SOURCES.md). `tools/test_market.gd` (15 s).
+- [ ] **Play it:** bot-tested only. Barter prices, the wall's cost, how often she comes, the specials' prices are all guesses.
+- [x] **In-game screenshots:** docs/images/market/ (`tools/market_shots.gd`); they caught the slide lying along the road instead of across it.
+- [ ] **The trader's route** through the village ignores buildings and props (no collision on the cart): watch for it clipping the crates by the town hall.
+- [ ] **The retaining wall goes up without a builder** (it's far from the village): a villager could walk out to build it.
+- [ ] **The landslide's mud** is a prop on the road, not terrain: the road's surface paint runs under it.

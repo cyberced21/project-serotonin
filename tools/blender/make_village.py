@@ -24,6 +24,7 @@ import random
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from mathutils import Matrix  # noqa: E402
 from make_models import (OUT_DIR, axe_head_shade, blob, box, bmesh, bpy, export, felling_head, weather_stonework,  # noqa: E402
                          make_object, paint, prism, reset, Vector)
 
@@ -1433,6 +1434,219 @@ def dog_blanket():
     export(os.path.join("village", "props", "dog_blanket"))
 
 
+def landslide_mud():
+    """The landslide's fan of mud and stones over the road east (plans/market.md): a long low
+    mound, highest at its uphill side (Blender +Y), spilling down across the road. 12 m by 9 m."""
+    reset()
+    k = Kit("", 660)
+    rng = k.rng
+    for i in range(9):  # overlapping squashed lumps make the fan
+        x = rng.uniform(-4.5, 4.5)
+        y = rng.uniform(-2.5, 3.0)
+        r = rng.uniform(1.8, 2.8) * (1.0 + 0.2 * (y + 2.5) / 5.5)
+        bm = blob(r, rng, 0.2, (1.4, 1.0, 0.24), subdiv=2)
+        k.add("Mud", bm, ("terrain.dirt", "wood.3", "wood.2", "wood.4"), (x, y, r * 0.12 + (y + 2.5) * 0.08))
+    for i in range(14):  # stones and broken branches in the mud
+        x, y = rng.uniform(-5, 5), rng.uniform(-3, 3)
+        s = rng.uniform(0.18, 0.45)
+        k.add("Stone", blob(s, rng, 0.3, (1.0, 1.0, 0.7)), ("stone.4", "stone.3", "stone.2"), (x, y, 0.5 + (y + 3) * 0.12))
+    for i in range(4):
+        x, y = rng.uniform(-4, 4), rng.uniform(-2, 2.5)
+        k.log("Branch", rng.uniform(1.0, 2.2), 0.07, (x, y, 0.7 + (y + 3) * 0.1))
+    export(os.path.join("village", "props", "landslide_mud"))
+
+
+def retaining_wall():
+    """Timber cribbing that holds the slope back above the road east once the slide is cleared:
+    stacked logs along the uphill side (Blender +Y is the slope), cross-ties into it every few
+    metres, the face leaning back a little. 12 m long, 2 m high."""
+    reset()
+    k = Kit("", 661)
+    length, rows, r = 12.0, 6, 0.16
+    for i in range(rows):
+        z = r + i * r * 1.9
+        lean = i * 0.12  # each row set a little further back into the slope
+        k.log("Log", length + k.rng.uniform(-0.2, 0.2), r, (k.rng.uniform(-0.1, 0.1), lean, z))
+        if i % 2 == 1:
+            for x in [-5.0, -2.5, 0.0, 2.5, 5.0]:
+                k.log("Tie", 1.6, r * 0.85, (x, lean + 0.7, z + r * 0.9), axis="y")
+    for x in [-5.6, 5.6]:  # stakes at the ends
+        k.post("Stake", 0.09, 0.0, 2.3, x, -0.15, ("wood.3", "wood.2", "wood.1"))
+    export(os.path.join("village", "props", "retaining_wall"))
+
+
+def market_stall():
+    """The market stall in the square (plans/market.md): a plank counter on trestles, four posts
+    holding a striped awning, crates of goods on the counter and beside it. Faces Blender -Y (Godot
+    +Z, the customer's side); the stallkeeper stands behind it, at +Y. 3 m wide."""
+    reset()
+    k = Kit("", 670)
+    w, d = 3.0, 1.0
+    wood = ("wood.5", "wood.4", "wood.3")
+    k.box("Counter", (w, d * 0.7, 0.08), (0, -0.1, 0.95), ("wood.6", "wood.5", "wood.4"), jit=0.004)
+    k.box("Front", (w, 0.05, 0.85), (0, -0.45, 0.5), ("wood.4", "wood.4", "wood.3", "wood.5"), jit=0.004)
+    for sx in (-1, 1):
+        k.box("Trestle", (0.08, d * 0.6, 0.9), (sx * (w / 2 - 0.15), -0.1, 0.45), wood)
+    for sx in (-1, 1):
+        for sy, h in ((-1, 2.3), (1, 2.6)):
+            k.post("Post", 0.05, 0, h, sx * (w / 2 - 0.05), sy * (d / 2 + 0.1), ("wood.3", "wood.3", "wood.2"))
+    for i in range(8):  # the awning: alternating stripes, sloping down toward the customer
+        x = -w / 2 + (i + 0.5) * (w / 8)
+        c = "accent.1" if i % 2 == 0 else "neutral.6"
+        k.box("Awning", (w / 8 + 0.005, d + 0.6, 0.03), (x, -0.05, 2.47), (c, c, c), rot=(math.radians(-10), 0, 0))
+    for i in range(8):  # scalloped edge
+        x = -w / 2 + (i + 0.5) * (w / 8)
+        c = "accent.1" if i % 2 == 0 else "neutral.6"
+        k.box("Flap", (w / 8 - 0.02, 0.02, 0.16), (x, -0.86, 2.27), (c, c, c))
+    goods = [("Apples", "accent.0"), ("Bread", "wood.6"), ("Fish", "stone.5"), ("Ore", "ore.copper")]
+    for i, (name, col) in enumerate(goods):  # crates of goods on the counter
+        x = -1.05 + i * 0.7
+        k.box("Crate", (0.5, 0.4, 0.22), (x, -0.05, 1.1), ("wood.4", "wood.3", "wood.2"))
+        for j in range(5):
+            k.add(name, blob(0.07, k.rng, 0.2, (1, 1, 0.8)), (col, col, col),
+                  (x + k.rng.uniform(-0.16, 0.16), -0.05 + k.rng.uniform(-0.1, 0.1), 1.24))
+    k.barrel((1.9, 0.2, 0))
+    k.crate((-2.0, 0.1, 0), 0.55)
+    k.crate((-1.95, 0.15, 0.5), 0.4)
+    export(os.path.join("village", "props", "market_stall"))
+
+
+def stallkeeper_villager():
+    def hat(k, p):  # a headscarf
+        attach(k, p["Head"], "Scarf", box((0.4, 0.38, 0.14)), "accent.2", (0, 0.01, 1.4))
+        attach(k, p["Head"], "Knot", box((0.1, 0.08, 0.1)), "accent.2", (0, 0.2, 1.36))
+
+    def extra(k, p):  # a green apron
+        attach(k, p["Body"], "Apron", box((0.44, 0.04, 0.5)), "leaves.3", (0, -0.17, 0.72))
+
+    villager("stallkeeper", "accent.5", "accent.5", "wood.2", hat=hat, extra=extra)
+
+
+def trader_cart():
+    """The travelling trader's cart and horse (plans/market.md), in parts the game moves: Cart
+    (the bed, canopy and goods), WheelL / WheelR (pivots on the axle), Horse (body) with Head and
+    LegFL / LegFR / LegBL / LegBR (pivots at the shoulders and hips). Faces Blender -Y (the horse in
+    front); origin on the ground under the axle."""
+    reset()
+    k = Kit("", 680)
+    bpy.context.view_layer.update()
+    wood = ("wood.5", "wood.4", "wood.3")
+    cart = pivot_box(k, "Cart", (1.4, 2.2, 0.12), (0, 0, 0.75), (0, 0, 0), ("wood.5", "wood.4", "wood.3"))
+    bpy.context.view_layer.update()  # (children take the parent's world matrix: it must be current)
+    for sx in (-1, 1):
+        attach(k, cart, "Side", box((0.06, 2.2, 0.4)), wood, (sx * 0.67, 0, 0.98))
+    attach(k, cart, "Back", box((1.4, 0.06, 0.4)), wood, (0, 1.08, 0.98))
+    for sx in (-1, 1):  # hoops and a canvas canopy
+        for y in (-0.9, 0.0, 0.9):
+            attach(k, cart, "Hoop", box((0.05, 0.05, 1.0)), "wood.3", (sx * 0.66, y, 1.6))
+    attach(k, cart, "Canopy", box((1.5, 2.1, 0.06)), ("neutral.6", "wood.7", "wood.6"), (0, 0, 2.12))
+    for sx in (-1, 1):
+        attach(k, cart, "CanopySide", box((0.04, 2.1, 0.5)), ("wood.7", "neutral.6", "wood.6"), (sx * 0.73, 0, 1.85))
+    for i, col in enumerate(["accent.0", "accent.3", "leaves.4", "accent.6"]):  # bundles of goods
+        attach(k, cart, "Goods", box((0.38, 0.38, 0.3)), (col, col, col), (-0.4 + (i % 2) * 0.8, 0.5 - (i // 2) * 0.6, 0.98))
+    for sx in (-1, 1):  # shafts reaching forward to the horse
+        attach(k, cart, "Shaft", box((0.06, 1.8, 0.06)), "wood.3", (sx * 0.42, -1.9, 0.85))
+    for side, sx in (("L", -1), ("R", 1)):
+        rim = prism(12, 0.5, 0.5, 0.08)
+        bmesh.ops.rotate(rim, cent=Vector((0, 0, 0)), matrix=Matrix.Rotation(math.pi / 2, 3, "Y"), verts=rim.verts)
+        wh = k.add(f"Wheel{side}", rim, ("wood.3", "wood.3", "wood.2"), (sx * 0.78, 0.2, 0.5))
+        bpy.context.view_layer.update()
+        for a in range(4):  # spokes, so the turning shows
+            attach(k, wh, "Spoke", box((0.1, 0.06, 0.9)), "wood.6", (sx * 0.78, 0.2, 0.5), (math.pi / 4 * a, 0, 0))
+    horse = pivot_box(k, "Horse", (0.5, 1.4, 0.6), (0, -2.9, 1.25), (0, 0, 0), ("wood.2", "wood.2", "wood.1"))
+    bpy.context.view_layer.update()
+    head = pivot_box(k, "Head", (0.28, 0.65, 0.3), (0, -3.5, 1.5), (0, -0.25, 0.25), ("wood.2", "wood.2", "wood.1"), horse)
+    bpy.context.view_layer.update()
+    attach(k, head, "Mane", box((0.08, 0.5, 0.18)), "neutral.1", (0, -3.5, 1.82))
+    attach(k, head, "Muzzle", box((0.24, 0.2, 0.22)), "wood.1", (0, -3.98, 1.68))
+    for side, sx in (("L", -1), ("R", 1)):
+        attach(k, head, f"Ear{side}", box((0.06, 0.05, 0.14)), "wood.1", (sx * 0.1, -3.55, 2.02))
+    for fb, y in (("F", -3.45), ("B", -2.35)):
+        for side, sx in (("L", -1), ("R", 1)):
+            pivot_box(k, f"Leg{fb}{side}", (0.13, 0.15, 1.0), (sx * 0.17, y, 1.05), (0, 0, -0.5),
+                      lambda f: "neutral.1" if f.calc_center_median().z < -0.85 else "wood.2", horse)
+    attach(k, horse, "Tail", box((0.1, 0.1, 0.6)), "neutral.1", (0, -2.2, 1.2), (0.4, 0, 0))
+    export(os.path.join("village", "props", "trader_cart"))
+
+
+def trader_villager():
+    def hat(k, p):  # a wide straw hat
+        attach(k, p["Head"], "HatBrim", prism(12, 0.42, 0.42, 0.04), "wood.7", (0, 0, 1.44))
+        attach(k, p["Head"], "HatCrown", prism(12, 0.2, 0.18, 0.18), ("wood.7", "wood.6", "wood.6"), (0, 0, 1.54))
+        attach(k, p["Head"], "HatBand", prism(12, 0.205, 0.205, 0.05), "accent.6", (0, 0, 1.48))
+
+    def extra(k, p):  # a long patterned scarf and a satchel
+        attach(k, p["Body"], "Scarf", box((0.52, 0.34, 0.1)), "accent.7", (0, 0, 1.0))
+        attach(k, p["Body"], "Satchel", box((0.1, 0.3, 0.25)), "wood.3", (0.3, 0.02, 0.62))
+
+    villager("trader", "accent.6", "accent.6", "wood.3", hat=hat, extra=extra)
+
+
+def flower_basket():
+    """A basket of flowers hanging from a small iron bracket (plans/market.md, from the trader).
+    Origin on the ground at a lamp post's foot: the bracket sticks out from 2.1 m up."""
+    reset()
+    k = Kit("", 690)
+    iron = ("neutral.3", "neutral.2", "neutral.2")
+    k.box("Bracket", (0.04, 0.5, 0.04), (0, -0.3, 2.1), iron)
+    for sx in (-1, 1):
+        k.box("Chain", (0.015, 0.015, 0.3), (sx * 0.1, -0.5, 1.95), iron)
+    k.add("Basket", prism(8, 0.14, 0.2, 0.18), ("wood.5", "wood.4", "wood.3"), (0, -0.5, 1.75))
+    for i in range(10):
+        col = k.rng.choice(["accent.7", "accent.3", "accent.6", "neutral.7", "accent.1"])
+        a = k.rng.uniform(0, math.tau)
+        r = k.rng.uniform(0.0, 0.17)
+        k.add("Flower", blob(0.05, k.rng, 0.2), (col, col, col), (math.cos(a) * r, -0.5 + math.sin(a) * r, 1.88 + k.rng.uniform(0, 0.06)))
+    for i in range(6):
+        a = i * math.tau / 6
+        k.box("Trail", (0.04, 0.04, 0.22), (math.cos(a) * 0.19, -0.5 + math.sin(a) * 0.19, 1.62), ("leaves.4", "leaves.3", "leaves.3"))
+    export(os.path.join("village", "props", "flower_basket"))
+
+
+def weathervane():
+    """A copper rooster turning on top of a tall pole (plans/market.md): Vane (pivot on the pole's
+    top) turns with the wind in the game."""
+    reset()
+    k = Kit("", 691)
+    bpy.context.view_layer.update()
+    k.post("Pole", 0.06, 0, 4.2, 0, 0, ("wood.4", "wood.3", "wood.2"))
+    k.box("Base", (0.5, 0.5, 0.25), (0, 0, 0.12), ("stone.5", "stone.4", "stone.3"))
+    for i, (dx, dy) in enumerate([(1, 0), (0, 1)]):  # the compass arms
+        k.box("Arm", (0.7 if dx else 0.03, 0.7 if dy else 0.03, 0.03), (0, 0, 3.9), ("ore.copper_dark",) * 3)
+    vane = pivot_box(k, "Vane", (0.03, 0.03, 0.03), (0, 0, 4.2), (0, 0, 0), ("ore.copper",) * 3)
+    bpy.context.view_layer.update()
+    copper = ("ore.copper", "ore.copper", "ore.copper_dark")
+    attach(k, vane, "Body", blob(0.16, k.rng, 0.1, (1.4, 0.4, 0.9)), copper, (0, 0, 4.42))
+    attach(k, vane, "Neck", box((0.06, 0.08, 0.2)), copper, (0, -0.16, 4.58))
+    attach(k, vane, "Head", blob(0.07, k.rng, 0.1), copper, (0, -0.2, 4.72))
+    attach(k, vane, "Comb", box((0.02, 0.08, 0.06)), ("accent.0",) * 3, (0, -0.2, 4.8))
+    attach(k, vane, "Tail", box((0.02, 0.22, 0.26)), copper, (0, 0.2, 4.56), (math.radians(-30), 0, 0))
+    attach(k, vane, "Arrow", box((0.02, 0.8, 0.03)), copper, (0, 0, 4.25))
+    export(os.path.join("village", "props", "weathervane"))
+
+
+def painted_cart():
+    """A little handcart painted with flowers, full of pumpkins, by the market (plans/market.md)."""
+    reset()
+    k = Kit("", 692)
+    k.box("Bed", (0.8, 1.2, 0.08), (0, 0, 0.55), ("accent.4", "accent.4", "wood.2"))
+    for sx in (-1, 1):
+        k.box("Side", (0.05, 1.2, 0.3), (sx * 0.38, 0, 0.72), ("accent.4", "accent.4", "accent.4", "accent.5"))
+        for j in range(3):  # painted flowers
+            k.box("Paint", (0.01, 0.08, 0.08), (sx * 0.41, -0.35 + j * 0.35, 0.74), ("accent.3",) * 3)
+    k.box("Back", (0.8, 0.05, 0.3), (0, 0.58, 0.72), ("accent.4", "accent.4", "accent.4"))
+    for sx in (-1, 1):
+        rim = prism(10, 0.3, 0.3, 0.05)
+        bmesh.ops.rotate(rim, cent=Vector((0, 0, 0)), matrix=Matrix.Rotation(math.pi / 2, 3, "Y"), verts=rim.verts)
+        k.add("Wheel", rim, ("wood.3", "wood.3", "wood.2"), (sx * 0.45, 0.2, 0.3))
+        k.box("Handle", (0.04, 0.9, 0.04), (sx * 0.3, -1.0, 0.62), ("wood.4", "wood.3", "wood.2"), rot=(math.radians(8), 0, 0))
+    k.box("Leg", (0.6, 0.04, 0.04), (0, -0.5, 0.25), ("wood.3",) * 3)
+    for i in range(6):
+        k.add("Pumpkin", blob(0.13, k.rng, 0.1, (1.15, 1.15, 0.8)), ("accent.2", "accent.2", "ore.copper_dark"),
+              (k.rng.uniform(-0.22, 0.22), k.rng.uniform(-0.4, 0.4), 0.72 + k.rng.uniform(0, 0.1)))
+    export(os.path.join("village", "props", "painted_cart"))
+
+
 def dogs():
     os.makedirs(os.path.join(OUT_DIR, "dogs"), exist_ok=True)
     for breed, coats in DOG_COATS.items():
@@ -1446,6 +1660,8 @@ for build in (woodcutter, smithy, fisher, town_hall, baker_cottage, prospector_c
               woodcutter_villager, smith_villager, fisher_villager, mayor_villager,
               baker_villager, prospector_villager,
               bench, lamp_post, lamp_post_rustic, lantern, noticeboard, planter, well, fountain, barrel_prop, crate_prop, signpost, dogs,
-              doghouse, doghouse_painted, doghouse_porch, dog_bowl, dog_blanket):
+              doghouse, doghouse_painted, doghouse_porch, dog_bowl, dog_blanket,
+              landslide_mud, retaining_wall, market_stall, stallkeeper_villager,
+              trader_cart, trader_villager, flower_basket, weathervane, painted_cart):
     if not only or build.__name__ in only:
         build()

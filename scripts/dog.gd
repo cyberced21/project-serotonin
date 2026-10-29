@@ -166,6 +166,7 @@ func _ready() -> void:
 	_side = 1.0 if randf() < 0.5 else -1.0
 	_yaw = rotation.y
 	get_tree().node_added.connect(_on_node_added)
+	Companion.collar_changed.connect(_build_collar)
 	Ambience.howled.connect(_on_howl)
 
 
@@ -185,6 +186,7 @@ func _build_model() -> void:
 	if _parts.has(&"LegFL"):
 		_leg = maxf(to_local(_parts[&"LegFL"].global_position).y, 0.1)
 	_build_lantern(inst)
+	_build_collar()
 	var box := AABB()
 	var first := true
 	for g in inst.find_children("*", "GeometryInstance3D", true, false):
@@ -278,6 +280,28 @@ func _nap(delta: float) -> void:
 		global_transform = Transform3D(Basis(Vector3.UP, _yaw), global_position)
 
 
+## His collar (Companion.collar, from the trader): a band round his neck, in its colour.
+func _build_collar() -> void:
+	var old := find_child("Collar", true, false)
+	if old:
+		old.queue_free()
+	if stray or not Companion.COLLARS.has(Companion.collar) or not _parts.has(&"Head") or not _parts.has(&"Body"):
+		return
+	var neck := _rest[&"Head"].origin
+	var band := MeshInstance3D.new()
+	band.name = "Collar"
+	var box := BoxMesh.new()
+	var size := _leg * 0.75
+	box.size = Vector3(size * 1.15, size * 0.32, size)
+	band.mesh = box
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Companion.COLLARS[Companion.collar]
+	mat.roughness = 0.8
+	band.material_override = mat
+	_parts[&"Body"].add_child(band)
+	band.position = neck + Vector3(0, -size * 0.1, 0)
+
+
 ## The lantern, hung from the socket in his jaw, with a light like the one you carry.
 func _build_lantern(model: Node3D) -> void:
 	var socket := model.find_child("LanternSocket", true, false) as Node3D
@@ -324,6 +348,7 @@ func _lantern_tick(delta: float) -> void:
 	_lantern.visible = _lantern_level > 0.01
 	var flicker := 1.0 + 0.07 * sin(_t * 7.3) + 0.04 * sin(_t * 19.1 + 1.3)
 	_lantern_light.light_energy = Lantern.LIGHT_ENERGY * _lantern_level * flicker
+	_lantern_light.light_color = Lamps.glass_color()
 	for m in _lantern_glass:
 		m.set_instance_shader_parameter("glow", _lantern_level * (0.6 + 0.1 * flicker))
 	_lantern.rotation = Vector3(sin(_phase) * 0.15 * clampf(_speed / 3.0, 0.0, 1.0), 0.0, sin(_phase * 0.5) * 0.1)
