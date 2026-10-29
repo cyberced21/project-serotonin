@@ -19,6 +19,19 @@ const LIFT: Array[StringName] = [&"", &"mine_lift", &"mine_lift_3"]
 const SUPPORTS := &"mine_supports"
 const RAILS := &"mine_rails"
 const PUMP := &"mine_pump"
+## Chance a dig face that gives way has a trophy in it (a fossil higher up, a geode deeper),
+## more with the prospector's assay table (mine_finds).
+const FIND_CHANCE := 0.1
+## What Edda writes when she hears what you found: a chamber's first on each level, the stream,
+## the crystals, the obstacles, the lift reaching a level.
+const NEWS := {
+	"C": "You've opened a chamber on %s! The old miners only dug those where the rock was worth it. Have a good look round.",
+	"S": "You found the stream! Mind your boots. The water's cold and clean down there; the old miners drank it.",
+	"K": "Crystal caverns! I've only ever heard them talked about. If you can spare a little piece, I'd love to see it.",
+	"X": "There's a roof fall on the first level, isn't there? Don't dig at it. Timber first, then we'll clear it.",
+	"F": "Flooded? That'll be the old drainage gone. A pump will sort it, and you'll find the stream beyond.",
+	"lift": "The lift goes down to %s now. Take a lamp, and ring the bell twice if you get stuck.",
+}
 const FADE_OUT := 0.6
 const FADE_IN := 0.8
 
@@ -28,6 +41,10 @@ var here := -1
 var _open: Array[Dictionary] = []
 var _fresh: Array[Dictionary] = []
 var _seen: Dictionary[StringName, bool] = {}
+## What Edda hasn't written to you about yet (HomeNotes takes them, oldest first), and what she has.
+var _news: Array[String] = []
+var _told: Dictionary[String, bool] = {}
+var map: MineMap
 var _travelling := false
 ## The ride under way (tests and tools watch it), or null.
 var riding: MineRide
@@ -48,6 +65,9 @@ func _ready() -> void:
 		level.visible = false
 		add_child(level)
 		levels.append(level)
+	map = MineMap.new()
+	map.mine = self
+	add_child(map)
 	_reset_open()
 	SaveGame.register(&"mine", self)
 	Projects.changed.connect(_refresh_all)
@@ -62,6 +82,8 @@ func _reset_open() -> void:
 	for c in MineLayout.cells_of(0, "E"):
 		_open[0][c] = true
 	_seen.clear()
+	_news.clear()
+	_told.clear()
 
 
 func _process(_delta: float) -> void:
@@ -129,8 +151,13 @@ func give_way_layers() -> int:
 
 
 ## A dig face gave way: the cell behind it is open (fresh until dawn).
-func on_broke_through(n: int, c: Vector2i, _at: Vector3) -> void:
+func on_broke_through(n: int, c: Vector2i, at: Vector3) -> void:
 	open_cell(n, c)
+	if randf() < FIND_CHANCE * (1.0 + Village.stat(&"mine_finds")):
+		Trophies.found(&"geode" if randf() < 0.3 + 0.3 * n else &"fossil", at)
+	var k := MineLayout.at(n, c)
+	if k in ["C", "S", "K"]:
+		_tell("%s%d" % [k, n], NEWS[k] % MineLayout.LEVELS[n]["title"].to_lower() if k == "C" else NEWS[k])
 
 
 func open_cell(n: int, c: Vector2i) -> void:
@@ -150,6 +177,36 @@ func saw_obstacle(_n: int, kind: String) -> void:
 		_seen[need] = true
 		SaveGame.mark_dirty()
 		Projects.changed.emit.call_deferred()
+		_tell(kind, NEWS[kind])
+
+
+## Something for Edda to write to you about, once.
+func _tell(key: String, text: String) -> void:
+	if _told.has(key):
+		return
+	_told[key] = true
+	_news.append(text)
+	SaveGame.mark_dirty()
+
+
+## For HomeNotes: the oldest news Edda hasn't written about yet ("" for none).
+func take_news() -> String:
+	if _news.is_empty():
+		return ""
+	SaveGame.mark_dirty()
+	return _news.pop_front()
+
+
+## For the survey board (MineMap): the ores a hidden cell's rock runs to, from its level's depth.
+func ore_hint(n: int, _c: Vector2i) -> String:
+	var row: Array = OreWall.RICHNESS[mini(int(MineLayout.LEVELS[n]["richness"]) + 1, OreWall.RICHNESS.size() - 1)]
+	var names: Array[String] = []
+	for kind: int in row:
+		var item: StringName = OreWall.ORES[kind]["item"]
+		var nm := Items.display_name(item).to_lower().replace(" ore", "")
+		if nm not in names:
+			names.append(nm)
+	return ", ".join(names)
 
 
 ## For Projects: whether a "mine:" need is met (the shaft dug into, an obstacle seen).
@@ -172,6 +229,8 @@ func _shore_fresh() -> void:
 func _refresh_all() -> void:
 	for i in levels.size():
 		_refresh(i)
+		if i > 0 and lift_reaches(i):
+			_tell("lift%d" % i, NEWS["lift"] % MineLayout.LEVELS[i]["title"].to_lower())
 
 
 func _refresh(n: int) -> void:
@@ -405,7 +464,7 @@ func to_dict() -> Dictionary:
 	for i in _open.size():
 		open.append(_open[i].keys().map(func(c: Vector2i) -> Array: return [c.x, c.y]))
 		fresh.append(_fresh[i].keys().map(func(c: Vector2i) -> Array: return [c.x, c.y]))
-	return {"open": open, "fresh": fresh, "seen": _seen.keys()}
+	return {"open": open, "fresh": fresh, "seen": _seen.keys(), "news": _news.duplicate(), "told": _told.keys()}
 
 
 func from_dict(d: Dictionary) -> void:
@@ -420,5 +479,9 @@ func from_dict(d: Dictionary) -> void:
 			_fresh[i][Vector2i(int(c[0]), int(c[1]))] = true
 	for k in d.get("seen", []):
 		_seen[StringName(k)] = true
+	for t in d.get("news", []):
+		_news.append(String(t))
+	for k in d.get("told", []):
+		_told[String(k)] = true
 	if is_inside_tree() and not levels.is_empty():
 		_refresh_all()

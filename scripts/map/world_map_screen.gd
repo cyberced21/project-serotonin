@@ -78,6 +78,9 @@ func _can_open() -> bool:
 	var tree := get_tree()
 	if Worlds.current.is_empty() or tree.paused:
 		return false
+	var mine := tree.get_first_node_in_group("mine") as Mine
+	if mine and mine.here >= 0:  # (down the mine M shows the level instead: MineMap)
+		return false
 	for panel in tree.get_nodes_in_group("modal_panel"):  # a villager's panel, the noticeboard
 		if panel.is_open():
 			return false

@@ -18,6 +18,11 @@ const GIFTS := {
 ## A note from someone in the village: {"from": name, "text": ..., "gift": {item: count}}, or {}
 ## if there's nobody to write one yet.
 static func write(tree: SceneTree) -> Dictionary:
+	var mine := tree.get_first_node_in_group("mine")
+	if mine:  # Edda's heard about what you found down the mine (plans/mine.md): that first
+		var news: String = mine.call("take_news")
+		if news != "":
+			return {"from": "Edda", "text": news, "gift": {}}
 	var folk := []
 	for b in tree.get_nodes_in_group("building"):
 		var def: BuildingDef = b.get("def")

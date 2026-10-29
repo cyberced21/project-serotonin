@@ -51,6 +51,12 @@ func _run() -> void:
 	await _settle(10)
 	_check(player.global_position.y > -41.0 and player.global_position.y < -38.0, "standing on the floor (y %.2f)" % player.global_position.y)
 	_check(get_nodes_in_group("mine_lamp").size() > 0, "lamps are lit on the shored level")
+	var sheet: Node = mine.get("map")
+	_check(not get_first_node_in_group("world_map").call("_can_open"), "the world map stands aside down here")
+	sheet.call("open")
+	_check(sheet.call("is_open") and paused, "M shows the level's map (and pauses)")
+	sheet.call("close")
+	_check(not paused, "and puts it away")
 
 	# dig through a face: the cell behind opens, fresh
 	var face: Node = null
@@ -105,6 +111,9 @@ func _run() -> void:
 	_check(&"mine_supports" in listed, "the roof fall puts its supports on the board")
 	_check(&"mine_lift" in listed, "the shaft dug into puts the lift on the board")
 	_check(not (&"mine_pump" in listed), "the pump waits till you've seen the flood")
+	var note: Dictionary = load("res://scripts/home_notes.gd").write(self)
+	_check(note.get("from") == "Edda" and String(note.get("text", "")).length() > 20, "Edda writes about what you found: '%s'" % note.get("text", ""))
+	_check(String(load("res://scripts/trophies.gd").title({"kind": "fossil"})) == "Fossil", "a fossil is a trophy")
 
 	# saves
 	var saved: Dictionary = mine.call("to_dict")

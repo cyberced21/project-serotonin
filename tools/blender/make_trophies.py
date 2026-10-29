@@ -211,13 +211,35 @@ def stick(look):
     return f"stick_{look}"
 
 
+def fossil(look):
+    """An ammonite from the mine (plans/mine.md): its spiral standing proud of a slab of grey
+    stone, on a little stand. One look so far (not picked on a page)."""
+    k = mv.Kit("", 81)
+    k.box("Slab", (0.34, 0.06, 0.3), (0, 0.0, 0.17), ("stone.4", "stone.3", "stone.2"), rot=(0, 0.08, 0))
+    turns = 2.6
+    steps = 34
+    for i in range(steps):  # the coil: chambers growing outward along a widening spiral
+        t = i / (steps - 1)
+        a = t * turns * math.tau
+        r = 0.012 + 0.1 * t ** 1.4
+        size = 0.012 + 0.03 * t
+        k.add("Coil", prism(6, size, size * 0.85, 0.025), ("stone.6", "stone.5", "stone.4"),
+              (math.cos(a) * r, -0.045, 0.17 + math.sin(a) * r), (math.pi / 2, 0, -a))
+        if i % 3 == 0:  # the ribs across it
+            k.box("Rib", (0.008, 0.012, size * 2.1), (math.cos(a) * r, -0.058, 0.17 + math.sin(a) * r),
+                  "stone.7", rot=(0, a, 0))
+    k.add("Stand", prism(8, 0.12, 0.1, 0.04), ("wood.4", "wood.3", "wood.2"), (0, 0.0, 0.0))
+    label_plate(k, -0.05)
+    return f"fossil_{look}"
+
+
 ## The looks picked (2026-10-29, the Hearthvale Trophy Wall page): only these are built unless
 ## `both` is named, which builds the a and b looks of everything again.
-PICKED = {"log": "b", "fish": "a", "geode": "b", "sheaf": "b", "feather": "a", "shell": "b", "stick": "b"}
+PICKED = {"log": "b", "fish": "a", "geode": "b", "sheaf": "b", "feather": "a", "shell": "b", "stick": "b", "fossil": "a"}
 
 BUILDERS = {
     "log": lambda look: log_a() if look == "a" else log_b(),
-    "geode": geode, "sheaf": sheaf, "feather": feather, "shell": shell, "stick": stick,
+    "geode": geode, "sheaf": sheaf, "feather": feather, "shell": shell, "stick": stick, "fossil": fossil,
 }
 
 if __name__ == "__main__":
