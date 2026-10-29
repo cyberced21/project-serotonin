@@ -21,6 +21,8 @@ const POINTS := {
 	&"sm_lane": Vector2(105.4, 48.6), &"sm_front": Vector2(107.0, 52.8),
 	&"pr_lane": Vector2(102.4, 51.8), &"pr_front": Vector2(104.8, 57.4),
 	&"nb_front": Vector2(108.0, 35.4),
+	# Rosa's terrace, in front of it and round toward the lane to the bakery
+	&"terrace": Vector2(87.4, 34.4), &"tr_east": Vector2(91.0, 34.2),
 }
 const LINKS := [
 	[&"sq_n", &"sq_ne"], [&"sq_ne", &"sq_e"], [&"sq_e", &"sq_se"], [&"sq_se", &"sq_s"],
@@ -33,6 +35,7 @@ const LINKS := [
 	[&"sq_se", &"sm_lane"], [&"sm_lane", &"sm_front"],
 	[&"sq_s", &"pr_lane"], [&"pr_lane", &"pr_front"],
 	[&"sq_ne", &"nb_front"],
+	[&"terrace", &"tr_east"], [&"tr_east", &"bk_bend"], [&"tr_east", &"bk_lane"],
 ]
 ## Somewhere closer than this is walked to straight, when nothing's in the way.
 const DIRECT := 8.0

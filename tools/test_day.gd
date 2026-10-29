@@ -60,6 +60,16 @@ func _run() -> void:
 	var bram := _villager(&"woodcutter")
 	_check(not ollie.get("_inside") and not rosa.get("_inside"), "06:00: Ollie and Rosa are up")
 	_check(bram.get("_inside"), "...Bram isn't yet")
+	await _run_until(7.4)
+	var at_terrace := 0
+	for v in _villagers():
+		var seat: Node = v.get("_seat")
+		if seat and seat.get_meta(&"kind") == &"terrace" and v.call("_seated"):
+			at_terrace += 1
+	var rosa_at: Node = rosa.get("_target")
+	print("  07:24: %d at breakfast on the terrace; Rosa's at %s" % [at_terrace, rosa_at.name if rosa_at else "-"])
+	_check(at_terrace >= 3, "07:24: breakfast on the terrace")
+	_check(rosa_at != null and rosa_at.is_in_group("terrace_serve"), "...with Rosa serving")
 	await _run_until(12.0, 11.0)
 	_check(_all(func(v: Node) -> bool: return not v.get("_inside") and v.get("_seat") == null), "12:00: everyone's out, nobody sitting")
 	await _run_until(19.8, 18.0)

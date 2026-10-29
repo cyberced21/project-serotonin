@@ -1647,6 +1647,68 @@ def painted_cart():
     export(os.path.join("village", "props", "painted_cart"))
 
 
+def mark(name, loc, facing=(0.0, -1.0)):
+    """An empty the game reads as a Marker3D: at `loc`, its front (Godot +Z, Blender -Y) turned
+    toward `facing` (a Blender XY direction)."""
+    obj = bpy.data.objects.new(name, None)
+    bpy.context.collection.objects.link(obj)
+    obj.location = loc
+    obj.rotation_euler = (0, 0, math.atan2(facing[0], -facing[1]))
+    return obj
+
+
+def cafe_table(k, x, y):
+    """A little round table on a pedestal, with two mugs and a plate of bread."""
+    k.add("TableTop", prism(8, 0.42, 0.42, 0.05), ("wood.6", "wood.5", "wood.4"), (x, y, 0.75))
+    k.post("TableLeg", 0.05, 0.0, 0.73, x, y, ("wood.3", "wood.3", "wood.2"))
+    k.add("TableFoot", prism(6, 0.22, 0.22, 0.04), ("wood.3", "wood.3", "wood.2"), (x, y, 0.02))
+    for sx in (-1, 1):
+        k.add("Mug", prism(8, 0.05, 0.05, 0.11), ("neutral.6", "neutral.5", "neutral.5"), (x + sx * 0.2, y + 0.08 * sx, 0.83))
+    k.add("Plate", prism(10, 0.13, 0.13, 0.02), ("neutral.7", "neutral.6", "neutral.6"), (x, y - 0.1, 0.785))
+    loaves(k, x, y - 0.1, 0.82, 2, 0.12)
+
+
+def stool(k, x, y, seat_name, facing):
+    """A three-legged stool with a Seat empty (where a villager sits) facing `facing`."""
+    k.add("StoolSeat", prism(8, 0.19, 0.19, 0.05), ("wood.6", "wood.5", "wood.4"), (x, y, 0.44))
+    for i in range(3):
+        a = i * math.tau / 3 + 0.4
+        k.box("StoolLeg", (0.04, 0.04, 0.44), (x + math.cos(a) * 0.12, y + math.sin(a) * 0.12, 0.21), "wood.3")
+    mark(seat_name, (x, y, 0), facing)
+
+
+def terrace():
+    """Rosa's bakery terrace (plans/tavern.md): two little tables with two stools each under a
+    striped awning that leans against the bakery's wall (+Y). Faces Blender -Y (Godot +Z), toward
+    the path. Empties: Seat1..4 (on the stools, facing their table), Serve (where Rosa stands
+    between rounds) and Table1..2 (where she stops to serve each table)."""
+    reset()
+    k = Kit("", 701)
+    w = 5.2
+    for i in range(10):  # the awning: warm stripes sloping down toward the path
+        x = -w / 2 + (i + 0.5) * (w / 10)
+        c = "accent.7" if i % 2 == 0 else "neutral.7"
+        k.box("Awning", (w / 10 + 0.005, 2.5, 0.03), (x, 0.2, 2.38), (c, c, c), rot=(math.radians(9), 0, 0))
+    for i in range(10):  # scalloped edge
+        x = -w / 2 + (i + 0.5) * (w / 10)
+        c = "accent.7" if i % 2 == 0 else "neutral.7"
+        k.box("Flap", (w / 10 - 0.02, 0.02, 0.16), (x, -1.04, 2.1), (c, c, c))
+    for sx in (-1, 1):
+        k.post("Post", 0.05, 0, 2.2, sx * (w / 2 - 0.1), -1.0, ("wood.3", "wood.3", "wood.2"))
+        k.post("Post", 0.05, 0, 2.6, sx * (w / 2 - 0.1), 1.4, ("wood.3", "wood.3", "wood.2"))
+    k.box("Boards", (w, 2.5, 0.06), (0, 0.2, 0.03), ("wood.5", "wood.4", "wood.3", "wood.6"), jit=0.004)
+    for t, tx in enumerate((-1.25, 1.25)):
+        cafe_table(k, tx, 0.1)
+        stool(k, tx - 0.72, 0.1, f"Seat{t * 2 + 1}", (1, 0))
+        stool(k, tx + 0.72, 0.1, f"Seat{t * 2 + 2}", (-1, 0))
+        mark(f"Table{t + 1}", (tx, -0.75, 0), (0, 1))
+    mark("Serve", (0.0, 0.95, 0), (0, -1))
+    # a chalkboard of the day's bakes by the front post
+    k.box("Board", (0.5, 0.04, 0.7), (w / 2 - 0.45, -1.15, 0.6), ("wood.1", "wood.1", "wood.1"), rot=(math.radians(12), 0, 0))
+    k.box("BoardFrame", (0.56, 0.05, 0.05), (w / 2 - 0.45, -1.16, 0.97), "wood.5")
+    export(os.path.join("village", "props", "terrace"))
+
+
 def dogs():
     os.makedirs(os.path.join(OUT_DIR, "dogs"), exist_ok=True)
     for breed, coats in DOG_COATS.items():
@@ -1662,6 +1724,6 @@ for build in (woodcutter, smithy, fisher, town_hall, baker_cottage, prospector_c
               bench, lamp_post, lamp_post_rustic, lantern, noticeboard, planter, well, fountain, barrel_prop, crate_prop, signpost, dogs,
               doghouse, doghouse_painted, doghouse_porch, dog_bowl, dog_blanket,
               landslide_mud, retaining_wall, market_stall, stallkeeper_villager,
-              trader_cart, trader_villager, flower_basket, weathervane, painted_cart):
+              trader_cart, trader_villager, flower_basket, weathervane, painted_cart, terrace):
     if not only or build.__name__ in only:
         build()

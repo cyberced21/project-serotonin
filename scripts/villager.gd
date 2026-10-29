@@ -414,6 +414,19 @@ func _come_out(door: Marker3D) -> void:
 ## Where to go next for this part of the day.
 func _next_spot() -> Marker3D:
 	match _part:
+		VillagerDay.Part.BREAKFAST:
+			if VillagerDay.has_quirk(building.def.id, "serves"):  # Rosa, doing the rounds
+				var rounds: Array[Marker3D] = []
+				for m in get_tree().get_nodes_in_group("terrace_serve"):
+					if m != _target and (m as Marker3D).is_visible_in_tree():
+						rounds.append(m)
+				if not rounds.is_empty():
+					return rounds.pick_random()
+			else:
+				if _seat == null:
+					_claim_seat(&"terrace")
+				if _seat:
+					return _seat
 		VillagerDay.Part.DUSK:
 			if not VillagerDay.has_quirk(building.def.id, "strolls"):
 				if _seat == null:

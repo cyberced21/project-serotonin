@@ -22,6 +22,7 @@ const SPOTS := [
 	[&"bunting", "Bunting", "Strings of little flags between the square's lamps.", {&"birch": 10, &"barley": 8}, 2],
 	[&"fountain", "A fountain", "A little fountain in the middle of the square, splashing away.", {&"iron": 30, &"gold": 10, &"oak": 20}, 3],
 	[&"footbridge", "Mend the footbridge", "Planks across the water, so you stop wading.", {&"oak": 30, &"iron": 10}, 3],
+	[&"terrace", "A terrace at the bakery", "Tables and stools under a striped awning outside Rosa's bakery: breakfast in the morning sun.", {&"wood": 15, &"birch": 8, &"wheat": 6}, 2],
 	[&"kennel", "A kennel for your dog", "A little wooden house by the square: somewhere of his own to sleep at night.", {&"wood": 15}, 1, &"dog"],
 	[&"kennel_paint", "Paint it and hang his name", "Cream walls, a red roof and a sign over the door with his name on it.", {&"birch": 10, &"wheat": 6, &"barley": 4}, 1, &"kennel"],
 	[&"market", "A market stall", "A stall in the square with a striped awning, where you can swap what you have plenty of for what you need.", {&"wood": 20, &"birch": 10, &"wheat": 8}, 1],

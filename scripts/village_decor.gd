@@ -35,6 +35,8 @@ const PROPS := {
 		[&"flower_basket", Vector2(2.0, 7.5), 3.0]],
 	&"deco_weathervane": [[&"weathervane", Vector2(-8.0, -6.0), 0.0]],
 	&"deco_cart": [[&"painted_cart", Vector2(-11.2, 3.6), 2.2]],
+	# Rosa's terrace (plans/tavern.md), against her bakery's south wall, facing the path
+	&"terrace": [[&"terrace", Vector2(-13.2, -7.4), 0.0]],
 	&"kennel_porch": [[&"doghouse_porch", Vector2(-0.96, 11.95), 3.06], [&"dog_bowl", Vector2(0.4, 11.5), 0.0],
 		[&"dog_blanket", Vector2(-1.9, 11.6), 2.6]],
 }
@@ -352,8 +354,11 @@ func _make(id: StringName) -> Array[Node3D]:
 		prop.snap_to_ground = true
 		prop.name = "%s_%d" % [p[0], out.size()]
 		prop.transform = frame(p[1], p[2])
+		prop.collision_from_mesh = p[0] == &"terrace"  # (you can walk in among the tables)
 		add_child(prop)
 		out.append(prop)
+		if p[0] == &"terrace":
+			_terrace_marks(prop)
 		if p[0] == &"doghouse_painted":  # his name on the sign
 			_name_sign.call_deferred(prop)
 		if p[0] == &"bench":  # a seat for the villagers' dusk (Villager._claim_seat)
@@ -374,6 +379,24 @@ func _make(id: StringName) -> Array[Node3D]:
 			prop.add_child(bed)
 			bed.position = Vector3.UP * 1.0
 	return out
+
+
+## The terrace's empties as markers villagers walk to: Seat1..4 (seats for breakfast,
+## Villager._claim_seat) and Serve, Table1..2 (Rosa's rounds: the "terrace_serve" group).
+func _terrace_marks(prop: Node3D) -> void:
+	for n in prop.find_children("*", "Node3D", true, false):
+		var nm := String(n.name)
+		if n is MeshInstance3D or not (nm.begins_with("Seat") or nm.begins_with("Table") or nm == "Serve"):
+			continue
+		var m := Marker3D.new()
+		m.name = nm
+		prop.add_child(m)
+		m.global_transform = (n as Node3D).global_transform
+		if nm.begins_with("Seat"):
+			m.add_to_group("seat")
+			m.set_meta(&"kind", &"terrace")
+		else:
+			m.add_to_group("terrace_serve")
 
 
 ## Writes your dog's name on the painted doghouse's sign (the model's SignText marker).
