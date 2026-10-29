@@ -134,7 +134,7 @@ Today's spending is building tiers (`Village` autoload, `BuildingDef` tiers). Th
 
 **Chunk 7 grilled 2026-10-29 → [market.md](market.md)**: a road east blocked by a landslide you dig
 out and shore up, a barter market stall, a trader cart every second day (dog collars, decorations,
-lantern glass). Barter only; the trader passes through.
+lantern glass). Barter only; the trader passes through. Built 2026-10-29 on branch `market`.
 
 ## 6. The mine (instead of the quarry)
 

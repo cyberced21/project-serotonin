@@ -3,6 +3,19 @@
 Chunk 7 of [cozy.md](cozy.md) (its section 5: the landslide, the market, traders). Grilled
 2026-10-29. Branch `market` off `main`.
 
+Status (2026-10-29): **all phases built** except in-game screenshots; sounds picked by ear
+(https://claude.ai/artifact/Lef91XrWa7ei3RiqwZxpwn). Bot-tested only (`tools/test_market.gd`).
+Open items: docs/TODO.md, "The road east and the market".
+
+### Built, and what changed on the way
+
+- The retaining wall pops in without a builder (the slide is far from the village).
+- The landslide places itself on the road east's laid line, its uphill side found from the ground.
+- The trader's whereabouts come from the time of day alone; she counts mornings herself (DayNight
+  has no day count). The specials are bought from her row in the market panel.
+- Specials: Companion.collar (a band on the dog's neck), Lamps.glass (the lantern's light colour),
+  decorations as Projects ids built by VillageDecor (not on the noticeboard).
+
 ## Where we start (2026-10-29)
 
 - Hearthvale is one curated valley (plans/world.md); no road leads out of it. Roads are laid by the
