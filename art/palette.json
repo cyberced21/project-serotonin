@@ -6,70 +6,70 @@
     0.0625,
     0.0625
    ],
-   "color": "#2f2f33"
+   "color": "#362e26"
   },
   "stone.1": {
    "uv": [
     0.1875,
     0.0625
    ],
-   "color": "#45454b"
+   "color": "#4a453e"
   },
   "stone.2": {
    "uv": [
     0.3125,
     0.0625
    ],
-   "color": "#5a5a61"
+   "color": "#615951"
   },
   "stone.3": {
    "uv": [
     0.4375,
     0.0625
    ],
-   "color": "#727279"
+   "color": "#7d7163"
   },
   "stone.4": {
    "uv": [
     0.5625,
     0.0625
    ],
-   "color": "#8a8a90"
+   "color": "#95897a"
   },
   "stone.5": {
    "uv": [
     0.6875,
     0.0625
    ],
-   "color": "#a3a3a8"
+   "color": "#aea293"
   },
   "stone.6": {
    "uv": [
     0.8125,
     0.0625
    ],
-   "color": "#bdbdc1"
+   "color": "#c9bbab"
   },
   "stone.7": {
    "uv": [
     0.9375,
     0.0625
    ],
-   "color": "#d6d6d9"
+   "color": "#e3d4c2"
   },
   "ore.copper_dark": {
    "uv": [
     0.0625,
     0.1875
    ],
-   "color": "#b0643a"
+   "color": "#b26336"
   },
   "ore.copper": {
    "uv": [
     0.1875,
     0.1875
    ],
-   "color": "#d98a52"
+   "color": "#e78252"
   },
   "ore.iron_dark": {
    "uv": [
@@ -90,7 +90,7 @@
     0.5625,
     0.1875
    ],
-   "color": "#e2b53b"
+   "color": "#edb04a"
   },
   "ore.coal": {
    "uv": [
@@ -118,133 +118,133 @@
     0.0625,
     0.3125
    ],
-   "color": "#3b2618"
+   "color": "#442207"
   },
   "wood.1": {
    "uv": [
     0.1875,
     0.3125
    ],
-   "color": "#4f3322"
+   "color": "#543113"
   },
   "wood.2": {
    "uv": [
     0.3125,
     0.3125
    ],
-   "color": "#5f4029"
+   "color": "#663d1c"
   },
   "wood.3": {
    "uv": [
     0.4375,
     0.3125
    ],
-   "color": "#734f33"
+   "color": "#794d29"
   },
   "wood.4": {
    "uv": [
     0.5625,
     0.3125
    ],
-   "color": "#8a6142"
+   "color": "#8e5f39"
   },
   "wood.5": {
    "uv": [
     0.6875,
     0.3125
    ],
-   "color": "#a37a55"
+   "color": "#ab774d"
   },
   "wood.6": {
    "uv": [
     0.8125,
     0.3125
    ],
-   "color": "#c2996c"
+   "color": "#cc9568"
   },
   "wood.7": {
    "uv": [
     0.9375,
     0.3125
    ],
-   "color": "#dcbc8f"
+   "color": "#f0b583"
   },
   "leaves.0": {
    "uv": [
     0.0625,
     0.4375
    ],
-   "color": "#1f3d22"
+   "color": "#283c12"
   },
   "leaves.1": {
    "uv": [
     0.1875,
     0.4375
    ],
-   "color": "#2a5230"
+   "color": "#38511b"
   },
   "leaves.2": {
    "uv": [
     0.3125,
     0.4375
    ],
-   "color": "#356a3b"
+   "color": "#486826"
   },
   "leaves.3": {
    "uv": [
     0.4375,
     0.4375
    ],
-   "color": "#3f7f45"
+   "color": "#577c30"
   },
   "leaves.4": {
    "uv": [
     0.5625,
     0.4375
    ],
-   "color": "#4f9452"
+   "color": "#69913d"
   },
   "leaves.5": {
    "uv": [
     0.6875,
     0.4375
    ],
-   "color": "#64a860"
+   "color": "#7ca54b"
   },
   "leaves.6": {
    "uv": [
     0.8125,
     0.4375
    ],
-   "color": "#7fbd72"
+   "color": "#94ba5b"
   },
   "leaves.7": {
    "uv": [
     0.9375,
     0.4375
    ],
-   "color": "#a3d18c"
+   "color": "#b0cf70"
   },
   "terrain.grass": {
    "uv": [
     0.0625,
     0.5625
    ],
-   "color": "#5c8c4d"
+   "color": "#678b36"
   },
   "terrain.grass_light": {
    "uv": [
     0.1875,
     0.5625
    ],
-   "color": "#6b9a50"
+   "color": "#74993c"
   },
   "terrain.dirt": {
    "uv": [
     0.3125,
     0.5625
    ],
-   "color": "#85674c"
+   "color": "#866749"
   },
   "terrain.rock": {
    "uv": [
@@ -258,7 +258,7 @@
     0.5625,
     0.5625
    ],
-   "color": "#cdbd8c"
+   "color": "#d1bc85"
   },
   "terrain.snow": {
    "uv": [
@@ -272,182 +272,182 @@
     0.8125,
     0.5625
    ],
-   "color": "#4a6b3c"
+   "color": "#516b20"
   },
   "terrain.path": {
    "uv": [
     0.9375,
     0.5625
    ],
-   "color": "#a18566"
+   "color": "#9f8666"
   },
   "metal.0": {
    "uv": [
     0.0625,
     0.6875
    ],
-   "color": "#2b3138"
+   "color": "#372e33"
   },
   "metal.1": {
    "uv": [
     0.1875,
     0.6875
    ],
-   "color": "#3c4550"
+   "color": "#48424a"
   },
   "metal.2": {
    "uv": [
     0.3125,
     0.6875
    ],
-   "color": "#525d6b"
+   "color": "#605a62"
   },
   "metal.3": {
    "uv": [
     0.4375,
     0.6875
    ],
-   "color": "#6c7886"
+   "color": "#7b757d"
   },
   "metal.4": {
    "uv": [
     0.5625,
     0.6875
    ],
-   "color": "#8994a2"
+   "color": "#979199"
   },
   "metal.5": {
    "uv": [
     0.6875,
     0.6875
    ],
-   "color": "#a9b2bd"
+   "color": "#b6afb7"
   },
   "metal.6": {
    "uv": [
     0.8125,
     0.6875
    ],
-   "color": "#c9d0d8"
+   "color": "#d3cdd6"
   },
   "metal.7": {
    "uv": [
     0.9375,
     0.6875
    ],
-   "color": "#e8ecf0"
+   "color": "#eceaf5"
   },
   "accent.0": {
    "uv": [
     0.0625,
     0.8125
    ],
-   "color": "#9e2b25"
+   "color": "#94371d"
   },
   "accent.1": {
    "uv": [
     0.1875,
     0.8125
    ],
-   "color": "#d0453a"
+   "color": "#bf5634"
   },
   "accent.2": {
    "uv": [
     0.3125,
     0.8125
    ],
-   "color": "#e88a2c"
+   "color": "#e38c48"
   },
   "accent.3": {
    "uv": [
     0.4375,
     0.8125
    ],
-   "color": "#f2cf4a"
+   "color": "#ffc660"
   },
   "accent.4": {
    "uv": [
     0.5625,
     0.8125
    ],
-   "color": "#3d7fc4"
+   "color": "#647cae"
   },
   "accent.5": {
    "uv": [
     0.6875,
     0.8125
    ],
-   "color": "#64b5e8"
+   "color": "#99afc5"
   },
   "accent.6": {
    "uv": [
     0.8125,
     0.8125
    ],
-   "color": "#8d4fb0"
+   "color": "#66678b"
   },
   "accent.7": {
    "uv": [
     0.9375,
     0.8125
    ],
-   "color": "#e66fa1"
+   "color": "#da7998"
   },
   "neutral.0": {
    "uv": [
     0.0625,
     0.9375
    ],
-   "color": "#0d0d0f"
+   "color": "#100c0c"
   },
   "neutral.1": {
    "uv": [
     0.1875,
     0.9375
    ],
-   "color": "#232326"
+   "color": "#272221"
   },
   "neutral.2": {
    "uv": [
     0.3125,
     0.9375
    ],
-   "color": "#3a3a3e"
+   "color": "#3f393a"
   },
   "neutral.3": {
    "uv": [
     0.4375,
     0.9375
    ],
-   "color": "#5e5e63"
+   "color": "#645c62"
   },
   "neutral.4": {
    "uv": [
     0.5625,
     0.9375
    ],
-   "color": "#8c8c91"
+   "color": "#928a8d"
   },
   "neutral.5": {
    "uv": [
     0.6875,
     0.9375
    ],
-   "color": "#b8b8bc"
+   "color": "#c2b6ad"
   },
   "neutral.6": {
    "uv": [
     0.8125,
     0.9375
    ],
-   "color": "#e0e0e3"
+   "color": "#e7dfdc"
   },
   "neutral.7": {
    "uv": [
     0.9375,
     0.9375
    ],
-   "color": "#ffffff"
+   "color": "#fffff7"
   }
  }
 }
