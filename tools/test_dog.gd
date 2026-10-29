@@ -45,6 +45,7 @@ func _run() -> void:
 	await _teleport()
 	await _pet()
 	await _water()
+	await _carry_lantern()
 	await _night_strays()
 	_finish()
 
@@ -124,6 +125,39 @@ func _water() -> void:
 		await physics_frame
 		_shook = _shook or dog.get("state") == 5
 	_check(_shook, "out of the water, he shakes himself dry")
+
+
+## Night with the lantern lit: he carries it and walks ahead; holding it up takes it back.
+func _carry_lantern() -> void:
+	var lamps := root.get_node("Lamps")
+	var day_night := root.get_node("DayNight")
+	day_night.set("frozen", true)
+	day_night.set("time", 0.95)
+	lamps.set("has_lantern", true)
+	lamps.call("set_lantern_lit", true)
+	var held: Node3D = player.get("lantern")
+	_place(Vector3(0, 0, 40), Vector2(0, -1))
+	await _seconds(3.0)
+	var in_mouth := dog.find_child("Lantern", true, false) as Node3D
+	_check(dog.call("carrying") and in_mouth and in_mouth.visible, "at night he carries the lantern in his mouth")
+	_check(not held.visible, "...and the one on your belt is gone")
+	await _walk_quiet(Vector2(0, 40), Vector2(0, 10), 3.0)
+	var ahead := dog.global_position - player.global_position
+	_check(ahead.z < 0.0, "walking, he goes ahead of you to light the way (%.1f m ahead)" % -ahead.z)
+	# (headless can't capture the mouse, so the raise key never reaches the lantern: hold it up by hand)
+	held.set_process(false)
+	held.set("_raise", 1.0)
+	await _seconds(0.3)
+	_check(not dog.call("carrying"), "holding it up: it's back in your hand")
+	held.set("_raise", 0.0)
+	held.set_process(true)
+	await _seconds(2.5)
+	_check(dog.call("carrying") and not held.visible, "let go, and he takes it again")
+	lamps.call("set_lantern_lit", false)
+	day_night.set("time", 0.4)
+	await _frames(5)
+	_check(not dog.call("carrying"), "put out, he doesn't carry it")
+	day_night.set("frozen", false)
 
 
 func _walk_quiet(a: Vector2, b: Vector2, speed: float) -> void:

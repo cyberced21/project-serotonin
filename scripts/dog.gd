@@ -11,6 +11,9 @@ extends AnimatableBody3D
 ## where it's deeper than DEEP, and shakes himself dry with a spray when he comes out. While you
 ## fish he sits beside you and watches the float. (Fish only flee from noise, FishPond.disturb,
 ## and he makes none.)
+## At night, once you have the lantern and it's lit, he carries it in his mouth and walks a little
+## ahead of you to light the way (your belt lantern hides: Lantern asks carrying()). Hold the raise
+## key and it's back in your hand; let go and he takes it again after a moment.
 ## Before you have a dog, three strays nap by the clearing's pond (DogHome): a stray lifts his head
 ## and wags when you come close; pet one (E) and DogHome asks his name; the others wander off.
 ## Physics layer 9 only: you walk through him (the player's mask leaves it out), only the
@@ -50,6 +53,12 @@ const SHAKE_TIME := 1.3
 ## In water (deeper than WET_DEPTH) this long, and he shakes when he's out.
 const WET_DEPTH := 0.12
 const WET_AFTER := 0.6
+## Carrying the lantern: this far ahead of you while you walk; after you've held it up yourself,
+## he takes it back this long after you let go; and he only carries it this close to you.
+const LIGHT_AHEAD := 3.2
+const RETAKE := 1.2
+const CARRY_RANGE := 20.0
+const LANTERN_MODEL := preload("res://models/lantern.glb")
 
 var breed: StringName = &"shepherd"
 var coat: StringName = &"saddle"
@@ -84,6 +93,11 @@ var _shake_left := 0.0
 var _wet := 0.0      # how long he's been in the water
 var _paddling := false
 var _watch := Vector3.INF  # the float, while you fish
+var _lantern: Node3D       # in his mouth (built with the model)
+var _lantern_light: OmniLight3D
+var _lantern_glass: Array[MeshInstance3D] = []
+var _lantern_level := 0.0
+var _retake := 0.0
 var _phase := 0.0    # gait
 var _t := 0.0
 var _last_state := State.FOLLOW
@@ -123,6 +137,7 @@ func _build_model() -> void:
 			_rest[part] = n.transform
 	if _parts.has(&"LegFL"):
 		_leg = maxf(to_local(_parts[&"LegFL"].global_position).y, 0.1)
+	_build_lantern(inst)
 	var box := AABB()
 	var first := true
 	for g in inst.find_children("*", "GeometryInstance3D", true, false):
@@ -177,6 +192,8 @@ func adopt_as(c: StringName, n: String) -> void:
 		_rest.clear()
 		_targets.clear()
 		_surfaces.clear()
+		_lantern_glass.clear()
+		_lantern = null
 		_build_model()
 	state = State.SIT
 
@@ -211,6 +228,57 @@ func _nap(delta: float) -> void:
 		global_transform = Transform3D(Basis(Vector3.UP, _yaw), global_position)
 
 
+## The lantern, hung from the socket in his jaw, with a light like the one you carry.
+func _build_lantern(model: Node3D) -> void:
+	var socket := model.find_child("LanternSocket", true, false) as Node3D
+	if socket == null:
+		return
+	_lantern = LANTERN_MODEL.instantiate() as Node3D
+	_lantern.name = "Lantern"
+	socket.add_child(_lantern)
+	for m in _lantern.find_children("*", "MeshInstance3D", true, false):
+		var mesh := m as MeshInstance3D
+		mesh.material_override = PaletteMaterial.for_mesh(mesh.mesh)
+		if String(mesh.name).begins_with("Lamp"):
+			_lantern_glass.append(mesh)
+	_lantern_light = OmniLight3D.new()
+	_lantern_light.light_color = Lantern.LIGHT_COLOR
+	_lantern_light.omni_range = Lantern.LIGHT_RANGE
+	_lantern_light.omni_attenuation = 1.2
+	_lantern_light.shadow_enabled = true
+	_lantern_light.shadow_bias = 0.08
+	_lantern_light.position = Lantern.FLAME + Vector3(0, 0.05, 0)
+	_lantern.add_child(_lantern_light)
+	_lantern.visible = false
+
+
+## Whether he has the lantern now: yours, lit, you not holding it up (or only just let go), him
+## near you and not a stray.
+func carrying() -> bool:
+	return not stray and _leaving == Vector3.INF and Lamps.has_lantern and Lamps.lantern_lit 			and _retake <= 0.0 and _player != null and _flat(_player.global_position - global_position) < CARRY_RANGE
+
+
+func _lantern_tick(delta: float) -> void:
+	var raising := false
+	if _player:
+		var held: Node = _player.get("lantern")
+		raising = held != null and float(held.get("_raise")) > 0.05
+	if raising:
+		_retake = RETAKE
+	else:
+		_retake = maxf(_retake - delta, 0.0)
+	if _lantern == null:
+		return
+	var on := carrying()
+	_lantern_level = move_toward(_lantern_level, 1.0 if on else 0.0, delta * (3.0 if on else 6.0))
+	_lantern.visible = _lantern_level > 0.01
+	var flicker := 1.0 + 0.07 * sin(_t * 7.3) + 0.04 * sin(_t * 19.1 + 1.3)
+	_lantern_light.light_energy = Lantern.LIGHT_ENERGY * _lantern_level * flicker
+	for m in _lantern_glass:
+		m.set_instance_shader_parameter("glow", _lantern_level * (0.6 + 0.1 * flicker))
+	_lantern.rotation = Vector3(sin(_phase) * 0.15 * clampf(_speed / 3.0, 0.0, 1.0), 0.0, sin(_phase * 0.5) * 0.1)
+
+
 func set_highlighted(on: bool) -> void:
 	for s in _surfaces:
 		s.set_instance_shader_parameter("highlight", 1.0 if on else 0.0)
@@ -229,6 +297,7 @@ func _physics_process(delta: float) -> void:
 	elif _player and not scripted:
 		_think(delta)
 		_move(delta)
+	_lantern_tick(delta)
 	_animate(delta)
 	_apply_poses(delta)
 
@@ -266,7 +335,9 @@ func _think(delta: float) -> void:
 	if moving:
 		var dir := vel.normalized()
 		_sniff_at = Vector3.INF
-		if _on_road(pp) and _flat(global_position - pp) < FOLLOW_DIST * 3.0:
+		if carrying() and _flat(global_position - pp) < FOLLOW_DIST * 3.0:  # lighting the way
+			_goal = pp + dir * LIGHT_AHEAD + Vector3(-dir.z, 0.0, dir.x) * _side * 0.4
+		elif _on_road(pp) and _flat(global_position - pp) < FOLLOW_DIST * 3.0:
 			_goal = pp + dir * AHEAD + Vector3(-dir.z, 0.0, dir.x) * _side * 0.6
 		else:
 			_goal = pp - dir * FOLLOW_DIST + Vector3(-dir.z, 0.0, dir.x) * _side * SIDE
