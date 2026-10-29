@@ -29,7 +29,7 @@ const QUARRY_LEVEL_DROP := 5.0
 ## Radii of the walls between levels, outermost first: rim | 1 | 2 | 3 | 4 | floor.
 const QUARRY_WALLS: Array[float] = [55.0, 45.0, 35.0, 25.0, 15.0]
 const QUARRY_APRON := 10.0  # flat ground round the rim
-const QUARRY_SLOPE := 40.0  # then the mountainside falls away over this
+const QUARRY_SLOPE := 75.0  # then the mountainside falls away over about this
 ## Direction (radians, from the centre) of the haul road's top, where the spur from the ring arrives.
 const QUARRY_ROAD_ANGLE := -0.4636
 
@@ -45,7 +45,8 @@ const GLADES: Array[Vector2] = [Vector2(-18, -92), Vector2(28, -112), Vector2(-8
 const GLADE_RADIUS := 9.0
 
 ## The roads and paths (plans/world.md): the terrain generator lays each one along the land (a
-## least-cost route over the slopes between `from` and `to`, unless `ctrl` fixes its line), and
+## least-cost route over the slopes from `from` through any `via` points to `to`, unless `ctrl`
+## fixes its line), and
 ## writes the lines it laid to scripts/world_roads.gd; roads() reads them back. `join` starts a
 ## road on another one, at its point nearest `from`. `lamps`: a stretch the Lamps can light, its
 ## points running out from the village end. Order matters: a road can only join one laid before it.
@@ -61,7 +62,7 @@ const ROADS: Array[Dictionary] = [
 		"ctrl": [Vector2(1, -26), Vector2(-2, -52), Vector2(3, -67), Vector2(-12, -80), Vector2(-18, -92),
 			Vector2(5, -104), Vector2(28, -112), Vector2(14, -128), Vector2(-8, -138), Vector2(-2, -150)]},
 	{"id": &"quarry_road", "title": "The road to the quarry", "kind": &"road",
-		"from": Vector2(-30, -8), "to": QUARRY_RIM_POINT},
+		"from": Vector2(-30, -8), "via": [Vector2(-92, 28)], "to": QUARRY_RIM_POINT},
 	{"id": &"lake_road", "title": "The road round the lake", "kind": &"road",
 		"from": Vector2(-42, 84), "to": Vector2(-80, -22), "join_end": &"quarry_road"},
 	{"id": &"peak_path", "title": "The path up Frostpeak", "kind": &"path",

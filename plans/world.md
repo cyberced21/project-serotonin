@@ -81,9 +81,10 @@ black sheer):
    blending across borders (Terrain3D overlay + blend); scatter and spawners thin out gradually.
    Goldmeadow's grid becomes fields that follow its swells. Done: no straight or circular border
    visible from the ground.
-6. **The quarry terraces.** A bowl of wide, gently sloped terraces with ramps between them on
-   the mountain shoulder; ore nodes and ore walls re-placed on the terraces. Done: walk to the
-   bottom without a mantle; every ore reachable.
+6. **The quarry: faces kept, the rest softened** (decided 2026-10-28: its sheer walls are the
+   ore walls' faces, so they stay). The mantle stairs go (the haul road already walks you to the
+   floor), the mountainside falls away over a longer, wandering slope, the apron's edge frays.
+   Done: walk to the bottom without a mantle; the ore walls stand on every ring.
 7. **Pictures and checks.** Before/after slope maps and screenshots (`graphics_tour.gd`), the
    minimap/world map, the README and TODO; all headless tests pass.
 

@@ -106,17 +106,13 @@ const LANE_HALF_WIDTH := 1.0
 const RAMP_WIDTH := 4.5
 const RAMP_LENGTH := 38.0
 const RAMP_GAP := 4.0
-## Mantle stairs: two places on every wall where it drops in three steps instead of one, each
-## step LEDGE deep (5 m / 3 = 1.67 m high, within a mantle's reach), STAIR_WIDTH wide.
-const LEDGE := 1.6
-const STAIR_WIDTH := 6.0
 
 ## Roads and paths: steepest grade, how far their shoulders reach and over how much they ease
 ## into the ground. No sheer cuttings: a road that cuts into a hill gets sloped sides.
 const ROAD_GRADE := 0.10
 const PATH_GRADE := 0.14
-const ROAD_SHOULDER := 16.0
-const PATH_SHOULDER := 8.0
+const ROAD_SHOULDER := 26.0
+const PATH_SHOULDER := 16.0
 ## Where the road router (a least-cost path over a ROUTE_CELL m grid) prefers to go: cost grows
 ## with the slope squared; water, the quarry pit and hand-placed things are all but walls.
 const ROUTE_CELL := 4
@@ -180,6 +176,7 @@ func _run() -> void:
 
 	var baked := _baked_points()
 	var laid := _lay_roads(h, ids, baked)
+	_relax(h)  # again: smooths any seam where two roads' banks (or a hairpin's legs) meet
 
 	var img := Image.create_empty(SIZE, SIZE, false, Image.FORMAT_RF)
 	for y in SIZE:
@@ -313,7 +310,8 @@ func _relax(h: PackedFloat32Array) -> void:
 		for x in SIZE:
 			var w := _world(x, y)
 			var crags := 1.0 - smoothstep(PEAK_RADIUS * 0.15, PEAK_RADIUS * 0.6, w.distance_to(PEAK_CENTER))
-			limit[y * SIZE + x] = 0.0 if _in_pit(w) else MAX_SLOPE + crags * PEAK_SLOPE
+			var keep := _in_pit(w) or (not _creek_mask.is_empty() and _creek_mask[y * SIZE + x] == 1)
+			limit[y * SIZE + x] = 0.0 if keep else MAX_SLOPE + crags * PEAK_SLOPE
 	for pass_i in RELAX_PASSES:
 		var changed := 0
 		for y in SIZE - 1:
@@ -354,8 +352,10 @@ func _biomes(w: Vector2, h: float) -> float:
 	var d := w.distance_to(q)
 	if d < outer:
 		h = _quarry_height(w, d)
-	elif d < outer + WorldMap.QUARRY_SLOPE:
-		h = lerpf(WorldMap.QUARRY_RIM_HEIGHT, h, smoothstep(outer, outer + WorldMap.QUARRY_SLOPE, d))
+	elif d < outer + WorldMap.QUARRY_SLOPE + 30.0:
+		# the mountainside falls away from the apron over a wandering distance, not a ring
+		var dw := d + (_biome_warp(w).distance_to(q) - d) * smoothstep(outer, outer + 15.0, d)
+		h = lerpf(WorldMap.QUARRY_RIM_HEIGHT, h, smoothstep(outer, outer + WorldMap.QUARRY_SLOPE, dw))
 	var fd := _biome_warp(w).distance_to(WorldMap.FIELD_CENTER)
 	var inside := 1.0 - smoothstep(WorldMap.FIELD_RADIUS - 10.0, WorldMap.FIELD_RADIUS + FIELD_RAMP, fd)
 	inside *= smoothstep(VILLAGE_RADIUS + FLAT_GROW, VILLAGE_RADIUS + FLAT_GROW + 25.0, w.distance_to(VILLAGE_CENTER))  # (not on the village's flat)
@@ -375,7 +375,7 @@ func _quarry_height(w: Vector2, d: float) -> float:
 	return WorldMap.QUARRY_RIM_HEIGHT - WorldMap.QUARRY_LEVEL_DROP * (walls.size() - above)
 
 
-## 1 on the outer side of wall i, 0 on the inner side; in between on its ramp and stairs.
+## 1 on the outer side of wall i, 0 on the inner side; in between on its ramp.
 func _wall_step(i: int, dn: float, theta: float) -> float:
 	var b: float = WorldMap.QUARRY_WALLS[i]
 	var s := _sharp(dn - b)
@@ -383,13 +383,10 @@ func _wall_step(i: int, dn: float, theta: float) -> float:
 		var t := _ramp_t(i, theta)
 		if t >= 0.0:
 			return t
-	for a in _stair_angles(i):
-		if absf(angle_difference(theta, a)) * b < STAIR_WIDTH * 0.5:
-			return (_sharp(dn - b + 2.0 * LEDGE) + _sharp(dn - b + LEDGE) + s) / 3.0
 	return s
 
 
-## A drop over a single vertex, so walls come out sheer enough to wall-run.
+## A drop over a single vertex: the pit's walls are cut stone faces (the ore walls stand on them).
 func _sharp(x: float) -> float:
 	return smoothstep(-0.2, 0.2, x)
 
@@ -398,12 +395,6 @@ func _sharp(x: float) -> float:
 func _ramp_t(i: int, theta: float) -> float:
 	var a := fposmod(theta - (_ramp_top[i] - _ramp_span[i]), TAU)
 	return a / _ramp_span[i] if a <= _ramp_span[i] else -1.0
-
-
-## The two mantle stairs on wall i, spread round the part of the wall the ramp doesn't use.
-func _stair_angles(i: int) -> Array[float]:
-	var rest := TAU - _ramp_span[i]
-	return [_ramp_top[i] + rest / 3.0, _ramp_top[i] + rest * 2.0 / 3.0]
 
 
 func _on_haul_road(w: Vector2) -> bool:
@@ -627,7 +618,7 @@ func _apply_route(r: Dictionary, h: PackedFloat32Array, ids: PackedByteArray, te
 		var diff := h[i] - road
 		if diff < 0.0 and not fill:
 			continue
-		var width := (1.0 if diff > wall_cut else gentle) if diff > 0.0 else clampf(-diff * 1.5, 2.0, shoulder)
+		var width := (1.0 if diff > wall_cut else clampf(diff * 2.4, gentle, shoulder)) if diff > 0.0 				else clampf(-diff * 1.5, 2.0, shoulder)
 		h[i] = lerpf(road, h[i], smoothstep(0.0, width, e))
 
 
@@ -712,7 +703,11 @@ func _lay_roads(h: PackedFloat32Array, ids: PackedByteArray, baked: Array[Vector
 				from = _nearest_on(laid[spec["join"]], from)
 			if spec.has("join_end"):
 				to = _nearest_on(laid[spec["join_end"]], to)
-			ctrl = _route(grid, from, to)
+			var stops: Array = [from] + spec.get("via", []) + [to]
+			ctrl = []
+			for k in stops.size() - 1:
+				var leg := _route(grid, stops[k], stops[k + 1])
+				ctrl.append_array(leg if k == 0 else leg.slice(1))
 		var road: bool = spec["kind"] == &"road"
 		var half := WorldMap.ROAD_HALF_WIDTH if road else WorldMap.PATH_HALF_WIDTH
 		var before := h.duplicate()
