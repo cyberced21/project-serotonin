@@ -7,8 +7,8 @@ extends Node3D
 ## A project paid for just now is built where you can see it (P7): the nearest villager walks
 ## over and hammers, and each piece pops up out of the ground with a wooden tok, then a cheer.
 ## (Loading a world, or ticking one in the debug menu, just puts it there.)
-## A little life (P4): at dusk villagers come and sit on the new benches until it's dark, and by
-## day someone now and then draws water at the well.
+## A little life (P4): each new bench has a seat villagers take at dusk (their day, VillagerDay),
+## and by day someone now and then draws water at the well.
 
 signal built(id: StringName, props: Array[Node3D])
 ## A bucket going down the well (for its sound): where.
@@ -65,9 +65,8 @@ const BUILDER_STAND := 1.6
 const BUILDER_PATIENCE := 20.0
 const BLOW := 0.55
 const POP := 0.3
-## Dusk on the benches: from this long before sunset (a fraction of the day) until dark, a
-## villager within LIFE_RANGE comes to sit on each. The well: someone every WELL_GAP seconds
-## [min, max] by day, cranking for WELL_TIME.
+## The well: a villager within LIFE_RANGE every WELL_GAP seconds [min, max] by day (not from this
+## long before sunset, a fraction of the day), cranking for WELL_TIME.
 const BENCH_FROM := 0.07
 const LIFE_RANGE := 45.0
 const WELL_GAP := Vector2(40.0, 90.0)
@@ -82,7 +81,6 @@ var footbridge_site: Array = []
 var board: Noticeboard
 var _built: Dictionary[StringName, Array] = {}  # project -> its props
 var _paid: Dictionary[StringName, bool] = {}  # paid for this session: build it in view
-var _sitters: Dictionary = {}  # bench prop -> [villager, its Bench marker]
 var _well_in := 0.0
 var _drawing: Villager  # the one at the well now
 
@@ -108,36 +106,7 @@ func _process(delta: float) -> void:
 		if vane:
 			var t := Time.get_ticks_msec() / 1000.0
 			vane.rotation.y = 0.8 + sin(t * 0.13) * 0.9 + sin(t * 0.47) * 0.25
-	_bench_life()
 	_well_life(delta)
-
-
-## At dusk, someone comes to sit on each new bench; they stay till dark, then go home.
-func _bench_life() -> void:
-	var t := DayNight.time
-	var dusk := t > DayNight.SUNSET - BENCH_FROM and not DayNight.is_night()
-	for bench in _sitters.keys():
-		var v: Villager = _sitters[bench][0]
-		var mark: Marker3D = _sitters[bench][1]
-		var left: bool = not is_instance_valid(v) or not is_instance_valid(bench) or v.get("_target") != mark
-		if not dusk or left:
-			_release(v, mark)
-			_sitters.erase(bench)
-		elif v.state == Villager.State.IDLE:
-			v.set("_timer", 5.0)  # sat down: stay
-	if not dusk:
-		return
-	for bench in props_of(&"benches"):
-		if _sitters.has(bench) or not (bench as Node3D).visible:
-			continue
-		var v := _free_villager((bench as Node3D).global_position)
-		if v == null:
-			return
-		var mark := Marker3D.new()
-		mark.name = "Bench"  # (the name a villager sits down at: one per bench, so on the bench)
-		(bench as Node3D).add_child(mark)
-		_sitters[bench] = [v, mark]
-		v.call("_walk_to", mark)
 
 
 ## Now and then by day, someone walks to the well and draws a bucket.
@@ -205,15 +174,12 @@ func _release(v: Villager, mark: Marker3D, idle := true) -> void:
 
 ## A villager out of doors near `at` with nothing else on (not building, sitting, drawing water).
 func _free_villager(at: Vector3) -> Villager:
-	var busy: Array = [_drawing]
-	for s in _sitters.values():
-		busy.append(s[0])
 	var best: Villager = null
 	var best_d := LIFE_RANGE
 	for b in get_tree().get_nodes_in_group("building"):
 		for c in b.get_children():
 			var v := c as Villager
-			if v == null or v in busy or v.scripted or v.get("_inside") or v.get("_away") or v.get("_watching"):
+			if v == null or v == _drawing or v.busy() or v.scripted or v.get("_inside") or v.get("_away") or v.get("_watching"):
 				continue
 			var d := v.global_position.distance_to(at)
 			if d < best_d:
@@ -390,6 +356,12 @@ func _make(id: StringName) -> Array[Node3D]:
 		out.append(prop)
 		if p[0] == &"doghouse_painted":  # his name on the sign
 			_name_sign.call_deferred(prop)
+		if p[0] == &"bench":  # a seat for the villagers' dusk (Villager._claim_seat)
+			var seat := Marker3D.new()
+			seat.name = "Bench"
+			seat.add_to_group("seat")
+			seat.set_meta(&"kind", &"bench")
+			prop.add_child(seat)
 		if id == &"fountain":  # its splash, close by
 			var bed := LoopBed.new()
 			bed.stream = FOUNTAIN_SOUND

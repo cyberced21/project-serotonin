@@ -24,6 +24,10 @@ const CLANK_SFX := preload("res://audio/stone_hit.tres")
 const NPC_LAYER := 1 << 6
 ## A point on the way somewhere counts as passed this close (so they round corners smoothly).
 const WAYPOINT_REACH := 0.6
+## Seats further than this are too far to bother with.
+const SEAT_RANGE := 45.0
+## A stroll round the square goes through these of the network's points, in order.
+const SQUARE_ROUND: Array[StringName] = [&"sq_n", &"sq_ne", &"sq_e", &"sq_se", &"sq_s", &"sq_sw", &"sq_nw"]
 
 @export var model: PackedScene
 @export var work := Work.CHOP
@@ -67,6 +71,13 @@ var _terrain: Terrain3D
 var _paths: VillagePaths
 ## The points still to pass on the way to _target (the last one is the target itself).
 var _route := PackedVector3Array()
+## Their day (VillagerDay): what they're at now, the seat they've taken (a bench at dusk...),
+## and whether they're giving the tavern a miss tonight.
+var _part := VillagerDay.Part.WORK
+var _seat: Marker3D
+var _skip_tonight := false
+var _stroll: Marker3D  # where they're strolling to next
+var _stroll_i := 0
 ## A cutscene is posing this villager (script_pose): no walking, working or talking of its own.
 var scripted := false
 
@@ -204,6 +215,7 @@ func _apply_poses(delta: float) -> void:
 
 func _start() -> void:
 	_terrain = get_tree().get_first_node_in_group("terrain") as Terrain3D
+	_part = _day_part()
 	var m := building.work_spot()
 	if m:
 		global_position = _ground(m.global_position)
@@ -211,6 +223,15 @@ func _start() -> void:
 		_target = m
 	reset_physics_interpolation()
 	_enter(State.WORK if m and m.name.begins_with("Work") else State.IDLE)
+	var door := building.spot("Door")
+	if _part == VillagerDay.Part.SLEEP and door:  # a world loaded at night: already in bed
+		global_position = _ground(door.global_position)
+		_target = door
+		_inside = true
+		_model.visible = false
+		_shape.set_deferred("disabled", true)
+	elif _part != VillagerDay.Part.WORK:
+		_walk_to.call_deferred(_next_spot())
 
 
 func _enter(s: State) -> void:
@@ -250,6 +271,9 @@ func _tick(delta: float) -> void:
 		return
 	if scripted:
 		return
+	var part := _day_part()
+	if part != _part:
+		_change_part(part, talking)
 
 	if state == State.CHEER:
 		_cheer_time += delta
@@ -270,36 +294,64 @@ func _tick(delta: float) -> void:
 			if not talking:
 				_enter(State.IDLE)
 		State.IDLE:
-			if _seated():
+			var seated := _seated()
+			if seated:
 				_turn_to_yaw(_marker_yaw(_target), delta, 6.0)
 				_animate_sit()
 			else:
 				_animate_idle()
 			if _watching:
 				_turn_toward(building.global_position, delta, 5.0)
-			else:
+			elif not (seated and _target == _seat):  # on a seat they've claimed: stay put
 				_timer -= delta
 				if _timer <= 0.0:
-					_walk_to(_pick_spot())
+					_walk_to(_next_spot())
 		State.WORK:
 			if _target:
 				_turn_to_yaw(_marker_yaw(_target), delta, 4.0)
 			_animate_work()
 			_timer -= delta
 			if _timer <= 0.0:
-				_walk_to(_pick_spot())
+				_walk_to(_next_spot())
 		State.WALK:
 			_walk(delta)
 	_look(delta)
 
 
+## What their day has them doing now (VillagerDay).
+func _day_part() -> VillagerDay.Part:
+	if _skip_tonight and DayNight.time > VillagerDay.time_at(12.0) and DayNight.time < VillagerDay.time_at(VillagerDay.DUSK_FROM):
+		_skip_tonight = false  # a new day
+	return VillagerDay.part(building.def.id, VillagerDay.hours(DayNight.time), _tavern_open(), _skip_tonight)
+
+
+## There's a tavern to go to tonight (plans/tavern.md P5).
+func _tavern_open() -> bool:
+	var tavern := get_tree().get_first_node_in_group("tavern")
+	return tavern != null and tavern.call("is_open")
+
+
+## Off to the next part of the day: give up a seat, decide about tonight, and head off (going to
+## bed is the night routine's).
+func _change_part(part: VillagerDay.Part, talking: bool) -> void:
+	var was := _part
+	_part = part
+	if part == VillagerDay.Part.DUSK and was != VillagerDay.Part.DUSK:
+		_skip_tonight = randf() < float(VillagerDay.person(building.def.id).get("skips_tavern", 0.0))
+		_part = _day_part()
+	_leave_seat()
+	if _part == VillagerDay.Part.SLEEP or _inside or _watching or talking or state == State.CHEER:
+		return
+	_walk_to(_next_spot())
+
+
 ## After dark: walk to the door and go inside. Step back out when the player comes to the door
-## (and stay out while they're near), and for good at daybreak. True when it handled the frame.
+## (and stay out while they're near), and for good in the morning. True when it handled the frame.
 func _night_routine(delta: float, talking: bool) -> bool:
 	var door := building.spot("Door")
 	if door == null:
 		return false
-	var night := DayNight.is_night()
+	var night := _part == VillagerDay.Part.SLEEP
 	var at_door := _player != null and _player.global_position.distance_to(door.global_position) < door_call_radius
 	if _inside:
 		if night and not at_door:
@@ -350,14 +402,90 @@ func _come_out(door: Marker3D) -> void:
 	create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).tween_property(_model, "scale", Vector3.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
-## Next place to go: mostly back to work, sometimes the door or the bench. Never where it is.
+## Where to go next for this part of the day.
+func _next_spot() -> Marker3D:
+	match _part:
+		VillagerDay.Part.DUSK:
+			if not VillagerDay.has_quirk(building.def.id, "strolls"):
+				if _seat == null:
+					_claim_seat(&"bench")
+				if _seat:
+					return _seat
+				if building.spot("Square") and _target != building.spot("Square"):
+					return building.spot("Square")
+			return _stroll_spot()
+	return _pick_spot()
+
+
+## Next place to go by day: mostly back to work, sometimes the door or the bench. Never where it
+## is, and not a seat someone else has.
 func _pick_spot() -> Marker3D:
 	var options: Array[Marker3D] = []
 	var work_m := building.work_spot()
 	for m in [work_m, work_m, work_m, building.spot("Door"), building.spot("Bench"), building.spot("Square")]:
-		if m and m != _target:
+		if m and m != _target and not _taken(m):
 			options.append(m)
 	return options.pick_random() if not options.is_empty() else _target
+
+
+## Busy with their own day (sitting somewhere, out for the evening, asleep): not free to be sent
+## to the well and the like.
+func busy() -> bool:
+	return _seat != null or _part != VillagerDay.Part.WORK
+
+
+## A round of the square: the next of the network's square points, facing the middle.
+func _stroll_spot() -> Marker3D:
+	if _paths == null:
+		_paths = get_tree().get_first_node_in_group("village_paths") as VillagePaths
+	if _paths == null:
+		return _pick_spot()
+	if _stroll == null:
+		_stroll = Marker3D.new()
+		_stroll.name = "Stroll"
+		_stroll.top_level = true
+		add_child(_stroll)
+		_stroll_i = randi() % SQUARE_ROUND.size()
+	_stroll_i = (_stroll_i + 1) % SQUARE_ROUND.size()
+	var p := _paths.named(SQUARE_ROUND[_stroll_i])
+	var middle := VillageDecor.HEARTHVALE_CENTER
+	_stroll.global_transform = Transform3D(Basis(Vector3.UP, atan2(middle.x - p.x, middle.y - p.z)), p)
+	return _stroll
+
+
+## Takes the nearest free seat of `kind` (markers in the "seat" group: benches, terrace, tavern),
+## preferring their own building's.
+func _claim_seat(kind: StringName) -> Marker3D:
+	var best: Marker3D = null
+	var best_d := SEAT_RANGE
+	for s in get_tree().get_nodes_in_group("seat"):
+		var m := s as Marker3D
+		if m == null or m.get_meta(&"kind", &"") != kind or not m.is_visible_in_tree() or _taken(m):
+			continue
+		var d := m.global_position.distance_to(global_position)
+		if m.has_meta(&"home") and m.get_meta(&"home") == building:
+			d -= 20.0
+		if d < best_d:
+			best_d = d
+			best = m
+	if best:
+		best.set_meta(&"taken_by", self)
+		_seat = best
+	return best
+
+
+func _leave_seat() -> void:
+	if _seat and is_instance_valid(_seat) and _seat.has_meta(&"taken_by") and _seat.get_meta(&"taken_by") == self:
+		_seat.remove_meta(&"taken_by")
+	_seat = null
+
+
+## Someone else is sitting there (or on their way).
+func _taken(m: Marker3D) -> bool:
+	if not m.has_meta(&"taken_by"):
+		return false
+	var by: Variant = m.get_meta(&"taken_by")
+	return is_instance_valid(by) and by != self
 
 
 func _walk_to(m: Marker3D) -> void:
@@ -480,9 +608,9 @@ func _animate_idle() -> void:
 	_pose(&"LegR", 0.0)
 
 
-## Idling on the Bench spot: sitting on the seat.
+## Idling on a seat (a Bench spot, or one from the "seat" group): sitting on it.
 func _seated() -> bool:
-	return _target != null and _target.name == "Bench" 		and Vector2(global_position.x - _target.global_position.x, global_position.z - _target.global_position.z).length() < 0.2
+	return _target != null and (_target.name == "Bench" or _target.is_in_group("seat"))		and Vector2(global_position.x - _target.global_position.x, global_position.z - _target.global_position.z).length() < 0.2
 
 
 func _animate_sit() -> void:
