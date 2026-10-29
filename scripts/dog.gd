@@ -7,12 +7,16 @@ extends AnimatableBody3D
 ## trots ahead of you along roads and paths, sits when you stop, lies down while you gather, and
 ## now and then sniffs about while you stand still. Fall more than CATCH_UP behind and he pops in
 ## trotting up behind you, out of view.
+## Pet him (E): a happy wiggle. He paddles after you into wading-depth water, waits on the bank
+## where it's deeper than DEEP, and shakes himself dry with a spray when he comes out. While you
+## fish he sits beside you and watches the float. (Fish only flee from noise, FishPond.disturb,
+## and he makes none.)
 ## Before you have a dog, three strays nap by the clearing's pond (DogHome): a stray lifts his head
 ## and wags when you come close; pet one (E) and DogHome asks his name; the others wander off.
 ## Physics layer 9 only: you walk through him (the player's mask leaves it out), only the
 ## crosshair finds him (player.gd PET_MASK).
 
-enum State { FOLLOW, SIT, LIE, SNIFF }
+enum State { FOLLOW, SIT, LIE, SNIFF, PET, SHAKE }
 
 const PET_LAYER := 1 << 8
 ## Where he keeps to: this far behind you and this far off to the side.
@@ -38,6 +42,14 @@ const LIE_AFTER := 4.0
 ## Standing still a while, now and then he wanders off a few metres to sniff.
 const SNIFF_AFTER := 14.0
 const SNIFF_RANGE := 3.5
+## He won't go into water deeper than this (m); he floats, paddling, once it's past his legs.
+const DEEP := 0.9
+## How long a pat makes him wiggle, and how long a shake takes.
+const PET_TIME := 1.8
+const SHAKE_TIME := 1.3
+## In water (deeper than WET_DEPTH) this long, and he shakes when he's out.
+const WET_DEPTH := 0.12
+const WET_AFTER := 0.6
 
 var breed: StringName = &"shepherd"
 var coat: StringName = &"saddle"
@@ -67,6 +79,11 @@ var _side := 1.0     # which side of you he keeps to
 var _sniff_at := Vector3.INF
 var _sniff_left := 0.0
 var _next_sniff := SNIFF_AFTER
+var _pet_left := 0.0
+var _shake_left := 0.0
+var _wet := 0.0      # how long he's been in the water
+var _paddling := false
+var _watch := Vector3.INF  # the float, while you fish
 var _phase := 0.0    # gait
 var _t := 0.0
 var _last_state := State.FOLLOW
@@ -134,6 +151,14 @@ func interact() -> void:
 		var home := get_tree().get_first_node_in_group("dog_home") as DogHome
 		if home:
 			home.meet(self)
+	else:
+		pet()
+
+
+## A pat: he wiggles, wags hard and looks up at you.
+func pet() -> void:
+	_pet_left = PET_TIME
+	_speed = 0.0
 
 
 ## The stray you picked becomes your dog: his coat (the model swapped if it changed) and name.
@@ -211,10 +236,24 @@ func _physics_process(delta: float) -> void:
 # --- following ----------------------------------------------------------------------------------
 
 func _think(delta: float) -> void:
+	_water(delta)
+	if _pet_left > 0.0 or _shake_left > 0.0:
+		_pet_left = maxf(_pet_left - delta, 0.0)
+		_shake_left = maxf(_shake_left - delta, 0.0)
+		state = State.PET if _pet_left > 0.0 else State.SHAKE
+		_goal = global_position
+		var face := _player.global_position - global_position
+		if state == State.PET and face.length() > 0.3:
+			_turn_to(atan2(face.x, face.z), delta, 6.0)
+		if _pet_left > 0.0 or _shake_left > 0.0:
+			return
 	var pp := _player.global_position
 	var vel := Vector3(_player.velocity.x, 0.0, _player.velocity.z)
 	var moving := vel.length() > 0.6
 	_still = 0.0 if moving else _still + delta
+	var rod: Node = _player.get("rodfishing")
+	var lure: Node3D = rod.get("lure") if rod else null
+	_watch = lure.global_position if rod and rod.call("is_busy") and is_instance_valid(lure) else Vector3.INF
 	if _player.call("is_busy"):
 		_busy = 2.5
 	_busy = maxf(_busy - delta, 0.0)
@@ -241,6 +280,7 @@ func _think(delta: float) -> void:
 	# never in front of you while you're at work
 	if _busy > 0.0 and _in_front(_goal, pp, look):
 		_goal = pp + right * _side * GATHER_SIDE
+	_goal = _shore(global_position, _goal)
 	var to_goal := _flat(_goal - global_position)
 	if to_goal > ARRIVE * (1.0 if state == State.FOLLOW else 2.2):
 		state = State.FOLLOW
@@ -250,6 +290,45 @@ func _think(delta: float) -> void:
 		state = State.LIE
 	elif _still > SIT_AFTER or _busy > 0.0:
 		state = State.SIT
+
+
+## Wet: counts time in the water; out of it after a while, he shakes himself dry.
+func _water(delta: float) -> void:
+	var d := WaterBody.depth_at(get_tree(), global_position)
+	if d > WET_DEPTH:
+		_wet += delta
+	elif _wet > WET_AFTER and _shake_left <= 0.0 and _pet_left <= 0.0:
+		_wet = 0.0
+		_shake_left = SHAKE_TIME
+		_speed = 0.0
+		_spray()
+	elif d <= 0.0:
+		_wet = 0.0
+
+
+func _spray() -> void:
+	var at := global_position + Vector3.UP * (_leg + 0.15)
+	RodFishing.splash(get_parent(), at, 0.45)
+	get_tree().create_timer(0.35).timeout.connect(func() -> void:
+		if is_inside_tree():
+			RodFishing.splash(get_parent(), global_position + Vector3.UP * (_leg + 0.15), 0.35))
+
+
+## `to`, unless the way there runs into water deeper than DEEP: then the last spot before it (he
+## waits on the bank). From deep water (popped in, or the water rose) he may always head out.
+func _shore(from: Vector3, to: Vector3) -> Vector3:
+	var tree := get_tree()
+	if WaterBody.depth_at(tree, from) > DEEP:
+		return to
+	var flat := Vector3(to.x - from.x, 0.0, to.z - from.z)
+	var n := int(flat.length() / 0.5)
+	var last := from
+	for i in range(1, n + 1):
+		var p := from + flat * (float(i) / n)
+		if WaterBody.depth_at(tree, p) > DEEP:
+			return last
+		last = p
+	return to
 
 
 ## Standing about a while: now and then off a few metres to sniff, then back.
@@ -287,8 +366,16 @@ func _move(delta: float) -> void:
 		var face := _player.global_position - pos
 		if face.length() > 0.5 and state == State.SIT:
 			_turn_to(atan2(face.x, face.z), delta, 3.0)
-	pos.y = _ground(pos)
+	pos.y = _float_or_ground(pos)
 	global_transform = Transform3D(Basis(Vector3.UP, _yaw), pos)
+
+
+## The ground, or in water past his legs, floating with his back at the surface.
+func _float_or_ground(pos: Vector3) -> float:
+	var g := _ground(pos)
+	var d := WaterBody.depth_at(get_tree(), pos)
+	_paddling = d > _leg * 0.9
+	return g + d - _leg * 0.9 if _paddling else g
 
 
 ## Pops in behind you, out of view: POP_BEHIND behind where you're looking (or to a side if
@@ -361,13 +448,28 @@ func _pose(part: StringName, x: float, z := 0.0, y := 0.0, offset := Vector3.ZER
 
 func _animate(delta: float) -> void:
 	var gait := clampf(_speed / 3.0, 0.0, 1.0)
-	_phase += delta * (4.0 + _speed * 2.2)
+	_phase += delta * (4.0 + _speed * 2.2 + (5.0 if _paddling else 0.0))
 	var s := sin(_phase)
 	var wag_speed := 9.0 if state == State.FOLLOW or state == State.SNIFF else 5.0
 	var wag := sin(_t * wag_speed) * (0.5 if state != State.LIE else 0.25)
 	match state:
+		State.PET:
+			var w := sin(_t * 14.0)
+			_pose(&"Body", 0.0, w * 0.12, 0.0, Vector3(0, absf(sin(_t * 7.0)) * 0.03, 0))
+			for leg in [&"LegFL", &"LegFR", &"LegBL", &"LegBR"]:
+				_pose(leg, 0.0)
+			_pose(&"Head", -0.3, -w * 0.15)
+			_pose(&"Jaw", 0.2)
+			wag = sin(_t * 18.0) * 0.75
+		State.SHAKE:
+			var w := sin(_t * 30.0) * (0.25 + 0.15 * clampf(_shake_left / SHAKE_TIME, 0.0, 1.0))
+			_pose(&"Body", 0.0, w, 0.0, Vector3(0, 0.02, 0))
+			for leg in [&"LegFL", &"LegFR", &"LegBL", &"LegBR"]:
+				_pose(leg, 0.0, -w * 0.4)
+			_pose(&"Head", 0.0, -w * 1.6)
+			_pose(&"Jaw", 0.05)
 		State.FOLLOW, State.SNIFF:
-			var swing := 0.55 * gait + (0.0 if _speed > 0.05 else 0.0)
+			var swing := 0.55 * gait if not _paddling else 0.8  # paddling: all four going, even standing
 			_pose(&"LegFL", s * swing)
 			_pose(&"LegBR", s * swing)
 			_pose(&"LegFR", -s * swing)
@@ -384,7 +486,7 @@ func _animate(delta: float) -> void:
 			_pose(&"LegFR", -tilt)
 			_pose(&"LegBL", -0.95, 0.12)
 			_pose(&"LegBR", -0.95, -0.12)
-			_pose(&"Head", -tilt * 0.8 + sin(_t * 0.7) * 0.05, 0.0, sin(_t * 0.4) * 0.25)
+			_pose(&"Head", -tilt * 0.8 + sin(_t * 0.7) * 0.05, 0.0, _head_turn(sin(_t * 0.4) * 0.25))
 			_pose(&"Jaw", 0.08 + sin(_t * 6.0) * 0.04)
 		State.LIE:
 			_pose(&"Body", 0.0, 0.0, 0.0, Vector3(0, -_leg * 0.82, 0))
@@ -398,6 +500,14 @@ func _animate(delta: float) -> void:
 	var ear := sin(_phase * 2.0) * 0.08 * gait
 	_pose(&"EarL", ear)
 	_pose(&"EarR", -ear)
+
+
+## Head yaw: toward the float while you fish (within what his neck allows), else `idle`.
+func _head_turn(idle: float) -> float:
+	if _watch == Vector3.INF:
+		return idle
+	var local := to_local(_watch)
+	return clampf(atan2(local.x, local.z), -0.9, 0.9)
 
 
 func _apply_poses(delta: float) -> void:

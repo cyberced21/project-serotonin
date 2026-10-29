@@ -4,13 +4,15 @@ extends SceneTree
 ## wander off. Then, walking the village path and sprinting over
 ## the hills he keeps up, stays on the ground and out of your way; he sits when you stop, lies
 ## down while you gather (never in front of you), and pops in behind you after a teleport.
-## The player is moved by the test (its own physics off), as if walking.
+## The player is moved by the test (its own physics off), as if walking. (No game class names: an
+## -s script compiles before the autoloads exist.)
 ##   godot --headless --path . -s res://tools/test_dog.gd -- --save-root=user://tool_worlds
 
 var _fails := 0
 var player: CharacterBody3D
 var dog: Node3D
 var terrain: Terrain3D
+var _shook := false
 
 
 func _initialize() -> void:
@@ -41,6 +43,8 @@ func _run() -> void:
 	# over the hills at a jog: the clearing west to the quarry's mountainside
 	await _walk(PackedVector2Array([Vector2(-20, -6), Vector2(-60, 10), Vector2(-95, 20)]), 5.5, "over the hills")
 	await _teleport()
+	await _pet()
+	await _water()
 	await _night_strays()
 	_finish()
 
@@ -73,6 +77,66 @@ func _meet() -> void:
 	var after: Array = others.map(func(d: Node3D) -> float: return d.global_position.distance_to(player.global_position) if is_instance_valid(d) else 999.0)
 	_check(after[0] > before[0] + 3.0 and after[1] > before[1] + 3.0, "the other two wander off")
 	_check(not panel.call("is_open"), "the box is closed")
+
+
+func _pet() -> void:
+	await _seconds(2.0)
+	dog.call("interact")
+	await _frames(5)
+	_check(dog.get("state") == 4, "E on him: a pat, he wiggles (state %s)" % dog.get("state"))  # State.PET
+	await _seconds(2.5)
+	_check(dog.get("state") != 4, "...then he settles again")
+
+
+## The lake: wading depth near the shore, too deep for him in the middle.
+func _water() -> void:
+	var schools: Array = []
+	for w in get_nodes_in_group("water"):
+		if String(w.name) == "Lake":
+			for c in w.get_children():
+				for s in c.get_children():
+					if s.get("fish") is Array:
+						schools.append(s)
+	_place(Vector3(-16, 0, 100), Vector2(0, -1))
+	await _seconds(5.0)
+	var max_depth := 0.0
+	var got_wet := false
+	var fled := 0
+	for target: Vector2 in [Vector2(-16, 84), Vector2(-16, 74)]:
+		var from := Vector2(player.global_position.x, player.global_position.z)
+		await _walk_quiet(from, target, 2.0)
+		for i in 60 * 6:
+			await physics_frame
+			var d: float = load("res://scripts/water_body.gd").depth_at(self, dog.global_position)
+			max_depth = maxf(max_depth, d)
+			got_wet = got_wet or d > 0.15
+			for school in schools:
+				for f in school.fish:
+					if f.flee_time > 0.0:
+						fled += 1
+	print("water: deepest he went %.2f m" % max_depth)
+	_check(got_wet, "he follows you into wading-depth water")
+	_check(max_depth <= 0.95, "...but waits where it's too deep for him (deepest %.2f m)" % max_depth)
+	_check(fled == 0, "fish don't flee from him (%d fleeing fish-frames)" % fled)
+	_shook = false
+	await _walk_quiet(Vector2(-16, 74), Vector2(-16, 104), 3.0)
+	for i in 60 * 8:
+		await physics_frame
+		_shook = _shook or dog.get("state") == 5
+	_check(_shook, "out of the water, he shakes himself dry")
+
+
+func _walk_quiet(a: Vector2, b: Vector2, speed: float) -> void:
+	var d := a.distance_to(b)
+	var t := 0.0
+	while t < d:
+		t += speed / 60.0
+		var p := a.lerp(b, minf(t / d, 1.0))
+		_place(Vector3(p.x, 0, p.y), b - a)
+		player.velocity = Vector3(b.x - a.x, 0, b.y - a.y).normalized() * speed
+		await physics_frame
+		_shook = _shook or dog.get("state") == 5  # State.SHAKE
+	player.velocity = Vector3.ZERO
 
 
 func _night_strays() -> void:
@@ -111,7 +175,8 @@ func _walk(pts: PackedVector2Array, speed: float, what: String) -> void:
 			await physics_frame
 			var gap := Vector2(dog.global_position.x - p.x, dog.global_position.z - p.y).length()
 			far = maxf(far, gap)
-			off_ground = maxf(off_ground, absf(dog.global_position.y - _h(dog.global_position)))
+			if load("res://scripts/water_body.gd").depth_at(self, dog.global_position) == 0.0:  # (in the creek he floats)
+				off_ground = maxf(off_ground, absf(dog.global_position.y - _h(dog.global_position)))
 	player.velocity = Vector3.ZERO
 	print("%s: farthest behind %.1f m, off the ground by up to %.2f m" % [what, far, off_ground])
 	_check(far < 14.0, "%s: he keeps up (at most %.1f m away)" % [what, far])
