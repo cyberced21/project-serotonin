@@ -47,6 +47,10 @@ const PUMP_POST := preload("res://models/mine/post.glb")
 const PUMP_BUCKET := preload("res://models/mine/bucket.glb")
 const CHAIN := preload("res://models/mine/chain.glb")
 const BOARDWALK := preload("res://models/mine/boardwalk.glb")
+const STREAM_SOUNDS: Array[AudioStream] = [preload("res://audio/mine/stream_1.mp3"), preload("res://audio/mine/stream_2.mp3")]
+const PUMP_SOUNDS: Array[AudioStream] = [preload("res://audio/mine/pump_1.mp3"), preload("res://audio/mine/pump_2.mp3")]
+const CRYSTAL_SOUND := preload("res://audio/mine/crystal.mp3")
+const ROCKFALL: Array[AudioStream] = [preload("res://audio/mine/rockfall_1.wav"), preload("res://audio/mine/rockfall_2.wav")]
 const PALETTE_PIECES := ["frame_square", "lamp_hanging", "lamp_hanging_plain", "rubble_pile", "boulder_small",
 	"planks", "post_crossbraced", "stalactite", "stalactite_cluster", "chest", "boardwalk", "post_cap", "gate_posts"]
 
@@ -270,6 +274,14 @@ func _make_panel(id: String, c: Vector2i, i: int, seam: bool) -> OreWall:
 func _on_gave_way(cell: Vector2i, panel: OreWall) -> void:
 	var at := panel.global_transform * Vector3(0, HEIGHT * 0.45, -0.6)
 	PopupText.spawn(self, at, "Broke through!", panel.ore_color, 13)
+	var fall := AudioStreamPlayer3D.new()
+	fall.stream = ROCKFALL.pick_random()
+	fall.bus = &"Effects"
+	fall.volume_db = -4.0
+	add_child(fall)
+	fall.global_position = at
+	fall.play()
+	fall.finished.connect(fall.queue_free)
 	Juice.shake(0.35)
 	mine.on_broke_through(n, cell, at)
 	opened_cell.emit(cell)
@@ -387,6 +399,8 @@ func _flood(c: Vector2i, o: Vector3) -> void:
 	water.position = o + Vector3.UP * (0.05 if drained else HEIGHT - 0.4)
 	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_dress.add_child(water)
+	if drained:
+		_bed(PUMP_SOUNDS[hash(c) % 2], o + Vector3.UP, -8.0)
 	if drained:  # the pump that did it: a post, a bucket at its spout, the chain up the shaft
 		_prop("post", PUMP_POST, o + Vector3(1.4, 0, -1.4), Vector3.FORWARD)
 		_prop("bucket", PUMP_BUCKET, o + Vector3(1.1, 0, -1.0), Vector3.LEFT)
@@ -416,6 +430,7 @@ func _stream(_c: Vector2i, o: Vector3) -> void:
 	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	water.add_to_group("mine_stream")
 	_dress.add_child(water)
+	_bed(STREAM_SOUNDS[hash(o) % 2], o + Vector3(0, 0.3, 0.9), -6.0)
 	for i in 4:
 		_prop("boulder_small", BOULDER, o + Vector3(-1.5 + i, 0.0, 0.25 + (i % 2) * 1.3), Vector3.FORWARD.rotated(Vector3.UP, i)).scale = Vector3.ONE * 2.0
 
@@ -456,8 +471,23 @@ func _crystals(c: Vector2i, o: Vector3, h: int) -> void:
 	glow.position = o + Vector3.UP * 0.8
 	glow.add_to_group("mine_lamp")
 	_dress.add_child(glow)
+	if h % 2 == 0:
+		_bed(CRYSTAL_SOUND, o + Vector3.UP, -14.0)
 	if h % 3 == 0:
 		_prop("stalactite_cluster", STALACTITES, o + Vector3(rng.randf_range(-1, 1), HEIGHT, rng.randf_range(-1, 1)), Vector3.FORWARD)
+
+
+## A looped sound heard near one spot (the stream, the pump, the crystals' hum), in the dressing.
+func _bed(stream: AudioStream, at: Vector3, trim_db: float) -> void:
+	var bed := LoopBed.new()
+	bed.stream = stream
+	bed.trim_db = trim_db
+	bed.positional = true
+	bed.unit_size = 4.0
+	bed.max_distance = 16.0
+	bed.level = 1.0
+	bed.position = at
+	_dress.add_child(bed)
 
 
 ## Something placed in a cell by the mine (the way out, the lift, the rail stop): parented to this

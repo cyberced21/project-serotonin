@@ -19,6 +19,8 @@ const RAIL := preload("res://models/mine/rail.glb")
 const FRAME := preload("res://models/mine/frame_braced.glb")
 const LAMP := preload("res://models/mine/lamp_hanging.glb")
 const ROCK_MATERIAL := preload("res://materials/node_rock.tres")
+const RATTLE := preload("res://audio/mine/rattle.mp3")
+const SET_OFF := preload("res://audio/mine/handcar.wav")
 const ROCK_UV := Vector2(0.4375, 0.0625)
 const FLOOR_UV := Vector2(0.3125, 0.5625)
 ## Where it's built.
@@ -61,6 +63,18 @@ func _ready() -> void:
 	_cart.add_child(_cam)
 	_cam.make_current()
 	_place(0.0)
+	rattle = AudioStreamPlayer.new()
+	rattle.stream = RATTLE
+	rattle.bus = &"Effects"
+	rattle.volume_db = -30.0
+	add_child(rattle)
+	rattle.play()
+	var off := AudioStreamPlayer.new()
+	off.stream = SET_OFF
+	off.bus = &"Effects"
+	off.volume_db = -8.0
+	add_child(off)
+	off.play()
 	get_tree().create_timer(1.0).timeout.connect(func() -> void: _skippable = true)
 
 

@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="BiomeMood" format=3]
 
 [ext_resource type="Script" path="res://scripts/biome_mood.gd" id="1_mood"]
-[ext_resource type="AudioStream" path="res://audio/ambience/mine.mp3" id="2_sound"]
+[ext_resource type="AudioStream" path="res://audio/mine/air.mp3" id="2_sound"]
 
 [resource]
 script = ExtResource("1_mood")

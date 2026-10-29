@@ -22,7 +22,9 @@ LOUDNESS = -20.0  # dBFS RMS over the clip's loud part
 ## Longest clip per kind (s), and the fades (s).
 MAX_LEN = {"pant": 2.6, "sniff": 2.0, "whine": 2.2, "woof": 0.9, "shake": 1.8,
            "cart": 6.0, "snort": 2.5, "trade": 1.4,  # (the trader too: plans/market.md)
-           "murmur": 30.0, "fire": 25.0, "laugh": 4.0, "clink": 1.6, "dice": 2.5}  # (and the tavern: plans/tavern.md)
+           "murmur": 30.0, "fire": 25.0, "laugh": 4.0, "clink": 1.6, "dice": 2.5,  # (and the tavern: plans/tavern.md)
+           "drip": 3.0, "air": 45.0, "stream": 30.0, "rattle": 20.0, "handcar": 2.5, "lift": 10.0,  # (and the mine:
+           "rockfall": 5.0, "pump": 12.0, "crystal": 20.0}  # plans/mine.md)
 FADE = 0.03
 
 argv = sys.argv[sys.argv.index("--") + 1:]

@@ -32,6 +32,11 @@ const NEWS := {
 	"F": "Flooded? That'll be the old drainage gone. A pump will sort it, and you'll find the stream beyond.",
 	"lift": "The lift goes down to %s now. Take a lamp, and ring the bell twice if you get stuck.",
 }
+const DRIPS: Array[AudioStream] = [preload("res://audio/mine/drip_1.wav"), preload("res://audio/mine/drip_2.wav"),
+	preload("res://audio/mine/drip_3.wav")]
+const DRIP_EVERY := Vector2(3.0, 9.0)
+const LIFT_SOUND := preload("res://audio/mine/lift.mp3")
+const DEEP_AIR := preload("res://audio/mine/air_deep.mp3")
 const FADE_OUT := 0.6
 const FADE_IN := 0.8
 
@@ -46,6 +51,8 @@ var _news: Array[String] = []
 var _told: Dictionary[String, bool] = {}
 var map: MineMap
 var _travelling := false
+var _drip_in := 4.0
+var _deep: LoopBed
 var _pasty_eaten := false
 ## The ride under way (tests and tools watch it), or null.
 var riding: MineRide
@@ -66,6 +73,10 @@ func _ready() -> void:
 		level.visible = false
 		add_child(level)
 		levels.append(level)
+	_deep = LoopBed.new()  # under the cave air, deeper down: the low breath of the rock
+	_deep.stream = DEEP_AIR
+	_deep.trim_db = -6.0
+	add_child(_deep)
 	map = MineMap.new()
 	map.mine = self
 	add_child(map)
@@ -87,6 +98,19 @@ func _reset_open() -> void:
 	_told.clear()
 
 
+## A drop of water somewhere near you, off the roof.
+func _drip(near: Vector3) -> void:
+	var p := AudioStreamPlayer3D.new()
+	p.stream = DRIPS.pick_random()
+	p.bus = &"Effects"
+	p.volume_db = randf_range(-14.0, -8.0)
+	p.pitch_scale = randf_range(0.9, 1.15)
+	add_child(p)
+	p.global_position = near + Vector3(randf_range(-6, 6), 3.0, randf_range(-6, 6))
+	p.play()
+	p.finished.connect(p.queue_free)
+
+
 func _process(_delta: float) -> void:
 	var player := get_tree().get_first_node_in_group("player") as Node3D
 	var now := level_at(player.global_position) if player else -1
@@ -94,6 +118,12 @@ func _process(_delta: float) -> void:
 		here = now
 		for i in levels.size():
 			levels[i].visible = i == here
+	_deep.level = move_toward(_deep.level, 0.0 if here < 1 else (0.6 if here == 1 else 1.0), _delta * 0.3)
+	if here >= 0 and player:
+		_drip_in -= _delta
+		if _drip_in <= 0.0:
+			_drip_in = randf_range(DRIP_EVERY.x, DRIP_EVERY.y)
+			_drip(player.global_position)
 
 
 ## Which level a world position is on (-1: not in the mine).
@@ -403,7 +433,14 @@ func _lift_prompt(n: int) -> String:
 
 func _ride_lift(n: int) -> void:
 	var to := _lift_next(n)
-	if to >= 0:
+	if to >= 0 and not _travelling:
+		var creak := AudioStreamPlayer.new()  # the rope and the winch, through the fade
+		creak.stream = LIFT_SOUND
+		creak.bus = &"Effects"
+		creak.volume_db = -6.0
+		add_child(creak)
+		creak.play()
+		creak.finished.connect(creak.queue_free)
 		go_to(to, MineLayout.cells_of(to, "L")[0])
 
 
