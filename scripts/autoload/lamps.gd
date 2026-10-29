@@ -25,6 +25,9 @@ var _lit: Dictionary[StringName, bool] = {}
 var stretches: Array[Dictionary] = []
 var has_lantern := false
 var lantern_lit := false
+## Your lantern's glass (a Trader special id, plans/market.md): its light's colour.
+var glass: StringName = &"glass_amber"
+const GLASS := {&"glass_amber": Color(1.0, 0.7, 0.42), &"glass_green": Color(0.62, 1.0, 0.55), &"glass_rose": Color(1.0, 0.55, 0.62)}
 var _lantern_at_dusk := true
 var _dark := false
 var _gift: Node
@@ -107,11 +110,21 @@ func light_all(on: bool) -> void:
 	changed.emit()
 
 
+func set_glass(id: StringName) -> void:
+	glass = id
+	SaveGame.mark_dirty()
+	lantern_changed.emit()
+
+
+func glass_color() -> Color:
+	return GLASS.get(glass, GLASS[&"glass_amber"])
+
+
 func to_dict() -> Dictionary:
 	var ids: Array[String] = []
 	for id in _lit:
 		ids.append(String(id))
-	return {"lit": ids, "lantern": {"has": has_lantern, "lit": lantern_lit, "at_dusk": _lantern_at_dusk}}
+	return {"lit": ids, "lantern": {"has": has_lantern, "lit": lantern_lit, "at_dusk": _lantern_at_dusk, "glass": String(glass)}}
 
 
 func from_dict(d: Dictionary) -> void:
@@ -122,6 +135,7 @@ func from_dict(d: Dictionary) -> void:
 	has_lantern = lantern.get("has", false)
 	lantern_lit = has_lantern and lantern.get("lit", false)
 	_lantern_at_dusk = lantern.get("at_dusk", true)
+	glass = StringName(lantern.get("glass", "glass_amber"))
 	_dark = DayNight.darkness() > LANTERN_DARK  # (no dusk or dawn just for loading)
 	changed.emit()
 	lantern_changed.emit()

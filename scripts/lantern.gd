@@ -99,6 +99,7 @@ func _process(delta: float) -> void:
 	var flicker := 1.0 + 0.07 * sin(t * 7.3) + 0.04 * sin(t * 19.1 + 1.3)
 	_light.visible = visible and _level > 0.01
 	_light.light_energy = LIGHT_ENERGY * _level * flicker
+	_light.light_color = Lamps.glass_color()
 	for m in _meshes:
 		m.set_instance_shader_parameter("glow", _level * (0.6 + 0.1 * flicker))
 	_sounds(delta)

@@ -21,6 +21,7 @@ func _run() -> void:
 		await process_frame
 	await _slide()
 	await _stall()
+	await _trader()
 	print("test_market: %s" % ("PASS" if _fails == 0 else "%d FAILED" % _fails))
 	quit(1 if _fails else 0)
 
@@ -87,6 +88,57 @@ func _stall() -> void:
 	_check(panel != null and panel.call("is_open"), "E at the stall opens the market")
 	if panel:
 		panel.call("close")
+
+
+## The trader: not before the road opens; the morning after, she drives in, parks, the rates are
+## kinder, she has her specials, and she's gone by night; she skips the next day.
+func _trader() -> void:
+	var trader := get_first_node_in_group("trader") as Node3D
+	var day_night := root.get_node("DayNight")
+	var inv := root.get_node("Inventory")
+	_check(trader != null, "the trader is in the world")
+	day_night.set("frozen", true)
+	# (the road was opened in _slide: she comes the morning after)
+	day_night.set("time", 0.5)
+	await process_frame
+	_check(not trader.call("visiting"), "not on the day the road opens")
+	day_night.emit_signal("day_broke")
+	day_night.set("time", 0.27)
+	await process_frame
+	var cart := trader.find_child("Cart", false, false) as Node3D
+	var p1 := cart.global_position
+	day_night.set("time", 0.29)
+	await process_frame
+	var p2 := cart.global_position
+	_check(cart.visible and p2.distance_to(p1) > 5.0, "the next morning her cart comes down the road (%.0f m in a moment)" % p2.distance_to(p1))
+	day_night.set("time", 0.5)
+	await process_frame
+	var stall := get_first_node_in_group("market_stall") as Node3D
+	var d := Vector2(cart.global_position.x - stall.global_position.x, cart.global_position.z - stall.global_position.z).length()
+	_check(trader.call("is_in") and d < 12.0, "midday: parked by the stall (%.1f m)" % d)
+	var specials: Array = trader.call("specials")
+	_check(specials.size() == 3, "she has three specials (%s)" % [specials.map(func(s: Array) -> String: return s[2])])
+	for s in specials:
+		for item in s[4]:
+			inv.call("add", item, int(s[4][item]))
+		_check(trader.call("buy", s[0]), "bought: %s" % s[2])
+	await process_frame
+	var dog_ok: bool = root.get_node("Companion").get("collar") != &""
+	var glass_ok: bool = root.get_node("Lamps").get("glass") != &"glass_amber" or specials.any(func(s: Array) -> bool: return s[0] == &"glass_amber")
+	var deco_ok: bool = specials.any(func(s: Array) -> bool: return s[1] == &"decoration" and root.get_node("Projects").call("is_done", s[0]))
+	_check(dog_ok and glass_ok and deco_ok, "each special takes effect (collar %s, glass %s, decoration %s)" % [dog_ok, glass_ok, deco_ok])
+	_check((trader.call("specials") as Array).is_empty(), "...and they're gone from her cart")
+	day_night.set("time", 0.95)
+	await process_frame
+	_check(not cart.visible and not trader.call("is_in"), "night: she's gone")
+	day_night.emit_signal("day_broke")
+	day_night.set("time", 0.5)
+	await process_frame
+	_check(not trader.call("visiting"), "she skips the next day")
+	day_night.emit_signal("day_broke")
+	await process_frame
+	_check(trader.call("visiting"), "...and comes the day after")
+	day_night.set("frozen", false)
 
 
 func _on_board(projects: Node, id: StringName) -> bool:

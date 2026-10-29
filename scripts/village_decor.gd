@@ -29,6 +29,12 @@ const PROPS := {
 	# plain one's place, his name on the sign), then a porch, a bowl and a blanket in front
 	&"kennel": [[&"doghouse", Vector2(-1.0, 13.0), 3.06]],
 	&"kennel_paint": [[&"doghouse_painted", Vector2(-1.0, 13.0), 3.06]],
+	# the trader's decorations (plans/market.md): baskets on the square's three lamp posts, a
+	# weathervane, a painted cart by the market stall
+	&"deco_baskets": [[&"flower_basket", Vector2(-5.5, -6.5), 0.7], [&"flower_basket", Vector2(6.5, -5.5), -0.8],
+		[&"flower_basket", Vector2(2.0, 7.5), 3.0]],
+	&"deco_weathervane": [[&"weathervane", Vector2(-8.0, -6.0), 0.0]],
+	&"deco_cart": [[&"painted_cart", Vector2(-11.2, 3.6), 2.2]],
 	&"kennel_porch": [[&"doghouse_porch", Vector2(-0.96, 11.95), 3.06], [&"dog_bowl", Vector2(0.4, 11.5), 0.0],
 		[&"dog_blanket", Vector2(-1.9, 11.6), 2.6]],
 }
@@ -97,6 +103,11 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	for p in _built.get(&"deco_weathervane", []):  # the rooster swings slowly with the wind
+		var vane := (p as Node).find_child("Vane", true, false) as Node3D
+		if vane:
+			var t := Time.get_ticks_msec() / 1000.0
+			vane.rotation.y = 0.8 + sin(t * 0.13) * 0.9 + sin(t * 0.47) * 0.25
 	_bench_life()
 	_well_life(delta)
 

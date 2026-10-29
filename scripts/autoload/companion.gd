@@ -3,6 +3,8 @@ extends Node
 ## The dog in the world is a Dog node (scripts/dog.gd) that DogHome puts in the scene.
 
 signal adopted
+## His collar changed (a special from the trader, plans/market.md).
+signal collar_changed
 
 const BREEDS: Array[StringName] = [&"terrier", &"shepherd", &"fluffy"]
 ## Coats per breed (models/dogs/dog_<breed>_<coat>.glb), the first one the stray's.
@@ -24,6 +26,9 @@ var has_dog := false
 var breed: StringName = &""
 var coat: StringName = &""
 var dog_name := ""
+## The collar he wears (a Trader special id, e.g. &"collar_red"), or &"" for none.
+var collar: StringName = &""
+const COLLARS := {&"collar_red": Color(0.62, 0.17, 0.12), &"collar_blue": Color(0.24, 0.5, 0.77), &"collar_green": Color(0.3, 0.52, 0.3)}
 
 
 func _ready() -> void:
@@ -43,8 +48,14 @@ func adopt(b: StringName, c: StringName, n: String) -> void:
 	adopted.emit()
 
 
+func set_collar(id: StringName) -> void:
+	collar = id
+	SaveGame.mark_dirty()
+	collar_changed.emit()
+
+
 func to_dict() -> Dictionary:
-	return {"has": has_dog, "breed": String(breed), "coat": String(coat), "name": dog_name}
+	return {"has": has_dog, "breed": String(breed), "coat": String(coat), "name": dog_name, "collar": String(collar)}
 
 
 func from_dict(d: Dictionary) -> void:
@@ -52,5 +63,6 @@ func from_dict(d: Dictionary) -> void:
 	breed = StringName(d.get("breed", ""))
 	coat = StringName(d.get("coat", ""))
 	dog_name = String(d.get("name", ""))
+	collar = StringName(d.get("collar", ""))
 	if has_dog and (not COATS.has(breed) or not (COATS[breed] as Array).has(coat)):
 		has_dog = false  # a breed or coat that's gone: meet a new one
