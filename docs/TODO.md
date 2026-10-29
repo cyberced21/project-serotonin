@@ -122,12 +122,12 @@ Plan and decisions: `plans/woodcutting-overhaul.md`.
 Design notes are in [village-design.md](village-design.md).
 
 - [x] **Upgrade effects:** tiers give perks (`TierEffect`, summed by `Village.stat`). Smithy: chance of a double hit. Lodge: extra logs. Fisher: calmer fish, then bonus fish. Town hall: an XP bonus.
-- [ ] **Villager rig and schedules:** real skeletal animation, a day plan, and wandering the whole valley instead of only 2–3 spots.
+- [ ] **Villager rig:** real skeletal animation. (Schedules: done, [plans/tavern.md](../plans/tavern.md); they still keep to the village.)
 - [x] **A growing village:** town hall tier 2 brings Rosa the baker's cottage, tier 3 Edda the prospector's. They build themselves when unlocked (`Building.unlock_hall_tier`).
 - [x] **Give the newcomers a job:** both cottages upgrade like the houses. Rosa: Bakery → Bakehouse, walk and sprint 8% / 15% faster (`run_speed`). Edda: Assay Shed → Assay Office, +1 ore per rock, then rocks grow back 30% faster (`extra_ore`, `rock_regrow`).
 - [x] **Sitting:** villagers idling on a `Bench` spot sit on the seat (`Villager._animate_sit`).
 - [x] **Talk ray occlusion:** a villager behind a pole still counts if their head, chest or hips is in plain sight (`player.gd` `_villager_behind_clutter`).
-- [ ] **Interiors:** buildings are solid shells. Could have doors you walk through.
+- [ ] **Interiors:** the tavern is the first you can walk into (plans/tavern.md); the rest are solid shells (cozy chunk 9).
 
 ## Biomes
 
@@ -259,3 +259,14 @@ Generated worlds are gone (the procgen items above are history); Hearthvale is t
 - [ ] **The trader's route** through the village ignores buildings and props (no collision on the cart): watch for it clipping the crates by the town hall.
 - [ ] **The retaining wall goes up without a builder** (it's far from the village): a villager could walk out to build it.
 - [ ] **The landslide's mud** is a prop on the road, not terrain: the road's surface paint runs under it.
+
+## Villager days and the tavern ([plans/tavern.md](../plans/tavern.md), branch `tavern`)
+
+- [x] The walking network (`VillagePaths`), the villagers' day (`VillagerDay`), windows by who's home, Rosa's terrace, the Sleepy Hound (ruin + 3 tiers, Maud, the walk-in room), sitting, Hound's Luck dice (`DiceRules`, `Die`, `DiceGame`), Ollie's fiddle and dancing, the room's sounds. `tools/test_paths.gd`, `tools/test_day.gd` (~2 min), `tools/test_dice.gd`.
+- [ ] **Pick the sounds by ear:** audio/tavern/ holds provisional first choices; the candidates are on the Sleepy Hound Sounds page (https://claude.ai/artifact/SsVfYHdugLLt1r2gyZyHsZ), and more tavern tunes for the band there too.
+- [ ] **In-game screenshots:** none yet (they need a game window). The tavern's spot was chosen from a top-down plot (`tools/village_layout.gd` + `tools/plot_village.py`).
+- [ ] **Play it:** bot-tested only. Tier and terrace prices, the dice styles, how long the evening runs, night walks home (an hour of night is ~36 s, so the walk takes most of one) are all guesses.
+- [ ] **Saves while sitting:** a save taken seated puts you back on the seat's spot standing (inside the stool); harmless, but could stand you up first.
+- [ ] **Villagers on the dice seat** play only against you; two villagers could play each other.
+- [ ] **The keeper and Ollie have no house of their own** at the tavern (Maud "lives upstairs": she goes in at the door).
+- [ ] **test_lamps and test_lantern fail on main too** (found on this branch): "all burning by full night (48 of 52)" and "walking swings it enough to creak".

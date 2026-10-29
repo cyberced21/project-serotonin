@@ -56,7 +56,7 @@ Each building is one `.glb` with objects named `T1_*`, `T2_*`, `T3_*`.
 - **Models:** low-poly "toy" villagers from the Blender script and palette. Separate parts (body, head, arms, hat/prop), no rig.
 - **Procedural animation:** idle bob, head tracking the player, a work loop.
 - **Behaviour:**
-  - 2–3 hand-placed spots each (door, work station, bench), walked in straight lines; no navmesh, no schedule
+  - 2–3 hand-placed spots each (door, work station, bench), walked in straight lines; no navmesh, no schedule (since 2026-10-29: a day, and the lanes' walking network: plans/tavern.md)
   - the work spot can change per tier (for example, the fisher moves from shore to dock)
   - they stop and face you when you come near
 
@@ -111,6 +111,6 @@ Each new tier adds a lean-to or oven to the cottage (`cottage_house()` and `side
 ## Parked
 
 - Upgrade effects (mechanics)
-- Villager rig and schedules
+- Villager rig (schedules: done, see [plans/tavern.md](../plans/tavern.md): each villager's day, the walking network, the tavern)
 - More villagers / village growth
 - New resource tiers (iron, oak) for costs

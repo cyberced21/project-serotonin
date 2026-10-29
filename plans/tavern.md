@@ -3,7 +3,34 @@
 Chunk 8 of [cozy.md](cozy.md) (its section 7: villager life). Grilled 2026-10-29. Branch `tavern`
 off `main`.
 
-Status (2026-10-29): **grilled, not started.**
+Status (2026-10-29): **all phases built** on branch `tavern`, except picking the sounds by ear
+(provisional first choices are in; the candidates are on
+https://claude.ai/artifact/SsVfYHdugLLt1r2gyZyHsZ) and in-game screenshots (they need a game
+window). Bot-tested only: `tools/test_paths.gd`, `tools/test_day.gd`, `tools/test_dice.gd`. Open
+items: docs/TODO.md, "Villager days and the tavern".
+
+### Built, and what changed on the way
+
+- **The walking network** is data in `scripts/village_paths.gd` (points and links, world XZ, like
+  VillageDecor's spots), not markers placed in the editor. A route skips points it can see past;
+  close places are walked to straight when nothing's in the way (a sphere cast on the world layer).
+  `tools/village_layout.gd` + `tools/plot_village.py` draw the village from above with it.
+- **Times are clock hours** (sunrise 06:00, sunset 20:00, DayNight's clock), per villager in
+  `VillagerDay.PEOPLE`. An hour of night is only ~36 s, so the walk home takes most of one.
+- **Seats** are markers in a "seat" group with a kind (bench, terrace, tavern), claimed by meta;
+  the decor's dusk bench routine went. Rosa does the rounds of her terrace's tables at breakfast.
+- **The tavern** is called the Sleepy Hound; Maud keeps it. Its tier 1 is the ruin (every building
+  starts at tier 1), so its three restored tiers are 2-4. Seats, the stage, dance spots and the
+  dice table are empties in the model, shown with their tier (`Building.marks`); after an upgrade
+  anyone on a vanished seat finds another. Lamps, fire and windows follow its opening hours.
+  Inside, the reverb is a small room (`Acoustics`, the "interior" group). Building also no longer
+  loses a tier change made mid-animation.
+- **The dice game** is "Hound's Luck": all scoring dice are set aside for you (no choosing which),
+  so the only choice is roll or stop. Five 7 cm physics dice on their own layer in a felt tray with
+  invisible walls; you play from a panel (the mouse freed), villagers by `DiceRules.STYLES`.
+- **The musician is Ollie** (the fisher's "plays" quirk), with a fiddle and bow made in code; the
+  band is a 3D player on the Music bus, muffled with distance, playing the library's "tavern" slot.
+- Dancing: every so often during a tune at the top tier, two get up for 25 s.
 
 ## Where we start (2026-10-29)
 
@@ -107,4 +134,5 @@ Status (2026-10-29): **grilled, not started.**
 ## Open
 
 - Prices for the tavern tiers and the terrace (placeholders, tuned in play).
-- Whether the keeper or the musician has their own house (proposal: they live above the tavern).
+- Whether the keeper or the musician has their own house (as built: Maud goes in at the tavern's
+  door; Ollie goes home to the fisher's hut).

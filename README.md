@@ -105,6 +105,12 @@ whatever you hit.
 
   ![The landslide, the retaining wall, the market stall, the trader parked by it with the weathervane and flower baskets](docs/images/market/sheet.jpg)
 
+- **The villagers' day and the Sleepy Hound** ([plans/tavern.md](plans/tavern.md)). Villagers keep a day now: breakfast, work, the square at dusk, the tavern after dark, then home to bed, staggered so they never move as a herd. Each has a quirk or two (Ollie fishes at dawn, the mayor strolls round the square, Greta skips the tavern some nights). They walk the lanes, not through houses, and their windows light up when they get home and go dark one by one at bedtime.
+  - **Rosa's bakery terrace** (a noticeboard project, town hall tier 2): tables under a striped awning where the village has breakfast while Rosa serves.
+  - **The tavern** stands boarded up on the west of the square. Talk to Maud, its keeper, to restore it in three tiers: a taproom, then a fireplace and a stage (Ollie fiddles of an evening, and the background music holds off near it), then the full Sleepy Hound with an annex, bunting and dancing. It's open from dark to about one in the morning, and you can walk right in.
+  - **Sit down** on any free seat (E): benches, the terrace, the tavern's stools. A movement key stands you up.
+  - **Dice:** sit at the tavern's dice table of an evening and a villager comes over to play Hound's Luck. Roll five dice; 1s and 5s and three of a kind score and are set aside; roll the rest or stop and bank, but a roll that scores nothing loses the turn. First to 2000. It's played for fun: a chalkboard keeps the tally against each villager.
+
 - **A village to build up.** East of the clearing, a dirt path leads along a shallow valley to the village and its four villagers: a woodcutter, a smith, a fisher and the mayor.
   - Talk to a villager (E) to see what their building's next tier costs, then pay with the logs, ore and fish you've gathered.
   - **Greta forges tools.** Her panel has a Forge tab: the next pick, axe and sickle, what each opens and what it costs. Each is made from what the tool before it can gather, and her smithy's tier caps the best she can make (the Stone Forge does copper, the Smithy iron, the Crystal Forge crystal).
@@ -166,7 +172,7 @@ whatever you hit.
 | Gather (axe, pickaxe or sickle: whichever fits what you aim at) / spear (hold) / rod: cast (hold, release on the whip), then click when the float goes under | Left mouse or E |
 | Swap the fishing tool: spear / rod | Q |
 | Rod: bow when a hooked fish jumps | Right mouse or Q |
-| Talk to a villager | E |
+| Talk to a villager / sit down on a free seat (any movement key stands you up) | E |
 | Pause menu | Esc |
 | Debug menu: items, skill levels, tool tiers, building tiers, time of day and speed, pause, teleports (buildings, biomes, ponds, nodes), fly mode, a live readout (with the biome), save wipe, graphics presets and effects | F1 (debug builds and playtest exports) |
 | Debug: skip ahead 3 hours / give 50 of every item / upgrade every building (wraps back to tier 1) | F6 / F7 / F8 (debug builds and playtest exports) |
