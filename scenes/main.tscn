@@ -58,6 +58,7 @@
 [ext_resource type="Script" path="res://scripts/path_lamps.gd" id="91_path_lamps"]
 [ext_resource type="Script" path="res://scripts/village_decor.gd" id="92_village_decor"]
 [ext_resource type="Script" path="res://scripts/creek.gd" id="93_creek"]
+[ext_resource type="Script" path="res://scripts/dog_home.gd" id="94_dog_home"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
@@ -678,6 +679,9 @@ script = ExtResource("92_village_decor")
 [node name="Quarry" parent="." instance=ExtResource("58_quarry")]
 
 [node name="Goldmeadow" parent="." instance=ExtResource("59_goldmeadow")]
+
+[node name="DogHome" type="Node3D" parent="."]
+script = ExtResource("94_dog_home")
 
 [node name="PathLamps" type="Node3D" parent="."]
 script = ExtResource("91_path_lamps")
