@@ -151,6 +151,26 @@ func _run() -> void:
 	await _until(func() -> bool: return mine.get("here") == 2 and not mine.get("_travelling"), 8.0)
 	_check(mine.get("here") == 2, "down on level 3")
 
+	# the minecart: down from the top to the deepest stop that's dug out
+	projects.call("set_done", &"mine_rails", true)
+	mine.call("open_cell", 1, Vector2i(6, 4))
+	await process_frame
+	_check(mine.call("ride_to", 0) == 1, "the cart runs down to level 2's stop (level 3's isn't dug out)")
+	mine.call("go_to", 0, Vector2i(5, 3))
+	await _until(func() -> bool: return mine.get("here") == 0 and not mine.get("_travelling"), 8.0)
+	mine.call("ride", 0)
+	await _until(func() -> bool: return mine.get("riding") != null, 5.0)
+	var trip: Node = mine.get("riding")
+	_check(trip != null, "the ride starts")
+	if trip:
+		await _settle(30)
+		var cam := root.get_viewport().get_camera_3d()
+		_check(cam != null and trip.is_ancestor_of(cam), "riding in the cart's seat")
+		trip.set("_t", 999.0)
+	await _until(func() -> bool: return mine.get("here") == 1 and not mine.get("_travelling"), 10.0)
+	_check(mine.get("here") == 1, "climbed out on level 2")
+	_check(root.get_viewport().get_camera_3d() == player.get("camera"), "back in your own eyes")
+
 	# out again
 	mine.call("leave")
 	await _until(func() -> bool: return mine.get("here") == -1 and not mine.get("_travelling"), 8.0)

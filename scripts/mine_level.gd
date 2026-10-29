@@ -127,6 +127,7 @@ func refresh() -> void:
 	_st = null
 	for id in _panels.keys():
 		if not want.has(id):
+			remove_child(_panels[id])  # (out of the tree now: a new one may take its save id at once)
 			_panels[id].queue_free()
 			_panels.erase(id)
 	for id in want:

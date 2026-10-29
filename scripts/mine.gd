@@ -17,6 +17,7 @@ const LEVEL_Y: Array[float] = [-40.0, -60.0, -80.0]
 const SHORING: Array[StringName] = [&"mine_shoring", &"mine_shoring_2", &"mine_shoring_3"]
 const LIFT: Array[StringName] = [&"", &"mine_lift", &"mine_lift_3"]
 const SUPPORTS := &"mine_supports"
+const RAILS := &"mine_rails"
 const PUMP := &"mine_pump"
 const FADE_OUT := 0.6
 const FADE_IN := 0.8
@@ -28,6 +29,8 @@ var _open: Array[Dictionary] = []
 var _fresh: Array[Dictionary] = []
 var _seen: Dictionary[StringName, bool] = {}
 var _travelling := false
+## The ride under way (tests and tools watch it), or null.
+var riding: MineRide
 
 
 func _ready() -> void:
@@ -200,6 +203,10 @@ func _add_spots(n: int) -> void:
 			var spot := MineSpot.make(Vector3(1.6, 2.4, 0.8), func() -> String: return "E  Back up to the quarry", leave)
 			spot.position = door_at - Vector3(back.x, 0, back.y) * 0.3
 			dress.add_child(spot)
+	if Projects.is_done(RAILS):
+		for c in MineLayout.cells_of(n, "R"):
+			if is_open(n, c):
+				_add_rail_stop(n, c)
 	for c in MineLayout.cells_of(n, "L"):
 		if not is_open(n, c) or not Projects.is_done(LIFT[1]):
 			continue
@@ -215,6 +222,92 @@ func _add_spots(n: int) -> void:
 		spot.position = MineLevel.centre(c)
 		spot.collision_layer = LookObject.LAYER  # (not solid: you stand in the cage)
 		dress.add_child(spot)
+
+
+## The rail stop on level n: the rails through it, the cart, and the ride.
+func _add_rail_stop(n: int, c: Vector2i) -> void:
+	var dress := levels[n].dressing()
+	var axis := _rail_axis(n, c)
+	var o := MineLevel.centre(c)
+	for k in [-1.0, 0.0, 1.0]:
+		var rail := Prop.new()
+		rail.model = load("res://models/mine/rail.glb")
+		rail.own_materials = true
+		rail.collide = false
+		rail.position = o + axis * k * 2.0 + Vector3.UP * 0.02
+		rail.rotation.y = 0.0 if axis == Vector3.RIGHT else PI / 2
+		dress.add_child(rail)
+	var cart := Prop.new()
+	cart.model = load("res://models/mine/cart_tall.glb")
+	cart.own_materials = true
+	cart.collide = false  # (E reaches the stop through it)
+	cart.position = o
+	cart.rotation.y = PI / 2 if axis == Vector3.RIGHT else 0.0
+	dress.add_child(cart)
+	var spot := MineSpot.make(Vector3(1.6, 1.6, 1.6), _ride_prompt.bind(n), ride.bind(n))
+	spot.position = o
+	dress.add_child(spot)
+
+
+## The way the rails run through a rail stop: along x if the tunnel goes on that way, else z.
+func _rail_axis(n: int, c: Vector2i) -> Vector3:
+	return Vector3.RIGHT if MineLayout.is_cell(n, c + Vector2i(1, 0)) or MineLayout.is_cell(n, c + Vector2i(-1, 0)) else Vector3.BACK
+
+
+## Where the cart goes from level n: from the top, down to the deepest level the lift reaches
+## whose rail stop is dug out; from below, back up to the top. -1: nowhere yet.
+func ride_to(n: int) -> int:
+	if n != 0:
+		return 0 if is_open(0, MineLayout.cells_of(0, "R")[0]) else -1
+	for i in range(levels.size() - 1, 0, -1):
+		var stop: Array[Vector2i] = MineLayout.cells_of(i, "R")
+		if lift_reaches(i) and not stop.is_empty() and is_open(i, stop[0]):
+			return i
+	return -1
+
+
+func _ride_prompt(n: int) -> String:
+	var to := ride_to(n)
+	if to < 0:
+		return "The rails run on down. Dig out the rail stop on the level below first."
+	return "E  Ride the minecart %s to %s" % ["down" if to > n else "up", MineLayout.LEVELS[to]["title"].to_lower()]
+
+
+## The ride: the cart rattles off down its tunnel, and you climb out at the far stop.
+func ride(n: int) -> void:
+	var to := ride_to(n)
+	if to < 0 or _travelling:
+		return
+	_travelling = true
+	var player := get_tree().get_first_node_in_group("player") as Node3D
+	player.call("set_cutscene", true)
+	var fade := _fade()
+	var rect := fade.get_child(0) as ColorRect
+	await fade.create_tween().tween_property(rect, "modulate:a", 1.0, 0.4).finished
+	var trip := MineRide.make(to < n)
+	add_child(trip)
+	riding = trip
+	await fade.create_tween().tween_property(rect, "modulate:a", 0.0, 0.6).finished
+	if not trip.done:  # (it may have been skipped while the fade was still clearing)
+		await trip.finished
+	await fade.create_tween().tween_property(rect, "modulate:a", 1.0, 0.5).finished
+	var stop: Vector2i = MineLayout.cells_of(to, "R")[0]
+	var beside := _rail_axis(to, stop).cross(Vector3.UP)  # (climbed out beside the cart)
+	var at := cell_position(to, stop) + Vector3.UP * 0.1 + beside * 1.2
+	player.call("teleport", at, at + beside * 3.0 + Vector3.UP * 1.5)
+	var dog := get_tree().get_first_node_in_group("dog") as Node3D
+	if dog:
+		dog.global_position = at + Vector3(0.9, 0, 0)
+		dog.reset_physics_interpolation()
+	trip.queue_free()
+	riding = null
+	(player.get("camera") as Camera3D).make_current()
+	Biome.settle(at)
+	await get_tree().create_timer(0.3).timeout
+	await fade.create_tween().tween_property(rect, "modulate:a", 0.0, FADE_IN).finished
+	fade.queue_free()
+	player.call("set_cutscene", false)
+	_travelling = false
 
 
 ## The first direction from cell c into solid rock (where the way-out door goes).
