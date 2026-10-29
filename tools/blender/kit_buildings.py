@@ -794,17 +794,26 @@ def dog_basket(k, x, y, z=0.0):
     marker(k, "DogBed", x, y, z + 0.12, (-1, 0))
 
 
-def trophy_wall(k, x, y, z=0.0, along="y", n=6):
-    """Empty plaques on a wall, waiting for trophies (what goes on them gets its own grill): markers
-    TrophySlot1.. where each one hangs."""
+def trophy_wall(k, x, y, z=0.0, along="y", facing=(1, 0), n=6, gap=0.75):
+    """The plaques for trophies (plans/trophies.md), two rows of three on a wall: markers
+    TrophySlot1.. where each hangs, facing into the room (`facing`). Home hangs them."""
     for i in range(n):
         col, row = i % 3, i // 3
-        off = (col - 1) * 0.75
+        off = (col - 1) * gap
         px, py = (x, y + off) if along == "y" else (x + off, y)
-        pz = z + 1.4 + row * 0.7
-        k.box("TrophyPlaque", (0.06, 0.5, 0.4) if along == "y" else (0.5, 0.06, 0.4), (px, py, pz),
-              ("wood.3", "wood.3", "wood.2", "wood.4"))
-        marker(k, f"TrophySlot{i + 1}", px, py, pz)
+        pz = z + 1.45 + row * 0.75
+        k.box("TrophyPlaque", (0.06, 0.52, 0.66) if along == "y" else (0.52, 0.06, 0.66),
+              (px - facing[0] * 0.02, py - facing[1] * 0.02, pz), ("wood.3", "wood.3", "wood.2", "wood.4"))
+        marker(k, f"TrophySlot{i + 1}", px + facing[0] * 0.02, py + facing[1] * 0.02, pz, facing)
+
+
+def mantel(k, x, y, z=0.0, facing=(0, -1)):
+    """A shelf over a hearth with three spots for the small trophies (MantelSpot1..3)."""
+    side = (-facing[1], facing[0])
+    k.box("Mantel", (1.9 if side[0] else 0.36, 0.36 if side[0] else 1.9, 0.07), (x, y, z + 1.62),
+          ("wood.5", "wood.4", "wood.3"))
+    for i in range(3):
+        marker(k, f"MantelSpot{i + 1}", x + side[0] * (i - 1) * 0.6, y + side[1] * (i - 1) * 0.6, z + 1.66, facing)
 
 
 def visitors(k, door_x, front_y):
@@ -837,7 +846,8 @@ def cottage(k):
     chair(k, "Seat3", -1.4, -1.2, facing="-x")
     marker(k, "Plans", -2.4, -1.6, 1.0)
     marker(k, "Desk", -2.4, -0.7, 0.95)
-    trophy_wall(k, -2.65, 0.9)
+    trophy_wall(k, -2.66, -1.0)  # above the desk
+    marker(k, "NoteFrame", 2.0, -3.66, 1.7, (0, 1))  # (a framed note by the door, one day)
     marker(k, "Wake", -1.0, 1.2, 0.0, (1, -1))
     prop(k, "Chandelier", 0, 0, WALL_TOP - 0.1)
     visitors(k, 0.0, -4.0)
@@ -870,7 +880,9 @@ def homestead(k):
     chair(k, "Seat5", -2.4, -3.4, facing="-x")
     marker(k, "Plans", -3.4, -3.8, 1.0)
     marker(k, "Desk", -3.4, -2.9, 0.95)
-    trophy_wall(k, -0.6, -4.65, along="x")
+    trophy_wall(k, 3.66, 0.0, facing=(-1, 0))
+    mantel(k, 2.0, 3.95)
+    marker(k, "NoteFrame", 3.66, -4.0, 1.7, (-1, 0))
     prop(k, "Chandelier", 0.5, 0, WALL_TOP - 0.1)
     # the loft bedroom
     z = WALL_TOP

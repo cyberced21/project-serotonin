@@ -440,7 +440,7 @@ func _show_tier(t: int) -> void:
 func _set_collision(t: int, on: bool) -> void:
 	for c in _bodies[t].get_children():
 		(c as CollisionShape3D).set_deferred("disabled", not on)
-	for look: LookObject in _looks.get(t, []):
+	for look: StaticBody3D in _looks.get(t, []):  # (look-at things, and your home's trophy places)
 		look.get_child(0).set_deferred("disabled", not on)
 
 

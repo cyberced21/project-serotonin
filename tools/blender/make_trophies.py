@@ -1,9 +1,10 @@
 """The trophies for your wall (plans/trophies.md), painted from the palette like our other models.
 
-    blender -b -P tools/blender/make_trophies.py -- models art/palette.json [kind ...]
+    blender -b -P tools/blender/make_trophies.py -- models art/palette.json [kind ...] [both]
 
-Writes models/trophies/<kind>_<look>.glb: two looks of each kind (a and b) to pick from, and for
-the fish, one per species (fish_<look>_<species>.glb, the species' own model on the mount). Each
+Writes models/trophies/<kind>_<look>.glb in the picked look of each kind (PICKED; `both` builds
+the a and b looks to pick from), and for the fish one per species (fish_<look>_<species>.glb,
+the species' own model on the mount). Each
 hangs from its origin, the middle of the plaque it goes on, standing out toward -Y (the room).
 The small ones (geode, feather, shell) also sit on the Homestead's mantel: their origin is then
 the shelf.
@@ -210,6 +211,10 @@ def stick(look):
     return f"stick_{look}"
 
 
+## The looks picked (2026-10-29, the Hearthvale Trophy Wall page): only these are built unless
+## `both` is named, which builds the a and b looks of everything again.
+PICKED = {"log": "b", "fish": "a", "geode": "b", "sheaf": "b", "feather": "a", "shell": "b", "stick": "b"}
+
 BUILDERS = {
     "log": lambda look: log_a() if look == "a" else log_b(),
     "geode": geode, "sheaf": sheaf, "feather": feather, "shell": shell, "stick": stick,
@@ -217,10 +222,11 @@ BUILDERS = {
 
 if __name__ == "__main__":
     argv = sys.argv[sys.argv.index("--") + 1:]
-    kinds = argv[2:] or list(BUILDERS) + ["fish"]
+    both = "both" in argv[2:]
+    kinds = [k for k in argv[2:] if k != "both"] or list(BUILDERS) + ["fish"]
     os.makedirs(os.path.join(OUT_DIR, "trophies"), exist_ok=True)
     for kind in kinds:
-        for look in ("a", "b"):
+        for look in ("a", "b") if both else (PICKED[kind],):
             if kind == "fish":
                 for species in FISH:
                     reset()

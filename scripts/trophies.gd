@@ -99,6 +99,38 @@ static func fish(item: StringName, count: int, at: Vector3) -> void:
 		found(&"fish", at, item)
 
 
+## The looks picked on the trophy page (2026-10-29): models/trophies/<kind>_<look>.glb, the fish
+## one per species (fish_<look>_<species>.glb).
+const LOOKS := {&"log": "b", &"fish": "a", &"geode": "b", &"sheaf": "b", &"feather": "a", &"shell": "b", &"stick": "b"}
+
+
+## Its model's name in models/trophies/.
+static func model(r: Dictionary) -> String:
+	var kind := StringName(r.get("kind", ""))
+	if kind == &"fish":
+		return "fish_%s_%s" % [LOOKS[kind], r.get("species", "pike")]
+	return "%s_%s" % [kind, LOOKS.get(kind, "a")]
+
+
+## The trophies you're carrying that fit a place (the mantel takes only the small ones).
+static func fitting(small_only: bool) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for r in carried:
+		if not small_only or StringName(r.get("kind", "")) in SMALL:
+			out.append(r)
+	return out
+
+
+## Hang `r` at `place` ({} to clear it).
+static func hang(place: String, r: Dictionary) -> void:
+	if r.is_empty():
+		hung.erase(place)
+	else:
+		hung[place] = r
+	SaveGame.mark_dirty()
+	_changed()
+
+
 ## Take `r` out of your pack (to hang it).
 static func take(r: Dictionary) -> void:
 	carried.erase(r)

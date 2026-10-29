@@ -3,10 +3,29 @@
 The trophy wall from [home.md](home.md) (the Cottage's six empty plaques, `TrophySlot1..6`).
 Grilled 2026-10-29. Branch `home` (on top of chunk 9).
 
-Status (2026-10-29): phases 1-2 built (`Trophies`, the finds, `test_trophies.gd`); phase 3's
-models made (`tools/blender/make_trophies.py` -> `models/trophies/`, two looks each, the fish per
-species) and waiting on picks: https://claude.ai/artifact/PNsWV5QD83YmXJdtMeRGHz (db `picks/main`).
-Phases 4-6 (hanging, villagers and the full wall, docs) after the picks.
+Status (2026-10-29): **all 6 phases built** on branch `home`, bot-tested and Blender-rendered only.
+Looks picked on https://claude.ai/artifact/PNsWV5QD83YmXJdtMeRGHz: the log's end (b), the fish on
+an oval board (a), the sapphire geode in its box (b), the wreath (b), the feather behind glass (a),
+the shell in a dish (b), the stick on a plaque with a bow (b).
+
+### Built, and what changed on the way
+
+- `Trophies` is a static class (no new autoload), saved with your home (`Home.to_dict`
+  "trophies"); a record is {kind, species, where (the map's biome name), day}. The HUD shows
+  "N trophies to hang at home"; nodes listen in the "trophies_listener" group.
+- Rolls in `ResourceNode._break`; fish in `LandedFish` and `SpearFishing` (count 3 = Huge);
+  `TrophyFind` for the feather (8-30 m from the summit) and the shell (walked out from the lake's
+  middle to dry ground), put out by `Home._on_morning`; the dog's stick by `Home._trophy_errands`
+  5 days after you first have him (then 5% of mornings).
+- Models: `tools/blender/make_trophies.py` (PICKED); hung at 80% (`TrophyPlaque.SCALE`) so
+  the fish boards clear their neighbours. The Cottage's plaques moved to the plain wall above the
+  desk, the Homestead's to the right wall's plain stretch (both first sat across a window); the
+  Homestead's mantel (`MantelSpot1..3`) over the hearth; `NoteFrame` markers by the doors.
+- `TrophyPlaque` (E: the `TrophyPanel`: Hang, Swap, Take it down; hung ones show their label in
+  3D) per place per tier, keyed by place so they carry up a tier.
+- Villagers: `Home.TROPHY_LINES` per villager per kind, else `TROPHY_ANY`; a full wall leaves the
+  mayor's note on the desk ("framed"), read, it hangs by the door.
+- Pictures: docs/images/home/trophy_wall_t3.png, trophy_wall_t4.png (`render_trophy_wall.py`).
 
 ## Where we start (2026-10-29)
 

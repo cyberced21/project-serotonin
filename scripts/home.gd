@@ -62,6 +62,17 @@ const REACT_ADDON := {
 	&"swing": "A porch swing! Save me a seat for the sunset.",
 	&"garden": "Look at your beans coming up. My gran grew beans just like those.",
 }
+## What they say on a visit about a trophy on your wall they haven't seen yet (plans/trophies.md):
+## per villager, per kind; anyone else, TROPHY_ANY.
+const TROPHY_LINES := {
+	&"fisher": {&"fish": "Is that the %s? Everyone said it was a story. Look at the size of it!"},
+	&"woodcutter": {&"log": "Count those rings. Older than my grandad's grandad, that tree."},
+	&"prospector_cottage": {&"geode": "Sapphire! The cleanest I've seen this side of the peak."},
+	&"smithy": {&"stick": "Finest stick in the valley. I'd know, I've seen him fetch it."},
+	&"baker_cottage": {&"sheaf": "A golden sheaf! My gran said they bring a good harvest."},
+	&"town_hall": {&"feather": "An eagle's feather from the peak. You climbed all that way?"},
+}
+const TROPHY_ANY := "Well now, %s! Where did you find that?"
 const HELLO := [
 	"Thought I'd come and see how the place is coming along.",
 	"You get the sunsets out here, don't you? Lucky.",
@@ -85,6 +96,9 @@ var _seen: Dictionary = {}  # villager (building id) -> the home's tier they las
 var _harvest: Dictionary = {}  # the garden's morning pickings, waiting in the crate (saved)
 var _harvest_node: DeskNote
 var _swinging := false
+var _wall_done := false  # the mayor's note for a full wall has been left
+var _framed := false  # ...read, and hung by the door
+var _frame_node: Node3D
 ## Trophies out in the world (plans/trophies.md): the peak's feather and the lake's shell where
 ## they lie (kind -> [x, y, z], saved), the days the next ones come, and the dog's stick.
 var _finds: Dictionary = {}
@@ -101,9 +115,12 @@ func _ready() -> void:
 	Trophies.clear()  # (so are the trophies)
 	SaveGame.register(&"home", self)
 	slept.connect(_on_slept)
+	add_to_group("trophies_listener")
+	add_child(TrophyPanel.new())
 	upgraded.connect(func(_t: int) -> void:  # (the desk and the step move with the tier)
 		_place_note()
-		_place_doorstep())
+		_place_doorstep()
+		_place_frame())
 	DayNight.day_broke.connect(_on_morning)
 	Village.addon_changed.connect(func(id: StringName, _s: int, _a: StringName) -> void:
 		if id == def.id:
@@ -113,7 +130,8 @@ func _ready() -> void:
 func to_dict() -> Dictionary:
 	return {"rested": rested, "note": _note, "doorstep": _doorstep, "day": _day, "next_visit": _next_visit,
 			"porch_day": _porch_day, "seen": _seen, "harvest": _harvest, "trophies": Trophies.to_dict(),
-			"finds": _finds, "next_find": _next_find, "dog_day": _dog_day, "stick_due": _stick_due}
+			"finds": _finds, "next_find": _next_find, "dog_day": _dog_day, "stick_due": _stick_due,
+			"wall_done": _wall_done, "framed": _framed}
 
 
 func from_dict(d: Dictionary) -> void:
@@ -130,6 +148,9 @@ func from_dict(d: Dictionary) -> void:
 	_next_find = d.get("next_find", _next_find)
 	_dog_day = int(d.get("dog_day", -1))
 	_stick_due = bool(d.get("stick_due", false))
+	_wall_done = bool(d.get("wall_done", false))
+	_framed = bool(d.get("framed", false))
+	_place_frame.call_deferred()
 	_place_finds.call_deferred()
 	Trophies.adopt_old_logs.call_deferred()
 	_place_note.call_deferred()
@@ -196,10 +217,15 @@ func visited(v: Villager) -> void:
 		var new_tier := int(_seen.get(id, 1)) < tier_shown
 		var built := Village.addon(def.id, 1)
 		var new_addon := built != &"" and StringName(_seen.get(id + "+", &"")) != built
+		var trophy := _unseen_trophy(id)
 		if new_tier:
 			v.say(REACT.get(tier_shown, HELLO.pick_random()))
 		elif new_addon:
 			v.say(REACT_ADDON.get(built, HELLO.pick_random()))
+		elif not trophy.is_empty():
+			_seen[id + "#" + _key(trophy)] = true
+			var line: String = TROPHY_LINES.get(v.building.def.id, {}).get(StringName(trophy["kind"]), TROPHY_ANY)
+			v.say(line % Trophies.title(trophy).to_lower() if line.contains("%s") else line)
 		else:
 			v.say(HELLO.pick_random())
 		_seen[id] = tier_shown
@@ -260,6 +286,9 @@ func _place_note() -> void:
 	_note_node = DeskNote.make(desk.position, _note)
 	desk.get_parent().add_child(_note_node)
 	_note_node.read.connect(func() -> void:
+		if _note.get("framed", false):  # (the mayor's: framed by the door)
+			_framed = true
+			_place_frame()
 		_note = {}
 		SaveGame.mark_dirty())
 
@@ -299,6 +328,12 @@ func _use_mark(t: int, m: Marker3D) -> void:
 			_tiers[t].add_child(HomePlans.make(m.transform, self))
 		"Bed":
 			_tiers[t].add_child(SleepSpot.make(m.transform, self))
+		var n when n.begins_with("TrophySlot") or n.begins_with("MantelSpot"):
+			var p := TrophyPlaque.make(m.transform, n)
+			_tiers[t].add_child(p)
+			if not _looks.has(t):
+				_looks[t] = []
+			_looks[t].append(p)  # (its collision follows the tier's, like the look-at things)
 		_:
 			super(t, m)
 
@@ -485,3 +520,72 @@ func _trophy_errands() -> void:
 		PopupText.spawn(get_parent(), dog.global_position + Vector3.UP * 0.6, "He won't let go till you take it",
 				Trophies.FOUND_COLOR, 8, 1.0)
 		SaveGame.mark_dirty()
+
+
+# --- the trophy wall (plans/trophies.md) -------------------------------------------------------
+
+## A trophy on your wall villager `id` hasn't remarked on yet, or {}.
+func _unseen_trophy(id: String) -> Dictionary:
+	for place in Trophies.hung:
+		var r: Dictionary = Trophies.hung[place]
+		if not _seen.has(id + "#" + _key(r)):
+			return r
+	return {}
+
+
+static func _key(r: Dictionary) -> String:
+	return "%s|%s|%s" % [r.get("kind"), r.get("species"), r.get("day")]
+
+
+## Every place on the wall (and the mantel) filled: the mayor leaves a framed note, once.
+func trophies_changed() -> void:
+	var places := 0
+	var filled := 0
+	for m in marks(tier_shown):
+		var n := String(m.name)
+		if n.begins_with("TrophySlot") or n.begins_with("MantelSpot"):
+			places += 1
+			if Trophies.hung.has(n):
+				filled += 1
+	if places > 0 and filled == places and not _wall_done:
+		_wall_done = true
+		_note = {"from": "Mayor Hartwell", "framed": true,
+				"text": "Hearthvale's proudest wall. Frame this, and hang it by your door. From all of us."}
+		_place_note()
+
+
+## The mayor's note, framed by the door once you've read it.
+func _place_frame() -> void:
+	if is_instance_valid(_frame_node):
+		_frame_node.queue_free()
+	_frame_node = null
+	var at := mark("NoteFrame")
+	if not _framed or at == null:
+		return
+	var frame := Node3D.new()
+	var box := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(0.5, 0.38, 0.03)
+	box.mesh = mesh
+	var wood := StandardMaterial3D.new()
+	wood.albedo_color = Color("6b4a2e")
+	box.material_override = wood
+	frame.add_child(box)
+	var paper := MeshInstance3D.new()
+	var sheet := BoxMesh.new()
+	sheet.size = Vector3(0.42, 0.3, 0.035)
+	paper.mesh = sheet
+	var white := StandardMaterial3D.new()
+	white.albedo_color = DeskNote.PAPER
+	paper.material_override = white
+	frame.add_child(paper)
+	var words := Label3D.new()
+	words.text = "Hearthvale's proudest wall\n— Mayor Hartwell"
+	words.pixel_size = 0.0011
+	words.font_size = 40
+	words.modulate = Color("4a3524")
+	words.outline_size = 0
+	words.position = Vector3(0, 0, 0.02)
+	frame.add_child(words)
+	at.add_child(frame)
+	_frame_node = frame
