@@ -1433,6 +1433,47 @@ def dog_blanket():
     export(os.path.join("village", "props", "dog_blanket"))
 
 
+def landslide_mud():
+    """The landslide's fan of mud and stones over the road east (plans/market.md): a long low
+    mound, highest at its uphill side (Blender +Y), spilling down across the road. 12 m by 9 m."""
+    reset()
+    k = Kit("", 660)
+    rng = k.rng
+    for i in range(9):  # overlapping squashed lumps make the fan
+        x = rng.uniform(-4.5, 4.5)
+        y = rng.uniform(-2.5, 3.0)
+        r = rng.uniform(1.8, 2.8) * (1.0 + 0.2 * (y + 2.5) / 5.5)
+        bm = blob(r, rng, 0.2, (1.4, 1.0, 0.24), subdiv=2)
+        k.add("Mud", bm, ("terrain.dirt", "wood.3", "wood.2", "wood.4"), (x, y, r * 0.12 + (y + 2.5) * 0.08))
+    for i in range(14):  # stones and broken branches in the mud
+        x, y = rng.uniform(-5, 5), rng.uniform(-3, 3)
+        s = rng.uniform(0.18, 0.45)
+        k.add("Stone", blob(s, rng, 0.3, (1.0, 1.0, 0.7)), ("stone.4", "stone.3", "stone.2"), (x, y, 0.5 + (y + 3) * 0.12))
+    for i in range(4):
+        x, y = rng.uniform(-4, 4), rng.uniform(-2, 2.5)
+        k.log("Branch", rng.uniform(1.0, 2.2), 0.07, (x, y, 0.7 + (y + 3) * 0.1))
+    export(os.path.join("village", "props", "landslide_mud"))
+
+
+def retaining_wall():
+    """Timber cribbing that holds the slope back above the road east once the slide is cleared:
+    stacked logs along the uphill side (Blender +Y is the slope), cross-ties into it every few
+    metres, the face leaning back a little. 12 m long, 2 m high."""
+    reset()
+    k = Kit("", 661)
+    length, rows, r = 12.0, 6, 0.16
+    for i in range(rows):
+        z = r + i * r * 1.9
+        lean = i * 0.12  # each row set a little further back into the slope
+        k.log("Log", length + k.rng.uniform(-0.2, 0.2), r, (k.rng.uniform(-0.1, 0.1), lean, z))
+        if i % 2 == 1:
+            for x in [-5.0, -2.5, 0.0, 2.5, 5.0]:
+                k.log("Tie", 1.6, r * 0.85, (x, lean + 0.7, z + r * 0.9), axis="y")
+    for x in [-5.6, 5.6]:  # stakes at the ends
+        k.post("Stake", 0.09, 0.0, 2.3, x, -0.15, ("wood.3", "wood.2", "wood.1"))
+    export(os.path.join("village", "props", "retaining_wall"))
+
+
 def dogs():
     os.makedirs(os.path.join(OUT_DIR, "dogs"), exist_ok=True)
     for breed, coats in DOG_COATS.items():
@@ -1446,6 +1487,7 @@ for build in (woodcutter, smithy, fisher, town_hall, baker_cottage, prospector_c
               woodcutter_villager, smith_villager, fisher_villager, mayor_villager,
               baker_villager, prospector_villager,
               bench, lamp_post, lamp_post_rustic, lantern, noticeboard, planter, well, fountain, barrel_prop, crate_prop, signpost, dogs,
-              doghouse, doghouse_painted, doghouse_porch, dog_bowl, dog_blanket):
+              doghouse, doghouse_painted, doghouse_porch, dog_bowl, dog_blanket,
+              landslide_mud, retaining_wall):
     if not only or build.__name__ in only:
         build()

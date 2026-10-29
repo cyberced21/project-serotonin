@@ -7,7 +7,8 @@ extends Node
 ##     lit, so that's where a road project's "done" lives).
 ## A project opens with the town hall's tier (`hall`) and costs gathered goods. Some wait for
 ## something first (a SPOTS entry's sixth field, `needs`): another project done (so the doghouse
-## grows in steps, plans/dog.md), or &"dog" for having a dog; until then they aren't on the board.
+## grows in steps, plans/dog.md), &"dog" for having a dog, or &"slide" for the landslide's boulders
+## all broken (plans/market.md); until then they aren't on the board.
 
 ## Paid for (not ticked off in the debug menu): VillageDecor builds it in view.
 signal completed(id: StringName)
@@ -23,6 +24,7 @@ const SPOTS := [
 	[&"footbridge", "Mend the footbridge", "Planks across the water, so you stop wading.", {&"oak": 30, &"iron": 10}, 3],
 	[&"kennel", "A kennel for your dog", "A little wooden house by the square: somewhere of his own to sleep at night.", {&"wood": 15}, 1, &"dog"],
 	[&"kennel_paint", "Paint it and hang his name", "Cream walls, a red roof and a sign over the door with his name on it.", {&"birch": 10, &"wheat": 6, &"barley": 4}, 1, &"kennel"],
+	[&"retaining_wall", "Shore up the road east", "A timber wall to hold the slope back, so the landslide's road stays open and traders can come over the pass. Dig out the boulders first.", {&"wood": 25, &"pine": 15, &"iron": 6}, 2, &"slide"],
 	[&"kennel_porch", "A bowl, a blanket and a porch", "A deck out front with a rail, a water bowl and a checked blanket to flop on.", {&"oak": 12, &"iron": 4}, 2, &"kennel_paint"],
 ]
 ## Road lamps: a stretch near the village (one that comes within NEAR_VILLAGE m of the square)
@@ -66,7 +68,12 @@ func all() -> Array[Dictionary]:
 
 
 func _needs_met(need: StringName) -> bool:
-	return Companion.has_dog if need == &"dog" else _done.has(need)
+	if need == &"dog":
+		return Companion.has_dog
+	if need == &"slide":  # every boulder of the landslide broken
+		var slide := get_tree().get_first_node_in_group("landslide")
+		return slide != null and slide.call("cleared")
+	return _done.has(need)
 
 
 static func _lower_first(t: String) -> String:
