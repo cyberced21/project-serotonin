@@ -116,6 +116,11 @@ func is_open() -> bool:
 	return _layer.visible
 
 
+## Another menu opening over it (the pause menu, the map, the debug menu): leave the table.
+func close() -> void:
+	leave()
+
+
 func just_closed() -> bool:
 	return Time.get_ticks_msec() - _closed_msec < 250
 

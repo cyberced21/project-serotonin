@@ -104,7 +104,7 @@ func _real_throw(dice: Node3D) -> void:
 	var inside := true
 	for d in dice.get("_dice"):
 		var p: Vector3 = (d as Node3D).position
-		if absf(p.x) > 0.31 or absf(p.z) > 0.31 or p.y < 0.0 or p.y > 0.1:
+		if absf(p.x) > 0.31 or absf(p.z) > 0.31 or p.y < 0.0 or p.y > 0.16:  # (0.16: one may rest on another)
 			inside = false
 			print("  a die ended up at %s" % p.snapped(Vector3.ONE * 0.01))
 	print("  thrown: %s in %.1f s" % [roll, secs])
@@ -133,6 +133,16 @@ func _sitting(dice: Node3D) -> void:
 	_check(player.get("seat") == seat1 and player.global_position.distance_to(seat1.global_position) < 0.05, "you sit down at the dice table")
 	_check(seat1.get_meta(&"taken_by") == player, "...and nobody else can take the seat")
 	_check(dice.call("is_open"), "...the dice panel opens")
+	var missing := []
+	for panel in get_nodes_in_group("modal_panel"):  # (every menu closes them when it opens)
+		for m in ["is_open", "just_closed", "close"]:
+			if not panel.has_method(m):
+				missing.append("%s.%s" % [panel.name, m])
+	_check(missing.is_empty(), "every modal panel can be closed by another menu %s" % [missing])
+	var debug := root.get_node("DebugMenu")
+	debug.call("open")
+	_check(not dice.call("is_open"), "the debug menu (F1) opens over it and the dice panel closes")
+	debug.call("close")
 	player.call("stand")
 	for i in 3:  # (process_frame comes before the nodes' _process)
 		await process_frame
