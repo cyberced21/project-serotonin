@@ -710,6 +710,12 @@ func respawn_now() -> void:
 		_respawn_timer.time_left = 0.01
 
 
+## Time passes while you sleep (Home.skip_to_morning): if depleted, `seconds` nearer growing back.
+func fast_forward(seconds: float) -> void:
+	if _respawn_timer:
+		_respawn_timer.time_left = maxf(_respawn_timer.time_left - seconds, 0.01)
+
+
 ## respawn_time, shortened for rocks by Edda's assay office.
 func _regrow_time() -> float:
 	var regrow := Village.stat(&"rock_regrow") if skill == &"mining" else 0.0

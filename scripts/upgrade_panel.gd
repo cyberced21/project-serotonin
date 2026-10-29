@@ -22,7 +22,8 @@ const PERK_COLOR := Color("a9d8ff")
 
 enum Tab { UPGRADE, FORGE, TALENTS }
 
-var villager: Villager
+## Who opened it: a Villager, or your home's plans (HomePlans). Anything with a `building`.
+var villager: Node3D
 var _closed_msec := -100000
 
 var _panel: PanelContainer
@@ -64,9 +65,9 @@ func just_closed() -> bool:
 	return Time.get_ticks_msec() - _closed_msec < 250
 
 
-func open(v: Villager) -> void:
+func open(v: Node3D) -> void:
 	villager = v
-	var def := v.building.def
+	var def := _building().def
 	_name.text = def.villager_name
 	_line.text = "“%s”" % _pick_line()
 	_tab = Tab.UPGRADE
@@ -80,6 +81,11 @@ func open(v: Villager) -> void:
 	t.tween_property(_panel, "modulate:a", 1.0, 0.2)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Sfx.play_ui(&"open")
+
+
+## The building whose upgrades this shows.
+func _building() -> Building:
+	return villager.get("building") as Building
 
 
 func close() -> void:
@@ -113,7 +119,7 @@ func _process(_delta: float) -> void:
 
 
 func _pick_line() -> String:
-	var def := villager.building.def
+	var def := _building().def
 	if Village.is_capped(def.id):
 		return def.capped_line
 	if DayNight.is_night() and not def.night_lines.is_empty():
@@ -127,7 +133,7 @@ func _pick_line() -> String:
 func _refresh() -> void:
 	if villager == null:
 		return
-	var def := villager.building.def
+	var def := _building().def
 	_tabs.visible = def.id == Tools.SMITHY
 	if not _tabs.visible:
 		_tab = Tab.UPGRADE
@@ -263,7 +269,7 @@ func _refresh_forge() -> void:
 func _on_forge_pressed(tool: StringName) -> void:
 	if villager == null:
 		return
-	var greta := villager
+	var greta := villager as Villager
 	if Tools.forge(tool):
 		close()
 		ForgeCutscene.play(greta, tool)  # Greta makes it, then hands it over
@@ -351,7 +357,7 @@ func _perk_lines(tier: BuildingTier, prefix: String, except: BuildingTier = null
 func _on_upgrade_pressed() -> void:
 	if villager == null:
 		return
-	var id := villager.building.def.id
+	var id := _building().def.id
 	if Village.upgrade(id):
 		close()  # step back and watch it go up
 

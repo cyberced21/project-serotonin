@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="BuildingDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/building_def.gd" id="1_def"]
+[ext_resource type="Script" path="res://scripts/building_tier.gd" id="2_tier"]
+[ext_resource type="PackedScene" path="res://models/village/home.gltf" id="3_model"]
+
+[sub_resource type="Resource" id="Tier_1"]
+script = ExtResource("2_tier")
+name = "Tent"
+lines = PackedStringArray("A tent, a fire and a view of the sunset. It's a start.", "The canvas flaps all night. A real roof would be nice.", "Some logs and birch, and this could be a cabin.")
+
+[sub_resource type="Resource" id="Tier_2"]
+script = ExtResource("2_tier")
+name = "Cabin"
+cost = Dictionary[StringName, int]({
+&"wood": 30,
+&"birch": 15
+})
+hall_tier = 1
+lines = PackedStringArray("Four walls, a stove and a proper bed. You sleep when the sun goes down now.", "The dog's taken the basket by the stove. Of course he has.", "The plaster's still drying. It smells like home already.")
+
+[resource]
+script = ExtResource("1_def")
+id = &"home"
+display_name = "Your home"
+model = ExtResource("3_model")
+tiers = Array[ExtResource("2_tier")]([SubResource("Tier_1"), SubResource("Tier_2")])
+villager_name = "Your home"
+villager_role = "Home"
+capped_line = "The mayor wants the town hall bigger before anyone builds bigger. Even you."
+night_lines = PackedStringArray("The fire's low and the stars are out. Time for bed, maybe.")
