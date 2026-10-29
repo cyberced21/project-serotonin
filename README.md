@@ -111,6 +111,8 @@ whatever you hit.
   - **Sit down** on any free seat (E): benches, the terrace, the tavern's stools. A movement key stands you up.
   - **Dice:** sit at the tavern's dice table of an evening and a villager comes over to play Hound's Luck. Roll five dice; 1s and 5s and three of a kind score and are set aside; roll the rest or stop and bank, but a roll that scores nothing loses the turn. First to 2000. It's played for fun: a chalkboard keeps the tally against each villager.
 
+  ![The boarded-up tavern, breakfast on the terrace, the Sleepy Hound lit at night, inside by the bar and the fire, dancing at the top tier, the square at night, a game of dice](docs/images/tavern/sheet.jpg)
+
 - **A village to build up.** East of the clearing, a dirt path leads along a shallow valley to the village and its four villagers: a woodcutter, a smith, a fisher and the mayor.
   - Talk to a villager (E) to see what their building's next tier costs, then pay with the logs, ore and fish you've gathered.
   - **Greta forges tools.** Her panel has a Forge tab: the next pick, axe and sickle, what each opens and what it costs. Each is made from what the tool before it can gather, and her smithy's tier caps the best she can make (the Stone Forge does copper, the Smithy iron, the Crystal Forge crystal).

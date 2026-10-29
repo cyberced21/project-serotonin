@@ -5,8 +5,8 @@ off `main`.
 
 Status (2026-10-29): **all phases built** on branch `tavern`, except picking the sounds by ear
 (provisional first choices are in; the candidates are on
-https://claude.ai/artifact/SsVfYHdugLLt1r2gyZyHsZ) and in-game screenshots (they need a game
-window). Bot-tested only: `tools/test_paths.gd`, `tools/test_day.gd`, `tools/test_dice.gd`. Open
+https://claude.ai/artifact/SsVfYHdugLLt1r2gyZyHsZ). Screenshots: docs/images/tavern/
+(`tools/tavern_shots.gd`). Bot-tested only: `tools/test_paths.gd`, `tools/test_day.gd`, `tools/test_dice.gd`. Open
 items: docs/TODO.md, "Villager days and the tavern".
 
 ### Built, and what changed on the way
@@ -31,6 +31,9 @@ items: docs/TODO.md, "Villager days and the tavern".
 - **The musician is Ollie** (the fisher's "plays" quirk), with a fiddle and bow made in code; the
   band is a 3D player on the Music bus, muffled with distance, playing the library's "tavern" slot.
 - Dancing: every so often during a tune at the top tier, two get up for 25 s.
+- **Villagers with a seat** (sat in it, or on their way) don't stop for you coming near, only when
+  you talk to them: the screenshots showed whoever came over to play dice stopping to chat with
+  you (sat right across) and never sitting down.
 
 ## Where we start (2026-10-29)
 

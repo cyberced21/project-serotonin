@@ -19,7 +19,7 @@ const SETTLE_WAIT := 3.0
 const SETTLE_GIVE_UP := 7.0
 const THINK := 1.1
 ## How long you wait for someone to come and play before giving up on it.
-const COME_OVER := 15.0
+const COME_OVER := 30.0
 ## Dice landing in the tray (audio/tavern/SOURCES.md).
 const DICE_SOUND := preload("res://audio/tavern/dice.wav")
 const DICE_DB := -8.0
@@ -153,8 +153,10 @@ func _sit_down(player: Node) -> void:
 	_score_line.text = ""
 	_turn_line.text = "First to %d. Ones are 100, fives 50, three of a kind the face times 100." % DiceRules.TARGET
 	_set_buttons(false, false, false)
-	if player.has_method("face_point"):
-		player.face_point(global_position, 0.6)
+	if player.has_method("face_point"):  # (once you're on the stool: it aims from where the eye is)
+		get_tree().create_timer(0.5).timeout.connect(func() -> void:
+			if is_instance_valid(player) and player.get("seat") == _seat1:
+				player.face_point(global_position, 0.6))
 	var tavern := get_tree().get_first_node_in_group("tavern")
 	if tavern == null or not tavern.call("is_open"):
 		_say.text = "Nobody about to play with. Come back of an evening."

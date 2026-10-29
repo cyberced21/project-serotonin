@@ -147,9 +147,30 @@ func _tavern_night(village: Node) -> void:
 				dancing += 1
 	Engine.time_scale = 1.0
 	_check(dancing > 0, "the Sleepy Hound: %d up dancing" % dancing)
+	# (dice at the top tier too, mid-dance: someone still comes over)
+	var dice4: Node3D = tavern.get("dice")
+	player.call("sit", dice4.get("_seat1"))
+	player.global_position = (dice4.get("_seat1") as Node3D).global_position
+	var w4 := 0
+	var comer: Node = null
+	while not dice4.get("playing") and w4 < 60 * 20:
+		await physics_frame
+		w4 += 1
+		if comer == null:
+			for v in _villagers():
+				if v.get("_seat") == dice4.get("_seat2"):
+					comer = v
+		if comer and w4 % 60 == 0:
+			print("    %s: state %d, at %s, going to %s, %d points left" % [comer.call("display_name"), comer.get("state"), comer.global_position.snapped(Vector3.ONE * 0.1),
+				comer.get("_target").name if comer.get("_target") else "-", (comer.get("_route") as PackedVector3Array).size()])
+	_check(dice4.get("playing"), "top tier: someone comes to play dice too")
+	player.call("stand")
+	for i in 3:
+		await process_frame
 	# a game of dice: sit at the table, and someone comes over to play
 	var dice: Node3D = tavern.get("dice")
 	player.call("sit", dice.get("_seat1"))
+	player.global_position = (dice.get("_seat1") as Node3D).global_position  # (the player's tick is off: put them there)
 	var waited := 0
 	while not dice.get("playing") and waited < 60 * 20:
 		await physics_frame

@@ -270,7 +270,10 @@ func _tick(delta: float) -> void:
 		to_player = Vector2(_player.global_position.x - global_position.x,
 			_player.global_position.z - global_position.z).length()
 	var panel := get_tree().get_first_node_in_group("upgrade_panel") as UpgradePanel
-	var talking := (panel != null and panel.villager == self) or to_player < talk_radius
+	# (with a seat of their own, at a table or the dice, sat in it or on the way: they don't stop
+	# for you coming near, only when you talk to them, E)
+	var settled := _settled()
+	var talking := (panel != null and panel.villager == self) or (to_player < talk_radius and _seat == null)
 
 	# not moved in yet (a cottage the town hall hasn't unlocked)
 	var away := building.tier_shown == 0
@@ -309,7 +312,7 @@ func _tick(delta: float) -> void:
 				_enter(State.IDLE)
 		State.IDLE:
 			var seated := _seated()
-			var settled := _seat != null and _target == _seat  # (got to their seat: stay put)
+			settled = _settled()  # (got to their seat: they stay put)
 			if seated or settled:
 				_turn_to_yaw(_marker_yaw(_target), delta, 6.0)
 			if settled and _seat.is_in_group("stage"):
@@ -506,6 +509,11 @@ func join_dice(seat: Marker3D) -> void:
 	_seat = seat
 	seat.set_meta(&"taken_by", self)
 	_walk_to(seat)
+
+
+## At the seat (or stage, or dance spot) they've claimed, not just on the way to it.
+func _settled() -> bool:
+	return _seat != null and _target == _seat and state != State.WALK 		and Vector2(global_position.x - _seat.global_position.x, global_position.z - _seat.global_position.z).length() < 0.25
 
 
 ## Sat at the seat they were going to.

@@ -1870,7 +1870,7 @@ def tavern():
         # the dice table, by the right-hand window
         k.box("TableTop", (0.8, 0.8, 0.07), (2.6, -2.0, 0.78), ("wood.6", "wood.5", "wood.4"))
         k.post("TableLeg", 0.06, 0, 0.75, 2.6, -2.0, "wood.3")
-        k.add("DiceCup", prism(8, 0.07, 0.06, 0.14), ("wood.2", "wood.1", "wood.1"), (2.75, -1.8, 0.885))
+        # (the dice tray on top is the game's: DiceGame)
         for x, n, face in ((1.95, 1, (1, 0)), (3.25, 2, (-1, 0))):
             k.add("StoolSeat", prism(8, 0.19, 0.19, 0.05), ("wood.6", "wood.5", "wood.4"), (x, -2.0, 0.46))
             k.add("StoolLeg", prism(6, 0.05, 0.05, 0.44), "wood.3", (x, -2.0, 0.24))
