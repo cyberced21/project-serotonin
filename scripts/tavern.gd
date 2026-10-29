@@ -33,6 +33,15 @@ const BAND_FADE := 2.5
 const DANCERS := 2
 const DANCE_EVERY := Vector2(15.0, 35.0)
 const DANCE_TIME := 25.0
+## Sounds (audio/tavern/SOURCES.md): the room's murmur, louder as it fills (full at FULL_ROOM
+## villagers), and the fire from the third tier, both looping where they are.
+const MURMUR := preload("res://audio/tavern/murmur.wav")
+const FIRE := preload("res://audio/tavern/fire.wav")
+const MURMUR_DB := -10.0
+const FIRE_DB := -14.0
+const FULL_ROOM := 6
+## Where the fire is, in the tavern's own frame (tools/blender/make_village.py tavern_fireplace).
+const HEARTH := Vector3(3.5, 0.4, -0.6)
 ## The room, in the tavern's own frame (x across, z front to back, +Z the front), for "are you
 ## inside": the main hall, and the annex at the top tier.
 const HALL := AABB(Vector3(-4.0, -0.5, -3.5), Vector3(8.0, 4.0, 7.0))
@@ -40,6 +49,8 @@ const ANNEX := AABB(Vector3(-7.0, -0.5, -3.5), Vector3(3.0, 4.0, 6.0))
 
 var dice: DiceGame
 var band: AudioStreamPlayer3D
+var _murmur: LoopBed
+var _fire: LoopBed
 var _band_level := 0.0
 var _between := 0.0
 var _dance_in := 0.0
@@ -85,6 +96,8 @@ func _ready() -> void:
 	add_child(band)
 	band.finished.connect(func() -> void: _between = randf_range(BETWEEN_TUNES.x, BETWEEN_TUNES.y))
 	_place_band()
+	_murmur = _bed(MURMUR, MURMUR_DB, Vector3(0, 1.5, 0), 6.0)
+	_fire = _bed(FIRE, FIRE_DB, HEARTH, 3.0)
 
 
 func _process(delta: float) -> void:
@@ -99,12 +112,39 @@ func _process(delta: float) -> void:
 			l.visible = level > 0.01
 	_band(delta)
 	_dance(delta)
+	_murmur.level = _lamp_level * clampf(float(_crowd()) / FULL_ROOM, 0.0, 1.0)
+	_fire.level = _lamp_level if tier_shown >= 3 else 0.0
 	if level > 0.01:  # firelight flickers, each lamp out of step
 		var t := Time.get_ticks_msec() / 1000.0
 		for l in _lights:
 			var ph := float(l.get_instance_id() % 997)
 			var flicker := 1.0 + 0.1 * sin(t * 8.3 + ph) + 0.06 * sin(t * 21.7 + ph * 1.7)
 			l.light_energy = level * float(l.get_meta("night_energy", 1.0)) * flicker
+
+
+func _bed(stream: AudioStream, db: float, at: Vector3, unit: float) -> LoopBed:
+	var bed := LoopBed.new()
+	bed.stream = stream
+	bed.bus = &"Ambience"
+	bed.positional = true
+	bed.unit_size = unit
+	bed.max_distance = 40.0
+	bed.trim_db = db
+	add_child(bed)
+	bed.position = at
+	return bed
+
+
+## How many are in for the evening (in the room, not the keeper).
+func _crowd() -> int:
+	var n := 0
+	for b in get_tree().get_nodes_in_group("building"):
+		var v := b.get_node_or_null("Villager") as Villager
+		if v and b != self and v.get("_part") == VillagerDay.Part.TAVERN:
+			var p := global_transform.affine_inverse() * v.global_position
+			if HALL.has_point(p) or ANNEX.has_point(p):
+				n += 1
+	return n
 
 
 ## The dice game goes on the dice table of the tier on show (none in the ruin).

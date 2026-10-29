@@ -20,6 +20,9 @@ const SETTLE_GIVE_UP := 7.0
 const THINK := 1.1
 ## How long you wait for someone to come and play before giving up on it.
 const COME_OVER := 15.0
+## Dice landing in the tray (audio/tavern/SOURCES.md).
+const DICE_SOUND := preload("res://audio/tavern/dice.wav")
+const DICE_DB := -8.0
 const FELT := Color("2f5a3c")
 const RIM_WOOD := Color("7a5236")
 const CHALK := Color(0.93, 0.92, 0.86)
@@ -43,6 +46,7 @@ var _kept: Array[Die] = []
 var _seat1: Marker3D
 var _seat2: Marker3D
 var _tray: StaticBody3D
+var _clatter: AudioStreamPlayer3D
 var _was_sat := false
 var _board: Label3D
 var _game := 0  # bumped by every start and leave, so a game left half-way stops
@@ -73,6 +77,12 @@ func _ready() -> void:
 		d.position = _row_spot(0, i)
 		_dice.append(d)
 	_build_panel()
+	_clatter = AudioStreamPlayer3D.new()
+	_clatter.stream = DICE_SOUND
+	_clatter.bus = &"SFX"
+	_clatter.volume_db = DICE_DB
+	_clatter.unit_size = 2.0
+	add_child(_clatter)
 	SaveGame.register(&"dice", self)
 
 
@@ -312,6 +322,8 @@ func _throw(who: int) -> Array[int]:
 		d.basis = Basis.from_euler(Vector3(rng.randf() * TAU, rng.randf() * TAU, rng.randf() * TAU))
 		d.throw(global_basis * Vector3(-side * rng.randf_range(0.9, 1.3), rng.randf_range(0.1, 0.4), rng.randf_range(-0.35, 0.35)),
 			Vector3(rng.randf_range(-18, 18), rng.randf_range(-18, 18), rng.randf_range(-18, 18)))
+	_clatter.pitch_scale = rng.randf_range(0.92, 1.08)
+	_clatter.play()
 	var t := 0.0
 	var nudged := false
 	while t < SETTLE_GIVE_UP:

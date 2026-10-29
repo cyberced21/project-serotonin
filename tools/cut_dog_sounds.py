@@ -3,7 +3,8 @@ page and then the game. Blender's bundled Python decodes the MP3s (its `aud` mod
 
     blender -b --python-exit-code 1 -P tools/cut_dog_sounds.py -- <folder of <id>.mp3> <meta.json> <out folder>
 
-meta.json maps each sound id to {"kind": pant | sniff | whine | woof | shake, ...}. Every clip is
+meta.json maps each sound id to {"kind": pant | sniff | whine | woof | shake, ...} (or the
+trader's and the tavern's kinds: see MAX_LEN). Every clip is
 mixed to mono at 48 kHz, cut to the loudest stretch no longer than its kind's MAX_LEN (a woof:
 the loudest single bark), faded in and out, levelled to LOUDNESS (the game sets each kind's mix),
 and written as 16-bit WAV <out>/<id>.wav. The recordings are CC0.
@@ -20,7 +21,8 @@ RATE = 48000
 LOUDNESS = -20.0  # dBFS RMS over the clip's loud part
 ## Longest clip per kind (s), and the fades (s).
 MAX_LEN = {"pant": 2.6, "sniff": 2.0, "whine": 2.2, "woof": 0.9, "shake": 1.8,
-           "cart": 6.0, "snort": 2.5, "trade": 1.4}  # (the trader too: plans/market.md)
+           "cart": 6.0, "snort": 2.5, "trade": 1.4,  # (the trader too: plans/market.md)
+           "murmur": 30.0, "fire": 25.0, "laugh": 4.0, "clink": 1.6, "dice": 2.5}  # (and the tavern: plans/tavern.md)
 FADE = 0.03
 
 argv = sys.argv[sys.argv.index("--") + 1:]

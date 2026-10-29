@@ -19,6 +19,9 @@ enum Work { CHOP, HAMMER, FISH, ORATE, TEND, WIPE }
 const PALETTE := preload("res://materials/node_palette.tres")
 const CHOP_SFX := preload("res://audio/wood_hit.tres")
 const CLANK_SFX := preload("res://audio/stone_hit.tres")
+## At the tavern (audio/tavern/SOURCES.md): a laugh, a mug raised (now and then a clink).
+const LAUGH_SFX := preload("res://audio/tavern/laugh.wav")
+const CLINK_SFX := preload("res://audio/tavern/clink.wav")
 ## Physics layer 7: the player bumps into villagers and aims at them, but they're not "world"
 ## (no mantling onto heads, debris and pickups pass through). (Layer 6 is the fish hit volumes.)
 const NPC_LAYER := 1 << 6
@@ -80,6 +83,8 @@ var _stroll: Marker3D  # where they're strolling to next
 var _stroll_i := 0
 var _mug: MeshInstance3D  # carried at the tavern
 var _throw_at := -10.0  # (_phase) when they last threw the dice
+var _laughing := false  # (for a laugh's sound at its start)
+var _drinking := false
 var _fiddle: MeshInstance3D  # on the stage (its bow is the "bow" meta)
 var _lights_out := 0.0  # evening hour (VillagerDay.evening_hours) their lamp goes out
 ## A cutscene is posing this villager (script_pose): no walking, working or talking of its own.
@@ -755,6 +760,12 @@ func _animate_chat(seated: bool) -> void:
 	if since_throw < 0.7:  # throwing the dice: back, then a flick forward over the table
 		var k := since_throw / 0.7
 		_pose(&"ArmR", lerpf(-0.7, -1.9, sin(k * PI * 0.5)) if k < 0.6 else lerpf(-1.9, -1.1, (k - 0.6) / 0.4), 0.1)
+	if laugh > 0.3 and not _laughing:
+		_play(LAUGH_SFX, randf_range(0.9, 1.12))
+	_laughing = laugh > 0.3
+	if drink > 0.4 and not _drinking and randf() < 0.5:
+		_play(CLINK_SFX, randf_range(0.92, 1.08))
+	_drinking = drink > 0.4
 	var bounce := absf(sin(_phase * 14.0)) * 0.03 * laugh
 	if seated:
 		_pose(&"Body", -0.08 - laugh * 0.15, 0.0, 0.0, Vector3(0, 0.02 + bounce, -0.05))
