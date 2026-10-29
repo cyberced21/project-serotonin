@@ -34,6 +34,9 @@ const AREAS := {&"hearthvale": &"village", &"pinewood": &"forest", &"stillwater"
 
 ## 0..1: how loud the music plays (a cutscene lowers it).
 var duck := 1.0
+## 0..1: how near you are to live music in the world (the tavern's band, Tavern): the waves fade
+## under it, and no new piece starts while it's playing close by.
+var band := 0.0
 ## Debug readout: what's happening now.
 var status := ""
 
@@ -79,7 +82,7 @@ func _process(delta: float) -> void:
 		_cue_fade = move_toward(_cue_fade, 0.0, delta / CUE_FADE_OUT)
 	else:
 		_cue_fade = move_toward(_cue_fade, 1.0, delta / CUE_FADE_IN)
-	_player.volume_db = MIX_DB + _level_db + linear_to_db(maxf(_fade * duck * _cue_fade, 0.0001))
+	_player.volume_db = MIX_DB + _level_db + linear_to_db(maxf(_fade * duck * _cue_fade * (1.0 - band), 0.0001))
 	if _player.playing or _fading_out:
 		status = "playing %s" % _player.stream.resource_path.get_file()
 		return
@@ -87,6 +90,9 @@ func _process(delta: float) -> void:
 		status = "menu"
 		if not LIBRARY.pieces(&"menu").is_empty():
 			play_next()
+		return
+	if band > 0.3:
+		status = "quiet: the band's playing"
 		return
 	_gap -= delta
 	status = "quiet, next piece in %d s (%s)" % [maxi(int(_gap), 0), _slot()]

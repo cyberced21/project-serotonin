@@ -80,6 +80,7 @@ var _stroll: Marker3D  # where they're strolling to next
 var _stroll_i := 0
 var _mug: MeshInstance3D  # carried at the tavern
 var _throw_at := -10.0  # (_phase) when they last threw the dice
+var _fiddle: MeshInstance3D  # on the stage (its bow is the "bow" meta)
 var _lights_out := 0.0  # evening hour (VillagerDay.evening_hours) their lamp goes out
 ## A cutscene is posing this villager (script_pose): no walking, working or talking of its own.
 var scripted := false
@@ -279,7 +280,9 @@ func _tick(delta: float) -> void:
 	var part := _day_part()
 	if part != _part:
 		_change_part(part, talking)
-	_show_mug(_part == VillagerDay.Part.TAVERN and not building is Tavern)
+	var on_stage := _seat != null and _seat.is_in_group("stage") and _part == VillagerDay.Part.TAVERN
+	_show_mug(_part == VillagerDay.Part.TAVERN and not building is Tavern and not on_stage)
+	_show_fiddle(on_stage)
 
 	if state == State.CHEER:
 		_cheer_time += delta
@@ -304,7 +307,11 @@ func _tick(delta: float) -> void:
 			var settled := _seat != null and _target == _seat  # (got to their seat: stay put)
 			if seated or settled:
 				_turn_to_yaw(_marker_yaw(_target), delta, 6.0)
-			if settled and _part == VillagerDay.Part.TAVERN:
+			if settled and _seat.is_in_group("stage"):
+				_animate_fiddle()
+			elif settled and _seat.is_in_group("dance_spot"):
+				_animate_dance()
+			elif settled and _part == VillagerDay.Part.TAVERN:
 				_animate_chat(seated)
 			elif seated:
 				_animate_sit()
@@ -437,6 +444,16 @@ func _next_spot() -> Marker3D:
 		VillagerDay.Part.TAVERN:
 			if building is Tavern:  # the keeper, behind the bar
 				return building.work_spot()
+			if VillagerDay.has_quirk(building.def.id, "plays"):  # Ollie, on the stage if there is one
+				if _seat and _seat.is_in_group("stage"):
+					return _seat
+				var old := _seat
+				_seat = null
+				if _claim_seat(&"", "stage"):
+					if old and is_instance_valid(old) and old.has_meta(&"taken_by") and old.get_meta(&"taken_by") == self:
+						old.remove_meta(&"taken_by")
+					return _seat
+				_seat = old
 			if _seat == null and _claim_seat(&"tavern") == null:
 				_claim_seat(&"tavern", "stand_spot")
 			if _seat:
@@ -475,7 +492,7 @@ func busy() -> bool:
 
 ## Free to come and play dice (DiceGame): out at the tavern and settled in, nothing else on.
 func free_for_dice() -> bool:
-	return _part == VillagerDay.Part.TAVERN and not _inside and not scripted and not _watching 		and _seat != null and _target == _seat and state == State.IDLE and not _seat.is_in_group("dice_seat")
+	return _part == VillagerDay.Part.TAVERN and not _inside and not scripted and not _watching 		and _seat != null and _target == _seat and state == State.IDLE and _seat.is_in_group("seat")
 
 
 ## Comes over to the dice table and sits at `seat`.
@@ -494,6 +511,35 @@ func at_seat() -> bool:
 ## The game's over: back to a seat of their own.
 func leave_dice() -> void:
 	if _seat and _seat.is_in_group("dice_seat"):
+		_leave_seat()
+		if not _inside and not scripted:
+			_walk_to(_next_spot())
+
+
+## Their seat has gone (the tavern was rebuilt round them): find another.
+func reseat() -> void:
+	if _seat and is_instance_valid(_seat) and not _seat.is_visible_in_tree():
+		_leave_seat()
+		if not _inside and not scripted and not _watching:
+			_walk_to(_next_spot())
+
+
+## On the stage, playing: the band's going (Tavern).
+func playing_music() -> bool:
+	return _seat != null and _seat.is_in_group("stage") and _target == _seat and state == State.IDLE 		and _part == VillagerDay.Part.TAVERN
+
+
+## Up for a dance at `spot` (Tavern, at the top tier).
+func dance(spot: Marker3D) -> void:
+	_leave_seat()
+	_seat = spot
+	spot.set_meta(&"taken_by", self)
+	_walk_to(spot)
+
+
+## The tune's over: back to a seat.
+func stop_dancing() -> void:
+	if _seat and _seat.is_in_group("dance_spot"):
 		_leave_seat()
 		if not _inside and not scripted:
 			_walk_to(_next_spot())
@@ -714,6 +760,60 @@ func _animate_chat(seated: bool) -> void:
 		_pose(&"Body", -0.08 - laugh * 0.15, 0.0, 0.0, Vector3(0, 0.02 + bounce, -0.05))
 	else:
 		_pose(&"Body", -laugh * 0.12, 0.0, 0.0, Vector3(0, bounce, 0))
+
+
+## On the stage: a fiddle under the chin, the bow sawing away, a foot tapping.
+func _animate_fiddle() -> void:
+	var beat := _phase * 7.0
+	_pose(&"ArmL", -1.5, -0.55)  # holding the neck out to the left
+	_pose(&"ArmR", -1.25 + sin(beat * 0.5) * 0.28, 0.35 + cos(beat * 0.5) * 0.12)  # the bow
+	_pose(&"Body", 0.0, sin(_phase * 1.6) * 0.06, 0.0, Vector3(0, absf(sin(beat * 0.5)) * 0.015, 0))
+	_pose(&"LegL", 0.0)
+	_pose(&"LegR", -maxf(sin(beat), 0.0) * 0.25)  # tapping
+
+
+## Dancing: hopping from foot to foot, arms up and swinging, a little sway.
+func _animate_dance() -> void:
+	var beat := _phase * 6.5
+	var hop := absf(sin(beat * 0.5))
+	_pose(&"Body", 0.0, sin(beat * 0.25) * 0.15, 0.0, Vector3(0, hop * 0.07, 0))
+	_pose(&"LegL", -maxf(sin(beat * 0.5), 0.0) * 0.6)
+	_pose(&"LegR", -maxf(-sin(beat * 0.5), 0.0) * 0.6)
+	_pose(&"ArmL", -2.4 + sin(beat * 0.5) * 0.4, -0.5)
+	_pose(&"ArmR", -2.4 - sin(beat * 0.5) * 0.4, 0.5)
+
+
+## A fiddle and bow in hand while they're playing on the stage.
+func _show_fiddle(on: bool) -> void:
+	if not on and _fiddle == null:
+		return
+	if _fiddle == null:
+		if not _parts.has(&"ArmL") or not _parts.has(&"ArmR"):
+			return
+		var wood := StandardMaterial3D.new()
+		wood.albedo_color = Color("8a4a24")
+		wood.roughness = 0.5
+		var body := BoxMesh.new()
+		body.size = Vector3(0.14, 0.05, 0.36)
+		body.material = wood
+		_fiddle = MeshInstance3D.new()
+		_fiddle.name = "Fiddle"
+		_fiddle.mesh = body
+		_parts[&"ArmL"].add_child(_fiddle)
+		_fiddle.position = Vector3(0.0, -0.48, 0.12)
+		var bow_mesh := BoxMesh.new()
+		bow_mesh.size = Vector3(0.015, 0.015, 0.5)
+		var pale := StandardMaterial3D.new()
+		pale.albedo_color = Color("d8c8a0")
+		bow_mesh.material = pale
+		var bow := MeshInstance3D.new()
+		bow.name = "Bow"
+		bow.mesh = bow_mesh
+		_parts[&"ArmR"].add_child(bow)
+		bow.position = Vector3(0.0, -0.5, 0.1)
+		_fiddle.set_meta(&"bow", bow)
+	_fiddle.visible = on
+	(_fiddle.get_meta(&"bow") as Node3D).visible = on
 
 
 ## A mug in the right hand while they're out at the tavern.

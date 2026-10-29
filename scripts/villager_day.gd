@@ -30,11 +30,12 @@ const LIGHTS_AWAKE := 0.35
 ##   strolls        at dusk: a slow round of the square instead of a seat
 ##   skips_tavern   some nights (this share of them) straight home at dark instead
 ##   lingers        last out of the tavern
+##   plays          plays the fiddle on the tavern's stage, once it has one (Tavern)
 const PEOPLE := {
 	&"town_hall": {"wake": 0.3, "dusk": -0.2, "tavern": 0.3, "bed": -0.3, "strolls": true},
 	&"woodcutter": {"wake": 0.1, "dusk": 0.2, "tavern": 0.1, "bed": 0.5, "lingers": true},
 	&"smithy": {"wake": 0.25, "dusk": 0.4, "tavern": 0.2, "bed": 0.1, "skips_tavern": 0.4},
-	&"fisher": {"wake": -1.0, "breakfast_from": 7.0, "dusk": -0.1, "tavern": 0.0, "bed": 0.3},
+	&"fisher": {"wake": -1.0, "breakfast_from": 7.0, "dusk": -0.1, "tavern": 0.0, "bed": 0.3, "plays": true},
 	&"baker_cottage": {"wake": -0.6, "dusk": -0.3, "tavern": 0.4, "bed": -0.6, "serves": true},
 	&"prospector_cottage": {"wake": 0.4, "dusk": 0.1, "tavern": 0.25, "bed": 0.0},
 	# Maud keeps the tavern: up late, at it till dusk getting ready, there before anyone, last to bed

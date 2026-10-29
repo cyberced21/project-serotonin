@@ -110,10 +110,45 @@ func _tavern_night(village: Node) -> void:
 	_check(there >= 4 and settled >= 4, "21:48: the village is at the tavern, sat down")
 	_check(maud.get("_target").name == "Work2" and not maud.get("_inside"), "...Maud behind the bar")
 	_check(tavern.call("windows_lit") > 0.5, "...the windows lit")
-	# a game of dice: sit at the table, and someone comes over to play
-	var dice: Node3D = tavern.get("dice")
+	# the band: Ollie on the stage, a tune playing, the background music holding off near it
 	var player := get_first_node_in_group("player") as Node3D
 	_dn.set("frozen", true)
+	var band: AudioStreamPlayer3D = tavern.get("band")
+	var waited_band := 0
+	while not band.playing and waited_band < 60 * 30:
+		await physics_frame
+		waited_band += 1
+	var musician: Node = tavern.call("musician")
+	_check(musician == _villager(&"fisher") and band.playing, "21:48: Ollie's fiddling on the stage, a tune playing")
+	var music := root.get_node("Music")
+	player.global_position = tavern.global_position + tavern.global_basis.z * 6.0
+	for i in 5:
+		await process_frame
+	var near: float = music.get("band")
+	player.global_position = tavern.global_position + Vector3(0, 0, 50)
+	for i in 5:
+		await process_frame
+	var far: float = music.get("band")
+	print("  the background music held off: %.2f by the door, %.2f 50 m off" % [near, far])
+	_check(near > 0.8 and far < 0.01, "...the background music holds off near the tavern, not far off")
+	player.global_position = Vector3(60, 30, 0)
+	# the top tier: dancing during a tune
+	root.get_node("Village").call("set_tier", &"tavern", 4)
+	var dancing := 0
+	var waited_dance := 0
+	Engine.time_scale = 4.0
+	while dancing == 0 and waited_dance < 60 * 60:
+		await physics_frame
+		waited_dance += 1
+		dancing = 0
+		for v in _villagers():
+			var spot: Node = v.get("_seat")
+			if spot and spot.is_in_group("dance_spot") and v.get("_target") == spot and v.get("state") == 0:
+				dancing += 1
+	Engine.time_scale = 1.0
+	_check(dancing > 0, "the Sleepy Hound: %d up dancing" % dancing)
+	# a game of dice: sit at the table, and someone comes over to play
+	var dice: Node3D = tavern.get("dice")
 	player.call("sit", dice.get("_seat1"))
 	var waited := 0
 	while not dice.get("playing") and waited < 60 * 20:
