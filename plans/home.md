@@ -7,6 +7,14 @@ Status (2026-10-29): grilled. Phase 1 pick page is up, waiting on picks:
 https://claude.ai/artifact/Pkbpyd4N1Uy3LUT9EyLG1R (113 renders; saved to its db, `picks/main`).
 Packs and renders are in `E:\Godot\downloads\art-packs` and `art-pick` (C: is low on space).
 
+**Picked 2026-10-29: A, every pack piece in its own colours, never snapped to our palette.**
+The user ticked 52 Fantasy Props pieces (the db's `picks/main`) and said to take the rest the
+same way. "Our palette is really bad compared to the colors": derive a new palette from the packs'
+textures and repaint our own models with it. Two candidates (gentle, strong: our lightness steps,
+the packs' hue and saturation, greens only half-moved, sapphire/amethyst kept) are on a second
+page waiting on a choice: https://claude.ai/artifact/Ey15NnqxzJkRrzeP2oujAf (db `choice/main`).
+Palette files: `E:\Godot\downloads\art-pick\newpal`, `strongpal`.
+
 ## Where we start (2026-10-29)
 
 - Seven village buildings (`data/buildings/*.tres`): town hall, woodcutter's lodge, smithy, fisher's
