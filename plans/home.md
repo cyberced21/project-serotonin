@@ -12,7 +12,9 @@ The user ticked 52 Fantasy Props pieces (the db's `picks/main`) and said to take
 same way. "Our palette is really bad compared to the colors": derive a new palette from the packs'
 textures and repaint our own models with it. Two candidates (gentle, strong: our lightness steps,
 the packs' hue and saturation, greens only half-moved, sapphire/amethyst kept) are on a second
-page waiting on a choice: https://claude.ai/artifact/Ey15NnqxzJkRrzeP2oujAf (db `choice/main`).
+page: https://claude.ai/artifact/Ey15NnqxzJkRrzeP2oujAf. **Picked "gentle"; applied 2026-10-29** in
+`tools/make_palette.py` (art/palette.png + icons regenerated). Still open: painted tiles (grain,
+wear) instead of flat swatches, and whether the shells are built from the village kit's modules.
 Palette files: `E:\Godot\downloads\art-pick\newpal`, `strongpal`.
 
 ## Where we start (2026-10-29)
