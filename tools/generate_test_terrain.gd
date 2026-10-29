@@ -59,15 +59,27 @@ const FIELD_RAMP := 60.0
 ## The world's edge rises into higher hills so the valley feels closed in, not cut off.
 const RIM_WIDTH := 95.0
 const RIM_HEIGHT := 24.0
-## Frostpeak: one broad mountain, not a cone.
+## Frostpeak: a summit with spurs running down from it and a high shoulder to the west, each a
+## ridge with a rounded crest and steep flanks (rock where steeper than ~47°, snow on the gentler
+## high ground: shaders/terrain.gdshader), gullies cut down its sides.
 const PEAK_CENTER := Vector2(-92, -92)
 const PEAK_RADIUS := 76.0
-const PEAK_HEIGHT := 64.0
+const PEAK_HEIGHT := 66.0
+## [from, to, crest height at each end, flank steepness at each end (rise per metre)]
+const PEAK_RIDGES := [
+	[Vector2(-92, -92), Vector2(-92, -92), 66.0, 66.0, 1.0, 1.0],     # the summit
+	[Vector2(-92, -92), Vector2(-50, -64), 64.0, 10.0, 1.3, 0.55],    # the north-east spur
+	[Vector2(-92, -92), Vector2(-98, -42), 62.0, 12.0, 1.25, 0.55],   # the south spur
+	[Vector2(-92, -92), Vector2(-84, -150), 62.0, 8.0, 1.2, 0.5],     # the north spur
+	[Vector2(-92, -92), Vector2(-126, -104), 60.0, 44.0, 1.4, 0.9],   # up to the shoulder
+	[Vector2(-126, -104), Vector2(-152, -132), 44.0, 10.0, 0.9, 0.5], # and down off it
+]
+const PEAK_CREST := 5.0  # how rounded the crests are (m)
 ## Steepest rise per metre the relax pass leaves between neighbouring cells, along x or z (so
-## diagonally at most ~0.64, about 32°). Not in the quarry pit; Frostpeak's top may be steeper by
-## up to PEAK_SLOPE.
+## diagonally at most ~0.64, about 32°). Not in the quarry pit; Frostpeak may be steeper by up to
+## PEAK_SLOPE (its rock faces).
 const MAX_SLOPE := 0.45
-const PEAK_SLOPE := 0.6
+const PEAK_SLOPE := 1.2
 const RELAX_PASSES := 80
 const DATA_DIR := "res://terrain_data"
 const WATER_LEVEL := -0.15     # keep in sync with the ponds' WaterBody nodes in main.tscn
@@ -177,7 +189,6 @@ func _run() -> void:
 	var baked := _baked_points()
 	var laid := _lay_roads(h, ids, baked)
 	_relax(h)  # again: smooths any seam where two roads' banks (or a hairpin's legs) meet
-	_peak_ridges(h)
 
 	var img := Image.create_empty(SIZE, SIZE, false, Image.FORMAT_RF)
 	for y in SIZE:
@@ -285,21 +296,28 @@ func _off_quarry(w: Vector2) -> float:
 	return smoothstep(outer, outer + WorldMap.QUARRY_SLOPE, w.distance_to(WorldMap.QUARRY_CENTER))
 
 
-## Frostpeak: a broad mountain whose flanks wander (a warped distance), steepest near the top.
+## Frostpeak: its ridges (PEAK_RIDGES) melted together, over a broad base so the valleys between
+## the spurs don't fall to nothing, with gullies down the flanks; faded out at its foot.
 func _peak(w: Vector2) -> float:
-	var q := w + Vector2(_warp_y.get_noise_2dv(w * 1.7), _warp_x.get_noise_2dv(w * 1.7)) * 22.0
-	var t := 1.0 - clampf(q.distance_to(PEAK_CENTER) / PEAK_RADIUS, 0.0, 1.0)
-	return PEAK_HEIGHT * t * t * (3.0 - 2.0 * t) * (0.85 + 0.15 * _noise.get_noise_2dv(w * 3.0))
-
-
-## Ridges and gullies down Frostpeak's flanks, after the relax (which would plane them into a
-## cone): strongest near the top, gone at its foot.
-func _peak_ridges(h: PackedFloat32Array) -> void:
-	_for_pixels_near(PEAK_CENTER, PEAK_RADIUS, func(i: int, w: Vector2) -> void:
-		var t := 1.0 - w.distance_to(PEAK_CENTER) / PEAK_RADIUS
-		var a := (w - PEAK_CENTER).angle()
-		var ridge := 1.0 - absf(_noise.get_noise_2d(a * 40.0, t * 6.0))  # runs downhill
-		h[i] += (ridge - 0.6) * 9.0 * t * t * (3.0 - 2.0 * t))
+	var d0 := w.distance_to(PEAK_CENTER)
+	if d0 > PEAK_RADIUS * 1.3:
+		return 0.0
+	var h := 26.0 * (1.0 - smoothstep(0.0, PEAK_RADIUS, d0))  # the massif under it all
+	for r in PEAK_RIDGES:
+		var a: Vector2 = r[0]
+		var b: Vector2 = r[1]
+		var ab := b - a
+		var t := 0.0 if ab.length_squared() < 0.01 else clampf((w - a).dot(ab) / ab.length_squared(), 0.0, 1.0)
+		var d := w.distance_to(a + ab * t)
+		var crest := lerpf(r[2], r[3], t)
+		var side := lerpf(r[4], r[5], t)
+		var ridge := crest - side * (sqrt(d * d + PEAK_CREST * PEAK_CREST) - PEAK_CREST)
+		h = h + log(1.0 + exp(0.35 * (ridge - h))) / 0.35  # a soft max: ridges merge without creases
+	# gullies running down the flanks, deepest high up
+	var dir := (w - PEAK_CENTER) / maxf(d0, 0.001)  # (by direction, not angle: no seam where it wraps)
+	var down := _noise.get_noise_3d(dir.x * 900.0, dir.y * 900.0, d0 * 1.5)
+	h -= absf(down) * 6.0 * clampf(h / PEAK_HEIGHT, 0.0, 1.0)
+	return maxf(h, 0.0) * (1.0 - smoothstep(PEAK_RADIUS * 0.85, PEAK_RADIUS * 1.3, d0))
 
 
 ## The edge of the world rising into high hills (wandering, so it isn't a straight wall).
@@ -321,7 +339,7 @@ func _relax(h: PackedFloat32Array) -> void:
 	for y in SIZE:
 		for x in SIZE:
 			var w := _world(x, y)
-			var crags := 1.0 - smoothstep(PEAK_RADIUS * 0.25, PEAK_RADIUS * 0.85, w.distance_to(PEAK_CENTER))
+			var crags := 1.0 - smoothstep(PEAK_RADIUS * 0.6, PEAK_RADIUS * 1.0, w.distance_to(PEAK_CENTER))
 			var keep := _in_pit(w) or (not _creek_mask.is_empty() and _creek_mask[y * SIZE + x] == 1)
 			limit[y * SIZE + x] = 0.0 if keep else MAX_SLOPE + crags * PEAK_SLOPE
 	for pass_i in RELAX_PASSES:

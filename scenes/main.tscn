@@ -476,7 +476,7 @@ rotation = Vector3(0, 1.1, 0)
 
 [node name="Pine1" parent="Nodes" instance=ExtResource("51_pine")]
 save_id = &"pine_1"
-position = Vector3(-10, 0.38, -50)
+position = Vector3(-10, 0.39, -50)
 rotation = Vector3(0, 0.3, 0)
 
 [node name="Pine2" parent="Nodes" instance=ExtResource("51_pine")]
@@ -491,7 +491,7 @@ rotation = Vector3(0, 2.9, 0)
 
 [node name="Pine4" parent="Nodes" instance=ExtResource("51_pine")]
 save_id = &"pine_4"
-position = Vector3(-22, 2.64, -58)
+position = Vector3(-22, 2.89, -58)
 rotation = Vector3(0, 4.2, 0)
 
 [node name="Pine5" parent="Nodes" instance=ExtResource("51_pine")]
@@ -516,17 +516,17 @@ rotation = Vector3(0, 4.4, 0)
 
 [node name="GoldRock1" parent="Nodes" instance=ExtResource("53_gold")]
 save_id = &"gold_rock_1"
-position = Vector3(-62, 25.34, -60)
+position = Vector3(-62, 31.84, -60)
 rotation = Vector3(0, 1.0, 0)
 
 [node name="GoldRock2" parent="Nodes" instance=ExtResource("53_gold")]
 save_id = &"gold_rock_2"
-position = Vector3(-70, 22.54, -48)
+position = Vector3(-70, 27.55, -48)
 rotation = Vector3(0, 3.5, 0)
 
 [node name="GoldRock3" parent="Nodes" instance=ExtResource("53_gold")]
 save_id = &"gold_rock_3"
-position = Vector3(-56, 30.98, -72)
+position = Vector3(-56, 36.69, -72)
 rotation = Vector3(0, 5.3, 0)
 
 [node name="VillagePond" type="Area3D" parent="."]

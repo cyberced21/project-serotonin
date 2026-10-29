@@ -87,6 +87,7 @@ const WORLD_VIEWS := [
 	["pinewood_edge", Vector3(70, 0, -40), Vector3(40, 0, -100), 0.4],
 	["from_the_rim", Vector3(200, 0, -170), Vector3(40, 0, 0), 0.38],
 	["frostpeak", Vector3(-22, 0, -14), Vector3(-92, 30, -92), 0.45],
+	["frostpeak_shoulder", Vector3(-118, 0, -52), Vector3(-112, 38, -100), 0.4],
 ]
 var views: Array = VIEWS
 var lamps := false
