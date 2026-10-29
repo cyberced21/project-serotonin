@@ -67,6 +67,8 @@ whatever you hit.
     - **Three levels:** earthy tunnels with copper and coal; rusty rock with iron and gold, an underground stream behind a flooded tunnel; the crystal caverns, glowing softly, with gold and crystal. The rock gets harder further down (a copper pick, then an iron one).
     - **Upgrades** on the noticeboard as you find what needs them: timber supports for a roof fall, a lift down the shaft you dig into, a pump for the flood, frames and lamps for each level, and rails with a minecart: a calm ride down a long lamplit tunnel to the deepest level you've opened.
     - Down there it's dim and warm where the tunnels are shored (fresh ones get their frames the next morning: Edda sees to it overnight) and dark beyond, but for your lantern. M shows the level's map. Edda writes to you about what you find.
+
+    ![The quarry's levels, the mine's mouth, a tunnel, a dig face, the mine map, the crystal caverns, the minecart ride, the tavern's long hall outside and in](docs/images/mine/sheet.jpg)
   - **Goldmeadow** (south-east): rolling farmland. Crop squares of wheat and barley between dirt tracks, a windmill with turning sails, a fenced pasture with hay bales, a hay cart, lone oaks, and crickets.
   - **Hearthvale** (the village), **Stillwater** (the lake), **The Clearing** and **Frostpeak** have moods of their own too.
 - **A main menu and your worlds.** The game opens on a menu over a slowly drifting view of the clearing's pond. **Continue** goes straight back into the world you played last (on a first launch it's **Play**). There's one world, Hearthvale ([plans/world.md](plans/world.md): generated worlds were removed, and old ones are deleted on startup).
