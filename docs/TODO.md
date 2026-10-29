@@ -241,3 +241,12 @@ Generated worlds are gone (the procgen items above are history); Hearthvale is t
 - [ ] **Biome cards vs ground:** `Biome.biome_at` still uses the plain shapes (ellipse, discs); the painted ground now uses warped ones, so a card can come a few metres early or late.
 - [x] **Saves:** a saved position under the new ground loads on top of it (`Player.from_dict`); one in the air just lands.
 - [ ] **Flaky tests:** `test_lamps` (lamps catching by full night, timing) and `test_fireflies` (a cricket voice fading in) fail now and then; both did on `main` before this.
+
+## The dog ([plans/dog.md](../plans/dog.md), branch `dog`)
+
+- [x] Phases 1-7: three breeds in three coats, following, meeting the strays, petting / water / fishing, the lantern, night and the doghouse projects, hints. `tools/test_dog.gd` checks all of it headless; `tools/dog_shots.gd` takes the screenshots.
+- [x] **His sounds:** picked by ear 2026-10-29 (https://claude.ai/artifact/JrjwYkzQz8V8HPKMutSGo6), audio/dog/ (SOURCES.md), cut by `tools/cut_dog_sounds.py`. Levels untuned by ear in game.
+- [ ] **Play him:** only bot-tested. Look at the poses (sit, lie, the wiggle, the shake), how close he keeps, whether the hints feel rare enough.
+- [ ] **Strays screenshot:** `dog_shots.gd`'s first view faces the pond, not the strays.
+- [ ] **Small dogs in tall grass:** the terrier half disappears in the grass field.
+- [ ] **The test is slow** (about 4 minutes, all real time): could run the clock faster or split it.

@@ -89,6 +89,15 @@ whatever you hit.
 
   ![The creek, the valley to the village, the roads, the quarry's slopes, Goldmeadow, Frostpeak](docs/images/world/tour.jpg)
   (`graphics_tour.gd -- --set=world`; the world map: [docs/images/world/classic_map.png](docs/images/world/classic_map.png))
+- **Your dog** ([plans/dog.md](plans/dog.md)). On your first morning three strays nap by the clearing's pond: a scruffy terrier, a shepherd mutt and a big fluffy one. Pet one (E), name him and pick his coat, and he's yours.
+  - He follows you at an easy distance, trots ahead on roads and paths, sits when you stop, lies down while you gather (never in front of what you're hitting), and sniffs about. Fall far behind and he trots up from out of view.
+  - Pet him any time (E). He paddles after you into shallow water, waits on the bank where it's deep, and shakes himself dry. While you fish he watches the float.
+  - At night he carries your lantern in his mouth, a little ahead of you, lighting the way (hold the raise key to take it back). Stand still and he dozes at your feet.
+  - Now and then he shows you something: an ore fault or a rare node to sniff at, a fish school to stare at. A big catch gets a happy wiggle; a far-off wolf gets an answer. He pants as he trots, sniffs, whines happily when petted and gives a soft woof now and then (real recordings, pitched higher for the terrier, lower for the big one).
+  - **His doghouse** is three projects on the noticeboard, one after another: a kennel, then paint and his name on a sign, then a porch, a bowl and a blanket. He sleeps in its doorway at night when you're in the village and waits there in the morning.
+
+  ![The dog: sitting, petted, trotting, with the lantern at night, and at his doghouse](docs/images/dog/sheet.jpg)
+
 - **A village to build up.** East of the clearing, a dirt path leads along a shallow valley to the village and its four villagers: a woodcutter, a smith, a fisher and the mayor.
   - Talk to a villager (E) to see what their building's next tier costs, then pay with the logs, ore and fish you've gathered.
   - **Greta forges tools.** Her panel has a Forge tab: the next pick, axe and sickle, what each opens and what it costs. Each is made from what the tool before it can gather, and her smithy's tier caps the best she can make (the Stone Forge does copper, the Smithy iron, the Crystal Forge crystal).

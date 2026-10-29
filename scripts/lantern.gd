@@ -3,7 +3,8 @@ extends Node3D
 ## The lantern you carry (plans/lamps.md L6, L7, L9): it hangs at your left hip and swings as you
 ## move; hold F to raise it in front of you (a tool swing lowers it again). It lights itself at
 ## dusk and goes out at dawn, L lights or puts it out (the Lamps autoload keeps whether you have
-## it and whether it burns, per world). No fuel.
+## it and whether it burns, per world). No fuel. While your dog carries it (Dog.carrying(): at
+## night, unless you hold it up) this one hides; raising it brings it straight back to your hand.
 ## A child of the viewmodel camera, so it's drawn over the world like the tools (layer 2, no
 ## shadow of its own); its light is a real light in the world, the one lamp that casts moving
 ## shadows whatever the graphics setting.
@@ -90,7 +91,8 @@ func _process(delta: float) -> void:
 		Lamps.set_lantern_lit(not Lamps.lantern_lit)
 	var raise: bool = playing and Input.is_action_pressed("raise_lantern") and not player.get("_swinging")
 	_raise = move_toward(_raise, 1.0 if raise else 0.0, RAISE_RATE * delta)
-	visible = Lamps.has_lantern
+	var dog := get_tree().get_first_node_in_group("dog")
+	visible = Lamps.has_lantern and not (dog and _raise <= 0.0 and dog.call("carrying"))
 	_level = move_toward(_level, 1.0 if Lamps.lantern_lit else 0.0, delta * (3.0 if Lamps.lantern_lit else 1.5))
 	_place(delta)
 	var t := Time.get_ticks_msec() / 1000.0

@@ -3,6 +3,21 @@
 Chunk 6 of [cozy.md](cozy.md) (its section 4). Grilled 2026-10-29. Branch `dog` off `main`, after
 `world` is merged (and released).
 
+Status (2026-10-29): **phases 1-7 built on branch `dog`, phase 8's pictures and docs done; the
+sounds picked by ear** (https://claude.ai/artifact/JrjwYkzQz8V8HPKMutSGo6, audio/dog/SOURCES.md). Bot-tested only
+(`tools/test_dog.gd`), screenshots in docs/images/dog/ (`tools/dog_shots.gd`). Not played. Open
+items: docs/TODO.md, "The dog".
+
+### Built, and what changed on the way
+
+- The meeting box picks the coat too; the stray's model swaps to it.
+- Projects gained a `needs` field (another project, or &"dog"); the doghouse projects only appear
+  once you have a dog. The painted doghouse replaces the plain one; his name is a Label3D on its
+  sign.
+- He sleeps in the kennel's doorway rather than inside it (no collision, so "inside" would clip).
+- Hints are rarer than planned at first glance: at most one every 40 s, never at night.
+- Ambience gained a `howled` signal for the wolf.
+
 ## Where we start (2026-10-29)
 
 - Villagers (`scripts/villager.gd`) have no rig and no navmesh: the model is separate parts

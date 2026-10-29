@@ -58,6 +58,8 @@ var _shots: Array[AudioStreamPlayer3D] = []
 var _next_shot := 0
 var _owl_in := 0.0
 var _wolf_in := 0.0
+## A wolf called far off, from `at` (the dog pricks up his ears and answers).
+signal howled(at: Vector3)
 var _dog_in := 0.0
 var _frog_in := 0.0
 ## The village found in the current world: its centre and its smithy (Vector3.INF: none).
@@ -172,7 +174,9 @@ func _process(delta: float) -> void:
 		_wolf_in = randf_range(WOLF_GAP.x, WOLF_GAP.y)
 		var far_from_village := not has_village or Vector2(at.x - _village.x, at.z - _village.z).length() > WOLF_CLEAR
 		if parts["night"] > 0.8 and far_from_village and duck > 0.5:
-			_shot(&"wolf", at + _around(WOLF_DISTANCE, WOLF_DISTANCE + 20.0, 10.0), 30.0, 220.0)
+			var from := at + _around(WOLF_DISTANCE, WOLF_DISTANCE + 20.0, 10.0)
+			_shot(&"wolf", from, 30.0, 220.0)
+			howled.emit(from)
 	_dog_in -= delta
 	if _dog_in <= 0.0:
 		_dog_in = randf_range(DOG_GAP.x, DOG_GAP.y)

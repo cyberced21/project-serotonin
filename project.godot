@@ -38,6 +38,7 @@ Music="*res://scripts/autoload/music.gd"
 Ambience="*res://scripts/autoload/ambience.gd"
 Fireflies="*res://scripts/autoload/fireflies.gd"
 Acoustics="*res://scripts/autoload/acoustics.gd"
+Companion="*res://scripts/autoload/companion.gd"
 
 [display]
 

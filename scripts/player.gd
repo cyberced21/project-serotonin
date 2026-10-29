@@ -168,6 +168,8 @@ const BUZZ_DECAY := 0.07
 const WORLD_MASK := 1
 ## Villagers (see Villager.NPC_LAYER): the crosshair ray stops on them, mantling ignores them.
 const NPC_MASK := 1 << 6
+## The dog (scripts/dog.gd): the crosshair finds him, you never bump into him.
+const PET_MASK := 1 << 8
 ## Farming's wide blade (Perks): how far off the crosshair's line the sickle still catches a sheaf,
 ## in m per unit of the perk's bonus (so about 0.36 m at level 50).
 const WIDE_BLADE_PER_BONUS := 1.0
@@ -627,12 +629,12 @@ func _use_tool_model(slot: Node3D, model: PackedScene) -> void:
 		m.material_override = TOOL_MATERIAL
 
 
-## Ray from the centre of the screen. Only the world and villagers, so debris and drops don't
-## block it.
+## Ray from the centre of the screen. Only the world, villagers and the dog, so debris and drops
+## don't block it.
 func _aim(length := reach) -> Dictionary:
 	var from := camera.global_position
 	var to := from - camera.global_basis.z * length
-	var query := PhysicsRayQueryParameters3D.create(from, to, WORLD_MASK | NPC_MASK, [get_rid()])
+	var query := PhysicsRayQueryParameters3D.create(from, to, WORLD_MASK | NPC_MASK | PET_MASK, [get_rid()])
 	return get_world_3d().direct_space_state.intersect_ray(query)
 
 

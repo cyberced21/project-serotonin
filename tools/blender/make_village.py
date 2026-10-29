@@ -14,6 +14,7 @@ Outputs into models/village/:
                            (pivots at the shoulders, the held tool is a child of ArmR),
                            LegL / LegR (pivots at the hips).
   props/<name>.glb         benches, lamp posts, barrels, crates, the signpost.
+  ../dogs/dog_<breed>_<coat>.glb   the dog (plans/dog.md) in parts the game poses: see dog().
 
 Buildings face Blender -Y (Godot +Z, "front"), origin at ground level in the middle.
 """
@@ -1216,11 +1217,235 @@ def signpost():
     export(os.path.join("village", "props", "signpost"))
 
 
+# --- the dog (plans/dog.md) ---------------------------------------------------------------------
+
+## Three breeds sharing one set of parts, so the game poses them all the same way. Sizes in metres:
+## body length / width / height, leg length (ground to the body's underside), head size, snout
+## length, and the shape of the ears and tail.
+DOG_BREEDS = {
+    "terrier": {"body": (0.40, 0.20, 0.21), "leg": 0.16, "leg_w": 0.065, "head": 0.18, "snout": 0.09,
+                "ears": "folded", "tail": "up", "fur": 0.012, "beard": True, "ruff": False},
+    "shepherd": {"body": (0.62, 0.25, 0.27), "leg": 0.31, "leg_w": 0.08, "head": 0.22, "snout": 0.16,
+                 "ears": "upright", "tail": "low", "fur": 0.006, "beard": False, "ruff": False},
+    "fluffy": {"body": (0.76, 0.36, 0.37), "leg": 0.28, "leg_w": 0.13, "head": 0.29, "snout": 0.13,
+               "ears": "floppy", "tail": "bushy", "fur": 0.025, "beard": False, "ruff": True},
+}
+## Coats per breed: main, under (belly, chest), muzzle, ears, points (paws, lower legs), tail tip,
+## and a saddle over the back (or None).
+DOG_COATS = {
+    "terrier": {
+        "wheaten": dict(main="wood.6", under="wood.7", muzzle="wood.7", ears="wood.5", points="wood.6", tip="wood.7", saddle=None),
+        "grey": dict(main="neutral.4", under="neutral.5", muzzle="neutral.5", ears="neutral.3", points="neutral.4", tip="neutral.5", saddle=None),
+        "black_tan": dict(main="neutral.1", under="wood.5", muzzle="wood.5", ears="neutral.1", points="wood.5", tip="neutral.1", saddle=None),
+    },
+    "shepherd": {
+        "saddle": dict(main="wood.5", under="wood.6", muzzle="neutral.1", ears="neutral.1", points="wood.5", tip="neutral.1", saddle="neutral.1"),
+        "brown": dict(main="wood.3", under="wood.5", muzzle="wood.5", ears="wood.2", points="wood.6", tip="wood.6", saddle=None),
+        "cream": dict(main="wood.7", under="neutral.6", muzzle="wood.7", ears="wood.6", points="neutral.6", tip="neutral.6", saddle=None),
+    },
+    "fluffy": {
+        "tricolour": dict(main="neutral.1", under="neutral.6", muzzle="neutral.6", ears="neutral.1", points="wood.4", tip="neutral.6", saddle=None),
+        "golden": dict(main="wood.6", under="wood.7", muzzle="wood.7", ears="wood.5", points="wood.7", tip="wood.7", saddle=None),
+        "white": dict(main="neutral.6", under="neutral.7", muzzle="neutral.7", ears="neutral.5", points="neutral.6", tip="neutral.7", saddle=None),
+    },
+}
+
+
+def dog_part(k, name, size, pivot, offset, choose, parent=None, jit=0.0, taper=0.0):
+    """A box whose origin is its joint `pivot`, the mesh shifted by `offset`, coloured by choose(face).
+    `jit` roughens it (fur), `taper` narrows its far end along +Y/-Y offset (a snout, a tail)."""
+    bm = box(size)
+    if taper:
+        half = size[1] / 2
+        for v in bm.verts:
+            t = (v.co.y + half) / (2 * half)  # 0 at -Y, 1 at +Y
+            far = t if offset[1] > 0 else 1 - t
+            v.co.x *= 1 - taper * far
+            v.co.z *= 1 - taper * 0.6 * far
+    if jit:
+        for v in bm.verts:
+            v.co += Vector((k.rng.uniform(-jit, jit), k.rng.uniform(-jit, jit), k.rng.uniform(-jit, jit)))
+    bmesh.ops.translate(bm, vec=Vector(offset), verts=bm.verts)
+    paint(bm, choose)
+    obj = make_object(name, bm, pivot)
+    if parent:
+        set_parent(obj, parent)
+    bpy.context.view_layer.update()
+    return obj
+
+
+def dog(breed, coat_name):
+    """A toy dog in parts the game poses in code (scripts/dog.gd), facing Blender -Y:
+    Body (origin at its middle), Head (at the neck) with Jaw (at its hinge, LanternSocket at its
+    tip), EarL / EarR (on top of the head), Tail (at the rump), LegFL / LegFR / LegBL / LegBR (at
+    the shoulders and hips). Written to models/dogs/dog_<breed>_<coat>.glb."""
+    reset()
+    b = DOG_BREEDS[breed]
+    c = DOG_COATS[breed][coat_name]
+    k = Kit("", 700 + sum(map(ord, breed + coat_name)))
+    bpy.context.view_layer.update()
+    length, width, height = b["body"]
+    leg = b["leg"]
+    bz = leg + height / 2  # the body's middle
+    fur = b["fur"]
+
+    def body_colour(f):
+        n = f.normal
+        if n.z > 0.55:
+            return c["saddle"] or c["main"]
+        if n.z < -0.4 or n.y < -0.7:
+            return c["under"]
+        return c["main"]
+
+    body = dog_part(k, "Body", (width, length, height), (0, 0, bz), (0, 0, 0), body_colour, jit=fur)
+    if b["ruff"]:  # a thick collar of fur round the neck
+        dog_part(k, "Ruff", (width * 1.12, length * 0.28, height * 1.05), (0, -length * 0.36, bz + height * 0.06),
+                 (0, 0, 0), lambda f: c["under"] if f.normal.y < -0.5 or f.normal.z < -0.4 else c["main"], body, jit=fur * 1.4)
+
+    # legs: pivots inside the body at the shoulders and hips, reaching the ground
+    for fb, along in (("F", -1), ("B", 1)):
+        for side, sx in (("L", -1), ("R", 1)):
+            pivot = (sx * width * 0.3, along * length * 0.36, leg + height * 0.2)
+            reach = pivot[2]
+            lw = b["leg_w"]
+            dog_part(k, f"Leg{fb}{side}", (lw, lw * 1.1, reach), pivot, (0, 0, -reach / 2),
+                     lambda f, reach=reach: c["points"] if f.calc_center_median().z < -reach * 0.62 else c["main"],
+                     body, jit=fur * 0.5)
+
+    # head: on a short neck at the front top of the body
+    hs = b["head"]
+    neck = (0, -length * 0.42, bz + height * 0.28)
+    head = dog_part(k, "Head", (hs * 0.95, hs, hs * 0.9), neck, (0, -hs * 0.38, hs * 0.42),
+                    lambda f: c["muzzle"] if f.normal.y < -0.7 and breed == "fluffy" else c["main"], body, jit=fur * 0.6)
+    face_y = neck[1] - hs * 0.38 - hs / 2  # the front of the head
+    sl = b["snout"]
+    snout_z = neck[2] + hs * 0.3
+    dog_part(k, "Snout", (hs * 0.55, sl, hs * 0.3), (0, face_y, snout_z), (0, -sl / 2, 0),
+             lambda f: c["muzzle"], head, taper=0.25)
+    dog_part(k, "Nose", (hs * 0.2, hs * 0.1, hs * 0.13), (0, face_y - sl + hs * 0.02, snout_z + hs * 0.11),
+             (0, 0, 0), lambda f: "neutral.0", head)
+    jaw = dog_part(k, "Jaw", (hs * 0.45, sl * 0.9, hs * 0.12), (0, face_y + hs * 0.05, snout_z - hs * 0.17),
+                   (0, -sl * 0.45 - hs * 0.05, 0), lambda f: c["muzzle"], head, taper=0.2)
+    socket = bpy.data.objects.new("LanternSocket", None)
+    bpy.context.collection.objects.link(socket)
+    socket.location = (0, face_y - sl * 0.75, snout_z - hs * 0.15)
+    set_parent(socket, jaw)
+    if b["beard"]:
+        dog_part(k, "Beard", (hs * 0.5, sl * 0.8, hs * 0.18), (0, face_y - sl * 0.45, snout_z - hs * 0.24),
+                 (0, 0, 0), lambda f: c["muzzle"], jaw, jit=fur * 1.5)
+    for side, sx in (("L", -1), ("R", 1)):
+        dog_part(k, f"Eye{side}", (hs * 0.13, hs * 0.04, hs * 0.13),
+                 (sx * hs * 0.24, face_y + hs * 0.01, neck[2] + hs * 0.55), (0, 0, 0), lambda f: "neutral.0", head)
+        top = (sx * hs * 0.3, neck[1] - hs * 0.28, neck[2] + hs * 0.82)
+        if b["ears"] == "upright":
+            ear = dog_part(k, f"Ear{side}", (hs * 0.28, hs * 0.08, hs * 0.5), top, (0, 0, hs * 0.22),
+                           lambda f: c["ears"], head, taper=0.0)
+            for v in ear.data.vertices:  # to a point
+                if v.co.z > hs * 0.3:
+                    v.co.x *= 0.2
+        elif b["ears"] == "floppy":
+            dog_part(k, f"Ear{side}", (hs * 0.1, hs * 0.38, hs * 0.55), (sx * hs * 0.48, neck[1] - hs * 0.35, neck[2] + hs * 0.75),
+                     (sx * hs * 0.02, 0, -hs * 0.28), lambda f: c["ears"], head, jit=fur * 0.6)
+        else:  # folded: small flaps tipping forward
+            dog_part(k, f"Ear{side}", (hs * 0.3, hs * 0.08, hs * 0.26), top, (0, -hs * 0.06, hs * 0.1),
+                     lambda f: c["ears"], head)
+    # tail: from the rump, angled by breed (the game wags it round its pivot)
+    rump = (0, length * 0.48, bz + height * 0.3)
+    tl = {"up": length * 0.35, "low": length * 0.55, "bushy": length * 0.36}[b["tail"]]
+    tw = {"up": 0.05, "low": 0.06, "bushy": 0.11}[b["tail"]]
+    tail = dog_part(k, "Tail", (tw, tl, tw), rump, (0, tl / 2, 0),
+                    lambda f, tl=tl: c["tip"] if f.calc_center_median().y > tl * 0.7 else c["main"],
+                    body, jit=fur * (1.5 if b["tail"] == "bushy" else 0.3), taper=0.0 if b["tail"] == "bushy" else 0.4)
+    tail.rotation_euler = ({"up": (math.radians(55), 0, 0), "low": (math.radians(-50), 0, 0),
+                            "bushy": (math.radians(20), 0, 0)}[b["tail"]])
+    export(os.path.join("dogs", f"dog_{breed}_{coat_name}"))
+
+
+def _doghouse(name, walls, roof, trim, sign=False):
+    """A doghouse big enough for the big fluffy dog: plank walls with a door hole in the front
+    (Blender -Y), a pitched roof. `sign`: a board over the door, with a SignText empty where the
+    game writes his name."""
+    reset()
+    k = Kit("", 640 + len(name))
+    w, d, h = 1.1, 1.3, 0.8      # width, depth, wall height
+    door_w, door_h = 0.5, 0.62
+    t = 0.06                      # plank thickness
+    k.box("Floor", (w, d, 0.06), (0, 0, 0.03), (trim, trim, trim))
+    k.box("Back", (w, t, h), (0, d / 2 - t / 2, h / 2), walls, jit=0.004)
+    for sx in (-1, 1):
+        k.box("Side", (t, d, h), (sx * (w / 2 - t / 2), 0, h / 2), walls, jit=0.004)
+        side_w = (w - door_w) / 2
+        k.box("Front", (side_w, t, h), (sx * (door_w / 2 + side_w / 2), -d / 2 + t / 2, h / 2), walls, jit=0.004)
+    k.box("Lintel", (door_w, t, h - door_h), (0, -d / 2 + t / 2, door_h + (h - door_h) / 2), walls)
+    for sy in (-1, 1):  # gable ends: wedges filling the roof's triangle front and back
+        bm = box((w, t, 0.4))
+        for v in bm.verts:
+            if v.co.z > 0:
+                v.co.x = 0.0
+        k.add("Gable", bm, walls, (0, sy * (d / 2 - t / 2), h + 0.2))
+    for sx in (-1, 1):  # two roof slabs meeting over the ridge
+        k.box("Roof", (w * 0.62, d + 0.2, 0.05), (sx * w * 0.25, 0, h + 0.22), (roof, roof, trim),
+              rot=(0, sx * math.radians(34), 0))
+    k.box("Ridge", (0.08, d + 0.22, 0.08), (0, 0, h + 0.4), (trim, trim, trim))
+    if sign:
+        k.box("Sign", (0.62, 0.04, 0.16), (0, -d / 2 - 0.03, h + 0.12), ("wood.6", "wood.6", "wood.5"))
+        mark = bpy.data.objects.new("SignText", None)
+        bpy.context.collection.objects.link(mark)
+        mark.location = (0, -d / 2 - 0.06, h + 0.12)
+    export(os.path.join("village", "props", name))
+
+
+def doghouse():
+    _doghouse("doghouse", ("wood.4", "wood.3", "wood.2", "wood.5"), "wood.2", "wood.1")
+
+
+def doghouse_painted():
+    _doghouse("doghouse_painted", ("wood.7", "wood.6", "wood.5"), "accent.0", "wood.3", sign=True)
+
+
+def doghouse_porch():
+    """A little deck in front of the doghouse's door, with a post at each front corner."""
+    reset()
+    k = Kit("", 646)
+    for i in range(4):
+        k.box("Board", (1.2, 0.14, 0.05), (0, -0.3 + i * 0.16, 0.06), ("wood.5", "wood.4", "wood.3"), jit=0.006)
+    for sx in (-1, 1):
+        k.post("Post", 0.035, 0, 0.5, sx * 0.55, -0.3, ("wood.4", "wood.3", "wood.2"))
+    k.box("Rail", (1.15, 0.05, 0.05), (0, -0.3, 0.5), ("wood.4", "wood.3", "wood.2"))
+    export(os.path.join("village", "props", "doghouse_porch"))
+
+
+def dog_bowl():
+    reset()
+    k = Kit("", 647)
+    k.add("Bowl", prism(8, 0.16, 0.2, 0.08), ("accent.1", "accent.0", "accent.0"), (0, 0, 0.04))
+    k.add("Water", prism(8, 0.16, 0.16, 0.01), ("accent.5", "accent.5", "accent.5"), (0, 0, 0.07))
+    export(os.path.join("village", "props", "dog_bowl"))
+
+
+def dog_blanket():
+    """A folded, checked blanket for him to lie on."""
+    reset()
+    k = Kit("", 648)
+    bm = box((0.8, 0.62, 0.06))
+    paint(bm, lambda f: "accent.6" if int((f.calc_center_median().x + 0.4) / 0.2) % 2 else "neutral.6")
+    make_object("Blanket", bm, (0, 0, 0.03))
+    export(os.path.join("village", "props", "dog_blanket"))
+
+
+def dogs():
+    os.makedirs(os.path.join(OUT_DIR, "dogs"), exist_ok=True)
+    for breed, coats in DOG_COATS.items():
+        for coat_name in coats:
+            dog(breed, coat_name)
+
+
 os.makedirs(os.path.join(VILLAGE_DIR, "props"), exist_ok=True)
 only = sys.argv[sys.argv.index("--") + 3:]  # optional: names of the builders to run (e.g. `smithy`)
 for build in (woodcutter, smithy, fisher, town_hall, baker_cottage, prospector_cottage,
               woodcutter_villager, smith_villager, fisher_villager, mayor_villager,
               baker_villager, prospector_villager,
-              bench, lamp_post, lamp_post_rustic, lantern, noticeboard, planter, well, fountain, barrel_prop, crate_prop, signpost):
+              bench, lamp_post, lamp_post_rustic, lantern, noticeboard, planter, well, fountain, barrel_prop, crate_prop, signpost, dogs,
+              doghouse, doghouse_painted, doghouse_porch, dog_bowl, dog_blanket):
     if not only or build.__name__ in only:
         build()
