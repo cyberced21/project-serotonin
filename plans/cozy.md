@@ -6,9 +6,10 @@ its own plan (and branch) when we start it, after a grill session on its open qu
 
 Status: **chunks 1–3 built, merged, released v0.3 and playtested** (2026-10-28):
 [mood-pass.md](mood-pass.md), [calm-feel.md](calm-feel.md), [cozy-sound.md](cozy-sound.md).
-Chunk 4 (lamps) merged and released v0.4 → [lamps.md](lamps.md). Chunk 5 (projects) built
-2026-10-28 on branch `projects` → [projects.md](projects.md), approved from screenshots, not yet
-played. Open questions at the end of each section.
+Chunks 4–7 merged and released: lamps v0.4 ([lamps.md](lamps.md)), projects v0.5
+([projects.md](projects.md)), the dog v0.7 ([dog.md](dog.md)), the market v0.8
+([market.md](market.md)); mostly unplayed. Chunk 8 (villager days + the tavern) grilled
+2026-10-29 → [tavern.md](tavern.md). Open questions at the end of each section.
 
 ## The pillars
 
@@ -166,6 +167,11 @@ quarry in procgen worlds too? Is the mine dark enough that you need the lantern/
 
 Open: can you join in (sit down, drink, a little minigame)? Do villagers talk to each other?
 
+**Grilled 2026-10-29 → [tavern.md](tavern.md)**: a shared day with quirks on a waypoint graph,
+breakfast on Rosa's bakery terrace, a tavern on the square (a ruin you restore, 3 tiers, a keeper,
+the first walk-in interior), murmur and gestures, a musician, and a press-your-luck dice game with
+real 3D dice, played for fun.
+
 ## 8. Interiors and add-ons
 
 - **Go inside buildings**: the woodcutter's lodge, the smithy, the tavern, your own home. Interiors
@@ -230,5 +236,5 @@ The rest of the sound overhaul runs alongside from step 3 on, once the grill has
 ## Next step
 
 Grill each chunk before its own plan; the open questions in each section are the starting list.
-Next: chunk 6, **the dog** (section 4): it can carry the lantern (chunk 4) and gets a doghouse as a
-project (chunk 5, a new entry in `Projects.SPOTS` with its spot in `VillageDecor.PROPS`).
+Next: build chunk 8 from [tavern.md](tavern.md) on branch `tavern`. After it: chunk 9 (interiors,
+add-ons, a player home), which reuses the tavern's interior pattern.

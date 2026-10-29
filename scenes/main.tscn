@@ -61,6 +61,7 @@
 [ext_resource type="Script" path="res://scripts/dog_home.gd" id="94_dog_home"]
 [ext_resource type="Script" path="res://scripts/landslide.gd" id="95_landslide"]
 [ext_resource type="Script" path="res://scripts/trader.gd" id="96_trader"]
+[ext_resource type="Script" path="res://scripts/village_paths.gd" id="97_village_paths"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
@@ -677,6 +678,9 @@ model = ExtResource("22_crates")
 
 [node name="Decor" type="Node3D" parent="Village"]
 script = ExtResource("92_village_decor")
+
+[node name="Paths" type="Node3D" parent="Village"]
+script = ExtResource("97_village_paths")
 
 [node name="Quarry" parent="." instance=ExtResource("58_quarry")]
 

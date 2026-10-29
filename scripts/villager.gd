@@ -22,6 +22,8 @@ const CLANK_SFX := preload("res://audio/stone_hit.tres")
 ## Physics layer 7: the player bumps into villagers and aims at them, but they're not "world"
 ## (no mantling onto heads, debris and pickups pass through). (Layer 6 is the fish hit volumes.)
 const NPC_LAYER := 1 << 6
+## A point on the way somewhere counts as passed this close (so they round corners smoothly).
+const WAYPOINT_REACH := 0.6
 
 @export var model: PackedScene
 @export var work := Work.CHOP
@@ -62,6 +64,9 @@ var _watching := false  # standing back while the building is upgraded
 var _audio: AudioStreamPlayer3D
 var _player: Node3D
 var _terrain: Terrain3D
+var _paths: VillagePaths
+## The points still to pass on the way to _target (the last one is the target itself).
+var _route := PackedVector3Array()
 ## A cutscene is posing this villager (script_pose): no walking, working or talking of its own.
 var scripted := false
 
@@ -337,6 +342,7 @@ func _come_out(door: Marker3D) -> void:
 	global_position = _ground(door.global_position)
 	_face_marker(door)
 	_target = door
+	_route.clear()
 	reset_physics_interpolation()
 	_shape.set_deferred("disabled", false)
 	_model.visible = true
@@ -359,29 +365,50 @@ func _walk_to(m: Marker3D) -> void:
 		_enter(State.IDLE)
 		return
 	_target = m
+	_route = _route_to(m.global_position)
 	_walk_from = global_position
 	_speed = 0.0
 	state = State.WALK
 
 
+## The way to `to`: along the village's paths (VillagePaths) when there are some, else straight.
+## The last point is always `to`.
+func _route_to(to: Vector3) -> PackedVector3Array:
+	if _paths == null:
+		_paths = get_tree().get_first_node_in_group("village_paths") as VillagePaths
+	if _paths:
+		return _paths.route(global_position, to)
+	return PackedVector3Array([to])
+
+
 func _walk(delta: float) -> void:
 	var goal := _target.global_position
+	var last := _route.size() <= 1
+	if not last:
+		goal = _route[0]
 	var flat := Vector3(goal.x - global_position.x, 0, goal.z - global_position.z)
 	var dist := flat.length()
+	if not last and dist < WAYPOINT_REACH:  # round the corner without stopping
+		_route.remove_at(0)
+		_walk_from = global_position
+		return
 	if dist < 0.08:
 		global_position = _ground(goal)
+		_route.clear()
 		_enter(State.WORK if _target.name.begins_with("Work") else State.IDLE)
 		return
-	# speed up from a standstill, slow into the stop
-	var cruise := walk_speed * _hurry * clampf(dist / 0.7, 0.3, 1.0)
+	# speed up from a standstill, slow into the stop (not at the points on the way)
+	var cruise := walk_speed * _hurry * (clampf(dist / 0.7, 0.3, 1.0) if last else 1.0)
 	_speed = move_toward(_speed, cruise, 3.0 * _hurry * delta)
 	var step := minf(_speed * delta, dist)
 	var next := global_position + flat / dist * step
-	# height: the ground, but never below the straight line between spots (docks, porches)
-	var total := Vector2(goal.x - _walk_from.x, goal.z - _walk_from.z).length()
-	var t := 1.0 - (dist - step) / maxf(total, 0.001)
-	var line_y := lerpf(_walk_from.y, goal.y, clampf(t, 0.0, 1.0))
-	next.y = maxf(_ground_height(next), line_y)
+	# height: the ground, but on the last stretch never below the straight line between spots
+	# (docks, porches)
+	next.y = _ground_height(next)
+	if last:
+		var total := Vector2(goal.x - _walk_from.x, goal.z - _walk_from.z).length()
+		var t := 1.0 - (dist - step) / maxf(total, 0.001)
+		next.y = maxf(next.y, lerpf(_walk_from.y, goal.y, clampf(t, 0.0, 1.0)))
 	global_position = next
 	_turn_toward(goal, delta, 8.0)
 	_walk_cycle += delta * _speed * 4.2
