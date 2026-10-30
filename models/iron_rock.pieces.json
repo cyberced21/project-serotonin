@@ -420,5 +420,9215 @@
   "Chunk_35"
  ],
  "knock": 0,
- "shatter_at": 0.5
+ "shatter_at": 0.5,
+ "crumbs": {
+  "Crumb_00_c00": {
+   "block": "Chunk_00",
+   "core": false,
+   "volume": 0.004572,
+   "links": [
+    "Crumb_00_c02",
+    "Crumb_00_c04",
+    "Crumb_00_c05",
+    "Crumb_00_c07",
+    "Crumb_00_c09",
+    "Crumb_05_c19",
+    "Crumb_08_c09"
+   ]
+  },
+  "Crumb_00_c01": {
+   "block": "Chunk_00",
+   "core": false,
+   "volume": 0.000838,
+   "links": [
+    "Crumb_00_c05",
+    "Crumb_00_c06",
+    "Crumb_00_c10",
+    "Crumb_05_c19"
+   ]
+  },
+  "Crumb_00_c02": {
+   "block": "Chunk_00",
+   "core": false,
+   "volume": 0.00867,
+   "links": [
+    "Crumb_00_c00",
+    "Crumb_00_c04",
+    "Crumb_00_c05",
+    "Crumb_00_c06",
+    "Crumb_00_c07",
+    "Crumb_00_c08",
+    "Crumb_00_c12",
+    "Crumb_08_c09"
+   ]
+  },
+  "Crumb_00_c03": {
+   "block": "Chunk_00",
+   "core": false,
+   "volume": 0.012103,
+   "links": [
+    "Crumb_00_c08",
+    "Crumb_00_c12",
+    "Crumb_08_c00",
+    "Crumb_08_c06",
+    "Crumb_08_c07"
+   ]
+  },
+  "Crumb_00_c04": {
+   "block": "Chunk_00",
+   "core": false,
+   "volume": 0.005427,
+   "links": [
+    "Crumb_00_c00",
+    "Crumb_00_c02",
+    "Crumb_00_c07",
+    "Crumb_00_c08",
+    "Crumb_00_c09",
+    "Crumb_00_c12",
+    "Crumb_08_c01",
+    "Crumb_08_c05",
+    "Crumb_08_c09"
+   ]
+  },
+  "Crumb_00_c05": {
+   "block": "Chunk_00",
+   "core": false,
+   "volume": 0.003654,
+   "links": [
+    "Crumb_00_c00",
+    "Crumb_00_c01",
+    "Crumb_00_c02",
+    "Crumb_00_c06",
+    "Crumb_00_c07",
+    "Crumb_00_c10",
+    "Crumb_05_c19"
+   ]
+  },
+  "Crumb_00_c06": {
+   "block": "Chunk_00",
+   "core": false,
+   "volume": 0.007312,
+   "links": [
+    "Crumb_00_c01",
+    "Crumb_00_c02",
+    "Crumb_00_c05",
+    "Crumb_00_c07",
+    "Crumb_00_c10",
+    "Crumb_05_c19"
+   ]
+  },
+  "Crumb_00_c07": {
+   "block": "Chunk_00",
+   "core": false,
+   "volume": 0.011088,
+   "links": [
+    "Crumb_00_c00",
+    "Crumb_00_c02",
+    "Crumb_00_c04",
+    "Crumb_00_c05",
+    "Crumb_00_c06",
+    "Crumb_00_c09",
+    "Crumb_00_c10",
+    "Crumb_00_c11",
+    "Crumb_00_c12",
+    "Crumb_05_c07",
+    "Crumb_05_c18",
+    "Crumb_05_c19",
+    "Crumb_05_c21"
+   ]
+  },
+  "Crumb_00_c08": {
+   "block": "Chunk_00",
+   "core": false,
+   "volume": 0.005535,
+   "links": [
+    "Crumb_00_c02",
+    "Crumb_00_c03",
+    "Crumb_00_c04",
+    "Crumb_00_c12",
+    "Crumb_08_c00",
+    "Crumb_08_c05"
+   ]
+  },
+  "Crumb_00_c09": {
+   "block": "Chunk_00",
+   "core": false,
+   "volume": 0.006966,
+   "links": [
+    "Crumb_00_c00",
+    "Crumb_00_c04",
+    "Crumb_00_c07",
+    "Crumb_00_c11",
+    "Crumb_00_c12",
+    "Crumb_05_c01",
+    "Crumb_08_c01",
+    "Crumb_08_c05",
+    "Crumb_08_c09",
+    "Crumb_08_c12",
+    "Crumb_08_c14",
+    "Crumb_13_c02"
+   ]
+  },
+  "Crumb_00_c10": {
+   "block": "Chunk_00",
+   "core": false,
+   "volume": 0.01029,
+   "links": [
+    "Crumb_00_c01",
+    "Crumb_00_c05",
+    "Crumb_00_c06",
+    "Crumb_00_c07",
+    "Crumb_05_c10",
+    "Crumb_05_c18",
+    "Crumb_05_c19",
+    "Crumb_05_c21"
+   ]
+  },
+  "Crumb_00_c11": {
+   "block": "Chunk_00",
+   "core": false,
+   "volume": 0.012996,
+   "links": [
+    "Crumb_00_c07",
+    "Crumb_00_c09",
+    "Crumb_00_c12",
+    "Crumb_05_c01",
+    "Crumb_05_c04",
+    "Crumb_05_c17",
+    "Crumb_05_c30",
+    "Crumb_08_c01",
+    "Crumb_08_c12",
+    "Crumb_08_c14",
+    "Crumb_13_c01",
+    "Crumb_13_c02"
+   ]
+  },
+  "Crumb_00_c12": {
+   "block": "Chunk_00",
+   "core": false,
+   "volume": 0.021943,
+   "links": [
+    "Crumb_00_c02",
+    "Crumb_00_c03",
+    "Crumb_00_c04",
+    "Crumb_00_c07",
+    "Crumb_00_c08",
+    "Crumb_00_c09",
+    "Crumb_00_c11",
+    "Crumb_08_c00",
+    "Crumb_08_c05",
+    "Crumb_08_c06",
+    "Crumb_08_c13"
+   ]
+  },
+  "Crumb_00_c13": {
+   "block": "Chunk_00",
+   "core": true,
+   "volume": 0.145807,
+   "links": [
+    "Crumb_00_c02",
+    "Crumb_00_c03",
+    "Crumb_00_c06",
+    "Crumb_00_c07",
+    "Crumb_00_c08",
+    "Crumb_00_c09",
+    "Crumb_00_c10",
+    "Crumb_00_c11",
+    "Crumb_00_c12"
+   ]
+  },
+  "Crumb_01_c00": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.01108,
+   "links": [
+    "Crumb_01_c03",
+    "Crumb_01_c04",
+    "Crumb_01_c05",
+    "Crumb_01_c08",
+    "Crumb_01_c11",
+    "Crumb_01_c16",
+    "Crumb_01_c20",
+    "Crumb_01_c21",
+    "Crumb_01_c28",
+    "Crumb_01_c30",
+    "Crumb_01_c32",
+    "Crumb_01_c34",
+    "Crumb_09_c06",
+    "Crumb_09_c08"
+   ]
+  },
+  "Crumb_01_c01": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.005719,
+   "links": [
+    "Crumb_01_c07",
+    "Crumb_01_c13",
+    "Crumb_01_c23",
+    "Crumb_01_c27"
+   ]
+  },
+  "Crumb_01_c02": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.005956,
+   "links": [
+    "Crumb_01_c12",
+    "Crumb_01_c26",
+    "Crumb_01_c27",
+    "Crumb_01_c31"
+   ]
+  },
+  "Crumb_01_c03": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.016432,
+   "links": [
+    "Crumb_01_c00",
+    "Crumb_01_c06",
+    "Crumb_01_c08",
+    "Crumb_01_c11",
+    "Crumb_01_c14",
+    "Crumb_01_c16",
+    "Crumb_01_c22",
+    "Crumb_01_c26",
+    "Crumb_01_c30",
+    "Crumb_01_c33",
+    "Crumb_01_c34"
+   ]
+  },
+  "Crumb_01_c04": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.006236,
+   "links": [
+    "Crumb_01_c00",
+    "Crumb_01_c05",
+    "Crumb_01_c20",
+    "Crumb_01_c21",
+    "Crumb_01_c25",
+    "Crumb_01_c28",
+    "Crumb_01_c34",
+    "Crumb_04_c08"
+   ]
+  },
+  "Crumb_01_c05": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.005562,
+   "links": [
+    "Crumb_01_c00",
+    "Crumb_01_c04",
+    "Crumb_01_c07",
+    "Crumb_01_c11",
+    "Crumb_01_c13",
+    "Crumb_01_c20",
+    "Crumb_01_c25",
+    "Crumb_01_c30"
+   ]
+  },
+  "Crumb_01_c06": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.009057,
+   "links": [
+    "Crumb_01_c03",
+    "Crumb_01_c14",
+    "Crumb_01_c17",
+    "Crumb_01_c18",
+    "Crumb_01_c26",
+    "Crumb_14_c00"
+   ]
+  },
+  "Crumb_01_c07": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.005912,
+   "links": [
+    "Crumb_01_c01",
+    "Crumb_01_c05",
+    "Crumb_01_c11",
+    "Crumb_01_c13",
+    "Crumb_01_c20",
+    "Crumb_01_c23",
+    "Crumb_01_c26",
+    "Crumb_01_c27",
+    "Crumb_01_c30"
+   ]
+  },
+  "Crumb_01_c08": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.005524,
+   "links": [
+    "Crumb_01_c00",
+    "Crumb_01_c03",
+    "Crumb_01_c16",
+    "Crumb_01_c30",
+    "Crumb_01_c32",
+    "Crumb_01_c33",
+    "Crumb_01_c34",
+    "Crumb_09_c01",
+    "Crumb_09_c02",
+    "Crumb_14_c12"
+   ]
+  },
+  "Crumb_01_c09": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.009673,
+   "links": [
+    "Crumb_01_c10",
+    "Crumb_01_c12",
+    "Crumb_01_c24",
+    "Crumb_01_c29",
+    "Crumb_01_c31",
+    "Crumb_06_c05",
+    "Crumb_06_c27"
+   ]
+  },
+  "Crumb_01_c10": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.012324,
+   "links": [
+    "Crumb_01_c09",
+    "Crumb_01_c17",
+    "Crumb_01_c18",
+    "Crumb_01_c29",
+    "Crumb_01_c31",
+    "Crumb_06_c05",
+    "Crumb_06_c12"
+   ]
+  },
+  "Crumb_01_c11": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.005359,
+   "links": [
+    "Crumb_01_c00",
+    "Crumb_01_c03",
+    "Crumb_01_c05",
+    "Crumb_01_c07",
+    "Crumb_01_c16",
+    "Crumb_01_c30"
+   ]
+  },
+  "Crumb_01_c12": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.0044,
+   "links": [
+    "Crumb_01_c02",
+    "Crumb_01_c09",
+    "Crumb_01_c31"
+   ]
+  },
+  "Crumb_01_c13": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.003969,
+   "links": [
+    "Crumb_01_c01",
+    "Crumb_01_c05",
+    "Crumb_01_c07",
+    "Crumb_01_c20",
+    "Crumb_01_c23",
+    "Crumb_01_c25"
+   ]
+  },
+  "Crumb_01_c14": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.014774,
+   "links": [
+    "Crumb_01_c03",
+    "Crumb_01_c06",
+    "Crumb_01_c18",
+    "Crumb_01_c33",
+    "Crumb_14_c00",
+    "Crumb_14_c06",
+    "Crumb_14_c10"
+   ]
+  },
+  "Crumb_01_c15": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.001611,
+   "links": [
+    "Crumb_01_c19",
+    "Crumb_01_c21",
+    "Crumb_01_c28",
+    "Crumb_04_c12",
+    "Crumb_04_c21",
+    "Crumb_09_c00",
+    "Crumb_09_c03",
+    "Crumb_09_c08",
+    "Crumb_09_c09",
+    "Crumb_09_c10"
+   ]
+  },
+  "Crumb_01_c16": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.005504,
+   "links": [
+    "Crumb_01_c00",
+    "Crumb_01_c03",
+    "Crumb_01_c08",
+    "Crumb_01_c11",
+    "Crumb_01_c30",
+    "Crumb_01_c32",
+    "Crumb_09_c06"
+   ]
+  },
+  "Crumb_01_c17": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.012728,
+   "links": [
+    "Crumb_01_c06",
+    "Crumb_01_c10",
+    "Crumb_01_c18",
+    "Crumb_01_c26",
+    "Crumb_01_c29",
+    "Crumb_01_c31",
+    "Crumb_06_c12"
+   ]
+  },
+  "Crumb_01_c18": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.011859,
+   "links": [
+    "Crumb_01_c06",
+    "Crumb_01_c10",
+    "Crumb_01_c14",
+    "Crumb_01_c17",
+    "Crumb_06_c12",
+    "Crumb_14_c00",
+    "Crumb_14_c10"
+   ]
+  },
+  "Crumb_01_c19": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.002032,
+   "links": [
+    "Crumb_01_c15",
+    "Crumb_01_c21",
+    "Crumb_04_c02",
+    "Crumb_04_c12",
+    "Crumb_04_c18",
+    "Crumb_04_c21",
+    "Crumb_09_c00",
+    "Crumb_09_c09"
+   ]
+  },
+  "Crumb_01_c20": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.0075,
+   "links": [
+    "Crumb_01_c00",
+    "Crumb_01_c04",
+    "Crumb_01_c05",
+    "Crumb_01_c07",
+    "Crumb_01_c13",
+    "Crumb_01_c22",
+    "Crumb_01_c23",
+    "Crumb_01_c25",
+    "Crumb_01_c30",
+    "Crumb_01_c34",
+    "Crumb_04_c08",
+    "Crumb_04_c14"
+   ]
+  },
+  "Crumb_01_c21": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.00576,
+   "links": [
+    "Crumb_01_c00",
+    "Crumb_01_c04",
+    "Crumb_01_c15",
+    "Crumb_01_c19",
+    "Crumb_01_c28",
+    "Crumb_04_c12",
+    "Crumb_04_c21",
+    "Crumb_09_c00",
+    "Crumb_09_c09"
+   ]
+  },
+  "Crumb_01_c22": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.01311,
+   "links": [
+    "Crumb_01_c03",
+    "Crumb_01_c20",
+    "Crumb_01_c23",
+    "Crumb_01_c30",
+    "Crumb_01_c34",
+    "Crumb_04_c00",
+    "Crumb_04_c08",
+    "Crumb_04_c14"
+   ]
+  },
+  "Crumb_01_c23": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.009421,
+   "links": [
+    "Crumb_01_c01",
+    "Crumb_01_c07",
+    "Crumb_01_c13",
+    "Crumb_01_c20",
+    "Crumb_01_c22",
+    "Crumb_01_c30"
+   ]
+  },
+  "Crumb_01_c24": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.003705,
+   "links": [
+    "Crumb_01_c09",
+    "Crumb_01_c29",
+    "Crumb_06_c05",
+    "Crumb_06_c18",
+    "Crumb_06_c27"
+   ]
+  },
+  "Crumb_01_c25": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.001388,
+   "links": [
+    "Crumb_01_c04",
+    "Crumb_01_c05",
+    "Crumb_01_c13",
+    "Crumb_01_c20"
+   ]
+  },
+  "Crumb_01_c26": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.006145,
+   "links": [
+    "Crumb_01_c02",
+    "Crumb_01_c03",
+    "Crumb_01_c06",
+    "Crumb_01_c07",
+    "Crumb_01_c17",
+    "Crumb_01_c27",
+    "Crumb_01_c30",
+    "Crumb_01_c31"
+   ]
+  },
+  "Crumb_01_c27": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.004175,
+   "links": [
+    "Crumb_01_c01",
+    "Crumb_01_c02",
+    "Crumb_01_c07",
+    "Crumb_01_c26"
+   ]
+  },
+  "Crumb_01_c28": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.002133,
+   "links": [
+    "Crumb_01_c00",
+    "Crumb_01_c04",
+    "Crumb_01_c15",
+    "Crumb_01_c21",
+    "Crumb_01_c32",
+    "Crumb_01_c34",
+    "Crumb_09_c00",
+    "Crumb_09_c06",
+    "Crumb_09_c08",
+    "Crumb_09_c10"
+   ]
+  },
+  "Crumb_01_c29": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.022016,
+   "links": [
+    "Crumb_01_c09",
+    "Crumb_01_c10",
+    "Crumb_01_c17",
+    "Crumb_01_c24",
+    "Crumb_01_c31",
+    "Crumb_06_c05",
+    "Crumb_06_c12",
+    "Crumb_06_c18",
+    "Crumb_06_c22",
+    "Crumb_06_c27"
+   ]
+  },
+  "Crumb_01_c30": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.010827,
+   "links": [
+    "Crumb_01_c00",
+    "Crumb_01_c03",
+    "Crumb_01_c05",
+    "Crumb_01_c07",
+    "Crumb_01_c08",
+    "Crumb_01_c11",
+    "Crumb_01_c16",
+    "Crumb_01_c20",
+    "Crumb_01_c22",
+    "Crumb_01_c23",
+    "Crumb_01_c26",
+    "Crumb_01_c34"
+   ]
+  },
+  "Crumb_01_c31": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.008338,
+   "links": [
+    "Crumb_01_c02",
+    "Crumb_01_c09",
+    "Crumb_01_c10",
+    "Crumb_01_c12",
+    "Crumb_01_c17",
+    "Crumb_01_c26",
+    "Crumb_01_c29"
+   ]
+  },
+  "Crumb_01_c32": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.004656,
+   "links": [
+    "Crumb_01_c00",
+    "Crumb_01_c08",
+    "Crumb_01_c16",
+    "Crumb_01_c28",
+    "Crumb_09_c06",
+    "Crumb_09_c08"
+   ]
+  },
+  "Crumb_01_c33": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.006823,
+   "links": [
+    "Crumb_01_c03",
+    "Crumb_01_c08",
+    "Crumb_01_c14",
+    "Crumb_09_c01",
+    "Crumb_14_c00",
+    "Crumb_14_c06",
+    "Crumb_14_c12"
+   ]
+  },
+  "Crumb_01_c34": {
+   "block": "Chunk_01",
+   "core": false,
+   "volume": 0.00467,
+   "links": [
+    "Crumb_01_c00",
+    "Crumb_01_c03",
+    "Crumb_01_c04",
+    "Crumb_01_c08",
+    "Crumb_01_c20",
+    "Crumb_01_c22",
+    "Crumb_01_c28",
+    "Crumb_01_c30",
+    "Crumb_04_c08",
+    "Crumb_04_c14",
+    "Crumb_04_c20"
+   ]
+  },
+  "Crumb_01_c35": {
+   "block": "Chunk_01",
+   "core": true,
+   "volume": 0.067822,
+   "links": [
+    "Crumb_01_c01",
+    "Crumb_01_c02",
+    "Crumb_01_c03",
+    "Crumb_01_c06",
+    "Crumb_01_c07",
+    "Crumb_01_c09",
+    "Crumb_01_c12",
+    "Crumb_01_c14",
+    "Crumb_01_c17",
+    "Crumb_01_c22",
+    "Crumb_01_c23",
+    "Crumb_01_c26",
+    "Crumb_01_c27",
+    "Crumb_01_c29",
+    "Crumb_01_c30",
+    "Crumb_01_c31",
+    "Crumb_01_c33"
+   ]
+  },
+  "Crumb_02_c00": {
+   "block": "Chunk_02",
+   "core": false,
+   "volume": 0.016141,
+   "links": [
+    "Crumb_02_c01",
+    "Crumb_02_c04",
+    "Crumb_02_c06",
+    "Crumb_02_c08",
+    "Crumb_02_c09",
+    "Crumb_02_c13",
+    "Crumb_02_c14",
+    "Crumb_02_c15"
+   ]
+  },
+  "Crumb_02_c01": {
+   "block": "Chunk_02",
+   "core": false,
+   "volume": 0.005946,
+   "links": [
+    "Crumb_02_c00",
+    "Crumb_02_c03",
+    "Crumb_02_c06",
+    "Crumb_02_c14",
+    "Crumb_07_c07",
+    "Crumb_07_c08",
+    "Crumb_07_c12"
+   ]
+  },
+  "Crumb_02_c02": {
+   "block": "Chunk_02",
+   "core": false,
+   "volume": 0.001952,
+   "links": [
+    "Crumb_02_c03",
+    "Crumb_02_c08",
+    "Crumb_02_c14",
+    "Crumb_02_c15",
+    "Crumb_07_c01",
+    "Crumb_07_c11",
+    "Crumb_10_c04",
+    "Crumb_10_c09",
+    "Crumb_10_c11",
+    "Crumb_10_c15",
+    "Crumb_15_c06"
+   ]
+  },
+  "Crumb_02_c03": {
+   "block": "Chunk_02",
+   "core": false,
+   "volume": 0.00328,
+   "links": [
+    "Crumb_02_c01",
+    "Crumb_02_c02",
+    "Crumb_02_c14",
+    "Crumb_07_c01",
+    "Crumb_07_c04",
+    "Crumb_07_c11",
+    "Crumb_10_c04",
+    "Crumb_10_c15",
+    "Crumb_15_c04",
+    "Crumb_15_c06"
+   ]
+  },
+  "Crumb_02_c04": {
+   "block": "Chunk_02",
+   "core": false,
+   "volume": 0.004304,
+   "links": [
+    "Crumb_02_c00",
+    "Crumb_02_c06",
+    "Crumb_02_c09",
+    "Crumb_02_c12"
+   ]
+  },
+  "Crumb_02_c05": {
+   "block": "Chunk_02",
+   "core": false,
+   "volume": 0.006551,
+   "links": [
+    "Crumb_02_c09",
+    "Crumb_02_c13",
+    "Crumb_02_c15",
+    "Crumb_10_c02"
+   ]
+  },
+  "Crumb_02_c06": {
+   "block": "Chunk_02",
+   "core": false,
+   "volume": 0.011316,
+   "links": [
+    "Crumb_02_c00",
+    "Crumb_02_c01",
+    "Crumb_02_c04",
+    "Crumb_02_c07",
+    "Crumb_02_c10",
+    "Crumb_02_c11",
+    "Crumb_02_c12",
+    "Crumb_07_c07",
+    "Crumb_07_c12"
+   ]
+  },
+  "Crumb_02_c07": {
+   "block": "Chunk_02",
+   "core": false,
+   "volume": 0.013599,
+   "links": [
+    "Crumb_02_c06",
+    "Crumb_02_c10",
+    "Crumb_02_c11",
+    "Crumb_07_c03"
+   ]
+  },
+  "Crumb_02_c08": {
+   "block": "Chunk_02",
+   "core": false,
+   "volume": 0.002592,
+   "links": [
+    "Crumb_02_c00",
+    "Crumb_02_c02",
+    "Crumb_02_c13",
+    "Crumb_02_c14",
+    "Crumb_02_c15",
+    "Crumb_10_c04",
+    "Crumb_10_c15"
+   ]
+  },
+  "Crumb_02_c09": {
+   "block": "Chunk_02",
+   "core": false,
+   "volume": 0.013321,
+   "links": [
+    "Crumb_02_c00",
+    "Crumb_02_c04",
+    "Crumb_02_c05",
+    "Crumb_02_c13"
+   ]
+  },
+  "Crumb_02_c10": {
+   "block": "Chunk_02",
+   "core": false,
+   "volume": 0.001973,
+   "links": [
+    "Crumb_02_c06",
+    "Crumb_02_c07",
+    "Crumb_02_c11",
+    "Crumb_07_c03",
+    "Crumb_07_c06",
+    "Crumb_07_c07",
+    "Crumb_07_c12"
+   ]
+  },
+  "Crumb_02_c11": {
+   "block": "Chunk_02",
+   "core": false,
+   "volume": 0.007929,
+   "links": [
+    "Crumb_02_c06",
+    "Crumb_02_c07",
+    "Crumb_02_c10",
+    "Crumb_02_c12"
+   ]
+  },
+  "Crumb_02_c12": {
+   "block": "Chunk_02",
+   "core": false,
+   "volume": 0.004945,
+   "links": [
+    "Crumb_02_c04",
+    "Crumb_02_c06",
+    "Crumb_02_c11"
+   ]
+  },
+  "Crumb_02_c13": {
+   "block": "Chunk_02",
+   "core": false,
+   "volume": 0.00928,
+   "links": [
+    "Crumb_02_c00",
+    "Crumb_02_c05",
+    "Crumb_02_c08",
+    "Crumb_02_c09",
+    "Crumb_02_c14",
+    "Crumb_02_c15",
+    "Crumb_10_c02"
+   ]
+  },
+  "Crumb_02_c14": {
+   "block": "Chunk_02",
+   "core": false,
+   "volume": 0.007855,
+   "links": [
+    "Crumb_02_c00",
+    "Crumb_02_c01",
+    "Crumb_02_c02",
+    "Crumb_02_c03",
+    "Crumb_02_c08",
+    "Crumb_02_c13",
+    "Crumb_02_c15",
+    "Crumb_07_c01",
+    "Crumb_07_c11",
+    "Crumb_10_c04",
+    "Crumb_10_c15",
+    "Crumb_15_c06"
+   ]
+  },
+  "Crumb_02_c15": {
+   "block": "Chunk_02",
+   "core": false,
+   "volume": 0.002458,
+   "links": [
+    "Crumb_02_c00",
+    "Crumb_02_c02",
+    "Crumb_02_c05",
+    "Crumb_02_c08",
+    "Crumb_02_c13",
+    "Crumb_02_c14",
+    "Crumb_10_c00",
+    "Crumb_10_c02",
+    "Crumb_10_c04",
+    "Crumb_10_c09"
+   ]
+  },
+  "Crumb_02_c16": {
+   "block": "Chunk_02",
+   "core": true,
+   "volume": 0.027805,
+   "links": [
+    "Crumb_02_c00",
+    "Crumb_02_c04",
+    "Crumb_02_c06",
+    "Crumb_02_c07",
+    "Crumb_02_c09",
+    "Crumb_02_c11",
+    "Crumb_02_c12"
+   ]
+  },
+  "Crumb_03_c00": {
+   "block": "Chunk_03",
+   "core": false,
+   "volume": 0.008089,
+   "links": [
+    "Crumb_03_c03",
+    "Crumb_03_c04",
+    "Crumb_03_c07",
+    "Crumb_03_c10",
+    "Crumb_03_c11",
+    "Crumb_03_c14",
+    "Crumb_03_c15"
+   ]
+  },
+  "Crumb_03_c01": {
+   "block": "Chunk_03",
+   "core": false,
+   "volume": 0.005234,
+   "links": [
+    "Crumb_03_c03",
+    "Crumb_03_c05",
+    "Crumb_03_c08",
+    "Crumb_03_c09",
+    "Crumb_03_c12",
+    "Crumb_06_c01",
+    "Crumb_06_c23",
+    "Crumb_11_c06"
+   ]
+  },
+  "Crumb_03_c02": {
+   "block": "Chunk_03",
+   "core": false,
+   "volume": 0.007656,
+   "links": [
+    "Crumb_03_c10",
+    "Crumb_03_c11",
+    "Crumb_03_c17",
+    "Crumb_08_c03",
+    "Crumb_08_c06",
+    "Crumb_08_c07"
+   ]
+  },
+  "Crumb_03_c03": {
+   "block": "Chunk_03",
+   "core": false,
+   "volume": 0.00565,
+   "links": [
+    "Crumb_03_c00",
+    "Crumb_03_c01",
+    "Crumb_03_c04",
+    "Crumb_03_c05",
+    "Crumb_03_c07",
+    "Crumb_03_c08",
+    "Crumb_03_c09",
+    "Crumb_03_c12"
+   ]
+  },
+  "Crumb_03_c04": {
+   "block": "Chunk_03",
+   "core": false,
+   "volume": 0.00542,
+   "links": [
+    "Crumb_03_c00",
+    "Crumb_03_c03",
+    "Crumb_03_c10",
+    "Crumb_03_c12"
+   ]
+  },
+  "Crumb_03_c05": {
+   "block": "Chunk_03",
+   "core": false,
+   "volume": 0.010345,
+   "links": [
+    "Crumb_03_c01",
+    "Crumb_03_c03",
+    "Crumb_03_c08",
+    "Crumb_03_c12",
+    "Crumb_03_c16",
+    "Crumb_06_c01",
+    "Crumb_06_c03",
+    "Crumb_06_c09"
+   ]
+  },
+  "Crumb_03_c06": {
+   "block": "Chunk_03",
+   "core": false,
+   "volume": 0.007578,
+   "links": [
+    "Crumb_03_c14",
+    "Crumb_03_c15",
+    "Crumb_03_c17",
+    "Crumb_08_c10",
+    "Crumb_08_c11",
+    "Crumb_16_c00",
+    "Crumb_16_c04",
+    "Crumb_16_c06"
+   ]
+  },
+  "Crumb_03_c07": {
+   "block": "Chunk_03",
+   "core": false,
+   "volume": 0.008018,
+   "links": [
+    "Crumb_03_c00",
+    "Crumb_03_c03",
+    "Crumb_03_c08",
+    "Crumb_03_c09",
+    "Crumb_03_c13",
+    "Crumb_03_c14",
+    "Crumb_03_c15"
+   ]
+  },
+  "Crumb_03_c08": {
+   "block": "Chunk_03",
+   "core": false,
+   "volume": 0.007219,
+   "links": [
+    "Crumb_03_c01",
+    "Crumb_03_c03",
+    "Crumb_03_c05",
+    "Crumb_03_c07",
+    "Crumb_03_c09",
+    "Crumb_03_c13",
+    "Crumb_06_c23",
+    "Crumb_11_c06",
+    "Crumb_11_c07"
+   ]
+  },
+  "Crumb_03_c09": {
+   "block": "Chunk_03",
+   "core": false,
+   "volume": 0.006593,
+   "links": [
+    "Crumb_03_c01",
+    "Crumb_03_c03",
+    "Crumb_03_c07",
+    "Crumb_03_c08",
+    "Crumb_03_c13",
+    "Crumb_06_c23",
+    "Crumb_11_c06",
+    "Crumb_11_c07"
+   ]
+  },
+  "Crumb_03_c10": {
+   "block": "Chunk_03",
+   "core": false,
+   "volume": 0.01086,
+   "links": [
+    "Crumb_03_c00",
+    "Crumb_03_c02",
+    "Crumb_03_c04",
+    "Crumb_03_c11",
+    "Crumb_03_c15"
+   ]
+  },
+  "Crumb_03_c11": {
+   "block": "Chunk_03",
+   "core": false,
+   "volume": 0.006477,
+   "links": [
+    "Crumb_03_c00",
+    "Crumb_03_c02",
+    "Crumb_03_c10",
+    "Crumb_03_c15",
+    "Crumb_03_c17",
+    "Crumb_08_c03",
+    "Crumb_08_c10",
+    "Crumb_08_c11"
+   ]
+  },
+  "Crumb_03_c12": {
+   "block": "Chunk_03",
+   "core": false,
+   "volume": 0.006688,
+   "links": [
+    "Crumb_03_c01",
+    "Crumb_03_c03",
+    "Crumb_03_c04",
+    "Crumb_03_c05"
+   ]
+  },
+  "Crumb_03_c13": {
+   "block": "Chunk_03",
+   "core": false,
+   "volume": 0.005006,
+   "links": [
+    "Crumb_03_c07",
+    "Crumb_03_c08",
+    "Crumb_03_c09",
+    "Crumb_03_c14",
+    "Crumb_11_c01",
+    "Crumb_11_c02",
+    "Crumb_11_c07",
+    "Crumb_16_c03"
+   ]
+  },
+  "Crumb_03_c14": {
+   "block": "Chunk_03",
+   "core": false,
+   "volume": 0.014003,
+   "links": [
+    "Crumb_03_c00",
+    "Crumb_03_c06",
+    "Crumb_03_c07",
+    "Crumb_03_c13",
+    "Crumb_03_c15",
+    "Crumb_11_c01",
+    "Crumb_16_c03",
+    "Crumb_16_c06"
+   ]
+  },
+  "Crumb_03_c15": {
+   "block": "Chunk_03",
+   "core": false,
+   "volume": 0.008986,
+   "links": [
+    "Crumb_03_c00",
+    "Crumb_03_c06",
+    "Crumb_03_c07",
+    "Crumb_03_c10",
+    "Crumb_03_c11",
+    "Crumb_03_c14",
+    "Crumb_03_c17",
+    "Crumb_08_c10",
+    "Crumb_08_c11",
+    "Crumb_16_c00"
+   ]
+  },
+  "Crumb_03_c16": {
+   "block": "Chunk_03",
+   "core": false,
+   "volume": 0.008375,
+   "links": [
+    "Crumb_03_c05",
+    "Crumb_06_c01",
+    "Crumb_06_c03",
+    "Crumb_06_c09",
+    "Crumb_06_c14"
+   ]
+  },
+  "Crumb_03_c17": {
+   "block": "Chunk_03",
+   "core": false,
+   "volume": 0.007223,
+   "links": [
+    "Crumb_03_c02",
+    "Crumb_03_c06",
+    "Crumb_03_c11",
+    "Crumb_03_c15",
+    "Crumb_08_c03",
+    "Crumb_08_c10",
+    "Crumb_08_c11",
+    "Crumb_08_c15",
+    "Crumb_16_c00"
+   ]
+  },
+  "Crumb_03_c18": {
+   "block": "Chunk_03",
+   "core": true,
+   "volume": 0.073868,
+   "links": [
+    "Crumb_03_c00",
+    "Crumb_03_c02",
+    "Crumb_03_c03",
+    "Crumb_03_c04",
+    "Crumb_03_c05",
+    "Crumb_03_c06",
+    "Crumb_03_c07",
+    "Crumb_03_c08",
+    "Crumb_03_c09",
+    "Crumb_03_c10",
+    "Crumb_03_c11",
+    "Crumb_03_c12",
+    "Crumb_03_c13",
+    "Crumb_03_c14",
+    "Crumb_03_c15",
+    "Crumb_03_c16",
+    "Crumb_03_c17"
+   ]
+  },
+  "Crumb_04_c00": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.02472,
+   "links": [
+    "Crumb_04_c04",
+    "Crumb_04_c05",
+    "Crumb_04_c14",
+    "Crumb_01_c22"
+   ]
+  },
+  "Crumb_04_c01": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.004128,
+   "links": [
+    "Crumb_04_c02",
+    "Crumb_04_c06",
+    "Crumb_04_c09",
+    "Crumb_04_c10",
+    "Crumb_04_c12",
+    "Crumb_04_c18",
+    "Crumb_04_c21",
+    "Crumb_04_c22"
+   ]
+  },
+  "Crumb_04_c02": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.003886,
+   "links": [
+    "Crumb_04_c01",
+    "Crumb_04_c12",
+    "Crumb_04_c18",
+    "Crumb_04_c21",
+    "Crumb_04_c22",
+    "Crumb_01_c19",
+    "Crumb_09_c09",
+    "Crumb_17_c18"
+   ]
+  },
+  "Crumb_04_c03": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.013732,
+   "links": [
+    "Crumb_04_c11",
+    "Crumb_04_c15",
+    "Crumb_04_c16",
+    "Crumb_04_c19",
+    "Crumb_12_c10",
+    "Crumb_12_c22"
+   ]
+  },
+  "Crumb_04_c04": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.004736,
+   "links": [
+    "Crumb_04_c00",
+    "Crumb_04_c05",
+    "Crumb_04_c11",
+    "Crumb_04_c13",
+    "Crumb_04_c19"
+   ]
+  },
+  "Crumb_04_c05": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.01917,
+   "links": [
+    "Crumb_04_c00",
+    "Crumb_04_c04",
+    "Crumb_04_c14",
+    "Crumb_04_c16",
+    "Crumb_04_c19",
+    "Crumb_04_c20"
+   ]
+  },
+  "Crumb_04_c06": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.006096,
+   "links": [
+    "Crumb_04_c01",
+    "Crumb_04_c08",
+    "Crumb_04_c09",
+    "Crumb_04_c10",
+    "Crumb_04_c18",
+    "Crumb_04_c20",
+    "Crumb_04_c23",
+    "Crumb_17_c15",
+    "Crumb_17_c20"
+   ]
+  },
+  "Crumb_04_c07": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.003623,
+   "links": [
+    "Crumb_04_c11",
+    "Crumb_04_c13",
+    "Crumb_04_c17",
+    "Crumb_12_c05",
+    "Crumb_12_c08",
+    "Crumb_12_c20",
+    "Crumb_12_c30"
+   ]
+  },
+  "Crumb_04_c08": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.012733,
+   "links": [
+    "Crumb_04_c06",
+    "Crumb_04_c09",
+    "Crumb_04_c12",
+    "Crumb_04_c14",
+    "Crumb_04_c18",
+    "Crumb_04_c20",
+    "Crumb_04_c21",
+    "Crumb_04_c22",
+    "Crumb_04_c23",
+    "Crumb_01_c04",
+    "Crumb_01_c20",
+    "Crumb_01_c22",
+    "Crumb_01_c34"
+   ]
+  },
+  "Crumb_04_c09": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.009215,
+   "links": [
+    "Crumb_04_c01",
+    "Crumb_04_c06",
+    "Crumb_04_c08",
+    "Crumb_04_c10",
+    "Crumb_04_c12",
+    "Crumb_04_c15",
+    "Crumb_04_c18",
+    "Crumb_04_c20",
+    "Crumb_04_c22",
+    "Crumb_04_c23"
+   ]
+  },
+  "Crumb_04_c10": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.00441,
+   "links": [
+    "Crumb_04_c01",
+    "Crumb_04_c06",
+    "Crumb_04_c09",
+    "Crumb_04_c15",
+    "Crumb_04_c16",
+    "Crumb_04_c20",
+    "Crumb_04_c23",
+    "Crumb_12_c15"
+   ]
+  },
+  "Crumb_04_c11": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.007489,
+   "links": [
+    "Crumb_04_c03",
+    "Crumb_04_c04",
+    "Crumb_04_c07",
+    "Crumb_04_c13",
+    "Crumb_04_c19",
+    "Crumb_12_c05",
+    "Crumb_12_c10",
+    "Crumb_12_c32"
+   ]
+  },
+  "Crumb_04_c12": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.004387,
+   "links": [
+    "Crumb_04_c01",
+    "Crumb_04_c02",
+    "Crumb_04_c08",
+    "Crumb_04_c09",
+    "Crumb_04_c18",
+    "Crumb_04_c21",
+    "Crumb_04_c22",
+    "Crumb_01_c15",
+    "Crumb_01_c19",
+    "Crumb_01_c21",
+    "Crumb_09_c00",
+    "Crumb_09_c03",
+    "Crumb_09_c09",
+    "Crumb_17_c00",
+    "Crumb_17_c16",
+    "Crumb_17_c18",
+    "Crumb_17_c20"
+   ]
+  },
+  "Crumb_04_c13": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.021588,
+   "links": [
+    "Crumb_04_c04",
+    "Crumb_04_c07",
+    "Crumb_04_c11",
+    "Crumb_04_c17"
+   ]
+  },
+  "Crumb_04_c14": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.006254,
+   "links": [
+    "Crumb_04_c00",
+    "Crumb_04_c05",
+    "Crumb_04_c08",
+    "Crumb_04_c20",
+    "Crumb_01_c20",
+    "Crumb_01_c22",
+    "Crumb_01_c34"
+   ]
+  },
+  "Crumb_04_c15": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.006161,
+   "links": [
+    "Crumb_04_c03",
+    "Crumb_04_c09",
+    "Crumb_04_c10",
+    "Crumb_04_c16",
+    "Crumb_04_c19",
+    "Crumb_04_c20",
+    "Crumb_12_c22"
+   ]
+  },
+  "Crumb_04_c16": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.013112,
+   "links": [
+    "Crumb_04_c03",
+    "Crumb_04_c05",
+    "Crumb_04_c10",
+    "Crumb_04_c15",
+    "Crumb_04_c19",
+    "Crumb_04_c20",
+    "Crumb_04_c23",
+    "Crumb_12_c15",
+    "Crumb_12_c22",
+    "Crumb_12_c29"
+   ]
+  },
+  "Crumb_04_c17": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.037353,
+   "links": [
+    "Crumb_04_c07",
+    "Crumb_04_c13",
+    "Crumb_12_c04",
+    "Crumb_12_c08",
+    "Crumb_12_c30"
+   ]
+  },
+  "Crumb_04_c18": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.008631,
+   "links": [
+    "Crumb_04_c01",
+    "Crumb_04_c02",
+    "Crumb_04_c06",
+    "Crumb_04_c08",
+    "Crumb_04_c09",
+    "Crumb_04_c12",
+    "Crumb_04_c23",
+    "Crumb_01_c19",
+    "Crumb_09_c09",
+    "Crumb_17_c00",
+    "Crumb_17_c15",
+    "Crumb_17_c18",
+    "Crumb_17_c20"
+   ]
+  },
+  "Crumb_04_c19": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.012705,
+   "links": [
+    "Crumb_04_c03",
+    "Crumb_04_c04",
+    "Crumb_04_c05",
+    "Crumb_04_c11",
+    "Crumb_04_c15",
+    "Crumb_04_c16",
+    "Crumb_04_c20"
+   ]
+  },
+  "Crumb_04_c20": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.021433,
+   "links": [
+    "Crumb_04_c05",
+    "Crumb_04_c06",
+    "Crumb_04_c08",
+    "Crumb_04_c09",
+    "Crumb_04_c10",
+    "Crumb_04_c14",
+    "Crumb_04_c15",
+    "Crumb_04_c16",
+    "Crumb_04_c19",
+    "Crumb_04_c23",
+    "Crumb_01_c34"
+   ]
+  },
+  "Crumb_04_c21": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.003288,
+   "links": [
+    "Crumb_04_c01",
+    "Crumb_04_c02",
+    "Crumb_04_c08",
+    "Crumb_04_c12",
+    "Crumb_04_c22",
+    "Crumb_01_c15",
+    "Crumb_01_c19",
+    "Crumb_01_c21",
+    "Crumb_09_c09",
+    "Crumb_17_c18"
+   ]
+  },
+  "Crumb_04_c22": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.005916,
+   "links": [
+    "Crumb_04_c01",
+    "Crumb_04_c02",
+    "Crumb_04_c08",
+    "Crumb_04_c09",
+    "Crumb_04_c12",
+    "Crumb_04_c21"
+   ]
+  },
+  "Crumb_04_c23": {
+   "block": "Chunk_04",
+   "core": false,
+   "volume": 0.009452,
+   "links": [
+    "Crumb_04_c06",
+    "Crumb_04_c08",
+    "Crumb_04_c09",
+    "Crumb_04_c10",
+    "Crumb_04_c16",
+    "Crumb_04_c18",
+    "Crumb_04_c20",
+    "Crumb_12_c15",
+    "Crumb_17_c15"
+   ]
+  },
+  "Crumb_04_c24": {
+   "block": "Chunk_04",
+   "core": true,
+   "volume": 0.103254,
+   "links": [
+    "Crumb_04_c00",
+    "Crumb_04_c03",
+    "Crumb_04_c04",
+    "Crumb_04_c05",
+    "Crumb_04_c11",
+    "Crumb_04_c13",
+    "Crumb_04_c16",
+    "Crumb_04_c17",
+    "Crumb_04_c19"
+   ]
+  },
+  "Crumb_05_c00": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.005112,
+   "links": [
+    "Crumb_05_c12",
+    "Crumb_05_c13",
+    "Crumb_05_c14",
+    "Crumb_05_c28",
+    "Crumb_10_c05",
+    "Crumb_10_c06"
+   ]
+  },
+  "Crumb_05_c01": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.00401,
+   "links": [
+    "Crumb_05_c04",
+    "Crumb_05_c07",
+    "Crumb_05_c17",
+    "Crumb_05_c30",
+    "Crumb_00_c09",
+    "Crumb_00_c11",
+    "Crumb_13_c02"
+   ]
+  },
+  "Crumb_05_c02": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.010815,
+   "links": [
+    "Crumb_05_c03",
+    "Crumb_05_c05",
+    "Crumb_05_c07",
+    "Crumb_05_c16",
+    "Crumb_05_c17",
+    "Crumb_05_c18",
+    "Crumb_05_c20",
+    "Crumb_05_c22"
+   ]
+  },
+  "Crumb_05_c03": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.009747,
+   "links": [
+    "Crumb_05_c02",
+    "Crumb_05_c05",
+    "Crumb_05_c12",
+    "Crumb_05_c13",
+    "Crumb_05_c14",
+    "Crumb_05_c15",
+    "Crumb_05_c16",
+    "Crumb_10_c05",
+    "Crumb_18_c05"
+   ]
+  },
+  "Crumb_05_c04": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.004357,
+   "links": [
+    "Crumb_05_c01",
+    "Crumb_05_c17",
+    "Crumb_05_c22",
+    "Crumb_05_c23",
+    "Crumb_05_c30",
+    "Crumb_00_c11",
+    "Crumb_13_c00",
+    "Crumb_13_c02",
+    "Crumb_13_c05"
+   ]
+  },
+  "Crumb_05_c05": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.002848,
+   "links": [
+    "Crumb_05_c02",
+    "Crumb_05_c03",
+    "Crumb_05_c08",
+    "Crumb_05_c11",
+    "Crumb_05_c14",
+    "Crumb_05_c18",
+    "Crumb_05_c21",
+    "Crumb_05_c24",
+    "Crumb_05_c29"
+   ]
+  },
+  "Crumb_05_c06": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.007555,
+   "links": [
+    "Crumb_05_c09",
+    "Crumb_05_c22",
+    "Crumb_05_c23",
+    "Crumb_05_c25",
+    "Crumb_13_c00",
+    "Crumb_18_c03",
+    "Crumb_26_c02"
+   ]
+  },
+  "Crumb_05_c07": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.004434,
+   "links": [
+    "Crumb_05_c01",
+    "Crumb_05_c02",
+    "Crumb_05_c17",
+    "Crumb_05_c18",
+    "Crumb_05_c19",
+    "Crumb_05_c21",
+    "Crumb_00_c07"
+   ]
+  },
+  "Crumb_05_c08": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.002896,
+   "links": [
+    "Crumb_05_c05",
+    "Crumb_05_c10",
+    "Crumb_05_c11",
+    "Crumb_05_c18",
+    "Crumb_05_c20",
+    "Crumb_05_c21",
+    "Crumb_05_c24",
+    "Crumb_05_c29"
+   ]
+  },
+  "Crumb_05_c09": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.001205,
+   "links": [
+    "Crumb_05_c06",
+    "Crumb_05_c25",
+    "Crumb_18_c03",
+    "Crumb_18_c09",
+    "Crumb_18_c10",
+    "Crumb_26_c02",
+    "Crumb_26_c03"
+   ]
+  },
+  "Crumb_05_c10": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 6.7e-05,
+   "links": [
+    "Crumb_05_c08",
+    "Crumb_05_c11",
+    "Crumb_05_c19",
+    "Crumb_05_c21",
+    "Crumb_05_c29",
+    "Crumb_00_c10"
+   ]
+  },
+  "Crumb_05_c11": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.000244,
+   "links": [
+    "Crumb_05_c05",
+    "Crumb_05_c08",
+    "Crumb_05_c10",
+    "Crumb_05_c24",
+    "Crumb_05_c26",
+    "Crumb_05_c29"
+   ]
+  },
+  "Crumb_05_c12": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.013009,
+   "links": [
+    "Crumb_05_c00",
+    "Crumb_05_c03",
+    "Crumb_05_c13",
+    "Crumb_05_c14",
+    "Crumb_05_c15",
+    "Crumb_05_c27",
+    "Crumb_05_c28"
+   ]
+  },
+  "Crumb_05_c13": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.003451,
+   "links": [
+    "Crumb_05_c00",
+    "Crumb_05_c03",
+    "Crumb_05_c12",
+    "Crumb_05_c14",
+    "Crumb_10_c01",
+    "Crumb_10_c05",
+    "Crumb_10_c06",
+    "Crumb_10_c12",
+    "Crumb_18_c05"
+   ]
+  },
+  "Crumb_05_c14": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.005144,
+   "links": [
+    "Crumb_05_c00",
+    "Crumb_05_c03",
+    "Crumb_05_c05",
+    "Crumb_05_c12",
+    "Crumb_05_c13",
+    "Crumb_05_c24",
+    "Crumb_05_c26",
+    "Crumb_05_c27",
+    "Crumb_05_c28"
+   ]
+  },
+  "Crumb_05_c15": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.008576,
+   "links": [
+    "Crumb_05_c03",
+    "Crumb_05_c12",
+    "Crumb_05_c16",
+    "Crumb_05_c25",
+    "Crumb_10_c12",
+    "Crumb_18_c00",
+    "Crumb_18_c05",
+    "Crumb_18_c08"
+   ]
+  },
+  "Crumb_05_c16": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.01314,
+   "links": [
+    "Crumb_05_c02",
+    "Crumb_05_c03",
+    "Crumb_05_c15",
+    "Crumb_05_c17",
+    "Crumb_05_c22",
+    "Crumb_05_c25"
+   ]
+  },
+  "Crumb_05_c17": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.004753,
+   "links": [
+    "Crumb_05_c01",
+    "Crumb_05_c02",
+    "Crumb_05_c04",
+    "Crumb_05_c07",
+    "Crumb_05_c16",
+    "Crumb_05_c18",
+    "Crumb_05_c22",
+    "Crumb_00_c11"
+   ]
+  },
+  "Crumb_05_c18": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.008179,
+   "links": [
+    "Crumb_05_c02",
+    "Crumb_05_c05",
+    "Crumb_05_c07",
+    "Crumb_05_c08",
+    "Crumb_05_c17",
+    "Crumb_05_c20",
+    "Crumb_05_c21",
+    "Crumb_05_c22",
+    "Crumb_00_c07",
+    "Crumb_00_c10"
+   ]
+  },
+  "Crumb_05_c19": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.000283,
+   "links": [
+    "Crumb_05_c07",
+    "Crumb_05_c10",
+    "Crumb_05_c21",
+    "Crumb_00_c00",
+    "Crumb_00_c01",
+    "Crumb_00_c05",
+    "Crumb_00_c06",
+    "Crumb_00_c07",
+    "Crumb_00_c10"
+   ]
+  },
+  "Crumb_05_c20": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.013029,
+   "links": [
+    "Crumb_05_c02",
+    "Crumb_05_c08",
+    "Crumb_05_c18",
+    "Crumb_05_c21",
+    "Crumb_05_c24",
+    "Crumb_05_c27"
+   ]
+  },
+  "Crumb_05_c21": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.002548,
+   "links": [
+    "Crumb_05_c05",
+    "Crumb_05_c07",
+    "Crumb_05_c08",
+    "Crumb_05_c10",
+    "Crumb_05_c18",
+    "Crumb_05_c19",
+    "Crumb_05_c20",
+    "Crumb_05_c29",
+    "Crumb_00_c07",
+    "Crumb_00_c10"
+   ]
+  },
+  "Crumb_05_c22": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.011221,
+   "links": [
+    "Crumb_05_c02",
+    "Crumb_05_c04",
+    "Crumb_05_c06",
+    "Crumb_05_c16",
+    "Crumb_05_c17",
+    "Crumb_05_c18",
+    "Crumb_05_c23",
+    "Crumb_05_c25",
+    "Crumb_13_c00"
+   ]
+  },
+  "Crumb_05_c23": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.001745,
+   "links": [
+    "Crumb_05_c04",
+    "Crumb_05_c06",
+    "Crumb_05_c22",
+    "Crumb_05_c30",
+    "Crumb_13_c00",
+    "Crumb_13_c01",
+    "Crumb_13_c02",
+    "Crumb_13_c03",
+    "Crumb_13_c05",
+    "Crumb_26_c02"
+   ]
+  },
+  "Crumb_05_c24": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.00247,
+   "links": [
+    "Crumb_05_c05",
+    "Crumb_05_c08",
+    "Crumb_05_c11",
+    "Crumb_05_c14",
+    "Crumb_05_c20",
+    "Crumb_05_c26",
+    "Crumb_05_c27",
+    "Crumb_05_c28"
+   ]
+  },
+  "Crumb_05_c25": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.007746,
+   "links": [
+    "Crumb_05_c06",
+    "Crumb_05_c09",
+    "Crumb_05_c15",
+    "Crumb_05_c16",
+    "Crumb_05_c22",
+    "Crumb_18_c00",
+    "Crumb_18_c03",
+    "Crumb_18_c08",
+    "Crumb_18_c09"
+   ]
+  },
+  "Crumb_05_c26": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 2.8e-05,
+   "links": [
+    "Crumb_05_c11",
+    "Crumb_05_c14",
+    "Crumb_05_c24",
+    "Crumb_05_c28"
+   ]
+  },
+  "Crumb_05_c27": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.02207,
+   "links": [
+    "Crumb_05_c12",
+    "Crumb_05_c14",
+    "Crumb_05_c20",
+    "Crumb_05_c24",
+    "Crumb_05_c28"
+   ]
+  },
+  "Crumb_05_c28": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.002912,
+   "links": [
+    "Crumb_05_c00",
+    "Crumb_05_c12",
+    "Crumb_05_c14",
+    "Crumb_05_c24",
+    "Crumb_05_c26",
+    "Crumb_05_c27",
+    "Crumb_10_c06"
+   ]
+  },
+  "Crumb_05_c29": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.000235,
+   "links": [
+    "Crumb_05_c05",
+    "Crumb_05_c08",
+    "Crumb_05_c10",
+    "Crumb_05_c11",
+    "Crumb_05_c21"
+   ]
+  },
+  "Crumb_05_c30": {
+   "block": "Chunk_05",
+   "core": false,
+   "volume": 0.000615,
+   "links": [
+    "Crumb_05_c01",
+    "Crumb_05_c04",
+    "Crumb_05_c23",
+    "Crumb_00_c11",
+    "Crumb_13_c00",
+    "Crumb_13_c01",
+    "Crumb_13_c02",
+    "Crumb_13_c05"
+   ]
+  },
+  "Crumb_05_c31": {
+   "block": "Chunk_05",
+   "core": true,
+   "volume": 0.019521,
+   "links": [
+    "Crumb_05_c02",
+    "Crumb_05_c03",
+    "Crumb_05_c05",
+    "Crumb_05_c08",
+    "Crumb_05_c12",
+    "Crumb_05_c14",
+    "Crumb_05_c15",
+    "Crumb_05_c16",
+    "Crumb_05_c18",
+    "Crumb_05_c20",
+    "Crumb_05_c24",
+    "Crumb_05_c27"
+   ]
+  },
+  "Crumb_06_c00": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.007669,
+   "links": [
+    "Crumb_06_c04",
+    "Crumb_06_c07",
+    "Crumb_06_c13",
+    "Crumb_06_c15",
+    "Crumb_06_c19",
+    "Crumb_06_c21",
+    "Crumb_06_c24",
+    "Crumb_19_c01"
+   ]
+  },
+  "Crumb_06_c01": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.001312,
+   "links": [
+    "Crumb_06_c03",
+    "Crumb_06_c09",
+    "Crumb_06_c23",
+    "Crumb_03_c01",
+    "Crumb_03_c05",
+    "Crumb_03_c16"
+   ]
+  },
+  "Crumb_06_c02": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.004999,
+   "links": [
+    "Crumb_06_c08",
+    "Crumb_06_c12",
+    "Crumb_06_c25",
+    "Crumb_06_c26",
+    "Crumb_14_c03",
+    "Crumb_14_c10"
+   ]
+  },
+  "Crumb_06_c03": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.004018,
+   "links": [
+    "Crumb_06_c01",
+    "Crumb_06_c06",
+    "Crumb_06_c09",
+    "Crumb_06_c14",
+    "Crumb_03_c05",
+    "Crumb_03_c16"
+   ]
+  },
+  "Crumb_06_c04": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.006208,
+   "links": [
+    "Crumb_06_c00",
+    "Crumb_06_c08",
+    "Crumb_06_c15",
+    "Crumb_06_c24",
+    "Crumb_06_c26",
+    "Crumb_14_c01",
+    "Crumb_14_c03",
+    "Crumb_19_c10",
+    "Crumb_19_c11",
+    "Crumb_19_c13",
+    "Crumb_19_c14"
+   ]
+  },
+  "Crumb_06_c05": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.003079,
+   "links": [
+    "Crumb_06_c12",
+    "Crumb_06_c18",
+    "Crumb_06_c22",
+    "Crumb_06_c25",
+    "Crumb_06_c27",
+    "Crumb_01_c09",
+    "Crumb_01_c10",
+    "Crumb_01_c24",
+    "Crumb_01_c29"
+   ]
+  },
+  "Crumb_06_c06": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.003534,
+   "links": [
+    "Crumb_06_c03",
+    "Crumb_06_c14",
+    "Crumb_06_c17"
+   ]
+  },
+  "Crumb_06_c07": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.002269,
+   "links": [
+    "Crumb_06_c00",
+    "Crumb_06_c15",
+    "Crumb_06_c19",
+    "Crumb_11_c04",
+    "Crumb_11_c05",
+    "Crumb_19_c01",
+    "Crumb_19_c06",
+    "Crumb_19_c07"
+   ]
+  },
+  "Crumb_06_c08": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.006026,
+   "links": [
+    "Crumb_06_c02",
+    "Crumb_06_c04",
+    "Crumb_06_c26",
+    "Crumb_14_c03",
+    "Crumb_19_c13"
+   ]
+  },
+  "Crumb_06_c09": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.006068,
+   "links": [
+    "Crumb_06_c01",
+    "Crumb_06_c03",
+    "Crumb_06_c14",
+    "Crumb_06_c16",
+    "Crumb_06_c20",
+    "Crumb_06_c23",
+    "Crumb_03_c05",
+    "Crumb_03_c16"
+   ]
+  },
+  "Crumb_06_c10": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.010663,
+   "links": [
+    "Crumb_06_c11",
+    "Crumb_06_c13",
+    "Crumb_06_c20",
+    "Crumb_06_c22",
+    "Crumb_06_c24",
+    "Crumb_06_c25",
+    "Crumb_06_c26"
+   ]
+  },
+  "Crumb_06_c11": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.01215,
+   "links": [
+    "Crumb_06_c10",
+    "Crumb_06_c14",
+    "Crumb_06_c17",
+    "Crumb_06_c20",
+    "Crumb_06_c22"
+   ]
+  },
+  "Crumb_06_c12": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.002398,
+   "links": [
+    "Crumb_06_c02",
+    "Crumb_06_c05",
+    "Crumb_06_c25",
+    "Crumb_01_c10",
+    "Crumb_01_c17",
+    "Crumb_01_c18",
+    "Crumb_01_c29",
+    "Crumb_14_c10"
+   ]
+  },
+  "Crumb_06_c13": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.007028,
+   "links": [
+    "Crumb_06_c00",
+    "Crumb_06_c10",
+    "Crumb_06_c16",
+    "Crumb_06_c20",
+    "Crumb_06_c21",
+    "Crumb_06_c24",
+    "Crumb_06_c26"
+   ]
+  },
+  "Crumb_06_c14": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.010899,
+   "links": [
+    "Crumb_06_c03",
+    "Crumb_06_c06",
+    "Crumb_06_c09",
+    "Crumb_06_c11",
+    "Crumb_06_c20",
+    "Crumb_03_c16"
+   ]
+  },
+  "Crumb_06_c15": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.003308,
+   "links": [
+    "Crumb_06_c00",
+    "Crumb_06_c04",
+    "Crumb_06_c07",
+    "Crumb_06_c19",
+    "Crumb_19_c01",
+    "Crumb_19_c06",
+    "Crumb_19_c11",
+    "Crumb_19_c14"
+   ]
+  },
+  "Crumb_06_c16": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.004396,
+   "links": [
+    "Crumb_06_c09",
+    "Crumb_06_c13",
+    "Crumb_06_c20",
+    "Crumb_06_c21",
+    "Crumb_06_c23",
+    "Crumb_11_c06"
+   ]
+  },
+  "Crumb_06_c17": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.008657,
+   "links": [
+    "Crumb_06_c06",
+    "Crumb_06_c11",
+    "Crumb_06_c18",
+    "Crumb_06_c22"
+   ]
+  },
+  "Crumb_06_c18": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.006711,
+   "links": [
+    "Crumb_06_c05",
+    "Crumb_06_c17",
+    "Crumb_06_c22",
+    "Crumb_06_c27",
+    "Crumb_01_c24",
+    "Crumb_01_c29"
+   ]
+  },
+  "Crumb_06_c19": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.003037,
+   "links": [
+    "Crumb_06_c00",
+    "Crumb_06_c07",
+    "Crumb_06_c15",
+    "Crumb_06_c21",
+    "Crumb_11_c02",
+    "Crumb_11_c04",
+    "Crumb_11_c05",
+    "Crumb_19_c01",
+    "Crumb_19_c06"
+   ]
+  },
+  "Crumb_06_c20": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.013876,
+   "links": [
+    "Crumb_06_c09",
+    "Crumb_06_c10",
+    "Crumb_06_c11",
+    "Crumb_06_c13",
+    "Crumb_06_c14",
+    "Crumb_06_c16",
+    "Crumb_06_c24",
+    "Crumb_06_c26"
+   ]
+  },
+  "Crumb_06_c21": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.002562,
+   "links": [
+    "Crumb_06_c00",
+    "Crumb_06_c13",
+    "Crumb_06_c16",
+    "Crumb_06_c19",
+    "Crumb_06_c23",
+    "Crumb_06_c24",
+    "Crumb_11_c02",
+    "Crumb_11_c06",
+    "Crumb_11_c07"
+   ]
+  },
+  "Crumb_06_c22": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.010878,
+   "links": [
+    "Crumb_06_c05",
+    "Crumb_06_c10",
+    "Crumb_06_c11",
+    "Crumb_06_c17",
+    "Crumb_06_c18",
+    "Crumb_06_c25",
+    "Crumb_06_c27",
+    "Crumb_01_c29"
+   ]
+  },
+  "Crumb_06_c23": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.001591,
+   "links": [
+    "Crumb_06_c01",
+    "Crumb_06_c09",
+    "Crumb_06_c16",
+    "Crumb_06_c21",
+    "Crumb_03_c01",
+    "Crumb_03_c08",
+    "Crumb_03_c09",
+    "Crumb_11_c06",
+    "Crumb_11_c07"
+   ]
+  },
+  "Crumb_06_c24": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.0096,
+   "links": [
+    "Crumb_06_c00",
+    "Crumb_06_c04",
+    "Crumb_06_c10",
+    "Crumb_06_c13",
+    "Crumb_06_c20",
+    "Crumb_06_c21",
+    "Crumb_06_c26"
+   ]
+  },
+  "Crumb_06_c25": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.008755,
+   "links": [
+    "Crumb_06_c02",
+    "Crumb_06_c05",
+    "Crumb_06_c10",
+    "Crumb_06_c12",
+    "Crumb_06_c22",
+    "Crumb_06_c26"
+   ]
+  },
+  "Crumb_06_c26": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.013398,
+   "links": [
+    "Crumb_06_c02",
+    "Crumb_06_c04",
+    "Crumb_06_c08",
+    "Crumb_06_c10",
+    "Crumb_06_c13",
+    "Crumb_06_c20",
+    "Crumb_06_c24",
+    "Crumb_06_c25"
+   ]
+  },
+  "Crumb_06_c27": {
+   "block": "Chunk_06",
+   "core": false,
+   "volume": 0.001857,
+   "links": [
+    "Crumb_06_c05",
+    "Crumb_06_c18",
+    "Crumb_06_c22",
+    "Crumb_01_c09",
+    "Crumb_01_c24",
+    "Crumb_01_c29"
+   ]
+  },
+  "Crumb_06_c28": {
+   "block": "Chunk_06",
+   "core": true,
+   "volume": 0.009809,
+   "links": [
+    "Crumb_06_c06",
+    "Crumb_06_c11",
+    "Crumb_06_c14",
+    "Crumb_06_c17"
+   ]
+  },
+  "Crumb_07_c00": {
+   "block": "Chunk_07",
+   "core": false,
+   "volume": 0.004214,
+   "links": [
+    "Crumb_07_c02",
+    "Crumb_07_c08",
+    "Crumb_07_c09",
+    "Crumb_07_c10",
+    "Crumb_20_c02",
+    "Crumb_20_c11"
+   ]
+  },
+  "Crumb_07_c01": {
+   "block": "Chunk_07",
+   "core": false,
+   "volume": 0.003035,
+   "links": [
+    "Crumb_07_c04",
+    "Crumb_07_c08",
+    "Crumb_07_c11",
+    "Crumb_07_c12",
+    "Crumb_02_c02",
+    "Crumb_02_c03",
+    "Crumb_02_c14",
+    "Crumb_15_c04",
+    "Crumb_15_c06"
+   ]
+  },
+  "Crumb_07_c02": {
+   "block": "Chunk_07",
+   "core": false,
+   "volume": 0.00588,
+   "links": [
+    "Crumb_07_c00",
+    "Crumb_07_c04",
+    "Crumb_07_c05",
+    "Crumb_07_c08",
+    "Crumb_15_c00",
+    "Crumb_20_c06",
+    "Crumb_20_c11"
+   ]
+  },
+  "Crumb_07_c03": {
+   "block": "Chunk_07",
+   "core": false,
+   "volume": 0.010009,
+   "links": [
+    "Crumb_07_c06",
+    "Crumb_02_c07",
+    "Crumb_02_c10",
+    "Crumb_12_c02",
+    "Crumb_12_c04"
+   ]
+  },
+  "Crumb_07_c04": {
+   "block": "Chunk_07",
+   "core": false,
+   "volume": 0.005092,
+   "links": [
+    "Crumb_07_c01",
+    "Crumb_07_c02",
+    "Crumb_07_c05",
+    "Crumb_07_c08",
+    "Crumb_07_c11",
+    "Crumb_02_c03",
+    "Crumb_15_c00",
+    "Crumb_15_c04",
+    "Crumb_15_c06"
+   ]
+  },
+  "Crumb_07_c05": {
+   "block": "Chunk_07",
+   "core": false,
+   "volume": 0.001682,
+   "links": [
+    "Crumb_07_c02",
+    "Crumb_07_c04",
+    "Crumb_07_c13",
+    "Crumb_15_c00",
+    "Crumb_15_c01",
+    "Crumb_15_c04",
+    "Crumb_15_c07",
+    "Crumb_15_c08",
+    "Crumb_20_c06",
+    "Crumb_20_c10"
+   ]
+  },
+  "Crumb_07_c06": {
+   "block": "Chunk_07",
+   "core": false,
+   "volume": 0.003865,
+   "links": [
+    "Crumb_07_c03",
+    "Crumb_07_c07",
+    "Crumb_07_c09",
+    "Crumb_02_c10",
+    "Crumb_12_c02",
+    "Crumb_12_c04",
+    "Crumb_12_c28"
+   ]
+  },
+  "Crumb_07_c07": {
+   "block": "Chunk_07",
+   "core": false,
+   "volume": 0.003342,
+   "links": [
+    "Crumb_07_c06",
+    "Crumb_07_c08",
+    "Crumb_07_c09",
+    "Crumb_07_c12",
+    "Crumb_02_c01",
+    "Crumb_02_c06",
+    "Crumb_02_c10"
+   ]
+  },
+  "Crumb_07_c08": {
+   "block": "Chunk_07",
+   "core": false,
+   "volume": 0.012379,
+   "links": [
+    "Crumb_07_c00",
+    "Crumb_07_c01",
+    "Crumb_07_c02",
+    "Crumb_07_c04",
+    "Crumb_07_c07",
+    "Crumb_07_c09",
+    "Crumb_07_c12",
+    "Crumb_02_c01"
+   ]
+  },
+  "Crumb_07_c09": {
+   "block": "Chunk_07",
+   "core": false,
+   "volume": 0.006606,
+   "links": [
+    "Crumb_07_c00",
+    "Crumb_07_c06",
+    "Crumb_07_c07",
+    "Crumb_07_c08",
+    "Crumb_07_c10",
+    "Crumb_07_c12",
+    "Crumb_12_c28"
+   ]
+  },
+  "Crumb_07_c10": {
+   "block": "Chunk_07",
+   "core": false,
+   "volume": 0.000789,
+   "links": [
+    "Crumb_07_c00",
+    "Crumb_07_c09",
+    "Crumb_12_c11",
+    "Crumb_12_c27",
+    "Crumb_12_c33",
+    "Crumb_20_c02",
+    "Crumb_20_c11"
+   ]
+  },
+  "Crumb_07_c11": {
+   "block": "Chunk_07",
+   "core": false,
+   "volume": 0.000715,
+   "links": [
+    "Crumb_07_c01",
+    "Crumb_07_c04",
+    "Crumb_02_c02",
+    "Crumb_02_c03",
+    "Crumb_02_c14",
+    "Crumb_15_c00",
+    "Crumb_15_c02",
+    "Crumb_15_c04",
+    "Crumb_15_c06"
+   ]
+  },
+  "Crumb_07_c12": {
+   "block": "Chunk_07",
+   "core": false,
+   "volume": 0.009022,
+   "links": [
+    "Crumb_07_c01",
+    "Crumb_07_c07",
+    "Crumb_07_c08",
+    "Crumb_07_c09",
+    "Crumb_02_c01",
+    "Crumb_02_c06",
+    "Crumb_02_c10"
+   ]
+  },
+  "Crumb_07_c13": {
+   "block": "Chunk_07",
+   "core": false,
+   "volume": 1.6e-05,
+   "links": [
+    "Crumb_07_c05",
+    "Crumb_15_c00",
+    "Crumb_15_c01",
+    "Crumb_15_c05",
+    "Crumb_15_c07",
+    "Crumb_15_c08",
+    "Crumb_20_c01",
+    "Crumb_20_c06",
+    "Crumb_20_c10"
+   ]
+  },
+  "Crumb_07_c14": {
+   "block": "Chunk_07",
+   "core": true,
+   "volume": 0.012916,
+   "links": [
+    "Crumb_07_c03",
+    "Crumb_07_c06",
+    "Crumb_07_c07",
+    "Crumb_07_c08",
+    "Crumb_07_c09",
+    "Crumb_07_c12"
+   ]
+  },
+  "Crumb_08_c00": {
+   "block": "Chunk_08",
+   "core": false,
+   "volume": 0.001359,
+   "links": [
+    "Crumb_08_c03",
+    "Crumb_08_c05",
+    "Crumb_08_c06",
+    "Crumb_08_c13",
+    "Crumb_00_c03",
+    "Crumb_00_c08",
+    "Crumb_00_c12"
+   ]
+  },
+  "Crumb_08_c01": {
+   "block": "Chunk_08",
+   "core": false,
+   "volume": 0.000896,
+   "links": [
+    "Crumb_08_c04",
+    "Crumb_08_c05",
+    "Crumb_08_c09",
+    "Crumb_08_c12",
+    "Crumb_08_c14",
+    "Crumb_00_c04",
+    "Crumb_00_c09",
+    "Crumb_00_c11",
+    "Crumb_13_c02"
+   ]
+  },
+  "Crumb_08_c02": {
+   "block": "Chunk_08",
+   "core": false,
+   "volume": 0.003619,
+   "links": [
+    "Crumb_08_c08",
+    "Crumb_08_c11",
+    "Crumb_08_c15",
+    "Crumb_13_c04",
+    "Crumb_16_c00",
+    "Crumb_16_c04",
+    "Crumb_21_c00",
+    "Crumb_21_c02",
+    "Crumb_21_c04"
+   ]
+  },
+  "Crumb_08_c03": {
+   "block": "Chunk_08",
+   "core": false,
+   "volume": 0.004614,
+   "links": [
+    "Crumb_08_c00",
+    "Crumb_08_c06",
+    "Crumb_08_c07",
+    "Crumb_08_c10",
+    "Crumb_08_c13",
+    "Crumb_08_c15",
+    "Crumb_03_c02",
+    "Crumb_03_c11",
+    "Crumb_03_c17"
+   ]
+  },
+  "Crumb_08_c04": {
+   "block": "Chunk_08",
+   "core": false,
+   "volume": 0.002685,
+   "links": [
+    "Crumb_08_c01",
+    "Crumb_08_c05",
+    "Crumb_08_c08",
+    "Crumb_08_c13",
+    "Crumb_08_c14",
+    "Crumb_08_c15"
+   ]
+  },
+  "Crumb_08_c05": {
+   "block": "Chunk_08",
+   "core": false,
+   "volume": 0.000938,
+   "links": [
+    "Crumb_08_c00",
+    "Crumb_08_c01",
+    "Crumb_08_c04",
+    "Crumb_08_c09",
+    "Crumb_08_c13",
+    "Crumb_00_c04",
+    "Crumb_00_c08",
+    "Crumb_00_c09",
+    "Crumb_00_c12"
+   ]
+  },
+  "Crumb_08_c06": {
+   "block": "Chunk_08",
+   "core": false,
+   "volume": 0.003349,
+   "links": [
+    "Crumb_08_c00",
+    "Crumb_08_c03",
+    "Crumb_08_c07",
+    "Crumb_08_c13",
+    "Crumb_00_c03",
+    "Crumb_00_c12",
+    "Crumb_03_c02"
+   ]
+  },
+  "Crumb_08_c07": {
+   "block": "Chunk_08",
+   "core": false,
+   "volume": 0.001875,
+   "links": [
+    "Crumb_08_c03",
+    "Crumb_08_c06",
+    "Crumb_00_c03",
+    "Crumb_03_c02"
+   ]
+  },
+  "Crumb_08_c08": {
+   "block": "Chunk_08",
+   "core": false,
+   "volume": 0.003042,
+   "links": [
+    "Crumb_08_c02",
+    "Crumb_08_c04",
+    "Crumb_08_c14",
+    "Crumb_08_c15",
+    "Crumb_13_c01",
+    "Crumb_13_c04",
+    "Crumb_21_c02"
+   ]
+  },
+  "Crumb_08_c09": {
+   "block": "Chunk_08",
+   "core": false,
+   "volume": 0.000214,
+   "links": [
+    "Crumb_08_c01",
+    "Crumb_08_c05",
+    "Crumb_00_c00",
+    "Crumb_00_c02",
+    "Crumb_00_c04",
+    "Crumb_00_c09"
+   ]
+  },
+  "Crumb_08_c10": {
+   "block": "Chunk_08",
+   "core": false,
+   "volume": 0.002825,
+   "links": [
+    "Crumb_08_c03",
+    "Crumb_08_c11",
+    "Crumb_08_c13",
+    "Crumb_08_c15",
+    "Crumb_03_c06",
+    "Crumb_03_c11",
+    "Crumb_03_c15",
+    "Crumb_03_c17",
+    "Crumb_16_c00"
+   ]
+  },
+  "Crumb_08_c11": {
+   "block": "Chunk_08",
+   "core": false,
+   "volume": 0.00479,
+   "links": [
+    "Crumb_08_c02",
+    "Crumb_08_c10",
+    "Crumb_08_c15",
+    "Crumb_03_c06",
+    "Crumb_03_c11",
+    "Crumb_03_c15",
+    "Crumb_03_c17",
+    "Crumb_16_c00",
+    "Crumb_16_c04"
+   ]
+  },
+  "Crumb_08_c12": {
+   "block": "Chunk_08",
+   "core": false,
+   "volume": 0.000387,
+   "links": [
+    "Crumb_08_c01",
+    "Crumb_08_c14",
+    "Crumb_00_c09",
+    "Crumb_00_c11",
+    "Crumb_13_c01",
+    "Crumb_13_c02",
+    "Crumb_13_c05"
+   ]
+  },
+  "Crumb_08_c13": {
+   "block": "Chunk_08",
+   "core": false,
+   "volume": 0.004104,
+   "links": [
+    "Crumb_08_c00",
+    "Crumb_08_c03",
+    "Crumb_08_c04",
+    "Crumb_08_c05",
+    "Crumb_08_c06",
+    "Crumb_08_c10",
+    "Crumb_08_c15",
+    "Crumb_00_c12"
+   ]
+  },
+  "Crumb_08_c14": {
+   "block": "Chunk_08",
+   "core": false,
+   "volume": 0.001036,
+   "links": [
+    "Crumb_08_c01",
+    "Crumb_08_c04",
+    "Crumb_08_c08",
+    "Crumb_08_c12",
+    "Crumb_00_c09",
+    "Crumb_00_c11",
+    "Crumb_13_c01",
+    "Crumb_13_c02",
+    "Crumb_13_c04"
+   ]
+  },
+  "Crumb_08_c15": {
+   "block": "Chunk_08",
+   "core": false,
+   "volume": 0.007686,
+   "links": [
+    "Crumb_08_c02",
+    "Crumb_08_c03",
+    "Crumb_08_c04",
+    "Crumb_08_c08",
+    "Crumb_08_c10",
+    "Crumb_08_c11",
+    "Crumb_08_c13",
+    "Crumb_03_c17",
+    "Crumb_16_c00"
+   ]
+  },
+  "Crumb_08_c16": {
+   "block": "Chunk_08",
+   "core": true,
+   "volume": 0.000492,
+   "links": [
+    "Crumb_08_c00",
+    "Crumb_08_c03",
+    "Crumb_08_c06",
+    "Crumb_08_c13",
+    "Crumb_08_c15"
+   ]
+  },
+  "Crumb_09_c00": {
+   "block": "Chunk_09",
+   "core": false,
+   "volume": 0.003479,
+   "links": [
+    "Crumb_09_c03",
+    "Crumb_09_c08",
+    "Crumb_09_c09",
+    "Crumb_09_c10",
+    "Crumb_01_c15",
+    "Crumb_01_c19",
+    "Crumb_01_c21",
+    "Crumb_01_c28",
+    "Crumb_04_c12",
+    "Crumb_17_c16",
+    "Crumb_17_c18"
+   ]
+  },
+  "Crumb_09_c01": {
+   "block": "Chunk_09",
+   "core": false,
+   "volume": 0.007481,
+   "links": [
+    "Crumb_09_c02",
+    "Crumb_09_c04",
+    "Crumb_09_c06",
+    "Crumb_01_c08",
+    "Crumb_01_c33",
+    "Crumb_14_c12"
+   ]
+  },
+  "Crumb_09_c02": {
+   "block": "Chunk_09",
+   "core": false,
+   "volume": 0.029386,
+   "links": [
+    "Crumb_09_c01",
+    "Crumb_09_c04",
+    "Crumb_01_c08",
+    "Crumb_14_c02",
+    "Crumb_14_c04",
+    "Crumb_14_c12",
+    "Crumb_22_c31",
+    "Crumb_22_c33"
+   ]
+  },
+  "Crumb_09_c03": {
+   "block": "Chunk_09",
+   "core": false,
+   "volume": 0.001739,
+   "links": [
+    "Crumb_09_c00",
+    "Crumb_09_c07",
+    "Crumb_09_c09",
+    "Crumb_09_c10",
+    "Crumb_01_c15",
+    "Crumb_04_c12",
+    "Crumb_17_c00",
+    "Crumb_17_c13",
+    "Crumb_17_c16",
+    "Crumb_17_c18",
+    "Crumb_17_c19",
+    "Crumb_22_c01"
+   ]
+  },
+  "Crumb_09_c04": {
+   "block": "Chunk_09",
+   "core": false,
+   "volume": 0.004673,
+   "links": [
+    "Crumb_09_c01",
+    "Crumb_09_c02",
+    "Crumb_09_c05",
+    "Crumb_09_c06",
+    "Crumb_22_c28",
+    "Crumb_22_c31"
+   ]
+  },
+  "Crumb_09_c05": {
+   "block": "Chunk_09",
+   "core": false,
+   "volume": 0.004772,
+   "links": [
+    "Crumb_09_c04",
+    "Crumb_09_c06",
+    "Crumb_09_c07",
+    "Crumb_09_c08",
+    "Crumb_09_c10",
+    "Crumb_22_c01",
+    "Crumb_22_c11",
+    "Crumb_22_c28"
+   ]
+  },
+  "Crumb_09_c06": {
+   "block": "Chunk_09",
+   "core": false,
+   "volume": 0.006165,
+   "links": [
+    "Crumb_09_c01",
+    "Crumb_09_c04",
+    "Crumb_09_c05",
+    "Crumb_09_c08",
+    "Crumb_01_c00",
+    "Crumb_01_c16",
+    "Crumb_01_c28",
+    "Crumb_01_c32"
+   ]
+  },
+  "Crumb_09_c07": {
+   "block": "Chunk_09",
+   "core": false,
+   "volume": 0.002448,
+   "links": [
+    "Crumb_09_c03",
+    "Crumb_09_c05",
+    "Crumb_09_c10",
+    "Crumb_17_c16",
+    "Crumb_17_c19",
+    "Crumb_22_c01",
+    "Crumb_22_c11"
+   ]
+  },
+  "Crumb_09_c08": {
+   "block": "Chunk_09",
+   "core": false,
+   "volume": 0.006147,
+   "links": [
+    "Crumb_09_c00",
+    "Crumb_09_c05",
+    "Crumb_09_c06",
+    "Crumb_09_c09",
+    "Crumb_09_c10",
+    "Crumb_01_c00",
+    "Crumb_01_c15",
+    "Crumb_01_c28",
+    "Crumb_01_c32"
+   ]
+  },
+  "Crumb_09_c09": {
+   "block": "Chunk_09",
+   "core": false,
+   "volume": 0.00114,
+   "links": [
+    "Crumb_09_c00",
+    "Crumb_09_c03",
+    "Crumb_09_c08",
+    "Crumb_01_c15",
+    "Crumb_01_c19",
+    "Crumb_01_c21",
+    "Crumb_04_c02",
+    "Crumb_04_c12",
+    "Crumb_04_c18",
+    "Crumb_04_c21",
+    "Crumb_17_c00",
+    "Crumb_17_c16",
+    "Crumb_17_c18",
+    "Crumb_17_c20"
+   ]
+  },
+  "Crumb_09_c10": {
+   "block": "Chunk_09",
+   "core": false,
+   "volume": 0.00443,
+   "links": [
+    "Crumb_09_c00",
+    "Crumb_09_c03",
+    "Crumb_09_c05",
+    "Crumb_09_c07",
+    "Crumb_09_c08",
+    "Crumb_01_c15",
+    "Crumb_01_c28",
+    "Crumb_17_c16"
+   ]
+  },
+  "Crumb_09_c11": {
+   "block": "Chunk_09",
+   "core": true,
+   "volume": 0.023605,
+   "links": [
+    "Crumb_09_c01",
+    "Crumb_09_c02",
+    "Crumb_09_c04",
+    "Crumb_09_c05",
+    "Crumb_09_c06"
+   ]
+  },
+  "Crumb_10_c00": {
+   "block": "Chunk_10",
+   "core": false,
+   "volume": 0.004986,
+   "links": [
+    "Crumb_10_c02",
+    "Crumb_10_c03",
+    "Crumb_10_c04",
+    "Crumb_10_c09",
+    "Crumb_10_c10",
+    "Crumb_10_c16",
+    "Crumb_02_c15"
+   ]
+  },
+  "Crumb_10_c01": {
+   "block": "Chunk_10",
+   "core": false,
+   "volume": 0.003663,
+   "links": [
+    "Crumb_10_c03",
+    "Crumb_10_c05",
+    "Crumb_10_c06",
+    "Crumb_10_c07",
+    "Crumb_10_c10",
+    "Crumb_05_c13"
+   ]
+  },
+  "Crumb_10_c02": {
+   "block": "Chunk_10",
+   "core": false,
+   "volume": 0.013005,
+   "links": [
+    "Crumb_10_c00",
+    "Crumb_10_c03",
+    "Crumb_10_c04",
+    "Crumb_10_c09",
+    "Crumb_10_c16",
+    "Crumb_02_c05",
+    "Crumb_02_c13",
+    "Crumb_02_c15"
+   ]
+  },
+  "Crumb_10_c03": {
+   "block": "Chunk_10",
+   "core": false,
+   "volume": 0.003665,
+   "links": [
+    "Crumb_10_c00",
+    "Crumb_10_c01",
+    "Crumb_10_c02",
+    "Crumb_10_c07",
+    "Crumb_10_c10"
+   ]
+  },
+  "Crumb_10_c04": {
+   "block": "Chunk_10",
+   "core": false,
+   "volume": 0.005121,
+   "links": [
+    "Crumb_10_c00",
+    "Crumb_10_c02",
+    "Crumb_10_c09",
+    "Crumb_10_c11",
+    "Crumb_10_c15",
+    "Crumb_02_c02",
+    "Crumb_02_c03",
+    "Crumb_02_c08",
+    "Crumb_02_c14",
+    "Crumb_02_c15",
+    "Crumb_15_c06"
+   ]
+  },
+  "Crumb_10_c05": {
+   "block": "Chunk_10",
+   "core": false,
+   "volume": 0.005048,
+   "links": [
+    "Crumb_10_c01",
+    "Crumb_10_c06",
+    "Crumb_10_c07",
+    "Crumb_10_c10",
+    "Crumb_10_c12",
+    "Crumb_10_c16",
+    "Crumb_05_c00",
+    "Crumb_05_c03",
+    "Crumb_05_c13",
+    "Crumb_18_c05"
+   ]
+  },
+  "Crumb_10_c06": {
+   "block": "Chunk_10",
+   "core": false,
+   "volume": 0.004159,
+   "links": [
+    "Crumb_10_c01",
+    "Crumb_10_c05",
+    "Crumb_10_c07",
+    "Crumb_05_c00",
+    "Crumb_05_c13",
+    "Crumb_05_c28"
+   ]
+  },
+  "Crumb_10_c07": {
+   "block": "Chunk_10",
+   "core": false,
+   "volume": 0.007701,
+   "links": [
+    "Crumb_10_c01",
+    "Crumb_10_c03",
+    "Crumb_10_c05",
+    "Crumb_10_c06"
+   ]
+  },
+  "Crumb_10_c08": {
+   "block": "Chunk_10",
+   "core": false,
+   "volume": 0.001922,
+   "links": [
+    "Crumb_10_c09",
+    "Crumb_10_c11",
+    "Crumb_10_c13",
+    "Crumb_10_c14",
+    "Crumb_15_c02",
+    "Crumb_18_c02",
+    "Crumb_18_c06",
+    "Crumb_18_c07"
+   ]
+  },
+  "Crumb_10_c09": {
+   "block": "Chunk_10",
+   "core": false,
+   "volume": 0.007951,
+   "links": [
+    "Crumb_10_c00",
+    "Crumb_10_c02",
+    "Crumb_10_c04",
+    "Crumb_10_c08",
+    "Crumb_10_c11",
+    "Crumb_10_c13",
+    "Crumb_10_c14",
+    "Crumb_10_c15",
+    "Crumb_10_c16",
+    "Crumb_02_c02",
+    "Crumb_02_c15",
+    "Crumb_18_c06"
+   ]
+  },
+  "Crumb_10_c10": {
+   "block": "Chunk_10",
+   "core": false,
+   "volume": 0.00365,
+   "links": [
+    "Crumb_10_c00",
+    "Crumb_10_c01",
+    "Crumb_10_c03",
+    "Crumb_10_c05",
+    "Crumb_10_c12",
+    "Crumb_10_c16"
+   ]
+  },
+  "Crumb_10_c11": {
+   "block": "Chunk_10",
+   "core": false,
+   "volume": 0.003538,
+   "links": [
+    "Crumb_10_c04",
+    "Crumb_10_c08",
+    "Crumb_10_c09",
+    "Crumb_10_c14",
+    "Crumb_10_c15",
+    "Crumb_02_c02",
+    "Crumb_15_c02",
+    "Crumb_15_c06"
+   ]
+  },
+  "Crumb_10_c12": {
+   "block": "Chunk_10",
+   "core": false,
+   "volume": 0.001075,
+   "links": [
+    "Crumb_10_c05",
+    "Crumb_10_c10",
+    "Crumb_10_c13",
+    "Crumb_10_c16",
+    "Crumb_05_c13",
+    "Crumb_05_c15",
+    "Crumb_18_c00",
+    "Crumb_18_c01",
+    "Crumb_18_c05"
+   ]
+  },
+  "Crumb_10_c13": {
+   "block": "Chunk_10",
+   "core": false,
+   "volume": 0.006428,
+   "links": [
+    "Crumb_10_c08",
+    "Crumb_10_c09",
+    "Crumb_10_c12",
+    "Crumb_10_c14",
+    "Crumb_10_c16",
+    "Crumb_18_c01",
+    "Crumb_18_c02",
+    "Crumb_18_c06"
+   ]
+  },
+  "Crumb_10_c14": {
+   "block": "Chunk_10",
+   "core": false,
+   "volume": 0.00176,
+   "links": [
+    "Crumb_10_c08",
+    "Crumb_10_c09",
+    "Crumb_10_c11",
+    "Crumb_10_c13",
+    "Crumb_10_c15",
+    "Crumb_15_c02",
+    "Crumb_15_c03",
+    "Crumb_15_c04",
+    "Crumb_15_c06",
+    "Crumb_18_c06",
+    "Crumb_18_c07"
+   ]
+  },
+  "Crumb_10_c15": {
+   "block": "Chunk_10",
+   "core": false,
+   "volume": 0.001859,
+   "links": [
+    "Crumb_10_c04",
+    "Crumb_10_c09",
+    "Crumb_10_c11",
+    "Crumb_10_c14",
+    "Crumb_02_c02",
+    "Crumb_02_c03",
+    "Crumb_02_c08",
+    "Crumb_02_c14",
+    "Crumb_15_c04",
+    "Crumb_15_c06"
+   ]
+  },
+  "Crumb_10_c16": {
+   "block": "Chunk_10",
+   "core": false,
+   "volume": 0.011296,
+   "links": [
+    "Crumb_10_c00",
+    "Crumb_10_c02",
+    "Crumb_10_c05",
+    "Crumb_10_c09",
+    "Crumb_10_c10",
+    "Crumb_10_c12",
+    "Crumb_10_c13",
+    "Crumb_18_c01",
+    "Crumb_18_c05"
+   ]
+  },
+  "Crumb_10_c17": {
+   "block": "Chunk_10",
+   "core": true,
+   "volume": 0.012296,
+   "links": [
+    "Crumb_10_c00",
+    "Crumb_10_c01",
+    "Crumb_10_c02",
+    "Crumb_10_c03",
+    "Crumb_10_c05",
+    "Crumb_10_c07",
+    "Crumb_10_c10",
+    "Crumb_10_c16"
+   ]
+  },
+  "Crumb_11_c00": {
+   "block": "Chunk_11",
+   "core": false,
+   "volume": 0.001591,
+   "links": [
+    "Crumb_11_c03",
+    "Crumb_11_c04",
+    "Crumb_11_c05",
+    "Crumb_16_c08",
+    "Crumb_19_c03",
+    "Crumb_19_c06",
+    "Crumb_19_c07",
+    "Crumb_19_c15",
+    "Crumb_24_c01",
+    "Crumb_24_c05"
+   ]
+  },
+  "Crumb_11_c01": {
+   "block": "Chunk_11",
+   "core": false,
+   "volume": 0.006681,
+   "links": [
+    "Crumb_11_c02",
+    "Crumb_11_c03",
+    "Crumb_11_c05",
+    "Crumb_11_c07",
+    "Crumb_03_c13",
+    "Crumb_03_c14",
+    "Crumb_16_c03"
+   ]
+  },
+  "Crumb_11_c02": {
+   "block": "Chunk_11",
+   "core": false,
+   "volume": 0.006491,
+   "links": [
+    "Crumb_11_c01",
+    "Crumb_11_c04",
+    "Crumb_11_c05",
+    "Crumb_11_c06",
+    "Crumb_11_c07",
+    "Crumb_03_c13",
+    "Crumb_06_c19",
+    "Crumb_06_c21"
+   ]
+  },
+  "Crumb_11_c03": {
+   "block": "Chunk_11",
+   "core": false,
+   "volume": 0.005485,
+   "links": [
+    "Crumb_11_c00",
+    "Crumb_11_c01",
+    "Crumb_11_c05",
+    "Crumb_16_c02",
+    "Crumb_16_c03",
+    "Crumb_16_c08",
+    "Crumb_24_c05",
+    "Crumb_24_c08"
+   ]
+  },
+  "Crumb_11_c04": {
+   "block": "Chunk_11",
+   "core": false,
+   "volume": 0.002639,
+   "links": [
+    "Crumb_11_c00",
+    "Crumb_11_c02",
+    "Crumb_11_c05",
+    "Crumb_06_c07",
+    "Crumb_06_c19",
+    "Crumb_19_c01",
+    "Crumb_19_c06",
+    "Crumb_19_c07"
+   ]
+  },
+  "Crumb_11_c05": {
+   "block": "Chunk_11",
+   "core": false,
+   "volume": 0.008972,
+   "links": [
+    "Crumb_11_c00",
+    "Crumb_11_c01",
+    "Crumb_11_c02",
+    "Crumb_11_c03",
+    "Crumb_11_c04",
+    "Crumb_06_c07",
+    "Crumb_06_c19",
+    "Crumb_19_c06"
+   ]
+  },
+  "Crumb_11_c06": {
+   "block": "Chunk_11",
+   "core": false,
+   "volume": 0.007068,
+   "links": [
+    "Crumb_11_c02",
+    "Crumb_11_c07",
+    "Crumb_03_c01",
+    "Crumb_03_c08",
+    "Crumb_03_c09",
+    "Crumb_06_c16",
+    "Crumb_06_c21",
+    "Crumb_06_c23"
+   ]
+  },
+  "Crumb_11_c07": {
+   "block": "Chunk_11",
+   "core": false,
+   "volume": 0.003587,
+   "links": [
+    "Crumb_11_c01",
+    "Crumb_11_c02",
+    "Crumb_11_c06",
+    "Crumb_03_c08",
+    "Crumb_03_c09",
+    "Crumb_03_c13",
+    "Crumb_06_c21",
+    "Crumb_06_c23"
+   ]
+  },
+  "Crumb_11_c08": {
+   "block": "Chunk_11",
+   "core": true,
+   "volume": 0.041319,
+   "links": [
+    "Crumb_11_c01",
+    "Crumb_11_c02",
+    "Crumb_11_c03",
+    "Crumb_11_c05",
+    "Crumb_11_c06",
+    "Crumb_11_c07"
+   ]
+  },
+  "Crumb_12_c00": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.014271,
+   "links": [
+    "Crumb_12_c01",
+    "Crumb_12_c06",
+    "Crumb_12_c09",
+    "Crumb_12_c16",
+    "Crumb_12_c18",
+    "Crumb_12_c24",
+    "Crumb_12_c26",
+    "Crumb_12_c29",
+    "Crumb_12_c31",
+    "Crumb_12_c36"
+   ]
+  },
+  "Crumb_12_c01": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.006653,
+   "links": [
+    "Crumb_12_c00",
+    "Crumb_12_c07",
+    "Crumb_12_c09",
+    "Crumb_12_c16",
+    "Crumb_12_c31",
+    "Crumb_12_c35",
+    "Crumb_12_c38",
+    "Crumb_20_c05"
+   ]
+  },
+  "Crumb_12_c02": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.003223,
+   "links": [
+    "Crumb_12_c04",
+    "Crumb_12_c20",
+    "Crumb_12_c28",
+    "Crumb_12_c37",
+    "Crumb_07_c03",
+    "Crumb_07_c06"
+   ]
+  },
+  "Crumb_12_c03": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.007212,
+   "links": [
+    "Crumb_12_c14",
+    "Crumb_12_c20",
+    "Crumb_12_c32",
+    "Crumb_12_c34",
+    "Crumb_12_c37"
+   ]
+  },
+  "Crumb_12_c04": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.008125,
+   "links": [
+    "Crumb_12_c02",
+    "Crumb_12_c08",
+    "Crumb_12_c20",
+    "Crumb_12_c28",
+    "Crumb_12_c30",
+    "Crumb_12_c37",
+    "Crumb_04_c17",
+    "Crumb_07_c03",
+    "Crumb_07_c06"
+   ]
+  },
+  "Crumb_12_c05": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.004722,
+   "links": [
+    "Crumb_12_c08",
+    "Crumb_12_c10",
+    "Crumb_12_c20",
+    "Crumb_12_c32",
+    "Crumb_04_c07",
+    "Crumb_04_c11"
+   ]
+  },
+  "Crumb_12_c06": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.005698,
+   "links": [
+    "Crumb_12_c00",
+    "Crumb_12_c13",
+    "Crumb_12_c18",
+    "Crumb_12_c23",
+    "Crumb_12_c24",
+    "Crumb_12_c29"
+   ]
+  },
+  "Crumb_12_c07": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.002089,
+   "links": [
+    "Crumb_12_c01",
+    "Crumb_12_c16",
+    "Crumb_12_c31",
+    "Crumb_12_c35",
+    "Crumb_12_c38",
+    "Crumb_20_c03",
+    "Crumb_20_c05",
+    "Crumb_20_c08",
+    "Crumb_20_c09",
+    "Crumb_25_c00"
+   ]
+  },
+  "Crumb_12_c08": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.003758,
+   "links": [
+    "Crumb_12_c04",
+    "Crumb_12_c05",
+    "Crumb_12_c20",
+    "Crumb_12_c30",
+    "Crumb_04_c07",
+    "Crumb_04_c17"
+   ]
+  },
+  "Crumb_12_c09": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.008834,
+   "links": [
+    "Crumb_12_c00",
+    "Crumb_12_c01",
+    "Crumb_12_c18",
+    "Crumb_12_c19",
+    "Crumb_12_c26",
+    "Crumb_12_c29",
+    "Crumb_12_c31"
+   ]
+  },
+  "Crumb_12_c10": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.004375,
+   "links": [
+    "Crumb_12_c05",
+    "Crumb_12_c19",
+    "Crumb_12_c22",
+    "Crumb_12_c32",
+    "Crumb_12_c34",
+    "Crumb_04_c03",
+    "Crumb_04_c11"
+   ]
+  },
+  "Crumb_12_c11": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.006033,
+   "links": [
+    "Crumb_12_c14",
+    "Crumb_12_c26",
+    "Crumb_12_c27",
+    "Crumb_12_c31",
+    "Crumb_12_c33",
+    "Crumb_12_c35",
+    "Crumb_07_c10",
+    "Crumb_20_c02",
+    "Crumb_20_c03"
+   ]
+  },
+  "Crumb_12_c12": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.003839,
+   "links": [
+    "Crumb_12_c16",
+    "Crumb_12_c21",
+    "Crumb_12_c25",
+    "Crumb_12_c36",
+    "Crumb_17_c12",
+    "Crumb_25_c03",
+    "Crumb_25_c12"
+   ]
+  },
+  "Crumb_12_c13": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.003459,
+   "links": [
+    "Crumb_12_c06",
+    "Crumb_12_c17",
+    "Crumb_12_c23",
+    "Crumb_12_c24",
+    "Crumb_12_c39",
+    "Crumb_17_c03",
+    "Crumb_17_c04",
+    "Crumb_17_c25"
+   ]
+  },
+  "Crumb_12_c14": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.024109,
+   "links": [
+    "Crumb_12_c03",
+    "Crumb_12_c11",
+    "Crumb_12_c26",
+    "Crumb_12_c27",
+    "Crumb_12_c34",
+    "Crumb_12_c35",
+    "Crumb_12_c37"
+   ]
+  },
+  "Crumb_12_c15": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.004966,
+   "links": [
+    "Crumb_12_c17",
+    "Crumb_12_c22",
+    "Crumb_12_c23",
+    "Crumb_12_c29",
+    "Crumb_12_c34",
+    "Crumb_04_c10",
+    "Crumb_04_c16",
+    "Crumb_04_c23"
+   ]
+  },
+  "Crumb_12_c16": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.006736,
+   "links": [
+    "Crumb_12_c00",
+    "Crumb_12_c01",
+    "Crumb_12_c07",
+    "Crumb_12_c12",
+    "Crumb_12_c31",
+    "Crumb_12_c36",
+    "Crumb_12_c38",
+    "Crumb_25_c00"
+   ]
+  },
+  "Crumb_12_c17": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.002014,
+   "links": [
+    "Crumb_12_c13",
+    "Crumb_12_c15",
+    "Crumb_12_c23",
+    "Crumb_17_c03",
+    "Crumb_17_c09",
+    "Crumb_17_c15",
+    "Crumb_17_c25"
+   ]
+  },
+  "Crumb_12_c18": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.009204,
+   "links": [
+    "Crumb_12_c00",
+    "Crumb_12_c06",
+    "Crumb_12_c09",
+    "Crumb_12_c19",
+    "Crumb_12_c22",
+    "Crumb_12_c23",
+    "Crumb_12_c29"
+   ]
+  },
+  "Crumb_12_c19": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.007766,
+   "links": [
+    "Crumb_12_c09",
+    "Crumb_12_c10",
+    "Crumb_12_c18",
+    "Crumb_12_c22",
+    "Crumb_12_c26",
+    "Crumb_12_c29",
+    "Crumb_12_c34"
+   ]
+  },
+  "Crumb_12_c20": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.006133,
+   "links": [
+    "Crumb_12_c02",
+    "Crumb_12_c03",
+    "Crumb_12_c04",
+    "Crumb_12_c05",
+    "Crumb_12_c08",
+    "Crumb_12_c30",
+    "Crumb_12_c32",
+    "Crumb_12_c37",
+    "Crumb_04_c07"
+   ]
+  },
+  "Crumb_12_c21": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.00091,
+   "links": [
+    "Crumb_12_c12",
+    "Crumb_12_c25",
+    "Crumb_17_c17",
+    "Crumb_25_c03",
+    "Crumb_25_c05",
+    "Crumb_25_c08",
+    "Crumb_25_c12"
+   ]
+  },
+  "Crumb_12_c22": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.009775,
+   "links": [
+    "Crumb_12_c10",
+    "Crumb_12_c15",
+    "Crumb_12_c18",
+    "Crumb_12_c19",
+    "Crumb_12_c29",
+    "Crumb_12_c34",
+    "Crumb_04_c03",
+    "Crumb_04_c15",
+    "Crumb_04_c16"
+   ]
+  },
+  "Crumb_12_c23": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.004976,
+   "links": [
+    "Crumb_12_c06",
+    "Crumb_12_c13",
+    "Crumb_12_c15",
+    "Crumb_12_c17",
+    "Crumb_12_c18",
+    "Crumb_12_c29",
+    "Crumb_17_c03"
+   ]
+  },
+  "Crumb_12_c24": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.005251,
+   "links": [
+    "Crumb_12_c00",
+    "Crumb_12_c06",
+    "Crumb_12_c13",
+    "Crumb_12_c25",
+    "Crumb_12_c36",
+    "Crumb_12_c39",
+    "Crumb_17_c12"
+   ]
+  },
+  "Crumb_12_c25": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.004785,
+   "links": [
+    "Crumb_12_c12",
+    "Crumb_12_c21",
+    "Crumb_12_c24",
+    "Crumb_12_c36",
+    "Crumb_12_c39",
+    "Crumb_17_c12"
+   ]
+  },
+  "Crumb_12_c26": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.011843,
+   "links": [
+    "Crumb_12_c00",
+    "Crumb_12_c09",
+    "Crumb_12_c11",
+    "Crumb_12_c14",
+    "Crumb_12_c19",
+    "Crumb_12_c27",
+    "Crumb_12_c29",
+    "Crumb_12_c31",
+    "Crumb_12_c34",
+    "Crumb_12_c35"
+   ]
+  },
+  "Crumb_12_c27": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.011706,
+   "links": [
+    "Crumb_12_c11",
+    "Crumb_12_c14",
+    "Crumb_12_c26",
+    "Crumb_12_c28",
+    "Crumb_12_c33",
+    "Crumb_12_c37",
+    "Crumb_07_c10",
+    "Crumb_20_c02"
+   ]
+  },
+  "Crumb_12_c28": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.007147,
+   "links": [
+    "Crumb_12_c02",
+    "Crumb_12_c04",
+    "Crumb_12_c27",
+    "Crumb_12_c33",
+    "Crumb_12_c37",
+    "Crumb_07_c06",
+    "Crumb_07_c09"
+   ]
+  },
+  "Crumb_12_c29": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.009506,
+   "links": [
+    "Crumb_12_c00",
+    "Crumb_12_c06",
+    "Crumb_12_c09",
+    "Crumb_12_c15",
+    "Crumb_12_c18",
+    "Crumb_12_c19",
+    "Crumb_12_c22",
+    "Crumb_12_c23",
+    "Crumb_12_c26",
+    "Crumb_12_c34",
+    "Crumb_04_c16"
+   ]
+  },
+  "Crumb_12_c30": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.001953,
+   "links": [
+    "Crumb_12_c04",
+    "Crumb_12_c08",
+    "Crumb_12_c20",
+    "Crumb_12_c37",
+    "Crumb_04_c07",
+    "Crumb_04_c17"
+   ]
+  },
+  "Crumb_12_c31": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.010673,
+   "links": [
+    "Crumb_12_c00",
+    "Crumb_12_c01",
+    "Crumb_12_c07",
+    "Crumb_12_c09",
+    "Crumb_12_c11",
+    "Crumb_12_c16",
+    "Crumb_12_c26",
+    "Crumb_12_c35",
+    "Crumb_20_c03"
+   ]
+  },
+  "Crumb_12_c32": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.003676,
+   "links": [
+    "Crumb_12_c03",
+    "Crumb_12_c05",
+    "Crumb_12_c10",
+    "Crumb_12_c20",
+    "Crumb_12_c34",
+    "Crumb_04_c11"
+   ]
+  },
+  "Crumb_12_c33": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.002117,
+   "links": [
+    "Crumb_12_c11",
+    "Crumb_12_c27",
+    "Crumb_12_c28",
+    "Crumb_07_c10",
+    "Crumb_20_c02",
+    "Crumb_20_c03",
+    "Crumb_20_c11"
+   ]
+  },
+  "Crumb_12_c34": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.011145,
+   "links": [
+    "Crumb_12_c03",
+    "Crumb_12_c10",
+    "Crumb_12_c14",
+    "Crumb_12_c15",
+    "Crumb_12_c19",
+    "Crumb_12_c22",
+    "Crumb_12_c26",
+    "Crumb_12_c29",
+    "Crumb_12_c32"
+   ]
+  },
+  "Crumb_12_c35": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.005079,
+   "links": [
+    "Crumb_12_c01",
+    "Crumb_12_c07",
+    "Crumb_12_c11",
+    "Crumb_12_c14",
+    "Crumb_12_c26",
+    "Crumb_12_c31",
+    "Crumb_20_c03",
+    "Crumb_20_c05",
+    "Crumb_20_c07",
+    "Crumb_20_c09"
+   ]
+  },
+  "Crumb_12_c36": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.006001,
+   "links": [
+    "Crumb_12_c00",
+    "Crumb_12_c12",
+    "Crumb_12_c16",
+    "Crumb_12_c24",
+    "Crumb_12_c25",
+    "Crumb_17_c12"
+   ]
+  },
+  "Crumb_12_c37": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.013756,
+   "links": [
+    "Crumb_12_c02",
+    "Crumb_12_c03",
+    "Crumb_12_c04",
+    "Crumb_12_c14",
+    "Crumb_12_c20",
+    "Crumb_12_c27",
+    "Crumb_12_c28",
+    "Crumb_12_c30"
+   ]
+  },
+  "Crumb_12_c38": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.000921,
+   "links": [
+    "Crumb_12_c01",
+    "Crumb_12_c07",
+    "Crumb_12_c16",
+    "Crumb_20_c05",
+    "Crumb_20_c08",
+    "Crumb_25_c00"
+   ]
+  },
+  "Crumb_12_c39": {
+   "block": "Chunk_12",
+   "core": false,
+   "volume": 0.001456,
+   "links": [
+    "Crumb_12_c13",
+    "Crumb_12_c24",
+    "Crumb_12_c25",
+    "Crumb_17_c04",
+    "Crumb_17_c06",
+    "Crumb_17_c12",
+    "Crumb_17_c25"
+   ]
+  },
+  "Crumb_12_c40": {
+   "block": "Chunk_12",
+   "core": true,
+   "volume": 0.001599,
+   "links": [
+    "Crumb_12_c10",
+    "Crumb_12_c14",
+    "Crumb_12_c19",
+    "Crumb_12_c26",
+    "Crumb_12_c32",
+    "Crumb_12_c34"
+   ]
+  },
+  "Crumb_13_c00": {
+   "block": "Chunk_13",
+   "core": false,
+   "volume": 0.005763,
+   "links": [
+    "Crumb_13_c01",
+    "Crumb_13_c02",
+    "Crumb_13_c03",
+    "Crumb_13_c05",
+    "Crumb_05_c04",
+    "Crumb_05_c06",
+    "Crumb_05_c22",
+    "Crumb_05_c23",
+    "Crumb_05_c30",
+    "Crumb_26_c02"
+   ]
+  },
+  "Crumb_13_c01": {
+   "block": "Chunk_13",
+   "core": false,
+   "volume": 0.005354,
+   "links": [
+    "Crumb_13_c00",
+    "Crumb_13_c02",
+    "Crumb_13_c03",
+    "Crumb_13_c04",
+    "Crumb_13_c05",
+    "Crumb_00_c11",
+    "Crumb_05_c23",
+    "Crumb_05_c30",
+    "Crumb_08_c08",
+    "Crumb_08_c12",
+    "Crumb_08_c14",
+    "Crumb_21_c06"
+   ]
+  },
+  "Crumb_13_c02": {
+   "block": "Chunk_13",
+   "core": false,
+   "volume": 0.00293,
+   "links": [
+    "Crumb_13_c00",
+    "Crumb_13_c01",
+    "Crumb_13_c05",
+    "Crumb_00_c09",
+    "Crumb_00_c11",
+    "Crumb_05_c01",
+    "Crumb_05_c04",
+    "Crumb_05_c23",
+    "Crumb_05_c30",
+    "Crumb_08_c01",
+    "Crumb_08_c12",
+    "Crumb_08_c14"
+   ]
+  },
+  "Crumb_13_c03": {
+   "block": "Chunk_13",
+   "core": false,
+   "volume": 0.004743,
+   "links": [
+    "Crumb_13_c00",
+    "Crumb_13_c01",
+    "Crumb_13_c04",
+    "Crumb_13_c05",
+    "Crumb_05_c23",
+    "Crumb_21_c06",
+    "Crumb_21_c09",
+    "Crumb_21_c10",
+    "Crumb_26_c02",
+    "Crumb_26_c07",
+    "Crumb_26_c11"
+   ]
+  },
+  "Crumb_13_c04": {
+   "block": "Chunk_13",
+   "core": false,
+   "volume": 0.007436,
+   "links": [
+    "Crumb_13_c01",
+    "Crumb_13_c03",
+    "Crumb_08_c02",
+    "Crumb_08_c08",
+    "Crumb_08_c14",
+    "Crumb_21_c00",
+    "Crumb_21_c02",
+    "Crumb_21_c06"
+   ]
+  },
+  "Crumb_13_c05": {
+   "block": "Chunk_13",
+   "core": false,
+   "volume": 0.002971,
+   "links": [
+    "Crumb_13_c00",
+    "Crumb_13_c01",
+    "Crumb_13_c02",
+    "Crumb_13_c03",
+    "Crumb_05_c04",
+    "Crumb_05_c23",
+    "Crumb_05_c30",
+    "Crumb_08_c12",
+    "Crumb_21_c06"
+   ]
+  },
+  "Crumb_13_c06": {
+   "block": "Chunk_13",
+   "core": true,
+   "volume": 0.031691,
+   "links": [
+    "Crumb_13_c00",
+    "Crumb_13_c01",
+    "Crumb_13_c02",
+    "Crumb_13_c03",
+    "Crumb_13_c04"
+   ]
+  },
+  "Crumb_14_c00": {
+   "block": "Chunk_14",
+   "core": false,
+   "volume": 0.001512,
+   "links": [
+    "Crumb_14_c03",
+    "Crumb_14_c06",
+    "Crumb_14_c10",
+    "Crumb_01_c06",
+    "Crumb_01_c14",
+    "Crumb_01_c18",
+    "Crumb_01_c33"
+   ]
+  },
+  "Crumb_14_c01": {
+   "block": "Chunk_14",
+   "core": false,
+   "volume": 0.00305,
+   "links": [
+    "Crumb_14_c03",
+    "Crumb_14_c08",
+    "Crumb_14_c11",
+    "Crumb_06_c04",
+    "Crumb_19_c10",
+    "Crumb_19_c11",
+    "Crumb_19_c13"
+   ]
+  },
+  "Crumb_14_c02": {
+   "block": "Chunk_14",
+   "core": false,
+   "volume": 0.001787,
+   "links": [
+    "Crumb_14_c04",
+    "Crumb_14_c05",
+    "Crumb_14_c07",
+    "Crumb_14_c12",
+    "Crumb_09_c02",
+    "Crumb_22_c03",
+    "Crumb_22_c15",
+    "Crumb_22_c33",
+    "Crumb_22_c38"
+   ]
+  },
+  "Crumb_14_c03": {
+   "block": "Chunk_14",
+   "core": false,
+   "volume": 0.00802,
+   "links": [
+    "Crumb_14_c00",
+    "Crumb_14_c01",
+    "Crumb_14_c06",
+    "Crumb_14_c08",
+    "Crumb_14_c10",
+    "Crumb_06_c02",
+    "Crumb_06_c04",
+    "Crumb_06_c08",
+    "Crumb_19_c13"
+   ]
+  },
+  "Crumb_14_c04": {
+   "block": "Chunk_14",
+   "core": false,
+   "volume": 0.007585,
+   "links": [
+    "Crumb_14_c02",
+    "Crumb_14_c06",
+    "Crumb_14_c07",
+    "Crumb_14_c08",
+    "Crumb_14_c11",
+    "Crumb_14_c12",
+    "Crumb_09_c02",
+    "Crumb_22_c33"
+   ]
+  },
+  "Crumb_14_c05": {
+   "block": "Chunk_14",
+   "core": false,
+   "volume": 0.001351,
+   "links": [
+    "Crumb_14_c02",
+    "Crumb_14_c07",
+    "Crumb_14_c09",
+    "Crumb_19_c02",
+    "Crumb_22_c03",
+    "Crumb_22_c15",
+    "Crumb_22_c32",
+    "Crumb_27_c16"
+   ]
+  },
+  "Crumb_14_c06": {
+   "block": "Chunk_14",
+   "core": false,
+   "volume": 0.007683,
+   "links": [
+    "Crumb_14_c00",
+    "Crumb_14_c03",
+    "Crumb_14_c04",
+    "Crumb_14_c08",
+    "Crumb_14_c10",
+    "Crumb_14_c12",
+    "Crumb_01_c14",
+    "Crumb_01_c33"
+   ]
+  },
+  "Crumb_14_c07": {
+   "block": "Chunk_14",
+   "core": false,
+   "volume": 0.004155,
+   "links": [
+    "Crumb_14_c02",
+    "Crumb_14_c04",
+    "Crumb_14_c05",
+    "Crumb_14_c08",
+    "Crumb_14_c09",
+    "Crumb_14_c11",
+    "Crumb_22_c03",
+    "Crumb_22_c32",
+    "Crumb_22_c33"
+   ]
+  },
+  "Crumb_14_c08": {
+   "block": "Chunk_14",
+   "core": false,
+   "volume": 0.005148,
+   "links": [
+    "Crumb_14_c01",
+    "Crumb_14_c03",
+    "Crumb_14_c04",
+    "Crumb_14_c06",
+    "Crumb_14_c07",
+    "Crumb_14_c11",
+    "Crumb_19_c10",
+    "Crumb_19_c13"
+   ]
+  },
+  "Crumb_14_c09": {
+   "block": "Chunk_14",
+   "core": false,
+   "volume": 0.003916,
+   "links": [
+    "Crumb_14_c05",
+    "Crumb_14_c07",
+    "Crumb_14_c11",
+    "Crumb_19_c02",
+    "Crumb_19_c08",
+    "Crumb_22_c32",
+    "Crumb_27_c16"
+   ]
+  },
+  "Crumb_14_c10": {
+   "block": "Chunk_14",
+   "core": false,
+   "volume": 0.008059,
+   "links": [
+    "Crumb_14_c00",
+    "Crumb_14_c03",
+    "Crumb_14_c06",
+    "Crumb_01_c14",
+    "Crumb_01_c18",
+    "Crumb_06_c02",
+    "Crumb_06_c12"
+   ]
+  },
+  "Crumb_14_c11": {
+   "block": "Chunk_14",
+   "core": false,
+   "volume": 0.005189,
+   "links": [
+    "Crumb_14_c01",
+    "Crumb_14_c04",
+    "Crumb_14_c07",
+    "Crumb_14_c08",
+    "Crumb_14_c09",
+    "Crumb_19_c08",
+    "Crumb_19_c10",
+    "Crumb_19_c13"
+   ]
+  },
+  "Crumb_14_c12": {
+   "block": "Chunk_14",
+   "core": false,
+   "volume": 0.002673,
+   "links": [
+    "Crumb_14_c02",
+    "Crumb_14_c04",
+    "Crumb_14_c06",
+    "Crumb_01_c08",
+    "Crumb_01_c33",
+    "Crumb_09_c01",
+    "Crumb_09_c02",
+    "Crumb_22_c33"
+   ]
+  },
+  "Crumb_14_c13": {
+   "block": "Chunk_14",
+   "core": true,
+   "volume": 0.022221,
+   "links": [
+    "Crumb_14_c01",
+    "Crumb_14_c03",
+    "Crumb_14_c04",
+    "Crumb_14_c06",
+    "Crumb_14_c07",
+    "Crumb_14_c08",
+    "Crumb_14_c10",
+    "Crumb_14_c11",
+    "Crumb_14_c12"
+   ]
+  },
+  "Crumb_15_c00": {
+   "block": "Chunk_15",
+   "core": false,
+   "volume": 0.005157,
+   "links": [
+    "Crumb_15_c01",
+    "Crumb_15_c04",
+    "Crumb_15_c06",
+    "Crumb_15_c07",
+    "Crumb_15_c08",
+    "Crumb_07_c02",
+    "Crumb_07_c04",
+    "Crumb_07_c05",
+    "Crumb_07_c11",
+    "Crumb_07_c13",
+    "Crumb_20_c06",
+    "Crumb_20_c10"
+   ]
+  },
+  "Crumb_15_c01": {
+   "block": "Chunk_15",
+   "core": false,
+   "volume": 0.003152,
+   "links": [
+    "Crumb_15_c00",
+    "Crumb_15_c02",
+    "Crumb_15_c03",
+    "Crumb_15_c04",
+    "Crumb_15_c05",
+    "Crumb_15_c07",
+    "Crumb_15_c08",
+    "Crumb_07_c05",
+    "Crumb_07_c13",
+    "Crumb_20_c10"
+   ]
+  },
+  "Crumb_15_c02": {
+   "block": "Chunk_15",
+   "core": false,
+   "volume": 0.004776,
+   "links": [
+    "Crumb_15_c01",
+    "Crumb_15_c03",
+    "Crumb_15_c04",
+    "Crumb_15_c06",
+    "Crumb_07_c11",
+    "Crumb_10_c08",
+    "Crumb_10_c11",
+    "Crumb_10_c14",
+    "Crumb_23_c00",
+    "Crumb_23_c07"
+   ]
+  },
+  "Crumb_15_c03": {
+   "block": "Chunk_15",
+   "core": false,
+   "volume": 0.002339,
+   "links": [
+    "Crumb_15_c01",
+    "Crumb_15_c02",
+    "Crumb_15_c07",
+    "Crumb_10_c14",
+    "Crumb_23_c00",
+    "Crumb_23_c07",
+    "Crumb_23_c08"
+   ]
+  },
+  "Crumb_15_c04": {
+   "block": "Chunk_15",
+   "core": false,
+   "volume": 0.003418,
+   "links": [
+    "Crumb_15_c00",
+    "Crumb_15_c01",
+    "Crumb_15_c02",
+    "Crumb_15_c06",
+    "Crumb_02_c03",
+    "Crumb_07_c01",
+    "Crumb_07_c04",
+    "Crumb_07_c05",
+    "Crumb_07_c11",
+    "Crumb_10_c14",
+    "Crumb_10_c15"
+   ]
+  },
+  "Crumb_15_c05": {
+   "block": "Chunk_15",
+   "core": false,
+   "volume": 0.001547,
+   "links": [
+    "Crumb_15_c01",
+    "Crumb_15_c07",
+    "Crumb_15_c08",
+    "Crumb_07_c13",
+    "Crumb_20_c01",
+    "Crumb_20_c10",
+    "Crumb_23_c06",
+    "Crumb_28_c03",
+    "Crumb_28_c27",
+    "Crumb_28_c36"
+   ]
+  },
+  "Crumb_15_c06": {
+   "block": "Chunk_15",
+   "core": false,
+   "volume": 0.004295,
+   "links": [
+    "Crumb_15_c00",
+    "Crumb_15_c02",
+    "Crumb_15_c04",
+    "Crumb_02_c02",
+    "Crumb_02_c03",
+    "Crumb_02_c14",
+    "Crumb_07_c01",
+    "Crumb_07_c04",
+    "Crumb_07_c11",
+    "Crumb_10_c04",
+    "Crumb_10_c11",
+    "Crumb_10_c14",
+    "Crumb_10_c15"
+   ]
+  },
+  "Crumb_15_c07": {
+   "block": "Chunk_15",
+   "core": false,
+   "volume": 0.00311,
+   "links": [
+    "Crumb_15_c00",
+    "Crumb_15_c01",
+    "Crumb_15_c03",
+    "Crumb_15_c05",
+    "Crumb_15_c08",
+    "Crumb_07_c05",
+    "Crumb_07_c13",
+    "Crumb_20_c01",
+    "Crumb_20_c10",
+    "Crumb_23_c06",
+    "Crumb_23_c08",
+    "Crumb_28_c03",
+    "Crumb_28_c27"
+   ]
+  },
+  "Crumb_15_c08": {
+   "block": "Chunk_15",
+   "core": false,
+   "volume": 0.002997,
+   "links": [
+    "Crumb_15_c00",
+    "Crumb_15_c01",
+    "Crumb_15_c05",
+    "Crumb_15_c07",
+    "Crumb_07_c05",
+    "Crumb_07_c13",
+    "Crumb_20_c01",
+    "Crumb_20_c06",
+    "Crumb_20_c10",
+    "Crumb_28_c27"
+   ]
+  },
+  "Crumb_15_c09": {
+   "block": "Chunk_15",
+   "core": true,
+   "volume": 0.018684,
+   "links": [
+    "Crumb_15_c00",
+    "Crumb_15_c01",
+    "Crumb_15_c02",
+    "Crumb_15_c03",
+    "Crumb_15_c04",
+    "Crumb_15_c06",
+    "Crumb_15_c07",
+    "Crumb_15_c08"
+   ]
+  },
+  "Crumb_16_c00": {
+   "block": "Chunk_16",
+   "core": false,
+   "volume": 0.003219,
+   "links": [
+    "Crumb_16_c04",
+    "Crumb_16_c06",
+    "Crumb_03_c06",
+    "Crumb_03_c15",
+    "Crumb_03_c17",
+    "Crumb_08_c02",
+    "Crumb_08_c10",
+    "Crumb_08_c11",
+    "Crumb_08_c15"
+   ]
+  },
+  "Crumb_16_c01": {
+   "block": "Chunk_16",
+   "core": false,
+   "volume": 0.005786,
+   "links": [
+    "Crumb_16_c02",
+    "Crumb_16_c03",
+    "Crumb_16_c04",
+    "Crumb_16_c05",
+    "Crumb_16_c06",
+    "Crumb_16_c07",
+    "Crumb_21_c04",
+    "Crumb_21_c07",
+    "Crumb_24_c08"
+   ]
+  },
+  "Crumb_16_c02": {
+   "block": "Chunk_16",
+   "core": false,
+   "volume": 0.004286,
+   "links": [
+    "Crumb_16_c01",
+    "Crumb_16_c03",
+    "Crumb_16_c05",
+    "Crumb_16_c06",
+    "Crumb_16_c07",
+    "Crumb_16_c08",
+    "Crumb_11_c03",
+    "Crumb_24_c08"
+   ]
+  },
+  "Crumb_16_c03": {
+   "block": "Chunk_16",
+   "core": false,
+   "volume": 0.003365,
+   "links": [
+    "Crumb_16_c01",
+    "Crumb_16_c02",
+    "Crumb_16_c06",
+    "Crumb_03_c13",
+    "Crumb_03_c14",
+    "Crumb_11_c01",
+    "Crumb_11_c03"
+   ]
+  },
+  "Crumb_16_c04": {
+   "block": "Chunk_16",
+   "core": false,
+   "volume": 0.004232,
+   "links": [
+    "Crumb_16_c00",
+    "Crumb_16_c01",
+    "Crumb_16_c06",
+    "Crumb_03_c06",
+    "Crumb_08_c02",
+    "Crumb_08_c11",
+    "Crumb_21_c02",
+    "Crumb_21_c04"
+   ]
+  },
+  "Crumb_16_c05": {
+   "block": "Chunk_16",
+   "core": false,
+   "volume": 0.002458,
+   "links": [
+    "Crumb_16_c01",
+    "Crumb_16_c02",
+    "Crumb_16_c07",
+    "Crumb_21_c04",
+    "Crumb_21_c07",
+    "Crumb_21_c08",
+    "Crumb_24_c04",
+    "Crumb_24_c08"
+   ]
+  },
+  "Crumb_16_c06": {
+   "block": "Chunk_16",
+   "core": false,
+   "volume": 0.004981,
+   "links": [
+    "Crumb_16_c00",
+    "Crumb_16_c01",
+    "Crumb_16_c02",
+    "Crumb_16_c03",
+    "Crumb_16_c04",
+    "Crumb_03_c06",
+    "Crumb_03_c14"
+   ]
+  },
+  "Crumb_16_c07": {
+   "block": "Chunk_16",
+   "core": false,
+   "volume": 0.00057,
+   "links": [
+    "Crumb_16_c01",
+    "Crumb_16_c02",
+    "Crumb_16_c05",
+    "Crumb_16_c08",
+    "Crumb_21_c08",
+    "Crumb_24_c03",
+    "Crumb_24_c04",
+    "Crumb_24_c05",
+    "Crumb_24_c07",
+    "Crumb_24_c08"
+   ]
+  },
+  "Crumb_16_c08": {
+   "block": "Chunk_16",
+   "core": false,
+   "volume": 0.00084,
+   "links": [
+    "Crumb_16_c02",
+    "Crumb_16_c07",
+    "Crumb_11_c00",
+    "Crumb_11_c03",
+    "Crumb_24_c05",
+    "Crumb_24_c08"
+   ]
+  },
+  "Crumb_16_c09": {
+   "block": "Chunk_16",
+   "core": true,
+   "volume": 0.002338,
+   "links": [
+    "Crumb_16_c01",
+    "Crumb_16_c04",
+    "Crumb_16_c05"
+   ]
+  },
+  "Crumb_17_c00": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.004875,
+   "links": [
+    "Crumb_17_c01",
+    "Crumb_17_c08",
+    "Crumb_17_c13",
+    "Crumb_17_c16",
+    "Crumb_17_c18",
+    "Crumb_17_c19",
+    "Crumb_17_c20",
+    "Crumb_17_c22",
+    "Crumb_04_c12",
+    "Crumb_04_c18",
+    "Crumb_09_c03",
+    "Crumb_09_c09"
+   ]
+  },
+  "Crumb_17_c01": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.006717,
+   "links": [
+    "Crumb_17_c00",
+    "Crumb_17_c05",
+    "Crumb_17_c07",
+    "Crumb_17_c08",
+    "Crumb_17_c09",
+    "Crumb_17_c13",
+    "Crumb_17_c14",
+    "Crumb_17_c19",
+    "Crumb_17_c21",
+    "Crumb_17_c22",
+    "Crumb_17_c25"
+   ]
+  },
+  "Crumb_17_c02": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.007525,
+   "links": [
+    "Crumb_17_c05",
+    "Crumb_17_c06",
+    "Crumb_17_c11",
+    "Crumb_17_c14",
+    "Crumb_17_c23",
+    "Crumb_17_c24"
+   ]
+  },
+  "Crumb_17_c03": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.006478,
+   "links": [
+    "Crumb_17_c04",
+    "Crumb_17_c05",
+    "Crumb_17_c08",
+    "Crumb_17_c09",
+    "Crumb_17_c15",
+    "Crumb_17_c25",
+    "Crumb_12_c13",
+    "Crumb_12_c17",
+    "Crumb_12_c23"
+   ]
+  },
+  "Crumb_17_c04": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.00678,
+   "links": [
+    "Crumb_17_c03",
+    "Crumb_17_c05",
+    "Crumb_17_c06",
+    "Crumb_17_c12",
+    "Crumb_17_c21",
+    "Crumb_17_c25",
+    "Crumb_12_c13",
+    "Crumb_12_c39"
+   ]
+  },
+  "Crumb_17_c05": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.00693,
+   "links": [
+    "Crumb_17_c01",
+    "Crumb_17_c02",
+    "Crumb_17_c03",
+    "Crumb_17_c04",
+    "Crumb_17_c06",
+    "Crumb_17_c08",
+    "Crumb_17_c09",
+    "Crumb_17_c14",
+    "Crumb_17_c21",
+    "Crumb_17_c25"
+   ]
+  },
+  "Crumb_17_c06": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.007257,
+   "links": [
+    "Crumb_17_c02",
+    "Crumb_17_c04",
+    "Crumb_17_c05",
+    "Crumb_17_c12",
+    "Crumb_17_c23",
+    "Crumb_12_c39"
+   ]
+  },
+  "Crumb_17_c07": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.005239,
+   "links": [
+    "Crumb_17_c01",
+    "Crumb_17_c13",
+    "Crumb_17_c14",
+    "Crumb_17_c19",
+    "Crumb_17_c24",
+    "Crumb_22_c01",
+    "Crumb_22_c12",
+    "Crumb_22_c19",
+    "Crumb_22_c29"
+   ]
+  },
+  "Crumb_17_c08": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.004681,
+   "links": [
+    "Crumb_17_c00",
+    "Crumb_17_c01",
+    "Crumb_17_c03",
+    "Crumb_17_c05",
+    "Crumb_17_c09",
+    "Crumb_17_c15",
+    "Crumb_17_c20",
+    "Crumb_17_c22",
+    "Crumb_17_c25"
+   ]
+  },
+  "Crumb_17_c09": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.003924,
+   "links": [
+    "Crumb_17_c01",
+    "Crumb_17_c03",
+    "Crumb_17_c05",
+    "Crumb_17_c08",
+    "Crumb_17_c21",
+    "Crumb_17_c22",
+    "Crumb_17_c25",
+    "Crumb_12_c17"
+   ]
+  },
+  "Crumb_17_c10": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.004733,
+   "links": [
+    "Crumb_17_c11",
+    "Crumb_17_c17",
+    "Crumb_17_c23",
+    "Crumb_22_c04",
+    "Crumb_25_c10",
+    "Crumb_25_c17"
+   ]
+  },
+  "Crumb_17_c11": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.003248,
+   "links": [
+    "Crumb_17_c02",
+    "Crumb_17_c10",
+    "Crumb_17_c14",
+    "Crumb_17_c23",
+    "Crumb_17_c24",
+    "Crumb_22_c13",
+    "Crumb_22_c43"
+   ]
+  },
+  "Crumb_17_c12": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.01015,
+   "links": [
+    "Crumb_17_c04",
+    "Crumb_17_c06",
+    "Crumb_17_c17",
+    "Crumb_17_c23",
+    "Crumb_12_c12",
+    "Crumb_12_c24",
+    "Crumb_12_c25",
+    "Crumb_12_c36",
+    "Crumb_12_c39"
+   ]
+  },
+  "Crumb_17_c13": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.004002,
+   "links": [
+    "Crumb_17_c00",
+    "Crumb_17_c01",
+    "Crumb_17_c07",
+    "Crumb_17_c16",
+    "Crumb_17_c19",
+    "Crumb_17_c22",
+    "Crumb_09_c03",
+    "Crumb_22_c01",
+    "Crumb_22_c19"
+   ]
+  },
+  "Crumb_17_c14": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.007593,
+   "links": [
+    "Crumb_17_c01",
+    "Crumb_17_c02",
+    "Crumb_17_c05",
+    "Crumb_17_c07",
+    "Crumb_17_c11",
+    "Crumb_17_c24",
+    "Crumb_22_c12",
+    "Crumb_22_c19",
+    "Crumb_22_c29",
+    "Crumb_22_c43"
+   ]
+  },
+  "Crumb_17_c15": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.011386,
+   "links": [
+    "Crumb_17_c03",
+    "Crumb_17_c08",
+    "Crumb_17_c20",
+    "Crumb_04_c06",
+    "Crumb_04_c18",
+    "Crumb_04_c23",
+    "Crumb_12_c17"
+   ]
+  },
+  "Crumb_17_c16": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.00594,
+   "links": [
+    "Crumb_17_c00",
+    "Crumb_17_c13",
+    "Crumb_17_c18",
+    "Crumb_17_c19",
+    "Crumb_17_c20",
+    "Crumb_04_c12",
+    "Crumb_09_c00",
+    "Crumb_09_c03",
+    "Crumb_09_c07",
+    "Crumb_09_c09",
+    "Crumb_09_c10"
+   ]
+  },
+  "Crumb_17_c17": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.003519,
+   "links": [
+    "Crumb_17_c10",
+    "Crumb_17_c12",
+    "Crumb_17_c23",
+    "Crumb_12_c21",
+    "Crumb_25_c03",
+    "Crumb_25_c10"
+   ]
+  },
+  "Crumb_17_c18": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.001784,
+   "links": [
+    "Crumb_17_c00",
+    "Crumb_17_c16",
+    "Crumb_17_c20",
+    "Crumb_04_c02",
+    "Crumb_04_c12",
+    "Crumb_04_c18",
+    "Crumb_04_c21",
+    "Crumb_09_c00",
+    "Crumb_09_c03",
+    "Crumb_09_c09"
+   ]
+  },
+  "Crumb_17_c19": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.00688,
+   "links": [
+    "Crumb_17_c00",
+    "Crumb_17_c01",
+    "Crumb_17_c07",
+    "Crumb_17_c13",
+    "Crumb_17_c16",
+    "Crumb_17_c22",
+    "Crumb_09_c03",
+    "Crumb_09_c07",
+    "Crumb_22_c01"
+   ]
+  },
+  "Crumb_17_c20": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.009581,
+   "links": [
+    "Crumb_17_c00",
+    "Crumb_17_c08",
+    "Crumb_17_c15",
+    "Crumb_17_c16",
+    "Crumb_17_c18",
+    "Crumb_04_c06",
+    "Crumb_04_c12",
+    "Crumb_04_c18",
+    "Crumb_09_c09"
+   ]
+  },
+  "Crumb_17_c21": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.003145,
+   "links": [
+    "Crumb_17_c01",
+    "Crumb_17_c04",
+    "Crumb_17_c05",
+    "Crumb_17_c09",
+    "Crumb_17_c25"
+   ]
+  },
+  "Crumb_17_c22": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.003978,
+   "links": [
+    "Crumb_17_c00",
+    "Crumb_17_c01",
+    "Crumb_17_c08",
+    "Crumb_17_c09",
+    "Crumb_17_c13",
+    "Crumb_17_c19"
+   ]
+  },
+  "Crumb_17_c23": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.015794,
+   "links": [
+    "Crumb_17_c02",
+    "Crumb_17_c06",
+    "Crumb_17_c10",
+    "Crumb_17_c11",
+    "Crumb_17_c12",
+    "Crumb_17_c17"
+   ]
+  },
+  "Crumb_17_c24": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.001085,
+   "links": [
+    "Crumb_17_c02",
+    "Crumb_17_c07",
+    "Crumb_17_c11",
+    "Crumb_17_c14",
+    "Crumb_22_c09",
+    "Crumb_22_c12",
+    "Crumb_22_c13",
+    "Crumb_22_c19",
+    "Crumb_22_c34",
+    "Crumb_22_c43"
+   ]
+  },
+  "Crumb_17_c25": {
+   "block": "Chunk_17",
+   "core": false,
+   "volume": 0.004707,
+   "links": [
+    "Crumb_17_c01",
+    "Crumb_17_c03",
+    "Crumb_17_c04",
+    "Crumb_17_c05",
+    "Crumb_17_c08",
+    "Crumb_17_c09",
+    "Crumb_17_c21",
+    "Crumb_12_c13",
+    "Crumb_12_c17",
+    "Crumb_12_c39"
+   ]
+  },
+  "Crumb_17_c26": {
+   "block": "Chunk_17",
+   "core": true,
+   "volume": 0.138262,
+   "links": [
+    "Crumb_17_c00",
+    "Crumb_17_c01",
+    "Crumb_17_c02",
+    "Crumb_17_c03",
+    "Crumb_17_c04",
+    "Crumb_17_c05",
+    "Crumb_17_c06",
+    "Crumb_17_c07",
+    "Crumb_17_c08",
+    "Crumb_17_c12",
+    "Crumb_17_c14",
+    "Crumb_17_c15",
+    "Crumb_17_c16",
+    "Crumb_17_c17",
+    "Crumb_17_c19",
+    "Crumb_17_c20",
+    "Crumb_17_c22",
+    "Crumb_17_c23",
+    "Crumb_17_c25"
+   ]
+  },
+  "Crumb_18_c00": {
+   "block": "Chunk_18",
+   "core": false,
+   "volume": 0.009467,
+   "links": [
+    "Crumb_18_c01",
+    "Crumb_18_c02",
+    "Crumb_18_c03",
+    "Crumb_18_c05",
+    "Crumb_18_c08",
+    "Crumb_05_c15",
+    "Crumb_05_c25",
+    "Crumb_10_c12"
+   ]
+  },
+  "Crumb_18_c01": {
+   "block": "Chunk_18",
+   "core": false,
+   "volume": 0.003667,
+   "links": [
+    "Crumb_18_c00",
+    "Crumb_18_c02",
+    "Crumb_18_c05",
+    "Crumb_18_c06",
+    "Crumb_18_c08",
+    "Crumb_10_c12",
+    "Crumb_10_c13",
+    "Crumb_10_c16"
+   ]
+  },
+  "Crumb_18_c02": {
+   "block": "Chunk_18",
+   "core": false,
+   "volume": 0.007458,
+   "links": [
+    "Crumb_18_c00",
+    "Crumb_18_c01",
+    "Crumb_18_c04",
+    "Crumb_18_c06",
+    "Crumb_18_c07",
+    "Crumb_18_c08",
+    "Crumb_18_c09",
+    "Crumb_10_c08",
+    "Crumb_10_c13"
+   ]
+  },
+  "Crumb_18_c03": {
+   "block": "Chunk_18",
+   "core": false,
+   "volume": 0.004317,
+   "links": [
+    "Crumb_18_c00",
+    "Crumb_18_c08",
+    "Crumb_18_c09",
+    "Crumb_18_c10",
+    "Crumb_05_c06",
+    "Crumb_05_c09",
+    "Crumb_05_c25",
+    "Crumb_26_c02",
+    "Crumb_26_c03"
+   ]
+  },
+  "Crumb_18_c04": {
+   "block": "Chunk_18",
+   "core": false,
+   "volume": 0.007015,
+   "links": [
+    "Crumb_18_c02",
+    "Crumb_18_c07",
+    "Crumb_18_c09",
+    "Crumb_18_c10",
+    "Crumb_23_c04",
+    "Crumb_23_c05",
+    "Crumb_23_c10",
+    "Crumb_26_c03",
+    "Crumb_26_c05"
+   ]
+  },
+  "Crumb_18_c05": {
+   "block": "Chunk_18",
+   "core": false,
+   "volume": 0.003989,
+   "links": [
+    "Crumb_18_c00",
+    "Crumb_18_c01",
+    "Crumb_05_c03",
+    "Crumb_05_c13",
+    "Crumb_05_c15",
+    "Crumb_10_c05",
+    "Crumb_10_c12",
+    "Crumb_10_c16"
+   ]
+  },
+  "Crumb_18_c06": {
+   "block": "Chunk_18",
+   "core": false,
+   "volume": 0.001861,
+   "links": [
+    "Crumb_18_c01",
+    "Crumb_18_c02",
+    "Crumb_18_c07",
+    "Crumb_10_c08",
+    "Crumb_10_c09",
+    "Crumb_10_c13",
+    "Crumb_10_c14",
+    "Crumb_23_c07"
+   ]
+  },
+  "Crumb_18_c07": {
+   "block": "Chunk_18",
+   "core": false,
+   "volume": 0.00452,
+   "links": [
+    "Crumb_18_c02",
+    "Crumb_18_c04",
+    "Crumb_18_c06",
+    "Crumb_10_c08",
+    "Crumb_10_c14",
+    "Crumb_23_c00",
+    "Crumb_23_c05",
+    "Crumb_23_c07",
+    "Crumb_23_c10"
+   ]
+  },
+  "Crumb_18_c08": {
+   "block": "Chunk_18",
+   "core": false,
+   "volume": 0.005003,
+   "links": [
+    "Crumb_18_c00",
+    "Crumb_18_c01",
+    "Crumb_18_c02",
+    "Crumb_18_c03",
+    "Crumb_18_c09",
+    "Crumb_05_c15",
+    "Crumb_05_c25"
+   ]
+  },
+  "Crumb_18_c09": {
+   "block": "Chunk_18",
+   "core": false,
+   "volume": 0.007387,
+   "links": [
+    "Crumb_18_c02",
+    "Crumb_18_c03",
+    "Crumb_18_c04",
+    "Crumb_18_c08",
+    "Crumb_18_c10",
+    "Crumb_05_c09",
+    "Crumb_05_c25",
+    "Crumb_26_c03"
+   ]
+  },
+  "Crumb_18_c10": {
+   "block": "Chunk_18",
+   "core": false,
+   "volume": 0.001314,
+   "links": [
+    "Crumb_18_c03",
+    "Crumb_18_c04",
+    "Crumb_18_c09",
+    "Crumb_05_c09",
+    "Crumb_26_c03",
+    "Crumb_26_c05",
+    "Crumb_26_c11"
+   ]
+  },
+  "Crumb_18_c11": {
+   "block": "Chunk_18",
+   "core": true,
+   "volume": 0.009747,
+   "links": [
+    "Crumb_18_c00",
+    "Crumb_18_c01",
+    "Crumb_18_c02",
+    "Crumb_18_c06",
+    "Crumb_18_c07",
+    "Crumb_18_c08"
+   ]
+  },
+  "Crumb_19_c00": {
+   "block": "Chunk_19",
+   "core": false,
+   "volume": 0.003366,
+   "links": [
+    "Crumb_19_c03",
+    "Crumb_19_c05",
+    "Crumb_19_c09",
+    "Crumb_19_c12",
+    "Crumb_19_c16",
+    "Crumb_27_c14",
+    "Crumb_27_c15"
+   ]
+  },
+  "Crumb_19_c01": {
+   "block": "Chunk_19",
+   "core": false,
+   "volume": 0.003157,
+   "links": [
+    "Crumb_19_c03",
+    "Crumb_19_c06",
+    "Crumb_19_c11",
+    "Crumb_19_c14",
+    "Crumb_06_c00",
+    "Crumb_06_c07",
+    "Crumb_06_c15",
+    "Crumb_06_c19",
+    "Crumb_11_c04"
+   ]
+  },
+  "Crumb_19_c02": {
+   "block": "Chunk_19",
+   "core": false,
+   "volume": 0.001319,
+   "links": [
+    "Crumb_19_c08",
+    "Crumb_19_c16",
+    "Crumb_14_c05",
+    "Crumb_14_c09",
+    "Crumb_27_c11",
+    "Crumb_27_c15",
+    "Crumb_27_c16"
+   ]
+  },
+  "Crumb_19_c03": {
+   "block": "Chunk_19",
+   "core": false,
+   "volume": 0.005905,
+   "links": [
+    "Crumb_19_c00",
+    "Crumb_19_c01",
+    "Crumb_19_c05",
+    "Crumb_19_c06",
+    "Crumb_19_c07",
+    "Crumb_19_c12",
+    "Crumb_19_c14",
+    "Crumb_19_c15",
+    "Crumb_11_c00"
+   ]
+  },
+  "Crumb_19_c04": {
+   "block": "Chunk_19",
+   "core": false,
+   "volume": 0.000977,
+   "links": [
+    "Crumb_19_c09",
+    "Crumb_19_c12",
+    "Crumb_19_c15",
+    "Crumb_24_c00",
+    "Crumb_24_c01",
+    "Crumb_24_c03",
+    "Crumb_24_c06",
+    "Crumb_27_c14"
+   ]
+  },
+  "Crumb_19_c05": {
+   "block": "Chunk_19",
+   "core": false,
+   "volume": 0.003962,
+   "links": [
+    "Crumb_19_c00",
+    "Crumb_19_c03",
+    "Crumb_19_c08",
+    "Crumb_19_c10",
+    "Crumb_19_c14",
+    "Crumb_19_c16"
+   ]
+  },
+  "Crumb_19_c06": {
+   "block": "Chunk_19",
+   "core": false,
+   "volume": 0.003044,
+   "links": [
+    "Crumb_19_c01",
+    "Crumb_19_c03",
+    "Crumb_19_c07",
+    "Crumb_19_c14",
+    "Crumb_06_c07",
+    "Crumb_06_c15",
+    "Crumb_06_c19",
+    "Crumb_11_c00",
+    "Crumb_11_c04",
+    "Crumb_11_c05"
+   ]
+  },
+  "Crumb_19_c07": {
+   "block": "Chunk_19",
+   "core": false,
+   "volume": 0.002893,
+   "links": [
+    "Crumb_19_c03",
+    "Crumb_19_c06",
+    "Crumb_19_c15",
+    "Crumb_06_c07",
+    "Crumb_11_c00",
+    "Crumb_11_c04",
+    "Crumb_24_c01"
+   ]
+  },
+  "Crumb_19_c08": {
+   "block": "Chunk_19",
+   "core": false,
+   "volume": 0.003601,
+   "links": [
+    "Crumb_19_c02",
+    "Crumb_19_c05",
+    "Crumb_19_c10",
+    "Crumb_19_c16",
+    "Crumb_14_c09",
+    "Crumb_14_c11",
+    "Crumb_27_c15"
+   ]
+  },
+  "Crumb_19_c09": {
+   "block": "Chunk_19",
+   "core": false,
+   "volume": 0.000804,
+   "links": [
+    "Crumb_19_c00",
+    "Crumb_19_c04",
+    "Crumb_19_c12",
+    "Crumb_19_c16",
+    "Crumb_24_c00",
+    "Crumb_27_c07",
+    "Crumb_27_c14"
+   ]
+  },
+  "Crumb_19_c10": {
+   "block": "Chunk_19",
+   "core": false,
+   "volume": 0.005696,
+   "links": [
+    "Crumb_19_c05",
+    "Crumb_19_c08",
+    "Crumb_19_c11",
+    "Crumb_19_c13",
+    "Crumb_19_c14",
+    "Crumb_06_c04",
+    "Crumb_14_c01",
+    "Crumb_14_c08",
+    "Crumb_14_c11"
+   ]
+  },
+  "Crumb_19_c11": {
+   "block": "Chunk_19",
+   "core": false,
+   "volume": 0.004088,
+   "links": [
+    "Crumb_19_c01",
+    "Crumb_19_c10",
+    "Crumb_19_c13",
+    "Crumb_19_c14",
+    "Crumb_06_c04",
+    "Crumb_06_c15",
+    "Crumb_14_c01"
+   ]
+  },
+  "Crumb_19_c12": {
+   "block": "Chunk_19",
+   "core": false,
+   "volume": 0.002921,
+   "links": [
+    "Crumb_19_c00",
+    "Crumb_19_c03",
+    "Crumb_19_c04",
+    "Crumb_19_c09",
+    "Crumb_19_c15",
+    "Crumb_24_c00",
+    "Crumb_24_c01",
+    "Crumb_27_c14"
+   ]
+  },
+  "Crumb_19_c13": {
+   "block": "Chunk_19",
+   "core": false,
+   "volume": 0.00304,
+   "links": [
+    "Crumb_19_c10",
+    "Crumb_19_c11",
+    "Crumb_06_c04",
+    "Crumb_06_c08",
+    "Crumb_14_c01",
+    "Crumb_14_c03",
+    "Crumb_14_c08",
+    "Crumb_14_c11"
+   ]
+  },
+  "Crumb_19_c14": {
+   "block": "Chunk_19",
+   "core": false,
+   "volume": 0.003271,
+   "links": [
+    "Crumb_19_c01",
+    "Crumb_19_c03",
+    "Crumb_19_c05",
+    "Crumb_19_c06",
+    "Crumb_19_c10",
+    "Crumb_19_c11",
+    "Crumb_06_c04",
+    "Crumb_06_c15"
+   ]
+  },
+  "Crumb_19_c15": {
+   "block": "Chunk_19",
+   "core": false,
+   "volume": 0.002097,
+   "links": [
+    "Crumb_19_c03",
+    "Crumb_19_c04",
+    "Crumb_19_c07",
+    "Crumb_19_c12",
+    "Crumb_11_c00",
+    "Crumb_24_c00",
+    "Crumb_24_c01",
+    "Crumb_24_c05"
+   ]
+  },
+  "Crumb_19_c16": {
+   "block": "Chunk_19",
+   "core": false,
+   "volume": 0.001938,
+   "links": [
+    "Crumb_19_c00",
+    "Crumb_19_c02",
+    "Crumb_19_c05",
+    "Crumb_19_c08",
+    "Crumb_19_c09",
+    "Crumb_27_c07",
+    "Crumb_27_c11",
+    "Crumb_27_c15"
+   ]
+  },
+  "Crumb_19_c17": {
+   "block": "Chunk_19",
+   "core": true,
+   "volume": 0.011314,
+   "links": [
+    "Crumb_19_c01",
+    "Crumb_19_c03",
+    "Crumb_19_c05",
+    "Crumb_19_c06",
+    "Crumb_19_c08",
+    "Crumb_19_c10",
+    "Crumb_19_c11",
+    "Crumb_19_c13",
+    "Crumb_19_c14"
+   ]
+  },
+  "Crumb_20_c00": {
+   "block": "Chunk_20",
+   "core": false,
+   "volume": 0.004232,
+   "links": [
+    "Crumb_20_c04",
+    "Crumb_20_c08",
+    "Crumb_20_c09",
+    "Crumb_28_c16",
+    "Crumb_28_c19",
+    "Crumb_28_c31"
+   ]
+  },
+  "Crumb_20_c01": {
+   "block": "Chunk_20",
+   "core": false,
+   "volume": 0.002471,
+   "links": [
+    "Crumb_20_c04",
+    "Crumb_20_c06",
+    "Crumb_20_c07",
+    "Crumb_20_c10",
+    "Crumb_07_c13",
+    "Crumb_15_c05",
+    "Crumb_15_c07",
+    "Crumb_15_c08",
+    "Crumb_28_c03",
+    "Crumb_28_c16",
+    "Crumb_28_c27",
+    "Crumb_28_c36"
+   ]
+  },
+  "Crumb_20_c02": {
+   "block": "Chunk_20",
+   "core": false,
+   "volume": 0.008317,
+   "links": [
+    "Crumb_20_c03",
+    "Crumb_20_c07",
+    "Crumb_20_c11",
+    "Crumb_07_c00",
+    "Crumb_07_c10",
+    "Crumb_12_c11",
+    "Crumb_12_c27",
+    "Crumb_12_c33"
+   ]
+  },
+  "Crumb_20_c03": {
+   "block": "Chunk_20",
+   "core": false,
+   "volume": 0.005169,
+   "links": [
+    "Crumb_20_c02",
+    "Crumb_20_c05",
+    "Crumb_20_c07",
+    "Crumb_20_c09",
+    "Crumb_12_c07",
+    "Crumb_12_c11",
+    "Crumb_12_c31",
+    "Crumb_12_c33",
+    "Crumb_12_c35"
+   ]
+  },
+  "Crumb_20_c04": {
+   "block": "Chunk_20",
+   "core": false,
+   "volume": 0.005651,
+   "links": [
+    "Crumb_20_c00",
+    "Crumb_20_c01",
+    "Crumb_20_c06",
+    "Crumb_20_c07",
+    "Crumb_20_c09",
+    "Crumb_28_c16",
+    "Crumb_28_c27",
+    "Crumb_28_c31",
+    "Crumb_28_c36"
+   ]
+  },
+  "Crumb_20_c05": {
+   "block": "Chunk_20",
+   "core": false,
+   "volume": 0.004843,
+   "links": [
+    "Crumb_20_c03",
+    "Crumb_20_c08",
+    "Crumb_20_c09",
+    "Crumb_12_c01",
+    "Crumb_12_c07",
+    "Crumb_12_c35",
+    "Crumb_12_c38",
+    "Crumb_25_c00"
+   ]
+  },
+  "Crumb_20_c06": {
+   "block": "Chunk_20",
+   "core": false,
+   "volume": 0.014247,
+   "links": [
+    "Crumb_20_c01",
+    "Crumb_20_c04",
+    "Crumb_20_c07",
+    "Crumb_20_c10",
+    "Crumb_20_c11",
+    "Crumb_07_c02",
+    "Crumb_07_c05",
+    "Crumb_07_c13",
+    "Crumb_15_c00",
+    "Crumb_15_c08"
+   ]
+  },
+  "Crumb_20_c07": {
+   "block": "Chunk_20",
+   "core": false,
+   "volume": 0.005247,
+   "links": [
+    "Crumb_20_c01",
+    "Crumb_20_c02",
+    "Crumb_20_c03",
+    "Crumb_20_c04",
+    "Crumb_20_c06",
+    "Crumb_20_c09",
+    "Crumb_20_c10",
+    "Crumb_20_c11",
+    "Crumb_12_c35"
+   ]
+  },
+  "Crumb_20_c08": {
+   "block": "Chunk_20",
+   "core": false,
+   "volume": 0.002836,
+   "links": [
+    "Crumb_20_c00",
+    "Crumb_20_c05",
+    "Crumb_20_c09",
+    "Crumb_12_c07",
+    "Crumb_12_c38",
+    "Crumb_25_c00",
+    "Crumb_25_c09",
+    "Crumb_28_c19",
+    "Crumb_28_c31"
+   ]
+  },
+  "Crumb_20_c09": {
+   "block": "Chunk_20",
+   "core": false,
+   "volume": 0.006383,
+   "links": [
+    "Crumb_20_c00",
+    "Crumb_20_c03",
+    "Crumb_20_c04",
+    "Crumb_20_c05",
+    "Crumb_20_c07",
+    "Crumb_20_c08",
+    "Crumb_12_c07",
+    "Crumb_12_c35",
+    "Crumb_28_c16",
+    "Crumb_28_c31"
+   ]
+  },
+  "Crumb_20_c10": {
+   "block": "Chunk_20",
+   "core": false,
+   "volume": 0.003273,
+   "links": [
+    "Crumb_20_c01",
+    "Crumb_20_c06",
+    "Crumb_20_c07",
+    "Crumb_07_c05",
+    "Crumb_07_c13",
+    "Crumb_15_c00",
+    "Crumb_15_c01",
+    "Crumb_15_c05",
+    "Crumb_15_c07",
+    "Crumb_15_c08",
+    "Crumb_28_c27"
+   ]
+  },
+  "Crumb_20_c11": {
+   "block": "Chunk_20",
+   "core": false,
+   "volume": 0.008719,
+   "links": [
+    "Crumb_20_c02",
+    "Crumb_20_c06",
+    "Crumb_20_c07",
+    "Crumb_07_c00",
+    "Crumb_07_c02",
+    "Crumb_07_c10",
+    "Crumb_12_c33"
+   ]
+  },
+  "Crumb_20_c12": {
+   "block": "Chunk_20",
+   "core": true,
+   "volume": 0.037536,
+   "links": [
+    "Crumb_20_c02",
+    "Crumb_20_c03",
+    "Crumb_20_c04",
+    "Crumb_20_c05",
+    "Crumb_20_c06",
+    "Crumb_20_c07",
+    "Crumb_20_c09",
+    "Crumb_20_c11"
+   ]
+  },
+  "Crumb_21_c00": {
+   "block": "Chunk_21",
+   "core": false,
+   "volume": 0.008528,
+   "links": [
+    "Crumb_21_c01",
+    "Crumb_21_c02",
+    "Crumb_21_c04",
+    "Crumb_21_c05",
+    "Crumb_21_c06",
+    "Crumb_21_c07",
+    "Crumb_21_c09",
+    "Crumb_08_c02",
+    "Crumb_13_c04"
+   ]
+  },
+  "Crumb_21_c01": {
+   "block": "Chunk_21",
+   "core": false,
+   "volume": 0.002878,
+   "links": [
+    "Crumb_21_c00",
+    "Crumb_21_c03",
+    "Crumb_21_c05",
+    "Crumb_21_c09",
+    "Crumb_21_c10",
+    "Crumb_26_c01",
+    "Crumb_26_c07",
+    "Crumb_26_c11",
+    "Crumb_29_c11"
+   ]
+  },
+  "Crumb_21_c02": {
+   "block": "Chunk_21",
+   "core": false,
+   "volume": 0.005317,
+   "links": [
+    "Crumb_21_c00",
+    "Crumb_21_c04",
+    "Crumb_08_c02",
+    "Crumb_08_c08",
+    "Crumb_13_c04",
+    "Crumb_16_c04"
+   ]
+  },
+  "Crumb_21_c03": {
+   "block": "Chunk_21",
+   "core": false,
+   "volume": 0.00221,
+   "links": [
+    "Crumb_21_c01",
+    "Crumb_21_c05",
+    "Crumb_21_c07",
+    "Crumb_21_c08",
+    "Crumb_24_c04",
+    "Crumb_29_c17",
+    "Crumb_29_c28"
+   ]
+  },
+  "Crumb_21_c04": {
+   "block": "Chunk_21",
+   "core": false,
+   "volume": 0.007717,
+   "links": [
+    "Crumb_21_c00",
+    "Crumb_21_c02",
+    "Crumb_21_c07",
+    "Crumb_08_c02",
+    "Crumb_16_c01",
+    "Crumb_16_c04",
+    "Crumb_16_c05"
+   ]
+  },
+  "Crumb_21_c05": {
+   "block": "Chunk_21",
+   "core": false,
+   "volume": 0.004067,
+   "links": [
+    "Crumb_21_c00",
+    "Crumb_21_c01",
+    "Crumb_21_c03",
+    "Crumb_21_c07",
+    "Crumb_21_c09"
+   ]
+  },
+  "Crumb_21_c06": {
+   "block": "Chunk_21",
+   "core": false,
+   "volume": 0.001695,
+   "links": [
+    "Crumb_21_c00",
+    "Crumb_21_c09",
+    "Crumb_21_c10",
+    "Crumb_13_c01",
+    "Crumb_13_c03",
+    "Crumb_13_c04",
+    "Crumb_13_c05"
+   ]
+  },
+  "Crumb_21_c07": {
+   "block": "Chunk_21",
+   "core": false,
+   "volume": 0.006254,
+   "links": [
+    "Crumb_21_c00",
+    "Crumb_21_c03",
+    "Crumb_21_c04",
+    "Crumb_21_c05",
+    "Crumb_21_c08",
+    "Crumb_16_c01",
+    "Crumb_16_c05",
+    "Crumb_24_c04"
+   ]
+  },
+  "Crumb_21_c08": {
+   "block": "Chunk_21",
+   "core": false,
+   "volume": 0.000967,
+   "links": [
+    "Crumb_21_c03",
+    "Crumb_21_c07",
+    "Crumb_16_c05",
+    "Crumb_16_c07",
+    "Crumb_24_c04",
+    "Crumb_24_c07",
+    "Crumb_24_c08",
+    "Crumb_29_c17",
+    "Crumb_29_c28"
+   ]
+  },
+  "Crumb_21_c09": {
+   "block": "Chunk_21",
+   "core": false,
+   "volume": 0.004772,
+   "links": [
+    "Crumb_21_c00",
+    "Crumb_21_c01",
+    "Crumb_21_c05",
+    "Crumb_21_c06",
+    "Crumb_21_c10",
+    "Crumb_13_c03",
+    "Crumb_26_c07"
+   ]
+  },
+  "Crumb_21_c10": {
+   "block": "Chunk_21",
+   "core": false,
+   "volume": 0.001812,
+   "links": [
+    "Crumb_21_c01",
+    "Crumb_21_c06",
+    "Crumb_21_c09",
+    "Crumb_13_c03",
+    "Crumb_26_c01",
+    "Crumb_26_c02",
+    "Crumb_26_c07",
+    "Crumb_26_c11"
+   ]
+  },
+  "Crumb_21_c11": {
+   "block": "Chunk_21",
+   "core": true,
+   "volume": 0.005307,
+   "links": [
+    "Crumb_21_c00",
+    "Crumb_21_c01",
+    "Crumb_21_c03",
+    "Crumb_21_c04",
+    "Crumb_21_c05",
+    "Crumb_21_c07"
+   ]
+  },
+  "Crumb_22_c00": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.006148,
+   "links": [
+    "Crumb_22_c10",
+    "Crumb_22_c16",
+    "Crumb_22_c20",
+    "Crumb_22_c25",
+    "Crumb_22_c36",
+    "Crumb_27_c12",
+    "Crumb_27_c20",
+    "Crumb_27_c21"
+   ]
+  },
+  "Crumb_22_c01": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.002329,
+   "links": [
+    "Crumb_22_c11",
+    "Crumb_22_c19",
+    "Crumb_22_c29",
+    "Crumb_09_c03",
+    "Crumb_09_c05",
+    "Crumb_09_c07",
+    "Crumb_17_c07",
+    "Crumb_17_c13",
+    "Crumb_17_c19"
+   ]
+  },
+  "Crumb_22_c02": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.009886,
+   "links": [
+    "Crumb_22_c04",
+    "Crumb_22_c06",
+    "Crumb_22_c07",
+    "Crumb_22_c14",
+    "Crumb_22_c16",
+    "Crumb_22_c18",
+    "Crumb_22_c23",
+    "Crumb_22_c24",
+    "Crumb_22_c35",
+    "Crumb_22_c37",
+    "Crumb_22_c44",
+    "Crumb_25_c07",
+    "Crumb_25_c14",
+    "Crumb_25_c17"
+   ]
+  },
+  "Crumb_22_c03": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.006216,
+   "links": [
+    "Crumb_22_c15",
+    "Crumb_22_c32",
+    "Crumb_22_c33",
+    "Crumb_22_c38",
+    "Crumb_14_c02",
+    "Crumb_14_c05",
+    "Crumb_14_c07"
+   ]
+  },
+  "Crumb_22_c04": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.010551,
+   "links": [
+    "Crumb_22_c02",
+    "Crumb_22_c06",
+    "Crumb_22_c13",
+    "Crumb_22_c14",
+    "Crumb_22_c23",
+    "Crumb_22_c44",
+    "Crumb_17_c10",
+    "Crumb_25_c10",
+    "Crumb_25_c14",
+    "Crumb_25_c17"
+   ]
+  },
+  "Crumb_22_c05": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.011131,
+   "links": [
+    "Crumb_22_c15",
+    "Crumb_22_c23",
+    "Crumb_22_c26",
+    "Crumb_22_c32",
+    "Crumb_22_c38",
+    "Crumb_22_c41",
+    "Crumb_22_c42",
+    "Crumb_27_c16",
+    "Crumb_27_c17"
+   ]
+  },
+  "Crumb_22_c06": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.005228,
+   "links": [
+    "Crumb_22_c02",
+    "Crumb_22_c04",
+    "Crumb_22_c13",
+    "Crumb_22_c14",
+    "Crumb_22_c24",
+    "Crumb_22_c30",
+    "Crumb_22_c44"
+   ]
+  },
+  "Crumb_22_c07": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.007307,
+   "links": [
+    "Crumb_22_c02",
+    "Crumb_22_c14",
+    "Crumb_22_c16",
+    "Crumb_22_c23",
+    "Crumb_22_c25",
+    "Crumb_22_c35",
+    "Crumb_22_c42",
+    "Crumb_22_c44"
+   ]
+  },
+  "Crumb_22_c08": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.005037,
+   "links": [
+    "Crumb_22_c09",
+    "Crumb_22_c13",
+    "Crumb_22_c14",
+    "Crumb_22_c17",
+    "Crumb_22_c21",
+    "Crumb_22_c30",
+    "Crumb_22_c34",
+    "Crumb_22_c43",
+    "Crumb_22_c44"
+   ]
+  },
+  "Crumb_22_c09": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.0048,
+   "links": [
+    "Crumb_22_c08",
+    "Crumb_22_c12",
+    "Crumb_22_c17",
+    "Crumb_22_c19",
+    "Crumb_22_c21",
+    "Crumb_22_c29",
+    "Crumb_22_c34",
+    "Crumb_22_c43",
+    "Crumb_17_c24"
+   ]
+  },
+  "Crumb_22_c10": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.006102,
+   "links": [
+    "Crumb_22_c00",
+    "Crumb_22_c16",
+    "Crumb_22_c18",
+    "Crumb_22_c20",
+    "Crumb_22_c22",
+    "Crumb_22_c27",
+    "Crumb_22_c35",
+    "Crumb_22_c37",
+    "Crumb_25_c04"
+   ]
+  },
+  "Crumb_22_c11": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.002832,
+   "links": [
+    "Crumb_22_c01",
+    "Crumb_22_c28",
+    "Crumb_22_c29",
+    "Crumb_22_c39",
+    "Crumb_09_c05",
+    "Crumb_09_c07"
+   ]
+  },
+  "Crumb_22_c12": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.00368,
+   "links": [
+    "Crumb_22_c09",
+    "Crumb_22_c19",
+    "Crumb_22_c21",
+    "Crumb_22_c29",
+    "Crumb_22_c34",
+    "Crumb_22_c43",
+    "Crumb_17_c07",
+    "Crumb_17_c14",
+    "Crumb_17_c24"
+   ]
+  },
+  "Crumb_22_c13": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.008966,
+   "links": [
+    "Crumb_22_c04",
+    "Crumb_22_c06",
+    "Crumb_22_c08",
+    "Crumb_22_c14",
+    "Crumb_22_c17",
+    "Crumb_22_c21",
+    "Crumb_22_c30",
+    "Crumb_22_c43",
+    "Crumb_22_c44",
+    "Crumb_17_c11",
+    "Crumb_17_c24"
+   ]
+  },
+  "Crumb_22_c14": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.006519,
+   "links": [
+    "Crumb_22_c02",
+    "Crumb_22_c04",
+    "Crumb_22_c06",
+    "Crumb_22_c07",
+    "Crumb_22_c08",
+    "Crumb_22_c13",
+    "Crumb_22_c17",
+    "Crumb_22_c24",
+    "Crumb_22_c30",
+    "Crumb_22_c35",
+    "Crumb_22_c44"
+   ]
+  },
+  "Crumb_22_c15": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.007378,
+   "links": [
+    "Crumb_22_c03",
+    "Crumb_22_c05",
+    "Crumb_22_c23",
+    "Crumb_22_c32",
+    "Crumb_22_c38",
+    "Crumb_22_c40",
+    "Crumb_14_c02",
+    "Crumb_14_c05"
+   ]
+  },
+  "Crumb_22_c16": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.013577,
+   "links": [
+    "Crumb_22_c00",
+    "Crumb_22_c02",
+    "Crumb_22_c07",
+    "Crumb_22_c10",
+    "Crumb_22_c18",
+    "Crumb_22_c20",
+    "Crumb_22_c25",
+    "Crumb_22_c35",
+    "Crumb_22_c37",
+    "Crumb_22_c42",
+    "Crumb_27_c12"
+   ]
+  },
+  "Crumb_22_c17": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.004094,
+   "links": [
+    "Crumb_22_c08",
+    "Crumb_22_c09",
+    "Crumb_22_c13",
+    "Crumb_22_c14",
+    "Crumb_22_c21",
+    "Crumb_22_c23",
+    "Crumb_22_c40",
+    "Crumb_22_c44"
+   ]
+  },
+  "Crumb_22_c18": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.004757,
+   "links": [
+    "Crumb_22_c02",
+    "Crumb_22_c10",
+    "Crumb_22_c16",
+    "Crumb_22_c22",
+    "Crumb_22_c27",
+    "Crumb_22_c35",
+    "Crumb_22_c37",
+    "Crumb_25_c04",
+    "Crumb_25_c07"
+   ]
+  },
+  "Crumb_22_c19": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.002656,
+   "links": [
+    "Crumb_22_c01",
+    "Crumb_22_c09",
+    "Crumb_22_c12",
+    "Crumb_22_c29",
+    "Crumb_17_c07",
+    "Crumb_17_c13",
+    "Crumb_17_c14",
+    "Crumb_17_c24"
+   ]
+  },
+  "Crumb_22_c20": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.004755,
+   "links": [
+    "Crumb_22_c00",
+    "Crumb_22_c10",
+    "Crumb_22_c16",
+    "Crumb_22_c27",
+    "Crumb_22_c36",
+    "Crumb_27_c02",
+    "Crumb_27_c09",
+    "Crumb_27_c20"
+   ]
+  },
+  "Crumb_22_c21": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.007816,
+   "links": [
+    "Crumb_22_c08",
+    "Crumb_22_c09",
+    "Crumb_22_c12",
+    "Crumb_22_c13",
+    "Crumb_22_c17",
+    "Crumb_22_c29",
+    "Crumb_22_c39",
+    "Crumb_22_c40",
+    "Crumb_22_c43"
+   ]
+  },
+  "Crumb_22_c22": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.002099,
+   "links": [
+    "Crumb_22_c10",
+    "Crumb_22_c18",
+    "Crumb_22_c27",
+    "Crumb_22_c37",
+    "Crumb_25_c02",
+    "Crumb_25_c04",
+    "Crumb_25_c07",
+    "Crumb_25_c16"
+   ]
+  },
+  "Crumb_22_c23": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.021693,
+   "links": [
+    "Crumb_22_c02",
+    "Crumb_22_c04",
+    "Crumb_22_c05",
+    "Crumb_22_c07",
+    "Crumb_22_c15",
+    "Crumb_22_c17",
+    "Crumb_22_c38",
+    "Crumb_22_c42",
+    "Crumb_22_c44"
+   ]
+  },
+  "Crumb_22_c24": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.003501,
+   "links": [
+    "Crumb_22_c02",
+    "Crumb_22_c06",
+    "Crumb_22_c14",
+    "Crumb_22_c30",
+    "Crumb_22_c35"
+   ]
+  },
+  "Crumb_22_c25": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.005135,
+   "links": [
+    "Crumb_22_c00",
+    "Crumb_22_c07",
+    "Crumb_22_c16",
+    "Crumb_22_c26",
+    "Crumb_22_c42",
+    "Crumb_27_c01",
+    "Crumb_27_c03",
+    "Crumb_27_c12",
+    "Crumb_27_c21"
+   ]
+  },
+  "Crumb_22_c26": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.00257,
+   "links": [
+    "Crumb_22_c05",
+    "Crumb_22_c25",
+    "Crumb_22_c41",
+    "Crumb_22_c42",
+    "Crumb_27_c01",
+    "Crumb_27_c03",
+    "Crumb_27_c12",
+    "Crumb_27_c17"
+   ]
+  },
+  "Crumb_22_c27": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.0033,
+   "links": [
+    "Crumb_22_c10",
+    "Crumb_22_c18",
+    "Crumb_22_c20",
+    "Crumb_22_c22",
+    "Crumb_22_c36",
+    "Crumb_25_c04",
+    "Crumb_25_c16",
+    "Crumb_27_c09",
+    "Crumb_28_c21"
+   ]
+  },
+  "Crumb_22_c28": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.004009,
+   "links": [
+    "Crumb_22_c11",
+    "Crumb_22_c31",
+    "Crumb_22_c39",
+    "Crumb_09_c04",
+    "Crumb_09_c05"
+   ]
+  },
+  "Crumb_22_c29": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.004848,
+   "links": [
+    "Crumb_22_c01",
+    "Crumb_22_c09",
+    "Crumb_22_c11",
+    "Crumb_22_c12",
+    "Crumb_22_c19",
+    "Crumb_22_c21",
+    "Crumb_22_c39",
+    "Crumb_17_c07",
+    "Crumb_17_c14"
+   ]
+  },
+  "Crumb_22_c30": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.003911,
+   "links": [
+    "Crumb_22_c06",
+    "Crumb_22_c08",
+    "Crumb_22_c13",
+    "Crumb_22_c14",
+    "Crumb_22_c24",
+    "Crumb_22_c34",
+    "Crumb_22_c43"
+   ]
+  },
+  "Crumb_22_c31": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.012172,
+   "links": [
+    "Crumb_22_c28",
+    "Crumb_22_c33",
+    "Crumb_22_c38",
+    "Crumb_22_c39",
+    "Crumb_22_c40",
+    "Crumb_09_c02",
+    "Crumb_09_c04"
+   ]
+  },
+  "Crumb_22_c32": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.014768,
+   "links": [
+    "Crumb_22_c03",
+    "Crumb_22_c05",
+    "Crumb_22_c15",
+    "Crumb_22_c33",
+    "Crumb_22_c38",
+    "Crumb_22_c41",
+    "Crumb_14_c05",
+    "Crumb_14_c07",
+    "Crumb_14_c09",
+    "Crumb_27_c11",
+    "Crumb_27_c16",
+    "Crumb_27_c17"
+   ]
+  },
+  "Crumb_22_c33": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.033939,
+   "links": [
+    "Crumb_22_c03",
+    "Crumb_22_c31",
+    "Crumb_22_c32",
+    "Crumb_22_c38",
+    "Crumb_09_c02",
+    "Crumb_14_c02",
+    "Crumb_14_c04",
+    "Crumb_14_c07",
+    "Crumb_14_c12"
+   ]
+  },
+  "Crumb_22_c34": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.003733,
+   "links": [
+    "Crumb_22_c08",
+    "Crumb_22_c09",
+    "Crumb_22_c12",
+    "Crumb_22_c30",
+    "Crumb_22_c43",
+    "Crumb_17_c24"
+   ]
+  },
+  "Crumb_22_c35": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.005888,
+   "links": [
+    "Crumb_22_c02",
+    "Crumb_22_c07",
+    "Crumb_22_c10",
+    "Crumb_22_c14",
+    "Crumb_22_c16",
+    "Crumb_22_c18",
+    "Crumb_22_c24",
+    "Crumb_22_c37"
+   ]
+  },
+  "Crumb_22_c36": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.003841,
+   "links": [
+    "Crumb_22_c00",
+    "Crumb_22_c20",
+    "Crumb_22_c27",
+    "Crumb_27_c02",
+    "Crumb_27_c09",
+    "Crumb_27_c22",
+    "Crumb_28_c10",
+    "Crumb_28_c21"
+   ]
+  },
+  "Crumb_22_c37": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.00328,
+   "links": [
+    "Crumb_22_c02",
+    "Crumb_22_c10",
+    "Crumb_22_c16",
+    "Crumb_22_c18",
+    "Crumb_22_c22",
+    "Crumb_22_c35",
+    "Crumb_25_c04",
+    "Crumb_25_c07",
+    "Crumb_25_c14",
+    "Crumb_25_c17"
+   ]
+  },
+  "Crumb_22_c38": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.016417,
+   "links": [
+    "Crumb_22_c03",
+    "Crumb_22_c05",
+    "Crumb_22_c15",
+    "Crumb_22_c23",
+    "Crumb_22_c31",
+    "Crumb_22_c32",
+    "Crumb_22_c33",
+    "Crumb_22_c39",
+    "Crumb_22_c40",
+    "Crumb_14_c02"
+   ]
+  },
+  "Crumb_22_c39": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.006463,
+   "links": [
+    "Crumb_22_c11",
+    "Crumb_22_c21",
+    "Crumb_22_c28",
+    "Crumb_22_c29",
+    "Crumb_22_c31",
+    "Crumb_22_c38",
+    "Crumb_22_c40"
+   ]
+  },
+  "Crumb_22_c40": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.008628,
+   "links": [
+    "Crumb_22_c15",
+    "Crumb_22_c17",
+    "Crumb_22_c21",
+    "Crumb_22_c31",
+    "Crumb_22_c38",
+    "Crumb_22_c39"
+   ]
+  },
+  "Crumb_22_c41": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.001921,
+   "links": [
+    "Crumb_22_c05",
+    "Crumb_22_c26",
+    "Crumb_22_c32",
+    "Crumb_27_c03",
+    "Crumb_27_c11",
+    "Crumb_27_c16",
+    "Crumb_27_c17",
+    "Crumb_27_c18"
+   ]
+  },
+  "Crumb_22_c42": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.020781,
+   "links": [
+    "Crumb_22_c05",
+    "Crumb_22_c07",
+    "Crumb_22_c16",
+    "Crumb_22_c23",
+    "Crumb_22_c25",
+    "Crumb_22_c26",
+    "Crumb_22_c44"
+   ]
+  },
+  "Crumb_22_c43": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.005659,
+   "links": [
+    "Crumb_22_c08",
+    "Crumb_22_c09",
+    "Crumb_22_c12",
+    "Crumb_22_c13",
+    "Crumb_22_c21",
+    "Crumb_22_c30",
+    "Crumb_22_c34",
+    "Crumb_17_c11",
+    "Crumb_17_c14",
+    "Crumb_17_c24"
+   ]
+  },
+  "Crumb_22_c44": {
+   "block": "Chunk_22",
+   "core": false,
+   "volume": 0.007714,
+   "links": [
+    "Crumb_22_c02",
+    "Crumb_22_c04",
+    "Crumb_22_c06",
+    "Crumb_22_c07",
+    "Crumb_22_c08",
+    "Crumb_22_c13",
+    "Crumb_22_c14",
+    "Crumb_22_c17",
+    "Crumb_22_c23",
+    "Crumb_22_c42"
+   ]
+  },
+  "Crumb_22_c45": {
+   "block": "Chunk_22",
+   "core": true,
+   "volume": 0.020626,
+   "links": [
+    "Crumb_22_c04",
+    "Crumb_22_c13",
+    "Crumb_22_c15",
+    "Crumb_22_c17",
+    "Crumb_22_c21",
+    "Crumb_22_c23",
+    "Crumb_22_c38",
+    "Crumb_22_c40",
+    "Crumb_22_c44"
+   ]
+  },
+  "Crumb_23_c00": {
+   "block": "Chunk_23",
+   "core": false,
+   "volume": 0.003259,
+   "links": [
+    "Crumb_23_c07",
+    "Crumb_23_c08",
+    "Crumb_23_c10",
+    "Crumb_15_c02",
+    "Crumb_15_c03",
+    "Crumb_18_c07"
+   ]
+  },
+  "Crumb_23_c01": {
+   "block": "Chunk_23",
+   "core": false,
+   "volume": 0.002938,
+   "links": [
+    "Crumb_23_c02",
+    "Crumb_23_c04",
+    "Crumb_23_c09",
+    "Crumb_26_c00",
+    "Crumb_26_c08",
+    "Crumb_26_c09",
+    "Crumb_26_c10",
+    "Crumb_28_c30",
+    "Crumb_28_c33"
+   ]
+  },
+  "Crumb_23_c02": {
+   "block": "Chunk_23",
+   "core": false,
+   "volume": 0.005995,
+   "links": [
+    "Crumb_23_c01",
+    "Crumb_23_c03",
+    "Crumb_23_c04",
+    "Crumb_23_c05",
+    "Crumb_23_c09",
+    "Crumb_23_c10",
+    "Crumb_26_c08",
+    "Crumb_28_c30"
+   ]
+  },
+  "Crumb_23_c03": {
+   "block": "Chunk_23",
+   "core": false,
+   "volume": 0.00373,
+   "links": [
+    "Crumb_23_c02",
+    "Crumb_23_c06",
+    "Crumb_23_c08",
+    "Crumb_23_c09",
+    "Crumb_23_c10",
+    "Crumb_28_c03",
+    "Crumb_28_c30"
+   ]
+  },
+  "Crumb_23_c04": {
+   "block": "Chunk_23",
+   "core": false,
+   "volume": 0.00473,
+   "links": [
+    "Crumb_23_c01",
+    "Crumb_23_c02",
+    "Crumb_23_c05",
+    "Crumb_23_c10",
+    "Crumb_18_c04",
+    "Crumb_26_c00",
+    "Crumb_26_c05",
+    "Crumb_26_c08"
+   ]
+  },
+  "Crumb_23_c05": {
+   "block": "Chunk_23",
+   "core": false,
+   "volume": 0.00474,
+   "links": [
+    "Crumb_23_c02",
+    "Crumb_23_c04",
+    "Crumb_23_c07",
+    "Crumb_23_c10",
+    "Crumb_18_c04",
+    "Crumb_18_c07",
+    "Crumb_26_c05"
+   ]
+  },
+  "Crumb_23_c06": {
+   "block": "Chunk_23",
+   "core": false,
+   "volume": 0.002002,
+   "links": [
+    "Crumb_23_c03",
+    "Crumb_23_c08",
+    "Crumb_15_c05",
+    "Crumb_15_c07",
+    "Crumb_28_c03",
+    "Crumb_28_c27",
+    "Crumb_28_c36"
+   ]
+  },
+  "Crumb_23_c07": {
+   "block": "Chunk_23",
+   "core": false,
+   "volume": 0.002502,
+   "links": [
+    "Crumb_23_c00",
+    "Crumb_23_c05",
+    "Crumb_23_c10",
+    "Crumb_15_c02",
+    "Crumb_15_c03",
+    "Crumb_18_c06",
+    "Crumb_18_c07"
+   ]
+  },
+  "Crumb_23_c08": {
+   "block": "Chunk_23",
+   "core": false,
+   "volume": 0.004019,
+   "links": [
+    "Crumb_23_c00",
+    "Crumb_23_c03",
+    "Crumb_23_c06",
+    "Crumb_23_c10",
+    "Crumb_15_c03",
+    "Crumb_15_c07",
+    "Crumb_28_c03"
+   ]
+  },
+  "Crumb_23_c09": {
+   "block": "Chunk_23",
+   "core": false,
+   "volume": 0.001247,
+   "links": [
+    "Crumb_23_c01",
+    "Crumb_23_c02",
+    "Crumb_23_c03",
+    "Crumb_26_c08",
+    "Crumb_26_c10",
+    "Crumb_28_c14",
+    "Crumb_28_c26",
+    "Crumb_28_c30",
+    "Crumb_28_c33"
+   ]
+  },
+  "Crumb_23_c10": {
+   "block": "Chunk_23",
+   "core": false,
+   "volume": 0.007242,
+   "links": [
+    "Crumb_23_c00",
+    "Crumb_23_c02",
+    "Crumb_23_c03",
+    "Crumb_23_c04",
+    "Crumb_23_c05",
+    "Crumb_23_c07",
+    "Crumb_23_c08",
+    "Crumb_18_c04",
+    "Crumb_18_c07"
+   ]
+  },
+  "Crumb_23_c11": {
+   "block": "Chunk_23",
+   "core": true,
+   "volume": 0.018981,
+   "links": [
+    "Crumb_23_c00",
+    "Crumb_23_c02",
+    "Crumb_23_c03",
+    "Crumb_23_c04",
+    "Crumb_23_c05",
+    "Crumb_23_c06",
+    "Crumb_23_c07",
+    "Crumb_23_c08",
+    "Crumb_23_c10"
+   ]
+  },
+  "Crumb_24_c00": {
+   "block": "Chunk_24",
+   "core": false,
+   "volume": 0.003809,
+   "links": [
+    "Crumb_24_c01",
+    "Crumb_24_c02",
+    "Crumb_24_c03",
+    "Crumb_24_c06",
+    "Crumb_19_c04",
+    "Crumb_19_c09",
+    "Crumb_19_c12",
+    "Crumb_19_c15",
+    "Crumb_27_c14",
+    "Crumb_29_c00",
+    "Crumb_29_c25"
+   ]
+  },
+  "Crumb_24_c01": {
+   "block": "Chunk_24",
+   "core": false,
+   "volume": 0.004718,
+   "links": [
+    "Crumb_24_c00",
+    "Crumb_24_c03",
+    "Crumb_24_c05",
+    "Crumb_11_c00",
+    "Crumb_19_c04",
+    "Crumb_19_c07",
+    "Crumb_19_c12",
+    "Crumb_19_c15"
+   ]
+  },
+  "Crumb_24_c02": {
+   "block": "Chunk_24",
+   "core": false,
+   "volume": 0.001686,
+   "links": [
+    "Crumb_24_c00",
+    "Crumb_24_c03",
+    "Crumb_24_c06",
+    "Crumb_24_c07",
+    "Crumb_29_c00",
+    "Crumb_29_c01",
+    "Crumb_29_c21",
+    "Crumb_29_c28"
+   ]
+  },
+  "Crumb_24_c03": {
+   "block": "Chunk_24",
+   "core": false,
+   "volume": 0.009002,
+   "links": [
+    "Crumb_24_c00",
+    "Crumb_24_c01",
+    "Crumb_24_c02",
+    "Crumb_24_c04",
+    "Crumb_24_c05",
+    "Crumb_24_c06",
+    "Crumb_24_c07",
+    "Crumb_24_c08",
+    "Crumb_16_c07",
+    "Crumb_19_c04",
+    "Crumb_29_c00"
+   ]
+  },
+  "Crumb_24_c04": {
+   "block": "Chunk_24",
+   "core": false,
+   "volume": 0.004892,
+   "links": [
+    "Crumb_24_c03",
+    "Crumb_24_c07",
+    "Crumb_24_c08",
+    "Crumb_16_c05",
+    "Crumb_16_c07",
+    "Crumb_21_c03",
+    "Crumb_21_c07",
+    "Crumb_21_c08",
+    "Crumb_29_c17",
+    "Crumb_29_c21",
+    "Crumb_29_c28"
+   ]
+  },
+  "Crumb_24_c05": {
+   "block": "Chunk_24",
+   "core": false,
+   "volume": 0.006769,
+   "links": [
+    "Crumb_24_c01",
+    "Crumb_24_c03",
+    "Crumb_24_c08",
+    "Crumb_11_c00",
+    "Crumb_11_c03",
+    "Crumb_16_c07",
+    "Crumb_16_c08",
+    "Crumb_19_c15"
+   ]
+  },
+  "Crumb_24_c06": {
+   "block": "Chunk_24",
+   "core": false,
+   "volume": 0.001311,
+   "links": [
+    "Crumb_24_c00",
+    "Crumb_24_c02",
+    "Crumb_24_c03",
+    "Crumb_19_c04",
+    "Crumb_27_c13",
+    "Crumb_27_c14",
+    "Crumb_29_c00",
+    "Crumb_29_c18",
+    "Crumb_29_c25",
+    "Crumb_29_c33"
+   ]
+  },
+  "Crumb_24_c07": {
+   "block": "Chunk_24",
+   "core": false,
+   "volume": 0.004118,
+   "links": [
+    "Crumb_24_c02",
+    "Crumb_24_c03",
+    "Crumb_24_c04",
+    "Crumb_24_c08",
+    "Crumb_16_c07",
+    "Crumb_21_c08",
+    "Crumb_29_c21",
+    "Crumb_29_c28"
+   ]
+  },
+  "Crumb_24_c08": {
+   "block": "Chunk_24",
+   "core": false,
+   "volume": 0.011364,
+   "links": [
+    "Crumb_24_c03",
+    "Crumb_24_c04",
+    "Crumb_24_c05",
+    "Crumb_24_c07",
+    "Crumb_11_c03",
+    "Crumb_16_c01",
+    "Crumb_16_c02",
+    "Crumb_16_c05",
+    "Crumb_16_c07",
+    "Crumb_16_c08",
+    "Crumb_21_c08"
+   ]
+  },
+  "Crumb_24_c09": {
+   "block": "Chunk_24",
+   "core": true,
+   "volume": 0.039039,
+   "links": [
+    "Crumb_24_c01",
+    "Crumb_24_c03",
+    "Crumb_24_c04",
+    "Crumb_24_c05",
+    "Crumb_24_c07",
+    "Crumb_24_c08"
+   ]
+  },
+  "Crumb_25_c00": {
+   "block": "Chunk_25",
+   "core": false,
+   "volume": 0.024525,
+   "links": [
+    "Crumb_25_c05",
+    "Crumb_25_c09",
+    "Crumb_25_c12",
+    "Crumb_12_c07",
+    "Crumb_12_c16",
+    "Crumb_12_c38",
+    "Crumb_20_c05",
+    "Crumb_20_c08"
+   ]
+  },
+  "Crumb_25_c01": {
+   "block": "Chunk_25",
+   "core": false,
+   "volume": 0.005093,
+   "links": [
+    "Crumb_25_c06",
+    "Crumb_25_c13",
+    "Crumb_25_c14",
+    "Crumb_25_c15",
+    "Crumb_25_c17"
+   ]
+  },
+  "Crumb_25_c02": {
+   "block": "Chunk_25",
+   "core": false,
+   "volume": 0.00684,
+   "links": [
+    "Crumb_25_c04",
+    "Crumb_25_c07",
+    "Crumb_25_c11",
+    "Crumb_25_c13",
+    "Crumb_25_c14",
+    "Crumb_25_c16",
+    "Crumb_22_c22",
+    "Crumb_28_c12",
+    "Crumb_28_c18",
+    "Crumb_28_c34"
+   ]
+  },
+  "Crumb_25_c03": {
+   "block": "Chunk_25",
+   "core": false,
+   "volume": 0.005903,
+   "links": [
+    "Crumb_25_c05",
+    "Crumb_25_c06",
+    "Crumb_25_c08",
+    "Crumb_25_c10",
+    "Crumb_25_c12",
+    "Crumb_12_c12",
+    "Crumb_12_c21",
+    "Crumb_17_c17"
+   ]
+  },
+  "Crumb_25_c04": {
+   "block": "Chunk_25",
+   "core": false,
+   "volume": 0.004623,
+   "links": [
+    "Crumb_25_c02",
+    "Crumb_25_c07",
+    "Crumb_25_c16",
+    "Crumb_22_c10",
+    "Crumb_22_c18",
+    "Crumb_22_c22",
+    "Crumb_22_c27",
+    "Crumb_22_c37",
+    "Crumb_28_c12",
+    "Crumb_28_c21"
+   ]
+  },
+  "Crumb_25_c05": {
+   "block": "Chunk_25",
+   "core": false,
+   "volume": 0.006492,
+   "links": [
+    "Crumb_25_c00",
+    "Crumb_25_c03",
+    "Crumb_25_c08",
+    "Crumb_25_c09",
+    "Crumb_25_c10",
+    "Crumb_25_c11",
+    "Crumb_25_c12",
+    "Crumb_25_c15",
+    "Crumb_12_c21",
+    "Crumb_28_c07",
+    "Crumb_28_c29"
+   ]
+  },
+  "Crumb_25_c06": {
+   "block": "Chunk_25",
+   "core": false,
+   "volume": 0.005082,
+   "links": [
+    "Crumb_25_c01",
+    "Crumb_25_c03",
+    "Crumb_25_c08",
+    "Crumb_25_c10",
+    "Crumb_25_c14",
+    "Crumb_25_c15",
+    "Crumb_25_c17"
+   ]
+  },
+  "Crumb_25_c07": {
+   "block": "Chunk_25",
+   "core": false,
+   "volume": 0.012232,
+   "links": [
+    "Crumb_25_c02",
+    "Crumb_25_c04",
+    "Crumb_25_c13",
+    "Crumb_25_c14",
+    "Crumb_25_c16",
+    "Crumb_22_c02",
+    "Crumb_22_c18",
+    "Crumb_22_c22",
+    "Crumb_22_c37"
+   ]
+  },
+  "Crumb_25_c08": {
+   "block": "Chunk_25",
+   "core": false,
+   "volume": 0.004501,
+   "links": [
+    "Crumb_25_c03",
+    "Crumb_25_c05",
+    "Crumb_25_c06",
+    "Crumb_25_c10",
+    "Crumb_25_c12",
+    "Crumb_25_c15",
+    "Crumb_12_c21",
+    "Crumb_28_c29"
+   ]
+  },
+  "Crumb_25_c09": {
+   "block": "Chunk_25",
+   "core": false,
+   "volume": 0.01009,
+   "links": [
+    "Crumb_25_c00",
+    "Crumb_25_c05",
+    "Crumb_25_c11",
+    "Crumb_25_c12",
+    "Crumb_25_c15",
+    "Crumb_20_c08",
+    "Crumb_28_c07",
+    "Crumb_28_c17",
+    "Crumb_28_c29"
+   ]
+  },
+  "Crumb_25_c10": {
+   "block": "Chunk_25",
+   "core": false,
+   "volume": 0.010633,
+   "links": [
+    "Crumb_25_c03",
+    "Crumb_25_c05",
+    "Crumb_25_c06",
+    "Crumb_25_c08",
+    "Crumb_25_c12",
+    "Crumb_25_c15",
+    "Crumb_25_c17",
+    "Crumb_17_c10",
+    "Crumb_17_c17",
+    "Crumb_22_c04"
+   ]
+  },
+  "Crumb_25_c11": {
+   "block": "Chunk_25",
+   "core": false,
+   "volume": 0.006593,
+   "links": [
+    "Crumb_25_c02",
+    "Crumb_25_c05",
+    "Crumb_25_c09",
+    "Crumb_25_c13",
+    "Crumb_25_c14",
+    "Crumb_25_c15",
+    "Crumb_28_c07",
+    "Crumb_28_c18",
+    "Crumb_28_c28",
+    "Crumb_28_c29"
+   ]
+  },
+  "Crumb_25_c12": {
+   "block": "Chunk_25",
+   "core": false,
+   "volume": 0.008379,
+   "links": [
+    "Crumb_25_c00",
+    "Crumb_25_c03",
+    "Crumb_25_c05",
+    "Crumb_25_c08",
+    "Crumb_25_c09",
+    "Crumb_25_c10",
+    "Crumb_12_c12",
+    "Crumb_12_c21"
+   ]
+  },
+  "Crumb_25_c13": {
+   "block": "Chunk_25",
+   "core": false,
+   "volume": 0.007994,
+   "links": [
+    "Crumb_25_c01",
+    "Crumb_25_c02",
+    "Crumb_25_c07",
+    "Crumb_25_c11",
+    "Crumb_25_c14",
+    "Crumb_25_c15",
+    "Crumb_28_c18"
+   ]
+  },
+  "Crumb_25_c14": {
+   "block": "Chunk_25",
+   "core": false,
+   "volume": 0.012192,
+   "links": [
+    "Crumb_25_c01",
+    "Crumb_25_c02",
+    "Crumb_25_c06",
+    "Crumb_25_c07",
+    "Crumb_25_c11",
+    "Crumb_25_c13",
+    "Crumb_25_c15",
+    "Crumb_25_c17",
+    "Crumb_22_c02",
+    "Crumb_22_c04",
+    "Crumb_22_c37"
+   ]
+  },
+  "Crumb_25_c15": {
+   "block": "Chunk_25",
+   "core": false,
+   "volume": 0.007574,
+   "links": [
+    "Crumb_25_c01",
+    "Crumb_25_c05",
+    "Crumb_25_c06",
+    "Crumb_25_c08",
+    "Crumb_25_c09",
+    "Crumb_25_c10",
+    "Crumb_25_c11",
+    "Crumb_25_c13",
+    "Crumb_25_c14",
+    "Crumb_25_c17",
+    "Crumb_28_c07",
+    "Crumb_28_c29"
+   ]
+  },
+  "Crumb_25_c16": {
+   "block": "Chunk_25",
+   "core": false,
+   "volume": 0.008279,
+   "links": [
+    "Crumb_25_c02",
+    "Crumb_25_c04",
+    "Crumb_25_c07",
+    "Crumb_22_c22",
+    "Crumb_22_c27",
+    "Crumb_28_c09",
+    "Crumb_28_c12",
+    "Crumb_28_c21"
+   ]
+  },
+  "Crumb_25_c17": {
+   "block": "Chunk_25",
+   "core": false,
+   "volume": 0.008013,
+   "links": [
+    "Crumb_25_c01",
+    "Crumb_25_c06",
+    "Crumb_25_c10",
+    "Crumb_25_c14",
+    "Crumb_25_c15",
+    "Crumb_17_c10",
+    "Crumb_22_c02",
+    "Crumb_22_c04",
+    "Crumb_22_c37"
+   ]
+  },
+  "Crumb_25_c18": {
+   "block": "Chunk_25",
+   "core": true,
+   "volume": 0.168446,
+   "links": [
+    "Crumb_25_c00",
+    "Crumb_25_c02",
+    "Crumb_25_c04",
+    "Crumb_25_c05",
+    "Crumb_25_c06",
+    "Crumb_25_c07",
+    "Crumb_25_c08",
+    "Crumb_25_c09",
+    "Crumb_25_c10",
+    "Crumb_25_c11",
+    "Crumb_25_c12",
+    "Crumb_25_c14",
+    "Crumb_25_c15",
+    "Crumb_25_c16",
+    "Crumb_25_c17"
+   ]
+  },
+  "Crumb_26_c00": {
+   "block": "Chunk_26",
+   "core": false,
+   "volume": 0.012601,
+   "links": [
+    "Crumb_26_c04",
+    "Crumb_26_c05",
+    "Crumb_26_c06",
+    "Crumb_26_c08",
+    "Crumb_26_c09",
+    "Crumb_23_c01",
+    "Crumb_23_c04"
+   ]
+  },
+  "Crumb_26_c01": {
+   "block": "Chunk_26",
+   "core": false,
+   "volume": 0.005337,
+   "links": [
+    "Crumb_26_c04",
+    "Crumb_26_c06",
+    "Crumb_26_c07",
+    "Crumb_26_c11",
+    "Crumb_21_c01",
+    "Crumb_21_c10",
+    "Crumb_29_c11"
+   ]
+  },
+  "Crumb_26_c02": {
+   "block": "Chunk_26",
+   "core": false,
+   "volume": 0.006119,
+   "links": [
+    "Crumb_26_c03",
+    "Crumb_26_c07",
+    "Crumb_26_c11",
+    "Crumb_05_c06",
+    "Crumb_05_c09",
+    "Crumb_05_c23",
+    "Crumb_13_c00",
+    "Crumb_13_c03",
+    "Crumb_18_c03",
+    "Crumb_21_c10"
+   ]
+  },
+  "Crumb_26_c03": {
+   "block": "Chunk_26",
+   "core": false,
+   "volume": 0.006851,
+   "links": [
+    "Crumb_26_c02",
+    "Crumb_26_c05",
+    "Crumb_26_c11",
+    "Crumb_05_c09",
+    "Crumb_18_c03",
+    "Crumb_18_c04",
+    "Crumb_18_c09",
+    "Crumb_18_c10"
+   ]
+  },
+  "Crumb_26_c04": {
+   "block": "Chunk_26",
+   "core": false,
+   "volume": 0.004636,
+   "links": [
+    "Crumb_26_c00",
+    "Crumb_26_c01",
+    "Crumb_26_c06",
+    "Crumb_26_c09",
+    "Crumb_29_c04",
+    "Crumb_29_c05",
+    "Crumb_29_c11",
+    "Crumb_29_c32"
+   ]
+  },
+  "Crumb_26_c05": {
+   "block": "Chunk_26",
+   "core": false,
+   "volume": 0.008443,
+   "links": [
+    "Crumb_26_c00",
+    "Crumb_26_c03",
+    "Crumb_26_c06",
+    "Crumb_26_c08",
+    "Crumb_26_c11",
+    "Crumb_18_c04",
+    "Crumb_18_c10",
+    "Crumb_23_c04",
+    "Crumb_23_c05"
+   ]
+  },
+  "Crumb_26_c06": {
+   "block": "Chunk_26",
+   "core": false,
+   "volume": 0.005007,
+   "links": [
+    "Crumb_26_c00",
+    "Crumb_26_c01",
+    "Crumb_26_c04",
+    "Crumb_26_c05",
+    "Crumb_26_c11",
+    "Crumb_29_c11"
+   ]
+  },
+  "Crumb_26_c07": {
+   "block": "Chunk_26",
+   "core": false,
+   "volume": 0.003241,
+   "links": [
+    "Crumb_26_c01",
+    "Crumb_26_c02",
+    "Crumb_26_c11",
+    "Crumb_13_c03",
+    "Crumb_21_c01",
+    "Crumb_21_c09",
+    "Crumb_21_c10"
+   ]
+  },
+  "Crumb_26_c08": {
+   "block": "Chunk_26",
+   "core": false,
+   "volume": 0.005264,
+   "links": [
+    "Crumb_26_c00",
+    "Crumb_26_c05",
+    "Crumb_26_c09",
+    "Crumb_26_c10",
+    "Crumb_23_c01",
+    "Crumb_23_c02",
+    "Crumb_23_c04",
+    "Crumb_23_c09",
+    "Crumb_28_c33",
+    "Crumb_29_c04"
+   ]
+  },
+  "Crumb_26_c09": {
+   "block": "Chunk_26",
+   "core": false,
+   "volume": 0.003368,
+   "links": [
+    "Crumb_26_c00",
+    "Crumb_26_c04",
+    "Crumb_26_c08",
+    "Crumb_26_c10",
+    "Crumb_23_c01",
+    "Crumb_28_c33",
+    "Crumb_29_c04",
+    "Crumb_29_c32"
+   ]
+  },
+  "Crumb_26_c10": {
+   "block": "Chunk_26",
+   "core": false,
+   "volume": 0.000801,
+   "links": [
+    "Crumb_26_c08",
+    "Crumb_26_c09",
+    "Crumb_23_c01",
+    "Crumb_23_c09",
+    "Crumb_28_c06",
+    "Crumb_28_c14",
+    "Crumb_28_c32",
+    "Crumb_28_c33",
+    "Crumb_29_c04",
+    "Crumb_29_c24"
+   ]
+  },
+  "Crumb_26_c11": {
+   "block": "Chunk_26",
+   "core": false,
+   "volume": 0.00394,
+   "links": [
+    "Crumb_26_c01",
+    "Crumb_26_c02",
+    "Crumb_26_c03",
+    "Crumb_26_c05",
+    "Crumb_26_c06",
+    "Crumb_26_c07",
+    "Crumb_13_c03",
+    "Crumb_18_c10",
+    "Crumb_21_c01",
+    "Crumb_21_c10"
+   ]
+  },
+  "Crumb_26_c12": {
+   "block": "Chunk_26",
+   "core": true,
+   "volume": 0.022436,
+   "links": [
+    "Crumb_26_c00",
+    "Crumb_26_c01",
+    "Crumb_26_c02",
+    "Crumb_26_c03",
+    "Crumb_26_c04",
+    "Crumb_26_c05",
+    "Crumb_26_c06",
+    "Crumb_26_c07",
+    "Crumb_26_c11"
+   ]
+  },
+  "Crumb_27_c00": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.004511,
+   "links": [
+    "Crumb_27_c05",
+    "Crumb_27_c10",
+    "Crumb_27_c19",
+    "Crumb_27_c21",
+    "Crumb_27_c23",
+    "Crumb_29_c07",
+    "Crumb_29_c10",
+    "Crumb_29_c20",
+    "Crumb_29_c23",
+    "Crumb_29_c26",
+    "Crumb_29_c27"
+   ]
+  },
+  "Crumb_27_c01": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.006238,
+   "links": [
+    "Crumb_27_c03",
+    "Crumb_27_c08",
+    "Crumb_27_c12",
+    "Crumb_27_c18",
+    "Crumb_27_c21",
+    "Crumb_27_c23",
+    "Crumb_22_c25",
+    "Crumb_22_c26"
+   ]
+  },
+  "Crumb_27_c02": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.003808,
+   "links": [
+    "Crumb_27_c04",
+    "Crumb_27_c05",
+    "Crumb_27_c09",
+    "Crumb_27_c10",
+    "Crumb_27_c20",
+    "Crumb_22_c20",
+    "Crumb_22_c36",
+    "Crumb_29_c12",
+    "Crumb_29_c19"
+   ]
+  },
+  "Crumb_27_c03": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.006689,
+   "links": [
+    "Crumb_27_c01",
+    "Crumb_27_c08",
+    "Crumb_27_c12",
+    "Crumb_27_c17",
+    "Crumb_27_c18",
+    "Crumb_22_c25",
+    "Crumb_22_c26",
+    "Crumb_22_c41"
+   ]
+  },
+  "Crumb_27_c04": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.00536,
+   "links": [
+    "Crumb_27_c02",
+    "Crumb_27_c05",
+    "Crumb_27_c09",
+    "Crumb_27_c10",
+    "Crumb_27_c20",
+    "Crumb_27_c22",
+    "Crumb_28_c10",
+    "Crumb_29_c12",
+    "Crumb_29_c19"
+   ]
+  },
+  "Crumb_27_c05": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.00339,
+   "links": [
+    "Crumb_27_c00",
+    "Crumb_27_c02",
+    "Crumb_27_c04",
+    "Crumb_27_c10",
+    "Crumb_29_c10",
+    "Crumb_29_c12",
+    "Crumb_29_c20"
+   ]
+  },
+  "Crumb_27_c06": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.007068,
+   "links": [
+    "Crumb_27_c07",
+    "Crumb_27_c08",
+    "Crumb_27_c13",
+    "Crumb_27_c14",
+    "Crumb_27_c19",
+    "Crumb_27_c23",
+    "Crumb_29_c25",
+    "Crumb_29_c33"
+   ]
+  },
+  "Crumb_27_c07": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.007106,
+   "links": [
+    "Crumb_27_c06",
+    "Crumb_27_c08",
+    "Crumb_27_c11",
+    "Crumb_27_c14",
+    "Crumb_27_c15",
+    "Crumb_27_c18",
+    "Crumb_19_c09",
+    "Crumb_19_c16"
+   ]
+  },
+  "Crumb_27_c08": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.004809,
+   "links": [
+    "Crumb_27_c01",
+    "Crumb_27_c03",
+    "Crumb_27_c06",
+    "Crumb_27_c07",
+    "Crumb_27_c18",
+    "Crumb_27_c19",
+    "Crumb_27_c23"
+   ]
+  },
+  "Crumb_27_c09": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.003754,
+   "links": [
+    "Crumb_27_c02",
+    "Crumb_27_c04",
+    "Crumb_27_c20",
+    "Crumb_27_c22",
+    "Crumb_22_c20",
+    "Crumb_22_c27",
+    "Crumb_22_c36",
+    "Crumb_28_c10",
+    "Crumb_28_c21",
+    "Crumb_28_c35",
+    "Crumb_29_c19"
+   ]
+  },
+  "Crumb_27_c10": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.005783,
+   "links": [
+    "Crumb_27_c00",
+    "Crumb_27_c02",
+    "Crumb_27_c04",
+    "Crumb_27_c05",
+    "Crumb_27_c20",
+    "Crumb_27_c21",
+    "Crumb_27_c22",
+    "Crumb_27_c23",
+    "Crumb_29_c12"
+   ]
+  },
+  "Crumb_27_c11": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.006873,
+   "links": [
+    "Crumb_27_c07",
+    "Crumb_27_c15",
+    "Crumb_27_c16",
+    "Crumb_27_c17",
+    "Crumb_27_c18",
+    "Crumb_19_c02",
+    "Crumb_19_c16",
+    "Crumb_22_c32",
+    "Crumb_22_c41"
+   ]
+  },
+  "Crumb_27_c12": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.009804,
+   "links": [
+    "Crumb_27_c01",
+    "Crumb_27_c03",
+    "Crumb_27_c20",
+    "Crumb_27_c21",
+    "Crumb_22_c00",
+    "Crumb_22_c16",
+    "Crumb_22_c25",
+    "Crumb_22_c26"
+   ]
+  },
+  "Crumb_27_c13": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.001821,
+   "links": [
+    "Crumb_27_c06",
+    "Crumb_27_c14",
+    "Crumb_27_c19",
+    "Crumb_24_c06",
+    "Crumb_29_c00",
+    "Crumb_29_c02",
+    "Crumb_29_c18",
+    "Crumb_29_c25",
+    "Crumb_29_c33"
+   ]
+  },
+  "Crumb_27_c14": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.018859,
+   "links": [
+    "Crumb_27_c06",
+    "Crumb_27_c07",
+    "Crumb_27_c13",
+    "Crumb_27_c15",
+    "Crumb_19_c00",
+    "Crumb_19_c04",
+    "Crumb_19_c09",
+    "Crumb_19_c12",
+    "Crumb_24_c00",
+    "Crumb_24_c06",
+    "Crumb_29_c25"
+   ]
+  },
+  "Crumb_27_c15": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.03797,
+   "links": [
+    "Crumb_27_c07",
+    "Crumb_27_c11",
+    "Crumb_27_c14",
+    "Crumb_27_c16",
+    "Crumb_27_c18",
+    "Crumb_19_c00",
+    "Crumb_19_c02",
+    "Crumb_19_c08",
+    "Crumb_19_c16"
+   ]
+  },
+  "Crumb_27_c16": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.009901,
+   "links": [
+    "Crumb_27_c11",
+    "Crumb_27_c15",
+    "Crumb_27_c17",
+    "Crumb_14_c05",
+    "Crumb_14_c09",
+    "Crumb_19_c02",
+    "Crumb_22_c05",
+    "Crumb_22_c32",
+    "Crumb_22_c41"
+   ]
+  },
+  "Crumb_27_c17": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.003573,
+   "links": [
+    "Crumb_27_c03",
+    "Crumb_27_c11",
+    "Crumb_27_c16",
+    "Crumb_27_c18",
+    "Crumb_22_c05",
+    "Crumb_22_c26",
+    "Crumb_22_c32",
+    "Crumb_22_c41"
+   ]
+  },
+  "Crumb_27_c18": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.005094,
+   "links": [
+    "Crumb_27_c01",
+    "Crumb_27_c03",
+    "Crumb_27_c07",
+    "Crumb_27_c08",
+    "Crumb_27_c11",
+    "Crumb_27_c15",
+    "Crumb_27_c17",
+    "Crumb_22_c41"
+   ]
+  },
+  "Crumb_27_c19": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.003477,
+   "links": [
+    "Crumb_27_c00",
+    "Crumb_27_c06",
+    "Crumb_27_c08",
+    "Crumb_27_c13",
+    "Crumb_27_c23",
+    "Crumb_29_c07",
+    "Crumb_29_c20",
+    "Crumb_29_c26",
+    "Crumb_29_c27",
+    "Crumb_29_c33",
+    "Crumb_29_c34"
+   ]
+  },
+  "Crumb_27_c20": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.008762,
+   "links": [
+    "Crumb_27_c02",
+    "Crumb_27_c04",
+    "Crumb_27_c09",
+    "Crumb_27_c10",
+    "Crumb_27_c12",
+    "Crumb_27_c21",
+    "Crumb_27_c22",
+    "Crumb_22_c00",
+    "Crumb_22_c20"
+   ]
+  },
+  "Crumb_27_c21": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.009448,
+   "links": [
+    "Crumb_27_c00",
+    "Crumb_27_c01",
+    "Crumb_27_c10",
+    "Crumb_27_c12",
+    "Crumb_27_c20",
+    "Crumb_27_c22",
+    "Crumb_27_c23",
+    "Crumb_22_c00",
+    "Crumb_22_c25"
+   ]
+  },
+  "Crumb_27_c22": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.004634,
+   "links": [
+    "Crumb_27_c04",
+    "Crumb_27_c09",
+    "Crumb_27_c10",
+    "Crumb_27_c20",
+    "Crumb_27_c21",
+    "Crumb_22_c36",
+    "Crumb_28_c10",
+    "Crumb_28_c35",
+    "Crumb_29_c19",
+    "Crumb_29_c29"
+   ]
+  },
+  "Crumb_27_c23": {
+   "block": "Chunk_27",
+   "core": false,
+   "volume": 0.00863,
+   "links": [
+    "Crumb_27_c00",
+    "Crumb_27_c01",
+    "Crumb_27_c06",
+    "Crumb_27_c08",
+    "Crumb_27_c10",
+    "Crumb_27_c19",
+    "Crumb_27_c21",
+    "Crumb_29_c27"
+   ]
+  },
+  "Crumb_27_c24": {
+   "block": "Chunk_27",
+   "core": true,
+   "volume": 0.094982,
+   "links": [
+    "Crumb_27_c01",
+    "Crumb_27_c03",
+    "Crumb_27_c06",
+    "Crumb_27_c07",
+    "Crumb_27_c08",
+    "Crumb_27_c11",
+    "Crumb_27_c12",
+    "Crumb_27_c14",
+    "Crumb_27_c15",
+    "Crumb_27_c16",
+    "Crumb_27_c17",
+    "Crumb_27_c18",
+    "Crumb_27_c19",
+    "Crumb_27_c21",
+    "Crumb_27_c23"
+   ]
+  },
+  "Crumb_28_c00": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.007804,
+   "links": [
+    "Crumb_28_c05",
+    "Crumb_28_c09",
+    "Crumb_28_c11",
+    "Crumb_28_c15",
+    "Crumb_28_c20",
+    "Crumb_28_c23"
+   ]
+  },
+  "Crumb_28_c01": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.015612,
+   "links": [
+    "Crumb_28_c02",
+    "Crumb_28_c03",
+    "Crumb_28_c13",
+    "Crumb_28_c22",
+    "Crumb_28_c24",
+    "Crumb_28_c25",
+    "Crumb_28_c26",
+    "Crumb_28_c30",
+    "Crumb_28_c36",
+    "Crumb_28_c37"
+   ]
+  },
+  "Crumb_28_c02": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.006105,
+   "links": [
+    "Crumb_28_c01",
+    "Crumb_28_c03",
+    "Crumb_28_c16",
+    "Crumb_28_c25",
+    "Crumb_28_c26",
+    "Crumb_28_c36"
+   ]
+  },
+  "Crumb_28_c03": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.024355,
+   "links": [
+    "Crumb_28_c01",
+    "Crumb_28_c02",
+    "Crumb_28_c13",
+    "Crumb_28_c26",
+    "Crumb_28_c27",
+    "Crumb_28_c30",
+    "Crumb_28_c36",
+    "Crumb_15_c05",
+    "Crumb_15_c07",
+    "Crumb_20_c01",
+    "Crumb_23_c03",
+    "Crumb_23_c06",
+    "Crumb_23_c08"
+   ]
+  },
+  "Crumb_28_c04": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.012266,
+   "links": [
+    "Crumb_28_c06",
+    "Crumb_28_c13",
+    "Crumb_28_c14",
+    "Crumb_28_c15",
+    "Crumb_28_c24",
+    "Crumb_28_c32",
+    "Crumb_29_c24"
+   ]
+  },
+  "Crumb_28_c05": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.005629,
+   "links": [
+    "Crumb_28_c00",
+    "Crumb_28_c08",
+    "Crumb_28_c09",
+    "Crumb_28_c11",
+    "Crumb_28_c28",
+    "Crumb_28_c34"
+   ]
+  },
+  "Crumb_28_c06": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.004315,
+   "links": [
+    "Crumb_28_c04",
+    "Crumb_28_c14",
+    "Crumb_28_c32",
+    "Crumb_28_c33",
+    "Crumb_26_c10",
+    "Crumb_29_c04",
+    "Crumb_29_c24"
+   ]
+  },
+  "Crumb_28_c07": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.002898,
+   "links": [
+    "Crumb_28_c17",
+    "Crumb_28_c19",
+    "Crumb_28_c28",
+    "Crumb_28_c29",
+    "Crumb_25_c05",
+    "Crumb_25_c09",
+    "Crumb_25_c11",
+    "Crumb_25_c15"
+   ]
+  },
+  "Crumb_28_c08": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.005572,
+   "links": [
+    "Crumb_28_c05",
+    "Crumb_28_c11",
+    "Crumb_28_c17",
+    "Crumb_28_c22",
+    "Crumb_28_c28",
+    "Crumb_28_c37"
+   ]
+  },
+  "Crumb_28_c09": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.005057,
+   "links": [
+    "Crumb_28_c00",
+    "Crumb_28_c05",
+    "Crumb_28_c12",
+    "Crumb_28_c20",
+    "Crumb_28_c21",
+    "Crumb_28_c34",
+    "Crumb_28_c35",
+    "Crumb_25_c16"
+   ]
+  },
+  "Crumb_28_c10": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.002769,
+   "links": [
+    "Crumb_28_c20",
+    "Crumb_28_c21",
+    "Crumb_28_c35",
+    "Crumb_22_c36",
+    "Crumb_27_c04",
+    "Crumb_27_c09",
+    "Crumb_27_c22",
+    "Crumb_29_c19",
+    "Crumb_29_c29"
+   ]
+  },
+  "Crumb_28_c11": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.010031,
+   "links": [
+    "Crumb_28_c00",
+    "Crumb_28_c05",
+    "Crumb_28_c08",
+    "Crumb_28_c15",
+    "Crumb_28_c23",
+    "Crumb_28_c24",
+    "Crumb_28_c37"
+   ]
+  },
+  "Crumb_28_c12": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.00338,
+   "links": [
+    "Crumb_28_c09",
+    "Crumb_28_c18",
+    "Crumb_28_c21",
+    "Crumb_28_c34",
+    "Crumb_25_c02",
+    "Crumb_25_c04",
+    "Crumb_25_c16"
+   ]
+  },
+  "Crumb_28_c13": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.022456,
+   "links": [
+    "Crumb_28_c01",
+    "Crumb_28_c03",
+    "Crumb_28_c04",
+    "Crumb_28_c14",
+    "Crumb_28_c24",
+    "Crumb_28_c26",
+    "Crumb_28_c30"
+   ]
+  },
+  "Crumb_28_c14": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.009706,
+   "links": [
+    "Crumb_28_c04",
+    "Crumb_28_c06",
+    "Crumb_28_c13",
+    "Crumb_28_c26",
+    "Crumb_28_c30",
+    "Crumb_28_c33",
+    "Crumb_23_c09",
+    "Crumb_26_c10"
+   ]
+  },
+  "Crumb_28_c15": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.007953,
+   "links": [
+    "Crumb_28_c00",
+    "Crumb_28_c04",
+    "Crumb_28_c11",
+    "Crumb_28_c23",
+    "Crumb_28_c24",
+    "Crumb_28_c32",
+    "Crumb_29_c09",
+    "Crumb_29_c22"
+   ]
+  },
+  "Crumb_28_c16": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.002881,
+   "links": [
+    "Crumb_28_c02",
+    "Crumb_28_c25",
+    "Crumb_28_c27",
+    "Crumb_28_c31",
+    "Crumb_28_c36",
+    "Crumb_20_c00",
+    "Crumb_20_c01",
+    "Crumb_20_c04",
+    "Crumb_20_c09"
+   ]
+  },
+  "Crumb_28_c17": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.005768,
+   "links": [
+    "Crumb_28_c07",
+    "Crumb_28_c08",
+    "Crumb_28_c19",
+    "Crumb_28_c22",
+    "Crumb_28_c28",
+    "Crumb_25_c09"
+   ]
+  },
+  "Crumb_28_c18": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.001326,
+   "links": [
+    "Crumb_28_c12",
+    "Crumb_28_c28",
+    "Crumb_28_c29",
+    "Crumb_28_c34",
+    "Crumb_25_c02",
+    "Crumb_25_c11",
+    "Crumb_25_c13"
+   ]
+  },
+  "Crumb_28_c19": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.003631,
+   "links": [
+    "Crumb_28_c07",
+    "Crumb_28_c17",
+    "Crumb_28_c22",
+    "Crumb_28_c25",
+    "Crumb_28_c31",
+    "Crumb_20_c00",
+    "Crumb_20_c08"
+   ]
+  },
+  "Crumb_28_c20": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.008002,
+   "links": [
+    "Crumb_28_c00",
+    "Crumb_28_c09",
+    "Crumb_28_c10",
+    "Crumb_28_c21",
+    "Crumb_28_c23",
+    "Crumb_28_c35",
+    "Crumb_29_c29"
+   ]
+  },
+  "Crumb_28_c21": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.004071,
+   "links": [
+    "Crumb_28_c09",
+    "Crumb_28_c10",
+    "Crumb_28_c12",
+    "Crumb_28_c20",
+    "Crumb_28_c35",
+    "Crumb_22_c27",
+    "Crumb_22_c36",
+    "Crumb_25_c04",
+    "Crumb_25_c16",
+    "Crumb_27_c09"
+   ]
+  },
+  "Crumb_28_c22": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.006087,
+   "links": [
+    "Crumb_28_c01",
+    "Crumb_28_c08",
+    "Crumb_28_c17",
+    "Crumb_28_c19",
+    "Crumb_28_c25",
+    "Crumb_28_c37"
+   ]
+  },
+  "Crumb_28_c23": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.006247,
+   "links": [
+    "Crumb_28_c00",
+    "Crumb_28_c11",
+    "Crumb_28_c15",
+    "Crumb_28_c20",
+    "Crumb_28_c24",
+    "Crumb_29_c09",
+    "Crumb_29_c13",
+    "Crumb_29_c15",
+    "Crumb_29_c29"
+   ]
+  },
+  "Crumb_28_c24": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.015776,
+   "links": [
+    "Crumb_28_c01",
+    "Crumb_28_c04",
+    "Crumb_28_c11",
+    "Crumb_28_c13",
+    "Crumb_28_c15",
+    "Crumb_28_c23",
+    "Crumb_28_c37"
+   ]
+  },
+  "Crumb_28_c25": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.009478,
+   "links": [
+    "Crumb_28_c01",
+    "Crumb_28_c02",
+    "Crumb_28_c16",
+    "Crumb_28_c19",
+    "Crumb_28_c22",
+    "Crumb_28_c31",
+    "Crumb_28_c36"
+   ]
+  },
+  "Crumb_28_c26": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.007241,
+   "links": [
+    "Crumb_28_c01",
+    "Crumb_28_c02",
+    "Crumb_28_c03",
+    "Crumb_28_c13",
+    "Crumb_28_c14",
+    "Crumb_28_c30",
+    "Crumb_23_c09"
+   ]
+  },
+  "Crumb_28_c27": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.002393,
+   "links": [
+    "Crumb_28_c03",
+    "Crumb_28_c16",
+    "Crumb_28_c36",
+    "Crumb_15_c05",
+    "Crumb_15_c07",
+    "Crumb_15_c08",
+    "Crumb_20_c01",
+    "Crumb_20_c04",
+    "Crumb_20_c10",
+    "Crumb_23_c06"
+   ]
+  },
+  "Crumb_28_c28": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.003073,
+   "links": [
+    "Crumb_28_c05",
+    "Crumb_28_c07",
+    "Crumb_28_c08",
+    "Crumb_28_c17",
+    "Crumb_28_c18",
+    "Crumb_28_c29",
+    "Crumb_28_c34",
+    "Crumb_25_c11"
+   ]
+  },
+  "Crumb_28_c29": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.000658,
+   "links": [
+    "Crumb_28_c07",
+    "Crumb_28_c18",
+    "Crumb_28_c28",
+    "Crumb_25_c05",
+    "Crumb_25_c08",
+    "Crumb_25_c09",
+    "Crumb_25_c11",
+    "Crumb_25_c15"
+   ]
+  },
+  "Crumb_28_c30": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.01869,
+   "links": [
+    "Crumb_28_c01",
+    "Crumb_28_c03",
+    "Crumb_28_c13",
+    "Crumb_28_c14",
+    "Crumb_28_c26",
+    "Crumb_28_c33",
+    "Crumb_23_c01",
+    "Crumb_23_c02",
+    "Crumb_23_c03",
+    "Crumb_23_c09"
+   ]
+  },
+  "Crumb_28_c31": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.002732,
+   "links": [
+    "Crumb_28_c16",
+    "Crumb_28_c19",
+    "Crumb_28_c25",
+    "Crumb_20_c00",
+    "Crumb_20_c04",
+    "Crumb_20_c08",
+    "Crumb_20_c09"
+   ]
+  },
+  "Crumb_28_c32": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.001259,
+   "links": [
+    "Crumb_28_c04",
+    "Crumb_28_c06",
+    "Crumb_28_c15",
+    "Crumb_26_c10",
+    "Crumb_29_c09",
+    "Crumb_29_c22",
+    "Crumb_29_c24"
+   ]
+  },
+  "Crumb_28_c33": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.005522,
+   "links": [
+    "Crumb_28_c06",
+    "Crumb_28_c14",
+    "Crumb_28_c30",
+    "Crumb_23_c01",
+    "Crumb_23_c09",
+    "Crumb_26_c08",
+    "Crumb_26_c09",
+    "Crumb_26_c10",
+    "Crumb_29_c04"
+   ]
+  },
+  "Crumb_28_c34": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.003405,
+   "links": [
+    "Crumb_28_c05",
+    "Crumb_28_c09",
+    "Crumb_28_c12",
+    "Crumb_28_c18",
+    "Crumb_28_c28",
+    "Crumb_25_c02"
+   ]
+  },
+  "Crumb_28_c35": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.003046,
+   "links": [
+    "Crumb_28_c09",
+    "Crumb_28_c10",
+    "Crumb_28_c20",
+    "Crumb_28_c21",
+    "Crumb_27_c09",
+    "Crumb_27_c22",
+    "Crumb_29_c29"
+   ]
+  },
+  "Crumb_28_c36": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.008762,
+   "links": [
+    "Crumb_28_c01",
+    "Crumb_28_c02",
+    "Crumb_28_c03",
+    "Crumb_28_c16",
+    "Crumb_28_c25",
+    "Crumb_28_c27",
+    "Crumb_15_c05",
+    "Crumb_20_c01",
+    "Crumb_20_c04",
+    "Crumb_23_c06"
+   ]
+  },
+  "Crumb_28_c37": {
+   "block": "Chunk_28",
+   "core": false,
+   "volume": 0.006991,
+   "links": [
+    "Crumb_28_c01",
+    "Crumb_28_c08",
+    "Crumb_28_c11",
+    "Crumb_28_c22",
+    "Crumb_28_c24"
+   ]
+  },
+  "Crumb_28_c38": {
+   "block": "Chunk_28",
+   "core": true,
+   "volume": 0.001949,
+   "links": [
+    "Crumb_28_c01",
+    "Crumb_28_c13",
+    "Crumb_28_c22",
+    "Crumb_28_c24",
+    "Crumb_28_c26",
+    "Crumb_28_c37"
+   ]
+  },
+  "Crumb_29_c00": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.01089,
+   "links": [
+    "Crumb_29_c01",
+    "Crumb_29_c03",
+    "Crumb_29_c05",
+    "Crumb_29_c14",
+    "Crumb_29_c16",
+    "Crumb_29_c17",
+    "Crumb_29_c18",
+    "Crumb_29_c21",
+    "Crumb_29_c25",
+    "Crumb_29_c28",
+    "Crumb_24_c00",
+    "Crumb_24_c02",
+    "Crumb_24_c03",
+    "Crumb_24_c06",
+    "Crumb_27_c13"
+   ]
+  },
+  "Crumb_29_c01": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.005309,
+   "links": [
+    "Crumb_29_c00",
+    "Crumb_29_c02",
+    "Crumb_29_c03",
+    "Crumb_29_c14",
+    "Crumb_29_c16",
+    "Crumb_29_c18",
+    "Crumb_29_c21",
+    "Crumb_24_c02"
+   ]
+  },
+  "Crumb_29_c02": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.004926,
+   "links": [
+    "Crumb_29_c01",
+    "Crumb_29_c03",
+    "Crumb_29_c07",
+    "Crumb_29_c18",
+    "Crumb_29_c27",
+    "Crumb_29_c33",
+    "Crumb_29_c34",
+    "Crumb_27_c13"
+   ]
+  },
+  "Crumb_29_c03": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.005204,
+   "links": [
+    "Crumb_29_c00",
+    "Crumb_29_c01",
+    "Crumb_29_c02",
+    "Crumb_29_c14",
+    "Crumb_29_c18",
+    "Crumb_29_c30",
+    "Crumb_29_c34"
+   ]
+  },
+  "Crumb_29_c04": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.020158,
+   "links": [
+    "Crumb_29_c05",
+    "Crumb_29_c11",
+    "Crumb_29_c24",
+    "Crumb_29_c31",
+    "Crumb_29_c32",
+    "Crumb_26_c04",
+    "Crumb_26_c08",
+    "Crumb_26_c09",
+    "Crumb_26_c10",
+    "Crumb_28_c06",
+    "Crumb_28_c33"
+   ]
+  },
+  "Crumb_29_c05": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.019047,
+   "links": [
+    "Crumb_29_c00",
+    "Crumb_29_c04",
+    "Crumb_29_c11",
+    "Crumb_29_c14",
+    "Crumb_29_c16",
+    "Crumb_29_c17",
+    "Crumb_29_c31",
+    "Crumb_29_c32",
+    "Crumb_26_c04"
+   ]
+  },
+  "Crumb_29_c06": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.006035,
+   "links": [
+    "Crumb_29_c08",
+    "Crumb_29_c13",
+    "Crumb_29_c14",
+    "Crumb_29_c22",
+    "Crumb_29_c30",
+    "Crumb_29_c31"
+   ]
+  },
+  "Crumb_29_c07": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.003599,
+   "links": [
+    "Crumb_29_c02",
+    "Crumb_29_c10",
+    "Crumb_29_c20",
+    "Crumb_29_c26",
+    "Crumb_29_c27",
+    "Crumb_29_c34",
+    "Crumb_27_c00",
+    "Crumb_27_c19"
+   ]
+  },
+  "Crumb_29_c08": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.006668,
+   "links": [
+    "Crumb_29_c06",
+    "Crumb_29_c09",
+    "Crumb_29_c13",
+    "Crumb_29_c15",
+    "Crumb_29_c22",
+    "Crumb_29_c23",
+    "Crumb_29_c26",
+    "Crumb_29_c27",
+    "Crumb_29_c30",
+    "Crumb_29_c34"
+   ]
+  },
+  "Crumb_29_c09": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.006655,
+   "links": [
+    "Crumb_29_c08",
+    "Crumb_29_c13",
+    "Crumb_29_c15",
+    "Crumb_29_c22",
+    "Crumb_29_c24",
+    "Crumb_29_c30",
+    "Crumb_28_c15",
+    "Crumb_28_c23",
+    "Crumb_28_c32"
+   ]
+  },
+  "Crumb_29_c10": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.001375,
+   "links": [
+    "Crumb_29_c07",
+    "Crumb_29_c12",
+    "Crumb_29_c20",
+    "Crumb_27_c00",
+    "Crumb_27_c05"
+   ]
+  },
+  "Crumb_29_c11": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.018449,
+   "links": [
+    "Crumb_29_c04",
+    "Crumb_29_c05",
+    "Crumb_29_c17",
+    "Crumb_29_c32",
+    "Crumb_21_c01",
+    "Crumb_26_c01",
+    "Crumb_26_c04",
+    "Crumb_26_c06"
+   ]
+  },
+  "Crumb_29_c12": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.001837,
+   "links": [
+    "Crumb_29_c10",
+    "Crumb_29_c19",
+    "Crumb_29_c20",
+    "Crumb_29_c23",
+    "Crumb_27_c02",
+    "Crumb_27_c04",
+    "Crumb_27_c05",
+    "Crumb_27_c10"
+   ]
+  },
+  "Crumb_29_c13": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.003087,
+   "links": [
+    "Crumb_29_c06",
+    "Crumb_29_c08",
+    "Crumb_29_c09",
+    "Crumb_29_c15",
+    "Crumb_29_c22",
+    "Crumb_28_c23"
+   ]
+  },
+  "Crumb_29_c14": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.015674,
+   "links": [
+    "Crumb_29_c00",
+    "Crumb_29_c01",
+    "Crumb_29_c03",
+    "Crumb_29_c05",
+    "Crumb_29_c06",
+    "Crumb_29_c16",
+    "Crumb_29_c18",
+    "Crumb_29_c25",
+    "Crumb_29_c30",
+    "Crumb_29_c31"
+   ]
+  },
+  "Crumb_29_c15": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.006139,
+   "links": [
+    "Crumb_29_c08",
+    "Crumb_29_c09",
+    "Crumb_29_c13",
+    "Crumb_29_c23",
+    "Crumb_29_c29",
+    "Crumb_28_c23"
+   ]
+  },
+  "Crumb_29_c16": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.007807,
+   "links": [
+    "Crumb_29_c00",
+    "Crumb_29_c01",
+    "Crumb_29_c05",
+    "Crumb_29_c14",
+    "Crumb_29_c17",
+    "Crumb_29_c21",
+    "Crumb_29_c28"
+   ]
+  },
+  "Crumb_29_c17": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.01539,
+   "links": [
+    "Crumb_29_c00",
+    "Crumb_29_c05",
+    "Crumb_29_c11",
+    "Crumb_29_c16",
+    "Crumb_29_c28",
+    "Crumb_21_c03",
+    "Crumb_21_c08",
+    "Crumb_24_c04"
+   ]
+  },
+  "Crumb_29_c18": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.004987,
+   "links": [
+    "Crumb_29_c00",
+    "Crumb_29_c01",
+    "Crumb_29_c02",
+    "Crumb_29_c03",
+    "Crumb_29_c14",
+    "Crumb_29_c25",
+    "Crumb_29_c30",
+    "Crumb_29_c33",
+    "Crumb_29_c34",
+    "Crumb_24_c06",
+    "Crumb_27_c13"
+   ]
+  },
+  "Crumb_29_c19": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.001912,
+   "links": [
+    "Crumb_29_c12",
+    "Crumb_29_c23",
+    "Crumb_29_c29",
+    "Crumb_27_c02",
+    "Crumb_27_c04",
+    "Crumb_27_c09",
+    "Crumb_27_c22",
+    "Crumb_28_c10"
+   ]
+  },
+  "Crumb_29_c20": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.003864,
+   "links": [
+    "Crumb_29_c07",
+    "Crumb_29_c10",
+    "Crumb_29_c12",
+    "Crumb_29_c23",
+    "Crumb_29_c26",
+    "Crumb_29_c27",
+    "Crumb_27_c00",
+    "Crumb_27_c05",
+    "Crumb_27_c19"
+   ]
+  },
+  "Crumb_29_c21": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.00432,
+   "links": [
+    "Crumb_29_c00",
+    "Crumb_29_c01",
+    "Crumb_29_c16",
+    "Crumb_29_c28",
+    "Crumb_24_c02",
+    "Crumb_24_c04",
+    "Crumb_24_c07"
+   ]
+  },
+  "Crumb_29_c22": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.008741,
+   "links": [
+    "Crumb_29_c06",
+    "Crumb_29_c08",
+    "Crumb_29_c09",
+    "Crumb_29_c13",
+    "Crumb_29_c24",
+    "Crumb_29_c30",
+    "Crumb_29_c31",
+    "Crumb_28_c15",
+    "Crumb_28_c32"
+   ]
+  },
+  "Crumb_29_c23": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.00406,
+   "links": [
+    "Crumb_29_c08",
+    "Crumb_29_c12",
+    "Crumb_29_c15",
+    "Crumb_29_c19",
+    "Crumb_29_c20",
+    "Crumb_29_c26",
+    "Crumb_29_c29",
+    "Crumb_27_c00"
+   ]
+  },
+  "Crumb_29_c24": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.009256,
+   "links": [
+    "Crumb_29_c04",
+    "Crumb_29_c09",
+    "Crumb_29_c22",
+    "Crumb_29_c31",
+    "Crumb_26_c10",
+    "Crumb_28_c04",
+    "Crumb_28_c06",
+    "Crumb_28_c32"
+   ]
+  },
+  "Crumb_29_c25": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.004372,
+   "links": [
+    "Crumb_29_c00",
+    "Crumb_29_c14",
+    "Crumb_29_c18",
+    "Crumb_29_c30",
+    "Crumb_29_c33",
+    "Crumb_24_c00",
+    "Crumb_24_c06",
+    "Crumb_27_c06",
+    "Crumb_27_c13",
+    "Crumb_27_c14"
+   ]
+  },
+  "Crumb_29_c26": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.003895,
+   "links": [
+    "Crumb_29_c07",
+    "Crumb_29_c08",
+    "Crumb_29_c20",
+    "Crumb_29_c23",
+    "Crumb_29_c27",
+    "Crumb_29_c34",
+    "Crumb_27_c00",
+    "Crumb_27_c19"
+   ]
+  },
+  "Crumb_29_c27": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.003131,
+   "links": [
+    "Crumb_29_c02",
+    "Crumb_29_c07",
+    "Crumb_29_c08",
+    "Crumb_29_c20",
+    "Crumb_29_c26",
+    "Crumb_29_c33",
+    "Crumb_29_c34",
+    "Crumb_27_c00",
+    "Crumb_27_c19",
+    "Crumb_27_c23"
+   ]
+  },
+  "Crumb_29_c28": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.006294,
+   "links": [
+    "Crumb_29_c00",
+    "Crumb_29_c16",
+    "Crumb_29_c17",
+    "Crumb_29_c21",
+    "Crumb_21_c03",
+    "Crumb_21_c08",
+    "Crumb_24_c02",
+    "Crumb_24_c04",
+    "Crumb_24_c07"
+   ]
+  },
+  "Crumb_29_c29": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.000934,
+   "links": [
+    "Crumb_29_c15",
+    "Crumb_29_c19",
+    "Crumb_29_c23",
+    "Crumb_27_c22",
+    "Crumb_28_c10",
+    "Crumb_28_c20",
+    "Crumb_28_c23",
+    "Crumb_28_c35"
+   ]
+  },
+  "Crumb_29_c30": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.010459,
+   "links": [
+    "Crumb_29_c03",
+    "Crumb_29_c06",
+    "Crumb_29_c08",
+    "Crumb_29_c09",
+    "Crumb_29_c14",
+    "Crumb_29_c18",
+    "Crumb_29_c22",
+    "Crumb_29_c25",
+    "Crumb_29_c33",
+    "Crumb_29_c34"
+   ]
+  },
+  "Crumb_29_c31": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.011017,
+   "links": [
+    "Crumb_29_c04",
+    "Crumb_29_c05",
+    "Crumb_29_c06",
+    "Crumb_29_c14",
+    "Crumb_29_c22",
+    "Crumb_29_c24",
+    "Crumb_29_c32"
+   ]
+  },
+  "Crumb_29_c32": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.010399,
+   "links": [
+    "Crumb_29_c04",
+    "Crumb_29_c05",
+    "Crumb_29_c11",
+    "Crumb_29_c31",
+    "Crumb_26_c04",
+    "Crumb_26_c09"
+   ]
+  },
+  "Crumb_29_c33": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.003989,
+   "links": [
+    "Crumb_29_c02",
+    "Crumb_29_c18",
+    "Crumb_29_c25",
+    "Crumb_29_c27",
+    "Crumb_29_c30",
+    "Crumb_29_c34",
+    "Crumb_24_c06",
+    "Crumb_27_c06",
+    "Crumb_27_c13",
+    "Crumb_27_c19"
+   ]
+  },
+  "Crumb_29_c34": {
+   "block": "Chunk_29",
+   "core": false,
+   "volume": 0.004866,
+   "links": [
+    "Crumb_29_c02",
+    "Crumb_29_c03",
+    "Crumb_29_c07",
+    "Crumb_29_c08",
+    "Crumb_29_c18",
+    "Crumb_29_c26",
+    "Crumb_29_c27",
+    "Crumb_29_c30",
+    "Crumb_29_c33",
+    "Crumb_27_c19"
+   ]
+  },
+  "Crumb_29_c35": {
+   "block": "Chunk_29",
+   "core": true,
+   "volume": 0.0021,
+   "links": [
+    "Crumb_29_c01",
+    "Crumb_29_c03",
+    "Crumb_29_c05",
+    "Crumb_29_c06",
+    "Crumb_29_c14",
+    "Crumb_29_c16",
+    "Crumb_29_c30",
+    "Crumb_29_c31"
+   ]
+  },
+  "Crumb_30_c00": {
+   "block": "Chunk_30",
+   "core": true,
+   "volume": 0.122638,
+   "links": []
+  },
+  "Crumb_31_c00": {
+   "block": "Chunk_31",
+   "core": true,
+   "volume": 0.130804,
+   "links": []
+  },
+  "Crumb_32_c00": {
+   "block": "Chunk_32",
+   "core": true,
+   "volume": 0.168378,
+   "links": []
+  },
+  "Crumb_33_c00": {
+   "block": "Chunk_33",
+   "core": true,
+   "volume": 0.196856,
+   "links": []
+  },
+  "Crumb_34_c00": {
+   "block": "Chunk_34",
+   "core": true,
+   "volume": 0.129943,
+   "links": []
+  },
+  "Crumb_35_c00": {
+   "block": "Chunk_35",
+   "core": true,
+   "volume": 0.264467,
+   "links": []
+  }
+ }
 }
