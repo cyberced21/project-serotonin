@@ -242,7 +242,8 @@ The rest of the sound overhaul runs alongside from step 3 on, once the grill has
 
 Grill each chunk before its own plan; the open questions in each section are the starting list.
 Chunks 1-10 are built (chunk 9, [home.md](home.md) and [trophies.md](trophies.md): v0.10,
-2026-10-29). Chunk 10 (the mine) built 2026-10-29 → [mine.md](mine.md), with the chunk 9 leftovers; unreleased.
+2026-10-29). Chunk 10 (the mine) built 2026-10-29 → [mine.md](mine.md), with the chunk 9 leftovers; released v0.11.
 
 After cozy: **a world pass**. The world feels too tight and too sparse, rocks sit out of place and
 the village looks randomly laid out; make it bigger, fill it in, lay the village out on purpose.
+Grilled 2026-10-29 → [world-pass.md](world-pass.md).
