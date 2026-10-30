@@ -68,6 +68,16 @@ func _run() -> void:
 		["stores", Vector3(140, 0, 96), Vector3(160, 2, 82)],
 		["allotments", Vector3(98, 0, 182), Vector3(82, 0.5, 192)],
 		["washhouse", Vector3(92, 0, 140), Vector3(82, 1.5, 151)],
+		# the country (phase 6): fields with their hedges and walls, a grove, the creek's banks,
+		# the old things
+		["fields_east", Vector3(216, 0, 136), Vector3(160, 1, 112)],
+		["fields_south", Vector3(140, 0, 262), Vector3(128, 0, 170)],
+		["fields_air", Vector3(60, 90, 300), Vector3(140, 0, 140)],
+		["grove", Vector3(276, 0, 52), Vector3(299, 0, 24)],
+		["creek_banks", Vector3(44, 0, 168), Vector3(30, 0.5, 190)],
+		["farmstead", Vector3(210, 0, 62), Vector3(226, 1, 50)],
+		["shrine", Vector3(80, 0, 230), Vector3(72, 1, 237)],
+		["view_bench", Vector3(152, 0, 342), Vector3(128, 0, 180)],
 	]
 	var only := ""
 	for a in OS.get_cmdline_user_args():

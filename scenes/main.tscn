@@ -92,6 +92,7 @@
 [ext_resource type="PackedScene" path="res://models/country/pumpkin.glb" id="yd_pumpkin"]
 [ext_resource type="PackedScene" path="res://models/country/turnip.glb" id="yd_turnip"]
 [ext_resource type="PackedScene" path="res://models/country/wheat.glb" id="yd_wheat"]
+[ext_resource type="PackedScene" path="res://scenes/country.tscn" id="country_scene"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
@@ -402,87 +403,6 @@ save_id = &"rock_5"
 position = Vector3(36, 0, 75.5)
 rotation = Vector3(0, 4.01, 0)
 
-[node name="VillageTree1" parent="Nodes" instance=ExtResource("3_tree")]
-save_id = &"village_tree_1"
-position = Vector3(176, 0.01, 66)
-rotation = Vector3(0, 0.7, 0)
-
-[node name="VillageTree2" parent="Nodes" instance=ExtResource("3_tree")]
-save_id = &"village_tree_2"
-position = Vector3(183, 0.01, 62)
-rotation = Vector3(0, 2.1, 0)
-
-[node name="VillageTree3" parent="Nodes" instance=ExtResource("3_tree")]
-save_id = &"village_tree_3"
-position = Vector3(189, 0, 69)
-rotation = Vector3(0, 4.4, 0)
-
-[node name="VillageTree4" parent="Nodes" instance=ExtResource("3_tree")]
-save_id = &"village_tree_4"
-position = Vector3(180, 0.02, 74)
-rotation = Vector3(0, 1.2, 0)
-
-[node name="VillageTree5" parent="Nodes" instance=ExtResource("3_tree")]
-save_id = &"village_tree_5"
-position = Vector3(187, 0.04, 77)
-rotation = Vector3(0, 5.5, 0)
-
-[node name="VillageTree6" parent="Nodes" instance=ExtResource("3_tree")]
-save_id = &"village_tree_6"
-position = Vector3(174, 0.01, 58)
-rotation = Vector3(0, 3.0, 0)
-
-[node name="VillageRock1" parent="Nodes" instance=ExtResource("4_rock")]
-save_id = &"village_rock_1"
-position = Vector3(66, 0, 182)
-rotation = Vector3(0, 1.1, 0)
-
-[node name="VillageRock2" parent="Nodes" instance=ExtResource("4_rock")]
-save_id = &"village_rock_2"
-position = Vector3(72, 0, 188)
-rotation = Vector3(0, 3.8, 0)
-
-[node name="VillageRock3" parent="Nodes" instance=ExtResource("4_rock")]
-save_id = &"village_rock_3"
-position = Vector3(62, 0.04, 190)
-rotation = Vector3(0, 5.2, 0)
-
-[node name="VillageRock4" parent="Nodes" instance=ExtResource("4_rock")]
-save_id = &"village_rock_4"
-position = Vector3(75, 0, 179)
-rotation = Vector3(0, 0.4, 0)
-required_level = 10
-
-[node name="Oak1" parent="Nodes" instance=ExtResource("25_oak")]
-save_id = &"oak_1"
-position = Vector3(194, 0.04, 62)
-rotation = Vector3(0, 0.9, 0)
-
-[node name="Oak2" parent="Nodes" instance=ExtResource("25_oak")]
-save_id = &"oak_2"
-position = Vector3(172, 0.03, 79)
-rotation = Vector3(0, 2.6, 0)
-
-[node name="Oak3" parent="Nodes" instance=ExtResource("25_oak")]
-save_id = &"oak_3"
-position = Vector3(194, 0.04, 74)
-rotation = Vector3(0, 4.8, 0)
-
-[node name="IronRock1" parent="Nodes" instance=ExtResource("26_iron")]
-save_id = &"iron_rock_1"
-position = Vector3(68, 0.03, 196)
-rotation = Vector3(0, 0.5, 0)
-
-[node name="IronRock2" parent="Nodes" instance=ExtResource("26_iron")]
-save_id = &"iron_rock_2"
-position = Vector3(78, 0, 194)
-rotation = Vector3(0, 2.2, 0)
-
-[node name="IronRock3" parent="Nodes" instance=ExtResource("26_iron")]
-save_id = &"iron_rock_3"
-position = Vector3(59, 0, 181)
-rotation = Vector3(0, 4.1, 0)
-
 [node name="Birch1" parent="Nodes" instance=ExtResource("50_birch")]
 save_id = &"birch_1"
 position = Vector3(12, 0, 64)
@@ -537,16 +457,6 @@ rotation = Vector3(0, 5.6, 0)
 save_id = &"coal_rock_1"
 position = Vector3(94, 0, 70)
 rotation = Vector3(0, 0.8, 0)
-
-[node name="CoalRock2" parent="Nodes" instance=ExtResource("52_coal")]
-save_id = &"coal_rock_2"
-position = Vector3(82, 0, 185)
-rotation = Vector3(0, 2.6, 0)
-
-[node name="CoalRock3" parent="Nodes" instance=ExtResource("52_coal")]
-save_id = &"coal_rock_3"
-position = Vector3(70, 0.01, 172)
-rotation = Vector3(0, 4.4, 0)
 
 [node name="GoldRock1" parent="Nodes" instance=ExtResource("53_gold")]
 save_id = &"gold_rock_1"
@@ -1316,6 +1226,8 @@ script = ExtResource("92_village_decor")
 
 [node name="Paths" type="Node3D" parent="Village"]
 script = ExtResource("97_village_paths")
+
+[node name="Country" parent="." instance=ExtResource("country_scene")]
 
 [node name="Quarry" parent="." instance=ExtResource("58_quarry")]
 

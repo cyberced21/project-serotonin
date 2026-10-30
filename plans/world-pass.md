@@ -215,3 +215,21 @@ the page's plots put the town hall and the tavern on the north and east lanes):
   phase 8 needs to look at them in the game before using them as wildlife.
 
 **Next:** phase 6, the country.
+
+## Phase 6, the country (2026-10-30)
+
+- `tools/place_country.gd` places it from the land once and saves `scenes/country.tscn` (main.tscn
+  instances it; the same seed gives the same country): hedges along both sides of the roads out of
+  the village between 84 and 150 m from the green, dry-stone walls on an arc at 115 m and hedges on
+  one at 150 m (the field edges), each run with a gate every ~40 m (`HedgeRow`: one MultiMesh, a
+  box collider a piece); a copse of gatherable trees (tree, oak, birch) in each wedge between the
+  roads out on the bowl's slopes; lone oaks on the highest knolls round the rim (two found clear);
+  five outcrops of rock (each with a little iron or coal) where the slope steepens; thickets and
+  wildflowers along the creek's banks; a standing stone (north-east rim), a wayside shrine on the
+  lake road, a bench at a view on the south rim, a ruined farmstead out north-east.
+- Everything keeps off roads, the creek, water, steep ground, the village and the other places.
+  The scenery and grass keep off the hedge lines.
+- The old village's starter trees and rocks (parked NE and SW in phase 4) are gone: the groves and
+  outcrops take their place. The clearing keeps its own.
+- Not done: a little waterfall where the creek leaves the hills; reeds and stepping stones at the
+  lake (its dressing has reeds already). Pastures are open grass until phase 8's animals.
