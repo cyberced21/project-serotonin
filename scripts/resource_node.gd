@@ -448,7 +448,7 @@ func _setup_carve() -> void:
 	if _trunk == null or not _trunk.mesh is ArrayMesh:
 		push_warning("%s: carve_notch needs a Body_Trunk mesh" % name)
 		return
-	_carve = TrunkCarve.new(_trunk.mesh, notch_band, bark_thickness)
+	_carve = TrunkCarve.new(_trunk.mesh, notch_band, bark_thickness, notch_depth, max_hits)
 	_trunk_rest = global_transform.affine_inverse() * _trunk.global_transform
 	for m in _trunk.get_parent().get_children():
 		if m is MeshInstance3D and m != _trunk:
@@ -1161,7 +1161,7 @@ func _carve_hit(info: HitInfo, cuts: int) -> void:
 	var stripped := _blaze_area()
 	if not _carve.is_started() and dir.length_squared() > 0.0001:
 		_notch_from = dir.normalized()  # the notch's side (Back cut and Dominoes go by it)
-	_carve.hit(y, dir, notch_depth * cuts / max_hits)
+	_carve.hit(y, dir, cuts)
 	_trunk.mesh = _carve.carved()
 	info.position = _trunk.global_transform * _carve.bite_point(dir)
 	info.normal = (_trunk.global_basis * dir).normalized()
