@@ -1,0 +1,362 @@
+<title>Hearthvale Redrawn</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+/* Layout: a surveyor's folio — each option a sheet of parchment, drawn to one scale, notes beside it. */
+:root {
+  --bg: #e9e1cf;          /* the desk */
+  --sheet: #f3ead6;       /* parchment */
+  --ink: #3b2a1a;         /* sepia ink */
+  --ink-soft: #7a6448;
+  --rule: #c9b58f;
+  --accent: #8b3a1f;      /* surveyor's red */
+  --water: #6f95a8;
+  --forest: #7f9a68;
+  --field: #d9c27a;
+  --stone: #a59a8a;
+  --road: #8a6a45;
+  --path: #b0905f;
+  --build: #6b4a2e;
+  --new: #8b3a1f;
+  --green: #a9bf7e;
+  --display: "IM Fell English SC", "IM Fell English", Georgia, serif;
+  --body: "Alegreya Sans", "Gill Sans", "Segoe UI", sans-serif;
+  --italic: "IM Fell English", Georgia, serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1d1914; --sheet: #2a241c; --ink: #eadcc0; --ink-soft: #b49f7d; --rule: #4d4232;
+  --accent: #e08a62; --water: #5f8ba0; --forest: #5f7a4c; --field: #9c8748; --stone: #7d746a;
+  --road: #b38d5f; --path: #8f7550; --build: #d1b48c; --new: #e08a62; --green: #6f8650; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #1d1914; --sheet: #2a241c; --ink: #eadcc0; --ink-soft: #b49f7d; --rule: #4d4232;
+  --accent: #e08a62; --water: #5f8ba0; --forest: #5f7a4c; --field: #9c8748; --stone: #7d746a;
+  --road: #b38d5f; --path: #8f7550; --build: #d1b48c; --new: #e08a62; --green: #6f8650; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 400 16px/1.55 var(--body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 40px; }
+header { display: grid; gap: 10px; max-width: 70ch; }
+h1 { font: 400 clamp(34px, 5vw, 52px)/1.05 var(--display); margin: 0; letter-spacing: 0.01em; text-wrap: balance; }
+h2 { font: 400 28px/1.15 var(--display); margin: 0; text-wrap: balance; }
+h3 { font: 400 22px/1.2 var(--display); margin: 0; }
+p { margin: 0; }
+.lede { font: italic 19px/1.5 var(--italic); color: var(--ink-soft); }
+.eyebrow { font: 700 12px/1 var(--body); letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+section { display: grid; gap: 22px; }
+.options { display: grid; gap: 28px; }
+.sheet { background: var(--sheet); border: 1px solid var(--rule); border-radius: 3px;
+  box-shadow: 0 1px 0 var(--rule), 0 10px 24px -18px rgba(40, 25, 10, 0.5);
+  display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 26px; padding: 22px; }
+.sheet .draw { min-width: 0; }
+.sheet svg { width: 100%; height: auto; display: block; }
+.notes { min-width: 0; display: grid; gap: 14px; align-content: start; }
+.tag { display: inline-flex; align-items: center; gap: 10px; }
+.letter { font: 400 30px/1 var(--display); color: var(--accent); width: 42px; height: 42px; border: 1.5px solid var(--accent);
+  border-radius: 50%; display: grid; place-items: center; flex: none; }
+.notes ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.times { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; font-variant-numeric: tabular-nums;
+  border-top: 1px solid var(--rule); padding-top: 10px; font-size: 15px; }
+.times span:nth-child(even) { color: var(--ink-soft); text-align: right; }
+.times .head { font: 700 12px/1.4 var(--body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); grid-column: 1 / -1; }
+.trade { font: italic 16px/1.5 var(--italic); color: var(--ink-soft); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--ink-soft); }
+.legend i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.pick { background: var(--sheet); border: 1px dashed var(--accent); border-radius: 3px; padding: 18px 22px; display: grid; gap: 8px; max-width: 70ch; }
+svg text { font-family: var(--body); fill: var(--ink); }
+svg .label { font: 400 15px var(--display); letter-spacing: 0.06em; }
+svg .small { font-size: 9.5px; fill: var(--ink-soft); }
+svg .bname { font-size: 7px; fill: var(--ink); }
+@media (max-width: 820px) { .sheet { grid-template-columns: 1fr; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">World pass · stop 1 of 2</span>
+    <h1>Hearthvale, redrawn</h1>
+    <p class="lede">Three ways to lay out the bigger valley, and three ways to lay out the village green at its heart. Every sheet is drawn to scale from the game's own numbers; pick one map and one green.</p>
+  </header>
+
+  <section>
+    <div><span class="eyebrow">The valley · 768 × 768 m</span><h2>Three maps</h2></div>
+    <p style="max-width:70ch">All three keep what we agreed: the village at the middle, the places in their old compass directions and further out, the Pinewood and Goldmeadow about half again bigger, the quarry, Stillwater and Frostpeak their own size. They differ in how the land and the water run, and where the new places sit. Times are jogging (5.5 m/s) from the green, along the roads.</p>
+    <div class="legend" id="maplegend"></div>
+    <div class="options" id="maps"></div>
+  </section>
+
+  <section>
+    <div><span class="eyebrow">The village · about 140 m across</span><h2>Three greens</h2></div>
+    <p style="max-width:70ch">The eight buildings you know (dark) and the new ones (red outline): farm buildings, stores and yards, the washhouse and chapel, the empty houses. Footprints are each building's top tier; the dotted squares are room left for add-ons.</p>
+    <div class="legend" id="villegend"></div>
+    <div class="options" id="greens"></div>
+  </section>
+
+  <div class="pick">
+    <h3>Your pick</h3>
+    <p>Tell me one map letter and one green number in the chat, for example <b>"map A, green 2"</b>. Mix and match freely, or say what to move: "green 1, but put the chapel by the pond".</p>
+  </div>
+</div>
+
+<script>
+const JOG = 5.5;
+const css = (v) => `var(--${v})`;
+
+/* ---- the maps: world metres, x east, y south (as the game's z), centre (0,0) ---- */
+const MAPS = [
+  {
+    key: "A", name: "The open valley",
+    blurb: "Closest to today's Hearthvale, just roomier. The creek comes down from the Pinewood's spring, passes the village on its west side (the fisher's water) and the mill, and runs on to Stillwater. Rolling farmland all round the green.",
+    trade: "Familiar; the most farmland near home. The quarry is the longest walk.",
+    places: {
+      quarry: [-262, -12], peak: [-218, -200], forest: [0, -228], lake: [-120, 185], meadow: [215, 195],
+      clearing: [-52, 44], mill: [-30, 112], orchard: [92, 62], shepherd: [215, -165], haven: [-70, -282],
+      east: [384, -14],
+    },
+    creek: [[-10, -150], [-20, -100], [-34, -50], [-44, -10], [-40, 40], [-32, 112], [-62, 150], [-100, 172]],
+    hills: [[-218, -200, 95, 1], [215, -165, 70, 0.6], [-300, 200, 90, 0.5], [300, -280, 90, 0.5], [120, -300, 80, 0.4]],
+    standing: [140, -60], ruin: [-160, 90], shrine: [90, 150], bench: [215, -125],
+  },
+  {
+    key: "B", name: "Between two ridges",
+    blurb: "One long valley running west to east: the quarry at its head, the road east out of its foot. The Pinewood and Frostpeak line the northern ridge, Stillwater and Goldmeadow lie along the southern side. The creek runs the valley floor past the green.",
+    trade: "Every place is in view across the valley floor; the ridges make a big sky line. Less room for wandering hills.",
+    places: {
+      quarry: [-268, 10], peak: [-212, -228], forest: [40, -238], lake: [-130, 168], meadow: [205, 205],
+      clearing: [-56, 30], mill: [70, 46], orchard: [-40, 92], shepherd: [250, -190], haven: [10, -300],
+      east: [384, 20],
+    },
+    creek: [[-200, 0], [-150, 14], [-100, 30], [-50, 52], [0, 58], [70, 50], [140, 40], [220, 60], [300, 40]],
+    hills: [[-212, -228, 100, 1], [0, -320, 260, 0.55], [0, 330, 280, 0.45], [250, -190, 70, 0.6]],
+    standing: [-200, -110], ruin: [150, 120], shrine: [120, -40], bench: [250, -150],
+  },
+  {
+    key: "C", name: "The bowl",
+    blurb: "The village sits low in a wide, shallow bowl; every place is on the hills round its rim, each up its own road like the spokes of a wheel. The creek falls from the north rim as a little waterfall, crosses the bowl past the green and leaves south to Stillwater.",
+    trade: "Every trip is about the same length, and you look down on the village coming home. Steeper climbs out.",
+    places: {
+      quarry: [-250, -40], peak: [-226, -182], forest: [-10, -240], lake: [-90, 210], meadow: [210, 190],
+      clearing: [-48, -40], mill: [12, 92], orchard: [70, -70], shepherd: [240, -120], haven: [-90, -300],
+      east: [384, 0],
+    },
+    creek: [[20, -150], [16, -110], [10, -70], [24, -30], [36, 20], [16, 92], [-30, 150], [-70, 192]],
+    hills: [[-226, -182, 95, 1], [0, 0, 330, -0.0], [240, -120, 70, 0.6], [-300, 120, 100, 0.55], [300, 300, 100, 0.5], [-320, -320, 100, 0.5], [320, -320, 90, 0.5]],
+    rim: true,
+    standing: [150, -150], ruin: [-180, 120], shrine: [120, 120], bench: [240, -80],
+  },
+];
+
+const NAMES = { quarry: "Greystone Quarry", peak: "Frostpeak", forest: "The Pinewood", lake: "Stillwater", meadow: "Goldmeadow",
+  clearing: "The Clearing", mill: "Watermill", orchard: "Orchard", shepherd: "Shepherd's hill", haven: "The haven", east: "Road east" };
+
+function el(tag, attrs, parent) {
+  const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function txt(parent, x, y, s, cls, anchor = "middle") {
+  const t = el("text", { x, y, class: cls || "", "text-anchor": anchor }, parent);
+  t.textContent = s;
+  return t;
+}
+function line(parent, pts, stroke, w, dash) {
+  const d = pts.map((p, i) => (i ? "L" : "M") + p[0] + " " + p[1]).join(" ");
+  return el("path", { d, fill: "none", stroke, "stroke-width": w, "stroke-linecap": "round", "stroke-linejoin": "round", ...(dash ? { "stroke-dasharray": dash } : {}) }, parent);
+}
+// a road from the green to p, bending gently (and its length)
+function road(p) {
+  const mid = [p[0] * 0.5 + p[1] * 0.12, p[1] * 0.5 - p[0] * 0.12];
+  const pts = [];
+  for (let i = 0; i <= 16; i++) {
+    const t = i / 16, a = (1 - t) * (1 - t), b = 2 * t * (1 - t), c = t * t;
+    pts.push([a * 0 + b * mid[0] + c * p[0], a * 0 + b * mid[1] + c * p[1]]);
+  }
+  let len = 0;
+  for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+  return { pts, len };
+}
+const fmt = (s) => s >= 60 ? `${Math.floor(s / 60)} min ${String(Math.round(s % 60)).padStart(2, "0")} s` : `${Math.round(s)} s`;
+
+function drawMap(m) {
+  const svg = el("svg", { viewBox: "-400 -400 800 800", role: "img", "aria-label": `Map ${m.key}: ${m.name}` });
+  el("rect", { x: -384, y: -384, width: 768, height: 768, fill: css("sheet"), stroke: css("ink"), "stroke-width": 2 }, svg);
+  // hills: rings like contour lines
+  for (const [x, y, r, k] of m.hills) {
+    for (let i = 1; i <= 4; i++) el("ellipse", { cx: x, cy: y, rx: r * i / 4, ry: r * i / 4 * 0.86, fill: "none", stroke: css("rule"), "stroke-width": 1.2, opacity: 0.4 + 0.15 * Math.abs(k) }, svg);
+  }
+  if (m.rim) for (const r of [300, 335, 362]) el("circle", { cx: 0, cy: 0, r, fill: "none", stroke: css("rule"), "stroke-width": 1.4 }, svg);
+  const P = m.places;
+  // Goldmeadow fields, the Pinewood, the quarry, the lake
+  const g = el("g", {}, svg);
+  el("ellipse", { cx: P.meadow[0], cy: P.meadow[1], rx: 98, ry: 92, fill: css("field"), opacity: 0.55 }, g);
+  for (let i = -4; i <= 4; i++) {
+    line(g, [[P.meadow[0] - 90, P.meadow[1] + i * 20], [P.meadow[0] + 90, P.meadow[1] + i * 20 + 10]], css("road"), 0.8).setAttribute("opacity", 0.4);
+    line(g, [[P.meadow[0] + i * 20, P.meadow[1] - 85], [P.meadow[0] + i * 20 - 8, P.meadow[1] + 85]], css("road"), 0.8).setAttribute("opacity", 0.4);
+  }
+  el("ellipse", { cx: P.forest[0], cy: P.forest[1], rx: 172, ry: 106, fill: css("forest"), opacity: 0.55 }, svg);
+  for (let i = 0; i < 170; i++) {
+    const a = i * 2.399, r = Math.sqrt(i / 170);
+    el("circle", { cx: P.forest[0] + Math.cos(a) * r * 160, cy: P.forest[1] + Math.sin(a) * r * 96, r: 2.3, fill: css("ink"), opacity: 0.35 }, svg);
+  }
+  for (const r of [55, 45, 35, 25, 15]) el("circle", { cx: P.quarry[0], cy: P.quarry[1], r, fill: css("stone"), "fill-opacity": 0.18, stroke: css("ink-soft"), "stroke-width": 1.1 }, svg);
+  el("ellipse", { cx: P.lake[0], cy: P.lake[1], rx: 34, ry: 26, fill: css("water"), opacity: 0.9 }, svg);
+  el("circle", { cx: P.peak[0], cy: P.peak[1], r: 14, fill: css("sheet"), stroke: css("ink"), "stroke-width": 1.4 }, svg);
+  // farmland round the village: field strips and hedges
+  for (let i = 0; i < 14; i++) {
+    const a = i / 14 * Math.PI * 2 + 0.2, r1 = 95, r2 = 150;
+    line(svg, [[Math.cos(a) * r1, Math.sin(a) * r1], [Math.cos(a) * r2, Math.sin(a) * r2]], css("forest"), 1.6, "2 3").setAttribute("opacity", 0.8);
+  }
+  el("circle", { cx: 0, cy: 0, r: 150, fill: "none", stroke: css("forest"), "stroke-width": 1.4, "stroke-dasharray": "2 3", opacity: 0.8 }, svg);
+  // the creek
+  line(svg, m.creek, css("water"), 5);
+  // roads from the green, and their times
+  const times = [];
+  for (const k of ["quarry", "forest", "lake", "meadow", "peak", "shepherd", "mill", "orchard", "clearing", "east"]) {
+    const r = road(P[k]);
+    const kind = ["clearing", "mill", "orchard", "shepherd", "peak"].includes(k) ? "path" : "road";
+    line(svg, r.pts, css(kind), kind === "road" ? 3.4 : 2, kind === "path" ? "5 4" : null);
+    if (k !== "east") times.push([NAMES[k], r.len / JOG, r.len]);
+  }
+  // the haven: a faint deer track off the forest trail
+  line(svg, [P.forest, [(P.forest[0] + P.haven[0]) / 2 + 20, (P.forest[1] + P.haven[1]) / 2], P.haven], css("ink-soft"), 1, "1 4");
+  el("circle", { cx: P.haven[0], cy: P.haven[1], r: 7, fill: css("water"), stroke: css("new"), "stroke-width": 1.5 }, svg);
+  // new places
+  const mk = (p, s) => { el("rect", { x: p[0] - 6, y: p[1] - 6, width: 12, height: 12, fill: css("sheet"), stroke: css("new"), "stroke-width": 1.8, transform: `rotate(45 ${p[0]} ${p[1]})` }, svg); };
+  mk(P.mill); mk(P.orchard); mk(P.shepherd);
+  for (let i = 0; i < 12; i++) el("circle", { cx: P.orchard[0] - 18 + (i % 4) * 12, cy: P.orchard[1] + 10 + Math.floor(i / 4) * 10, r: 3.2, fill: css("forest") }, svg);
+  // old things
+  for (const p of [m.standing, m.ruin, m.shrine, m.bench]) el("circle", { cx: p[0], cy: p[1], r: 3.5, fill: css("ink") }, svg);
+  txt(svg, m.standing[0], m.standing[1] - 8, "standing stone", "small");
+  txt(svg, m.ruin[0], m.ruin[1] - 8, "ruined farmstead", "small");
+  txt(svg, m.shrine[0], m.shrine[1] - 8, "wayside shrine", "small");
+  txt(svg, m.bench[0], m.bench[1] - 8, "bench at a view", "small");
+  // the village and the clearing
+  el("circle", { cx: 0, cy: 0, r: 70, fill: css("green"), "fill-opacity": 0.35, stroke: css("build"), "stroke-width": 2 }, svg);
+  el("rect", { x: -17, y: -15, width: 34, height: 30, fill: css("green"), stroke: css("build"), "stroke-width": 1 }, svg);
+  for (const [x, y] of [[-30, -32], [24, -36], [38, 6], [30, 38], [-10, 44], [-42, 22], [-44, -8], [8, -46]]) el("rect", { x: x - 4, y: y - 4, width: 8, height: 8, fill: css("build") }, svg);
+  el("circle", { cx: P.clearing[0], cy: P.clearing[1], r: 9, fill: css("water"), opacity: 0.8 }, svg);
+  // labels
+  txt(svg, 0, 88, "HEARTHVALE", "label");
+  const lab = { quarry: [0, 75], peak: [0, -22], forest: [0, -4], lake: [0, 42], meadow: [0, 6], clearing: [-20, 22], mill: [0, -13], orchard: [0, -12], shepherd: [0, -14], haven: [0, -13], east: [-34, -10] };
+  for (const k in lab) txt(svg, P[k][0] + lab[k][0], P[k][1] + lab[k][1], NAMES[k], ["mill", "orchard", "shepherd", "haven", "clearing", "east"].includes(k) ? "small" : "label");
+  // scale bar and north
+  el("rect", { x: -370, y: 362, width: 100, height: 5, fill: css("ink") }, svg);
+  txt(svg, -320, 356, "100 m", "small");
+  txt(svg, 366, -360, "N", "label");
+  line(svg, [[366, -352], [366, -328]], css("ink"), 1.5);
+  return { svg, times: times.sort((a, b) => a[1] - b[1]) };
+}
+
+const maps = document.getElementById("maps");
+for (const m of MAPS) {
+  const { svg, times } = drawMap(m);
+  const s = document.createElement("article");
+  s.className = "sheet";
+  s.innerHTML = `<div class="draw"></div><div class="notes">
+    <div class="tag"><span class="letter">${m.key}</span><h3>${m.name}</h3></div>
+    <p>${m.blurb}</p><p class="trade">${m.trade}</p>
+    <div class="times"><span class="head">Jogging from the green</span>${times.map(([n, t, l]) => `<span>${n}</span><span>${fmt(t)} · ${Math.round(l)} m</span>`).join("")}</div></div>`;
+  s.querySelector(".draw").appendChild(svg);
+  maps.appendChild(s);
+}
+document.getElementById("maplegend").innerHTML = [["field", "Goldmeadow's fields"], ["forest", "woods, hedges"], ["water", "water"], ["stone", "quarry rings"], ["road", "roads"], ["path", "footpaths"], ["new", "new places"]]
+  .map(([c, n]) => `<span><i style="background:var(--${c})"></i>${n}</span>`).join("");
+
+/* ---- the greens: village metres, centre (0,0), north up ---- */
+// [name, w, d, kind] kinds: own (the eight), new, yard (open area), add (add-on room)
+const KEEP = { hall: ["Town hall", 8, 10], tavern: ["Tavern", 8, 12], smithy: ["Smithy", 6, 6], wood: ["Woodcutter's lodge", 6, 8],
+  fisher: ["Fisher's hut", 6, 6], baker: ["Rosa's bakehouse", 6, 8], edda: ["Edda's assay office", 6, 8], home: ["Your home", 8, 12] };
+const NEW = { barn: ["Barn", 10, 16], granary: ["Granary", 4, 4], rick: ["Hay ricks", 6, 4], cart: ["Cart shed", 6, 4], pens: ["Pens", 12, 8],
+  store: ["Storehouse", 8, 10], timber: ["Timber yard", 10, 8], ore: ["Ore store", 6, 6], woodshed: ["Woodshed", 4, 3],
+  wash: ["Washhouse", 5, 6], chapel: ["Chapel", 6, 11], dove: ["Dovecote", 3, 3], stable: ["Stable", 6, 10],
+  empty1: ["Empty cottage", 6, 6], empty2: ["Empty cottage", 6, 6], ruin: ["Ruined cottage", 6, 6], allot: ["Allotments", 18, 12] };
+
+const GREENS = [
+  {
+    key: 1, name: "The square green",
+    blurb: "A plain rectangle of grass with the well in the middle. The town hall closes its north end, the tavern faces it from the east, the market stall and benches along the south. A lane leaves each corner toward that craft's work; the farm sits together south-east, the stores beside the crafts they serve.",
+    trade: "Easy to read and to find your way in; the most like an English village green.",
+    green: { shape: "rect", w: 36, d: 30 },
+    lanes: [[[-18, -15], [-50, -48]], [[18, -15], [52, -50]], [[18, 15], [55, 50]], [[-18, 15], [-52, 52]], [[0, 15], [0, 70]], [[18, 0], [70, 0]], [[-18, 0], [-70, 0]]],
+    place: {
+      hall: [0, -24, 0], tavern: [26, 0, 90], smithy: [44, -40, 0], wood: [-44, -42, 0], fisher: [-56, 34, 0], baker: [-28, 30, 0], edda: [-30, -32, 0], home: [-62, 6, 90],
+      barn: [46, 46, 0], granary: [34, 60, 0], rick: [60, 62, 0], cart: [62, 32, 90], pens: [44, 64, 0], store: [28, -44, 0], timber: [-58, -54, 0], ore: [58, -28, 0], woodshed: [-34, -52, 0],
+      wash: [-40, 46, 0], chapel: [-12, -46, 0], dove: [12, 36, 0], stable: [14, 46, 90], empty1: [26, 24, 0], empty2: [-14, 30, 0], ruin: [-62, -20, 0], allot: [-14, 60, 0],
+    },
+    pond: [-62, 50, 10],
+  },
+  {
+    key: 2, name: "The triangle green",
+    blurb: "A three-cornered green where the three roads meet (the quarry road from the west, the Pinewood road from the north, the road east). The town hall stands at the broad end, the tavern at the point where the roads part, the chapel across the green from it. Houses line the three sides; the farm and the stores sit behind them, round yards.",
+    trade: "The most like a real old crossroads village; every road comes past the green.",
+    green: { shape: "tri", pts: [[-26, -20], [30, -14], [0, 26]] },
+    lanes: [[[-26, -20], [-70, -28]], [[30, -14], [70, -18]], [[0, 26], [8, 70]], [[0, -18], [-6, -70]], [[-12, 4], [-60, 36]], [[16, 8], [58, 40]]],
+    place: {
+      hall: [0, -28, 0], tavern: [2, 34, 0], smithy: [44, -30, 0], wood: [-20, -50, 0], fisher: [-54, 40, 0], baker: [28, 14, 60], edda: [-44, -36, 0], home: [-58, 10, 90],
+      barn: [48, 50, 30], granary: [30, 62, 0], rick: [64, 36, 0], cart: [62, 58, 90], pens: [44, 70, 0], store: [24, -46, 0], timber: [-40, -60, 0], ore: [60, -40, 0], woodshed: [-30, -66, 0],
+      wash: [-36, 52, 0], chapel: [-24, 12, 120], dove: [12, 52, 0], stable: [-58, -12, 90], empty1: [40, -4, 0], empty2: [-8, 50, 0], ruin: [58, -4, 0], allot: [-22, 66, 0],
+    },
+    pond: [-50, 56, 9],
+  },
+  {
+    key: 3, name: "The pond green",
+    blurb: "A round green with the village pond on it (Ollie's fish, the ducks), the well and a big old tree beside. Everything faces in round it like a clock: the town hall at twelve, the tavern at three, the fisher's hut on the pond's bank. The farm is a yard of its own to the south, the stores to the north by the roads out.",
+    trade: "The coziest centre, with water in the middle; a ring is a little harder to find your way round.",
+    green: { shape: "circle", r: 22 },
+    lanes: [[[0, -22], [0, -70]], [[22, 0], [70, 0]], [[0, 22], [0, 70]], [[-22, 0], [-70, 0]], [[16, -16], [50, -50]], [[-16, 16], [-50, 50]]],
+    place: {
+      hall: [0, -32, 0], tavern: [32, -2, 90], smithy: [36, -36, 45], wood: [-36, -36, -45], fisher: [-30, 12, 90], baker: [24, 28, 30], edda: [-26, 32, -30], home: [-56, 0, 90],
+      barn: [10, 58, 0], granary: [30, 62, 0], rick: [-6, 68, 0], cart: [26, 50, 0], pens: [-18, 56, 0], store: [14, -54, 0], timber: [-54, -46, 0], ore: [52, -40, 0], woodshed: [-30, -54, 0],
+      wash: [-50, 30, 0], chapel: [54, 20, 0], dove: [42, 40, 0], stable: [54, -14, 90], empty1: [-12, -52, 0], empty2: [44, 54, 0], ruin: [-62, 50, 0], allot: [-40, 56, 0],
+    },
+    pond: [-8, 4, 10],
+  },
+];
+
+function drawGreen(g) {
+  const svg = el("svg", { viewBox: "-80 -80 160 160", role: "img", "aria-label": `Green ${g.key}: ${g.name}` });
+  el("rect", { x: -76, y: -76, width: 152, height: 152, fill: css("sheet"), stroke: css("ink"), "stroke-width": 0.8 }, svg);
+  el("circle", { cx: 0, cy: 0, r: 70, fill: "none", stroke: css("rule"), "stroke-width": 0.5, "stroke-dasharray": "1.5 1.5" }, svg);
+  for (const ln of g.lanes) line(svg, ln, css("path"), 4).setAttribute("opacity", 0.7);
+  const G = g.green;
+  if (G.shape === "rect") el("rect", { x: -G.w / 2, y: -G.d / 2, width: G.w, height: G.d, fill: css("green"), stroke: css("forest"), "stroke-width": 0.6 }, svg);
+  if (G.shape === "circle") el("circle", { cx: 0, cy: 0, r: G.r, fill: css("green"), stroke: css("forest"), "stroke-width": 0.6 }, svg);
+  if (G.shape === "tri") el("polygon", { points: G.pts.map((p) => p.join(",")).join(" "), fill: css("green"), stroke: css("forest"), "stroke-width": 0.6 }, svg);
+  el("circle", { cx: g.pond[0], cy: g.pond[1], r: g.pond[2], fill: css("water"), opacity: 0.85 }, svg);
+  el("circle", { cx: 0, cy: g.key === 3 ? -12 : 0, r: 1.6, fill: css("stone"), stroke: css("ink"), "stroke-width": 0.3 }, svg);
+  txt(svg, 0, (g.key === 3 ? -12 : 0) + 4.4, "well", "bname");
+  const put = (key, def, kind) => {
+    const [x, y, rot] = g.place[key];
+    const [name, w, d] = def;
+    const grp = el("g", { transform: `translate(${x} ${y}) rotate(${rot})` }, svg);
+    if (kind === "own") el("rect", { x: -w / 2 - 2, y: -d / 2 - 2, width: w + 4, height: d + 4, fill: "none", stroke: css("ink-soft"), "stroke-width": 0.3, "stroke-dasharray": "0.8 0.8" }, grp);
+    const open = ["pens", "allot", "timber", "rick"].includes(key);
+    el("rect", { x: -w / 2, y: -d / 2, width: w, height: d, rx: open ? 0.6 : 0, fill: kind === "own" ? css("build") : (open ? "none" : css("sheet")),
+      stroke: kind === "own" ? css("build") : css("new"), "stroke-width": 0.6, ...(open ? { "stroke-dasharray": "1.2 0.8" } : {}) }, grp);
+    const t = txt(svg, x, y + d / 2 + 4.2 > 74 ? y - d / 2 - 1.5 : y + (rot % 180 ? w : d) / 2 + 4.2, name, "bname");
+    if (kind === "own") t.setAttribute("font-weight", "700");
+  };
+  for (const k in KEEP) put(k, KEEP[k], "own");
+  for (const k in NEW) put(k, NEW[k], "new");
+  el("rect", { x: -74, y: 70, width: 20, height: 1.4, fill: css("ink") }, svg);
+  txt(svg, -64, 68, "20 m", "bname");
+  txt(svg, 70, -66, "N", "bname");
+  return svg;
+}
+
+const greens = document.getElementById("greens");
+for (const g of GREENS) {
+  const s = document.createElement("article");
+  s.className = "sheet";
+  s.innerHTML = `<div class="draw"></div><div class="notes">
+    <div class="tag"><span class="letter">${g.key}</span><h3>${g.name}</h3></div>
+    <p>${g.blurb}</p><p class="trade">${g.trade}</p>
+    <ul><li>Farm: barn, granary on staddle stones, hay ricks, cart shed, pens</li>
+    <li>Stores: storehouse, timber yard, ore store, woodshed</li>
+    <li>Village life: washhouse, chapel, dovecote, stable, allotments</li>
+    <li>Empty: two cottages to let, one ruined</li></ul></div>`;
+  s.querySelector(".draw").appendChild(drawGreen(g));
+  greens.appendChild(s);
+}
+document.getElementById("villegend").innerHTML = [["build", "the eight you know"], ["new", "new buildings (outline)"], ["green", "the green"], ["water", "pond"], ["path", "lanes"]]
+  .map(([c, n]) => `<span><i style="background:var(--${c})"></i>${n}</span>`).join("") + `<span>dotted: add-on room · dashed: yards and plots</span>`;
+</script>
