@@ -144,6 +144,11 @@ func _trim(path: String) -> void:
 	for line in lines:
 		if line.begins_with("["):
 			trimming = line.begins_with("[node") and line.contains(" instance=")
+			# (and no unique_ids: they're new every bake, which would make every bake's diff the whole file)
+			var cut := line.find(" unique_id=")
+			if cut >= 0:
+				var end := line.find(" ", cut + 1)
+				line = line.substr(0, cut) + (line.substr(end) if end >= 0 else "]")
 			out.append(line)
 		elif not trimming or line == "" or line.begins_with("transform =") or line.begins_with("save_id ="):
 			out.append(line)
