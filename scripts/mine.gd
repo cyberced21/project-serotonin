@@ -304,23 +304,17 @@ func cell_position(n: int, c: Vector2i) -> Vector3:
 	return levels[n].global_transform * MineLevel.centre(c)
 
 
-## The things you press E at on level n: the way out, the lift.
+## The things you press E at on level n: the shaft up, the lift.
 func _add_spots(n: int) -> void:
 	var dress := levels[n].dressing()
-	if n == 0:
+	if n == 0:  # the way in and out: the cage in its shaft through the roof
 		for c in MineLayout.cells_of(0, "E"):
 			var back := _wall_dir(0, c)
-			var door_at := MineLevel.centre(c) + Vector3(back.x, 0, back.y) * (MineLayout.CELL / 2 - 0.3)
-			var door := Prop.new()
-			door.model = MineLevel.DOOR
-			door.own_materials = true
-			door.collide = false
-			door.position = door_at
-			door.rotation.y = atan2(back.x, back.y)
-			dress.add_child(door)
-			var spot := MineSpot.make(Vector3(1.6, 2.4, 0.8), func() -> String: return "E  Back up to the quarry", leave)
-			spot.position = door_at - Vector3(back.x, 0, back.y) * 0.3
-			dress.add_child(spot)
+			var shaft := MineShaft.new()
+			shaft.mine = self
+			shaft.position = MineLevel.centre(c)
+			shaft.rotation.y = atan2(back.x, back.y)  # (its back to the rock)
+			dress.add_child(shaft)
 	if Projects.is_done(RAILS):
 		for c in MineLayout.cells_of(n, "R"):
 			if is_open(n, c):
@@ -428,7 +422,7 @@ func ride(n: int) -> void:
 	_travelling = false
 
 
-## The first direction from cell c into solid rock (where the way-out door goes).
+## The first direction from cell c into solid rock (the way you face coming down the shaft).
 func _wall_dir(n: int, c: Vector2i) -> Vector2i:
 	for d in MineLayout.DIRS:
 		if not MineLayout.is_cell(n, c + d):
@@ -464,10 +458,12 @@ func _ride_lift(n: int) -> void:
 		go_to(to, MineLayout.cells_of(to, "L")[0])
 
 
-## In from the quarry: down to the first level's way in.
+## In from the quarry: down the shaft in the cage, to the first level's way in.
 func enter() -> void:
 	var c: Vector2i = MineLayout.cells_of(0, "E")[0]
 	go_to(0, c)
+	for shaft: MineShaft in levels[0].find_children("*", "MineShaft", true, false):
+		shaft.arrive()
 
 
 ## Out to the quarry floor, in front of the mouth.

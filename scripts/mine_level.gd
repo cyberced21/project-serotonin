@@ -24,6 +24,11 @@ const SEAM_LAYERS := 4
 const SEAM_REGROW := 900.0
 ## Every this-many walls into solid rock (by a hash), a seam.
 const SEAM_EVERY := 3
+## The shaft over the way in (MineShaft): how wide its hole in the roof, how far up it goes.
+const SHAFT := 2.6
+const SHAFT_HEIGHT := 7.0
+## How far inside a hidden cell's other walls an alcove's rock stops colliding (MineLevel._alcove).
+const ALCOVE_CLEAR := 0.3
 const ROUGH := 0.13
 const GRID := 0.5
 const FLOOR_UV := Vector2(0.3125, 0.5625)  # terrain.dirt
@@ -39,7 +44,6 @@ const RUBBLE := preload("res://models/mine/rubble_pile.glb")
 const BOULDER := preload("res://models/mine/boulder_small.glb")
 const PLANKS := preload("res://models/mine/planks.glb")
 const POSTS := preload("res://models/mine/post_crossbraced.glb")
-const DOOR := preload("res://models/mine/door.glb")
 const STALACTITE := preload("res://models/mine/stalactite.glb")
 const STALACTITES := preload("res://models/mine/stalactite_cluster.glb")
 const PUMP_POST := preload("res://models/mine/post.glb")
@@ -102,7 +106,10 @@ func refresh() -> void:
 			continue
 		var o := centre(c)
 		_quad(o + Vector3(-CELL / 2, 0, CELL / 2), Vector3(CELL, 0, 0), Vector3(0, 0, -CELL), FLOOR_UV, 0)
-		_quad(o + Vector3(-CELL / 2, HEIGHT, -CELL / 2), Vector3(CELL, 0, 0), Vector3(0, 0, CELL), rock_uv, 1)
+		if n == 0 and MineLayout.at(n, c) == "E":
+			_shaft(o, rock_uv)  # the way up: a hole in the roof for the cage
+		else:
+			_quad(o + Vector3(-CELL / 2, HEIGHT, -CELL / 2), Vector3(CELL, 0, 0), Vector3(0, 0, CELL), rock_uv, 1)
 		_box(o + Vector3(0, -0.25, 0), Basis.IDENTITY, Vector3(CELL, 0.5, CELL))
 		_box(o + Vector3(0, HEIGHT + 0.25, 0), Basis.IDENTITY, Vector3(CELL, 0.5, CELL))
 		if not mine.is_passable(n, c):  # an obstacle: plain rock round it till it's cleared
@@ -160,6 +167,24 @@ func _wall(c: Vector2i, d: Vector2i, uv: Vector2) -> void:
 	_box(o + d3 * 0.25 + Vector3.UP * HEIGHT / 2, Basis(u, Vector3.UP, d3), Vector3(CELL, HEIGHT, 0.5))
 
 
+## The roof over cell middle `o` with the shaft up through it (MineShaft's cage waits up there):
+## the roof round a square hole, the shaft's four walls, dark at the top.
+func _shaft(o: Vector3, uv: Vector2) -> void:
+	var h := SHAFT / 2
+	var r := CELL / 2
+	var roof := o + Vector3.UP * HEIGHT
+	_quad(roof + Vector3(-r, 0, -r), Vector3(CELL, 0, 0), Vector3(0, 0, r - h), uv, 1)  # the roof round the hole
+	_quad(roof + Vector3(-r, 0, h), Vector3(CELL, 0, 0), Vector3(0, 0, r - h), uv, 1)
+	_quad(roof + Vector3(-r, 0, -h), Vector3(r - h, 0, 0), Vector3(0, 0, SHAFT), uv, 1)
+	_quad(roof + Vector3(h, 0, -h), Vector3(r - h, 0, 0), Vector3(0, 0, SHAFT), uv, 1)
+	var up := Vector3.UP * SHAFT_HEIGHT
+	_quad(roof + Vector3(-h, 0, -h), Vector3(SHAFT, 0, 0), up, uv, 2)  # its walls, facing in
+	_quad(roof + Vector3(h, 0, h), Vector3(-SHAFT, 0, 0), up, uv, 2)
+	_quad(roof + Vector3(-h, 0, h), Vector3(0, 0, -SHAFT), up, uv, 2)
+	_quad(roof + Vector3(h, 0, -h), Vector3(0, 0, SHAFT), up, uv, 2)
+	_quad(roof + up + Vector3(-h, 0, -h), Vector3(SHAFT, 0, 0), Vector3(0, 0, SHAFT), uv, 1)  # (dark, far up)
+
+
 ## A panel's hole in the wall toward d: pillars either side of it, and the alcove it digs back
 ## into (sides, floor, roof and the bedrock at `depth`), so a dug panel shows rock, not a void.
 func _alcove(c: Vector2i, d: Vector2i, depth: float, uv: Vector2) -> void:
@@ -170,18 +195,23 @@ func _alcove(c: Vector2i, d: Vector2i, depth: float, uv: Vector2) -> void:
 	var w := OreWall.WIDTH / 2
 	var side := CELL / 2 - w
 	var basis := Basis(u, Vector3.UP, d3)
+	# the rock round it collides only so far: it stays ALCOVE_CLEAR inside the hidden cell's other
+	# walls, where the faces dug into it from the other tunnels stand (a box flush with one of
+	# them took every swing aimed at it)
+	var reach := minf(depth, CELL - ALCOVE_CLEAR)
+	var pillar := side - ALCOVE_CLEAR
 	for s: float in [-1.0, 1.0]:  # the pillars' faces in the tunnel
 		var a := o + u * (s * (w + side * 0.5) - side * 0.5)
 		_quad(a, u * side, Vector3.UP * HEIGHT, uv, 2)
-		_box(o + u * s * (w + side / 2) + d3 * depth / 2 + Vector3.UP * HEIGHT / 2, basis, Vector3(side, HEIGHT, depth))
+		_box(o + u * s * (w + pillar / 2) + d3 * reach / 2 + Vector3.UP * HEIGHT / 2, basis, Vector3(pillar, HEIGHT, reach))
 	_quad(o - u * w, d3 * depth, Vector3.UP * HEIGHT, uv, 3)  # left side, facing in
 	_quad(o + u * w + d3 * depth, -d3 * depth, Vector3.UP * HEIGHT, uv, 3)  # right side
 	_quad(o - u * w, u * OreWall.WIDTH, d3 * depth, FLOOR_UV, 0)  # floor
 	_quad(o - u * w + Vector3.UP * HEIGHT, d3 * depth, u * OreWall.WIDTH, uv, 1)  # roof
 	_quad(o + d3 * depth - u * w, u * OreWall.WIDTH, Vector3.UP * HEIGHT, MineLayout.LEVELS[2]["rock"], 2)  # bedrock
-	_box(o + d3 * depth / 2 + Vector3.DOWN * 0.25, basis, Vector3(OreWall.WIDTH, 0.5, depth))
-	_box(o + d3 * depth / 2 + Vector3.UP * (HEIGHT + 0.25), basis, Vector3(OreWall.WIDTH, 0.5, depth))
-	_box(o + d3 * (depth + 0.25) + Vector3.UP * HEIGHT / 2, basis, Vector3(OreWall.WIDTH, HEIGHT, 0.5))
+	_box(o + d3 * reach / 2 + Vector3.DOWN * 0.25, basis, Vector3(OreWall.WIDTH, 0.5, reach))
+	_box(o + d3 * reach / 2 + Vector3.UP * (HEIGHT + 0.25), basis, Vector3(OreWall.WIDTH, 0.5, reach))
+	_box(o + d3 * minf(depth + 0.25, reach - 0.25) + Vector3.UP * HEIGHT / 2, basis, Vector3(OreWall.WIDTH, HEIGHT, 0.5))
 
 
 ## A quad from corner `a` along `u` and `v` (its face toward u x v), gridded and wandered by the

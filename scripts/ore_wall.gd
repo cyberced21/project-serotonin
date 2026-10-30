@@ -21,6 +21,10 @@ const WALL_MATERIAL := preload("res://materials/node_wall.tres")
 ## The pieces get their own collision (a hull each) while the player is this close (m); further
 ## off one box stands in for the whole panel.
 const NEAR := 14.0
+## The box standing in for the layers behind the ones drawn stops this far short of the back: in
+## the mine another face is dug into the same rock from the far side, and a box flush with its
+## front took every swing aimed at it.
+const BACK_CLEAR := 0.3
 ## How far into the wall (m) from the hit point to look for the piece struck.
 const AIM_DEPTH := 0.08
 
@@ -446,9 +450,10 @@ func _fit_box() -> void:
 	collision.set_deferred("disabled", false)
 	var box := BoxShape3D.new()
 	var front_z := -from * LAYER_DEPTH - (0.15 if _near else 0.0)  # (near: clear of the hulls in front)
-	box.size = Vector3(WIDTH, HEIGHT, DEPTH + front_z)
+	var back := DEPTH - BACK_CLEAR
+	box.size = Vector3(WIDTH, HEIGHT, maxf(back + front_z, 0.05))
 	collision.shape = box
-	collision.position = Vector3(0, HEIGHT * 0.5, (front_z - DEPTH) * 0.5)
+	collision.position = Vector3(0, HEIGHT * 0.5, (front_z - back) * 0.5)
 
 
 func _rebuild_shapes() -> void:

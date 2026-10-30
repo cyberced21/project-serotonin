@@ -15,7 +15,12 @@ const PROJECT := &"mine_shoring"
 
 @export var angle := 135.0
 
+## The frame's height, and the beam model's length (the passage's timbers are stretched to fit).
+const FRAME_HEIGHT := 2.85
+const BEAM_LENGTH := 1.9
+
 var is_open := false
+var _depth := 1.0  # how far the timbered passage runs back to the rock
 var _boards: Node3D
 var _lamps: Array[Node3D] = []
 
@@ -28,7 +33,9 @@ func _ready() -> void:
 	_refresh()
 
 
-## Puts the mouth at the foot of the floor's wall, facing the pit's middle.
+## Puts the mouth at the foot of the floor's wall, facing the pit's middle: the frame stands
+## out where the slope starts (clear of it, the wall leans back), and a timbered passage runs from
+## it back into the rock (`_depth`), so the frame isn't half sunk in the wall.
 func _settle() -> void:
 	var terrain := get_tree().get_first_node_in_group("terrain") as Terrain3D
 	var a := deg_to_rad(angle)
@@ -36,14 +43,22 @@ func _settle() -> void:
 	var c := Vector3(WorldMap.QUARRY_CENTER.x, 0.0, WorldMap.QUARRY_CENTER.y)
 	var floor_y := WorldMap.QUARRY_RIM_HEIGHT - WorldMap.QUARRY_LEVEL_DROP * WorldMap.QUARRY_WALLS.size()
 	var r := WorldMap.QUARRY_WALLS[-1] - 4.0
+	var foot := r
+	var top := r
 	if terrain and terrain.data:
 		floor_y = terrain.data.get_height(c + dir * r)
-		while r < WorldMap.QUARRY_WALLS[-1] + 4.0:
+		foot = -1.0
+		while r < WorldMap.QUARRY_WALLS[-1] + 6.0:
 			var h: float = terrain.data.get_height(c + dir * r)
-			if not is_nan(h) and h > floor_y + 2.5:
-				break
+			if not is_nan(h) and foot < 0.0 and h > floor_y + 0.15:
+				foot = r  # where the wall starts to rise
+			if not is_nan(h) and h > floor_y + FRAME_HEIGHT + 0.3:
+				break  # high enough to roof the passage over
 			r += 0.1
-	global_position = c + dir * (r - 0.35) + Vector3.UP * floor_y
+		top = r
+		foot = top if foot < 0.0 else foot
+	_depth = clampf(top - foot + 0.6, 0.6, 4.0)
+	global_position = c + dir * (foot - 0.15) + Vector3.UP * floor_y
 	look_at(c + Vector3.UP * floor_y, Vector3.UP)  # -Z toward the middle
 	rotate_object_local(Vector3.UP, PI)  # its front (+Z here) out into the pit
 
@@ -51,14 +66,14 @@ func _settle() -> void:
 func _build() -> void:
 	var dark := MeshInstance3D.new()  # the tunnel going back into the rock
 	var box := BoxMesh.new()
-	box.size = Vector3(3.0, 2.85, 5.0)
+	box.size = Vector3(3.0, 2.85, _depth + 3.0)
 	var black := StandardMaterial3D.new()
 	black.albedo_color = Color(0.02, 0.018, 0.016)
 	black.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	black.cull_mode = BaseMaterial3D.CULL_FRONT  # seen from inside: the far walls only
 	box.material = black
 	dark.mesh = box
-	dark.position = Vector3(0, 1.42, -2.4)
+	dark.position = Vector3(0, 1.42, -(_depth + 3.0) / 2.0 - 0.1)
 	add_child(dark)
 	var mouth := MeshInstance3D.new()  # (the quarry's wall stands in front of that box: a dark
 	var quad := QuadMesh.new()  # face across the frame reads as the way in going back)
@@ -71,6 +86,15 @@ func _build() -> void:
 	mouth.position = Vector3(0, 1.4, -0.05)
 	add_child(mouth)
 	_prop(FRAME, Vector3.ZERO, 0.0, false, true)
+	# the passage back to the rock: timber sides and a roof of beams across
+	var along := _depth / BEAM_LENGTH
+	for side in [-1.0, 1.0]:
+		for i in 6:
+			var b := _prop(BEAM, Vector3(side * 1.45, 0.2 + i * 0.46, -_depth / 2.0), 90.0, true, true)
+			b.scale = Vector3(along, 1.0, 1.0)
+	for i in ceili(_depth / 0.4):
+		var b := _prop(BEAM, Vector3(0.0, FRAME_HEIGHT, -0.25 - i * 0.4), 0.0, true, false)
+		b.scale = Vector3(1.6, 1.0, 1.0)
 	for side in [-1.0, 1.0]:
 		_prop(RUBBLE, Vector3(side * 2.3, 0.0, 0.5), side * 40.0, false, false)
 	_boards = Node3D.new()

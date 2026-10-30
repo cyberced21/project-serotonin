@@ -117,6 +117,44 @@ func _run() -> void:
 	else:
 		print("(no seam round the first cells: skipped)")
 
+	# one cell left hidden with tunnel dug up to it on every side: each face into it still takes a
+	# swing (the alcoves dug into it from the other sides, and the far face's own box, used to stand
+	# flush with it and catch every swing)
+	var hidden := Vector2i(-1, -1)
+	for c: Vector2i in _cells(0):
+		var sides := 0
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			if _cells(0).has(c + d):
+				sides += 1
+		if sides >= 3 and not mine.call("is_open", 0, c) and String(load("res://scripts/mine_layout.gd").call("at", 0, c)) == ".":
+			hidden = c
+			break
+	if hidden.x >= 0:
+		for c in _cells(0):
+			if c != hidden:
+				mine.call("open_cell", 0, c)
+		await process_frame
+		await process_frame
+		await _settle(3)
+		var facing := 0
+		var reached := 0
+		var space := player.get_world_3d().direct_space_state
+		for p: Node3D in l1.call("panels"):
+			if p.get("give_way_at") <= 0:
+				continue
+			facing += 1
+			player.global_position = p.global_transform * Vector3(0, 0.1, 2.0)  # (stood at it: hulls per piece)
+			await _settle(2)
+			var ok := true
+			for aim in [Vector3(0, 1.4, 0), Vector3(-1.0, 0.6, 0), Vector3(1.0, 2.4, 0)]:
+				var from: Vector3 = p.global_transform * (aim + Vector3(0, 0, 1.6))
+				var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(from, p.global_transform * (aim - Vector3(0, 0, 0.5)), 1))
+				ok = ok and not hit.is_empty() and (hit["collider"] == p or p.is_ancestor_of(hit["collider"]))
+			reached += 1 if ok else 0
+		_check(facing >= 3 and reached == facing, "a cell dug up to from %d sides: a swing reaches every face into it (%d of %d)" % [facing, reached, facing])
+	else:
+		print("(no cell to leave hidden: skipped)")
+
 	# opening everything on level 1 (the way the player would, cell by cell)
 	for c in _cells(0):
 		mine.call("open_cell", 0, c)
@@ -196,8 +234,28 @@ func _run() -> void:
 	_check(mine.get("here") == 1, "climbed out on level 2")
 	_check(root.get_viewport().get_camera_3d() == player.get("camera"), "back in your own eyes")
 
-	# out again
-	mine.call("leave")
+	# out again, by the cage in the shaft over the way in: ring for it, it comes down, ride it up
+	mine.call("go_to", 0, load("res://scripts/mine_layout.gd").call("cells_of", 0, "E")[0])
+	await _until(func() -> bool: return mine.get("here") == 0 and not mine.get("_travelling"), 8.0)
+	var shafts: Array = (mine.get("levels")[0] as Node).find_children("*", "MineShaft", true, false)
+	_check(shafts.size() == 1, "a shaft with its cage over the way in")
+	if shafts.size() == 1:
+		var shaft: Node3D = shafts[0]
+		var cage := shaft.get("_cage") as Node3D
+		shaft.call("arrive")
+		var stood := player.global_position
+		player.global_position = shaft.global_position + Vector3.UP * 6.0  # (well away from the cage)
+		await _until(func() -> bool: return cage.position.y > 3.0 and not shaft.get("_moving"), 12.0)
+		_check(cage.position.y > 3.0, "stepped off, the cage goes back up the shaft (%.1f m)" % cage.position.y)
+		_check(String(shaft.call("_prompt")).begins_with("E  Ring"), "...and you ring for it: '%s'" % shaft.call("_prompt"))
+		player.global_position = stood
+		shaft.call("_act")
+		await _until(func() -> bool: return shaft.call("is_down"), 6.0)
+		_check(cage.position.y < 0.05, "it comes down out of the roof")
+		_check(String(shaft.call("_prompt")).begins_with("E  Ride"), "...and takes you up: '%s'" % shaft.call("_prompt"))
+		shaft.call("_act")
+	else:
+		mine.call("leave")
 	await _until(func() -> bool: return mine.get("here") == -1 and not mine.get("_travelling"), 8.0)
 	await _settle(10)
 	print("out at ", player.global_position)
