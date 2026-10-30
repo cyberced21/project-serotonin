@@ -321,3 +321,9 @@ Generated worlds are gone (the procgen items above are history); Hearthvale is t
 - [ ] **Fixture projects' effects**: restoring the barn, mending the granary and opening a cottage only change how they look; first guesses at a small effect each (plans/world-pass.md, "Open").
 - [ ] **The picked rabbit, bunny, frog and pigeon are characters** (Quaternius, upright, with Wave and Punch): look at them in the game before using them as wildlife (phase 8), else simple models of our own.
 - [ ] **Walks across the green take longer**: villagers walk briskly over 20 m (`Villager.BRISK`) and go further for the terrace and the tavern (`OUTING_RANGE`); watch test_day's timings and how it feels in play.
+- [ ] **The world pass is unplayed and unheard**: every animal call, birdsong and place sound has a first-guess level; walk it with the sound on and tune (`SoundSpot`, `Animal.KINDS`).
+- [ ] **A little waterfall** where the creek leaves the north rim (phase 6, not built), and reeds and stepping stones at the lake.
+- [ ] **The haven at dusk**: check Fireflies finds its pool on its own (it looks for still water); if not, give the haven a cluster.
+- [ ] **Hens hide in long grass** (they're life-size): clear the grass in the farm yard, or scale them up a touch.
+- [ ] **The new places' uses** (their own chunk): fruit from the orchard, wool from the shepherd's flock, flour from the mill for Rosa.
+- [ ] **`place_country.gd` found only two clear knolls** for lone oaks (it wanted four): loosen its rules or pick spots by hand.

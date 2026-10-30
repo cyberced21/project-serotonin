@@ -44,8 +44,7 @@
 [ext_resource type="Resource" path="res://audio/mining/iron/crack_tip.tres" id="42_fy12t"]
 [ext_resource type="Resource" path="res://audio/mining/iron/split.tres" id="43_w4wfh"]
 [ext_resource type="Script" path="res://scripts/prop.gd" id="44_wyh0u"]
-[ext_resource type="PackedScene" path="res://models/country/bushes.glb" id="45_h72dk"]
-[ext_resource type="PackedScene" path="res://models/country/flower_bushes.glb" id="46_f41w5"]
+[ext_resource type="PackedScene" path="res://models/country/bush_with_flowers.glb" id="45_lcf67"]
 [ext_resource type="PackedScene" path="res://models/country/flowers.glb" id="47_jlotq"]
 [ext_resource type="PackedScene" path="res://models/country/bush_with_berries.glb" id="48_i76bh"]
 [ext_resource type="PackedScene" path="res://models/country/flower_group.glb" id="49_l260r"]
@@ -55,309 +54,309 @@
 [ext_resource type="Script" path="res://scripts/fixture.gd" id="53_2qelx"]
 [ext_resource type="PackedScene" path="res://models/village/fx_ruined_cottage.gltf" id="54_r7uav"]
 
-[node name="Country" type="Node3D" unique_id=931946940]
+[node name="Country" type="Node3D" unique_id=693242450]
 
-[node name="Hedge1" type="Node3D" parent="." unique_id=571432206]
+[node name="Hedge1" type="Node3D" parent="." unique_id=1620038663]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(120.560265, 43.05301, 120.56106, 40.89404, 120.60239, 38.84108, 120.65238, 36.841038, 120.69026, 34.94699, 120.7, 33, 120.7, 31, 120.7, 29, 120.7, 27, 120.7, 25, 120.7, 23, 120.71029, 20.954824, 120.751205, 18.977278, 120.802635, 17.032722, 120.84027, 15.225909, 120.84096, 13.380917, 120.77996, 11.464826, 120.65413, 9.645159, 120.47493, 7.8174834, 120.24241, 5.769145, 119.968605, 3.6161072)
 
-[node name="Hedge2" type="Node3D" parent="." unique_id=135065979]
+[node name="Hedge2" type="Node3D" parent="." unique_id=2024385790]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(131.15973, 42.94699, 131.15894, 41.10596, 131.19762, 39.15892, 131.24762, 37.158962, 131.28973, 35.05301, 131.3, 33, 131.3, 31, 131.3, 29, 131.3, 27, 131.3, 25, 131.3, 23, 131.30972, 21.065176, 131.3488, 19.202723, 131.39735, 17.36728, 131.43973, 15.33409, 131.43904, 13.179083, 131.36003, 10.815175, 131.20587, 8.634842, 131.00507, 6.6025167)
 
-[node name="Hedge3" type="Node3D" parent="." unique_id=1228709705]
+[node name="Hedge3" type="Node3D" parent="." unique_id=288499408]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(42.916134, 130.71599, 41.03679, 130.36835, 39.351467, 130.17792, 38.114, 130.14304, 37.466774, 130.17735, 37.608997, 129.88138, 37.604515, 129.7064, 37.22406, 130.4371, 36.792606, 131.89507, 36.379772, 133.81378, 35.94736, 136.06686, 35.363564, 138.57263, 34.77498, 140.44794, 34.26024, 142.21138, 33.74024, 144.06137, 33.18037, 146.00317, 32.518772, 148.09946, 31.708763, 150.24406, 30.751862, 152.3473, 29.96016, 153.96689)
 
-[node name="Hedge4" type="Node3D" parent="." unique_id=1061432936]
+[node name="Hedge4" type="Node3D" parent="." unique_id=963333014]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(9.380319, 165.49069, 7.3535566, 164.45113, 5.723481, 163.61696, 4.406667, 163.05482, 2.9173555, 162.61467, 1.1957072, 162.21153, -0.8254163, 161.75175)
 
-[node name="Hedge5" type="Node3D" parent="." unique_id=1865310087]
+[node name="Hedge5" type="Node3D" parent="." unique_id=1302719710]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(-17.679405, 149.82767, -19.030296, 148.36215, -20.254715, 147.10883, -21.342125, 146.11342, -22.745764, 144.99545, -24.165241, 143.97287)
 
-[node name="Hedge6" type="Node3D" parent="." unique_id=1231957505]
+[node name="Hedge6" type="Node3D" parent="." unique_id=1103708071]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(44.903866, 120.30402, 42.363213, 119.85166, 39.648533, 119.58208, 36.706, 119.63696, 33.613228, 120.302635, 30.391003, 122.118614, 28.275482, 124.6736, 27.135942, 127.18289, 26.447395, 129.58495, 25.960226, 131.86621, 25.57264, 133.89313, 25.216438, 135.50735)
 
-[node name="Hedge7" type="Node3D" parent="." unique_id=837379921]
+[node name="Hedge7" type="Node3D" parent="." unique_id=1361405613]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(22.541227, 144.52054, 21.971237, 146.05592, 21.248138, 147.6527, 20.35984, 149.47311, 19.50978, 151.26938, 18.619762, 153.04568, 17.721436, 154.67381, 16.923481, 155.93991, 16.299263, 156.74956)
 
-[node name="Hedge8" type="Node3D" parent="." unique_id=569920321]
+[node name="Hedge8" type="Node3D" parent="." unique_id=1264311448]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(14.159682, 156.0293, 12.286443, 155.06886, 10.056519, 153.94304, 7.593333, 152.94518, 5.3826447, 152.30534)
 
-[node name="Hedge9" type="Node3D" parent="." unique_id=1211827757]
+[node name="Hedge9" type="Node3D" parent="." unique_id=1200610799]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(110.477646, 213.01768, 109.03764, 214.45769, 107.6277, 215.86761, 106.21769, 217.27765, 104.80764, 218.68768, 103.397644, 220.09769, 101.987686, 221.50764, 100.5677, 222.92761, 99.157646, 224.33768, 97.74769, 225.74765, 96.33764, 227.15768, 94.92764, 228.56769, 93.507645, 229.98769, 92.0977, 231.39761, 90.687645, 232.80768, 89.27764, 234.21768, 87.867645, 235.62769, 86.45769, 237.03764, 84.86063, 238.6084, 83.1955, 240.13002)
 
-[node name="Hedge10" type="Node3D" parent="." unique_id=899137636]
+[node name="Hedge10" type="Node3D" parent="." unique_id=1759687554]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(77.124176, 245.48096, 76.02409, 246.62915, 75.26016, 247.54442, 74.90383, 248.01059, 74.623695, 248.52736, 74.538666, 249.52493, 74.71617, 251.06108, 75.09136, 253.21379, 75.38973, 255.94699, 75.19047, 259.07193, 74.61481, 261.4434, 73.872604, 263.6033, 73.08856, 265.5634)
 
-[node name="Hedge11" type="Node3D" parent="." unique_id=64080620]
+[node name="Hedge11" type="Node3D" parent="." unique_id=1587408359]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(98.72231, 209.78235, 97.312355, 211.19232, 95.90236, 212.60233, 94.49231, 214.01234, 93.072296, 215.43237, 91.66236, 216.84232, 90.25231, 218.25235, 88.842354, 219.66232, 87.43236, 221.07233, 86.01236, 222.49232, 84.602295, 223.90237, 83.19236, 225.31232, 81.78236, 226.72232, 80.37236, 228.13232)
 
-[node name="Hedge12" type="Node3D" parent="." unique_id=1509171059]
+[node name="Hedge12" type="Node3D" parent="." unique_id=1629376989]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(72.96646, 234.95438, 71.26725, 236.45358, 69.57582, 238.03903, 67.97591, 239.73083, 66.45984, 241.63557, 65.09617, 243.98941, 64.0763, 247.47264, 63.981335, 250.47507, 64.28383, 252.93892, 64.608635, 254.78621, 64.79026, 256.053, 64.80953, 256.92807, 64.50519, 258.25662, 63.987396, 259.7767, 63.29144, 261.51663)
 
-[node name="Hedge13" type="Node3D" parent="." unique_id=819457420]
+[node name="Hedge13" type="Node3D" parent="." unique_id=112302464]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(198, 172.7, 200, 172.7, 201.94704, 172.70027, 203.78821, 172.65424, 205.73532, 172.55663, 207.84108, 172.45238)
 
-[node name="Hedge14" type="Node3D" parent="." unique_id=1279534163]
+[node name="Hedge14" type="Node3D" parent="." unique_id=1845531106]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(217.44334, 173.38518, 219.60321, 174.12738, 221.56332, 174.9114, 223.29321, 175.62738, 224.82333, 176.21518, 226.15196, 176.61954, 227.47507, 176.86133)
 
-[node name="Hedge15" type="Node3D" parent="." unique_id=1676695511]
+[node name="Hedge15" type="Node3D" parent="." unique_id=566785072]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(196, 183.3, 198, 183.3, 200, 183.3, 202.05296, 183.29973, 204.21179, 183.24576, 206.26468, 183.14339, 208.15892, 183.04762, 209.894, 182.99893, 211.52493, 183.04868, 212.92804, 183.19046, 214.25667, 183.49483, 215.7768, 184.01263, 217.51666, 184.70859, 219.4668, 185.51263, 221.63666, 186.32483)
 
-[node name="Hedge16" type="Node3D" parent="." unique_id=1091033471]
+[node name="Hedge16" type="Node3D" parent="." unique_id=1870169011]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(211.73099, 118.17485, 213.86841, 117.73744, 216.05614, 117.31402, 218.32832, 116.88253, 220.63118, 116.48337, 222.99153, 116.088974, 225.31339, 115.74144, 227.66263, 115.43093, 230.03262, 115.1563, 232.36847, 114.94449, 234.70824, 114.783844, 236.93752, 114.71026)
 
-[node name="Hedge17" type="Node3D" parent="." unique_id=1100793703]
+[node name="Hedge17" type="Node3D" parent="." unique_id=911153699]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(245.14561, 115.01794, 247.1935, 115.20795, 249.24072, 115.440094, 251.24403, 115.69697)
 
-[node name="Hedge18" type="Node3D" parent="." unique_id=1134876571]
+[node name="Hedge18" type="Node3D" parent="." unique_id=1283055352]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(213.82901, 128.56516, 215.8916, 128.14256, 218.04387, 127.725975, 220.19167, 127.31747, 222.38881, 126.93663, 224.56847, 126.57103, 226.78662, 126.238556, 228.97739, 125.94907, 231.08737, 125.7037, 233.15152, 125.51552, 235.11177, 125.37616, 237.0425, 125.309746, 238.83963, 125.30885)
 
-[node name="Hedge19" type="Node3D" parent="." unique_id=1049380565]
+[node name="Hedge19" type="Node3D" parent="." unique_id=523834269]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(247.93927, 125.9599, 249.83595, 126.203026, 251.68008, 126.46775, 253.53415, 126.752014, 255.44255, 127.0728, 257.41254, 127.4228, 259.32126, 127.78312, 261.29123, 128.16312, 263.21048, 128.53503)
 
-[node name="Hedge20" type="Node3D" parent="." unique_id=555648848]
+[node name="Hedge20" type="Node3D" parent="." unique_id=245394230]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(71.61618, 198.89601, 70.07518, 198.49812, 68.652565, 198.25626, 67.02312, 198.1698, 65.210915, 198.21227, 63.193516, 198.3321, 61.01889, 198.44911)
 
-[node name="Hedge21" type="Node3D" parent="." unique_id=887160402]
+[node name="Hedge21" type="Node3D" parent="." unique_id=302288622]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(73.92381, 190.40398, 71.76482, 189.86186, 69.347435, 189.48373, 66.93689, 189.37021, 64.68908, 189.42775, 62.666485, 189.5479, 60.84111, 189.6509, 59.23445, 189.66856, 57.602604, 189.54008, 55.6499, 189.25096)
 
-[node name="Wall1" type="Node3D" parent="." unique_id=804743688]
+[node name="Wall1" type="Node3D" parent="." unique_id=198092152]
 script = ExtResource("1_wtoqg")
 model = ExtResource("3_83k5j")
 points = PackedVector2Array(131.20387, 13.04464, 132.80502, 13.100426, 134.40526, 13.17852, 136.00424, 13.2788925, 137.60167, 13.401535, 139.19724, 13.546425, 140.79062, 13.713516, 142.38153, 13.902794, 143.96965, 14.114227, 145.55467, 14.347755, 147.13628, 14.60334, 148.71417, 14.880936, 150.28806, 15.180489, 151.8576, 15.50193, 153.42253, 15.845215, 154.98251, 16.210266, 156.53726, 16.597023, 158.08647, 17.005386, 159.62984, 17.435303, 161.16708, 17.886673, 162.69788, 18.359413, 164.22192, 18.85344, 165.73895, 19.368645)
 model_scale = Vector3(1, 0.55, 1)
 spacing = 1.95
 
-[node name="Wall2" type="Node3D" parent="." unique_id=397387603]
+[node name="Wall2" type="Node3D" parent="." unique_id=68073140]
 script = ExtResource("1_wtoqg")
 model = ExtResource("3_83k5j")
 points = PackedVector2Array(173.2084, 22.258804, 174.67712, 22.898872, 176.13678, 23.559341, 177.5871, 24.24009, 179.02779, 24.940964, 180.45857, 25.661842, 181.87918, 26.402588, 183.28932, 27.163048, 184.68874, 27.943085, 186.07715, 28.74253, 187.4543, 29.561256, 188.8199, 30.399078, 190.17369, 31.255844, 191.51543, 32.131386, 192.84482, 33.025543, 194.16165, 33.938118, 195.46562, 34.868965)
 model_scale = Vector3(1, 0.55, 1)
 spacing = 1.95
 
-[node name="Wall3" type="Node3D" parent="." unique_id=1432429253]
+[node name="Wall3" type="Node3D" parent="." unique_id=1108885127]
 script = ExtResource("1_wtoqg")
 model = ExtResource("3_83k5j")
 points = PackedVector2Array(226.64523, 68.88892, 227.45914, 70.268906, 228.25375, 71.660095, 229.0289, 73.062225, 229.78445, 74.475006, 230.52023, 75.898186, 231.23615, 77.33147, 231.932, 78.7746, 232.60767, 80.22727, 233.26306, 81.689224, 233.89801, 83.16016, 234.5124, 84.6398, 235.10614, 86.12785)
 model_scale = Vector3(1, 0.55, 1)
 spacing = 1.95
 
-[node name="Wall4" type="Node3D" parent="." unique_id=510255615]
+[node name="Wall4" type="Node3D" parent="." unique_id=460114641]
 script = ExtResource("1_wtoqg")
 model = ExtResource("3_83k5j")
 points = PackedVector2Array(237.76077, 93.68421, 238.22818, 95.216644, 238.6742, 96.75543, 239.09872, 98.30029, 239.50171, 99.85092, 239.88303, 101.407005, 240.24265, 102.968254, 240.58047, 104.53436, 240.89645, 106.10503, 241.19052, 107.67993, 241.46262, 109.25879, 241.7127, 110.84128, 241.9407, 112.4271, 242.1466, 114.015945, 242.33034, 115.607506)
 model_scale = Vector3(1, 0.55, 1)
 spacing = 1.95
 
-[node name="Wall5" type="Node3D" parent="." unique_id=940751935]
+[node name="Wall5" type="Node3D" parent="." unique_id=810943033]
 script = ExtResource("1_wtoqg")
 model = ExtResource("3_83k5j")
 points = PackedVector2Array(242.96582, 125.196526, 242.99371, 126.798416, 242.9993, 128.40053, 242.98256, 130.00258, 242.94351, 131.60423, 242.88214, 133.20518)
 model_scale = Vector3(1, 0.55, 1)
 spacing = 1.95
 
-[node name="Wall6" type="Node3D" parent="." unique_id=1415570075]
+[node name="Wall6" type="Node3D" parent="." unique_id=1574371233]
 script = ExtResource("1_wtoqg")
 model = ExtResource("3_83k5j")
 points = PackedVector2Array(242.24124, 141.1886, 242.04642, 142.77884, 241.82947, 144.36621, 241.59042, 145.95041, 241.32932, 147.53111, 241.04623, 149.10803, 240.74121, 150.68086, 240.41429, 152.24928, 240.06555, 153.81299, 239.69507, 155.3717, 239.30292, 156.9251, 238.88916, 158.47287, 238.45386, 160.01474, 237.99715, 161.55038, 237.51907, 163.07953, 237.01974, 164.60187, 236.49925, 166.11708, 235.9577, 167.62491, 235.3952, 169.12505, 234.81186, 170.6172, 234.2078, 172.10109, 233.5831, 173.57642, 232.93791, 175.0429)
 model_scale = Vector3(1, 0.55, 1)
 spacing = 1.95
 
-[node name="Wall7" type="Node3D" parent="." unique_id=1114593819]
+[node name="Wall7" type="Node3D" parent="." unique_id=1894721477]
 script = ExtResource("1_wtoqg")
 model = ExtResource("3_83k5j")
 points = PackedVector2Array(222.74805, 193.17523, 221.83087, 194.48886, 220.8955, 195.78958, 219.94208, 197.07715, 218.97083, 198.35132, 217.98193, 199.61182, 216.97556, 200.85843, 215.9519, 202.0909, 214.9112, 203.30899, 213.85362, 204.51245, 212.77937, 205.70108, 211.68869, 206.87462, 210.58173, 208.03285, 209.45877, 209.17554, 208.31998, 210.30249, 207.16562, 211.41345, 205.99588, 212.50824, 204.811, 213.58661, 203.61124, 214.64838, 202.39677, 215.69333, 201.16788, 216.72125, 199.92477, 217.73196, 198.66772, 218.72525, 197.39696, 219.70093)
 model_scale = Vector3(1, 0.55, 1)
 spacing = 1.95
 
-[node name="Wall8" type="Node3D" parent="." unique_id=890354229]
+[node name="Wall8" type="Node3D" parent="." unique_id=1311570792]
 script = ExtResource("1_wtoqg")
 model = ExtResource("3_83k5j")
 points = PackedVector2Array(190.84608, 224.30872, 189.49829, 225.1749, 188.13855, 226.02222, 186.76715, 226.8505, 185.38434, 227.6596, 183.99039, 228.44937, 182.58557, 229.21964, 181.17017, 229.97026, 179.74443, 230.70108, 178.30865, 231.41199, 176.86311, 232.10281, 175.4081, 232.77344, 173.94388, 233.4237, 172.47073, 234.05354, 170.98897, 234.66278, 169.49884, 235.25131, 168.00067, 235.81903, 166.49475, 236.36584, 164.98134, 236.8916, 163.46075, 237.39622, 161.93329, 237.87962, 160.39925, 238.34169, 158.8589, 238.78235, 157.31258, 239.2015, 155.76056, 239.59906, 154.20316, 239.97498)
 model_scale = Vector3(1, 0.55, 1)
 spacing = 1.95
 
-[node name="Wall9" type="Node3D" parent="." unique_id=826434997]
+[node name="Wall9" type="Node3D" parent="." unique_id=601812098]
 script = ExtResource("1_wtoqg")
 model = ExtResource("3_83k5j")
 points = PackedVector2Array(146.34592, 241.5272, 144.76256, 241.77176, 143.17596, 241.99426, 141.58641, 242.19461, 139.99422, 242.3728, 138.3997, 242.52881, 136.80316, 242.66257, 135.20493, 242.77408, 133.60527, 242.86331, 132.00455, 242.93025, 130.40305, 242.97488, 128.80107, 242.99721, 127.19894, 242.99721, 125.59696, 242.97488, 123.99545, 242.93025, 122.39472, 242.86331, 120.79508, 242.77408, 119.19684, 242.66257, 117.600296, 242.52881, 116.00578, 242.3728, 114.41359, 242.19461, 112.82404, 241.99426, 111.237434, 241.77176, 109.65408, 241.5272, 108.07429, 241.26062)
 model_scale = Vector3(1, 0.55, 1)
 spacing = 1.95
 
-[node name="Wall10" type="Node3D" parent="." unique_id=1530663284]
+[node name="Wall10" type="Node3D" parent="." unique_id=1114826096]
 script = ExtResource("1_wtoqg")
 model = ExtResource("3_83k5j")
 points = PackedVector2Array(100.23944, 239.59906, 98.68742, 239.2015, 97.1411, 238.78235, 95.60075, 238.34169, 94.0667, 237.87962, 92.53924, 237.39622, 91.01866, 236.8916)
 model_scale = Vector3(1, 0.55, 1)
 spacing = 1.95
 
-[node name="Wall11" type="Node3D" parent="." unique_id=1037378260]
+[node name="Wall11" type="Node3D" parent="." unique_id=1133809718]
 script = ExtResource("1_wtoqg")
 model = ExtResource("3_83k5j")
 points = PackedVector2Array(77.691345, 231.41199, 76.25557, 230.70108, 74.829834, 229.97026, 73.41443, 229.21964, 72.00961, 228.44937, 70.61566, 227.6596, 69.23285, 226.8505, 67.86144, 226.02222, 66.50172, 225.1749, 65.153915, 224.30872, 63.818314, 223.42386, 62.49517, 222.52046, 61.184746, 221.59872, 59.887283, 220.65883, 58.603043, 219.70093, 57.332268, 218.72525, 56.07522, 217.73196, 54.832115, 216.72125, 53.603226, 215.69333, 52.38877, 214.64838)
 model_scale = Vector3(1, 0.55, 1)
 spacing = 1.95
 
-[node name="Wall12" type="Node3D" parent="." unique_id=109152897]
+[node name="Wall12" type="Node3D" parent="." unique_id=1326553237]
 script = ExtResource("1_wtoqg")
 model = ExtResource("3_83k5j")
 points = PackedVector2Array(24.413414, 177.94818, 23.72763, 176.50024, 23.062088, 175.0429, 22.4169, 173.57642, 21.792213, 172.10109, 21.18814, 170.6172, 20.604797, 169.12505, 20.042297, 167.62491)
 model_scale = Vector3(1, 0.55, 1)
 spacing = 1.95
 
-[node name="Wall13" type="Node3D" parent="." unique_id=856303366]
+[node name="Wall13" type="Node3D" parent="." unique_id=324930991]
 script = ExtResource("1_wtoqg")
 model = ExtResource("3_83k5j")
 points = PackedVector2Array(13.36879, 118.79753, 13.50811, 117.20147, 13.669662, 115.607506, 13.853401, 114.015945, 14.059296, 112.4271, 14.2873, 110.84128, 14.537376, 109.25879, 14.809471, 107.67993, 15.1035385, 106.10503, 15.4195175, 104.53436, 15.757355, 102.968254, 16.116966, 101.407005, 16.498299, 99.85092, 16.901276, 98.30029)
 model_scale = Vector3(1, 0.55, 1)
 spacing = 1.95
 
-[node name="Wall14" type="Node3D" parent="." unique_id=115986445]
+[node name="Wall14" type="Node3D" parent="." unique_id=1765973064]
 script = ExtResource("1_wtoqg")
 model = ExtResource("3_83k5j")
 points = PackedVector2Array(68.5457, 29.561256, 69.92285, 28.74253, 71.311264, 27.943085, 72.71068, 27.163048)
 model_scale = Vector3(1, 0.55, 1)
 spacing = 1.95
 
-[node name="Wall15" type="Node3D" parent="." unique_id=835467412]
+[node name="Wall15" type="Node3D" parent="." unique_id=722123426]
 script = ExtResource("1_wtoqg")
 model = ExtResource("3_83k5j")
 points = PackedVector2Array(90.26104, 19.368645, 91.778076, 18.85344, 93.30213, 18.359413, 94.832924, 17.886673, 96.370155, 17.435303, 97.91353, 17.005386, 99.46274, 16.597023, 101.01749, 16.210266, 102.57748, 15.845215, 104.142395, 15.50193, 105.711945, 15.180489, 107.28583, 14.880936, 108.86372, 14.60334, 110.44533, 14.347755, 112.03035, 14.114227, 113.61847, 13.902794, 115.20938, 13.713516, 116.80277, 13.546425, 118.39833, 13.401535, 119.995766, 13.2788925, 121.59474, 13.17852)
 model_scale = Vector3(1, 0.55, 1)
 spacing = 1.95
 
-[node name="Hedge22" type="Node3D" parent="." unique_id=2020997020]
+[node name="Hedge22" type="Node3D" parent="." unique_id=1402560798]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(176.70493, -13.872589, 178.21555, -13.344955, 179.72047, -12.801254, 181.21951, -12.241531, 182.71248, -11.6658325, 184.19923, -11.074249, 185.67958, -10.466843, 187.15338, -9.843674, 188.62044, -9.204819)
 
-[node name="Hedge23" type="Node3D" parent="." unique_id=514195044]
+[node name="Hedge23" type="Node3D" parent="." unique_id=1886421568]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(192.97957, -7.1948853, 194.41803, -6.494034, 195.84895, -5.777878, 197.27216, -5.0464935, 198.68747, -4.2999725, 200.09473, -3.5384064, 201.49379, -2.761856)
 
-[node name="Hedge24" type="Node3D" parent="." unique_id=1072155032]
+[node name="Hedge24" type="Node3D" parent="." unique_id=2077329917]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(208.3605, 1.3422394, 209.70703, 2.2066803, 211.04427, 3.085434, 212.37204, 3.9784012, 213.69023, 4.885483, 214.99866, 5.8065796, 216.2972, 6.741577, 217.58566, 7.6903763, 218.86395, 8.652855, 220.1319, 9.6289215, 221.38937, 10.618462, 222.6362, 11.621353, 223.87227, 12.637489, 225.09744, 13.666763, 226.31152, 14.709045, 227.51447, 15.764206, 228.70605, 16.832146, 229.88618, 17.912735, 231.05472, 19.00586, 232.21155, 20.111382, 233.3565, 21.22918, 234.48947, 22.35913, 235.61032, 23.501099, 236.71892, 24.65496, 237.81516, 25.820587, 238.89888, 26.997833, 239.97, 28.186577, 241.02837, 29.38668, 242.07388, 30.598, 243.10641, 31.820412)
 
-[node name="Hedge25" type="Node3D" parent="." unique_id=726829731]
+[node name="Hedge25" type="Node3D" parent="." unique_id=673417588]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(248.07028, 38.093796, 249.02252, 39.379745, 249.96097, 40.675766, 250.88556, 41.981743, 251.79614, 43.297493, 252.69266, 44.622887, 253.57498, 45.95778, 254.443, 47.301994, 255.29663, 48.655403, 256.1358, 50.01783, 256.9604, 51.389137, 257.77026, 52.769157, 258.5654, 54.157745, 259.34567, 55.554733, 260.111, 56.95996, 260.86127, 58.373276, 261.59644, 59.794518, 262.3164, 61.22352, 263.02112, 62.66012, 263.71045, 64.10416, 264.3843, 65.55546, 265.04266, 67.01387)
 
-[node name="Hedge26" type="Node3D" parent="." unique_id=759427269]
+[node name="Hedge26" type="Node3D" parent="." unique_id=1541739498]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(277.1894, 143.57318, 277.01477, 145.16374, 276.8232, 146.75235, 276.61472, 148.33884, 276.38928, 149.923, 276.14697, 151.50468, 275.88782, 153.08368, 275.61182, 154.65982, 275.31903, 156.23293, 275.0095, 157.80283, 274.68323, 159.36934, 274.34024, 160.93227, 273.9806, 162.49146, 273.60437, 164.04672, 273.21155, 165.59787, 272.80225, 167.14476, 272.37643, 168.6872, 271.9342, 170.22499, 271.4756, 171.75798, 271.0006, 173.286, 270.5094, 174.80885, 270.00195, 176.32639, 269.4784, 177.83842, 268.9387, 179.34479, 268.38297, 180.8453, 267.81125, 182.33981, 267.22363, 183.82814)
 
-[node name="Hedge27" type="Node3D" parent="." unique_id=878213211]
+[node name="Hedge27" type="Node3D" parent="." unique_id=151445579]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(252.24617, 212.041, 251.3426, 213.3616, 250.425, 214.67247, 249.49347, 215.9735)
 
-[node name="Hedge28" type="Node3D" parent="." unique_id=1318872586]
+[node name="Hedge28" type="Node3D" parent="." unique_id=1270349405]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(214.34567, 250.6557, 213.03235, 251.56982, 211.70935, 252.46985, 210.37683, 253.35573)
 
-[node name="Hedge29" type="Node3D" parent="." unique_id=495545742]
+[node name="Hedge29" type="Node3D" parent="." unique_id=68724717]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(207.6838, 255.08458, 206.32361, 255.92737, 204.95451, 256.75558, 203.57666, 257.56915, 202.19019, 258.36798, 200.79529, 259.15198, 199.3921, 259.92108, 197.9808, 260.6751, 196.56152, 261.41406, 195.13446, 262.13788, 193.69974, 262.84637)
 
-[node name="Hedge30" type="Node3D" parent="." unique_id=947941771]
+[node name="Hedge30" type="Node3D" parent="." unique_id=1832652892]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(186.41731, 266.15723, 184.94022, 266.77252, 183.45663, 267.372, 181.96677, 267.95566, 180.47073, 268.52338, 178.96873, 269.0751, 177.46094, 269.61078, 175.94751, 270.13034, 174.42863, 270.63373, 172.90448, 271.12088, 171.3752, 271.59174, 169.84097, 272.04626, 168.302, 272.48444, 166.75845, 272.90613, 165.21048, 273.31134, 163.65828, 273.7, 162.10202, 274.07208, 160.54187, 274.42755, 158.97803, 274.76636, 157.41066, 275.08844, 155.83995, 275.3938, 154.26607, 275.6824, 152.6892, 275.9542, 151.10951, 276.20914, 149.52719, 276.44724, 147.94243, 276.6684, 146.3554, 276.87268)
 
-[node name="Hedge31" type="Node3D" parent="." unique_id=750148399]
+[node name="Hedge31" type="Node3D" parent="." unique_id=2100667808]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(138.39253, 277.63956, 136.79568, 277.74188, 135.19783, 277.8272, 133.59917, 277.89545, 131.99986, 277.94666, 130.4001, 277.98077, 128.80006, 277.99786, 127.199936, 277.99786, 125.59991, 277.98077, 124.000145, 277.94666, 122.40084, 277.89545, 120.80217, 277.8272, 119.20432, 277.74188, 117.607475, 277.63956, 116.01181, 277.52017, 114.41751, 277.3838, 112.82475, 277.2304, 111.23372, 277.06003, 109.6446, 276.87268, 108.05757, 276.6684, 106.47281, 276.44724, 104.890495, 276.20914, 103.310814, 275.9542, 101.73394, 275.6824, 100.16005, 275.3938, 98.58934, 275.08844, 97.021965, 274.76636, 95.45812, 274.42755)
 
-[node name="Hedge32" type="Node3D" parent="." unique_id=1261518885]
+[node name="Hedge32" type="Node3D" parent="." unique_id=1396900610]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(87.69799, 272.48444, 86.15902, 272.04626, 84.6248, 271.59174, 83.09553, 271.12088, 81.571365, 270.63373, 80.05248, 270.13034, 78.53906, 269.61078, 77.031265, 269.0751, 75.52927, 268.52338, 74.03324, 267.95566, 72.54336, 267.372)
 
-[node name="Hedge33" type="Node3D" parent="." unique_id=531926045]
+[node name="Hedge33" type="Node3D" parent="." unique_id=1332513033]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(60.865547, 262.13788, 59.438477, 261.41406, 58.019203, 260.6751, 56.607895, 259.92108, 55.204704, 259.15198, 53.809807, 258.36798, 52.42334, 257.56915, 51.045486, 256.75558, 49.676384, 255.92737, 48.316193, 255.08458)
 
-[node name="Hedge34" type="Node3D" parent="." unique_id=1065439314]
+[node name="Hedge34" type="Node3D" parent="." unique_id=1071941372]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(33.98587, 244.88174, 32.744408, 243.87222, 31.513779, 242.84952, 30.294128, 241.81372, 29.085594, 240.76498, 27.88832, 239.7034, 26.702446, 238.62914, 25.528084, 237.54227, 24.365387, 236.44293, 23.214493, 235.33124, 22.075508, 234.20737, 20.948586, 233.07138, 19.83384, 231.92345, 18.731407, 230.76369, 17.64141, 229.59222, 16.563972, 228.40921, 15.499214, 227.21478, 14.447258, 226.00906, 13.408218, 224.79218, 12.382225, 223.56427, 11.369392, 222.3255, 10.36982, 221.07599, 9.383644, 219.81589)
 
-[node name="Hedge35" type="Node3D" parent="." unique_id=699536909]
+[node name="Hedge35" type="Node3D" parent="." unique_id=206058209]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(4.6573944, 213.3616, 3.75383, 212.041, 2.8644104, 210.71085, 1.9892197, 209.37128, 1.1283722, 208.02245, 0.28196716, 206.6645, -0.5499115, 205.2976, -1.367157, 203.92194, -2.1696777, 202.53761, -2.9573822, 201.1448, -3.730194, 199.74368, -4.488022, 198.33438)
 
-[node name="Hedge36" type="Node3D" parent="." unique_id=1097620798]
+[node name="Hedge36" type="Node3D" parent="." unique_id=1023749554]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(0.7033615, 48.655403, 1.5569992, 47.301994, 2.425026, 45.95778, 3.3073502, 44.622887, 4.20385, 43.297493, 5.1144485, 41.981743, 6.0390244, 40.675766, 6.9774857, 39.379745, 7.929718, 38.093796, 8.895607, 36.818085, 9.875053, 35.552742)
 
-[node name="Hedge37" type="Node3D" parent="." unique_id=1497057224]
+[node name="Hedge37" type="Node3D" parent="." unique_id=1209478428]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(14.971634, 29.38668, 16.030006, 28.186577, 17.10112, 26.997833, 18.184845, 25.820587, 19.281082, 24.65496, 20.389687, 23.501099, 21.510536, 22.35913, 22.643501, 21.22918, 23.788452, 20.111382, 24.945274, 19.00586, 26.113815, 17.912735, 27.293953, 16.832146, 28.485542, 15.764206, 29.688469, 14.709045, 30.902565, 13.666763, 32.12773, 12.637489, 33.3638, 11.621353, 34.610634, 10.618462, 35.868095, 9.6289215, 37.13604, 8.652855)
 
-[node name="Hedge38" type="Node3D" parent="." unique_id=702621178]
+[node name="Hedge38" type="Node3D" parent="." unique_id=1235616977]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(43.627953, 3.9784012, 44.955734, 3.085434, 46.29296, 2.2066803, 47.63949, 1.3422394, 48.99517, 0.4922104, 50.359833, -0.3433075, 51.73333, -1.1642151)
 
-[node name="Hedge39" type="Node3D" parent="." unique_id=430303284]
+[node name="Hedge39" type="Node3D" parent="." unique_id=870895394]
 script = ExtResource("1_wtoqg")
 model = ExtResource("2_0pdwt")
 points = PackedVector2Array(58.72785, -5.0464935, 60.151047, -5.777878, 61.581963, -6.494034, 63.02043, -7.1948853, 64.4663, -7.880356, 65.9194, -8.550354, 67.37956, -9.204819, 68.84662, -9.843674, 70.32042, -10.466843, 71.800766, -11.074249)
 
-[node name="GroveTree1" type="StaticBody3D" parent="." unique_id=2078845977 instance=ExtResource("15_5wddb")]
+[node name="GroveTree1" type="StaticBody3D" parent="." unique_id=1393380132 instance=ExtResource("15_5wddb")]
 transform = Transform3D(0.2855688, 0, -0.9583582, 0, 1, 0, 0.9583582, 0, 0.2855688, 287.25977, 30.359007, -14.018162)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -387,7 +386,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree2" type="StaticBody3D" parent="." unique_id=1768212764 instance=ExtResource("15_5wddb")]
+[node name="GroveTree2" type="StaticBody3D" parent="." unique_id=375060264 instance=ExtResource("15_5wddb")]
 transform = Transform3D(0.2675985, 0, -0.9635305, 0, 1, 0, 0.9635305, 0, 0.2675985, 285.293, 29.361788, -6.709508)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -417,7 +416,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree3" type="StaticBody3D" parent="." unique_id=1252809479 instance=ExtResource("4_xcxuj")]
+[node name="GroveTree3" type="StaticBody3D" parent="." unique_id=1079221256 instance=ExtResource("4_xcxuj")]
 transform = Transform3D(-0.9682084, 0, -0.2501451, 0, 1, 0, 0.2501451, 0, -0.9682084, 271.58762, 27.978018, -11.809073)
 script = ExtResource("5_s6iup")
 item = &"oak"
@@ -448,7 +447,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("14_412pc")
 
-[node name="GroveTree4" type="StaticBody3D" parent="." unique_id=1332455939 instance=ExtResource("15_5wddb")]
+[node name="GroveTree4" type="StaticBody3D" parent="." unique_id=719958086 instance=ExtResource("15_5wddb")]
 transform = Transform3D(0.988762, 0, 0.14949802, 0, 1, 0, -0.14949802, 0, 0.988762, 275.22278, 27.849274, -7.1619506)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -478,7 +477,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree5" type="StaticBody3D" parent="." unique_id=2073745139 instance=ExtResource("4_xcxuj")]
+[node name="GroveTree5" type="StaticBody3D" parent="." unique_id=1324217504 instance=ExtResource("4_xcxuj")]
 transform = Transform3D(0.972113, 0, 0.23451285, 0, 1, 0, -0.23451285, 0, 0.972113, 277.5408, 29.599113, -25.70199)
 script = ExtResource("5_s6iup")
 item = &"oak"
@@ -509,7 +508,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("14_412pc")
 
-[node name="GroveTree6" type="StaticBody3D" parent="." unique_id=834341568 instance=ExtResource("20_tqlc1")]
+[node name="GroveTree6" type="StaticBody3D" parent="." unique_id=348547409 instance=ExtResource("20_tqlc1")]
 transform = Transform3D(0.91567576, 0, -0.4019178, 0, 1, 0, 0.4019178, 0, 0.91567576, 275.34204, 29.10871, -18.68639)
 script = ExtResource("5_s6iup")
 max_hits = 15
@@ -536,7 +535,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("24_3crcg")
 
-[node name="GroveTree7" type="StaticBody3D" parent="." unique_id=790950123 instance=ExtResource("15_5wddb")]
+[node name="GroveTree7" type="StaticBody3D" parent="." unique_id=1209775107 instance=ExtResource("15_5wddb")]
 transform = Transform3D(0.9037475, 0, -0.42806593, 0, 1, 0, 0.42806593, 0, 0.9037475, 280.3802, 29.346836, -13.481686)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -566,7 +565,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree8" type="StaticBody3D" parent="." unique_id=1327940600 instance=ExtResource("15_5wddb")]
+[node name="GroveTree8" type="StaticBody3D" parent="." unique_id=41669559 instance=ExtResource("15_5wddb")]
 transform = Transform3D(0.7467182, 0, 0.6651405, 0, 1, 0, -0.6651405, 0, 0.7467182, 304.14178, 20.508087, 209.22606)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -596,7 +595,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree9" type="StaticBody3D" parent="." unique_id=1269188209 instance=ExtResource("15_5wddb")]
+[node name="GroveTree9" type="StaticBody3D" parent="." unique_id=1108156498 instance=ExtResource("15_5wddb")]
 transform = Transform3D(0.2985528, 0, -0.95439315, 0, 1, 0, 0.95439315, 0, 0.2985528, 311.11038, 21.707693, 200.52434)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -626,7 +625,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree10" type="StaticBody3D" parent="." unique_id=179912857 instance=ExtResource("15_5wddb")]
+[node name="GroveTree10" type="StaticBody3D" parent="." unique_id=2042261294 instance=ExtResource("15_5wddb")]
 transform = Transform3D(0.50563926, 0, -0.862745, 0, 1, 0, 0.862745, 0, 0.50563926, 297.68893, 20.058416, 212.257)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -656,7 +655,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree11" type="StaticBody3D" parent="." unique_id=1420131778 instance=ExtResource("15_5wddb")]
+[node name="GroveTree11" type="StaticBody3D" parent="." unique_id=1196984482 instance=ExtResource("15_5wddb")]
 transform = Transform3D(-0.27125347, 0, 0.96250796, 0, 1, 0, -0.96250796, 0, -0.27125347, 301.25098, 19.962753, 205.06671)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -686,7 +685,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree12" type="StaticBody3D" parent="." unique_id=1585577032 instance=ExtResource("4_xcxuj")]
+[node name="GroveTree12" type="StaticBody3D" parent="." unique_id=1804050757 instance=ExtResource("4_xcxuj")]
 transform = Transform3D(-0.9597024, 0, -0.2810185, 0, 1, 0, 0.2810185, 0, -0.9597024, 310.9601, 20.913303, 208.53522)
 script = ExtResource("5_s6iup")
 item = &"oak"
@@ -717,7 +716,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("14_412pc")
 
-[node name="GroveTree13" type="StaticBody3D" parent="." unique_id=348438249 instance=ExtResource("20_tqlc1")]
+[node name="GroveTree13" type="StaticBody3D" parent="." unique_id=1213112234 instance=ExtResource("20_tqlc1")]
 transform = Transform3D(0.86635333, 0, 0.49943158, 0, 1, 0, -0.49943158, 0, 0.86635333, 292.3069, 16.141632, 198.51125)
 script = ExtResource("5_s6iup")
 max_hits = 15
@@ -744,7 +743,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("24_3crcg")
 
-[node name="GroveTree14" type="StaticBody3D" parent="." unique_id=710750594 instance=ExtResource("4_xcxuj")]
+[node name="GroveTree14" type="StaticBody3D" parent="." unique_id=1803107118 instance=ExtResource("4_xcxuj")]
 transform = Transform3D(-0.9823352, 0, 0.18712977, 0, 1, 0, -0.18712977, 0, -0.9823352, 292.50824, 18.173967, 204.32611)
 script = ExtResource("5_s6iup")
 item = &"oak"
@@ -775,7 +774,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("14_412pc")
 
-[node name="GroveTree15" type="StaticBody3D" parent="." unique_id=314340278 instance=ExtResource("15_5wddb")]
+[node name="GroveTree15" type="StaticBody3D" parent="." unique_id=22697850 instance=ExtResource("15_5wddb")]
 transform = Transform3D(-0.9049337, 0, -0.42555258, 0, 1, 0, 0.42555258, 0, -0.9049337, 189.88635, 12.518772, 296.59692)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -805,7 +804,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree16" type="StaticBody3D" parent="." unique_id=374792767 instance=ExtResource("15_5wddb")]
+[node name="GroveTree16" type="StaticBody3D" parent="." unique_id=1432174804 instance=ExtResource("15_5wddb")]
 transform = Transform3D(-0.6304533, 0, -0.77622724, 0, 1, 0, 0.77622724, 0, -0.6304533, 188.70229, 11.633208, 290.38535)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -835,7 +834,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree17" type="StaticBody3D" parent="." unique_id=1508917009 instance=ExtResource("15_5wddb")]
+[node name="GroveTree17" type="StaticBody3D" parent="." unique_id=994526787 instance=ExtResource("15_5wddb")]
 transform = Transform3D(-0.32286355, 0, 0.9464455, 0, 1, 0, -0.9464455, 0, -0.32286355, 182.92279, 9.252045, 286.87564)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -865,7 +864,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree18" type="StaticBody3D" parent="." unique_id=1837847925 instance=ExtResource("15_5wddb")]
+[node name="GroveTree18" type="StaticBody3D" parent="." unique_id=1989270491 instance=ExtResource("15_5wddb")]
 transform = Transform3D(0.96584046, 0, -0.25913754, 0, 1, 0, 0.25913754, 0, 0.96584046, 190.44168, 15.265789, 302.89532)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -895,7 +894,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree19" type="StaticBody3D" parent="." unique_id=1152114117 instance=ExtResource("20_tqlc1")]
+[node name="GroveTree19" type="StaticBody3D" parent="." unique_id=1796871767 instance=ExtResource("20_tqlc1")]
 transform = Transform3D(-0.51141846, 0, 0.8593318, 0, 1, 0, -0.8593318, 0, -0.51141846, 193.88223, 17.154448, 306.52576)
 script = ExtResource("5_s6iup")
 max_hits = 15
@@ -922,7 +921,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("24_3crcg")
 
-[node name="GroveTree20" type="StaticBody3D" parent="." unique_id=923226535 instance=ExtResource("4_xcxuj")]
+[node name="GroveTree20" type="StaticBody3D" parent="." unique_id=1696113518 instance=ExtResource("4_xcxuj")]
 transform = Transform3D(0.9994776, 0, -0.032317556, 0, 1, 0, 0.032317556, 0, 0.9994776, 195.1485, 12.129486, 286.06427)
 script = ExtResource("5_s6iup")
 item = &"oak"
@@ -953,7 +952,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("14_412pc")
 
-[node name="GroveTree21" type="StaticBody3D" parent="." unique_id=11295776 instance=ExtResource("20_tqlc1")]
+[node name="GroveTree21" type="StaticBody3D" parent="." unique_id=467959812 instance=ExtResource("20_tqlc1")]
 transform = Transform3D(0.44472206, 0, 0.8956686, 0, 1, 0, -0.8956686, 0, 0.44472206, 186.7831, 16.529415, 306.261)
 script = ExtResource("5_s6iup")
 max_hits = 15
@@ -980,7 +979,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("24_3crcg")
 
-[node name="GroveTree22" type="StaticBody3D" parent="." unique_id=1697336784 instance=ExtResource("20_tqlc1")]
+[node name="GroveTree22" type="StaticBody3D" parent="." unique_id=1378915821 instance=ExtResource("20_tqlc1")]
 transform = Transform3D(0.60672766, 0, -0.7949098, 0, 1, 0, 0.7949098, 0, 0.60672766, -41.912243, 32.583927, 257.34955)
 script = ExtResource("5_s6iup")
 max_hits = 15
@@ -1007,7 +1006,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("24_3crcg")
 
-[node name="GroveTree23" type="StaticBody3D" parent="." unique_id=1010194351 instance=ExtResource("20_tqlc1")]
+[node name="GroveTree23" type="StaticBody3D" parent="." unique_id=1905739348 instance=ExtResource("20_tqlc1")]
 transform = Transform3D(-0.2611828, 0, 0.96528935, 0, 1, 0, -0.96528935, 0, -0.2611828, -38.938168, 31.322569, 247.31201)
 script = ExtResource("5_s6iup")
 max_hits = 15
@@ -1034,7 +1033,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("24_3crcg")
 
-[node name="GroveTree24" type="StaticBody3D" parent="." unique_id=1155209881 instance=ExtResource("20_tqlc1")]
+[node name="GroveTree24" type="StaticBody3D" parent="." unique_id=825875687 instance=ExtResource("20_tqlc1")]
 transform = Transform3D(0.9681307, 0, -0.2504454, 0, 1, 0, 0.2504454, 0, 0.9681307, -46.826504, 33.232002, 258.80273)
 script = ExtResource("5_s6iup")
 max_hits = 15
@@ -1061,7 +1060,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("24_3crcg")
 
-[node name="GroveTree25" type="StaticBody3D" parent="." unique_id=915639044 instance=ExtResource("20_tqlc1")]
+[node name="GroveTree25" type="StaticBody3D" parent="." unique_id=1205394220 instance=ExtResource("20_tqlc1")]
 transform = Transform3D(0.87218666, 0, -0.48917326, 0, 1, 0, 0.48917326, 0, 0.87218666, -40.034943, 32.184734, 251.88605)
 script = ExtResource("5_s6iup")
 max_hits = 15
@@ -1088,7 +1087,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("24_3crcg")
 
-[node name="GroveTree26" type="StaticBody3D" parent="." unique_id=454632413 instance=ExtResource("15_5wddb")]
+[node name="GroveTree26" type="StaticBody3D" parent="." unique_id=1624660038 instance=ExtResource("15_5wddb")]
 transform = Transform3D(0.98172057, 0, -0.19032796, 0, 1, 0, 0.19032796, 0, 0.98172057, -39.6011, 31.951357, 262.7376)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -1118,7 +1117,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree27" type="StaticBody3D" parent="." unique_id=145748 instance=ExtResource("4_xcxuj")]
+[node name="GroveTree27" type="StaticBody3D" parent="." unique_id=1514310690 instance=ExtResource("4_xcxuj")]
 transform = Transform3D(-0.9431403, 0, 0.33239478, 0, 1, 0, -0.33239478, 0, -0.9431403, -46.75164, 33.171997, 253.61928)
 script = ExtResource("5_s6iup")
 item = &"oak"
@@ -1149,7 +1148,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("14_412pc")
 
-[node name="GroveTree28" type="StaticBody3D" parent="." unique_id=1296673128 instance=ExtResource("15_5wddb")]
+[node name="GroveTree28" type="StaticBody3D" parent="." unique_id=2015827907 instance=ExtResource("15_5wddb")]
 transform = Transform3D(-0.64079577, 0, 0.7677114, 0, 1, 0, -0.7677114, 0, -0.64079577, -36.19208, 31.360405, 255.28026)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -1179,7 +1178,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree29" type="StaticBody3D" parent="." unique_id=1393041332 instance=ExtResource("4_xcxuj")]
+[node name="GroveTree29" type="StaticBody3D" parent="." unique_id=978078331 instance=ExtResource("4_xcxuj")]
 transform = Transform3D(-0.39975622, 0, 0.9166215, 0, 1, 0, -0.9166215, 0, -0.39975622, -32.167053, 21.74555, 25.03738)
 script = ExtResource("5_s6iup")
 item = &"oak"
@@ -1210,7 +1209,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("14_412pc")
 
-[node name="GroveTree30" type="StaticBody3D" parent="." unique_id=1995656594 instance=ExtResource("20_tqlc1")]
+[node name="GroveTree30" type="StaticBody3D" parent="." unique_id=1822176599 instance=ExtResource("20_tqlc1")]
 transform = Transform3D(0.8952129, 0, -0.44563875, 0, 1, 0, 0.44563875, 0, 0.8952129, -42.97106, 24.011753, 28.618004)
 script = ExtResource("5_s6iup")
 max_hits = 15
@@ -1237,7 +1236,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("24_3crcg")
 
-[node name="GroveTree31" type="StaticBody3D" parent="." unique_id=861539737 instance=ExtResource("20_tqlc1")]
+[node name="GroveTree31" type="StaticBody3D" parent="." unique_id=2143432722 instance=ExtResource("20_tqlc1")]
 transform = Transform3D(0.8797443, 0, -0.47544718, 0, 1, 0, 0.47544718, 0, 0.8797443, -31.587126, 21.793116, 12.279772)
 script = ExtResource("5_s6iup")
 max_hits = 15
@@ -1264,7 +1263,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("24_3crcg")
 
-[node name="GroveTree32" type="StaticBody3D" parent="." unique_id=380092250 instance=ExtResource("15_5wddb")]
+[node name="GroveTree32" type="StaticBody3D" parent="." unique_id=435419083 instance=ExtResource("15_5wddb")]
 transform = Transform3D(0.28896004, 0, 0.95734113, 0, 1, 0, -0.95734113, 0, 0.28896004, -30.402224, 21.511793, 18.400318)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -1294,7 +1293,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree33" type="StaticBody3D" parent="." unique_id=788881159 instance=ExtResource("20_tqlc1")]
+[node name="GroveTree33" type="StaticBody3D" parent="." unique_id=336163093 instance=ExtResource("20_tqlc1")]
 transform = Transform3D(-0.5138297, 0, 0.8578922, 0, 1, 0, -0.8578922, 0, -0.5138297, -42.120125, 23.887836, 12.19366)
 script = ExtResource("5_s6iup")
 max_hits = 15
@@ -1321,7 +1320,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("24_3crcg")
 
-[node name="GroveTree34" type="StaticBody3D" parent="." unique_id=500625936 instance=ExtResource("15_5wddb")]
+[node name="GroveTree34" type="StaticBody3D" parent="." unique_id=1836673311 instance=ExtResource("15_5wddb")]
 transform = Transform3D(-0.75593436, 0, -0.6546474, 0, 1, 0, 0.6546474, 0, -0.75593436, -44.341362, 24.491245, 17.119652)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -1351,7 +1350,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree35" type="StaticBody3D" parent="." unique_id=1975520037 instance=ExtResource("4_xcxuj")]
+[node name="GroveTree35" type="StaticBody3D" parent="." unique_id=591122216 instance=ExtResource("4_xcxuj")]
 transform = Transform3D(-0.79405123, 0, -0.6078508, 0, 1, 0, 0.6078508, 0, -0.79405123, -26.050083, 21.25443, 13.934954)
 script = ExtResource("5_s6iup")
 item = &"oak"
@@ -1382,7 +1381,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("14_412pc")
 
-[node name="GroveTree36" type="StaticBody3D" parent="." unique_id=1749482556 instance=ExtResource("15_5wddb")]
+[node name="GroveTree36" type="StaticBody3D" parent="." unique_id=848665827 instance=ExtResource("15_5wddb")]
 transform = Transform3D(0.99709976, 0, 0.076105766, 0, 1, 0, -0.076105766, 0, 0.99709976, -39.700813, 18.978836, 206.14948)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -1412,7 +1411,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree37" type="StaticBody3D" parent="." unique_id=1549991242 instance=ExtResource("15_5wddb")]
+[node name="GroveTree37" type="StaticBody3D" parent="." unique_id=1759534970 instance=ExtResource("15_5wddb")]
 transform = Transform3D(-0.7756854, 0, -0.6311197, 0, 1, 0, 0.6311197, 0, -0.7756854, -37.34271, 18.497814, 200.29498)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -1442,7 +1441,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree38" type="StaticBody3D" parent="." unique_id=290634079 instance=ExtResource("4_xcxuj")]
+[node name="GroveTree38" type="StaticBody3D" parent="." unique_id=1834883206 instance=ExtResource("4_xcxuj")]
 transform = Transform3D(-0.8911301, 0, -0.45374793, 0, 1, 0, 0.45374793, 0, -0.8911301, -31.712471, 17.657692, 214.08423)
 script = ExtResource("5_s6iup")
 item = &"oak"
@@ -1473,7 +1472,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("14_412pc")
 
-[node name="GroveTree39" type="StaticBody3D" parent="." unique_id=783659285 instance=ExtResource("15_5wddb")]
+[node name="GroveTree39" type="StaticBody3D" parent="." unique_id=142543464 instance=ExtResource("15_5wddb")]
 transform = Transform3D(0.59171313, 0, 0.8061486, 0, 1, 0, -0.8061486, 0, 0.59171313, -36.261692, 18.174318, 195.17026)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -1503,7 +1502,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree40" type="StaticBody3D" parent="." unique_id=2000862580 instance=ExtResource("15_5wddb")]
+[node name="GroveTree40" type="StaticBody3D" parent="." unique_id=1034582494 instance=ExtResource("15_5wddb")]
 transform = Transform3D(0.9981179, 0, -0.061324067, 0, 1, 0, 0.061324067, 0, 0.9981179, -25.718351, 14.229405, 203.27109)
 script = ExtResource("5_s6iup")
 item = &"birch"
@@ -1533,7 +1532,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("19_amqr7")
 
-[node name="GroveTree41" type="StaticBody3D" parent="." unique_id=582717224 instance=ExtResource("4_xcxuj")]
+[node name="GroveTree41" type="StaticBody3D" parent="." unique_id=1956604394 instance=ExtResource("4_xcxuj")]
 transform = Transform3D(-0.8159141, 0, 0.57817316, 0, 1, 0, -0.57817316, 0, -0.8159141, -29.740906, 16.213507, 195.80434)
 script = ExtResource("5_s6iup")
 item = &"oak"
@@ -1564,7 +1563,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("14_412pc")
 
-[node name="GroveTree42" type="StaticBody3D" parent="." unique_id=1767041850 instance=ExtResource("4_xcxuj")]
+[node name="GroveTree42" type="StaticBody3D" parent="." unique_id=1775233024 instance=ExtResource("4_xcxuj")]
 transform = Transform3D(-0.009814093, 0, -0.99995184, 0, 1, 0, 0.99995184, 0, -0.009814093, -31.93637, 17.011429, 200.83372)
 script = ExtResource("5_s6iup")
 item = &"oak"
@@ -1595,7 +1594,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("14_412pc")
 
-[node name="LoneOak1" type="StaticBody3D" parent="." unique_id=939653895 instance=ExtResource("4_xcxuj")]
+[node name="LoneOak1" type="StaticBody3D" parent="." unique_id=1550742801 instance=ExtResource("4_xcxuj")]
 transform = Transform3D(-0.51833576, 0, -0.85517716, 0, 1, 0, 0.85517716, 0, -0.51833576, -44.112473, 25.634335, 73.006546)
 script = ExtResource("5_s6iup")
 item = &"oak"
@@ -1626,7 +1625,7 @@ fall_layers = ExtResource("12_f4v42")
 clean_layers = ExtResource("13_ej2pa")
 land_layers = ExtResource("14_412pc")
 
-[node name="OutcropRock1" type="StaticBody3D" parent="." unique_id=1732880031 instance=ExtResource("25_jrhlw")]
+[node name="OutcropRock1" type="StaticBody3D" parent="." unique_id=310953962 instance=ExtResource("25_jrhlw")]
 transform = Transform3D(-0.9608891, 0, 0.27693337, 0, 1, 0, -0.27693337, 0, -0.9608891, 224.60298, 25.149076, 343.41373)
 script = ExtResource("5_s6iup")
 item = &"coal"
@@ -1664,7 +1663,7 @@ split_layers = ExtResource("33_lcvn4")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock2" type="StaticBody3D" parent="." unique_id=1657718334 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock2" type="StaticBody3D" parent="." unique_id=1669203369 instance=ExtResource("34_gpskk")]
 transform = Transform3D(-0.7683663, 0, -0.64001036, 0, 1, 0, 0.64001036, 0, -0.7683663, 231.12114, 23.18985, 347.88538)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -1697,7 +1696,7 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock3" type="StaticBody3D" parent="." unique_id=52137410 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock3" type="StaticBody3D" parent="." unique_id=1037551315 instance=ExtResource("34_gpskk")]
 transform = Transform3D(-0.6722807, 0, -0.7402963, 0, 1, 0, 0.7402963, 0, -0.6722807, 228.65564, 23.809135, 339.3186)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -1730,7 +1729,7 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock4" type="StaticBody3D" parent="." unique_id=330942709 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock4" type="StaticBody3D" parent="." unique_id=1198083173 instance=ExtResource("34_gpskk")]
 transform = Transform3D(-0.87926793, 0, -0.47632748, 0, 1, 0, 0.47632748, 0, -0.87926793, 228.78258, 24.000847, 343.86887)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -1763,7 +1762,7 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock5" type="StaticBody3D" parent="." unique_id=1331923814 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock5" type="StaticBody3D" parent="." unique_id=1546212056 instance=ExtResource("34_gpskk")]
 transform = Transform3D(0.89780176, 0, -0.4403999, 0, 1, 0, 0.4403999, 0, 0.89780176, 233.3366, 23.17213, 343.11566)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -1796,7 +1795,7 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock6" type="StaticBody3D" parent="." unique_id=586022868 instance=ExtResource("39_3lf0q")]
+[node name="OutcropRock6" type="StaticBody3D" parent="." unique_id=1585625669 instance=ExtResource("39_3lf0q")]
 transform = Transform3D(-0.6909305, 0, 0.72292125, 0, 1, 0, -0.72292125, 0, -0.6909305, 159.00697, 13.522028, 295.66376)
 script = ExtResource("5_s6iup")
 item = &"iron"
@@ -1834,7 +1833,7 @@ split_layers = ExtResource("43_w4wfh")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock7" type="StaticBody3D" parent="." unique_id=1083148275 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock7" type="StaticBody3D" parent="." unique_id=1322989473 instance=ExtResource("34_gpskk")]
 transform = Transform3D(0.7903516, 0, -0.61265355, 0, 1, 0, 0.61265355, 0, 0.7903516, 153.14946, 10.990301, 291.10165)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -1867,7 +1866,7 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock8" type="StaticBody3D" parent="." unique_id=497274017 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock8" type="StaticBody3D" parent="." unique_id=1647253001 instance=ExtResource("34_gpskk")]
 transform = Transform3D(0.006778264, 0, 0.99997705, 0, 1, 0, -0.99997705, 0, 0.006778264, 160.91083, 11.336418, 290.54315)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -1900,7 +1899,7 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock9" type="StaticBody3D" parent="." unique_id=1022070129 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock9" type="StaticBody3D" parent="." unique_id=922523240 instance=ExtResource("34_gpskk")]
 transform = Transform3D(-0.9756048, 0, 0.21953443, 0, 1, 0, -0.21953443, 0, -0.9756048, 161.9559, 9.680329, 286.5655)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -1933,7 +1932,7 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock10" type="StaticBody3D" parent="." unique_id=407217507 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock10" type="StaticBody3D" parent="." unique_id=232986752 instance=ExtResource("34_gpskk")]
 transform = Transform3D(0.62349075, 0, -0.7818307, 0, 1, 0, 0.7818307, 0, 0.62349075, 151.37706, 8.510407, 285.3474)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -1966,7 +1965,7 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock11" type="StaticBody3D" parent="." unique_id=805132431 instance=ExtResource("25_jrhlw")]
+[node name="OutcropRock11" type="StaticBody3D" parent="." unique_id=169139012 instance=ExtResource("25_jrhlw")]
 transform = Transform3D(-0.48897, 0, -0.87230057, 0, 1, 0, 0.87230057, 0, -0.48897, 335.167, 27.294735, 61.176342)
 script = ExtResource("5_s6iup")
 item = &"coal"
@@ -2004,7 +2003,7 @@ split_layers = ExtResource("33_lcvn4")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock12" type="StaticBody3D" parent="." unique_id=511550212 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock12" type="StaticBody3D" parent="." unique_id=209753292 instance=ExtResource("34_gpskk")]
 transform = Transform3D(-0.9906889, 0, 0.13614504, 0, 1, 0, -0.13614504, 0, -0.9906889, 340.4444, 28.920292, 59.251015)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -2037,7 +2036,7 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock13" type="StaticBody3D" parent="." unique_id=1189713631 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock13" type="StaticBody3D" parent="." unique_id=1252479147 instance=ExtResource("34_gpskk")]
 transform = Transform3D(-0.8347393, 0, -0.55064535, 0, 1, 0, 0.55064535, 0, -0.8347393, 338.5164, 27.143963, 68.55565)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -2070,7 +2069,7 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock14" type="StaticBody3D" parent="." unique_id=1299724593 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock14" type="StaticBody3D" parent="." unique_id=330520428 instance=ExtResource("34_gpskk")]
 transform = Transform3D(0.99983364, 0, 0.018240253, 0, 1, 0, -0.018240253, 0, 0.99983364, 346.32983, 29.04008, 64.9943)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -2103,7 +2102,7 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock15" type="StaticBody3D" parent="." unique_id=1866021900 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock15" type="StaticBody3D" parent="." unique_id=266594880 instance=ExtResource("34_gpskk")]
 transform = Transform3D(0.9945392, 0, 0.104363926, 0, 1, 0, -0.104363926, 0, 0.9945392, 344.8407, 29.497293, 60.205822)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -2136,7 +2135,7 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock16" type="StaticBody3D" parent="." unique_id=371490135 instance=ExtResource("39_3lf0q")]
+[node name="OutcropRock16" type="StaticBody3D" parent="." unique_id=271574457 instance=ExtResource("39_3lf0q")]
 transform = Transform3D(0.24052396, 0, -0.9706432, 0, 1, 0, 0.9706432, 0, 0.24052396, 10.44067, 20.74278, -18.177998)
 script = ExtResource("5_s6iup")
 item = &"iron"
@@ -2174,7 +2173,7 @@ split_layers = ExtResource("43_w4wfh")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock17" type="StaticBody3D" parent="." unique_id=1502260110 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock17" type="StaticBody3D" parent="." unique_id=1956103770 instance=ExtResource("34_gpskk")]
 transform = Transform3D(-0.18510279, 0, 0.9827192, 0, 1, 0, -0.9827192, 0, -0.18510279, 3.5329857, 19.424408, -11.376434)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -2207,7 +2206,7 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock18" type="StaticBody3D" parent="." unique_id=583159601 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock18" type="StaticBody3D" parent="." unique_id=330997489 instance=ExtResource("34_gpskk")]
 transform = Transform3D(-0.5434572, 0, -0.8394369, 0, 1, 0, 0.8394369, 0, -0.5434572, 15.293358, 18.482485, -16.064415)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -2240,7 +2239,7 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock19" type="StaticBody3D" parent="." unique_id=1978722812 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock19" type="StaticBody3D" parent="." unique_id=302753866 instance=ExtResource("34_gpskk")]
 transform = Transform3D(-0.8732257, 0, -0.48731604, 0, 1, 0, 0.48731604, 0, -0.8732257, 6.517302, 22.344988, -20.421743)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -2273,7 +2272,7 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock20" type="StaticBody3D" parent="." unique_id=271434750 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock20" type="StaticBody3D" parent="." unique_id=760055009 instance=ExtResource("34_gpskk")]
 transform = Transform3D(0.15166278, 0, -0.9884323, 0, 1, 0, 0.9884323, 0, 0.15166278, 8.7296, 18.628061, -12.7595415)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -2306,7 +2305,7 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock21" type="StaticBody3D" parent="." unique_id=2012957446 instance=ExtResource("25_jrhlw")]
+[node name="OutcropRock21" type="StaticBody3D" parent="." unique_id=1739823861 instance=ExtResource("25_jrhlw")]
 transform = Transform3D(-0.97254467, 0, -0.23271637, 0, 1, 0, 0.23271637, 0, -0.97254467, 215.28244, 16.210718, 280.04855)
 script = ExtResource("5_s6iup")
 item = &"coal"
@@ -2344,7 +2343,7 @@ split_layers = ExtResource("33_lcvn4")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock22" type="StaticBody3D" parent="." unique_id=1424139711 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock22" type="StaticBody3D" parent="." unique_id=1366338434 instance=ExtResource("34_gpskk")]
 transform = Transform3D(0.7217693, 0, 0.6921337, 0, 1, 0, -0.6921337, 0, 0.7217693, 215.78505, 15.547987, 272.2243)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -2377,7 +2376,7 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock23" type="StaticBody3D" parent="." unique_id=136053105 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock23" type="StaticBody3D" parent="." unique_id=346695951 instance=ExtResource("34_gpskk")]
 transform = Transform3D(-0.3436219, 0, -0.9391081, 0, 1, 0, 0.9391081, 0, -0.3436219, 219.39873, 17.820229, 282.43378)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -2410,7 +2409,7 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock24" type="StaticBody3D" parent="." unique_id=719839365 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock24" type="StaticBody3D" parent="." unique_id=1798613256 instance=ExtResource("34_gpskk")]
 transform = Transform3D(-0.47542417, 0, 0.8797567, 0, 1, 0, -0.8797567, 0, -0.47542417, 211.7702, 14.474343, 275.07544)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -2443,7 +2442,7 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="OutcropRock25" type="StaticBody3D" parent="." unique_id=85734182 instance=ExtResource("34_gpskk")]
+[node name="OutcropRock25" type="StaticBody3D" parent="." unique_id=1151341578 instance=ExtResource("34_gpskk")]
 transform = Transform3D(-0.84924567, 0, -0.5279979, 0, 1, 0, 0.5279979, 0, -0.84924567, 209.68326, 14.766031, 280.47705)
 script = ExtResource("5_s6iup")
 item = &"ore"
@@ -2476,115 +2475,115 @@ split_layers = ExtResource("38_nmynv")
 flash_strength = 0.18
 shake_break = 1.5
 
-[node name="BankPlant1" type="StaticBody3D" parent="." unique_id=743438263]
+[node name="BankPlant1" type="StaticBody3D" parent="." unique_id=2119446085]
 transform = Transform3D(0.9442277, 0, -0.32929328, 0, 1, 0, 0.32929328, 0, 0.9442277, 84.703674, 0, 3.7559311)
 script = ExtResource("44_wyh0u")
-model = ExtResource("45_h72dk")
+model = ExtResource("45_lcf67")
 collide = false
 snap_to_ground = true
 own_materials = true
 
-[node name="BankPlant2" type="StaticBody3D" parent="." unique_id=176707977]
+[node name="BankPlant2" type="StaticBody3D" parent="." unique_id=1651440988]
 transform = Transform3D(0.87673676, 0, -0.48097056, 0, 1, 0, 0.48097056, 0, 0.87673676, 76.45193, 0, 23.03117)
 script = ExtResource("44_wyh0u")
-model = ExtResource("46_f41w5")
+model = ExtResource("47_jlotq")
 collide = false
 snap_to_ground = true
 own_materials = true
 
-[node name="BankPlant3" type="StaticBody3D" parent="." unique_id=1424869920]
+[node name="BankPlant3" type="StaticBody3D" parent="." unique_id=161314848]
 transform = Transform3D(0.93018365, 0, -0.36709458, 0, 1, 0, 0.36709458, 0, 0.93018365, 41.06834, 0, 133.69801)
 script = ExtResource("44_wyh0u")
-model = ExtResource("47_jlotq")
+model = ExtResource("48_i76bh")
 collide = false
 snap_to_ground = true
 own_materials = true
 
-[node name="BankPlant4" type="StaticBody3D" parent="." unique_id=2122734088]
+[node name="BankPlant4" type="StaticBody3D" parent="." unique_id=1451146994]
 transform = Transform3D(0.96827507, 0, -0.24988669, 0, 1, 0, 0.24988669, 0, 0.96827507, 45.62115, 0, 158.54543)
 script = ExtResource("44_wyh0u")
-model = ExtResource("48_i76bh")
-collide = false
-snap_to_ground = true
-own_materials = true
-
-[node name="BankPlant5" type="StaticBody3D" parent="." unique_id=1167403228]
-transform = Transform3D(0.991309, 0, -0.1315543, 0, 1, 0, 0.1315543, 0, 0.991309, 31.956583, 0, 172.32864)
-script = ExtResource("44_wyh0u")
 model = ExtResource("49_l260r")
 collide = false
 snap_to_ground = true
 own_materials = true
 
-[node name="BankPlant6" type="StaticBody3D" parent="." unique_id=1405589146]
+[node name="BankPlant5" type="StaticBody3D" parent="." unique_id=344731563]
+transform = Transform3D(0.991309, 0, -0.1315543, 0, 1, 0, 0.1315543, 0, 0.991309, 31.956583, 0, 172.32864)
+script = ExtResource("44_wyh0u")
+model = ExtResource("45_lcf67")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="BankPlant6" type="StaticBody3D" parent="." unique_id=114590790]
 transform = Transform3D(0.99543864, 0, 0.09540408, 0, 1, 0, -0.09540408, 0, 0.99543864, 34.053246, 0, 230.32867)
-script = ExtResource("44_wyh0u")
-model = ExtResource("45_h72dk")
-collide = false
-snap_to_ground = true
-own_materials = true
-
-[node name="BankPlant7" type="StaticBody3D" parent="." unique_id=829974202]
-transform = Transform3D(0.9987989, 0, 0.048997074, 0, 1, 0, -0.048997074, 0, 0.9987989, 47.908913, 0, 263.02557)
-script = ExtResource("44_wyh0u")
-model = ExtResource("46_f41w5")
-collide = false
-snap_to_ground = true
-own_materials = true
-
-[node name="BankPlant8" type="StaticBody3D" parent="." unique_id=1212264820]
-transform = Transform3D(0.9986711, 0, -0.05153691, 0, 1, 0, 0.05153691, 0, 0.9986711, 48.146214, 0, 282.93414)
 script = ExtResource("44_wyh0u")
 model = ExtResource("47_jlotq")
 collide = false
 snap_to_ground = true
 own_materials = true
 
-[node name="BankPlant9" type="StaticBody3D" parent="." unique_id=749869950]
-transform = Transform3D(0.9970647, 0, -0.07656366, 0, 1, 0, 0.07656366, 0, 0.9970647, 45.812946, 0, 300.72037)
+[node name="BankPlant7" type="StaticBody3D" parent="." unique_id=676215621]
+transform = Transform3D(0.9987989, 0, 0.048997074, 0, 1, 0, -0.048997074, 0, 0.9987989, 47.908913, 0, 263.02557)
 script = ExtResource("44_wyh0u")
 model = ExtResource("48_i76bh")
 collide = false
 snap_to_ground = true
 own_materials = true
 
-[node name="BankPlant10" type="StaticBody3D" parent="." unique_id=1690422621]
-transform = Transform3D(0.9971756, 0, -0.07510553, 0, 1, 0, 0.07510553, 0, 0.9971756, 45.235626, 0, 314.54755)
+[node name="BankPlant8" type="StaticBody3D" parent="." unique_id=313498814]
+transform = Transform3D(0.9986711, 0, -0.05153691, 0, 1, 0, 0.05153691, 0, 0.9986711, 48.146214, 0, 282.93414)
 script = ExtResource("44_wyh0u")
 model = ExtResource("49_l260r")
 collide = false
 snap_to_ground = true
 own_materials = true
 
-[node name="StandingStone1" type="StaticBody3D" parent="." unique_id=1196706711]
+[node name="BankPlant9" type="StaticBody3D" parent="." unique_id=1289899668]
+transform = Transform3D(0.9970647, 0, -0.07656366, 0, 1, 0, 0.07656366, 0, 0.9970647, 45.812946, 0, 300.72037)
+script = ExtResource("44_wyh0u")
+model = ExtResource("45_lcf67")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="BankPlant10" type="StaticBody3D" parent="." unique_id=479165874]
+transform = Transform3D(0.9971756, 0, -0.07510553, 0, 1, 0, 0.07510553, 0, 0.9971756, 45.235626, 0, 314.54755)
+script = ExtResource("44_wyh0u")
+model = ExtResource("47_jlotq")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="StandingStone1" type="StaticBody3D" parent="." unique_id=1710678529]
 transform = Transform3D(0.6008259, 0, 0.7993799, 0, 1, 0, -0.7993799, 0, 0.6008259, 292.66937, 0, 7.5543256)
 script = ExtResource("44_wyh0u")
 model = ExtResource("50_e7ry0")
 snap_to_ground = true
 model_scale = Vector3(0.7, 2.6, 0.6)
 
-[node name="Shrine1" type="StaticBody3D" parent="." unique_id=187728837]
+[node name="Shrine1" type="StaticBody3D" parent="." unique_id=1604309992]
 transform = Transform3D(-0.7308975, 0, -0.68248725, 0, 1, 0, 0.68248725, 0, -0.7308975, 71.78881, 0, 237.06097)
 script = ExtResource("44_wyh0u")
 model = ExtResource("51_85iil")
 snap_to_ground = true
 own_materials = true
 
-[node name="ViewBench1" type="StaticBody3D" parent="." unique_id=2037139883]
+[node name="ViewBench1" type="StaticBody3D" parent="." unique_id=1851278780]
 transform = Transform3D(0.99961185, 0, 0.02785985, 0, 1, 0, -0.02785985, 0, 0.99961185, 132.98567, 0, 306.886)
 script = ExtResource("44_wyh0u")
 model = ExtResource("52_anvhd")
 snap_to_ground = true
 own_materials = true
 
-[node name="RuinedFarmstead" type="Node3D" parent="." unique_id=2125117094]
-transform = Transform3D(-0.9724935, 0, -0.23292992, 0, 1, 0, 0.23292992, 0, -0.9724935, 276.50186, 0, 41.759285)
+[node name="RuinedFarmstead" type="Node3D" parent="." unique_id=2079948834]
+transform = Transform3D(-0.16568154, 0, -0.9861793, 0, 1, 0, 0.9861793, 0, -0.16568154, 224.66429, 0, 104.4646)
 script = ExtResource("53_2qelx")
 model = ExtResource("54_r7uav")
 
-[node name="FarmWall1" type="Node3D" parent="." unique_id=704268186]
+[node name="FarmWall1" type="Node3D" parent="." unique_id=396116149]
 script = ExtResource("1_wtoqg")
 model = ExtResource("3_83k5j")
-points = PackedVector2Array(268.82562, 46.457703, 270.03595, 48.019646, 271.558, 49.279808, 273.31836, 50.17744, 275.23218, 50.669273, 277.2072, 50.7316, 279.14822, 50.36142, 280.9617, 49.57657, 282.56015, 48.414886)
+points = PackedVector2Array(225.98886, 113.36659, 227.89961, 112.862976, 229.6544, 111.95451, 231.16866, 110.685, 232.36935, 109.11562, 233.19864, 107.32205, 233.61652, 105.39073, 233.60284, 103.41477, 233.15831, 101.48942)
 model_scale = Vector3(1, 0.4, 1)
 spacing = 2.1

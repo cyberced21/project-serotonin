@@ -13,6 +13,15 @@ sparse, rocks sit out of place, the village looks randomly laid out. Branch `wor
   twelve, the tavern at three, the fisher's hut on the pond's bank. The farm a yard of its own to
   the south, the stores to the north by the roads out.
 
+## As built (2026-10-30)
+
+All nine phases are built on `world-pass` (each phase's notes are at the end of this file): the
+land at 768 m round a bowl (2), the assets page and the picks (3), the pond green (4), the
+village's fixtures (5), the country (6), the watermill, the orchard, the shepherd's hill and the
+hidden haven (7), the animals, small wildlife and the places' sounds (8), and the checks (9). Left
+for later (docs/TODO.md, "The world pass"): roomier top-tier interiors, the fixture projects'
+effects, the waterfall, tuning the sounds by ear, the places' uses. Nothing has been played yet.
+
 ## The map
 
 - **768 x 768 m** (3 x 3 Terrain3D regions, a region being one 256 m tile of terrain data; today
@@ -279,3 +288,19 @@ the page's plots put the town hall and the tavern on the north and east lanes):
   crickets (the ambience has its own).
 - Not done: sounds unheard by anyone yet (levels are first guesses), the hens are small enough to
   hide in long grass, no fish model jumping (just the splash).
+
+## Phase 9, checks and pictures (2026-10-30)
+
+- Every test passes but `test_lantern` (failing before this pass; docs/TODO.md).
+- `tools/audit_world.gd` is clean bar the known leftovers (the boarded tavern's door, the fisher's
+  door seen from under its dock, a villager standing in a doorway, the tavern's shelf bottles, the
+  mine's cage and passage) and small ones: lamp footing stones sunk a few cm into slopes, the fruit
+  on the orchard trees "floating" (hung in the canopy), the haven log's seat on moss, a rabbit in
+  mid-hop. It skips the critters (they fly).
+- Fixed on the way: Prop's `model_scale` multiplies the model's own scale; two of the picked
+  bushes (bushes.glb, flower_bushes.glb) draw far from where they're put, so they aren't used; the
+  haven's old oaks collide by their trunks only; animals settle on the ground before they first
+  move; the ruined farmstead stands on level ground.
+- The screenshot tour (`world_shots.gd`, 44 views) is in docs/images/world/; the README's world
+  section is rewritten round the bowl, the pond green, the fixtures, the country, the new places
+  and life (docs/images/world/pass_sheet.jpg).

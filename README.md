@@ -87,16 +87,17 @@ whatever you hit.
   | ![Rocks by theme](docs/images/themes/rocks.png) | ![Trees by theme](docs/images/themes/trees.png) |
 
 
-- **One valley, all of a piece** ([plans/world.md](plans/world.md)). Broad rolling hills ease down into the clearing, the village and the lake basin, joined by shallow valleys; nothing outside the quarry's stone faces is sheer, and almost all of it is gentler than 30°. The world's edge rises into high hills, so the valley feels closed in rather than cut off. Biomes fray into the grass at their edges instead of ending on a line.
-  - **The creek** runs from a spring at the foot of the Pinewood hills, down its own little vale, through the clearing's pond and into the lake. Wade it anywhere; mend the footbridge where the village path crosses it.
-  - **Roads that follow the land:** gravel roads to the quarry, round the lake, to Goldmeadow and from the village up into the Pinewood, and dirt paths to the lake, into the forest and up Frostpeak. Each was routed over the terrain the cheapest way (round hills, along valleys) and climbs gently.
+- **One wide bowl round the village** ([plans/world-pass.md](plans/world-pass.md)). The world is 768 m across now. Hearthvale sits low in the middle of a broad, shallow bowl; every other place stands on the hills round its rim, each up its own road like the spokes of a wheel (the quarry west, Frostpeak north-west, the Pinewood north, the lake south past the rim, Goldmeadow up on a plateau to the south-east, the road east).
+  - **The creek** falls from a spring under the north rim, through the clearing's pond, past the village and out to Stillwater. Wade it anywhere; mend the footbridge where the clearing path crosses it.
+  - **Roads that follow the land**, routed over the terrain the cheapest way (round hills, along valleys, keeping off the creek's banks), and footpaths to the new places.
+- **The pond green.** The village faces in round a round green with its pond, the well, benches, lamp posts and the market stall; the town hall at twelve, the tavern at three, the fisher's hut on the pond's bank. A path rings the green, lanes run in to every door and out to the roads, and one crosses the green beside the pond.
+  - **The village's fixtures**, built from the same kit as the houses: a farm yard (the old barn, a granary on staddle stones, the cart shed, the stable, hay ricks, a pig pen), the storehouse, the ore store, the timber yard, a woodshed, the chapel with its bell, the washhouse and its washing lines, a dovecote, a pump, allotments, two shuttered cottages "to let" and a ruined one. Walk into the barn, the storehouse, the chapel and the washhouse. Noticeboard projects restore the barn, mend the granary and open up a cottage.
+- **The country between.** Hedgerows along the roads and stone walls and hedges round the fields (with gates), copses of trees to fell, lone oaks on the knolls, rocky outcrops with a little iron and coal, flowers and thickets along the creek, and old things to come across on a walk: a standing stone, a wayside shrine, a bench at a view, a ruined farmstead (`tools/place_country.gd` places it all from the land, once).
+- **New places.** A watermill on the creek below the village (mend its wheel and it turns), an orchard of apples and pears with a cider press (mend its wall), the shepherd's hill with its hut on wheels, a stone fold and a view, and somewhere in the Pinewood a hidden haven: find the faint track and the gap in the thicket for a quiet glade with a spring pool, old oaks, a mossy ruin and a flower to take home for your wall.
+- **Life.** Sheep on the hill and in the pastures, cows in the east fields, hens and pigs in the farm yard, horses and a donkey by the stable, deer at the forest's edge (and two in the haven that don't run), rabbits in the fields (your dog gives chase), squirrels, frogs; butterflies, bees, dragonflies and birds. They graze and wander and call, and each place has sounds of its own: the farmyard, the mill wheel, the wind on the hill, birdsong, the chapel bell at seven, noon and six.
 
-  | The land's slopes before (black: sheer) | And after |
-  |---|---|
-  | ![Before](docs/images/world/slope_before.png) | ![After](docs/images/world/slope_after.png) |
-
-  ![The creek, the valley to the village, the roads, the quarry's slopes, Goldmeadow, Frostpeak](docs/images/world/tour.jpg)
-  (`graphics_tour.gd -- --set=world`; the world map: [docs/images/world/classic_map.png](docs/images/world/classic_map.png))
+  ![The village from the air, the green, the farm yard, the fields, the watermill, the orchard, the haven, a deer in the haven](docs/images/world/pass_sheet.jpg)
+  (`world_shots.gd`; every view in docs/images/world/)
 - **Your dog** ([plans/dog.md](plans/dog.md)). On your first morning three strays nap by the clearing's pond: a scruffy terrier, a shepherd mutt and a big fluffy one. Pet one (E), name him and pick his coat, and he's yours.
   - He follows you at an easy distance, trots ahead on roads and paths, sits when you stop, lies down while you gather (never in front of what you're hitting), and sniffs about. Fall far behind and he trots up from out of view.
   - Pet him any time (E). He paddles after you into shallow water, waits on the bank where it's deep, and shakes himself dry. While you fish he watches the float.
@@ -108,14 +109,14 @@ whatever you hit.
 
 - **The road east, the market and the trader** ([plans/market.md](plans/market.md)). A road climbs from the village through a pass in the eastern hills, but a landslide has buried it partway up.
   - Break its boulders with your pick (they never grow back), then pay for a timber retaining wall on the noticeboard: the mud goes and the road is open.
-  - **The market stall** (a noticeboard project, west of the square): barter, no money. Pick what you want, then what you'll give; swaps within a family (logs, ore, crops, fish) are cheaper.
+  - **The market stall** (a noticeboard project, on the green's east edge): barter, no money. Pick what you want, then what you'll give; swaps within a family (logs, ore, crops, fish) are cheaper.
   - **The trader** drives her horse and cart over the pass every second morning once the road's open, parks by the stall (kinder rates all day) and leaves at dusk. She brings one special of each kind per visit, in turn: a collar or bandana for your dog, a decoration (hanging flower baskets, a turning weathervane, a painted cart), or a colour of lantern glass.
 
   ![The landslide, the retaining wall, the market stall, the trader parked by it with the weathervane and flower baskets](docs/images/market/sheet.jpg)
 
-- **The villagers' day and the Sleepy Hound** ([plans/tavern.md](plans/tavern.md)). Villagers keep a day now: breakfast, work, the square at dusk, the tavern after dark, then home to bed, staggered so they never move as a herd. Each has a quirk or two (Ollie fishes at dawn, the mayor strolls round the square, Greta skips the tavern some nights). They walk the lanes, not through houses, and their windows light up when they get home and go dark one by one at bedtime.
+- **The villagers' day and the Sleepy Hound** ([plans/tavern.md](plans/tavern.md)). Villagers keep a day now: breakfast, work, the green at dusk, the tavern after dark, then home to bed, staggered so they never move as a herd. Each has a quirk or two (Ollie fishes at dawn, the mayor strolls round the green, Greta skips the tavern some nights). They walk the lanes, not through houses, and their windows light up when they get home and go dark one by one at bedtime.
   - **Rosa's bakery terrace** (a noticeboard project, town hall tier 2): tables under a striped awning where the village has breakfast while Rosa serves.
-  - **The tavern** stands boarded up on the west of the square. Talk to Maud, its keeper, to restore it in three tiers: a taproom, then a fireplace and a stage (Ollie fiddles of an evening, and the background music holds off near it), then the full Sleepy Hound, a long timbered hall with bunting and room to dance. It's open from dark to about one in the morning, and you can walk right in. Its add-ons: a beer garden or a bigger stage, then a fireside snug or a guest room.
+  - **The tavern** stands boarded up on the east of the green. Talk to Maud, its keeper, to restore it in three tiers: a taproom, then a fireplace and a stage (Ollie fiddles of an evening, and the background music holds off near it), then the full Sleepy Hound, a long timbered hall with bunting and room to dance. It's open from dark to about one in the morning, and you can walk right in. Its add-ons: a beer garden or a bigger stage, then a fireside snug or a guest room.
   - **Sit down** on any free seat (E): benches, the terrace, the tavern's stools. A movement key stands you up.
   - **Dice:** sit at the tavern's dice table of an evening and a villager comes over to play Hound's Luck. Roll five dice; 1s and 5s and three of a kind score and are set aside; roll the rest or stop and bank, but a roll that scores nothing loses the turn. First to 2000. It's played for fun: a chalkboard keeps the tally against each villager.
 
@@ -294,6 +295,10 @@ Most content is generated by scripts, so it's easy to tweak and regenerate. Run 
 | Kit pieces into `art/kit/` (Quaternius CC0 packs, textures as 1024 px JPEGs) | `python tools/import_kit.py village <kit glTF dir>`, `python tools/import_kit.py props <props glTF dir>` |
 | The houses built from the kit → `models/village/<name>.gltf` (shared textures in `models/village/textures/`): the village's six houses, your home, their add-ons | `blender -b -P tools/blender/kit_buildings.py -- models art/palette.json [baker_cottage woodcutter fisher prospector_cottage town_hall smithy home]` |
 | The village's fixtures built from the kit → `models/village/fx_<name>.gltf` (plans/world-pass.md, phase 5): barn, granary, cart shed, stable, storehouse, ore store, woodshed, timber yard, washhouse, chapel, dovecote, pump, empty and ruined cottages (T1 as found, T2 put right by its project) | `blender -b -P tools/blender/kit_fixtures.py -- models art/palette.json [barn granary ...]` |
+| The country round the village (hedges, walls, groves, outcrops, the creek's banks, the old things) → `scenes/country.tscn`, placed from the land once (same seed, same country) | `godot --headless --path . -s res://tools/place_country.gd -- --save-root=user://tool_worlds` |
+| Our own rabbit and squirrel (the picks had none) → `models/animals/rabbit_ours.glb`, `squirrel_ours.glb` | `blender -b -P tools/blender/make_critters.py -- models art/palette.json` |
+| A stretch cut out of an MP3 without re-encoding (whole frames; the hay rustle between its voices) | `python tools/mp3_cut.py IN.mp3 OUT.mp3 START_S END_S` |
+| Screenshots of the world pass (the bowl, the green, the fixtures, the country, the new places, the animals) → `docs/images/world/` | `godot --path . --audio-driver Dummy --screen 1 --resolution 1280x720 -s res://tools/world_shots.gd -- --save-root=user://world_shots [--only=green,haven]` |
 | Trophy models → `models/trophies/` (the picked looks; `both` for the a/b looks) | `blender -b -P tools/blender/make_trophies.py -- models art/palette.json [kind ...] [both]` |
 | A picture of the trophy wall, full | `blender -b -P tools/blender/render_trophy_wall.py -- models art/palette.png OUT.png [3\|4]` |
 | Renders of a building, every tier outside and cut away (and add-ons) | `blender -b -P tools/blender/render_building.py -- models/village/home.gltf art/palette.png OUT [swing garden]` |
@@ -333,6 +338,7 @@ hand-edit a model, import the `.glb` in Blender, edit it, and export it back as 
 
 ## Credits
 
+- The world pass's animals and country props: CC0 models picked from [Poly Pizza](https://poly.pizza), mostly by Quaternius, see `models/animals/SOURCES.md` and `models/country/SOURCES.md`; its countryside and animal sounds: CC0 recordings from [Freesound](https://freesound.org), see `audio/country/SOURCES.md`.
 - [Terrain3D](https://github.com/TokisanGames/Terrain3D) by Cory Petkovsek, Roope Palmroos and contributors (MIT). `shaders/terrain.gdshader` builds on its example shader.
 - House pieces and furniture: [Medieval Village MegaKit](https://quaternius.com/packs/medievalvillagemegakit.html) and [Fantasy Props MegaKit](https://quaternius.com/packs/fantasypropsmegakit.html) by Quaternius (CC0), see `art/kit/SOURCES.md`.
 - Models made with [Blender](https://www.blender.org/). The game is built with [Godot](https://godotengine.org/).

@@ -20,7 +20,7 @@ extends SceneTree
 const VIS_LAYER := 1 << 24
 const WORLD_MASK := 1
 ## Never part of the world: the player's own view and the UI.
-const NOT_WORLD := ["Viewmodel", "Player", "HUD", "Canvas"]
+const NOT_WORLD := ["Viewmodel", "Player", "HUD", "Canvas", "Life/Critters"]  # (the butterflies, bees and birds fly)
 ## Names (a node's or its parent's) that are meant to hang, fly, flutter or float on the water:
 ## they still hold things up, but aren't reported.
 const SKIP := ["Smoke", "Firefl", "Grass", "Water", "Surface", "Ripple", "Fish", "Ghost", "Villager",

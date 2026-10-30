@@ -345,8 +345,9 @@ func _prop(model: String, p: Vector2, yaw: float, kind: String, scale := Vector3
 
 
 func _creek_banks() -> void:
-	var picks := ["res://models/country/bushes.glb", "res://models/country/flower_bushes.glb",
-		"res://models/country/flowers.glb", "res://models/country/bush_with_berries.glb", "res://models/country/flower_group.glb"]
+	# (not bushes.glb nor flower_bushes.glb: their meshes draw far from where they're put)
+	var picks := ["res://models/country/bush_with_flowers.glb", "res://models/country/flowers.glb",
+		"res://models/country/bush_with_berries.glb", "res://models/country/flower_group.glb"]
 	var k := 0
 	var i := 30
 	while i < creek.size() - 3:
@@ -363,12 +364,24 @@ func _creek_banks() -> void:
 
 # --- the old things on a walk ------------------------------------------------------------------------
 
-func _near_ok(around: Vector2, r: float, reach: float) -> Vector2:
-	for tries in 200:
+func _near_ok(around: Vector2, r: float, reach: float, level := INF) -> Vector2:
+	for tries in 300:
 		var p := around + Vector2.from_angle(rng.randf() * TAU) * rng.randf() * reach
-		if _ok(p, r, 3.0):
+		if _ok(p, r, 3.0) and _rise(p, r) < level:
 			return p
 	return Vector2.INF
+
+
+## How far the ground rises and falls over a circle of radius `r` round `p` (m).
+func _rise(p: Vector2, r: float) -> float:
+	var lo := INF
+	var hi := -INF
+	for a in 12:
+		for rr in [0.0, r * 0.5, r]:
+			var h := _h(p + Vector2.from_angle(a * TAU / 12.0) * rr)
+			lo = minf(lo, h)
+			hi = maxf(hi, h)
+	return hi - lo
 
 
 func _old_things() -> void:
@@ -391,7 +404,7 @@ func _old_things() -> void:
 	if view != Vector2.INF:
 		var to_green := C - view
 		_prop("res://models/country/bench_2.glb", view, atan2(to_green.x, to_green.y) + PI, "view_bench", Vector3.ONE, true)
-	var farm := _near_ok(C + Vector2(120, -60), 8.0, 50.0)
+	var farm := _near_ok(C + Vector2(120, -60), 8.0, 70.0, 0.8)  # (on level ground: a ruin on a slope floats)
 	if farm != Vector2.INF:
 		var fx := Node3D.new()
 		fx.set_script(load("res://scripts/fixture.gd"))

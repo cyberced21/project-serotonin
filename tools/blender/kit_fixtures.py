@@ -479,7 +479,7 @@ def haven_log():
         k.add("Moss", mv.blob(0.22, k.rng, squash=(1.4, 1.0, 0.4)), ("leaves.2", "leaves.3", "leaves.1"),
               (-1.3 + i * 0.5, k.rng.uniform(-0.1, 0.1), 0.6))
     k.add("Fungus", mv.prism(8, 0.12, 0.12, 0.04), ("neutral.6", "neutral.5", "neutral.4"), (1.35, -0.2, 0.35))
-    marker(k, "Seat1", 0.3, -0.35, 0.0, (0, -1))
+    marker(k, "Seat1", 0.3, -0.05, 0.6, (0, -1))  # (on top of the log)
     kb.export_kit_building("fx_haven_log")
 
 

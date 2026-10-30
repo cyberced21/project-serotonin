@@ -32,7 +32,7 @@ func _ready() -> void:
 		if not is_nan(h):
 			global_position.y = h - sink
 	var inst := model.instantiate() as Node3D
-	inst.scale = model_scale
+	inst.scale *= model_scale  # (on top of any scale the model's own root has)
 	add_child(inst)
 	var bounds := AABB()
 	var first := true

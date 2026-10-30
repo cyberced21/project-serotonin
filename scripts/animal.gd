@@ -82,7 +82,7 @@ func _ready() -> void:
 	_rng.seed = hash(str(global_position))
 	_home = global_position
 	_model = (load("res://models/animals/%s.glb" % _def["model"]) as PackedScene).instantiate() as Node3D
-	_model.scale = Vector3.ONE * float(_def["scale"])
+	_model.scale *= float(_def["scale"])
 	add_child(_model)
 	if _def.get("palette", false):
 		for m in _model.find_children("*", "MeshInstance3D", true, false):
@@ -103,6 +103,13 @@ func _ready() -> void:
 	_dwell = _rng.randf_range(0.0, DWELL.y)
 	rotation.y = _rng.randf() * TAU
 	_play("graze")
+	_settle.call_deferred()
+
+
+## Onto the ground where it starts (a resting one far from you doesn't move until you're near).
+func _settle() -> void:
+	_terrain = get_tree().get_first_node_in_group("terrain") as Terrain3D
+	global_position.y = _ground(global_position)
 
 
 func _physics_process(delta: float) -> void:

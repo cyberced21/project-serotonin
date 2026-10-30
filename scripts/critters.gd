@@ -154,10 +154,10 @@ func _make() -> Node3D:
 			n.add_child(m)
 		&"dragonfly":
 			var model := (load("res://models/animals/%s.glb" % ("red_dragonfly" if _rng.randf() < 0.4 else "dragonfly")) as PackedScene).instantiate() as Node3D
-			model.scale = Vector3.ONE * 0.4
+			model.scale *= 0.4
 			n.add_child(model)
 		&"bird":
 			var model := (load("res://models/animals/bird.glb") as PackedScene).instantiate() as Node3D
-			model.scale = Vector3.ONE * 0.2
+			model.scale *= 0.2
 			n.add_child(model)
 	return n
