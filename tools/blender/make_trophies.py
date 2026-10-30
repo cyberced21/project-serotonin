@@ -235,10 +235,32 @@ def fossil(look):
 
 ## The looks picked (2026-10-29, the Hearthvale Trophy Wall page): only these are built unless
 ## `both` is named, which builds the a and b looks of everything again.
-PICKED = {"log": "b", "fish": "a", "geode": "b", "sheaf": "b", "feather": "a", "shell": "b", "stick": "b", "fossil": "a"}
+PICKED = {"log": "b", "fish": "a", "geode": "b", "sheaf": "b", "feather": "a", "shell": "b", "stick": "b", "fossil": "a", "flower": "a"}
+
+def flower(look):
+    """The hidden haven's flower (plans/world-pass.md), pressed under glass in a little frame."""
+    k = mv.Kit("", 61)
+    for x in (-0.17, 0.17):
+        k.box("Frame", (0.04, 0.06, 0.46), (x, -0.02, 0.0), ("wood.5", "wood.4", "wood.3"))
+    for z in (-0.21, 0.21):
+        k.box("Frame", (0.38, 0.06, 0.04), (0, -0.02, z), ("wood.5", "wood.4", "wood.3"))
+    k.box("Back", (0.32, 0.01, 0.4), (0, 0.0, 0.0), "neutral.6")
+    k.box("Stem", (0.012, 0.01, 0.26), (0.01, -0.012, -0.05), "leaves.3", rot=(0, 0.12, 0))
+    for side in (-1, 1):
+        k.box("Leaf", (0.07, 0.008, 0.035), (side * 0.04, -0.012, -0.08), "leaves.4", rot=(0, side * 0.5, 0))
+    for i in range(5):
+        a = i * math.tau / 5
+        k.box("Petal", (0.045, 0.008, 0.03), (0.03 + math.cos(a) * 0.035, -0.013, 0.1 + math.sin(a) * 0.035), "accent.6",
+              rot=(0, -a, 0))
+    k.box("Heart", (0.025, 0.009, 0.025), (0.03, -0.014, 0.1), "accent.3")
+    k.box("Glass", (0.32, 0.005, 0.4), (0, -0.05, 0.0), "neutral.7")
+    label_plate(k, -0.26)
+    return f"flower_{look}"
+
 
 BUILDERS = {
     "log": lambda look: log_a() if look == "a" else log_b(),
+    "flower": flower,
     "geode": geode, "sheaf": sheaf, "feather": feather, "shell": shell, "stick": stick, "fossil": fossil,
 }
 

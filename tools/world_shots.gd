@@ -78,6 +78,14 @@ func _run() -> void:
 		["farmstead", Vector3(210, 0, 62), Vector3(226, 1, 50)],
 		["shrine", Vector3(80, 0, 230), Vector3(72, 1, 237)],
 		["view_bench", Vector3(152, 0, 342), Vector3(128, 0, 180)],
+		# the new places (phase 7)
+		["watermill", Vector3(58, 0, 186), Vector3(41, 1.5, 201)],
+		["orchard", Vector3(184, 0, 80), Vector3(202, 0, 58)],
+		["shepherds_hill", Vector3(340, 0, 40), Vector3(360, 0, 12)],
+		["haven_gap", Vector3(106, 0, -146), Vector3(111, 0, -163)],
+		["haven", Vector3(102, 0, -158), Vector3(118, 0, -167)],
+		["haven_air", Vector3(111, 45, -131), Vector3(111, 0, -163)],
+		["shepherds_air", Vector3(330, 60, 60), Vector3(358, 0, 14)],
 	]
 	var only := ""
 	for a in OS.get_cmdline_user_args():

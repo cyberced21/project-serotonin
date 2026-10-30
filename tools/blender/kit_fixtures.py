@@ -354,10 +354,140 @@ def ruined_cottage():
     kb.export_kit_building("fx_ruined_cottage")
 
 
+# --- the new places (phase 7) --------------------------------------------------------------------
+
+def _wheel(k, x, hub_z, r, whole):
+    """A mill wheel turning about X, its mesh made round its hub (Fixture spins pieces named Wheel*)."""
+    import bmesh
+    from mathutils import Matrix
+    bm = bmesh.new()
+    n = 12
+    for side in (-0.35, 0.35):  # two rims
+        ring = bmesh.ops.create_cone(bm, cap_ends=False, segments=24, radius1=r, radius2=r, depth=0.08)
+        bmesh.ops.translate(bm, verts=ring["verts"], vec=(0, 0, side))
+    for i in range(n if whole else n - 5):  # paddles (some gone on the broken one)
+        a = math.tau * i / n
+        geom = bmesh.ops.create_cube(bm, size=1.0)
+        bmesh.ops.scale(bm, verts=geom["verts"], vec=(0.08, r * 0.5, 0.8))
+        bmesh.ops.translate(bm, verts=geom["verts"], vec=(0, r * 0.72, 0))
+        bmesh.ops.rotate(bm, verts=geom["verts"], cent=(0, 0, 0), matrix=Matrix.Rotation(a, 3, "Z"))
+    geom = bmesh.ops.create_cone(bm, cap_ends=True, segments=10, radius1=0.18, radius2=0.18, depth=1.2)  # the axle
+    bmesh.ops.rotate(bm, verts=bm.verts, cent=(0, 0, 0), matrix=Matrix.Rotation(math.pi / 2, 3, "Y"))  # (made about Z, turns about X)
+    k.add("Wheel", bm, ("wood.4", "wood.3", "wood.2"), (x, 0.0, hub_z))
+
+
+def watermill():
+    """The watermill on the creek below the village: a 6 x 8 m brick mill, the wheel on its right
+    side in the water; restored (the "mill_wheel" project) the wheel is whole and turns."""
+    kb.reset()
+    for tier, whole in ((1, False), (2, True)):
+        k = mv.Kit("T%d" % tier, 640 + tier)
+        storey(k, 3, 4, "brick", front="wdw", back="wnw", left="wowo", right="wnnw", floor="Floor_WoodDark")
+        gable_roof(k, 3, 4, WALL_TOP)
+        place(k, "Prop_Chimney", (-2.0, 1.5, WALL_TOP + 0.5), 0)
+        _wheel(k, 3.75, 1.4, 1.8, whole)
+        k.box("Race", (0.9, 3.4, 0.12), (3.75, 0.0, 3.25), ("wood.3", "wood.2", "wood.2"))  # the trough over the wheel
+        for y in (-1.5, 1.5):
+            k.post("RacePost", 0.08, 0.0, 3.2, 4.25, y)
+        prop(k, "Bag", -2.0, -1.0)
+        prop(k, "Bag", -2.2, -0.3)
+        prop(k, "Barrel", 2.0, 3.0)
+        k.add("Millstone", mv.prism(16, 0.75, 0.75, 0.3), ("stone.5", "stone.4", "stone.3"), (0.4, 1.4, 0.15))
+        k.add("Millstone", mv.prism(16, 0.72, 0.72, 0.25), ("stone.4", "stone.3", "stone.2"), (0.4, 1.4, 0.45))
+        if whole:
+            k.empty("Smoke", (-2.0, 1.5, WALL_TOP + 3.8))
+        marker(k, "Doorway", 0.0, -3.1, 0.0, (0, 1))
+    kb.export_kit_building("fx_watermill")
+
+
+def cider_press():
+    """The orchard's press: an open-fronted shed over a timber screw press and barrels of cider."""
+    kb.reset()
+    k = mv.Kit("T1", 651)
+    for x in (-2.0, 2.0):
+        k.post("Post", 0.1, 0.0, 2.6, x, -1.5)
+    k.plank_walls(-2.0, 2.0, -1.4, 1.5, 0.0, 2.2, 4.2, PLANKS)
+    k.shed_roof("Roof", 4.6, -1.9, 1.9, 2.65, 2.2, 4, ("accent.0", "accent.0", "wood.1"))
+    k.box("PressBed", (1.3, 1.3, 0.3), (0, 0.4, 0.55), ("wood.5", "wood.4", "wood.3"))
+    for x in (-0.55, 0.55):
+        k.post("PressPost", 0.09, 0.0, 2.0, x, 0.4)
+    k.box("PressBeam", (1.5, 0.22, 0.22), (0, 0.4, 1.9), ("wood.3", "wood.2", "wood.2"))
+    k.post("Screw", 0.06, 0.8, 1.8, 0, 0.4, colors=("metal.3", "metal.2", "metal.1"))
+    for i, x in enumerate((-1.5, -0.9, 1.4)):
+        prop(k, "Barrel", x, 1.0 if i < 2 else -0.6)
+    prop(k, "Barrel_Apples", 1.3, 0.8)
+    prop(k, "FarmCrate_Apple", -1.4, -0.6)
+    kb.export_kit_building("fx_cider_press")
+
+
+def shepherd_hut():
+    """A shepherd's hut on iron wheels: a curved tin roof, a stove pipe, steps up to the door."""
+    kb.reset()
+    k = mv.Kit("T1", 661)
+    k.box("Body", (2.2, 4.0, 1.9), (0, 0, 1.55), ("neutral.6", "accent.6", "wood.2"))
+    for i in range(7):  # the curved roof in strips
+        a = (i - 3) * 0.24
+        k.box("RoofStrip", (0.42, 4.2, 0.06), (math.sin(a) * 1.25, 0, 2.55 + math.cos(a) * 0.45 - 0.45), ("metal.3", "metal.2", "metal.1"),
+              rot=(0, a, 0))
+    for x in (-0.9, 0.9):
+        for y in (-1.4, 1.4):
+            k.add("HutWheel", mv.prism(10, 0.42, 0.42, 0.1), ("metal.2", "metal.1", "metal.1"), (x * 1.12, y, 0.42), (0, math.pi / 2, 0))
+    k.box("Door", (0.75, 0.06, 1.5), (0.4, -2.03, 1.45), ("wood.4", "wood.3", "wood.2"))
+    k.window((-0.5, -2.04, 1.75), (0.45, 0.45))
+    k.post("StovePipe", 0.06, 2.4, 3.3, -0.6, 1.2, colors=("metal.1", "metal.1", "metal.1"))
+    k.empty("Smoke", (-0.6, 1.2, 3.6))
+    for i in range(3):
+        k.box("Step", (0.8, 0.35, 0.12), (0.4, -2.3 - i * 0.32, 0.55 - i * 0.2), ("wood.5", "wood.4", "wood.3"))
+    kb.export_kit_building("fx_shepherd_hut")
+
+
+def _fruit_tree(k, fruit):
+    k.add("Trunk", mv.prism(7, 0.16, 0.11, 1.6), ("wood.3", "wood.2", "wood.2"), (0, 0, 0.8))
+    for i in range(3):
+        a = i * math.tau / 3
+        k.box("Bough", (0.08, 0.08, 0.9), (math.cos(a) * 0.3, math.sin(a) * 0.3, 1.8), ("wood.3", "wood.2", "wood.2"),
+              rot=(math.sin(a) * 0.6, -math.cos(a) * 0.6, 0))
+    for i in range(6):
+        a = i * math.tau / 6 + k.rng.uniform(-0.3, 0.3)
+        r = k.rng.uniform(0.4, 0.9)
+        k.add("Canopy", mv.blob(k.rng.uniform(0.6, 0.85), k.rng, squash=(1.0, 1.0, 0.8)), ("leaves.4", "leaves.3", "leaves.2"),
+              (math.cos(a) * r, math.sin(a) * r, 2.3 + k.rng.uniform(-0.2, 0.3)))
+    k.add("Canopy", mv.blob(0.9, k.rng, squash=(1.0, 1.0, 0.8)), ("leaves.5", "leaves.4", "leaves.3"), (0, 0, 2.8))
+    for i in range(14):
+        a = k.rng.uniform(0, math.tau)
+        r = k.rng.uniform(0.6, 1.25)
+        k.add("Fruit", mv.blob(0.07, k.rng), fruit, (math.cos(a) * r, math.sin(a) * r, k.rng.uniform(1.9, 2.9)))
+
+
+def orchard_tree():
+    """Orchard trees, small and round-headed, hung with fruit: an apple (T1) and a pear (T2 is
+    used as the other kind, not a later state: Fixture is told which to show)."""
+    kb.reset()
+    k = mv.Kit("T1", 671)
+    _fruit_tree(k, ("accent.1", "accent.1", "accent.0"))
+    k = mv.Kit("T2", 672)
+    _fruit_tree(k, ("terrain.sand", "accent.3", "terrain.sand"))
+    kb.export_kit_building("fx_orchard_tree")
+
+
+def haven_log():
+    """A mossy fallen log in the hidden haven, flat on top to sit on."""
+    kb.reset()
+    k = mv.Kit("T1", 681)
+    k.log("Log", 3.2, 0.32, (0, 0, 0.3), "x", sides=("wood.3", "wood.2", "wood.4"))
+    for i in range(6):
+        k.add("Moss", mv.blob(0.22, k.rng, squash=(1.4, 1.0, 0.4)), ("leaves.2", "leaves.3", "leaves.1"),
+              (-1.3 + i * 0.5, k.rng.uniform(-0.1, 0.1), 0.6))
+    k.add("Fungus", mv.prism(8, 0.12, 0.12, 0.04), ("neutral.6", "neutral.5", "neutral.4"), (1.35, -0.2, 0.35))
+    marker(k, "Seat1", 0.3, -0.35, 0.0, (0, -1))
+    kb.export_kit_building("fx_haven_log")
+
+
 BUILDERS = {"barn": barn, "granary": granary, "cart_shed": cart_shed, "stable": stable, "storehouse": storehouse,
             "ore_store": ore_store, "woodshed": woodshed, "timber_yard": timber_yard, "washhouse": washhouse,
             "chapel": chapel, "dovecote": dovecote, "pump": pump, "empty_cottage": empty_cottage,
-            "ruined_cottage": ruined_cottage}
+            "ruined_cottage": ruined_cottage, "watermill": watermill, "cider_press": cider_press,
+            "shepherd_hut": shepherd_hut, "orchard_tree": orchard_tree, "haven_log": haven_log}
 
 if __name__ == "__main__":
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []

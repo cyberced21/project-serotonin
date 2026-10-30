@@ -233,3 +233,24 @@ the page's plots put the town hall and the tavern on the north and east lanes):
   outcrops take their place. The clearing keeps its own.
 - Not done: a little waterfall where the creek leaves the hills; reeds and stepping stones at the
   lake (its dressing has reeds already). Pastures are open grass until phase 8's animals.
+
+## Phase 7, the new places (2026-10-30)
+
+- **The watermill** on the creek's east bank below the village (42, 200), its wheel in the water;
+  "Mend the mill wheel" gives it its paddles back and sets it turning (Fixture turns `Wheel*`
+  pieces). A path off the lake road.
+- **The orchard** on the slope north-east of the village (200, 62): twelve fruit trees in rows
+  (apples and pears, our own models: none of the picks was a fruit tree), the cider press, a stone
+  wall fallen in places; "Mend the orchard wall" stands it back up (ProjectShown swaps the two). A
+  path off the Pinewood road.
+- **The shepherd's hill** up on the rim north of the road east (360, 18): the shepherd's hut on
+  its wheels, a round stone fold, a bench looking back over the bowl. A path winding up from the
+  road east. (Its sheep come with phase 8.)
+- **The hidden haven** in the Pinewood's south, on its gentlest ground (111, -163; the plans page's
+  spot was a steep hillside): a 16 m glade of grass the forest keeps out of (Haven: "keep_clear"),
+  a thicket round it with one gap, flat stones for a faint deer track in from the forest trail, a
+  spring pool dug at the glade's own height (Haven lifts its water to match), old oaks, a mossy
+  ruin, flowers, lily pads, a log. Once per world a pressed flower lies by the pool: a new trophy
+  (kind `flower`, "Haven flower", models/trophies/flower_a.glb).
+- Not done: fireflies at dusk over the pool (Fireflies finds still water on its own: check in
+  play), deer that don't bolt (phase 8), the places' uses (fruit, wool, flour: their own chunk).

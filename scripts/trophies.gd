@@ -17,9 +17,10 @@ const KINDS := {
 	&"shell": "Lake shell",
 	&"stick": "The dog's stick",
 	&"fossil": "Fossil",
+	&"flower": "Haven flower",
 }
 ## The small ones (they fit the Homestead's mantel as well as the wall).
-const SMALL: Array[StringName] = [&"geode", &"feather", &"shell", &"fossil"]
+const SMALL: Array[StringName] = [&"geode", &"feather", &"shell", &"fossil", &"flower"]
 ## Chance per node broken (plans/trophies.md): a tree felled, an ore vein from iron up, a harvest.
 const LOG_CHANCE := 1.0 / 150.0
 const GEODE_CHANCE := 1.0 / 120.0
@@ -102,7 +103,7 @@ static func fish(item: StringName, count: int, at: Vector3) -> void:
 
 ## The looks picked on the trophy page (2026-10-29): models/trophies/<kind>_<look>.glb, the fish
 ## one per species (fish_<look>_<species>.glb).
-const LOOKS := {&"log": "b", &"fish": "a", &"geode": "b", &"sheaf": "b", &"feather": "a", &"shell": "b", &"stick": "b", &"fossil": "a"}
+const LOOKS := {&"log": "b", &"fish": "a", &"geode": "b", &"sheaf": "b", &"feather": "a", &"shell": "b", &"stick": "b", &"fossil": "a", &"flower": "a"}
 
 
 ## Its model's name in models/trophies/.

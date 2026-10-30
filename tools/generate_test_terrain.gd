@@ -494,6 +494,9 @@ func _biome_id(w: Vector2) -> int:
 		return _crop_id(w, q)
 	if _dither(w, fd, WorldMap.FIELD_RADIUS + 6.0, WorldMap.FIELD_RADIUS + 6.0 + BORDER_BELT):
 		return WorldMap.TEX_FIELD
+	var hd := w.distance_to(WorldMap.HAVEN_CENTER)  # the hidden haven: open grass in the forest
+	if hd < WorldMap.HAVEN_RADIUS - 3.0 or _dither(w, hd, WorldMap.HAVEN_RADIUS - 3.0, WorldMap.HAVEN_RADIUS + 1.0):
+		return WorldMap.TEX_DEFAULT
 	var f := ((q - WorldMap.FOREST_CENTER) / WorldMap.FOREST_RADII).length() * WorldMap.FOREST_RADII.y
 	var r := WorldMap.FOREST_RADII.y
 	if _dither(w, f, r - BORDER_BELT * 0.6, r + BORDER_BELT * 0.4) and qd > apron + WorldMap.QUARRY_SLOPE \
@@ -542,11 +545,32 @@ func _hash(p: Vector2) -> float:
 
 ## Flattens each forest glade to the height of its middle.
 func _glades(h: PackedFloat32Array) -> void:
+	var glades: Array = []
 	for g in WorldMap.GLADES:
+		glades.append([g, WorldMap.GLADE_RADIUS])
+	glades.append([WorldMap.HAVEN_CENTER, WorldMap.HAVEN_RADIUS])  # (the hidden haven, plans/world-pass.md)
+	for gr in glades:
+		var g: Vector2 = gr[0]
+		var r: float = gr[1]
 		var gh := _sample(h, g)
-		var r := WorldMap.GLADE_RADIUS
 		_for_pixels_near(g, r + 7.0, func(i: int, w: Vector2) -> void:
 			h[i] = lerpf(gh, h[i], smoothstep(r, r + 7.0, w.distance_to(g))))
+	_haven_pool(h)
+
+
+## The hidden haven's spring pool, dug into its glade at the glade's own height (up in the forest:
+## not a pond at the bowl's water level). Haven lifts its water to match.
+func _haven_pool(h: PackedFloat32Array) -> void:
+	var pool: Dictionary = WorldMap.HAVEN_POOL
+	var c: Vector2 = pool["center"]
+	var r: float = pool["radius"]
+	var top := _sample(h, WorldMap.HAVEN_CENTER)
+	_for_pixels_near(c, r + 2.0, func(i: int, w: Vector2) -> void:
+		var d := w.distance_to(c)
+		if d < r:
+			h[i] = minf(h[i], top - 0.12 - float(pool["depth"]) * (1.0 - (d / r) * (d / r)))
+		else:
+			h[i] = minf(h[i], lerpf(top - 0.06, h[i], smoothstep(r, r + 2.0, d))))
 
 
 # --- routes -----------------------------------------------------------------------------------

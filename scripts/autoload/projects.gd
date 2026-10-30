@@ -30,6 +30,9 @@ const SPOTS := [
 	[&"mend_granary", "Mend the granary", "Straighten the old granary on its stones and patch its walls, so the grain keeps dry.", {&"wood": 15, &"oak": 8, &"ore": 6}, 1],
 	[&"restore_barn", "Restore the old barn", "New planks and doors for the barn by the farm yard, and hay stacked to the rafters.", {&"wood": 30, &"pine": 15, &"wheat": 10}, 2],
 	[&"open_cottage", "Open up an empty cottage", "Air out the shuttered cottage north of the green, light a fire and hang flower boxes: ready for a newcomer.", {&"wood": 20, &"birch": 10, &"iron": 4}, 2],
+	# the new places (phase 7)
+	[&"mill_wheel", "Mend the mill wheel", "New paddles for the watermill's wheel below the village, so it turns again and the miller can grind.", {&"oak": 20, &"iron": 10, &"wood": 15}, 2],
+	[&"orchard_wall", "Mend the orchard wall", "Lay the fallen stones of the orchard's wall back up, so the sheep stay out of the apples.", {&"ore": 25, &"wood": 8}, 1],
 	[&"retaining_wall", "Shore up the road east", "A timber wall to hold the slope back, so the landslide's road stays open and traders can come over the pass. Dig out the boulders first.", {&"wood": 25, &"pine": 15, &"iron": 6}, 2, &"slide"],
 	[&"kennel_porch", "A bowl, a blanket and a porch", "A deck out front with a rail, a water bowl and a checked blanket to flop on.", {&"oak": 12, &"iron": 4}, 2, &"kennel_paint"],
 	# the mine under the quarry (plans/mine.md): "mine:" needs are the Mine's (a shaft dug into,

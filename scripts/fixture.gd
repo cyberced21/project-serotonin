@@ -7,7 +7,9 @@ extends Node3D
 ## Pieces collide as Building's do (kit pieces exactly, the rest as hulls); kit door leaves stand
 ## open in a walk-in one (doors_open) and shut, solid, in one you can't go into. Seat* markers are
 ## seats anyone may take ("seat" group, kind &"pew"); *Smoke* empties smoke while shown.
-## It sits on the ground where it stands.
+## Pieces named *Wheel* (the watermill's) turn about their X while shown, once it's put right (or
+## always, with no project). `variant` > 0 shows that state whatever the project (the orchard's
+## trees: T1 an apple, T2 a pear). It sits on the ground where it stands.
 
 const WORLD_LAYER := 1
 const POP_TIME := 0.5
@@ -17,10 +19,15 @@ const POP_TIME := 0.5
 @export var project: StringName = &""
 ## Walk-in: its kit doors stand open.
 @export var doors_open := true
+## Always show this state (0: by the project).
+@export var variant := 0
+## How fast its wheels turn (radians a second).
+@export var wheel_speed := 0.9
 
 var _states: Dictionary[int, Node3D] = {}
 var _bodies: Dictionary[int, StaticBody3D] = {}
 var _shown := 0
+var _wheels: Dictionary[int, Array] = {}  # state -> its Wheel pieces
 
 
 func _ready() -> void:
@@ -52,7 +59,16 @@ func footprint_radius() -> float:
 
 
 func _wanted() -> int:
+	if variant > 0:
+		return variant
 	return 2 if project != &"" and _states.has(2) and Projects.is_done(project) else 1
+
+
+func _process(delta: float) -> void:
+	if not _wheels.has(_shown) or (project != &"" and not Projects.is_done(project)):
+		return
+	for w: MeshInstance3D in _wheels[_shown]:
+		w.rotate_object_local(Vector3.RIGHT, wheel_speed * delta)
 
 
 ## Onto the ground below its middle (the village's flat is level; out in the yards it may not be).
@@ -101,6 +117,11 @@ func _build() -> void:
 				swung.append([t, (shut * m.get_aabb()).grow(0.02), xform * shut.affine_inverse()])
 			m.transform = xform
 			Building._mark_night_glow(m)
+			if piece.begins_with("Wheel"):
+				if not _wheels.has(t):
+					_wheels[t] = []
+				_wheels[t].append(m)
+				continue  # (no collision: it turns)
 			if door and doors_open:
 				continue
 			var aabb := m.get_aabb()

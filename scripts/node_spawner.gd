@@ -224,6 +224,8 @@ func _collect_taken() -> void:
 	for f in get_tree().get_nodes_in_group("fixture"):
 		var g := (f as Node3D).global_position
 		_taken.append(Vector3(g.x, g.z, (f as Fixture).footprint_radius() + building_margin))
+	for k in get_tree().get_nodes_in_group("keep_clear"):  # (the hidden haven's glade)
+		_taken.append(k.call("keep_clear"))
 	var player := get_tree().get_first_node_in_group("player") as Node3D
 	if player:
 		_taken.append(Vector3(player.global_position.x, player.global_position.z, spawn_radius))

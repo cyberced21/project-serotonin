@@ -16,6 +16,7 @@ extends SceneTree
 ## (No game class names: an -s script compiles before the autoloads exist.)
 
 const OUT := "res://scenes/country.tscn"
+const WorldMapC := preload("res://scripts/world_map.gd")
 const SEED := 20261030
 const C := Vector2(128, 128)
 const FIELD_IN := 84.0
@@ -162,6 +163,8 @@ func _collect_keep_out() -> void:
 		var g := (n as Node3D).global_position
 		keep_out.append(Vector3(g.x, g.z, 3.0))
 	keep_out.append(Vector3(46, 66, 42))  # the clearing
+	for site in [[WorldMapC.MILL_SITE, 16.0], [WorldMapC.ORCHARD_SITE, 26.0], [WorldMapC.SHEPHERD_SITE, 24.0]]:  # the new places
+		keep_out.append(Vector3(site[0].x, site[0].y, site[1]))
 	keep_out.append(Vector3(C.x, C.y, 74))  # the village's flat
 
 

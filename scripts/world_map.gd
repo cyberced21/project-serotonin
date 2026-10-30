@@ -53,6 +53,17 @@ const FOREST_CENTER := Vector2(118, -112)
 const FOREST_RADII := Vector2(172, 108)
 const GLADES: Array[Vector2] = [Vector2(61, -62.5), Vector2(130, -92.5), Vector2(76, -131.5)]
 const GLADE_RADIUS := 13.5
+## The new places (plans/world-pass.md, phase 7): the watermill on the creek below the village, the
+## orchard on the slope north-east of it, the shepherd's hill up on the rim north of the road east,
+## and the hidden haven deep in the Pinewood's south, on its gentlest ground, its spring pool, the
+## faint deer track to it from the forest trail.
+const MILL_SITE := Vector2(42, 200)
+const ORCHARD_SITE := Vector2(200, 62)
+const SHEPHERD_SITE := Vector2(360, 18)
+const HAVEN_CENTER := Vector2(111, -163)
+const HAVEN_RADIUS := 16.0
+const HAVEN_POOL := {"center": Vector2(114, -161), "radius": 3.5, "depth": 0.5}
+const HAVEN_TRACK: Array[Vector2] = [Vector2(101, -131), Vector2(104, -140), Vector2(106, -149), Vector2(109, -156)]
 
 ## The roads and paths (plans/world.md): the terrain generator lays each one along the land (a
 ## least-cost route over the slopes from `from` through any `via` points to `to`, unless `ctrl`
@@ -81,6 +92,13 @@ const ROADS: Array[Dictionary] = [
 	{"id": &"field_road", "title": "The road to Goldmeadow", "kind": &"road",
 		"from": Vector2(178, 178), "to": Vector2(268, 252)},
 	{"id": &"east_road", "title": "The road east", "kind": &"road", "village": true, "ctrl": EAST_ROAD},
+	# the new places' footpaths (plans/world-pass.md, phase 7), each off a road laid before it
+	{"id": &"mill_path", "title": "The path to the mill", "kind": &"path",
+		"from": Vector2(100, 206), "join": &"lake_road", "to": Vector2(47, 192)},
+	{"id": &"orchard_path", "title": "The path to the orchard", "kind": &"path",
+		"from": Vector2(150, 50), "join": &"village_road", "to": Vector2(186, 70)},
+	{"id": &"shepherd_path", "title": "The path up the shepherd's hill", "kind": &"path",
+		"from": Vector2(330, 120), "join": &"east_road", "to": Vector2(354, 32)},
 ]
 ## The road east (plans/market.md): from the green's east edge up through a pass in the eastern
 ## rim hills to the world's edge, the way traders come. The terrain generator cuts the pass along it.

@@ -196,6 +196,8 @@ static func keep_out_spots(tree: SceneTree, node_r: float, prop_r: float, margin
 	for f in tree.get_nodes_in_group("fixture"):  # (the barn, the chapel... Fixture)
 		var at := (f as Node3D).global_position
 		out.append(Vector3(at.x, at.z, float(f.call("footprint_radius")) + margin))
+	for k in tree.get_nodes_in_group("keep_clear"):  # (the hidden haven's glade: Haven)
+		out.append(k.call("keep_clear"))
 	for row in tree.get_nodes_in_group("hedge_row"):  # the field hedges and walls (HedgeRow)
 		var line: PackedVector2Array = row.call("line")
 		for k in range(0, line.size(), 2):

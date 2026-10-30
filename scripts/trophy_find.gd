@@ -34,18 +34,36 @@ static func make(at: Vector3, what: StringName) -> TrophyFind:
 		quad.size = Vector3(0.08, 0.02, 0.42)
 		mesh.mesh = quad
 		mesh.rotation = Vector3(0.0, randf() * TAU, 0.15)
+	elif what == &"flower":  # the haven's: a little bloom on a stem
+		var bloom := SphereMesh.new()
+		bloom.radius = 0.09
+		bloom.height = 0.07
+		mesh.mesh = bloom
+		mesh.position.y = 0.3
+		var stem := MeshInstance3D.new()
+		var stalk := CylinderMesh.new()
+		stalk.top_radius = 0.012
+		stalk.bottom_radius = 0.015
+		stalk.height = 0.3
+		stem.mesh = stalk
+		stem.position.y = 0.15
+		var green := StandardMaterial3D.new()
+		green.albedo_color = Color("5d8a3a")
+		stem.material_override = green
+		f.add_child(stem)
 	else:
 		var shell := SphereMesh.new()
 		shell.radius = 0.14
 		shell.height = 0.16
 		mesh.mesh = shell
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color("f2efe6") if what == &"feather" else Color("e9c9a8")
+	mat.albedo_color = Color("f2efe6") if what == &"feather" else (Color("c98fd6") if what == &"flower" else Color("e9c9a8"))
 	mat.emission_enabled = true  # (a faint glint, so it can be spotted)
 	mat.emission = GLINT
 	mat.emission_energy_multiplier = 0.35
 	mesh.material_override = mat
-	mesh.position.y = 0.06
+	if what != &"flower":
+		mesh.position.y = 0.06
 	f.add_child(mesh)
 	return f
 
@@ -67,7 +85,7 @@ func _process(_delta: float) -> void:
 
 
 func prompt() -> String:
-	return "E  Pick up the %s" % ("feather" if kind == &"feather" else "shell")
+	return "E  Pick the flower" if kind == &"flower" else "E  Pick up the %s" % ("feather" if kind == &"feather" else "shell")
 
 
 func interact() -> void:
