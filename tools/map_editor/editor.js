@@ -74,7 +74,7 @@ const Editor = (() => {
 
 	/** spec: {label, title(o), color(o), draw(ctx, o, selected), hit(o, x, z, tol), handles(o), move(o, dx, dz), panel(o, el), group(o)} */
 	E.registerKind = (name, spec) => { E.kinds[name] = spec; };
-	/** spec: {id, label, key, title, options(el), down(x, z, ev), move(x, z, ev), up(x, z, ev), dblclick(x, z), finish(), cancel(), preview(ctx), hint()} */
+	/** spec: {id, label, title, options(el), down(x, z, ev), move(x, z, ev), up(x, z, ev), dblclick(x, z), keydown(ev) -> handled, finish(), cancel(), preview(ctx), hint()}; its shortcut digit goes in `key`. */
 	E.registerTool = (spec) => { E.tools.push(spec); };
 
 	E.uniqueId = (prefix) => {
@@ -610,6 +610,7 @@ const Editor = (() => {
 		if ((ev.ctrlKey || ev.metaKey) && k === "b") { ev.preventDefault(); E.bake(); return; }
 		if ((ev.ctrlKey || ev.metaKey) && k === "d") { ev.preventDefault(); E.duplicateSelected(); return; }
 		if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+		if (E.tool && E.tool.keydown && E.tool.keydown(ev)) { ev.preventDefault(); E.draw(); return; }
 		if (k === "escape") { if (E.tool) { if (E.tool.cancel) E.tool.cancel(); E.draw(); } else E.select(null, null); return; }
 		if (k === "enter") { if (E.tool && E.tool.finish) { E.tool.finish(); E.draw(); } return; }
 		if (k === "delete" || k === "backspace") { E.deleteSelected(); return; }

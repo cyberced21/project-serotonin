@@ -213,4 +213,158 @@
 	};
 
 	E.patches = { area, density, setTier, DEFAULT_DENSITY, DEFAULT_SPACING, KINDS, TIER_NAMES };
+
+	// --- the brush ------------------------------------------------------------------------------------
+
+	// What the next patch is: kept between patches, so you can lay out several alike.
+	const brush = { kind: "wood", tier: 0, shape: "polygon", density: DEFAULT_DENSITY.wood, ground: [] };
+	let corners = [];      // the polygon so far
+	let pressAt = null;    // where a circle or rectangle drag began
+	let hover = null;
+
+	const make = (shape) => {
+		const o = {
+			id: E.uniqueId(brush.kind),
+			name: `${KINDS[brush.kind]} ${TIER_NAMES[brush.tier]}`,
+			shape,
+			items: {},
+			count: 1,
+			spacing: DEFAULT_SPACING[brush.kind],
+			seed: Math.floor(Math.random() * 1e9),
+			ground: [...brush.ground],
+		};
+		setTier(o, brush.kind, brush.tier);
+		return o;
+	};
+	const add = (o) => {
+		if (area(o) < 4) return;  // (a slip of the mouse)
+		o.count = Math.max(1, Math.round((area(o) * brush.density) / 1000));
+		E.roundShape("patches", o);
+		E.commit();
+		E.layout.patches.push(o);
+		E.select("patches", o);
+		E.changed();
+	};
+	const finishPolygon = () => {
+		if (corners.length >= 3) {
+			const o = make("polygon");
+			o.points = corners;
+			add(o);
+		}
+		corners = [];
+		E.updateHint();
+	};
+
+	E.registerTool({
+		id: "patch",
+		label: "Patch",
+		title: "Draw a patch of gatherables",
+		options(box) {
+			const el = E.el;
+			const kind = el("select", {}, ...Object.keys(KINDS).map((k) => el("option", { value: k }, KINDS[k])));
+			kind.value = brush.kind;
+			const tiers = el("span", { class: "row" });
+			const tierButtons = () => {
+				tiers.textContent = "";
+				const have = Object.keys(E.catalog.tiers[brush.kind] || {}).map(Number);
+				brush.tier = have.includes(brush.tier) ? brush.tier : have[0];
+				for (const t of have) {
+					const mix = E.catalog.tiers[brush.kind][t];
+					const names = Object.keys(mix).map((id) => E.catalog.gatherables[id].label).join(", ");
+					tiers.append(el("button", { class: t === brush.tier ? "on" : "", title: names, onclick: () => { brush.tier = t; tierButtons(); } }, `${TIER_NAMES[t]}: ${names}`));
+				}
+			};
+			kind.onchange = () => { brush.kind = kind.value; brush.density = DEFAULT_DENSITY[brush.kind]; dens.value = brush.density; tierButtons(); };
+			tierButtons();
+			const dens = el("input", { type: "number", step: "0.5", min: "0.1", value: brush.density, title: "Gatherables per 1000 m²" });
+			dens.onchange = () => { brush.density = Math.max(0.1, Number(dens.value)); };
+			const shapes = el("span", { class: "row" });
+			const shapeButtons = () => {
+				shapes.textContent = "";
+				for (const [s, label] of [["polygon", "Polygon"], ["rect", "Rectangle"], ["circle", "Circle"]]) {
+					shapes.append(el("button", { class: s === brush.shape ? "on" : "", onclick: () => { brush.shape = s; corners = []; shapeButtons(); E.updateHint(); E.draw(); } }, label));
+				}
+			};
+			shapeButtons();
+			const ground = el("select", {}, el("option", { value: "" }, "anywhere not bare"),
+				...Object.keys(E.catalog.grounds).map((g) => el("option", { value: g }, `only on ${g}`)));
+			ground.value = brush.ground[0] || "";
+			ground.onchange = () => { brush.ground = ground.value ? [ground.value] : []; };
+			box.append(kind, tiers, el("span", { class: "muted" }, "per 1000 m²"), dens, shapes, ground);
+		},
+		hint() {
+			if (brush.shape === "polygon") return corners.length ? `${corners.length} corners: click to add, click the first or double-click / Enter to finish, Backspace to take one back, Esc to drop it` : "Click the corners of the patch.";
+			return brush.shape === "circle" ? "Drag from the middle out to the edge." : "Drag from one corner to the other.";
+		},
+		down(x, z) {
+			if (brush.shape === "polygon") {
+				if (corners.length >= 3 && E.dist(x, z, corners[0][0], corners[0][1]) < 8 / E.view.s) { finishPolygon(); return; }
+				corners.push([x, z]);
+				E.updateHint();
+			} else pressAt = [x, z];
+		},
+		move(x, z) { hover = [x, z]; },
+		up(x, z) {
+			if (!pressAt) return;
+			const [ax, az] = pressAt;
+			pressAt = null;
+			if (brush.shape === "circle") {
+				const o = make("circle");
+				o.center = [ax, az];
+				o.radius = E.dist(ax, az, x, z);
+				o.inner = 0;
+				add(o);
+			} else {
+				const o = make("polygon");
+				o.points = [[ax, az], [x, az], [x, z], [ax, z]];
+				add(o);
+			}
+		},
+		dblclick() {
+			// (a double-click's two clicks each added a corner, on the same spot: drop one and finish;
+			// two quick clicks in different places are just two corners)
+			const n = corners.length;
+			if (n < 2 || E.dist(corners[n - 1][0], corners[n - 1][1], corners[n - 2][0], corners[n - 2][1]) > 6 / E.view.s) return;
+			corners.pop();
+			finishPolygon();
+		},
+		finish: finishPolygon,
+		cancel() { corners = []; pressAt = null; E.updateHint(); },
+		keydown(ev) {
+			if (ev.key === "Backspace" && corners.length) { corners.pop(); E.updateHint(); return true; }
+			return false;
+		},
+		preview(ctx) {
+			const col = (E.catalog.gatherables[Object.keys(E.catalog.tiers[brush.kind][brush.tier])[0]] || {}).color || "#fff";
+			ctx.lineWidth = 2;
+			ctx.strokeStyle = "#fff";
+			ctx.fillStyle = hexA(col, 0.25);
+			ctx.setLineDash([5, 4]);
+			if (brush.shape === "polygon" && corners.length) {
+				E.path(hover ? [...corners, hover] : corners, false);
+				ctx.stroke();
+				for (const [x, z] of corners) {
+					const [sx, sy] = E.toScreen(x, z);
+					ctx.fillRect(sx - 3, sy - 3, 6, 6);
+				}
+			} else if (pressAt && hover) {
+				const [ax, az] = pressAt, [x, z] = hover;
+				if (brush.shape === "circle") {
+					const [sx, sy] = E.toScreen(ax, az);
+					ctx.beginPath();
+					ctx.arc(sx, sy, E.dist(ax, az, x, z) * E.view.s, 0, Math.PI * 2);
+				} else E.path([[ax, az], [x, az], [x, z], [ax, z]], true);
+				ctx.fill();
+				ctx.stroke();
+				const a = brush.shape === "circle" ? Math.PI * E.dist(ax, az, x, z) ** 2 : Math.abs((x - ax) * (z - az));
+				const [sx, sy] = E.toScreen(x, z);
+				ctx.setLineDash([]);
+				ctx.font = "12px system-ui, sans-serif";
+				ctx.fillStyle = "#fff";
+				ctx.textAlign = "left";
+				ctx.fillText(`${Math.round(a)} m², ~${Math.max(1, Math.round((a * brush.density) / 1000))}`, sx + 10, sy - 8);
+			}
+			ctx.setLineDash([]);
+		},
+	});
 })();
