@@ -5541,5 +5541,7 @@
    "volume": 0.022558,
    "links": []
   }
- }
+ },
+ "crumb_shatter_at": 0.45,
+ "crumb_swings": 7
 }

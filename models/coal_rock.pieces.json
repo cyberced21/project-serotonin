@@ -6162,5 +6162,7 @@
     "Crumb_30_c07"
    ]
   }
- }
+ },
+ "crumb_shatter_at": 0.45,
+ "crumb_swings": 10
 }

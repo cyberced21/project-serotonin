@@ -31,6 +31,11 @@ OUT_DIR = argv[0]
 ONLY = argv[1:]
 
 ROCKS = ["rock", "iron_rock", "coal_rock", "gold_rock"]  # (crystal: its prisms snap off whole)
+## How many biting swings a rock of crumbs takes, and the share of it dug out (by volume) at which
+## the rest crumbles away sooner (a big collapse): set so each ore takes about the swings it did
+## before crumbs (tools/bench_mining_pace.gd; plans/crumbs.md has the numbers).
+CRUMB_SWINGS = {"rock": 6, "iron_rock": 11, "coal_rock": 10, "gold_rock": 7}  # (gold: its tough shell takes more)
+CRUMB_SHATTER_AT = {"rock": 0.45, "iron_rock": 0.45, "coal_rock": 0.45, "gold_rock": 0.45}
 WALL_TEMPLATES = 4
 WALL_LAYERS = 8
 CRUMB = 0.13  # skin seeds at least this far apart (m)
@@ -262,6 +267,8 @@ def rock(name):
                 lambda n: n.replace("Chunk_", "Crumb_") + "_", pieces["links"])
     export(base + "_crumbs.glb")
     pieces["crumbs"] = data
+    pieces["crumb_shatter_at"] = CRUMB_SHATTER_AT[name]
+    pieces["crumb_swings"] = CRUMB_SWINGS[name]
     with open(base + ".pieces.json", "w") as f:
         json.dump(pieces, f, indent=1)
     skins = sum(1 for c in data.values() if not c["core"])

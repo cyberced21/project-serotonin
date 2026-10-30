@@ -9630,5 +9630,7 @@
    "volume": 0.264467,
    "links": []
   }
- }
+ },
+ "crumb_shatter_at": 0.45,
+ "crumb_swings": 11
 }

@@ -101,7 +101,8 @@ func _run() -> void:
 			await physics_frame
 		layer_swings.append(n)
 		run.free()
-	print("wall layer    swings: mean %.1f  min %d  max %d" % [_mean(layer_swings), layer_swings.min(), layer_swings.max()])
+	if not layer_swings.is_empty():
+		print("wall layer    swings: mean %.1f  min %d  max %d" % [_mean(layer_swings), layer_swings.min(), layer_swings.max()])
 
 	world.free()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE))
