@@ -204,9 +204,18 @@ def bedroll(k, x, y, facing=(0, 1), make=True):
 
 
 def chair(k, name, x, y, z=0.0, facing="+x"):
-    """A chair whose sitter faces `facing`, with its Seat marker."""
-    prop(k, "Chair_1", x, y, z, facing=BACK[facing])
+    """A chair whose sitter faces `facing`, with its Seat marker. (The kit chair's front is its -Y
+    like every prop's, its back at +Y: it faces the way its sitter does.)"""
+    prop(k, "Chair_1", x, y, z, facing=facing)
     marker(k, name, x, y, z, VEC[facing])
+
+
+def chandelier(k, x, y, z, hw, beam=True):
+    """The kit's chandelier, hung at the wall plate. Under a roof there's no ceiling to hang it
+    from, so a tie beam spans the room (`hw` its half width) to carry it; under a floor, `beam=False`."""
+    prop(k, "Chandelier", x, y, z + WALL_TOP - 0.1)
+    if beam:
+        k.log("TieBeam", 2 * hw - 0.3, 0.09, (0, y, z + WALL_TOP + 0.02), "x", sides=("wood.2", "wood.1", "wood.3"))
 
 
 def look(k, name, x, y, z):
@@ -243,14 +252,14 @@ def bakery_room(k, hw, hd, z=0.0):
     chair(k, "Seat2", hw - 2.4, 0.9, z)
     prop(k, "Bookcase_2", hw - 1.1, hd - 0.35, z)
     look(k, "Recipes", hw - 1.1, hd - 0.5, z + 1.4)
-    prop(k, "Chandelier", 0, 0, z + WALL_TOP - 0.1)
+    chandelier(k, 0, 0, z, hw)
 
 
 def bakery_shop(k):
     """The shop in a 6 x 8 storey: a counter facing the door, bread on a shelf, flour, the oven."""
     prop(k, "Table_Large", 0.9, -1.4)
-    prop(k, "Shelf_Simple", 2.65, -0.8, 1.6, facing="-x")
-    mv.loaves(k, 2.45, -0.8, 1.63, 3, 0.25)
+    prop(k, "Shelf_Simple", 2.73, -0.8, 1.6, facing="-x")
+    mv.loaves(k, 2.53, -0.8, 1.63, 3, 0.25)
     mv.loaves(k, 0.9, -1.4, 0.82, 4, 0.3)
     prop(k, "FarmCrate_Empty", 2.3, -3.5)
     mv.bread_oven(k, 1.6, 2.9, big=True)
@@ -282,7 +291,7 @@ def baker_cottage():
     chair(k, "Seat2", 0.35, 0.9, facing="-x")
     prop(k, "Bag", -2.4, -3.3)
     look(k, "Flour", -2.4, -3.3, 0.5)
-    prop(k, "Chandelier", 0, 0, WALL_TOP - 0.1)
+    chandelier(k, 0, 0, 0.0, 3)
     place(k, "Prop_Chimney", (1.6, 2.4, WALL_TOP + 1.0), 0)
     k.empty("Smoke", (1.6, 2.4, WALL_TOP + 4.3))
     mv.hanging_sign(k, -2.0, -4.1, 2.4, lambda k, x, y, z: mv.loaves(k, x, y, z - 0.08, 2, 0.2))
@@ -294,9 +303,9 @@ def baker_cottage():
     storey(k, 3, 4, "brick", front="odo", back="wnw", left="wowo", right="owow")
     storey(k, 3, 4, "plaster", front="tot", back="tnt", left="toto", right="toto", z0=WALL_TOP,
            floor="Floor_WoodLight", holes={(0, 1), (0, 2)})
-    place(k, "Stair_Interior_Solid", (-2.1, -3.0, 0.0), 0)
-    marker(k, "Stair0", -2.1, -3.6, 0.0, (0, 1))
-    marker(k, "Stair1", -2.1, 1.6, WALL_TOP, (0, 1))
+    place(k, "Stair_Interior_Solid", (-2.1, -2.35, 0.0), 0)  # (its head flush with the stairwell's end)
+    marker(k, "Stair0", -2.1, -3.0, 0.0, (0, 1))
+    marker(k, "Stair1", -2.1, 2.3, WALL_TOP, (0, 1))
     gable_roof(k, 3, 4, 2 * WALL_TOP)
     bakery_shop(k)
     prop(k, "Bag", -2.4, 3.3)
@@ -309,7 +318,7 @@ def baker_cottage():
     prop(k, "Table_Large", 1.4, -1.6, z, facing="+x")
     chair(k, "Seat1", 0.6, -2.3, z)
     chair(k, "Seat2", 0.6, -0.9, z)
-    prop(k, "Chandelier", 0.6, 0, z + WALL_TOP - 0.1)
+    chandelier(k, 0.6, 0, z, 3)
     place(k, "Prop_Chimney", (1.6, 2.4, 2 * WALL_TOP + 1.0), 0)
     k.empty("Smoke", (1.6, 2.4, 2 * WALL_TOP + 4.3))
     mv.hanging_sign(k, -2.0, -4.1, 2.4, lambda k, x, y, z: mv.loaves(k, x, y, z - 0.08, 3, 0.16))
@@ -361,7 +370,7 @@ def woodcutter():
     prop(k, "WeaponStand", -0.2, 2.65)
     prop(k, "Axe_Bronze", -0.2, 2.6, 0.6)
     look(k, "Axe", -0.2, 2.5, 1.0)
-    prop(k, "Chandelier", 0, 0, WALL_TOP - 0.1)
+    chandelier(k, 0, 0, 0.0, 3)
     place(k, "Prop_Chimney", (2.0, 1.0, WALL_TOP + 0.5), 0)
     k.empty("Smoke", (2.0, 1.0, WALL_TOP + 3.8))
     house.back(1.0)
@@ -380,6 +389,7 @@ def woodcutter():
             k.log("Woodpile", 1.6, 0.14, (-3.35 - (i + row * 0.5) * 0.28, 0.6, z), "y")
     k.box("WoodpileRoof", (1.4, 2.0, 0.08), (-3.8, 0.6, 1.2), ("wood.2", "wood.2", "wood.1"), rot=(0, 0.25, 0))
     k.box("Lantern", (0.16, 0.16, 0.22), (0.95, -2.3, 2.0), ("accent.3", "accent.3", "neutral.1"))
+    k.box("LanternBracket", (0.04, 0.26, 0.04), (0.95, -2.2, 2.12), "metal.1")
     k.chopping_block((-3.6, -4.5, 0))
     drying_rack_logs(4.6, 1.2)
     whet_bench(4.6, 1.2)
@@ -469,6 +479,7 @@ def fisher():
 
 def assay_things(k, z=0.0):
     """Edda's work: a bench of drawers, bottles on a shelf, her ledger on its stand."""
+    prop(k, "Workbench", 1.6, -1.3, z, facing="+x")
     prop(k, "Workbench_Drawers", 1.6, -1.3, z, facing="+x")
     prop(k, "Shelf_Small_Bottles", 2.65, 0.6, z + 1.5, facing="-x")
     look(k, "Samples", 2.5, 0.6, z + 1.5)
@@ -489,7 +500,7 @@ def prospector_cottage():
     chair(k, "Seat2", 0.8, 1.0)
     prop(k, "Bookcase_2", 1.9, 2.65)
     look(k, "Maps", 1.9, 2.5, 1.4)
-    prop(k, "Chandelier", 0, 0, WALL_TOP - 0.1)
+    chandelier(k, 0, 0, 0.0, 3)
     place(k, "Prop_Chimney", (-1.8, 1.5, WALL_TOP + 0.5), 0)
     k.empty("Smoke", (-1.8, 1.5, WALL_TOP + 3.8))
     house.back(1.0)
@@ -506,7 +517,7 @@ def prospector_cottage():
     prop(k, "Stool", -1.4, -2.5)
     marker(k, "Seat2", -1.4, -2.5, 0.0, (0, -1))
     prop(k, "Crate_Wooden", -2.4, -3.3)
-    prop(k, "Chandelier", 0, 0, WALL_TOP - 0.1)
+    chandelier(k, 0, 0, 0.0, 3)
     place(k, "Prop_Chimney", (-1.8, 2.4, WALL_TOP + 1.0), 0)
     k.empty("Smoke", (-1.8, 2.4, WALL_TOP + 4.3))
     house.back(2.0)
@@ -517,9 +528,9 @@ def prospector_cottage():
     storey(k, 3, 4, "brick", front="odo", back="wnw", left="wowo", right="owow")
     storey(k, 3, 4, "plaster", front="tot", back="tnt", left="toto", right="toto", z0=WALL_TOP,
            floor="Floor_WoodLight", holes={(0, 1), (0, 2)})
-    place(k, "Stair_Interior_Solid", (-2.1, -3.0, 0.0), 0)
-    marker(k, "Stair0", -2.1, -3.6, 0.0, (0, 1))
-    marker(k, "Stair1", -2.1, 1.6, WALL_TOP, (0, 1))
+    place(k, "Stair_Interior_Solid", (-2.1, -2.35, 0.0), 0)  # (its head flush with the stairwell's end)
+    marker(k, "Stair0", -2.1, -3.0, 0.0, (0, 1))
+    marker(k, "Stair1", -2.1, 2.3, WALL_TOP, (0, 1))
     gable_roof(k, 3, 4, 2 * WALL_TOP)
     assay_things(k)
     chair(k, "Seat1", 0.7, -1.3, facing="+x")
@@ -531,7 +542,7 @@ def prospector_cottage():
     prop(k, "Table_Large", 1.4, -1.6, z, facing="+x")
     chair(k, "Seat2", 0.6, -2.3, z)
     chair(k, "Seat3", 0.6, -0.9, z)
-    prop(k, "Chandelier", 0.6, 0, z + WALL_TOP - 0.1)
+    chandelier(k, 0.6, 0, z, 3)
     place(k, "Prop_Chimney", (-1.8, 2.4, 2 * WALL_TOP + 1.0), 0)
     k.empty("Smoke", (-1.8, 2.4, 2 * WALL_TOP + 4.3))
     house.back(2.0)
@@ -552,19 +563,21 @@ def hall_front(k, flag=True):
         k.box("Flag", (1.0, 0.04, 0.6), (5.42, -3.6, 4.85), "accent.4")
 
 
-def hall_inside(k, hw, hd):
-    """The meeting hall: a long table with benches either side, banners, the town charter."""
+def hall_inside(k, hw, hd, upstairs=False):
+    """The meeting hall: a long table with benches either side, banners, the town charter. With
+    `upstairs` (a storey above, its stair up the left wall) the charter stands by the right wall."""
     prop(k, "Table_Large", 0.5, 0.0, facing="+x")
     for i, (x, f) in enumerate(((-0.35, "+x"), (1.35, "-x"))):
         prop(k, "Bench", x, 0.0, facing=BACK[f])
         marker(k, f"Seat{i + 1}", x, -0.6, 0.0, VEC[f])
         marker(k, f"Seat{i + 3}", x, 0.6, 0.0, VEC[f])
-    prop(k, "BookStand", -hw + 1.0, -hd + 1.2, facing="+x")
-    look(k, "Charter", -hw + 1.0, -hd + 1.2, 1.1)
+    cx, cf = (hw - 1.0, "-x") if upstairs else (-hw + 1.0, "+x")
+    prop(k, "BookStand", cx, -hd + 1.2, facing=cf)
+    look(k, "Charter", cx, -hd + 1.2, 1.1)
     for x in (-hw + 1.6, hw - 1.6):
         prop(k, "Banner_1", x, hd - 0.45, 1.4)
         prop(k, "Banner_1_Cloth", x, hd - 0.45, 1.4)
-    prop(k, "Chandelier", 0.5, 0, WALL_TOP - 0.1)
+    chandelier(k, 0.5, 0, 0.0, hw, beam=not upstairs)
 
 
 def bell_tower(k, z):
@@ -574,6 +587,8 @@ def bell_tower(k, z):
     for x in (-0.8, 0.8):
         for y in (-0.8, 0.8):
             k.post("Belfry", 0.08, z + 2.6, z + 3.8, x, y, beam)
+    k.box("BellBeam", (1.7, 0.12, 0.12), (0, 0, z + 3.72), beam)
+    k.box("BellStrap", (0.06, 0.06, 0.36), (0, 0, z + 3.48), "metal.1")
     k.add("Bell", mv.prism(8, 0.36, 0.16, 0.5), ("ore.gold", "ore.gold", "ore.copper_dark"), (0, 0, z + 3.15))
     k.add("TowerRoof", mv.prism(4, 1.45, 0.04, 1.6), ("accent.0", "accent.0", "wood.1", "accent.1"), (0, 0, z + 4.6),
           (0, 0, math.pi / 4))
@@ -594,6 +609,7 @@ def town_hall():
     for x in (1.8, 2.7):
         k.post("BellPost", 0.07, 0, 2.3, x, -2.4)
     k.box("BellBar", (1.1, 0.08, 0.08), (2.25, -2.4, 2.25), "wood.3")
+    k.box("BellStrap", (0.04, 0.04, 0.14), (2.25, -2.4, 2.16), "metal.1")
     k.add("Bell", mv.prism(8, 0.22, 0.1, 0.32), ("ore.copper", "ore.copper", "ore.copper_dark"), (2.25, -2.4, 1.95))
     bedroll(k, 0.0, -0.4)  # the mayor's, straight in from the door
 
@@ -617,14 +633,14 @@ def town_hall():
     marker(k, "Stair0", -3.1, -4.1, 0.0, (0, 1))
     marker(k, "Stair1", -3.1, 1.1, WALL_TOP, (0, 1))
     gable_roof(k, 4, 5, 2 * WALL_TOP)
-    hall_inside(k, 4, 5)
+    hall_inside(k, 4, 5, upstairs=True)
     z = WALL_TOP
     bed(k, 2.7, 3.4, z)
     prop(k, "Nightstand_Shelf", 1.4, 4.45, z)
     prop(k, "Bookcase_2", 0.0, 4.45, z)
     prop(k, "Table_Large", 2.4, -1.6, z, facing="+x")
     chair(k, "Seat5", 1.6, -1.6, z)
-    prop(k, "Chandelier", 0.5, 0, z + WALL_TOP - 0.1)
+    chandelier(k, 0.5, 0, z, 4)
     bell_tower(k, 2 * WALL_TOP + 5.6)
     house.back(2.0)
     hall_front(k)
@@ -656,7 +672,7 @@ def smithy_workshop(k):
     k.box("BellowsLow", (0.55, 0.95, 0.06), (1.35, 1.6, 0.55), "wood.3", rot=(0.1, 0, 0))
     k.box("BellowsLeather", (0.5, 0.8, 0.22), (1.35, 1.65, 0.68), ("wood.1", "wood.1", "wood.0"), rot=(0.1, 0, 0))
     k.box("BellowsTop", (0.55, 0.95, 0.06), (1.35, 1.6, 0.84), "wood.3", rot=(0.25, 0, 0))
-    k.box("BellowsHandle", (0.06, 0.5, 0.06), (1.35, 0.95, 0.85), "wood.5")
+    k.box("BellowsHandle", (0.06, 0.55, 0.06), (1.35, 0.92, 0.74), "wood.5")
     k.add("BellowsNozzle", mv.prism(6, 0.06, 0.03, 0.4), "metal.2", (0.9, 1.75, 0.6), (0, math.pi / 2, 0))
     k.anvil((0.5, -0.7, 0), 1.15)
     look(k, "Hammer", 0.5, -0.7, 1.1)
@@ -666,6 +682,7 @@ def smithy_workshop(k):
         k.post("GrindFrame", 0.05, 0, 0.75, 2.3, y)
     k.add("Grindstone", mv.prism(12, 0.36, 0.36, 0.12), ("stone.5", "stone.4", "stone.3"), (2.3, -1.25, 0.6),
           (math.pi / 2, 0, 0))
+    k.log("GrindAxle", 0.66, 0.03, (2.3, -1.25, 0.6), "y", sides=("metal.1", "metal.1", "metal.2"), ends="metal.2")
     prop(k, "WeaponStand", -0.3, 3.1)
     k.post("SignPost", 0.08, 0, 2.7, 3.7, -3.0, ("wood.2", "wood.2", "wood.1"))
     k.box("SignArm", (0.9, 0.06, 0.06), (3.3, -3.0, 2.55), "wood.2")
@@ -703,6 +720,7 @@ def smithy():
     k.barrel((-1.7, -0.5, 0), 0.3, 0.7)
     bedroll(k, 0.85, -1.5, (1, 0))
     k.add("Water", mv.prism(10, 0.27, 0.27, 0.03), "accent.4", (-1.7, -0.5, 0.69))
+    k.post("RackPost", 0.05, 0, 1.75, 2.42, 0.6, ("wood.3", "wood.3", "wood.2"))
     k.box("ToolRack", (0.08, 0.9, 0.6), (2.32, 0.6, 1.4), "wood.4")
     for i in range(3):
         k.box("Tool", (0.04, 0.05, 0.45), (2.26, 0.3 + i * 0.3, 1.25), "metal.2")
@@ -873,18 +891,19 @@ def cottage(k):
     # the kitchen corner, front right
     prop(k, "Cabinet", 2.65, -2.2, facing="-x")
     prop(k, "Pot_1", 2.65, -2.2, 1.0)
-    prop(k, "Shelf_Simple", 2.65, -1.0, 1.7, facing="-x")
+    prop(k, "Shelf_Simple", 2.73, -1.0, 1.7, facing="-x")
     prop(k, "Table_Large", 1.5, -0.6, facing="+x")
     chair(k, "Seat2", 0.7, -1.2)
     # the desk, front left: the plans, and where the notes are left
-    prop(k, "Workbench_Drawers", -2.4, -1.2, facing="+x")
+    prop(k, "Workbench", -2.18, -1.2, facing="+x")  # (its back to the wall)
+    prop(k, "Workbench_Drawers", -2.18, -1.2, facing="+x")
     chair(k, "Seat3", -1.4, -1.2, facing="-x")
     marker(k, "Plans", -2.4, -1.6, 1.0)
     marker(k, "Desk", -2.4, -0.7, 0.95)
     trophy_wall(k, -2.66, -1.0)  # above the desk
     marker(k, "NoteFrame", 2.0, -3.66, 1.7, (0, 1))  # (a framed note by the door, one day)
     marker(k, "Wake", -1.0, 1.2, 0.0, (1, -1))
-    prop(k, "Chandelier", 0, 0, WALL_TOP - 0.1)
+    chandelier(k, 0, 0, 0.0, 3)
     visitors(k, 0.0, -4.0)
 
 
@@ -894,9 +913,9 @@ def homestead(k):
     storey(k, 4, 5, "brick", front="oodo", back="wnnw", left="totot", right="totot")
     storey(k, 4, 5, "plaster", front="toot", back="tnnt", left="totot", right="totot", z0=WALL_TOP,
            floor="Floor_WoodLight", holes={(0, 3), (0, 4)})
-    place(k, "Stair_Interior_Solid", (-3.1, -0.4, 0.0), 0)
-    marker(k, "Stair0", -3.1, -1.0, 0.0, (0, 1))
-    marker(k, "Stair1", -3.1, 4.2, WALL_TOP, (0, 1))
+    place(k, "Stair_Interior_Solid", (-3.1, 0.5, 0.0), 0)  # (up the stairwell, its head at the back wall)
+    marker(k, "Stair0", -3.1, -0.1, 0.0, (0, 1))
+    marker(k, "Stair1", -3.1, 4.5, WALL_TOP, (0, 1))
     gable_roof(k, 4, 5, 2 * WALL_TOP)
     hearth(k, 2.0, 4.35, facing="-y")
     place(k, "Prop_Chimney", (2.0, 4.35, 2 * WALL_TOP + 1.4), 0)
@@ -906,26 +925,27 @@ def homestead(k):
     chair(k, "Seat2", 2.8, 2.6, facing="+y")
     prop(k, "Cabinet", 3.65, -3.0, facing="-x")
     prop(k, "Pot_1", 3.65, -3.0, 1.0)
-    prop(k, "Shelf_Simple", 3.65, -1.6, 1.7, facing="-x")
+    prop(k, "Shelf_Simple", 3.73, -1.6, 1.7, facing="-x")
     prop(k, "Barrel_Apples", 3.3, -4.3)
     prop(k, "Table_Large", 1.2, -0.2, facing="+x")
     chair(k, "Seat3", 0.4, -0.9)
     chair(k, "Seat4", 0.4, 0.5)
-    prop(k, "Workbench_Drawers", -3.4, -3.4, facing="+x")
+    prop(k, "Workbench", -3.18, -3.4, facing="+x")  # (its back to the wall)
+    prop(k, "Workbench_Drawers", -3.18, -3.4, facing="+x")
     chair(k, "Seat5", -2.4, -3.4, facing="-x")
     marker(k, "Plans", -3.4, -3.8, 1.0)
     marker(k, "Desk", -3.4, -2.9, 0.95)
     trophy_wall(k, 3.66, 0.0, facing=(-1, 0))
     mantel(k, 2.0, 3.95)
     marker(k, "NoteFrame", 3.66, -4.0, 1.7, (-1, 0))
-    prop(k, "Chandelier", 0.5, 0, WALL_TOP - 0.1)
+    chandelier(k, 0.5, 0, 0.0, 4, beam=False)  # (under the loft floor)
     # the loft bedroom
     z = WALL_TOP
     bed(k, 2.6, 3.5, z)
     prop(k, "Nightstand_Shelf", 1.3, 4.45, z)
     prop(k, "Bookcase_2", 0.2, 4.45, z)
     marker(k, "Wake", 1.6, 2.2, z, (-1, -1))
-    prop(k, "Chandelier", 1.0, 1.0, z + WALL_TOP - 0.1)
+    chandelier(k, 1.0, 1.0, z, 4)
     # the porch along the front
     for y in (-5.45, -6.6):
         k.log("PorchBeam", 8.0, 0.12, (0, y, 0.12), "x")
@@ -1008,6 +1028,9 @@ def lookout(x, y):
     k.box("PerchFloor", (1.4, 1.4, 0.08), (x, y, 2.5), ("wood.5", "wood.4", "wood.3"))
     for dx, dy, sx, sy in ((0, -0.68, 1.4, 0.05), (0, 0.68, 1.4, 0.05), (-0.68, 0, 0.05, 1.4), (0.68, 0, 0.05, 1.4)):
         k.box("PerchRail", (sx, sy, 0.06), (x + dx, y + dy, 3.0), "wood.4")
+    for dx in (-0.67, 0.67):
+        for dy in (-0.67, 0.67):
+            k.post("RailPost", 0.035, 2.5, 3.02, x + dx, y + dy, ("wood.4", "wood.4", "wood.3"))
     for i in range(6):
         k.box("Rung", (0.5, 0.05, 0.05), (x, y - 0.75, 0.35 + i * 0.4), "wood.5")
     for dx in (-0.25, 0.25):
@@ -1032,7 +1055,7 @@ def big_bellows(x, y):
     for dy in (-0.7, 0.7):
         k.post("BellowsLeg", 0.07, 0, 0.7, x, y + dy)
     k.add("BellowsPipe", mv.prism(8, 0.1, 0.1, 1.4), "metal.2", (x - 0.9, y, 0.95), (0, math.pi / 2, 0))
-    k.box("BellowsLever", (0.08, 1.2, 0.08), (x, y - 1.2, 1.5), "wood.5", rot=(0.4, 0, 0))
+    k.box("BellowsLever", (0.08, 1.2, 0.08), (x, y - 1.3, 1.38), "wood.5", rot=(-0.4, 0, 0))
 
 
 def street_oven(x, y):
@@ -1143,10 +1166,17 @@ def ore_sorter(x, y):
 def tool_rack(x, y):
     """Smithy: picks hung by size and a grindstone (dig faces break sooner)."""
     k = addon("toolrack")
+    for dx in (-0.66, 0.66):
+        k.post("RackPost", 0.05, 0, 1.55, x + dx, y + 0.03, ("wood.3", "wood.3", "wood.2"))
+    k.box("RackRail", (1.42, 0.06, 0.08), (x, y + 0.03, 1.45), "wood.3")
     prop(k, "Peg_Rack", x, y, 0.9)
+    prop(k, "Peg_Rack", x, y, 1.25)
     for i, z in enumerate((1.3, 1.0, 0.7)):
         prop(k, "pickaxe", x - 0.4 + i * 0.4, y - 0.08, z)
     k.add("Grindstone", mv.prism(12, 0.3, 0.3, 0.1), ("stone.5", "stone.4", "stone.3"), (x + 1.1, y, 0.55), (math.pi / 2, 0, 0))
+    for dy in (-0.22, 0.22):
+        k.post("GrindFrame", 0.04, 0, 0.62, x + 1.1, y + dy)
+    k.log("GrindAxle", 0.5, 0.025, (x + 1.1, y, 0.55), "y", sides=("metal.1", "metal.1", "metal.2"), ends="metal.2")
 
 
 def pie_window(x, y, z):
@@ -1221,7 +1251,8 @@ def lamplighter_post(x, y):
     for dy in (-0.25, 0.25):
         k.box("Ladder", (0.06, 0.06, 2.8), (x + 0.1, y + dy, 1.45), ("wood.4", "wood.3", "wood.5"), rot=(0, -0.12, 0))
     for i in range(7):
-        k.box("Rung", (0.04, 0.5, 0.04), (x + 0.1 + i * 0.045, y, 0.35 + i * 0.38), ("wood.4", "wood.3", "wood.5"))
+        z = 0.35 + i * 0.38
+        k.box("Rung", (0.04, 0.5, 0.04), (x + 0.1 - math.sin(0.12) * (z - 1.45), y, z), ("wood.4", "wood.3", "wood.5"))
     prop(k, "Bucket_Metal", x - 0.4, y + 0.7)
 
 

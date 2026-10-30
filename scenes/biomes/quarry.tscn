@@ -247,11 +247,13 @@ model = ExtResource("m_ladder")
 collide = false
 
 [node name="Crane" type="StaticBody3D" parent="Props"]
-position = Vector3(-117.68, 26.00, 2.73)
+position = Vector3(-117.68, 19.6, 2.73)
 rotation = Vector3(0, -1.8708, 0)
 script = ExtResource("8_prop")
 model = ExtResource("m_crane")
 collide = false
+snap_to_ground = true
+sink = 0.1
 
 [node name="Scenery" type="Node3D" parent="."]
 script = ExtResource("9_scatter")

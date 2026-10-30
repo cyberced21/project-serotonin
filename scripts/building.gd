@@ -247,8 +247,9 @@ func _build_tiers() -> void:
 			var aabb := m.get_aabb()
 			if aabb.size.x * aabb.size.y * aabb.size.z >= MIN_COLLIDER_VOLUME:
 				var shape := CollisionShape3D.new()
-				# a kit wall's hull would close its doorway and windows: kit pieces collide as they are
-				shape.shape = m.mesh.create_trimesh_shape() if kit \
+				# a kit wall's hull would close its doorway and windows: kit pieces collide as they are,
+				# but a stair's hull, a smooth ramp, is what you walk up (its steps are too tall to)
+				shape.shape = m.mesh.create_trimesh_shape() if kit and not piece.begins_with("KitStair") \
 						else m.mesh.create_convex_shape(true, false)  # simplify=true takes seconds per building
 				shape.transform = xform
 				_bodies[t].add_child(shape)
@@ -264,6 +265,23 @@ func _build_tiers() -> void:
 			mark.transform = xform
 			_use_mark(t, mark)
 	inst.free()
+	_hang_door_glass()
+
+
+## A kit door's little window is split off with the rest of the glass (it's lit at night): hung
+## from its door, it swings open with it instead of staying in the doorway.
+func _hang_door_glass() -> void:
+	for t in _doors:
+		for d: MeshInstance3D in _doors[t]:
+			var leaf := (d.transform * d.get_aabb()).grow(0.02)
+			for g in _windows:
+				if g.get_parent() != _tiers[t] or not leaf.has_point((g.transform * g.get_aabb()).get_center()):
+					continue
+				var local := d.transform.affine_inverse() * g.transform
+				_tiers[t].remove_child(g)
+				d.add_child(g)
+				g.transform = local
+				_homes[g] = local
 
 
 ## A piece of an add-on ("AO-<id>_..."): into that add-on's node (a mesh, with collision) or a

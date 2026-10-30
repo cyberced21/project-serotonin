@@ -67,6 +67,8 @@ extends CharacterBody3D
 @export var mantle_max_height := 2.2
 ## Pull-up time per metre of height.
 @export var mantle_time_per_m := 0.18
+## Ledges up to this high (a porch step, a dock's edge, a kerb) you just walk up onto.
+@export var step_height := 0.4
 
 @export_group("Gathering")
 ## How far the crosshair reaches (m).
@@ -252,6 +254,7 @@ var _bob_phase := 0.0
 var _bob_amp := 0.0
 var _dip := 0.0  # landing dip spring (m, + = down)
 var _dip_vel := 0.0
+var _step_lift := 0.0  # how far the eye still trails a step up (m, eased away)
 # the held tool
 var _grip_rest := Transform3D.IDENTITY  # the grip this frame: rest, or turning to the swing grip
 var _grip_default := Transform3D.IDENTITY  # the Grip node's own placement: everyone's rest pose
@@ -363,6 +366,7 @@ func _process(delta: float) -> void:
 	var k := _dip_vel + w * _dip
 	_dip_vel = (_dip_vel - w * k * delta) * decay
 	_dip = (_dip + k * delta) * decay
+	_step_lift *= exp(-14.0 * delta)  # a step up: the eye catches up instead of popping
 	# lean into strafes
 	var lean_target := -_move_input.x * deg_to_rad(strafe_lean_deg) if grounded else 0.0
 	_lean = lerp_angle(_lean, lean_target, 1.0 - exp(-6.0 * delta))
@@ -370,7 +374,7 @@ func _process(delta: float) -> void:
 	var feet := get_global_transform_interpolated().origin
 	head.global_transform = Transform3D(
 		Basis.from_euler(Vector3(_pitch - _dip * 0.6, rotation.y, _lean)),
-		feet + Vector3.UP * (_eye + bob - _dip))
+		feet + Vector3.UP * (_eye + bob - _dip - _step_lift))
 	_update_tool_feel(delta, bob, run)
 	if is_instance_valid(_stuck_pivot):  # the stuck tool quivers round its buried edge
 		var a := _buzz_angle()
@@ -518,6 +522,8 @@ func _move(delta: float) -> void:
 	velocity.z = horizontal.y
 	var was_on_floor := on_floor
 	var fall_speed := -velocity.y
+	if on_floor and not jumped:
+		_step_up(Vector3(velocity.x, 0.0, velocity.z) * delta)
 	move_and_slide()
 
 	if is_on_floor() and not was_on_floor:
@@ -555,6 +561,37 @@ func _fits(at: Vector3) -> bool:
 	query.collision_mask = WORLD_MASK
 	query.exclude = [get_rid()]
 	return get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
+
+
+## Walking into a ledge no higher than step_height (a porch step, a dock's edge): up onto it. The
+## probe reaches a little past this frame's move, so the capsule's round foot lands on the step's
+## top rather than its edge. A step's edge meets the round foot like a steep slope; only what's
+## walkable on top of it counts.
+func _step_up(motion: Vector3) -> void:
+	var flat := motion.length()
+	if flat < 0.0005:
+		return
+	var ahead := motion / flat * maxf(flat, 0.2)
+	var from := global_transform
+	var bump := KinematicCollision3D.new()
+	if not test_move(from, ahead, bump) or bump.get_normal().y > 0.7:
+		return  # nothing in the way, or ground you just walk up
+	var up := Vector3.UP * step_height
+	var lift := KinematicCollision3D.new()
+	if test_move(from, up, lift):
+		up = lift.get_travel()  # (a low ceiling)
+	var raised := from.translated(up)
+	if test_move(raised, ahead):
+		return  # a wall, not a step
+	var drop := KinematicCollision3D.new()
+	if not test_move(raised.translated(ahead), -up - Vector3.UP * 0.05, drop) or drop.get_normal().y < 0.7:
+		return  # nothing to stand on up there (or a slope too steep to walk)
+	var rise := up.y + drop.get_travel().y
+	if rise < 0.02:
+		return
+	global_position.y += rise
+	velocity.y = maxf(velocity.y, 0.0)
+	_step_lift += rise
 
 
 # --- mantle ---------------------------------------------------------------------------------

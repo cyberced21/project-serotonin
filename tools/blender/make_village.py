@@ -321,16 +321,20 @@ def bread_oven(k, x, y, big=False):
           ("ore.copper", "ore.copper_dark", "stone.2"), (x, y, 0.62))
     k.box("OvenMouth", (0.5 * s, 0.2, 0.36 * s), (x, y - 0.66 * s, 0.82), "neutral.1")
     k.box("OvenEmbers", (0.36 * s, 0.1, 0.1), (x, y - 0.62 * s, 0.7), "accent.2")
-    n = 5 if big else 2  # in the bakehouse the flue goes up through the roof
+    n = 6 if big else 3  # in the bakehouse the flue goes up through the roof
+    base = 0.62 + 0.4 * s  # (on the dome, over the back of it)
     for i in range(n):
-        k.stone("Flue", (0.28, 0.28, 0.3), (x, y + 0.35 * s, 1.18 * s + i * 0.28 + 0.1), ("stone.3", "stone.2", "stone.1"))
-    k.empty("Smoke", (x, y + 0.35 * s, 1.2 * s + n * 0.28 + 0.15))
+        k.stone("Flue", (0.28, 0.28, 0.3), (x, y + 0.35 * s, base + 0.15 + i * 0.28), ("stone.3", "stone.2", "stone.1"))
+    k.empty("Smoke", (x, y + 0.35 * s, base + n * 0.28 + 0.2))
 
 
 def hanging_sign(k, x, y, z, emblem):
     """A board on a bracket sticking out from a front wall (y), with an `emblem(k, x, y, z)` on it."""
     k.box("SignBracket", (0.05, 0.6, 0.05), (x, y - 0.3, z + 0.35), "metal.1")
     k.box("Sign", (0.6, 0.05, 0.42), (x, y - 0.5, z), ("wood.6", "wood.5", "wood.4"))
+    k.box("SignBar", (0.5, 0.03, 0.03), (x, y - 0.5, z + 0.33), "metal.1")  # across under the bracket
+    for dx in (-0.2, 0.2):
+        k.box("SignChain", (0.015, 0.015, 0.12), (x + dx, y - 0.5, z + 0.26), "metal.1")
     emblem(k, x, y - 0.54, z)
 
 
@@ -545,12 +549,12 @@ def noticeboard():
     reset()
     k = Kit("", 608)
     for x in (-0.85, 0.85):
-        k.post("Post", 0.07, 0, 2.3, x, 0, ("wood.3", "wood.3", "wood.2"))
+        k.post("Post", 0.07, 0, 2.52, x, 0, ("wood.3", "wood.3", "wood.2"))
     k.box("Board", (1.75, 0.07, 1.05), (0, 0, 1.45), ("wood.5", "wood.4", "wood.3"), jit=0.004)
     k.box("Frame", (1.85, 0.09, 0.08), (0, 0, 2.0), "wood.2")
     k.box("Frame", (1.85, 0.09, 0.08), (0, 0, 0.9), "wood.2")
     for x, side in ((0, 1), (0, -1)):
-        k.box("Roof", (2.1, 0.42, 0.04), (0, side * 0.19, 2.42), ("wood.2", "wood.1", "wood.1"), rot=(side * 0.55, 0, 0))
+        k.box("Roof", (2.1, 0.42, 0.04), (0, side * 0.19, 2.42), ("wood.2", "wood.1", "wood.1"), rot=(-side * 0.55, 0, 0))
     k.box("Ridge", (2.15, 0.07, 0.07), (0, 0, 2.53), "wood.1")
     notes = ((-0.55, 1.68, 0.36, 0.28, 0.05), (-0.05, 1.62, 0.3, 0.38, -0.08), (0.48, 1.7, 0.34, 0.26, 0.1),
              (-0.42, 1.18, 0.32, 0.3, -0.06), (0.22, 1.2, 0.4, 0.3, 0.04), (0.66, 1.14, 0.22, 0.28, -0.12))
@@ -577,7 +581,7 @@ def planter():
         c = rng.choice(("accent.5", "accent.6", "accent.2", "accent.4"))
         for j in range(2):
             k.add("Flower", blob(0.05, rng, squash=(1, 1, 0.6)), (c, c, c),
-                  (x + rng.uniform(-0.06, 0.06), rng.uniform(-0.1, 0.1), 0.58 + rng.uniform(0, 0.06)))
+                  (x + rng.uniform(-0.06, 0.06), rng.uniform(-0.1, 0.1), 0.53 + rng.uniform(0, 0.04)))
     export(os.path.join("village", "props", "planter"))
 
 
@@ -594,13 +598,13 @@ def well():
               ("stone.5", "stone.4", "stone.3"), rot=(0, 0, a + math.pi / 2), jit=0.02)
     k.add("Water", prism(10, 0.52, 0.52, 0.02), ("accent.4", "accent.4", "accent.4"), (0, 0, 0.45))
     for x in (-0.72, 0.72):
-        k.post("Post", 0.06, 0.6, 2.0, x, 0, ("wood.3", "wood.3", "wood.2"))
+        k.post("Post", 0.06, 0.6, 2.26, x, 0, ("wood.3", "wood.3", "wood.2"))
     k.box("Crank", (1.5, 0.08, 0.08), (0, 0, 1.55), "wood.2")
     k.box("Handle", (0.06, 0.25, 0.06), (0.8, -0.12, 1.55), "wood.2")
     k.box("Rope", (0.02, 0.02, 0.6), (0, 0, 1.22), ("neutral.5", "neutral.5", "neutral.4"))
     k.add("Bucket", prism(8, 0.12, 0.14, 0.2), ("wood.5", "wood.4", "wood.3"), (0, 0, 0.84))
     for side in (1, -1):
-        k.box("Roof", (1.8, 0.55, 0.04), (0, side * 0.24, 2.12), ("wood.2", "wood.1", "wood.1"), rot=(side * 0.6, 0, 0))
+        k.box("Roof", (1.8, 0.55, 0.04), (0, side * 0.24, 2.12), ("wood.2", "wood.1", "wood.1"), rot=(-side * 0.6, 0, 0))
     k.box("Ridge", (1.85, 0.07, 0.07), (0, 0, 2.27), "wood.1")
     export(os.path.join("village", "props", "well"))
 
@@ -944,7 +948,7 @@ def market_stall():
     for i in range(8):  # the awning: alternating stripes, sloping down toward the customer
         x = -w / 2 + (i + 0.5) * (w / 8)
         c = "accent.1" if i % 2 == 0 else "neutral.6"
-        k.box("Awning", (w / 8 + 0.005, d + 0.6, 0.03), (x, -0.05, 2.47), (c, c, c), rot=(math.radians(-10), 0, 0))
+        k.box("Awning", (w / 8 + 0.005, d + 0.6, 0.03), (x, -0.05, 2.47), (c, c, c), rot=(math.radians(10), 0, 0))
     for i in range(8):  # scalloped edge
         x = -w / 2 + (i + 0.5) * (w / 8)
         c = "accent.1" if i % 2 == 0 else "neutral.6"
