@@ -20,7 +20,8 @@ const Editor = (() => {
 	const redo = [];
 	let canvas, ctx, mapImg;
 	let W = 0, H = 0;
-	let mouse = { x: 0, y: 0, wx: 0, wz: 0 };
+	const mouse = { x: 0, y: 0, wx: 0, wz: 0 };
+	E.mouse = mouse;
 	let drag = null;   // {type: 'pan'|'move'|'handle'|'box', ...}
 
 	// --- geometry -------------------------------------------------------------------------------

@@ -131,4 +131,123 @@
 	});
 
 	E.points = { section, entry };
+
+	// --- the line brush --------------------------------------------------------------------------------
+
+	const lineBrush = { type: "hedge", gate_every: 0, clip: true };
+	let corners = [];
+	let hover = null;
+
+	const finishLine = () => {
+		if (corners.length >= 2 && E.polyLength(corners) >= 2) {
+			const o = { id: E.uniqueId(lineBrush.type), type: lineBrush.type, points: corners, clip: lineBrush.clip };
+			if (lineBrush.gate_every > 0) { o.gate_every = lineBrush.gate_every; o.gate = 4; }
+			E.roundShape("lines", o);
+			E.commit();
+			E.layout.lines.push(o);
+			E.select("lines", o);
+			E.changed();
+		}
+		corners = [];
+		E.updateHint();
+	};
+
+	E.registerTool({
+		id: "line",
+		label: "Line",
+		title: "Draw a hedge, wall or fence",
+		options(box) {
+			const el = E.el;
+			const t = el("select", {}, ...Object.keys(E.catalog.lines).map((k) => el("option", { value: k }, E.catalog.lines[k].label)));
+			t.value = lineBrush.type;
+			t.onchange = () => { lineBrush.type = t.value; };
+			const g = el("input", { type: "number", step: "1", min: "0", value: lineBrush.gate_every, title: "A gate every this many metres (0: none)" });
+			g.onchange = () => { lineBrush.gate_every = Math.max(0, Number(g.value)); };
+			const c = el("input", { type: "checkbox" });
+			c.checked = lineBrush.clip;
+			c.onchange = () => { lineBrush.clip = c.checked; };
+			box.append(t, el("span", { class: "muted" }, "gate every (m)"), g, el("label", { class: "row" }, c, "cut at roads and water"));
+		},
+		hint: () => (corners.length
+			? `${corners.length} points, ${Math.round(E.polyLength(corners))} m: click to add, double-click / Enter to finish, Backspace to take one back, Esc to drop it`
+			: "Click along where the line runs."),
+		down(x, z) { corners.push([x, z]); E.updateHint(); },
+		move(x, z) { hover = [x, z]; },
+		dblclick() {
+			const n = corners.length;
+			if (n < 2 || E.dist(corners[n - 1][0], corners[n - 1][1], corners[n - 2][0], corners[n - 2][1]) > 6 / E.view.s) return;
+			corners.pop();
+			finishLine();
+		},
+		finish: finishLine,
+		cancel() { corners = []; E.updateHint(); },
+		keydown(ev) {
+			if (ev.key === "Backspace" && corners.length) { corners.pop(); E.updateHint(); return true; }
+			return false;
+		},
+		preview(ctx) {
+			if (!corners.length) return;
+			E.path(hover ? [...corners, hover] : corners, false);
+			ctx.lineWidth = Math.max(2, E.view.s * 1.1);
+			ctx.strokeStyle = (E.catalog.lines[lineBrush.type] || {}).color || "#fff";
+			ctx.setLineDash([6, 4]);
+			ctx.stroke();
+			ctx.setLineDash([]);
+		},
+	});
+
+	// --- the point brush -------------------------------------------------------------------------------
+
+	const pointBrush = { type: "oak", yaw: 0, spin: true };
+
+	E.registerTool({
+		id: "point",
+		label: "Point",
+		title: "Place one thing: a tree, a rock, a prop, a ruin",
+		options(box) {
+			const el = E.el;
+			const s = el("select", {});
+			for (const [sec, title] of [["gatherables", "Gatherables"], ["props", "Props"], ["fixtures", "Fixtures"]]) {
+				const g = el("optgroup", { label: title });
+				for (const k in E.catalog[sec]) g.append(el("option", { value: k }, E.catalog[sec][k].label));
+				s.append(g);
+			}
+			s.value = pointBrush.type;
+			s.onchange = () => { pointBrush.type = s.value; };
+			const y = el("input", { type: "number", step: "15", value: pointBrush.yaw, title: "Facing (degrees)" });
+			y.onchange = () => { pointBrush.yaw = Number(y.value); };
+			const r = el("input", { type: "checkbox" });
+			r.checked = pointBrush.spin;
+			r.onchange = () => { pointBrush.spin = r.checked; };
+			box.append(s, el("span", { class: "muted" }, "facing °"), y, el("label", { class: "row" }, r, "random facing"));
+		},
+		hint: () => "Click to place. R turns the next one 45°.",
+		down(x, z) {
+			const o = { id: E.uniqueId(pointBrush.type), type: pointBrush.type, at: [E.round(x), E.round(z)],
+				yaw: pointBrush.spin ? Math.round(Math.random() * 360) : pointBrush.yaw };
+			E.commit();
+			E.layout.points.push(o);
+			E.select("points", o);
+			E.changed();
+		},
+		keydown(ev) {
+			if (ev.key.toLowerCase() === "r") {
+				pointBrush.yaw = (pointBrush.yaw + 45) % 360;
+				pointBrush.spin = false;
+				E.setTool(E.tool);  // (shows the new facing)
+				return true;
+			}
+			return false;
+		},
+		preview(ctx) {
+			const p = E.mouse;
+			if (!p) return;
+			const [sx, sy] = E.toScreen(p.wx, p.wz);
+			ctx.beginPath();
+			ctx.arc(sx, sy, 5, 0, Math.PI * 2);
+			ctx.strokeStyle = "#fff";
+			ctx.lineWidth = 1.5;
+			ctx.stroke();
+		},
+	});
 })();
