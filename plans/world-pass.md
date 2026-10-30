@@ -165,4 +165,4 @@ sparse, rocks sit out of place, the village looks randomly laid out. Branch `wor
 **Carried on:**
 - The forest trail detours east round a steep climb (317 m, one 13.6 m cut at (171, -93)): phases 6-7 revisit the Pinewood (the haven's deer track).
 - Bare-dirt patches show on many slopes (the terrain shader paints dirt from a gentle slope): phase 6.
-- Next: **phase 3, the assets page** (stop 2 for the user: buildings and props, animals, sounds, picked on a page).
+- **Phase 3, the assets page** (stop 2), published 2026-10-30: [Hearthvale Country Picks](https://claude.ai/artifact/2KtQbt7xxdTbMTnf194vMe). 114 CC0 models from Poly Pizza (mostly Quaternius: farm animals, wild things, barns and stores, mills, chapel/cottages/huts, fields and yards, orchard/flowers/water, old things) and 87 CC0 Freesound recordings in 26 groups, plus a choice of how the new buildings are made (from our village kit, whole models, or a mix). Picks save to the page's database (`picks`, `notes`, `choices/buildings`). Working files in `E:\Godot\downloads\world-pick` (`models_short.json` has each pick's GLB link). Next: read the picks, write them here, then phase 4.
