@@ -308,7 +308,10 @@ func _add_addon_piece(n: Node, inst: Node) -> void:
 			m.remove_child(c)
 		_addon_nodes[id].add_child(m)
 		m.transform = xform
-		if m.mesh.get_surface_count() > 0 and m.mesh.surface_get_material(0) == null:
+		# ours are palette-painted like a tier's (the importer gives them a blank default material,
+		# so they came out white); the kits' pieces keep their own named materials
+		var own := m.mesh.surface_get_material(0) if m.mesh.get_surface_count() > 0 else null
+		if own == null or own.resource_name == "":
 			m.material_override = PaletteMaterial.for_mesh(m.mesh)
 		_homes[m] = xform
 		_mark_night_glow(m)
