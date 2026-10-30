@@ -92,6 +92,11 @@ const GREET := 9.0
 ## Hints: how near something must be (m), at most one this often (s), and how long he lingers.
 const HINT_RANGE := 9.0
 const HINT_GAP := 40.0
+## A rabbit bolting within CHASE_RANGE (plans/world-pass.md, phase 8): he's off after it for
+## CHASE_TIME s, then trots back; not again for CHASE_GAP s, nor while you work or at night.
+const CHASE_RANGE := 14.0
+const CHASE_TIME := 3.5
+const CHASE_GAP := 25.0
 const HINT_TIME := 3.5
 ## A fish this many counts or more (Big 2, Huge 3: LandedFish.count) is worth a woof.
 const BIG_FISH := 2
@@ -437,6 +442,9 @@ func _think(delta: float) -> void:
 	_hints(delta, moving)
 	if _hint_at != Vector3.INF:
 		_goal = _hint_at
+	_chase_tick(delta)
+	if _chase:
+		_goal = _chase.global_position
 	# never in front of you while you're at work
 	if _busy > 0.0 and _in_front(_goal, pp, look):
 		_goal = pp + right * _side * GATHER_SIDE
@@ -489,6 +497,27 @@ func _kennel(pp: Vector3) -> bool:
 
 
 var _is_fish_hint := false
+var _chase: Node3D
+var _chase_left := 0.0
+var _chase_wait := 0.0
+
+
+## After a bolting rabbit (Animal): who he's chasing now, if anyone.
+func _chase_tick(delta: float) -> void:
+	if _chase:
+		_chase_left -= delta
+		if _chase_left <= 0.0 or not is_instance_valid(_chase):
+			_chase = null
+			_chase_wait = CHASE_GAP
+		return
+	_chase_wait = maxf(_chase_wait - delta, 0.0)
+	if _chase_wait > 0.0 or _busy > 0.0 or DayNight.is_night():
+		return
+	for a in get_tree().get_nodes_in_group("animal"):
+		if a.get("kind") == &"rabbit" and a.get("_bolting") and _flat((a as Node3D).global_position - global_position) < CHASE_RANGE:
+			_chase = a as Node3D
+			_chase_left = CHASE_TIME
+			return
 
 
 ## Now and then: over to a rare-look node or an ore fault near him, or a stare at a fish school.

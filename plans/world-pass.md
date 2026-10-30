@@ -254,3 +254,28 @@ the page's plots put the town hall and the tavern on the north and east lanes):
   (kind `flower`, "Haven flower", models/trophies/flower_a.glb).
 - Not done: fireflies at dusk over the pool (Fireflies finds still water on its own: check in
   play), deer that don't bolt (phase 8), the places' uses (fruit, wool, flour: their own chunk).
+
+## Phase 8, life (2026-10-30)
+
+- **Animals** (`Animal`, the picked Quaternius models scaled to life, their own clips): a flock on
+  the shepherd's hill (7 sheep, 2 lambs) and 5 sheep in a pasture south-east of the village, 4
+  cows in the east fields, hens and chicks in the farm yard, 2 pigs in their pen, two horses and a
+  donkey by the stable; deer and a stag at the forest's edges that bolt from you and the dog, two
+  deer in the haven that don't; rabbits in the fields (bolting, a thump), squirrels by the groves
+  (chattering); frogs at the ponds. They graze, idle and amble about home, never into water, and
+  call now and then (a few seconds out of their recording). Out of range (120 m) they rest.
+- The rabbit and the squirrel are our own (tools/blender/make_critters.py): the picked ones were
+  upright characters. They hop along in code.
+- **The dog chases bolting rabbits** for a few seconds (`Dog.CHASE_*`), then comes back.
+- **Small wildlife** (`Critters`): butterflies over meadows and flowers, bees round the orchard,
+  the allotments and the haven (humming), dragonflies over the ponds, the creek and the lake,
+  birds pecking about the groves that flutter off as you come near.
+- **The places' sounds** (`SoundSpot`, audio/country/, SOURCES.md): the farmyard and hay in the
+  barn by day, the rooster at dawn, the pen gate, the mill's wheel once mended and its race, the
+  wind on the shepherd's hill, the washhouse in the morning, the chapel bell at 7, 12 and 18,
+  meadow insects, blackbird and chaffinch by the groves, wood pigeons, skylarks over the hill, a
+  tawny owl at night, ducks and jumping fish at the ponds. The hay rustle is the minute between the
+  voices on its recording (`tools/mp3_cut.py`). Not used: the brook (the creek has its own), the
+  crickets (the ambience has its own).
+- Not done: sounds unheard by anyone yet (levels are first guesses), the hens are small enough to
+  hide in long grass, no fish model jumping (just the splash).

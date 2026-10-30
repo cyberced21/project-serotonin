@@ -115,6 +115,9 @@
 [ext_resource type="PackedScene" path="res://models/country/bench.glb" id="pl_bench"]
 [ext_resource type="PackedScene" path="res://models/country/lilypad.glb" id="pl_lily"]
 [ext_resource type="PackedScene" path="res://models/country/rock_path_round_small.glb" id="pl_stone"]
+[ext_resource type="Script" path="res://scripts/animal.gd" id="lf_animal"]
+[ext_resource type="Script" path="res://scripts/critters.gd" id="lf_critters"]
+[ext_resource type="Script" path="res://scripts/sound_spot.gd" id="lf_sound"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
@@ -1260,6 +1263,848 @@ script = ExtResource("97_village_paths")
 
 
 
+
+[node name="Life" type="Node3D" parent="."]
+
+[node name="Animals" type="Node3D" parent="Life"]
+
+[node name="Sheep1" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 348.5, 0, 6.5)
+script = ExtResource("lf_animal")
+kind = &"sheep"
+home_radius = 18
+
+[node name="Sheep2" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 350.2, 0, 8.8)
+script = ExtResource("lf_animal")
+kind = &"sheep"
+home_radius = 18
+
+[node name="Sheep3" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 348.9, 0, 8.1)
+script = ExtResource("lf_animal")
+kind = &"sheep"
+home_radius = 18
+
+[node name="Sheep4" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 350.6, 0, 7.4)
+script = ExtResource("lf_animal")
+kind = &"sheep"
+home_radius = 18
+
+[node name="Sheep5" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 349.3, 0, 6.7)
+script = ExtResource("lf_animal")
+kind = &"sheep"
+home_radius = 18
+
+[node name="Sheep6" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 351, 0, 9)
+script = ExtResource("lf_animal")
+kind = &"sheep"
+home_radius = 18
+
+[node name="Sheep7" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 349.7, 0, 8.3)
+script = ExtResource("lf_animal")
+kind = &"sheep"
+home_radius = 18
+
+[node name="Lamb1" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 350.5, 0, 2.5)
+script = ExtResource("lf_animal")
+kind = &"lamb"
+home_radius = 14
+
+[node name="Lamb2" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 352.2, 0, 4.8)
+script = ExtResource("lf_animal")
+kind = &"lamb"
+home_radius = 14
+
+[node name="Sheep8" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 191.5, 0, 238.5)
+script = ExtResource("lf_animal")
+kind = &"sheep"
+home_radius = 10
+
+[node name="Sheep9" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 193.2, 0, 240.8)
+script = ExtResource("lf_animal")
+kind = &"sheep"
+home_radius = 10
+
+[node name="Sheep10" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 191.9, 0, 240.1)
+script = ExtResource("lf_animal")
+kind = &"sheep"
+home_radius = 10
+
+[node name="Sheep11" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 193.6, 0, 239.4)
+script = ExtResource("lf_animal")
+kind = &"sheep"
+home_radius = 10
+
+[node name="Sheep12" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 192.3, 0, 238.7)
+script = ExtResource("lf_animal")
+kind = &"sheep"
+home_radius = 10
+
+[node name="Cow1" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 252.5, 0, 92.5)
+script = ExtResource("lf_animal")
+kind = &"cow"
+home_radius = 11
+
+[node name="Cow2" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 254.2, 0, 94.8)
+script = ExtResource("lf_animal")
+kind = &"cow"
+home_radius = 11
+
+[node name="Cow3" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 252.9, 0, 94.1)
+script = ExtResource("lf_animal")
+kind = &"cow"
+home_radius = 11
+
+[node name="Cow4" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 254.6, 0, 93.4)
+script = ExtResource("lf_animal")
+kind = &"cow"
+home_radius = 11
+
+[node name="Hen1" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 148.5, 0, 186.5)
+script = ExtResource("lf_animal")
+kind = &"hen"
+home_radius = 8
+
+[node name="Hen2" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150.2, 0, 188.8)
+script = ExtResource("lf_animal")
+kind = &"hen"
+home_radius = 8
+
+[node name="Hen3" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 148.9, 0, 188.1)
+script = ExtResource("lf_animal")
+kind = &"hen"
+home_radius = 8
+
+[node name="Hen4" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150.6, 0, 187.4)
+script = ExtResource("lf_animal")
+kind = &"hen"
+home_radius = 8
+
+[node name="Hen5" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 149.3, 0, 186.7)
+script = ExtResource("lf_animal")
+kind = &"hen"
+home_radius = 8
+
+[node name="Hen6" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 151, 0, 189)
+script = ExtResource("lf_animal")
+kind = &"hen"
+home_radius = 8
+
+[node name="Chick1" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150.5, 0, 184.5)
+script = ExtResource("lf_animal")
+kind = &"chick"
+home_radius = 5
+
+[node name="Chick2" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 152.2, 0, 186.8)
+script = ExtResource("lf_animal")
+kind = &"chick"
+home_radius = 5
+
+[node name="Chick3" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150.9, 0, 186.1)
+script = ExtResource("lf_animal")
+kind = &"chick"
+home_radius = 5
+
+[node name="Pig1" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 147.5, 0, 222.5)
+script = ExtResource("lf_animal")
+kind = &"pig"
+home_radius = 3.5
+
+[node name="Pig2" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 149.2, 0, 224.8)
+script = ExtResource("lf_animal")
+kind = &"pig"
+home_radius = 3.5
+
+[node name="Horse1" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 114.5, 0, 212.5)
+script = ExtResource("lf_animal")
+kind = &"horse"
+home_radius = 7
+
+[node name="Whitehorse1" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 116.5, 0, 208.5)
+script = ExtResource("lf_animal")
+kind = &"white_horse"
+home_radius = 7
+
+[node name="Donkey1" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 112.5, 0, 214.5)
+script = ExtResource("lf_animal")
+kind = &"donkey"
+home_radius = 7
+
+[node name="Deer1" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58.5, 0, -41.5)
+script = ExtResource("lf_animal")
+kind = &"deer"
+home_radius = 15
+skittish = true
+
+[node name="Deer2" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60.2, 0, -39.2)
+script = ExtResource("lf_animal")
+kind = &"deer"
+home_radius = 15
+skittish = true
+
+[node name="Stag1" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 173.5, 0, -61.5)
+script = ExtResource("lf_animal")
+kind = &"stag"
+home_radius = 15
+skittish = true
+
+[node name="Deer3" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 176.5, 0, -65.5)
+script = ExtResource("lf_animal")
+kind = &"deer"
+home_radius = 15
+skittish = true
+
+[node name="Deer4" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 109.5, 0, -164.5)
+script = ExtResource("lf_animal")
+kind = &"deer"
+home_radius = 7
+
+[node name="Deer5" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 111.2, 0, -162.2)
+script = ExtResource("lf_animal")
+kind = &"deer"
+home_radius = 7
+
+[node name="Rabbit1" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 86.5, 0, 234.5)
+script = ExtResource("lf_animal")
+kind = &"rabbit"
+home_radius = 8
+skittish = true
+
+[node name="Rabbit2" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 88.2, 0, 236.8)
+script = ExtResource("lf_animal")
+kind = &"rabbit"
+home_radius = 8
+skittish = true
+
+[node name="Rabbit3" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 230.5, 0, 194.5)
+script = ExtResource("lf_animal")
+kind = &"rabbit"
+home_radius = 8
+skittish = true
+
+[node name="Rabbit4" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 232.2, 0, 196.8)
+script = ExtResource("lf_animal")
+kind = &"rabbit"
+home_radius = 8
+skittish = true
+
+[node name="Rabbit5" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 176.5, 0, 38.5)
+script = ExtResource("lf_animal")
+kind = &"rabbit"
+home_radius = 8
+skittish = true
+
+[node name="Rabbit6" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 178.2, 0, 40.8)
+script = ExtResource("lf_animal")
+kind = &"rabbit"
+home_radius = 8
+skittish = true
+
+[node name="Squirrel1" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 297.5, 0, 22.5)
+script = ExtResource("lf_animal")
+kind = &"squirrel"
+home_radius = 5
+skittish = true
+
+[node name="Squirrel2" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 201.5, 0, 290.5)
+script = ExtResource("lf_animal")
+kind = &"squirrel"
+home_radius = 5
+skittish = true
+
+[node name="Squirrel3" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 128.5, 0, -93.5)
+script = ExtResource("lf_animal")
+kind = &"squirrel"
+home_radius = 5
+skittish = true
+
+[node name="Frog1" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 110.5, 0, 132.5)
+script = ExtResource("lf_animal")
+kind = &"frog"
+home_radius = 1.5
+
+[node name="Frog2" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 126.5, 0, 135.5)
+script = ExtResource("lf_animal")
+kind = &"frog"
+home_radius = 1.5
+
+[node name="Frog3" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58.5, 0, 86.5)
+script = ExtResource("lf_animal")
+kind = &"frog"
+home_radius = 1.5
+
+[node name="Frog4" type="Node3D" parent="Life/Animals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 115.5, 0, -160.5)
+script = ExtResource("lf_animal")
+kind = &"frog"
+home_radius = 1.2
+
+[node name="Critters" type="Node3D" parent="Life"]
+
+[node name="Butterflies1" type="Node3D" parent="Life/Critters"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100, 0, 80)
+script = ExtResource("lf_critters")
+kind = &"butterfly"
+count = 6
+radius = 10
+
+[node name="Butterflies2" type="Node3D" parent="Life/Critters"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 190, 0, 150)
+script = ExtResource("lf_critters")
+kind = &"butterfly"
+count = 6
+radius = 10
+
+[node name="Butterflies3" type="Node3D" parent="Life/Critters"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 111, 0, -163)
+script = ExtResource("lf_critters")
+kind = &"butterfly"
+count = 6
+radius = 8
+
+[node name="Butterflies4" type="Node3D" parent="Life/Critters"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 84, 0, 190)
+script = ExtResource("lf_critters")
+kind = &"butterfly"
+count = 6
+radius = 8
+
+[node name="Butterflies5" type="Node3D" parent="Life/Critters"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 200, 0, 62)
+script = ExtResource("lf_critters")
+kind = &"butterfly"
+count = 6
+radius = 12
+
+[node name="OrchardBees" type="Node3D" parent="Life/Critters"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 200, 0, 62)
+script = ExtResource("lf_critters")
+kind = &"bee"
+count = 10
+radius = 12
+sound = "bees"
+sound_db = -24
+
+[node name="AllotmentBees" type="Node3D" parent="Life/Critters"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 84, 0, 190)
+script = ExtResource("lf_critters")
+kind = &"bee"
+count = 6
+radius = 8
+sound = "bees"
+sound_db = -26
+
+[node name="HavenBees" type="Node3D" parent="Life/Critters"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 111, 0, -163)
+script = ExtResource("lf_critters")
+kind = &"bee"
+count = 5
+radius = 6
+sound = "bees"
+sound_db = -26
+
+[node name="Dragonflies1" type="Node3D" parent="Life/Critters"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 120, 0, 132)
+script = ExtResource("lf_critters")
+kind = &"dragonfly"
+count = 4
+radius = 6
+
+[node name="Dragonflies2" type="Node3D" parent="Life/Critters"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, 0, 178)
+script = ExtResource("lf_critters")
+kind = &"dragonfly"
+count = 4
+radius = 6
+
+[node name="Dragonflies3" type="Node3D" parent="Life/Critters"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 66, 0, 86)
+script = ExtResource("lf_critters")
+kind = &"dragonfly"
+count = 4
+radius = 6
+
+[node name="Dragonflies4" type="Node3D" parent="Life/Critters"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 0, 338)
+script = ExtResource("lf_critters")
+kind = &"dragonfly"
+count = 4
+radius = 10
+
+[node name="Birds1" type="Node3D" parent="Life/Critters"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 299, 0, 24)
+script = ExtResource("lf_critters")
+kind = &"bird"
+count = 4
+radius = 8
+
+[node name="Birds2" type="Node3D" parent="Life/Critters"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 203, 0, 292)
+script = ExtResource("lf_critters")
+kind = &"bird"
+count = 4
+radius = 8
+
+[node name="Birds3" type="Node3D" parent="Life/Critters"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 196, 0, 66)
+script = ExtResource("lf_critters")
+kind = &"bird"
+count = 4
+radius = 8
+
+[node name="Birds4" type="Node3D" parent="Life/Critters"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0, 70)
+script = ExtResource("lf_critters")
+kind = &"bird"
+count = 4
+radius = 6
+
+[node name="Birds5" type="Node3D" parent="Life/Critters"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 111, 0, -160)
+script = ExtResource("lf_critters")
+kind = &"bird"
+count = 4
+radius = 6
+
+[node name="Sounds" type="Node3D" parent="Life"]
+
+[node name="Farmyard" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150, 0, 195)
+script = ExtResource("lf_sound")
+sound = "farmyard"
+volume_db = -16
+hear = 45
+max_distance = 45
+unit_size = 8.0
+bus = &"Ambience"
+from_hour = 6
+to_hour = 19
+
+[node name="BarnHay" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150, 0, 200)
+script = ExtResource("lf_sound")
+sound = "hay_rustle"
+volume_db = -16
+hear = 20
+max_distance = 20
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(18, 40)
+take = 4
+from_hour = 6
+to_hour = 19
+
+[node name="Rooster" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 152, 0, 186)
+script = ExtResource("lf_sound")
+sound = "rooster"
+volume_db = -10
+hear = 140
+max_distance = 140
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(40, 90)
+from_hour = 5.5
+to_hour = 7.5
+
+[node name="PenGate" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 143, 0, 224)
+script = ExtResource("lf_sound")
+sound = "gate_creak"
+volume_db = -16
+hear = 30
+max_distance = 30
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(70, 160)
+take = 3
+from_hour = 7
+to_hour = 18
+
+[node name="MillWheel" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 0, 200)
+script = ExtResource("lf_sound")
+sound = "water_wheel"
+volume_db = -8
+hear = 40
+max_distance = 40
+unit_size = 8.0
+bus = &"Ambience"
+project = &"mill_wheel"
+
+[node name="MillRace" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0, 205)
+script = ExtResource("lf_sound")
+sound = "brook"
+volume_db = -16
+hear = 25
+max_distance = 25
+unit_size = 8.0
+bus = &"Ambience"
+
+[node name="HillWind" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 360, 0, 18)
+script = ExtResource("lf_sound")
+sound = "wind_grass"
+volume_db = -14
+hear = 70
+max_distance = 70
+unit_size = 8.0
+bus = &"Ambience"
+
+[node name="Washing" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 0, 150)
+script = ExtResource("lf_sound")
+sound = "washing"
+volume_db = -14
+hear = 30
+max_distance = 30
+unit_size = 8.0
+bus = &"Ambience"
+from_hour = 7
+to_hour = 11
+
+[node name="ChapelBell" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 180, 0, 150)
+script = ExtResource("lf_sound")
+sound = "chapel_bell"
+volume_db = -6
+hear = 220
+max_distance = 220
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+strike_hours = PackedInt32Array(7, 12, 18)
+
+[node name="Meadow1" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 190, 0, 240)
+script = ExtResource("lf_sound")
+sound = "meadow_insects"
+volume_db = -22
+hear = 50
+max_distance = 50
+unit_size = 8.0
+bus = &"Ambience"
+from_hour = 10
+to_hour = 18
+
+[node name="Meadow2" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 0, 230)
+script = ExtResource("lf_sound")
+sound = "meadow_insects"
+volume_db = -22
+hear = 50
+max_distance = 50
+unit_size = 8.0
+bus = &"Ambience"
+from_hour = 10
+to_hour = 18
+
+[node name="Meadow3" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 250, 0, 100)
+script = ExtResource("lf_sound")
+sound = "meadow_insects"
+volume_db = -22
+hear = 50
+max_distance = 50
+unit_size = 8.0
+bus = &"Ambience"
+from_hour = 10
+to_hour = 18
+
+[node name="Blackbird1" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 299, 0, 24)
+script = ExtResource("lf_sound")
+sound = "blackbird"
+volume_db = -12
+hear = 60
+max_distance = 60
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(25, 60)
+take = 8
+from_hour = 5
+to_hour = 20
+
+[node name="Blackbird2" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 203, 0, 292)
+script = ExtResource("lf_sound")
+sound = "chaffinch"
+volume_db = -12
+hear = 60
+max_distance = 60
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(25, 60)
+take = 8
+from_hour = 5
+to_hour = 20
+
+[node name="Blackbird3" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 196, 0, 66)
+script = ExtResource("lf_sound")
+sound = "blackbird"
+volume_db = -12
+hear = 60
+max_distance = 60
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(25, 60)
+take = 8
+from_hour = 5
+to_hour = 20
+
+[node name="Blackbird4" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 111, 0, -163)
+script = ExtResource("lf_sound")
+sound = "chaffinch"
+volume_db = -12
+hear = 60
+max_distance = 60
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(25, 60)
+take = 8
+from_hour = 5
+to_hour = 20
+
+[node name="Blackbird5" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 0, -45)
+script = ExtResource("lf_sound")
+sound = "blackbird"
+volume_db = -12
+hear = 60
+max_distance = 60
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(25, 60)
+take = 8
+from_hour = 5
+to_hour = 20
+
+[node name="WoodPigeon1" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 175, 0, -60)
+script = ExtResource("lf_sound")
+sound = "wood_pigeon"
+volume_db = -14
+hear = 80
+max_distance = 80
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(40, 90)
+take = 3
+from_hour = 6
+to_hour = 19
+
+[node name="WoodPigeon2" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48, 0, 29)
+script = ExtResource("lf_sound")
+sound = "wood_pigeon"
+volume_db = -14
+hear = 80
+max_distance = 80
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(40, 90)
+take = 3
+from_hour = 6
+to_hour = 19
+
+[node name="WoodPigeon3" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 130, 0, -92)
+script = ExtResource("lf_sound")
+sound = "wood_pigeon"
+volume_db = -14
+hear = 80
+max_distance = 80
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(40, 90)
+take = 3
+from_hour = 6
+to_hour = 19
+
+[node name="Skylark1" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 350, 0, 8)
+script = ExtResource("lf_sound")
+sound = "skylark"
+volume_db = -14
+hear = 120
+max_distance = 120
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(40, 80)
+take = 10
+from_hour = 8
+to_hour = 17
+
+[node name="Skylark2" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 193, 0, 250)
+script = ExtResource("lf_sound")
+sound = "skylark"
+volume_db = -14
+hear = 120
+max_distance = 120
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(40, 80)
+take = 10
+from_hour = 8
+to_hour = 17
+
+[node name="TawnyOwl1" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 175, 0, -60)
+script = ExtResource("lf_sound")
+sound = "tawny_owl"
+volume_db = -12
+hear = 120
+max_distance = 120
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(90, 220)
+take = 6
+from_hour = 21
+to_hour = 4
+
+[node name="TawnyOwl2" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 0, -40)
+script = ExtResource("lf_sound")
+sound = "tawny_owl"
+volume_db = -12
+hear = 120
+max_distance = 120
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(90, 220)
+take = 6
+from_hour = 21
+to_hour = 4
+
+[node name="PondDucks" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 120, 0, 132)
+script = ExtResource("lf_sound")
+sound = "ducks"
+volume_db = -14
+hear = 40
+max_distance = 40
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(30, 80)
+take = 3
+from_hour = 6
+to_hour = 20
+
+[node name="FishJump1" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 120, 0, 132)
+script = ExtResource("lf_sound")
+sound = "fish_splash"
+volume_db = -12
+hear = 30
+max_distance = 30
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(35, 100)
+
+[node name="FishJump2" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 66, 0, 86)
+script = ExtResource("lf_sound")
+sound = "fish_splash"
+volume_db = -12
+hear = 30
+max_distance = 30
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(35, 100)
+
+[node name="FishJump3" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 0, 338)
+script = ExtResource("lf_sound")
+sound = "fish_splash"
+volume_db = -12
+hear = 30
+max_distance = 30
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(35, 100)
+
+[node name="FishJump4" type="AudioStreamPlayer3D" parent="Life/Sounds"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 114, 0, -161)
+script = ExtResource("lf_sound")
+sound = "fish_splash"
+volume_db = -12
+hear = 30
+max_distance = 30
+unit_size = 8.0
+bus = &"Ambience"
+looping = false
+gap = Vector2(35, 100)
 
 [node name="Places" type="Node3D" parent="."]
 

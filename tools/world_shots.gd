@@ -86,6 +86,12 @@ func _run() -> void:
 		["haven", Vector3(102, 0, -158), Vector3(118, 0, -167)],
 		["haven_air", Vector3(111, 45, -131), Vector3(111, 0, -163)],
 		["shepherds_air", Vector3(330, 60, 60), Vector3(358, 0, 14)],
+		# life (phase 8)
+		["sheep", Vector3(338, 0, 20), Vector3(350, 0, 8)],
+		["farm_animals", Vector3(138, 0, 180), Vector3(150, 0, 192)],
+		["horses", Vector3(108, 0, 204), Vector3(117, 0, 213)],
+		["cows", Vector3(242, 0, 104), Vector3(254, 0, 94)],
+		["haven_deer", Vector3(102, 0, -158), Vector3(111, 0, -163)],
 	]
 	var only := ""
 	for a in OS.get_cmdline_user_args():
