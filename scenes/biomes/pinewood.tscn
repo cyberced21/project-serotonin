@@ -1,9 +1,5 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/node_spawner.gd" id="1_spawner"]
-[ext_resource type="Script" path="res://scripts/spawn_entry.gd" id="2_entry"]
-[ext_resource type="PackedScene" path="res://scenes/pine_tree.tscn" id="3_pine"]
-[ext_resource type="PackedScene" path="res://scenes/birch_tree.tscn" id="4_birch"]
 [ext_resource type="Script" path="res://scripts/scenery_scatter.gd" id="5_scatter"]
 [ext_resource type="Script" path="res://scripts/scatter_layer.gd" id="6_layer"]
 [ext_resource type="PackedScene" path="res://models/scenery/canopy_pine.glb" id="7_canopy_pine"]
@@ -12,18 +8,6 @@
 [ext_resource type="PackedScene" path="res://models/scenery/fern.glb" id="10_fern"]
 [ext_resource type="PackedScene" path="res://models/scenery/mushrooms.glb" id="11_mushrooms"]
 [ext_resource type="PackedScene" path="res://models/scenery/grass_tuft.glb" id="12_grass"]
-
-[sub_resource type="Resource" id="Entry_pine"]
-script = ExtResource("2_entry")
-scene = ExtResource("3_pine")
-weight = 3.0
-edge_weight = 1.0
-
-[sub_resource type="Resource" id="Entry_birch"]
-script = ExtResource("2_entry")
-scene = ExtResource("4_birch")
-weight = 1.0
-edge_weight = 2.5
 
 [sub_resource type="Resource" id="Layer_canopy_pine"]
 script = ExtResource("6_layer")
@@ -98,19 +82,6 @@ cast_shadow = false
 visible_distance = 60.0
 
 [node name="Pinewood" type="Node3D"]
-
-[node name="Trees" type="Node3D" parent="."]
-script = ExtResource("1_spawner")
-entries = Array[ExtResource("2_entry")]([SubResource("Entry_pine"), SubResource("Entry_birch")])
-count = 225
-seed = 4
-save_prefix = "forest"
-area = Rect2(-54.5, -220, 345, 225)
-allowed_ids = Array[int]([3])
-spacing = 5.0
-hotspots = PackedVector3Array(61, -62.5, 22.5, 130, -92.5, 22.5, 76, -131.5, 22.5, 70, -44.5, 10.5, 95.5, -80.5, 10.5, 109, -116.5, 10.5, 85, -149.5, 10.5)
-hotspot_share = 0.55
-ellipse = Vector4(118, -112, 172.5, 108)
 
 [node name="Scenery" type="Node3D" parent="."]
 script = ExtResource("5_scatter")

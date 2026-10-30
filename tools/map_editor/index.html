@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hearthvale map editor</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+	<strong>Hearthvale</strong>
+	<div class="tools" id="tools"></div>
+	<div class="spacer"></div>
+	<button id="undo" title="Undo (Ctrl+Z)">Undo</button>
+	<button id="redo" title="Redo (Ctrl+Y)">Redo</button>
+	<button id="save" title="Save (Ctrl+S)">Save</button>
+	<button id="bake" class="primary" title="Save and bake into the game (Ctrl+B)">Save &amp; bake</button>
+</header>
+<div id="toolopts"></div>
+<main>
+	<aside id="left">
+		<input id="filter" placeholder="Find a shape…" autocomplete="off">
+		<div id="list"></div>
+	</aside>
+	<div id="stage">
+		<canvas id="map"></canvas>
+		<div id="hint"></div>
+	</div>
+	<aside id="right">
+		<section id="props"><p class="muted">Click a shape to see it here.</p></section>
+		<section>
+			<h3>Show</h3>
+			<div id="layers"></div>
+		</section>
+		<section>
+			<h3>Last bake <span id="bakeinfo" class="muted"></span></h3>
+			<div id="warnings"></div>
+		</section>
+		<section class="help">
+			<h3>Keys</h3>
+			<p>Drag empty map, middle or right button: pan. Wheel: zoom. Click: select (Shift: add).
+			Drag a shape or a handle to move it. Double-click a line or patch edge: add a corner;
+			Alt-click a corner: remove it. Del: delete. Ctrl+D: duplicate. Enter / double-click: finish
+			drawing, Esc: cancel. Ctrl+Z / Ctrl+Y, Ctrl+S, Ctrl+B. 1-9: tools.</p>
+		</section>
+	</aside>
+</main>
+<footer>
+	<span id="cursor"></span>
+	<span class="spacer"></span>
+	<span id="status"></span>
+</footer>
+<script src="editor.js"></script>
+<script src="patches.js"></script>
+<script src="lines_points.js"></script>
+<script src="terrain.js"></script>
+<script>Editor.start();</script>
+</body>
+</html>

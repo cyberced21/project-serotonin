@@ -326,4 +326,14 @@ Generated worlds are gone (the procgen items above are history); Hearthvale is t
 - [ ] **The haven at dusk**: check Fireflies finds its pool on its own (it looks for still water); if not, give the haven a cluster.
 - [ ] **Hens hide in long grass** (they're life-size): clear the grass in the farm yard, or scale them up a touch.
 - [ ] **The new places' uses** (their own chunk): fruit from the orchard, wool from the shepherd's flock, flour from the mill for Rosa.
-- [ ] **`place_country.gd` found only two clear knolls** for lone oaks (it wanted four): loosen its rules or pick spots by hand.
+- [ ] **Only one lone oak on the knolls** (place_country.gd wanted four): place more by hand in the map editor (plans/map-editor.md).
+
+## The map editor ([plans/map-editor.md](../plans/map-editor.md), branch `map-editor`)
+
+- [ ] **Use it:** lay out Hearthvale by hand (`python tools/map_editor/serve.py`, http://127.0.0.1:8765/), bake, play.
+- [ ] **Not walked in-game yet:** the imported world bakes back the same counts and the tests pass, but nobody has looked at it in a window.
+- [ ] **The Pinewood's core-to-edge slide** (pine in the middle, birch at the rim) became one average mix on import: split the forest into an inner and an outer patch to get it back.
+- [ ] **The forest trail shifts a little** the first time the terrain is regenerated (the road router no longer steers round the old country's grove trees and rocks, only round the layout's points).
+- [ ] **Hard-coded land** (the bowl, the clearing, the village flat, the quarry pit, Frostpeak, the existing roads) still lives in `generate_test_terrain.gd` and `WorldMap`; only new terrain shapes come from the editor.
+- [ ] **Patch themes and rare looks** (NodeSpawner's `theme`, `rare`) aren't in the layout yet; nothing used them before either.
+- [ ] **Ore walls** stay on the quarry's rings (OreWallPlacer); not a line brush.

@@ -1,0 +1,43 @@
+{
+	"_about": "What the map editor (tools/map_editor) can place, read by the editor and by tools/bake_layout.gd. See plans/map-editor.md.",
+	"gatherables": {
+		"tree":    {"label": "Tree",          "kind": "wood", "tier": 0, "scene": "res://scenes/tree.tscn",         "color": "#5f8f3e"},
+		"birch":   {"label": "Birch",         "kind": "wood", "tier": 0, "scene": "res://scenes/birch_tree.tscn",   "color": "#a9c46a"},
+		"oak":     {"label": "Oak",           "kind": "wood", "tier": 1, "scene": "res://scenes/oak_tree.tscn",     "color": "#3f7a32"},
+		"pine":    {"label": "Pine",          "kind": "wood", "tier": 2, "scene": "res://scenes/pine_tree.tscn",    "color": "#24553a"},
+		"rock":    {"label": "Copper rock",   "kind": "rock", "tier": 0, "scene": "res://scenes/rock.tscn",         "color": "#b0784a"},
+		"coal":    {"label": "Coal rock",     "kind": "rock", "tier": 1, "scene": "res://scenes/coal_rock.tscn",    "color": "#3d3d3d"},
+		"iron":    {"label": "Iron rock",     "kind": "rock", "tier": 1, "scene": "res://scenes/iron_rock.tscn",    "color": "#8a6f63"},
+		"gold":    {"label": "Gold rock",     "kind": "rock", "tier": 2, "scene": "res://scenes/gold_rock.tscn",    "color": "#d9b23a"},
+		"crystal": {"label": "Crystal rock",  "kind": "rock", "tier": 2, "scene": "res://scenes/crystal_rock.tscn", "color": "#7fc6d9"},
+		"wheat":   {"label": "Wheat",         "kind": "crop", "tier": 0, "scene": "res://scenes/wheat_sheaf.tscn",  "color": "#e6cf6e"},
+		"barley":  {"label": "Barley",        "kind": "crop", "tier": 1, "scene": "res://scenes/barley_sheaf.tscn", "color": "#c9a85a"}
+	},
+	"_tiers": "A new patch of a kind and tier starts with this mix (gatherable id -> weight); the editor can change it.",
+	"tiers": {
+		"wood": {"0": {"tree": 2, "birch": 1}, "1": {"oak": 1}, "2": {"pine": 3, "birch": 1}},
+		"rock": {"0": {"rock": 1}, "1": {"iron": 1, "coal": 1}, "2": {"gold": 1, "crystal": 1}},
+		"crop": {"0": {"wheat": 1}, "1": {"barley": 1}}
+	},
+	"lines": {
+		"hedge":     {"label": "Hedge",           "model": "res://models/country/hedge.glb", "scale": [1, 1, 1],      "spacing": 1.7,  "color": "#4f7d3a"},
+		"wall":      {"label": "Stone wall",      "model": "res://models/country/wall.glb",  "scale": [1, 0.55, 1],   "spacing": 1.95, "color": "#9a958a"},
+		"low_wall":  {"label": "Tumbledown wall", "model": "res://models/country/wall.glb",  "scale": [1, 0.4, 1],    "spacing": 2.1,  "color": "#b5ad9c"},
+		"fence":     {"label": "Field fence",     "model": "res://models/field/fence.glb",   "scale": [1, 1, 1],      "spacing": 5.1,  "color": "#8b6a43"}
+	},
+	"props": {
+		"standing_stone": {"label": "Standing stone", "model": "res://models/scenery/boulder_big.glb", "scale": [0.7, 2.6, 0.6], "collide": true, "own_materials": false},
+		"boulder":        {"label": "Boulder",        "model": "res://models/scenery/boulder_big.glb", "scale": [1, 1, 1], "collide": true, "own_materials": false},
+		"shrine":         {"label": "Wayside shrine", "model": "res://models/country/shrine.glb", "collide": true},
+		"bench":          {"label": "Bench",          "model": "res://models/country/bench_2.glb", "collide": true},
+		"bush_flowers":   {"label": "Flowering bush", "model": "res://models/country/bush_with_flowers.glb", "collide": false},
+		"bush_berries":   {"label": "Berry bush",     "model": "res://models/country/bush_with_berries.glb", "collide": false},
+		"flowers":        {"label": "Wildflowers",    "model": "res://models/country/flowers.glb", "collide": false},
+		"flower_group":   {"label": "Flower clump",   "model": "res://models/country/flower_group.glb", "collide": false}
+	},
+	"fixtures": {
+		"ruined_farmstead": {"label": "Ruined farmstead", "model": "res://models/village/fx_ruined_cottage.gltf", "radius": 8}
+	},
+	"_grounds": "Terrain surfaces a patch may be limited to (WorldMap.TEX_*). An empty list = anywhere that isn't bare.",
+	"grounds": {"grass": 0, "path": 1, "road": 2, "forest": 3, "meadow": 4, "quarry": 5, "crop": 6}
+}
