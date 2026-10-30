@@ -1,10 +1,5 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/node_spawner.gd" id="1_spawner"]
-[ext_resource type="Script" path="res://scripts/spawn_entry.gd" id="2_entry"]
-[ext_resource type="PackedScene" path="res://scenes/wheat_sheaf.tscn" id="3_wheat"]
-[ext_resource type="PackedScene" path="res://scenes/barley_sheaf.tscn" id="4_barley"]
-[ext_resource type="PackedScene" path="res://scenes/oak_tree.tscn" id="5_oak"]
 [ext_resource type="Script" path="res://scripts/prop.gd" id="6_prop"]
 [ext_resource type="Script" path="res://scripts/windmill.gd" id="7_windmill"]
 [ext_resource type="Script" path="res://scripts/scenery_scatter.gd" id="8_scatter"]
@@ -18,18 +13,6 @@
 [ext_resource type="PackedScene" path="res://models/field/fence.glb" id="m_fence"]
 [ext_resource type="PackedScene" path="res://models/field/hay_round.glb" id="m_hay_round"]
 [ext_resource type="PackedScene" path="res://models/field/hay_stack.glb" id="m_hay_stack"]
-
-[sub_resource type="Resource" id="Entry_Wheat"]
-script = ExtResource("2_entry")
-scene = ExtResource("3_wheat")
-
-[sub_resource type="Resource" id="Entry_Barley"]
-script = ExtResource("2_entry")
-scene = ExtResource("4_barley")
-
-[sub_resource type="Resource" id="Entry_Oak"]
-script = ExtResource("2_entry")
-scene = ExtResource("5_oak")
 
 [sub_resource type="Resource" id="Layer_wheat"]
 script = ExtResource("9_layer")
@@ -200,42 +183,6 @@ rotation = Vector3(0, 2.4000, 0)
 script = ExtResource("6_prop")
 model = ExtResource("m_cart")
 snap_to_ground = true
-
-[node name="Wheat" type="Node3D" parent="."]
-script = ExtResource("1_spawner")
-entries = Array[ExtResource("2_entry")]([SubResource("Entry_Wheat")])
-count = 56
-seed = 21
-save_prefix = "field_wheat"
-area = Rect2(248, 228, 135, 112.5)
-allowed_ids = Array[int]([6])
-spacing = 3.5
-path_clearance = 0.5
-hotspot_share = 0.0
-
-[node name="Barley" type="Node3D" parent="."]
-script = ExtResource("1_spawner")
-entries = Array[ExtResource("2_entry")]([SubResource("Entry_Barley")])
-count = 34
-seed = 22
-save_prefix = "field_barley"
-area = Rect2(330.5, 318, 90, 90)
-allowed_ids = Array[int]([6])
-spacing = 3.5
-path_clearance = 0.5
-hotspot_share = 0.0
-
-[node name="Oaks" type="Node3D" parent="."]
-script = ExtResource("1_spawner")
-entries = Array[ExtResource("2_entry")]([SubResource("Entry_Oak")])
-count = 11
-seed = 23
-save_prefix = "field_oak"
-area = Rect2(240.5, 220.5, 202.5, 202.5)
-allowed_ids = Array[int]([4])
-spacing = 20.0
-path_clearance = 0.5
-hotspot_share = 0.0
 
 [node name="Scenery" type="Node3D" parent="."]
 script = ExtResource("8_scatter")

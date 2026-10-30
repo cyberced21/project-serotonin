@@ -30,6 +30,9 @@ const FAMILIES := 4
 ## Or a ring instead (centre x, z, inner radius, outer radius): one level of the quarry. An outer
 ## radius of 0 = use `area`.
 @export var ring := Vector4.ZERO
+## Or a polygon (world XZ): a map editor patch (tools/bake_layout.gd). Placed over its bounding
+## box, kept to its inside. Empty = use `area` (or `ring`).
+@export var polygon := PackedVector2Array()
 ## Only on these terrain texture ids (WorldMap.TEX_*). Empty = anywhere that isn't bare.
 @export var allowed_ids: Array[int] = []
 ## Minimum distance between nodes (this spawner's and any already in the world).
@@ -65,7 +68,20 @@ var _taken: Array[Vector3] = []  # (x, z, radius) already used
 
 
 func _ready() -> void:
+	if not polygon.is_empty():
+		var box := Rect2(polygon[0], Vector2.ZERO)
+		for p in polygon:
+			box = box.expand(p)
+		area = box
 	_spawn.call_deferred()  # once the terrain, buildings and props are in place
+
+
+## Adds a kind of node to place (for scripts that can't name SpawnEntry: tools/bake_layout.gd).
+func add_entry(scene: PackedScene, weight := 1.0) -> void:
+	var e := SpawnEntry.new()
+	e.scene = scene
+	e.weight = weight
+	entries.append(e)
 
 
 func _spawn() -> void:
@@ -136,6 +152,9 @@ func _ground(terrain: Terrain3D, p: Vector2) -> Variant:
 	if ring.w > 0.0:
 		var d := p.distance_to(Vector2(ring.x, ring.y))
 		if d < ring.z or d > ring.w:
+			return null
+	elif not polygon.is_empty():
+		if not Geometry2D.is_point_in_polygon(p, polygon):
 			return null
 	elif not area.has_point(p):
 		return null

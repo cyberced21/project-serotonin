@@ -3,7 +3,7 @@ extends Node3D
 ## A run of hedge or dry-stone wall along the field edges (plans/world-pass.md, phase 6): one model
 ## repeated along `points` (world XZ), each piece turned along its stretch and stood on the ground,
 ## drawn as one MultiMesh per mesh of the model. Each piece gets a box collider (the run follows the
-## ground's ups and downs, so one long box wouldn't). Written by tools/place_country.gd.
+## ground's ups and downs, so one long box wouldn't). Written by tools/bake_layout.gd (a map editor line).
 
 const WORLD_LAYER := 1
 

@@ -1,0 +1,2326 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/oak_tree.tscn" id="1_1n5bp"]
+[ext_resource type="Script" path="res://scripts/prop.gd" id="2_ll70m"]
+[ext_resource type="PackedScene" path="res://models/country/bush_with_flowers.glb" id="3_t8lul"]
+[ext_resource type="PackedScene" path="res://models/country/flowers.glb" id="4_nvuf6"]
+[ext_resource type="PackedScene" path="res://models/country/bush_with_berries.glb" id="5_mjhkm"]
+[ext_resource type="PackedScene" path="res://models/country/flower_group.glb" id="6_67qa1"]
+[ext_resource type="PackedScene" path="res://models/scenery/boulder_big.glb" id="7_i7m68"]
+[ext_resource type="PackedScene" path="res://models/country/shrine.glb" id="8_4xsax"]
+[ext_resource type="PackedScene" path="res://models/country/bench_2.glb" id="9_vcpfe"]
+[ext_resource type="PackedScene" path="res://scenes/tree.tscn" id="10_k7dwp"]
+[ext_resource type="PackedScene" path="res://scenes/rock.tscn" id="11_8uhmp"]
+[ext_resource type="PackedScene" path="res://scenes/birch_tree.tscn" id="12_a6dxe"]
+[ext_resource type="PackedScene" path="res://scenes/pine_tree.tscn" id="13_n067m"]
+[ext_resource type="PackedScene" path="res://scenes/coal_rock.tscn" id="14_ft0cb"]
+[ext_resource type="PackedScene" path="res://scenes/gold_rock.tscn" id="15_dtu00"]
+[ext_resource type="Script" path="res://scripts/hedge_row.gd" id="16_4fdlt"]
+[ext_resource type="PackedScene" path="res://models/country/hedge.glb" id="17_8p7lc"]
+[ext_resource type="PackedScene" path="res://models/country/wall.glb" id="18_e6c8o"]
+[ext_resource type="Script" path="res://scripts/fixture.gd" id="20_2kw4o"]
+[ext_resource type="PackedScene" path="res://models/village/fx_ruined_cottage.gltf" id="21_vqbv3"]
+[ext_resource type="PackedScene" path="res://scenes/wheat_sheaf.tscn" id="59_0pqgu"]
+[ext_resource type="PackedScene" path="res://scenes/barley_sheaf.tscn" id="62_vt6j2"]
+[ext_resource type="PackedScene" path="res://scenes/iron_rock.tscn" id="64_kunej"]
+
+[node name="Layout" type="Node3D" unique_id=1349666703]
+
+[node name="Points" type="Node3D" parent="." unique_id=1497902272]
+
+[node name="LoneOak1" type="StaticBody3D" parent="Points" unique_id=2020338819 instance=ExtResource("1_1n5bp")]
+transform = Transform3D(-0.518027, 0, -0.85536426, 0, 1, 0, 0.85536426, 0, -0.518027, -44.1, 25.483313, 73)
+save_id = &"country_lone_oak_1"
+
+[node name="BankPlant1" type="StaticBody3D" parent="Points" unique_id=1689398344]
+transform = Transform3D(0.94437635, 0, -0.32886663, 0, 1, 0, 0.32886663, 0, 0.94437635, 84.7, 0, 3.8)
+script = ExtResource("2_ll70m")
+model = ExtResource("3_t8lul")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="BankPlant2" type="StaticBody3D" parent="Points" unique_id=1062906633]
+transform = Transform3D(0.8771462, 0, -0.4802235, 0, 1, 0, 0.4802235, 0, 0.8771462, 76.5, 0, 23)
+script = ExtResource("2_ll70m")
+model = ExtResource("4_nvuf6")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="BankPlant3" type="StaticBody3D" parent="Points" unique_id=847083270]
+transform = Transform3D(0.9304176, 0, -0.3665012, 0, 1, 0, 0.3665012, 0, 0.9304176, 41.1, 0, 133.7)
+script = ExtResource("2_ll70m")
+model = ExtResource("5_mjhkm")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="BankPlant4" type="StaticBody3D" parent="Points" unique_id=1361164612]
+transform = Transform3D(0.96814764, 0, -0.25038, 0, 1, 0, 0.25038, 0, 0.96814764, 45.6, 0, 158.5)
+script = ExtResource("2_ll70m")
+model = ExtResource("6_67qa1")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="BankPlant5" type="StaticBody3D" parent="Points" unique_id=20391870]
+transform = Transform3D(0.9912155, 0, -0.13225639, 0, 1, 0, 0.13225639, 0, 0.9912155, 32, 0, 172.3)
+script = ExtResource("2_ll70m")
+model = ExtResource("3_t8lul")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="BankPlant6" type="StaticBody3D" parent="Points" unique_id=1205373325]
+transform = Transform3D(0.9953962, 0, 0.09584575, 0, 1, 0, -0.09584575, 0, 0.9953962, 34.1, 0, 230.3)
+script = ExtResource("2_ll70m")
+model = ExtResource("4_nvuf6")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="BankPlant7" type="StaticBody3D" parent="Points" unique_id=1336389499]
+transform = Transform3D(0.9988061, 0, 0.04884977, 0, 1, 0, -0.04884977, 0, 0.9988061, 47.9, 0, 263)
+script = ExtResource("2_ll70m")
+model = ExtResource("5_mjhkm")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="BankPlant8" type="StaticBody3D" parent="Points" unique_id=408641628]
+transform = Transform3D(0.9986295, 0, -0.05233596, 0, 1, 0, 0.05233596, 0, 0.9986295, 48.1, 0, 282.9)
+script = ExtResource("2_ll70m")
+model = ExtResource("6_67qa1")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="BankPlant9" type="StaticBody3D" parent="Points" unique_id=977208231]
+transform = Transform3D(0.9970527, 0, -0.07671903, 0, 1, 0, 0.07671903, 0, 0.9970527, 45.8, 0, 300.7)
+script = ExtResource("2_ll70m")
+model = ExtResource("3_t8lul")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="BankPlant10" type="StaticBody3D" parent="Points" unique_id=430309079]
+transform = Transform3D(0.9971851, 0, -0.074978724, 0, 1, 0, 0.074978724, 0, 0.9971851, 45.2, 0, 314.5)
+script = ExtResource("2_ll70m")
+model = ExtResource("4_nvuf6")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="StandingStone1" type="StaticBody3D" parent="Points" unique_id=2098849043]
+transform = Transform3D(0.60042024, 0, 0.79968464, 0, 1, 0, -0.79968464, 0, 0.60042024, 292.7, 0, 7.6)
+script = ExtResource("2_ll70m")
+model = ExtResource("7_i7m68")
+snap_to_ground = true
+model_scale = Vector3(0.7, 2.6, 0.6)
+
+[node name="Shrine1" type="StaticBody3D" parent="Points" unique_id=939477525]
+transform = Transform3D(-0.73135376, 0, -0.6819983, 0, 1, 0, 0.6819983, 0, -0.73135376, 71.8, 0, 237.1)
+script = ExtResource("2_ll70m")
+model = ExtResource("8_4xsax")
+snap_to_ground = true
+own_materials = true
+
+[node name="ViewBench1" type="StaticBody3D" parent="Points" unique_id=1024645528]
+transform = Transform3D(0.9996101, 0, 0.02792164, 0, 1, 0, -0.02792164, 0, 0.9996101, 133, 0, 306.9)
+script = ExtResource("2_ll70m")
+model = ExtResource("9_vcpfe")
+snap_to_ground = true
+own_materials = true
+
+[node name="RuinedFarmstead" type="Node3D" parent="Points" unique_id=943372493]
+transform = Transform3D(-0.16504766, 0, -0.98628557, 0, 1, 0, 0.98628557, 0, -0.16504766, 224.7, 0, 104.5)
+script = ExtResource("20_2kw4o")
+model = ExtResource("21_vqbv3")
+
+[node name="Tree1" type="StaticBody3D" parent="Points" unique_id=882035503 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(0.08019893, 0, 0.9967789, 0, 1, 0, -0.9967789, 0, 0.08019893, 37, -0.15, 66)
+save_id = &"tree_1"
+
+[node name="Tree2" type="StaticBody3D" parent="Points" unique_id=759506578 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(-0.9612617, 0, -0.2756373, 0, 1, 0, 0.2756373, 0, -0.9612617, 40, -0.15, 64.5)
+save_id = &"tree_2"
+
+[node name="Tree3" type="StaticBody3D" parent="Points" unique_id=1880375970 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(-0.6807209, 0, 0.7325429, 0, 1, 0, -0.7325429, 0, -0.6807209, 35, -0.15, 71)
+save_id = &"tree_3"
+
+[node name="Tree4" type="StaticBody3D" parent="Points" unique_id=261586951 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(-0.7965299, 0, -0.6045991, 0, 1, 0, 0.6045991, 0, -0.7965299, 39, -0.15, 73)
+save_id = &"tree_4"
+
+[node name="Tree5" type="StaticBody3D" parent="Points" unique_id=2142581025 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(-0.70463425, 0, -0.7095707, 0, 1, 0, 0.7095707, 0, -0.70463425, 52, -0.15, 65)
+save_id = &"tree_5"
+
+[node name="Tree6" type="StaticBody3D" parent="Points" unique_id=639302431 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(0.9170601, 0, 0.39874908, 0, 1, 0, -0.39874908, 0, 0.9170601, 55.5, -0.18599148, 67)
+save_id = &"tree_6"
+
+[node name="Tree7" type="StaticBody3D" parent="Points" unique_id=812601335 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(0.9967789, 0, 0.08019893, 0, 1, 0, -0.08019893, 0, 0.9967789, 58, -0.15, 72.5)
+save_id = &"tree_7"
+
+[node name="Tree8" type="StaticBody3D" parent="Points" unique_id=1858820406 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(0.5210095, 0, -0.85355085, 0, 1, 0, 0.85355085, 0, 0.5210095, 32, -0.15, 68)
+save_id = &"tree_8"
+
+[node name="Tree9" type="StaticBody3D" parent="Points" unique_id=426789191 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(-0.059306417, 0, 0.9982398, 0, 1, 0, -0.9982398, 0, -0.059306417, 49, -0.15, 76)
+save_id = &"tree_9"
+
+[node name="Tree10" type="StaticBody3D" parent="Points" unique_id=1850209914 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(0.101056345, 0, 0.9948807, 0, 1, 0, -0.9948807, 0, 0.101056345, 43, -0.15, 77)
+save_id = &"tree_10"
+
+[node name="Rock1" type="StaticBody3D" parent="Points" unique_id=219241744 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(0.9994502, 0, -0.03315539, 0, 1, 0, 0.03315539, 0, 0.9994502, 50, -0.15, 69)
+save_id = &"rock_1"
+
+[node name="Rock2" type="StaticBody3D" parent="Points" unique_id=1214274368 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.98162717, 0, 0.19080901, 0, 1, 0, -0.19080901, 0, -0.98162717, 54, -0.15, 72)
+save_id = &"rock_2"
+
+[node name="Rock3" type="StaticBody3D" parent="Points" unique_id=363092294 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(0.5120429, 0, -0.8589599, 0, 1, 0, 0.8589599, 0, 0.5120429, 44, -0.15, 65.5)
+save_id = &"rock_3"
+
+[node name="Rock4" type="StaticBody3D" parent="Points" unique_id=1289477443 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.98849386, 0, 0.15126087, 0, 1, 0, -0.15126087, 0, -0.98849386, 56, -0.15, 75.5)
+save_id = &"rock_4"
+
+[node name="Rock5" type="StaticBody3D" parent="Points" unique_id=1385887069 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.6454578, 0, -0.763796, 0, 1, 0, 0.763796, 0, -0.6454578, 36, -0.15, 75.5)
+save_id = &"rock_5"
+
+[node name="Birch1" type="StaticBody3D" parent="Points" unique_id=1008370045 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.9211854, 0, 0.38912395, 0, 1, 0, -0.38912395, 0, 0.9211854, 12, -0.15, 64)
+save_id = &"birch_1"
+
+[node name="Birch2" type="StaticBody3D" parent="Points" unique_id=2138255945 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.4162808, 0, 0.9092361, 0, 1, 0, -0.9092361, 0, -0.4162808, 9, -0.15, 72)
+save_id = &"birch_2"
+
+[node name="Birch3" type="StaticBody3D" parent="Points" unique_id=1120769389 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.9874138, 0, -0.15815811, 0, 1, 0, 0.15815811, 0, -0.9874138, 14, -0.15, 79)
+save_id = &"birch_3"
+
+[node name="Birch4" type="StaticBody3D" parent="Points" unique_id=364525844 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.28401518, 0, -0.9588198, 0, 1, 0, 0.9588198, 0, 0.28401518, 6, -0.14999868, 58)
+save_id = &"birch_4"
+
+[node name="Birch5" type="StaticBody3D" parent="Points" unique_id=1434153465 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.45399052, 0, 0.8910065, 0, 1, 0, -0.8910065, 0, 0.45399052, 16, -0.15, 85)
+save_id = &"birch_5"
+
+[node name="Pine1" type="StaticBody3D" parent="Points" unique_id=757951977 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.95527834, 0, 0.29570803, 0, 1, 0, -0.29570803, 0, 0.95527834, 36, -0.0922445, 20)
+save_id = &"pine_1"
+
+[node name="Pine2" type="StaticBody3D" parent="Points" unique_id=406268915 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.1287956, 0, 0.99167114, 0, 1, 0, -0.99167114, 0, -0.1287956, 51, -0.054347515, 15)
+save_id = &"pine_2"
+
+[node name="Pine3" type="StaticBody3D" parent="Points" unique_id=804834166 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.9711343, 0, 0.23853339, 0, 1, 0, -0.23853339, 0, -0.9711343, 64, -0.13197033, 22)
+save_id = &"pine_3"
+
+[node name="Pine4" type="StaticBody3D" parent="Points" unique_id=532091854 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.4909038, 0, -0.8712138, 0, 1, 0, 0.8712138, 0, -0.4909038, 24, 3.2248704, 12)
+save_id = &"pine_4"
+
+[node name="Pine5" type="StaticBody3D" parent="Points" unique_id=871910315 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.77604634, 0, -0.6306759, 0, 1, 0, 0.6306759, 0, 0.77604634, 42, 1.1670337, 8)
+save_id = &"pine_5"
+
+[node name="CoalRock1" type="StaticBody3D" parent="Points" unique_id=1524658182 instance=ExtResource("14_ft0cb")]
+transform = Transform3D(0.6971651, 0, 0.7169106, 0, 1, 0, -0.7169106, 0, 0.6971651, 94, -0.15, 70)
+save_id = &"coal_rock_1"
+
+[node name="GoldRock1" type="StaticBody3D" parent="Points" unique_id=971823738 instance=ExtResource("15_dtu00")]
+transform = Transform3D(0.5402403, 0, 0.8415108, 0, 1, 0, -0.8415108, 0, 0.5402403, -68, 39.491688, -22)
+save_id = &"gold_rock_1"
+
+[node name="GoldRock2" type="StaticBody3D" parent="Points" unique_id=873793393 instance=ExtResource("15_dtu00")]
+transform = Transform3D(-0.9366722, 0, -0.35020736, 0, 1, 0, 0.35020736, 0, -0.9366722, -76, 34.86518, -10)
+save_id = &"gold_rock_2"
+
+[node name="GoldRock3" type="StaticBody3D" parent="Points" unique_id=996275416 instance=ExtResource("15_dtu00")]
+transform = Transform3D(0.55484426, 0, -0.83195424, 0, 1, 0, 0.83195424, 0, 0.55484426, -62, 46.77614, -34)
+save_id = &"gold_rock_3"
+
+[node name="Lines" type="Node3D" parent="." unique_id=1238306766]
+
+[node name="Hedge1_1" type="Node3D" parent="Lines" unique_id=1716135076]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(120.6, 43.1, 120.6, 8.742857, 120, 3.6)
+
+[node name="Hedge2_1" type="Node3D" parent="Lines" unique_id=825813022]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(131.2, 42.9, 131.06667, 7.2666664, 131, 6.6)
+
+[node name="Hedge3_1" type="Node3D" parent="Lines" unique_id=1568713279]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(42.9, 130.7, 37.5, 130.2, 37.6, 129.7, 31.36, 150.95999, 30, 154)
+
+[node name="Hedge4_1" type="Node3D" parent="Lines" unique_id=689829555]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(9.4, 165.5, 2.9, 162.6, -0.8, 161.8)
+
+[node name="Hedge5_1" type="Node3D" parent="Lines" unique_id=1915832850]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(-17.7, 149.8, -23.45, 144.5, -24.2, 144)
+
+[node name="Hedge6_1" type="Node3D" parent="Lines" unique_id=930460588]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(44.9, 120.3, 36.7, 119.6, 33.6, 120.3, 30.4, 122.1, 28.3, 124.7, 26.22857, 130.44286, 25.2, 135.5)
+
+[node name="Hedge7_1" type="Node3D" parent="Lines" unique_id=1457568745]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(22.5, 144.5, 16.599998, 156.29999, 16.3, 156.7)
+
+[node name="Hedge8_1" type="Node3D" parent="Lines" unique_id=673318614]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(14.2, 156, 6.866667, 152.7, 5.4, 152.3)
+
+[node name="Hedge9_1" type="Node3D" parent="Lines" unique_id=648660508]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(110.5, 213, 83.2, 240.1)
+
+[node name="Hedge10_1" type="Node3D" parent="Lines" unique_id=1428756554]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(77.1, 245.5, 74.6, 248.5, 75.4, 255.9, 74.6, 261.4, 73.1, 265.6)
+
+[node name="Hedge11_1" type="Node3D" parent="Lines" unique_id=16952643]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(98.7, 209.8, 80.4, 228.1)
+
+[node name="Hedge12_1" type="Node3D" parent="Lines" unique_id=63225845]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(73, 235, 66.5, 241.6, 65.1, 244, 64.1, 247.5, 64.600006, 255.29999, 64.8, 256.9, 63.3, 261.5)
+
+[node name="Hedge13_1" type="Node3D" parent="Lines" unique_id=505273234]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(198, 172.7, 207.8, 172.5)
+
+[node name="Hedge14_1" type="Node3D" parent="Lines" unique_id=1917718541]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(217.4, 173.4, 227.5, 176.9)
+
+[node name="Hedge15_1" type="Node3D" parent="Lines" unique_id=1270575741]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(196, 183.3, 212.9, 183.2, 221.6, 186.3)
+
+[node name="Hedge16_1" type="Node3D" parent="Lines" unique_id=1063849129]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(211.7, 118.2, 230.98572, 115.12857, 236.9, 114.7)
+
+[node name="Hedge17_1" type="Node3D" parent="Lines" unique_id=1071112029]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(245.1, 115, 251.2, 115.7)
+
+[node name="Hedge18_1" type="Node3D" parent="Lines" unique_id=1753039607]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(213.8, 128.6, 234.13333, 125.46667, 238.8, 125.3)
+
+[node name="Hedge19_1" type="Node3D" parent="Lines" unique_id=448398861]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(247.9, 126, 263.2, 128.5)
+
+[node name="Hedge20_1" type="Node3D" parent="Lines" unique_id=1435456846]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(71.6, 198.9, 66.14286, 198.22856, 61, 198.4)
+
+[node name="Hedge21_1" type="Node3D" parent="Lines" unique_id=44462654]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(73.9, 190.4, 65.97, 189.40999, 56.266666, 189.36667, 55.6, 189.3)
+
+[node name="Wall1_1" type="Node3D" parent="Lines" unique_id=1482833299]
+script = ExtResource("16_4fdlt")
+model = ExtResource("18_e6c8o")
+points = PackedVector2Array(131.2, 13, 148.01765, 14.82353, 164.2, 18.9, 165.7, 19.4)
+model_scale = Vector3(1, 0.55, 1)
+spacing = 1.95
+
+[node name="Wall2_1" type="Node3D" parent="Lines" unique_id=755280748]
+script = ExtResource("16_4fdlt")
+model = ExtResource("18_e6c8o")
+points = PackedVector2Array(173.2, 22.3, 188.3, 30.130001, 195.5, 34.9)
+model_scale = Vector3(1, 0.55, 1)
+spacing = 1.95
+
+[node name="Wall3_1" type="Node3D" parent="Lines" unique_id=2144200831]
+script = ExtResource("16_4fdlt")
+model = ExtResource("18_e6c8o")
+points = PackedVector2Array(226.6, 68.9, 234.5, 84.649994, 235.1, 86.1)
+model_scale = Vector3(1, 0.55, 1)
+spacing = 1.95
+
+[node name="Wall4_1" type="Node3D" parent="Lines" unique_id=268987596]
+script = ExtResource("16_4fdlt")
+model = ExtResource("18_e6c8o")
+points = PackedVector2Array(237.8, 93.7, 241.61429, 110.200005, 242.3, 115.6)
+model_scale = Vector3(1, 0.55, 1)
+spacing = 1.95
+
+[node name="Wall5_1" type="Node3D" parent="Lines" unique_id=1505259188]
+script = ExtResource("16_4fdlt")
+model = ExtResource("18_e6c8o")
+points = PackedVector2Array(243, 125.2, 242.9, 133.2)
+model_scale = Vector3(1, 0.55, 1)
+spacing = 1.95
+
+[node name="Wall6_1" type="Node3D" parent="Lines" unique_id=793552971]
+script = ExtResource("16_4fdlt")
+model = ExtResource("18_e6c8o")
+points = PackedVector2Array(242.2, 141.2, 239, 157.79411, 233.54999, 173.55, 232.9, 175)
+model_scale = Vector3(1, 0.55, 1)
+spacing = 1.95
+
+[node name="Wall7_1" type="Node3D" parent="Lines" unique_id=1624907767]
+script = ExtResource("16_4fdlt")
+model = ExtResource("18_e6c8o")
+points = PackedVector2Array(222.7, 193.2, 212.075, 206.3875, 200.44, 217.3, 197.4, 219.7)
+model_scale = Vector3(1, 0.55, 1)
+spacing = 1.95
+
+[node name="Wall8_1" type="Node3D" parent="Lines" unique_id=1435986754]
+script = ExtResource("16_4fdlt")
+model = ExtResource("18_e6c8o")
+points = PackedVector2Array(190.8, 224.3, 176.01764, 232.44118, 160.9375, 238.16249, 154.2, 240)
+model_scale = Vector3(1, 0.55, 1)
+spacing = 1.95
+
+[node name="Wall9_1" type="Node3D" parent="Lines" unique_id=434084009]
+script = ExtResource("16_4fdlt")
+model = ExtResource("18_e6c8o")
+points = PackedVector2Array(146.3, 241.5, 129.45882, 242.95294, 112.6, 241.94286, 108.1, 241.3)
+model_scale = Vector3(1, 0.55, 1)
+spacing = 1.95
+
+[node name="Wall10_1" type="Node3D" parent="Lines" unique_id=1449398540]
+script = ExtResource("16_4fdlt")
+model = ExtResource("18_e6c8o")
+points = PackedVector2Array(100.2, 239.6, 91, 236.9)
+model_scale = Vector3(1, 0.55, 1)
+spacing = 1.95
+
+[node name="Wall11_1" type="Node3D" parent="Lines" unique_id=997439029]
+script = ExtResource("16_4fdlt")
+model = ExtResource("18_e6c8o")
+points = PackedVector2Array(77.7, 231.4, 63.04, 222.81332, 52.4, 214.6)
+model_scale = Vector3(1, 0.55, 1)
+spacing = 1.95
+
+[node name="Wall12_1" type="Node3D" parent="Lines" unique_id=1607181489]
+script = ExtResource("16_4fdlt")
+model = ExtResource("18_e6c8o")
+points = PackedVector2Array(24.4, 177.9, 20, 167.6)
+model_scale = Vector3(1, 0.55, 1)
+spacing = 1.95
+
+[node name="Wall13_1" type="Node3D" parent="Lines" unique_id=690971978]
+script = ExtResource("16_4fdlt")
+model = ExtResource("18_e6c8o")
+points = PackedVector2Array(13.4, 118.8, 16.24, 101.12, 16.9, 98.3)
+model_scale = Vector3(1, 0.55, 1)
+spacing = 1.95
+
+[node name="Wall14_1" type="Node3D" parent="Lines" unique_id=1893342379]
+script = ExtResource("16_4fdlt")
+model = ExtResource("18_e6c8o")
+points = PackedVector2Array(68.5, 29.6, 72.7, 27.2)
+model_scale = Vector3(1, 0.55, 1)
+spacing = 1.95
+
+[node name="Wall15_1" type="Node3D" parent="Lines" unique_id=2037414584]
+script = ExtResource("16_4fdlt")
+model = ExtResource("18_e6c8o")
+points = PackedVector2Array(90.3, 19.4, 106.63529, 15.082353, 121.6, 13.2)
+model_scale = Vector3(1, 0.55, 1)
+spacing = 1.95
+
+[node name="Hedge22_1" type="Node3D" parent="Lines" unique_id=1976069502]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(176.7, -13.9, 188.6, -9.2)
+
+[node name="Hedge23_1" type="Node3D" parent="Lines" unique_id=794673150]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(193, -7.2, 201.5, -2.8)
+
+[node name="Hedge24_1" type="Node3D" parent="Lines" unique_id=1010710878]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(208.4, 1.3, 223.32224, 12.261111, 236.225, 24.191666, 243.1, 31.8)
+
+[node name="Hedge25_1" type="Node3D" parent="Lines" unique_id=303007289]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(248.1, 38.1, 258.25, 53.6875, 265, 67)
+
+[node name="Hedge26_1" type="Node3D" parent="Lines" unique_id=1438524891]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(277.2, 143.6, 274.03333, 161.83888, 268.84286, 179.51428, 267.2, 183.8)
+
+[node name="Hedge27_1" type="Node3D" parent="Lines" unique_id=2105666201]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(252.2, 212, 249.5, 216)
+
+[node name="Hedge28_1" type="Node3D" parent="Lines" unique_id=775458547]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(214.3, 250.7, 210.4, 253.4)
+
+[node name="Hedge29_1" type="Node3D" parent="Lines" unique_id=857941549]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(207.7, 255.1, 193.7, 262.8)
+
+[node name="Hedge30_1" type="Node3D" parent="Lines" unique_id=1251635602]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(186.4, 266.2, 168.85, 272.22223, 150.9, 276.25714, 146.4, 276.9)
+
+[node name="Hedge31_1" type="Node3D" parent="Lines" unique_id=918855227]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(138.4, 277.6, 119.82778, 277.69998, 102.325005, 275.8, 95.5, 274.4)
+
+[node name="Hedge32_1" type="Node3D" parent="Lines" unique_id=645029818]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(87.7, 272.5, 72.5, 267.4)
+
+[node name="Hedge33_1" type="Node3D" parent="Lines" unique_id=739680613]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(60.9, 262.1, 48.3, 255.1)
+
+[node name="Hedge34_1" type="Node3D" parent="Lines" unique_id=1144658528]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(34, 244.9, 20.26111, 232.36111, 9.4, 219.8)
+
+[node name="Hedge35_1" type="Node3D" parent="Lines" unique_id=1301682846]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(4.7, 213.4, -4.5, 198.3)
+
+[node name="Hedge36_1" type="Node3D" parent="Lines" unique_id=445121445]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(0.7, 48.7, 9.9, 35.6)
+
+[node name="Hedge37_1" type="Node3D" parent="Lines" unique_id=234643009]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(15, 29.4, 28.053844, 16.176922, 37.1, 8.7)
+
+[node name="Hedge38_1" type="Node3D" parent="Lines" unique_id=1048244714]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(43.6, 4, 51.7, -1.2)
+
+[node name="Hedge39_1" type="Node3D" parent="Lines" unique_id=162066679]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(58.7, -5, 71.8, -11.1)
+
+[node name="FarmWall1_1" type="Node3D" parent="Lines" unique_id=53110572]
+script = ExtResource("16_4fdlt")
+model = ExtResource("18_e6c8o")
+points = PackedVector2Array(226, 113.4, 229.7, 112, 232.4, 109.1, 233.6, 105.4, 233.2, 101.5)
+model_scale = Vector3(1, 0.4, 1)
+spacing = 2.1
+
+[node name="Patches" type="Node3D" parent="." unique_id=345934133]
+
+[node name="ForestSpot1" type="Node3D" parent="Patches" unique_id=1419856835]
+
+[node name="forest_spot1_000" type="StaticBody3D" parent="Patches/ForestSpot1" unique_id=1426151592 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.14093995, 0, 0.9900181, 0, 1, 0, -0.9900181, 0, 0.14093995, 44.578438, 29.036901, -75.66096)
+save_id = &"forest_spot1_000"
+
+[node name="forest_spot1_001" type="StaticBody3D" parent="Patches/ForestSpot1" unique_id=327285884 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.09471448, 0, 0.9955045, 0, 1, 0, -0.9955045, 0, -0.09471448, 76.40767, 7.7713966, -50.82309)
+save_id = &"forest_spot1_001"
+
+[node name="forest_spot1_002" type="StaticBody3D" parent="Patches/ForestSpot1" unique_id=410422733 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.8790529, 0, 0.4767243, 0, 1, 0, -0.4767243, 0, 0.8790529, 39.904175, 25.148092, -55.13041)
+save_id = &"forest_spot1_002"
+
+[node name="forest_spot1_003" type="StaticBody3D" parent="Patches/ForestSpot1" unique_id=1578765140 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.54056364, 0, -0.8413031, 0, 1, 0, 0.8413031, 0, 0.54056364, 52.895195, 22.819323, -70.61206)
+save_id = &"forest_spot1_003"
+
+[node name="forest_spot1_004" type="StaticBody3D" parent="Patches/ForestSpot1" unique_id=1855916012 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.7129695, 0, -0.70119506, 0, 1, 0, 0.70119506, 0, 0.7129695, 54.823483, 26.335857, -80.44697)
+save_id = &"forest_spot1_004"
+
+[node name="forest_spot1_005" type="StaticBody3D" parent="Patches/ForestSpot1" unique_id=2005208710 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.9999396, 0, -0.010990486, 0, 1, 0, 0.010990486, 0, -0.9999396, 40.21912, 25.76364, -61.99688)
+save_id = &"forest_spot1_005"
+
+[node name="forest_spot1_006" type="StaticBody3D" parent="Patches/ForestSpot1" unique_id=1809753529 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.9117751, 0, -0.4106898, 0, 1, 0, 0.4106898, 0, -0.9117751, 52.756336, 19.262733, -57.828957)
+save_id = &"forest_spot1_006"
+
+[node name="forest_spot1_007" type="StaticBody3D" parent="Patches/ForestSpot1" unique_id=98430735 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.732169, 0, 0.681123, 0, 1, 0, -0.681123, 0, -0.732169, 78.34552, 17.572947, -73.03929)
+save_id = &"forest_spot1_007"
+
+[node name="forest_spot1_008" type="StaticBody3D" parent="Patches/ForestSpot1" unique_id=436468575 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.094991304, 0, -0.9954781, 0, 1, 0, 0.9954781, 0, 0.094991304, 68.60158, 12.44633, -53.269455)
+save_id = &"forest_spot1_008"
+
+[node name="forest_spot1_009" type="StaticBody3D" parent="Patches/ForestSpot1" unique_id=1359829258 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.3563009, 0, -0.9343713, 0, 1, 0, 0.9343713, 0, -0.3563009, 63.892857, 17.716656, -67.64213)
+save_id = &"forest_spot1_009"
+
+[node name="forest_spot1_010" type="StaticBody3D" parent="Patches/ForestSpot1" unique_id=420383082 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.9990225, 0, 0.044204284, 0, 1, 0, -0.044204284, 0, -0.9990225, 79.04916, 11.663614, -61.528458)
+save_id = &"forest_spot1_010"
+
+[node name="forest_spot1_011" type="StaticBody3D" parent="Patches/ForestSpot1" unique_id=1944902203 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.16815154, 0, 0.98576117, 0, 1, 0, -0.98576117, 0, 0.16815154, 67.20499, 18.91086, -71.54863)
+save_id = &"forest_spot1_011"
+
+[node name="forest_spot1_012" type="StaticBody3D" parent="Patches/ForestSpot1" unique_id=1442171659 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.1342735, 0, -0.9909443, 0, 1, 0, 0.9909443, 0, 0.1342735, 54.822357, 17.780859, -53.087242)
+save_id = &"forest_spot1_012"
+
+[node name="forest_spot1_013" type="StaticBody3D" parent="Patches/ForestSpot1" unique_id=2129058583 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.17477363, 0, -0.98460865, 0, 1, 0, 0.98460865, 0, -0.17477363, 63.91101, 23.351334, -84.393845)
+save_id = &"forest_spot1_013"
+
+[node name="forest_spot1_014" type="StaticBody3D" parent="Patches/ForestSpot1" unique_id=1741031766 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.93957686, 0, -0.34233806, 0, 1, 0, 0.34233806, 0, -0.93957686, 65.34422, 21.559643, -79.60329)
+save_id = &"forest_spot1_014"
+
+[node name="forest_spot1_015" type="StaticBody3D" parent="Patches/ForestSpot1" unique_id=1566776125 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.66126394, 0, 0.7501533, 0, 1, 0, -0.7501533, 0, 0.66126394, 71.87402, 6.4150987, -43.401558)
+save_id = &"forest_spot1_015"
+
+[node name="forest_spot1_016" type="StaticBody3D" parent="Patches/ForestSpot1" unique_id=2036870669 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.9843041, 0, -0.1764808, 0, 1, 0, 0.1764808, 0, -0.9843041, 68.01796, 9.683853, -46.704304)
+save_id = &"forest_spot1_016"
+
+[node name="forest_spot1_017" type="StaticBody3D" parent="Patches/ForestSpot1" unique_id=1694208734 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.9988285, 0, -0.048391357, 0, 1, 0, 0.048391357, 0, -0.9988285, 61.19897, 15.087447, -51.72831)
+save_id = &"forest_spot1_017"
+
+[node name="ForestSpot2" type="Node3D" parent="Patches" unique_id=1657702797]
+
+[node name="forest_spot2_000" type="StaticBody3D" parent="Patches/ForestSpot2" unique_id=1067475621 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.9458149, 0, -0.3247063, 0, 1, 0, 0.3247063, 0, 0.9458149, 142.65701, 29.256456, -92.670044)
+save_id = &"forest_spot2_000"
+
+[node name="forest_spot2_001" type="StaticBody3D" parent="Patches/ForestSpot2" unique_id=1625194342 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.98974466, 0, 0.14284803, 0, 1, 0, -0.14284803, 0, -0.98974466, 124.84387, 28.424265, -108.399315)
+save_id = &"forest_spot2_001"
+
+[node name="forest_spot2_002" type="StaticBody3D" parent="Patches/ForestSpot2" unique_id=648068859 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.1161745, 0, -0.9932288, 0, 1, 0, 0.9932288, 0, -0.1161745, 146.95035, 28.324203, -85.09514)
+save_id = &"forest_spot2_002"
+
+[node name="forest_spot2_003" type="StaticBody3D" parent="Patches/ForestSpot2" unique_id=1255087927 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.6974084, 0, 0.716674, 0, 1, 0, -0.716674, 0, 0.6974084, 129.0458, 24.218378, -77.82926)
+save_id = &"forest_spot2_003"
+
+[node name="forest_spot2_004" type="StaticBody3D" parent="Patches/ForestSpot2" unique_id=1096082422 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.5024121, 0, -0.8646283, 0, 1, 0, 0.8646283, 0, -0.5024121, 126.7684, 29.274626, -94.831184)
+save_id = &"forest_spot2_004"
+
+[node name="forest_spot2_005" type="StaticBody3D" parent="Patches/ForestSpot2" unique_id=48824367 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.28983706, 0, 0.957076, 0, 1, 0, -0.957076, 0, -0.28983706, 114.24588, 24.391565, -86.64751)
+save_id = &"forest_spot2_005"
+
+[node name="forest_spot2_006" type="StaticBody3D" parent="Patches/ForestSpot2" unique_id=1135379206 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.8593006, 0, 0.5114709, 0, 1, 0, -0.5114709, 0, -0.8593006, 132.9276, 21.675667, -71.836136)
+save_id = &"forest_spot2_006"
+
+[node name="forest_spot2_007" type="StaticBody3D" parent="Patches/ForestSpot2" unique_id=293976332 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.51094204, 0, 0.85961515, 0, 1, 0, -0.85961515, 0, -0.51094204, 131.8271, 27.166162, -107.85992)
+save_id = &"forest_spot2_007"
+
+[node name="forest_spot2_008" type="StaticBody3D" parent="Patches/ForestSpot2" unique_id=1855626863 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.9648293, 0, -0.26287708, 0, 1, 0, 0.26287708, 0, 0.9648293, 136.07925, 26.281412, -80.92283)
+save_id = &"forest_spot2_008"
+
+[node name="forest_spot2_009" type="StaticBody3D" parent="Patches/ForestSpot2" unique_id=134488159 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.7604728, 0, -0.64936984, 0, 1, 0, 0.64936984, 0, -0.7604728, 119.28669, 22.833733, -79.92442)
+save_id = &"forest_spot2_009"
+
+[node name="forest_spot2_010" type="StaticBody3D" parent="Patches/ForestSpot2" unique_id=1264447690 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.96180415, 0, -0.2737384, 0, 1, 0, 0.2737384, 0, 0.96180415, 145.2886, 24.046217, -104.61071)
+save_id = &"forest_spot2_010"
+
+[node name="forest_spot2_011" type="StaticBody3D" parent="Patches/ForestSpot2" unique_id=673305579 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.23004074, 0, -0.973181, 0, 1, 0, 0.973181, 0, -0.23004074, 126.86119, 27.023634, -84.14641)
+save_id = &"forest_spot2_011"
+
+[node name="forest_spot2_012" type="StaticBody3D" parent="Patches/ForestSpot2" unique_id=1017056632 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.8482613, 0, -0.5295779, 0, 1, 0, 0.5295779, 0, 0.8482613, 135.95813, 29.274628, -94.35902)
+save_id = &"forest_spot2_012"
+
+[node name="forest_spot2_013" type="StaticBody3D" parent="Patches/ForestSpot2" unique_id=1569937652 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.20384485, 0, -0.9790032, 0, 1, 0, 0.9790032, 0, -0.20384485, 148.76021, 28.299, -92.98399)
+save_id = &"forest_spot2_013"
+
+[node name="forest_spot2_014" type="StaticBody3D" parent="Patches/ForestSpot2" unique_id=1185508156 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.2500642, 0, -0.96822923, 0, 1, 0, 0.96822923, 0, -0.2500642, 108.91548, 22.922531, -87.17483)
+save_id = &"forest_spot2_014"
+
+[node name="forest_spot2_015" type="StaticBody3D" parent="Patches/ForestSpot2" unique_id=1577175079 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.74488026, 0, 0.6671982, 0, 1, 0, -0.6671982, 0, -0.74488026, 138.2409, 28.338764, -85.54208)
+save_id = &"forest_spot2_015"
+
+[node name="forest_spot2_016" type="StaticBody3D" parent="Patches/ForestSpot2" unique_id=1519473114 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.30260625, 0, 0.95311564, 0, 1, 0, -0.95311564, 0, 0.30260625, 138.65091, 25.733, -106.119125)
+save_id = &"forest_spot2_016"
+
+[node name="forest_spot2_017" type="StaticBody3D" parent="Patches/ForestSpot2" unique_id=1451967915 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.29224408, 0, 0.95634377, 0, 1, 0, -0.95634377, 0, 0.29224408, 142.25745, 24.327637, -77.61542)
+save_id = &"forest_spot2_017"
+
+[node name="ForestSpot3" type="Node3D" parent="Patches" unique_id=1954493235]
+
+[node name="forest_spot3_000" type="StaticBody3D" parent="Patches/ForestSpot3" unique_id=2122189673 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.26500273, 0, 0.96424764, 0, 1, 0, -0.96424764, 0, -0.26500273, 92.58252, 31.561087, -139.46422)
+save_id = &"forest_spot3_000"
+
+[node name="forest_spot3_001" type="StaticBody3D" parent="Patches/ForestSpot3" unique_id=2058662612 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.6823497, 0, -0.73102593, 0, 1, 0, 0.73102593, 0, -0.6823497, 67.05178, 30.464514, -152.0562)
+save_id = &"forest_spot3_001"
+
+[node name="forest_spot3_002" type="StaticBody3D" parent="Patches/ForestSpot3" unique_id=1415244668 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.27447918, 0, -0.96159303, 0, 1, 0, 0.96159303, 0, 0.27447918, 81.03013, 29.959581, -118.75051)
+save_id = &"forest_spot3_002"
+
+[node name="forest_spot3_003" type="StaticBody3D" parent="Patches/ForestSpot3" unique_id=531930282 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.9874375, 0, -0.15801027, 0, 1, 0, 0.15801027, 0, -0.9874375, 62.910732, 29.570683, -124.933495)
+save_id = &"forest_spot3_003"
+
+[node name="forest_spot3_004" type="StaticBody3D" parent="Patches/ForestSpot3" unique_id=326655485 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.9971314, 0, 0.07568949, 0, 1, 0, -0.07568949, 0, -0.9971314, 67.279335, 31.122952, -137.48888)
+save_id = &"forest_spot3_004"
+
+[node name="forest_spot3_005" type="StaticBody3D" parent="Patches/ForestSpot3" unique_id=1991871577 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.9972692, 0, 0.07385215, 0, 1, 0, -0.07385215, 0, -0.9972692, 78.8734, 29.273542, -126.4221)
+save_id = &"forest_spot3_005"
+
+[node name="forest_spot3_006" type="StaticBody3D" parent="Patches/ForestSpot3" unique_id=945501301 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.0015008007, 0, 0.99999887, 0, 1, 0, -0.99999887, 0, 0.0015008007, 83.61857, 31.826254, -149.6718)
+save_id = &"forest_spot3_006"
+
+[node name="forest_spot3_007" type="StaticBody3D" parent="Patches/ForestSpot3" unique_id=1363896953 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.537993, 0, 0.8429493, 0, 1, 0, -0.8429493, 0, 0.537993, 75.05789, 27.59166, -114.3905)
+save_id = &"forest_spot3_007"
+
+[node name="forest_spot3_008" type="StaticBody3D" parent="Patches/ForestSpot3" unique_id=1491055724 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.9995588, 0, -0.02970148, 0, 1, 0, 0.02970148, 0, -0.9995588, 58.47595, 29.679022, -137.97273)
+save_id = &"forest_spot3_008"
+
+[node name="forest_spot3_009" type="StaticBody3D" parent="Patches/ForestSpot3" unique_id=241128493 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.80986506, 0, -0.5866162, 0, 1, 0, 0.5866162, 0, -0.80986506, 74.188065, 31.143454, -145.4759)
+save_id = &"forest_spot3_009"
+
+[node name="forest_spot3_010" type="StaticBody3D" parent="Patches/ForestSpot3" unique_id=1809228679 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.83285916, 0, 0.5534849, 0, 1, 0, -0.5534849, 0, -0.83285916, 91.047386, 32.290703, -120.764336)
+save_id = &"forest_spot3_010"
+
+[node name="forest_spot3_011" type="StaticBody3D" parent="Patches/ForestSpot3" unique_id=1181673949 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.6352632, 0, -0.7722957, 0, 1, 0, 0.7722957, 0, 0.6352632, 67.04962, 29.136908, -130.117)
+save_id = &"forest_spot3_011"
+
+[node name="forest_spot3_012" type="StaticBody3D" parent="Patches/ForestSpot3" unique_id=1914391465 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.8640764, 0, -0.50336075, 0, 1, 0, 0.50336075, 0, -0.8640764, 87.41344, 29.878323, -135.07997)
+save_id = &"forest_spot3_012"
+
+[node name="forest_spot3_013" type="StaticBody3D" parent="Patches/ForestSpot3" unique_id=838867811 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.73399055, 0, -0.67915964, 0, 1, 0, 0.67915964, 0, 0.73399055, 73.85925, 30.034071, -137.66177)
+save_id = &"forest_spot3_013"
+
+[node name="forest_spot3_014" type="StaticBody3D" parent="Patches/ForestSpot3" unique_id=777070701 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.9781259, 0, -0.2080139, 0, 1, 0, 0.2080139, 0, 0.9781259, 55.107883, 28.947292, -130.2308)
+save_id = &"forest_spot3_014"
+
+[node name="forest_spot3_015" type="StaticBody3D" parent="Patches/ForestSpot3" unique_id=310938939 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.0034146362, 0, -0.99999416, 0, 1, 0, 0.99999416, 0, 0.0034146362, 57.588192, 29.37715, -124.53811)
+save_id = &"forest_spot3_015"
+
+[node name="forest_spot3_016" type="StaticBody3D" parent="Patches/ForestSpot3" unique_id=372015023 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.3881107, 0, 0.92161274, 0, 1, 0, -0.92161274, 0, -0.3881107, 60.89791, 30.268948, -142.3832)
+save_id = &"forest_spot3_016"
+
+[node name="forest_spot3_017" type="StaticBody3D" parent="Patches/ForestSpot3" unique_id=501295345 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.9994983, 0, -0.031672034, 0, 1, 0, 0.031672034, 0, -0.9994983, 79.16834, 30.21739, -138.12776)
+save_id = &"forest_spot3_017"
+
+[node name="ForestSpot4" type="Node3D" parent="Patches" unique_id=1380828313]
+
+[node name="forest_spot4_000" type="StaticBody3D" parent="Patches/ForestSpot4" unique_id=2031953141 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.7571766, 0, 0.6532102, 0, 1, 0, -0.6532102, 0, 0.7571766, 64.62936, 9.094645, -42.012722)
+save_id = &"forest_spot4_000"
+
+[node name="forest_spot4_001" type="StaticBody3D" parent="Patches/ForestSpot4" unique_id=388034907 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.80229694, 0, -0.59692514, 0, 1, 0, 0.59692514, 0, 0.80229694, 70.05766, 3.9281716, -36.04299)
+save_id = &"forest_spot4_001"
+
+[node name="forest_spot4_002" type="StaticBody3D" parent="Patches/ForestSpot4" unique_id=1029840052 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.9683831, 0, -0.24946797, 0, 1, 0, 0.24946797, 0, 0.9683831, 60.807247, 12.447158, -45.56716)
+save_id = &"forest_spot4_002"
+
+[node name="forest_spot4_003" type="StaticBody3D" parent="Patches/ForestSpot4" unique_id=1826318177 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.9881938, 0, -0.15320882, 0, 1, 0, 0.15320882, 0, 0.9881938, 79.72081, 4.158993, -46.244083)
+save_id = &"forest_spot4_003"
+
+[node name="forest_spot4_004" type="StaticBody3D" parent="Patches/ForestSpot4" unique_id=1787655593 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.81505203, 0, 0.5793877, 0, 1, 0, -0.5793877, 0, -0.81505203, 77.68132, 2.321856, -40.173428)
+save_id = &"forest_spot4_004"
+
+[node name="forest_spot4_005" type="StaticBody3D" parent="Patches/ForestSpot4" unique_id=185890761 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.99999756, 0, 0.0021981301, 0, 1, 0, -0.0021981301, 0, -0.99999756, 63.856995, 7.065411, -36.672546)
+save_id = &"forest_spot4_005"
+
+[node name="ForestSpot5" type="Node3D" parent="Patches" unique_id=1434689624]
+
+[node name="forest_spot5_000" type="StaticBody3D" parent="Patches/ForestSpot5" unique_id=388803613 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.9722844, 0, -0.23380136, 0, 1, 0, 0.23380136, 0, 0.9722844, 89.74191, 16.556068, -76.26723)
+save_id = &"forest_spot5_000"
+
+[node name="forest_spot5_001" type="StaticBody3D" parent="Patches/ForestSpot5" unique_id=846111917 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.9265133, 0, 0.37626192, 0, 1, 0, -0.37626192, 0, 0.9265133, 99.44685, 17.84927, -78.71295)
+save_id = &"forest_spot5_001"
+
+[node name="forest_spot5_002" type="StaticBody3D" parent="Patches/ForestSpot5" unique_id=2112006627 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.7422974, 0, 0.6700706, 0, 1, 0, -0.6700706, 0, -0.7422974, 88.77973, 19.644388, -81.320206)
+save_id = &"forest_spot5_002"
+
+[node name="forest_spot5_003" type="StaticBody3D" parent="Patches/ForestSpot5" unique_id=1674529251 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.53726065, 0, 0.8434163, 0, 1, 0, -0.8434163, 0, -0.53726065, 99.39759, 22.381369, -86.452156)
+save_id = &"forest_spot5_003"
+
+[node name="forest_spot5_004" type="StaticBody3D" parent="Patches/ForestSpot5" unique_id=1939401328 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.599238, 0, 0.80057096, 0, 1, 0, -0.80057096, 0, 0.599238, 92.913315, 23.012753, -87.12127)
+save_id = &"forest_spot5_004"
+
+[node name="forest_spot5_005" type="StaticBody3D" parent="Patches/ForestSpot5" unique_id=1521655139 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.5970458, 0, -0.8022072, 0, 1, 0, 0.8022072, 0, -0.5970458, 97.59615, 14.580233, -73.1422)
+save_id = &"forest_spot5_005"
+
+[node name="forest_spot5_006" type="StaticBody3D" parent="Patches/ForestSpot5" unique_id=407174866 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.9904914, 0, -0.13757455, 0, 1, 0, 0.13757455, 0, -0.9904914, 94.33198, 18.436148, -79.545975)
+save_id = &"forest_spot5_006"
+
+[node name="forest_spot5_007" type="StaticBody3D" parent="Patches/ForestSpot5" unique_id=1007760738 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.8928044, 0, 0.4504446, 0, 1, 0, -0.4504446, 0, 0.8928044, 104.38938, 20.566755, -83.303375)
+save_id = &"forest_spot5_007"
+
+[node name="ForestSpot6" type="Node3D" parent="Patches" unique_id=1539622622]
+
+[node name="forest_spot6_000" type="StaticBody3D" parent="Patches/ForestSpot6" unique_id=668903803 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.8081388, 0, -0.5889921, 0, 1, 0, 0.5889921, 0, 0.8081388, 116.08575, 26.97136, -122.11988)
+save_id = &"forest_spot6_000"
+
+[node name="forest_spot6_001" type="StaticBody3D" parent="Patches/ForestSpot6" unique_id=2085205005 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.734722, 0, -0.6783683, 0, 1, 0, 0.6783683, 0, 0.734722, 115.6631, 27.286427, -113.64909)
+save_id = &"forest_spot6_001"
+
+[node name="forest_spot6_002" type="StaticBody3D" parent="Patches/ForestSpot6" unique_id=1397901188 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.9954922, 0, -0.09484349, 0, 1, 0, 0.09484349, 0, 0.9954922, 101.59756, 31.754704, -117.40125)
+save_id = &"forest_spot6_002"
+
+[node name="forest_spot6_003" type="StaticBody3D" parent="Patches/ForestSpot6" unique_id=1326473320 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.8531433, 0, -0.52167666, 0, 1, 0, 0.52167666, 0, 0.8531433, 105.14211, 32.06075, -110.168495)
+save_id = &"forest_spot6_003"
+
+[node name="forest_spot6_004" type="StaticBody3D" parent="Patches/ForestSpot6" unique_id=813514546 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.65073794, 0, 0.7593024, 0, 1, 0, -0.7593024, 0, 0.65073794, 105.15438, 28.902199, -121.183914)
+save_id = &"forest_spot6_004"
+
+[node name="forest_spot6_005" type="StaticBody3D" parent="Patches/ForestSpot6" unique_id=225423694 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.5638901, 0, -0.82584983, 0, 1, 0, 0.82584983, 0, 0.5638901, 99.69558, 33.08757, -111.731285)
+save_id = &"forest_spot6_005"
+
+[node name="forest_spot6_006" type="StaticBody3D" parent="Patches/ForestSpot6" unique_id=184124996 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.99593586, 0, -0.09006517, 0, 1, 0, 0.09006517, 0, 0.99593586, 110.57896, 27.471273, -118.33648)
+save_id = &"forest_spot6_006"
+
+[node name="forest_spot6_007" type="StaticBody3D" parent="Patches/ForestSpot6" unique_id=1214184374 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.929711, 0, -0.36828992, 0, 1, 0, 0.36828992, 0, -0.929711, 112.24433, 30.99988, -107.08465)
+save_id = &"forest_spot6_007"
+
+[node name="ForestSpot7" type="Node3D" parent="Patches" unique_id=731386828]
+
+[node name="forest_spot7_000" type="StaticBody3D" parent="Patches/ForestSpot7" unique_id=1667707101 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.80286616, 0, -0.59615934, 0, 1, 0, 0.59615934, 0, 0.80286616, 92.75871, 31.897242, -153.88768)
+save_id = &"forest_spot7_000"
+
+[node name="forest_spot7_001" type="StaticBody3D" parent="Patches/ForestSpot7" unique_id=889491167 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.9607846, 0, -0.2772957, 0, 1, 0, 0.2772957, 0, -0.9607846, 80.62035, 31.70178, -155.38306)
+save_id = &"forest_spot7_001"
+
+[node name="forest_spot7_002" type="StaticBody3D" parent="Patches/ForestSpot7" unique_id=954190332 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.9692825, 0, -0.24595004, 0, 1, 0, 0.24595004, 0, -0.9692825, 88.34696, 31.887594, -158.95773)
+save_id = &"forest_spot7_002"
+
+[node name="forest_spot7_003" type="StaticBody3D" parent="Patches/ForestSpot7" unique_id=1241282134 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.19589782, 0, 0.9806243, 0, 1, 0, -0.9806243, 0, -0.19589782, 93.42376, 31.89261, -145.54584)
+save_id = &"forest_spot7_003"
+
+[node name="forest_spot7_004" type="StaticBody3D" parent="Patches/ForestSpot7" unique_id=1926191318 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.9995331, 0, 0.030554935, 0, 1, 0, -0.030554935, 0, -0.9995331, 82.9065, 31.17652, -144.24042)
+save_id = &"forest_spot7_004"
+
+[node name="forest_spot7_005" type="StaticBody3D" parent="Patches/ForestSpot7" unique_id=1146851574 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.9597309, 0, 0.28092083, 0, 1, 0, -0.28092083, 0, 0.9597309, 88.36209, 31.837881, -146.18567)
+save_id = &"forest_spot7_005"
+
+[node name="forest_spot7_006" type="StaticBody3D" parent="Patches/ForestSpot7" unique_id=1138339227 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.90938467, 0, -0.41595617, 0, 1, 0, 0.41595617, 0, 0.90938467, 78.13464, 31.471998, -149.30151)
+save_id = &"forest_spot7_006"
+
+[node name="forest_spot7_007" type="StaticBody3D" parent="Patches/ForestSpot7" unique_id=1335848261 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.06771786, 0, 0.9977045, 0, 1, 0, -0.9977045, 0, 0.06771786, 88.449776, 31.916368, -151.20241)
+save_id = &"forest_spot7_007"
+
+[node name="Forest" type="Node3D" parent="Patches" unique_id=1406403236]
+
+[node name="forest_000" type="StaticBody3D" parent="Patches/Forest" unique_id=2016891425 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.039372083, 0, 0.9992246, 0, 1, 0, -0.9992246, 0, -0.039372083, 28.809853, 31.158709, -113.616684)
+save_id = &"forest_000"
+
+[node name="forest_001" type="StaticBody3D" parent="Patches/Forest" unique_id=37687856 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.9996666, 0, -0.025820548, 0, 1, 0, 0.025820548, 0, 0.9996666, 5.004162, 31.220354, -127.499756)
+save_id = &"forest_001"
+
+[node name="forest_002" type="StaticBody3D" parent="Patches/Forest" unique_id=515221002 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.43301976, 0, -0.9013844, 0, 1, 0, 0.9013844, 0, 0.43301976, 4.0748405, 29.096338, -146.85907)
+save_id = &"forest_002"
+
+[node name="forest_003" type="StaticBody3D" parent="Patches/Forest" unique_id=1450306058 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.9640587, 0, -0.26568928, 0, 1, 0, 0.26568928, 0, -0.9640587, 178.65492, 31.898417, -187.71652)
+save_id = &"forest_003"
+
+[node name="forest_004" type="StaticBody3D" parent="Patches/Forest" unique_id=1797051920 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.63460636, 0, -0.77283555, 0, 1, 0, 0.77283555, 0, 0.63460636, 197.11638, 28.671757, -161.48543)
+save_id = &"forest_004"
+
+[node name="forest_005" type="StaticBody3D" parent="Patches/Forest" unique_id=1572472395 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.9024616, 0, -0.43077034, 0, 1, 0, 0.43077034, 0, -0.9024616, 143.1842, 36.289932, -204.42943)
+save_id = &"forest_005"
+
+[node name="forest_006" type="StaticBody3D" parent="Patches/Forest" unique_id=1155962153 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.62698513, 0, 0.7790312, 0, 1, 0, -0.7790312, 0, 0.62698513, 8.413124, 32.034546, -61.83696)
+save_id = &"forest_006"
+
+[node name="forest_007" type="StaticBody3D" parent="Patches/Forest" unique_id=1110188237 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.8254193, 0, 0.5645201, 0, 1, 0, -0.5645201, 0, 0.8254193, 3.8782425, 30.362696, -55.71779)
+save_id = &"forest_007"
+
+[node name="forest_008" type="StaticBody3D" parent="Patches/Forest" unique_id=924281051 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.9743534, 0, -0.2250233, 0, 1, 0, 0.2250233, 0, -0.9743534, 171.77155, 30.267225, -117.37886)
+save_id = &"forest_008"
+
+[node name="forest_009" type="StaticBody3D" parent="Patches/Forest" unique_id=2129149106 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.9507385, 0, 0.30999416, 0, 1, 0, -0.30999416, 0, -0.9507385, 11.142265, 34.07298, -70.17409)
+save_id = &"forest_009"
+
+[node name="forest_010" type="StaticBody3D" parent="Patches/Forest" unique_id=406097953 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.95321846, 0, 0.30228236, 0, 1, 0, -0.30228236, 0, 0.95321846, 14.012016, 31.628977, -58.713867)
+save_id = &"forest_010"
+
+[node name="forest_011" type="StaticBody3D" parent="Patches/Forest" unique_id=1894747626 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.8818416, 0, 0.4715457, 0, 1, 0, -0.4715457, 0, -0.8818416, 156.0123, 16.182678, -61.274384)
+save_id = &"forest_011"
+
+[node name="forest_012" type="StaticBody3D" parent="Patches/Forest" unique_id=1162336780 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.26075557, 0, 0.96540487, 0, 1, 0, -0.96540487, 0, 0.26075557, 144.41704, 24.679724, -117.464554)
+save_id = &"forest_012"
+
+[node name="forest_013" type="StaticBody3D" parent="Patches/Forest" unique_id=941794062 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.9470003, 0, -0.32123256, 0, 1, 0, 0.32123256, 0, -0.9470003, 145.49269, 34.232895, -192.40256)
+save_id = &"forest_013"
+
+[node name="forest_014" type="StaticBody3D" parent="Patches/Forest" unique_id=172711359 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.887915, 0, 0.46000758, 0, 1, 0, -0.46000758, 0, 0.887915, 231.42007, 20.675367, -31.355713)
+save_id = &"forest_014"
+
+[node name="forest_015" type="StaticBody3D" parent="Patches/Forest" unique_id=1394583208 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.9922439, 0, 0.12430655, 0, 1, 0, -0.12430655, 0, -0.9922439, -13.178291, 31.43636, -85.23778)
+save_id = &"forest_015"
+
+[node name="forest_016" type="StaticBody3D" parent="Patches/Forest" unique_id=947772080 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.123462, 0, 0.9923493, 0, 1, 0, -0.9923493, 0, 0.123462, 209.73523, 18.265543, -28.302185)
+save_id = &"forest_016"
+
+[node name="forest_017" type="StaticBody3D" parent="Patches/Forest" unique_id=2098081393 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.62380505, 0, 0.78158, 0, 1, 0, -0.78158, 0, 0.62380505, 223.59824, 29.776638, -76.10637)
+save_id = &"forest_017"
+
+[node name="forest_018" type="StaticBody3D" parent="Patches/Forest" unique_id=480882074 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.99122673, 0, 0.13217233, 0, 1, 0, -0.13217233, 0, 0.99122673, 93.201355, 30.826143, -198.57759)
+save_id = &"forest_018"
+
+[node name="forest_019" type="StaticBody3D" parent="Patches/Forest" unique_id=687723437 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.91079813, 0, -0.41285202, 0, 1, 0, 0.41285202, 0, 0.91079813, 2.9725075, 32.967003, -96.80698)
+save_id = &"forest_019"
+
+[node name="forest_020" type="StaticBody3D" parent="Patches/Forest" unique_id=795568441 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.96667695, 0, -0.25599942, 0, 1, 0, 0.25599942, 0, -0.96667695, 119.46399, 1.1881396, -21.973938)
+save_id = &"forest_020"
+
+[node name="forest_021" type="StaticBody3D" parent="Patches/Forest" unique_id=771092607 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.18952797, 0, 0.9818753, 0, 1, 0, -0.9818753, 0, -0.18952797, 147.25024, 12.177851, -49.324005)
+save_id = &"forest_021"
+
+[node name="forest_022" type="StaticBody3D" parent="Patches/Forest" unique_id=814793088 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.37428623, 0, -0.9273132, 0, 1, 0, 0.9273132, 0, -0.37428623, 103.4886, 31.684607, -143.66422)
+save_id = &"forest_022"
+
+[node name="forest_023" type="StaticBody3D" parent="Patches/Forest" unique_id=1407149732 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.7935792, 0, 0.6084669, 0, 1, 0, -0.6084669, 0, 0.7935792, 79.46484, 0.83141196, -13.832779)
+save_id = &"forest_023"
+
+[node name="forest_024" type="StaticBody3D" parent="Patches/Forest" unique_id=2109089772 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.15213993, 0, 0.988359, 0, 1, 0, -0.988359, 0, 0.15213993, 116.052, 31.431091, -140.37375)
+save_id = &"forest_024"
+
+[node name="forest_025" type="StaticBody3D" parent="Patches/Forest" unique_id=1808916903 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.47203025, 0, 0.8815823, 0, 1, 0, -0.8815823, 0, -0.47203025, 141.14273, 19.512444, -67.88638)
+save_id = &"forest_025"
+
+[node name="forest_026" type="StaticBody3D" parent="Patches/Forest" unique_id=1798479803 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.96142304, 0, -0.27507412, 0, 1, 0, 0.27507412, 0, 0.96142304, 225.7597, 35.25404, -99.012794)
+save_id = &"forest_026"
+
+[node name="forest_027" type="StaticBody3D" parent="Patches/Forest" unique_id=961917614 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.04573387, 0, 0.99895364, 0, 1, 0, -0.99895364, 0, -0.04573387, 123.02106, 31.848953, -180.6892)
+save_id = &"forest_027"
+
+[node name="forest_028" type="StaticBody3D" parent="Patches/Forest" unique_id=1318246241 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.89844745, 0, -0.43908107, 0, 1, 0, 0.43908107, 0, -0.89844745, 163.26799, 10.304653, -41.614014)
+save_id = &"forest_028"
+
+[node name="forest_029" type="StaticBody3D" parent="Patches/Forest" unique_id=567770788 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.63144386, 0, 0.7754216, 0, 1, 0, -0.7754216, 0, 0.63144386, 140.48773, 33.557693, -187.77188)
+save_id = &"forest_029"
+
+[node name="forest_030" type="StaticBody3D" parent="Patches/Forest" unique_id=1232124874 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.7374115, 0, 0.67544377, 0, 1, 0, -0.67544377, 0, 0.7374115, 20.960312, 34.851616, -96.479935)
+save_id = &"forest_030"
+
+[node name="forest_031" type="StaticBody3D" parent="Patches/Forest" unique_id=1193745414 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.41182435, 0, -0.9112632, 0, 1, 0, 0.9112632, 0, -0.41182435, -38.178097, 30.427914, -100.82524)
+save_id = &"forest_031"
+
+[node name="forest_032" type="StaticBody3D" parent="Patches/Forest" unique_id=1063494772 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.6181789, 0, -0.78603745, 0, 1, 0, 0.78603745, 0, -0.6181789, 184.97758, 30.806349, -192.08984)
+save_id = &"forest_032"
+
+[node name="forest_033" type="StaticBody3D" parent="Patches/Forest" unique_id=2044078940 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.9048522, 0, 0.42572588, 0, 1, 0, -0.42572588, 0, -0.9048522, 230.77435, 34.142395, -111.10831)
+save_id = &"forest_033"
+
+[node name="forest_034" type="StaticBody3D" parent="Patches/Forest" unique_id=1063667714 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.6854363, 0, -0.72813255, 0, 1, 0, 0.72813255, 0, 0.6854363, -6.17379, 29.311764, -56.02971)
+save_id = &"forest_034"
+
+[node name="forest_035" type="StaticBody3D" parent="Patches/Forest" unique_id=1351986323 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.8706865, 0, -0.49183849, 0, 1, 0, 0.49183849, 0, 0.8706865, 201.71265, 20.18927, -34.662155)
+save_id = &"forest_035"
+
+[node name="forest_036" type="StaticBody3D" parent="Patches/Forest" unique_id=791345938 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.98854506, 0, 0.15092596, 0, 1, 0, -0.15092596, 0, -0.98854506, -8.7114525, 30.697523, -148.32375)
+save_id = &"forest_036"
+
+[node name="forest_037" type="StaticBody3D" parent="Patches/Forest" unique_id=1704746897 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.48618147, 0, 0.87385786, 0, 1, 0, -0.87385786, 0, -0.48618147, 140.5122, 31.27747, -155.87085)
+save_id = &"forest_037"
+
+[node name="forest_038" type="StaticBody3D" parent="Patches/Forest" unique_id=802964543 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.32414445, 0, -0.9460076, 0, 1, 0, 0.9460076, 0, -0.32414445, 43.620934, 31.991434, -81.32149)
+save_id = &"forest_038"
+
+[node name="forest_039" type="StaticBody3D" parent="Patches/Forest" unique_id=705460318 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.31115094, 0, -0.9503605, 0, 1, 0, 0.9503605, 0, -0.31115094, 24.947304, 30.90434, -128.05437)
+save_id = &"forest_039"
+
+[node name="forest_040" type="StaticBody3D" parent="Patches/Forest" unique_id=2078367687 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.10725855, 0, -0.99423116, 0, 1, 0, 0.99423116, 0, 0.10725855, 9.462357, 31.097328, -136.19681)
+save_id = &"forest_040"
+
+[node name="forest_041" type="StaticBody3D" parent="Patches/Forest" unique_id=225335710 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.17778042, 0, -0.9840702, 0, 1, 0, 0.9840702, 0, -0.17778042, 143.27553, 13.328905, -54.586487)
+save_id = &"forest_041"
+
+[node name="forest_042" type="StaticBody3D" parent="Patches/Forest" unique_id=1798295406 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.30360824, 0, -0.95279694, 0, 1, 0, 0.95279694, 0, -0.30360824, 220.1708, 32.505108, -133.80637)
+save_id = &"forest_042"
+
+[node name="forest_043" type="StaticBody3D" parent="Patches/Forest" unique_id=767905432 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.792964, 0, -0.60926855, 0, 1, 0, 0.60926855, 0, 0.792964, 121.66629, 17.248375, -67.79431)
+save_id = &"forest_043"
+
+[node name="forest_044" type="StaticBody3D" parent="Patches/Forest" unique_id=302352811 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.10643794, 0, 0.9943193, 0, 1, 0, -0.9943193, 0, 0.10643794, 223.23965, 34.28296, -93.41143)
+save_id = &"forest_044"
+
+[node name="forest_045" type="StaticBody3D" parent="Patches/Forest" unique_id=2034591173 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.45842683, 0, 0.88873214, 0, 1, 0, -0.88873214, 0, 0.45842683, 181.06871, 20.969143, -91.42235)
+save_id = &"forest_045"
+
+[node name="forest_046" type="StaticBody3D" parent="Patches/Forest" unique_id=948230518 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.985246, 0, -0.17114428, 0, 1, 0, 0.17114428, 0, -0.985246, 155.8954, 32.43081, -176.3849)
+save_id = &"forest_046"
+
+[node name="forest_047" type="StaticBody3D" parent="Patches/Forest" unique_id=1144784102 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.99954575, 0, 0.030138139, 0, 1, 0, -0.030138139, 0, 0.99954575, 197.10349, 21.821537, -60.356094)
+save_id = &"forest_047"
+
+[node name="forest_048" type="StaticBody3D" parent="Patches/Forest" unique_id=836571223 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.7494582, 0, -0.6620517, 0, 1, 0, 0.6620517, 0, 0.7494582, 276.36795, 30.677723, -153.20691)
+save_id = &"forest_048"
+
+[node name="forest_049" type="StaticBody3D" parent="Patches/Forest" unique_id=953720904 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.7520126, 0, 0.6591487, 0, 1, 0, -0.6591487, 0, -0.7520126, 124.094376, 31.916693, -187.69914)
+save_id = &"forest_049"
+
+[node name="forest_050" type="StaticBody3D" parent="Patches/Forest" unique_id=1860101694 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.6935678, 0, -0.72039133, 0, 1, 0, 0.72039133, 0, 0.6935678, 173.89894, 25.466858, -105.83912)
+save_id = &"forest_050"
+
+[node name="forest_051" type="StaticBody3D" parent="Patches/Forest" unique_id=843499996 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.62488633, 0, -0.78071576, 0, 1, 0, 0.78071576, 0, 0.62488633, 35.59018, 31.402704, -113.47616)
+save_id = &"forest_051"
+
+[node name="forest_052" type="StaticBody3D" parent="Patches/Forest" unique_id=1158274225 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.4863053, 0, -0.87378895, 0, 1, 0, 0.87378895, 0, 0.4863053, 260.16013, 33.948395, -117.02386)
+save_id = &"forest_052"
+
+[node name="forest_053" type="StaticBody3D" parent="Patches/Forest" unique_id=1578966753 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.9824488, 0, 0.1865325, 0, 1, 0, -0.1865325, 0, 0.9824488, 203.12927, 29.252508, -155.11755)
+save_id = &"forest_053"
+
+[node name="forest_054" type="StaticBody3D" parent="Patches/Forest" unique_id=772475114 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.9451108, 0, 0.32674998, 0, 1, 0, -0.32674998, 0, -0.9451108, 55.906013, 13.73106, -43.50685)
+save_id = &"forest_054"
+
+[node name="forest_055" type="StaticBody3D" parent="Patches/Forest" unique_id=1489159508 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.6139829, 0, 0.78931934, 0, 1, 0, -0.78931934, 0, -0.6139829, 116.2643, 31.038258, -131.11124)
+save_id = &"forest_055"
+
+[node name="forest_056" type="StaticBody3D" parent="Patches/Forest" unique_id=1967688329 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.99944407, 0, -0.033339344, 0, 1, 0, 0.033339344, 0, 0.99944407, 64.954865, 28.362406, -184.83578)
+save_id = &"forest_056"
+
+[node name="forest_057" type="StaticBody3D" parent="Patches/Forest" unique_id=1533333920 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.849772, 0, -0.5271505, 0, 1, 0, 0.5271505, 0, 0.849772, -22.15073, 29.623358, -94.04038)
+save_id = &"forest_057"
+
+[node name="forest_058" type="StaticBody3D" parent="Patches/Forest" unique_id=124001173 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.41894054, 0, 0.90801364, 0, 1, 0, -0.90801364, 0, 0.41894054, 125.24919, 27.392313, -125.16363)
+save_id = &"forest_058"
+
+[node name="forest_059" type="StaticBody3D" parent="Patches/Forest" unique_id=1052873243 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.70967287, 0, 0.7045313, 0, 1, 0, -0.7045313, 0, -0.70967287, 157.9208, 19.101849, -66.45064)
+save_id = &"forest_059"
+
+[node name="forest_060" type="StaticBody3D" parent="Patches/Forest" unique_id=1233308281 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.07511304, 0, -0.99717504, 0, 1, 0, 0.99717504, 0, -0.07511304, 140.8169, 30.41464, -130.37032)
+save_id = &"forest_060"
+
+[node name="forest_061" type="StaticBody3D" parent="Patches/Forest" unique_id=684879793 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.47714034, 0, -0.8788271, 0, 1, 0, 0.8788271, 0, -0.47714034, 214.55081, 31.890287, -162.61899)
+save_id = &"forest_061"
+
+[node name="forest_062" type="StaticBody3D" parent="Patches/Forest" unique_id=1091571843 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.9757953, 0, 0.2186858, 0, 1, 0, -0.2186858, 0, -0.9757953, 19.346527, 28.060156, -150.09314)
+save_id = &"forest_062"
+
+[node name="forest_063" type="StaticBody3D" parent="Patches/Forest" unique_id=1698908331 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.4056136, 0, 0.9140446, 0, 1, 0, -0.9140446, 0, -0.4056136, 187.53668, 28.864332, -125.59917)
+save_id = &"forest_063"
+
+[node name="forest_064" type="StaticBody3D" parent="Patches/Forest" unique_id=737727722 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.7873185, 0, 0.61654645, 0, 1, 0, -0.61654645, 0, 0.7873185, 123.71779, 32.255005, -142.30045)
+save_id = &"forest_064"
+
+[node name="forest_065" type="StaticBody3D" parent="Patches/Forest" unique_id=728320156 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.38232082, 0, 0.92402965, 0, 1, 0, -0.92402965, 0, 0.38232082, 127.57254, 32.222645, -148.5825)
+save_id = &"forest_065"
+
+[node name="forest_066" type="StaticBody3D" parent="Patches/Forest" unique_id=1078053973 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.95361114, 0, -0.3010412, 0, 1, 0, 0.3010412, 0, -0.95361114, 218.7417, 29.716032, -71.77484)
+save_id = &"forest_066"
+
+[node name="forest_067" type="StaticBody3D" parent="Patches/Forest" unique_id=1609916736 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.5539998, 0, -0.8325168, 0, 1, 0, 0.8325168, 0, 0.5539998, 139.42592, 31.295643, -166.4302)
+save_id = &"forest_067"
+
+[node name="forest_068" type="StaticBody3D" parent="Patches/Forest" unique_id=23539861 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.8059956, 0, -0.5919215, 0, 1, 0, 0.5919215, 0, 0.8059956, 27.39296, 35.212574, -78.76073)
+save_id = &"forest_068"
+
+[node name="forest_069" type="StaticBody3D" parent="Patches/Forest" unique_id=323399960 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.33983415, 0, 0.94048536, 0, 1, 0, -0.94048536, 0, 0.33983415, 224.21906, 32.662735, -88.17859)
+save_id = &"forest_069"
+
+[node name="forest_070" type="StaticBody3D" parent="Patches/Forest" unique_id=1408539505 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.84770477, 0, -0.53046834, 0, 1, 0, 0.53046834, 0, -0.84770477, 175.92561, 29.387812, -112.22406)
+save_id = &"forest_070"
+
+[node name="forest_071" type="StaticBody3D" parent="Patches/Forest" unique_id=157974141 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.73584735, 0, -0.67714745, 0, 1, 0, 0.67714745, 0, 0.73584735, 22.466148, 29.301298, -143.84203)
+save_id = &"forest_071"
+
+[node name="forest_072" type="StaticBody3D" parent="Patches/Forest" unique_id=140293995 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.95883745, 0, -0.28395554, 0, 1, 0, 0.28395554, 0, 0.95883745, 94.956436, 28.469135, -96.80789)
+save_id = &"forest_072"
+
+[node name="forest_073" type="StaticBody3D" parent="Patches/Forest" unique_id=294580175 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.41010162, 0, -0.9120398, 0, 1, 0, 0.9120398, 0, 0.41010162, -17.519672, 29.754412, -118.77358)
+save_id = &"forest_073"
+
+[node name="forest_074" type="StaticBody3D" parent="Patches/Forest" unique_id=943926180 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.70870787, 0, 0.70550203, 0, 1, 0, -0.70550203, 0, -0.70870787, 137.67563, 4.498589, -25.468033)
+save_id = &"forest_074"
+
+[node name="forest_075" type="StaticBody3D" parent="Patches/Forest" unique_id=515311664 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.94575006, 0, 0.32489514, 0, 1, 0, -0.32489514, 0, 0.94575006, 181.50722, 17.066505, -38.351852)
+save_id = &"forest_075"
+
+[node name="forest_076" type="StaticBody3D" parent="Patches/Forest" unique_id=1856669998 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.42011797, 0, 0.9074695, 0, 1, 0, -0.9074695, 0, -0.42011797, 208.63974, 30.409452, -154.00993)
+save_id = &"forest_076"
+
+[node name="forest_077" type="StaticBody3D" parent="Patches/Forest" unique_id=1438899835 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.50518215, 0, -0.8630128, 0, 1, 0, 0.8630128, 0, -0.50518215, 243.06638, 33.510868, -92.32038)
+save_id = &"forest_077"
+
+[node name="forest_078" type="StaticBody3D" parent="Patches/Forest" unique_id=1848993139 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.5892292, 0, -0.80796593, 0, 1, 0, 0.80796593, 0, -0.5892292, 76.01471, 1.5669041, -22.443909)
+save_id = &"forest_078"
+
+[node name="forest_079" type="StaticBody3D" parent="Patches/Forest" unique_id=1470297802 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.820058, 0, -0.57228047, 0, 1, 0, 0.57228047, 0, -0.820058, -13.019093, 31.134165, -142.21545)
+save_id = &"forest_079"
+
+[node name="forest_080" type="StaticBody3D" parent="Patches/Forest" unique_id=2133534416 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.9818674, 0, 0.1895692, 0, 1, 0, -0.1895692, 0, 0.9818674, 208.84875, 31.276522, -122.64909)
+save_id = &"forest_080"
+
+[node name="forest_081" type="StaticBody3D" parent="Patches/Forest" unique_id=1805741313 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.99669325, 0, -0.08125617, 0, 1, 0, 0.08125617, 0, 0.99669325, 110.93492, 30.627886, -132.09908)
+save_id = &"forest_081"
+
+[node name="forest_082" type="StaticBody3D" parent="Patches/Forest" unique_id=718625842 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.8675806, 0, -0.49729663, 0, 1, 0, 0.49729663, 0, 0.8675806, 205.35547, 32.339394, -107.267075)
+save_id = &"forest_082"
+
+[node name="forest_083" type="StaticBody3D" parent="Patches/Forest" unique_id=549155371 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.85052073, 0, 0.52594155, 0, 1, 0, -0.52594155, 0, 0.85052073, 224.91562, 33.39568, -169.2781)
+save_id = &"forest_083"
+
+[node name="forest_084" type="StaticBody3D" parent="Patches/Forest" unique_id=2136444742 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.96135074, 0, -0.27532673, 0, 1, 0, 0.27532673, 0, -0.96135074, 31.973206, 30.745821, -128.57285)
+save_id = &"forest_084"
+
+[node name="forest_085" type="StaticBody3D" parent="Patches/Forest" unique_id=1535325578 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.7584586, 0, -0.65172124, 0, 1, 0, 0.65172124, 0, -0.7584586, 25.47599, 30.902098, -121.50645)
+save_id = &"forest_085"
+
+[node name="forest_086" type="StaticBody3D" parent="Patches/Forest" unique_id=647708393 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.9040816, 0, 0.42735994, 0, 1, 0, -0.42735994, 0, 0.9040816, 81.50198, 30.736607, -193.2951)
+save_id = &"forest_086"
+
+[node name="forest_087" type="StaticBody3D" parent="Patches/Forest" unique_id=1491018791 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.78402925, 0, -0.62072384, 0, 1, 0, 0.62072384, 0, 0.78402925, 206.61261, 30.145685, -180.06908)
+save_id = &"forest_087"
+
+[node name="forest_088" type="StaticBody3D" parent="Patches/Forest" unique_id=1775610785 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.71082664, 0, -0.70336723, 0, 1, 0, 0.70336723, 0, 0.71082664, 137.12311, 9.678968, -44.70146)
+save_id = &"forest_088"
+
+[node name="forest_089" type="StaticBody3D" parent="Patches/Forest" unique_id=386155308 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.23095159, 0, -0.97296524, 0, 1, 0, 0.97296524, 0, 0.23095159, -21.964935, 29.498753, -101.01751)
+save_id = &"forest_089"
+
+[node name="forest_090" type="StaticBody3D" parent="Patches/Forest" unique_id=1733568263 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.98778087, 0, 0.15584923, 0, 1, 0, -0.15584923, 0, -0.98778087, 222.65637, 33.047283, -163.9157)
+save_id = &"forest_090"
+
+[node name="forest_091" type="StaticBody3D" parent="Patches/Forest" unique_id=477772267 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.020527394, 0, 0.9997893, 0, 1, 0, -0.9997893, 0, -0.020527394, 248.7337, 33.851795, -123.913185)
+save_id = &"forest_091"
+
+[node name="forest_092" type="StaticBody3D" parent="Patches/Forest" unique_id=1331116496 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.9999834, 0, -0.005763801, 0, 1, 0, 0.005763801, 0, 0.9999834, 49.519325, 31.65446, -87.611984)
+save_id = &"forest_092"
+
+[node name="forest_093" type="StaticBody3D" parent="Patches/Forest" unique_id=913004806 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.82413954, 0, 0.5663869, 0, 1, 0, -0.5663869, 0, -0.82413954, 67.77198, 28.346582, -176.79634)
+save_id = &"forest_093"
+
+[node name="forest_094" type="StaticBody3D" parent="Patches/Forest" unique_id=313768908 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.9984089, 0, -0.056388818, 0, 1, 0, 0.056388818, 0, -0.9984089, 109.189926, 2.7064958, -42.542984)
+save_id = &"forest_094"
+
+[node name="forest_095" type="StaticBody3D" parent="Patches/Forest" unique_id=799083742 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.98948187, 0, -0.14465691, 0, 1, 0, 0.14465691, 0, 0.98948187, 155.0463, 9.398569, -48.13344)
+save_id = &"forest_095"
+
+[node name="forest_096" type="StaticBody3D" parent="Patches/Forest" unique_id=1222326415 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.9956544, 0, -0.093124986, 0, 1, 0, 0.093124986, 0, 0.9956544, 135.32996, 11.678619, -50.639557)
+save_id = &"forest_096"
+
+[node name="forest_097" type="StaticBody3D" parent="Patches/Forest" unique_id=1013828449 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.3723301, 0, -0.92810035, 0, 1, 0, 0.92810035, 0, 0.3723301, -45.937954, 30.353405, -111.71283)
+save_id = &"forest_097"
+
+[node name="forest_098" type="StaticBody3D" parent="Patches/Forest" unique_id=426493028 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.8518697, 0, 0.5237538, 0, 1, 0, -0.5237538, 0, -0.8518697, 120.073715, 9.321858, -52.471527)
+save_id = &"forest_098"
+
+[node name="forest_099" type="StaticBody3D" parent="Patches/Forest" unique_id=122650281 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.96686476, 0, -0.25528902, 0, 1, 0, 0.25528902, 0, -0.96686476, 127.50386, 14.386921, -59.533813)
+save_id = &"forest_099"
+
+[node name="forest_100" type="StaticBody3D" parent="Patches/Forest" unique_id=2009785710 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.46771058, 0, 0.8838817, 0, 1, 0, -0.8838817, 0, 0.46771058, 281.8365, 32.313145, -104.982765)
+save_id = &"forest_100"
+
+[node name="forest_101" type="StaticBody3D" parent="Patches/Forest" unique_id=751902875 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.50325084, 0, -0.8641404, 0, 1, 0, 0.8641404, 0, 0.50325084, 240.85327, 29.307215, -72.84619)
+save_id = &"forest_101"
+
+[node name="forest_102" type="StaticBody3D" parent="Patches/Forest" unique_id=1716501025 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.29816318, 0, 0.9545149, 0, 1, 0, -0.9545149, 0, 0.29816318, 5.173527, 30.277737, -140.69664)
+save_id = &"forest_102"
+
+[node name="forest_103" type="StaticBody3D" parent="Patches/Forest" unique_id=625654191 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.99823123, 0, 0.059451144, 0, 1, 0, -0.059451144, 0, 0.99823123, 180.0153, 30.083847, -151.07147)
+save_id = &"forest_103"
+
+[node name="forest_104" type="StaticBody3D" parent="Patches/Forest" unique_id=1213851946 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.4978355, 0, 0.8672715, 0, 1, 0, -0.8672715, 0, 0.4978355, 254.2425, 33.715954, -126.86362)
+save_id = &"forest_104"
+
+[node name="forest_105" type="StaticBody3D" parent="Patches/Forest" unique_id=1828522070 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.5144774, 0, 0.85750395, 0, 1, 0, -0.85750395, 0, -0.5144774, -1.0781784, 29.56991, -147.46439)
+save_id = &"forest_105"
+
+[node name="forest_106" type="StaticBody3D" parent="Patches/Forest" unique_id=306398267 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.046348725, 0, 0.9989253, 0, 1, 0, -0.9989253, 0, 0.046348725, 234.2587, 32.587933, -132.85638)
+save_id = &"forest_106"
+
+[node name="forest_107" type="StaticBody3D" parent="Patches/Forest" unique_id=536061515 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.3699274, 0, 0.92906064, 0, 1, 0, -0.92906064, 0, 0.3699274, 151.05637, 15.340297, -57.96245)
+save_id = &"forest_107"
+
+[node name="forest_108" type="StaticBody3D" parent="Patches/Forest" unique_id=1559508746 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.9087081, 0, -0.41743216, 0, 1, 0, 0.41743216, 0, -0.9087081, 218.25992, 24.340961, -48.191483)
+save_id = &"forest_108"
+
+[node name="forest_109" type="StaticBody3D" parent="Patches/Forest" unique_id=952967794 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.5495219, 0, -0.8354793, 0, 1, 0, 0.8354793, 0, 0.5495219, 126.98605, 36.66865, -206.88506)
+save_id = &"forest_109"
+
+[node name="forest_110" type="StaticBody3D" parent="Patches/Forest" unique_id=670879667 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.9994778, 0, 0.032312162, 0, 1, 0, -0.032312162, 0, -0.9994778, 206.41379, 24.09159, -45.45941)
+save_id = &"forest_110"
+
+[node name="forest_111" type="StaticBody3D" parent="Patches/Forest" unique_id=1993042400 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.9989244, 0, -0.046368983, 0, 1, 0, 0.046368983, 0, -0.9989244, 209.43835, 30.205563, -127.77456)
+save_id = &"forest_111"
+
+[node name="forest_112" type="StaticBody3D" parent="Patches/Forest" unique_id=1830778573 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.34605286, 0, 0.938215, 0, 1, 0, -0.938215, 0, 0.34605286, -13.757454, 29.513168, -103.734375)
+save_id = &"forest_112"
+
+[node name="forest_113" type="StaticBody3D" parent="Patches/Forest" unique_id=1141046773 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.9999928, 0, 0.0037920217, 0, 1, 0, -0.0037920217, 0, 0.9999928, 237.17316, 34.558968, -109.29847)
+save_id = &"forest_113"
+
+[node name="forest_114" type="StaticBody3D" parent="Patches/Forest" unique_id=422424293 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.70342314, 0, 0.7107713, 0, 1, 0, -0.7107713, 0, 0.70342314, -25.235413, 33.671104, -164.64603)
+save_id = &"forest_114"
+
+[node name="forest_115" type="StaticBody3D" parent="Patches/Forest" unique_id=1727983647 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.99143267, 0, 0.13061874, 0, 1, 0, -0.13061874, 0, -0.99143267, 193.66986, 27.782671, -134.55258)
+save_id = &"forest_115"
+
+[node name="forest_116" type="StaticBody3D" parent="Patches/Forest" unique_id=2075332234 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.9898215, 0, -0.14231437, 0, 1, 0, 0.14231437, 0, 0.9898215, 11.204605, 27.402119, -157.42744)
+save_id = &"forest_116"
+
+[node name="forest_117" type="StaticBody3D" parent="Patches/Forest" unique_id=147287529 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.11793472, 0, -0.99302137, 0, 1, 0, 0.99302137, 0, -0.11793472, 171.21309, 14.532444, -63.647858)
+save_id = &"forest_117"
+
+[node name="forest_118" type="StaticBody3D" parent="Patches/Forest" unique_id=39025279 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.2929684, 0, 0.9561221, 0, 1, 0, -0.9561221, 0, 0.2929684, 150.11266, 20.914072, -68.84189)
+save_id = &"forest_118"
+
+[node name="forest_119" type="StaticBody3D" parent="Patches/Forest" unique_id=1109897475 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.2263476, 0, -0.9740466, 0, 1, 0, 0.9740466, 0, -0.2263476, 36.69731, 34.15716, -94.71357)
+save_id = &"forest_119"
+
+[node name="forest_120" type="StaticBody3D" parent="Patches/Forest" unique_id=1405721888 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.6395601, 0, -0.76874113, 0, 1, 0, 0.76874113, 0, 0.6395601, 16.898148, 31.40338, -126.154884)
+save_id = &"forest_120"
+
+[node name="forest_121" type="StaticBody3D" parent="Patches/Forest" unique_id=1293578035 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.8036593, 0, 0.5950896, 0, 1, 0, -0.5950896, 0, -0.8036593, 197.20335, 30.642439, -98.37505)
+save_id = &"forest_121"
+
+[node name="forest_122" type="StaticBody3D" parent="Patches/Forest" unique_id=159639597 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.4049688, 0, 0.9143305, 0, 1, 0, -0.9143305, 0, 0.4049688, 142.30402, 6.138587, -28.72705)
+save_id = &"forest_122"
+
+[node name="forest_123" type="StaticBody3D" parent="Patches/Forest" unique_id=410549726 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.9448909, 0, -0.32738528, 0, 1, 0, 0.32738528, 0, 0.9448909, 171.56236, 32.571266, -177.5354)
+save_id = &"forest_123"
+
+[node name="forest_124" type="StaticBody3D" parent="Patches/Forest" unique_id=64192718 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.8295912, 0, -0.5583712, 0, 1, 0, 0.5583712, 0, -0.8295912, 100.54808, 9.510151, -63.798737)
+save_id = &"forest_124"
+
+[node name="forest_125" type="StaticBody3D" parent="Patches/Forest" unique_id=243347113 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.033345196, 0, 0.9994439, 0, 1, 0, -0.9994439, 0, 0.033345196, 152.47957, 33.65913, -194.50871)
+save_id = &"forest_125"
+
+[node name="forest_126" type="StaticBody3D" parent="Patches/Forest" unique_id=353297381 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.4288442, 0, -0.9033784, 0, 1, 0, 0.9033784, 0, 0.4288442, 110.82684, 9.084927, -59.152786)
+save_id = &"forest_126"
+
+[node name="forest_127" type="StaticBody3D" parent="Patches/Forest" unique_id=2146010326 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.6245843, 0, -0.78095734, 0, 1, 0, 0.78095734, 0, 0.6245843, -32.713516, 29.963762, -94.39766)
+save_id = &"forest_127"
+
+[node name="forest_128" type="StaticBody3D" parent="Patches/Forest" unique_id=1924718067 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.5102617, 0, -0.86001915, 0, 1, 0, 0.86001915, 0, 0.5102617, 159.83755, 33.774685, -207.71858)
+save_id = &"forest_128"
+
+[node name="forest_129" type="StaticBody3D" parent="Patches/Forest" unique_id=1370162460 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.6036504, 0, 0.79724914, 0, 1, 0, -0.79724914, 0, -0.6036504, 83.82092, 31.079227, -124.68065)
+save_id = &"forest_129"
+
+[node name="forest_130" type="StaticBody3D" parent="Patches/Forest" unique_id=1323982939 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.7973553, 0, -0.6035102, 0, 1, 0, 0.6035102, 0, 0.7973553, 263.6921, 33.026268, -137.39355)
+save_id = &"forest_130"
+
+[node name="forest_131" type="StaticBody3D" parent="Patches/Forest" unique_id=1040155173 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.84539837, 0, 0.5341363, 0, 1, 0, -0.5341363, 0, -0.84539837, 211.60724, 29.963537, -132.56134)
+save_id = &"forest_131"
+
+[node name="forest_132" type="StaticBody3D" parent="Patches/Forest" unique_id=1002672501 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.7370154, 0, -0.6758759, 0, 1, 0, 0.6758759, 0, 0.7370154, 256.74835, 32.859554, -149.25809)
+save_id = &"forest_132"
+
+[node name="forest_133" type="StaticBody3D" parent="Patches/Forest" unique_id=171913924 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.2705276, 0, -0.9627122, 0, 1, 0, 0.9627122, 0, -0.2705276, 200.41664, 28.485443, -141.68077)
+save_id = &"forest_133"
+
+[node name="forest_134" type="StaticBody3D" parent="Patches/Forest" unique_id=837527701 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.986126, 0, -0.16599858, 0, 1, 0, 0.16599858, 0, -0.986126, 97.31932, 7.0089073, -59.3909)
+save_id = &"forest_134"
+
+[node name="forest_135" type="StaticBody3D" parent="Patches/Forest" unique_id=1156919675 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.7386945, 0, -0.6740404, 0, 1, 0, 0.6740404, 0, 0.7386945, 182.02562, 29.772242, -162.37816)
+save_id = &"forest_135"
+
+[node name="forest_136" type="StaticBody3D" parent="Patches/Forest" unique_id=1029476162 instance=ExtResource("13_n067m")]
+transform = Transform3D(0.99841243, 0, -0.056325953, 0, 1, 0, 0.056325953, 0, 0.99841243, 172.27657, 13.655267, -47.54706)
+save_id = &"forest_136"
+
+[node name="forest_137" type="StaticBody3D" parent="Patches/Forest" unique_id=357164624 instance=ExtResource("13_n067m")]
+transform = Transform3D(-0.99220085, 0, -0.12464951, 0, 1, 0, 0.12464951, 0, -0.99220085, 168.16553, 33.295692, -189.69994)
+save_id = &"forest_137"
+
+[node name="forest_138" type="StaticBody3D" parent="Patches/Forest" unique_id=1830862112 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.9784169, 0, 0.20664051, 0, 1, 0, -0.20664051, 0, 0.9784169, 224.08615, 28.433315, -65.09418)
+save_id = &"forest_138"
+
+[node name="FieldWheat" type="Node3D" parent="Patches" unique_id=179183369]
+
+[node name="field_wheat_000" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=165038133 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.815189, 0, -0.5791951, 0, 1, 0, 0.5791951, 0, 0.815189, 352.0452, 21.625856, 328.98248)
+save_id = &"field_wheat_000"
+
+[node name="field_wheat_001" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1756921790 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.51464015, 0, -0.85740626, 0, 1, 0, 0.85740626, 0, -0.51464015, 303.58295, 21.0517, 244.80608)
+save_id = &"field_wheat_001"
+
+[node name="field_wheat_002" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1357252696 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.989523, 0, 0.14437531, 0, 1, 0, -0.14437531, 0, -0.989523, 308.58853, 21.154953, 265.17783)
+save_id = &"field_wheat_002"
+
+[node name="field_wheat_003" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1551091819 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.95251155, 0, -0.30450255, 0, 1, 0, 0.30450255, 0, 0.95251155, 331.45618, 20.278069, 316.63788)
+save_id = &"field_wheat_003"
+
+[node name="field_wheat_004" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=435644330 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.38181394, 0, 0.9242392, 0, 1, 0, -0.9242392, 0, -0.38181394, 341.0306, 20.914637, 235.16936)
+save_id = &"field_wheat_004"
+
+[node name="field_wheat_005" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1853366856 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.035655882, 0, 0.99936414, 0, 1, 0, -0.99936414, 0, 0.035655882, 339.87534, 20.776653, 292.30115)
+save_id = &"field_wheat_005"
+
+[node name="field_wheat_006" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=428550689 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.99950707, 0, 0.031394746, 0, 1, 0, -0.031394746, 0, 0.99950707, 289.8746, 20.496038, 318.25674)
+save_id = &"field_wheat_006"
+
+[node name="field_wheat_007" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1063694166 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.96292365, 0, -0.26977405, 0, 1, 0, 0.26977405, 0, 0.96292365, 277.87564, 21.026115, 281.14478)
+save_id = &"field_wheat_007"
+
+[node name="field_wheat_008" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=157582743 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.8022862, 0, 0.59693956, 0, 1, 0, -0.59693956, 0, -0.8022862, 313.2735, 21.110184, 269.60406)
+save_id = &"field_wheat_008"
+
+[node name="field_wheat_009" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=406260884 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.13586241, 0, -0.9907277, 0, 1, 0, 0.9907277, 0, 0.13586241, 332.17346, 20.268164, 309.08047)
+save_id = &"field_wheat_009"
+
+[node name="field_wheat_010" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=866765503 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.8459039, 0, -0.53333545, 0, 1, 0, 0.53333545, 0, -0.8459039, 250.76503, 20.726828, 314.91568)
+save_id = &"field_wheat_010"
+
+[node name="field_wheat_011" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1362961563 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.9963785, 0, 0.08502924, 0, 1, 0, -0.08502924, 0, -0.9963785, 334.71335, 21.14956, 258.08362)
+save_id = &"field_wheat_011"
+
+[node name="field_wheat_012" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=469299571 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.990882, 0, -0.13473259, 0, 1, 0, 0.13473259, 0, 0.990882, 268.11105, 21.247402, 292.72513)
+save_id = &"field_wheat_012"
+
+[node name="field_wheat_013" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=2007974494 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.0660915, 0, -0.9978136, 0, 1, 0, 0.9978136, 0, 0.0660915, 281.84805, 21.22638, 332.2075)
+save_id = &"field_wheat_013"
+
+[node name="field_wheat_014" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=680981226 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.021462688, 0, -0.9997696, 0, 1, 0, 0.9997696, 0, -0.021462688, 375.37112, 21.45199, 274.73)
+save_id = &"field_wheat_014"
+
+[node name="field_wheat_015" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=278477579 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.12652445, 0, 0.9919635, 0, 1, 0, -0.9919635, 0, -0.12652445, 334.20294, 20.990084, 281.57117)
+save_id = &"field_wheat_015"
+
+[node name="field_wheat_016" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1047715828 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.14509782, 0, 0.9894173, 0, 1, 0, -0.9894173, 0, 0.14509782, 263.60815, 20.91051, 328.65344)
+save_id = &"field_wheat_016"
+
+[node name="field_wheat_017" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1675910766 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.65715396, 0, -0.75375634, 0, 1, 0, 0.75375634, 0, 0.65715396, 370.2859, 22.00248, 335.61594)
+save_id = &"field_wheat_017"
+
+[node name="field_wheat_018" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=418527724 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.2579482, 0, 0.96615875, 0, 1, 0, -0.96615875, 0, -0.2579482, 349.86383, 21.486437, 255.14084)
+save_id = &"field_wheat_018"
+
+[node name="field_wheat_019" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=2005784156 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.9257719, 0, -0.37808254, 0, 1, 0, 0.37808254, 0, 0.9257719, 352.1916, 21.584198, 310.41656)
+save_id = &"field_wheat_019"
+
+[node name="field_wheat_020" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=2075252634 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.21155228, 0, -0.9773667, 0, 1, 0, 0.9773667, 0, 0.21155228, 330.99664, 20.31765, 327.2384)
+save_id = &"field_wheat_020"
+
+[node name="field_wheat_021" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=757336295 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.27716842, 0, 0.96082133, 0, 1, 0, -0.96082133, 0, -0.27716842, 342.1068, 20.850603, 238.61159)
+save_id = &"field_wheat_021"
+
+[node name="field_wheat_022" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=927999276 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.3779322, 0, -0.9258333, 0, 1, 0, 0.9258333, 0, 0.3779322, 380.93365, 21.204794, 332.2343)
+save_id = &"field_wheat_022"
+
+[node name="field_wheat_023" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=874171607 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.22285897, 0, -0.9748507, 0, 1, 0, 0.9748507, 0, -0.22285897, 287.28827, 20.722456, 314.77454)
+save_id = &"field_wheat_023"
+
+[node name="field_wheat_024" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1506779582 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.56884927, 0, 0.82244176, 0, 1, 0, -0.82244176, 0, -0.56884927, 345.65704, 21.275982, 328.44952)
+save_id = &"field_wheat_024"
+
+[node name="field_wheat_025" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=65601482 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.10085761, 0, -0.9949009, 0, 1, 0, 0.9949009, 0, -0.10085761, 253.1102, 20.578058, 307.96765)
+save_id = &"field_wheat_025"
+
+[node name="field_wheat_026" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=2031407857 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.57939225, 0, -0.8150488, 0, 1, 0, 0.8150488, 0, -0.57939225, 306.87186, 21.505766, 309.7154)
+save_id = &"field_wheat_026"
+
+[node name="field_wheat_027" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1697909120 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.9149904, 0, 0.4034756, 0, 1, 0, -0.4034756, 0, -0.9149904, 327.0017, 21.245436, 268.08197)
+save_id = &"field_wheat_027"
+
+[node name="field_wheat_028" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=644912522 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.59873635, 0, -0.8009462, 0, 1, 0, 0.8009462, 0, 0.59873635, 346.23822, 21.663687, 260.0296)
+save_id = &"field_wheat_028"
+
+[node name="field_wheat_029" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1059138131 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.6259374, 0, -0.7798733, 0, 1, 0, 0.7798733, 0, 0.6259374, 345.45505, 20.762337, 299.64743)
+save_id = &"field_wheat_029"
+
+[node name="field_wheat_030" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=904946604 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.17220016, 0, 0.985062, 0, 1, 0, -0.985062, 0, 0.17220016, 281.06952, 21.00095, 286.2023)
+save_id = &"field_wheat_030"
+
+[node name="field_wheat_031" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1220233322 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.9842953, 0, -0.17652984, 0, 1, 0, 0.17652984, 0, -0.9842953, 311.91418, 21.502203, 316.62878)
+save_id = &"field_wheat_031"
+
+[node name="field_wheat_032" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=31631757 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.2873393, 0, 0.9578289, 0, 1, 0, -0.9578289, 0, 0.2873393, 292.88202, 20.803461, 277.5933)
+save_id = &"field_wheat_032"
+
+[node name="field_wheat_033" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1179699980 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.3500362, 0, -0.93673617, 0, 1, 0, 0.93673617, 0, -0.3500362, 262.34134, 21.526909, 339.10043)
+save_id = &"field_wheat_033"
+
+[node name="field_wheat_034" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1020367690 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.9904011, 0, -0.13822344, 0, 1, 0, 0.13822344, 0, 0.9904011, 346.94687, 20.908195, 305.29724)
+save_id = &"field_wheat_034"
+
+[node name="field_wheat_035" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=610676009 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.5045775, 0, -0.8633664, 0, 1, 0, 0.8633664, 0, 0.5045775, 359.20535, 21.942587, 326.04874)
+save_id = &"field_wheat_035"
+
+[node name="field_wheat_036" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1232994523 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.7471304, 0, -0.6646775, 0, 1, 0, 0.6646775, 0, 0.7471304, 321.75092, 20.843042, 258.15778)
+save_id = &"field_wheat_036"
+
+[node name="field_wheat_037" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1433318216 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.23117892, 0, -0.97291124, 0, 1, 0, 0.97291124, 0, 0.23117892, 339.64926, 20.406404, 305.62897)
+save_id = &"field_wheat_037"
+
+[node name="field_wheat_038" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1046510808 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.9447199, 0, -0.3278784, 0, 1, 0, 0.3278784, 0, -0.9447199, 355.649, 21.590925, 309.27014)
+save_id = &"field_wheat_038"
+
+[node name="field_wheat_039" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=922802093 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.6871905, 0, -0.72647727, 0, 1, 0, 0.72647727, 0, 0.6871905, 346.13556, 21.369297, 322.92554)
+save_id = &"field_wheat_039"
+
+[node name="field_wheat_040" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1186054086 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.83748776, 0, -0.54645604, 0, 1, 0, 0.54645604, 0, 0.83748776, 305.29437, 20.99825, 339.93134)
+save_id = &"field_wheat_040"
+
+[node name="field_wheat_041" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=739695358 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.8818366, 0, -0.47155508, 0, 1, 0, 0.47155508, 0, 0.8818366, 330.70435, 20.358297, 304.81805)
+save_id = &"field_wheat_041"
+
+[node name="field_wheat_042" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1645557318 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.9405256, 0, 0.33972278, 0, 1, 0, -0.33972278, 0, -0.9405256, 320.98114, 21.036386, 296.65723)
+save_id = &"field_wheat_042"
+
+[node name="field_wheat_043" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1655346214 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.082261495, 0, -0.99661076, 0, 1, 0, 0.99661076, 0, 0.082261495, 382.3047, 21.169489, 276.95688)
+save_id = &"field_wheat_043"
+
+[node name="field_wheat_044" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1801474331 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.15148148, 0, 0.9884601, 0, 1, 0, -0.9884601, 0, -0.15148148, 322.9209, 20.915464, 320.4699)
+save_id = &"field_wheat_044"
+
+[node name="field_wheat_045" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=236398194 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.7614974, 0, -0.648168, 0, 1, 0, 0.648168, 0, 0.7614974, 290.6547, 20.77359, 329.16077)
+save_id = &"field_wheat_045"
+
+[node name="field_wheat_046" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1085696760 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.04257916, 0, -0.9990931, 0, 1, 0, 0.9990931, 0, -0.04257916, 348.8006, 20.787882, 301.84412)
+save_id = &"field_wheat_046"
+
+[node name="field_wheat_047" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=2119184796 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.61991954, 0, -0.7846654, 0, 1, 0, 0.7846654, 0, 0.61991954, 337.01495, 20.880398, 238.92044)
+save_id = &"field_wheat_047"
+
+[node name="field_wheat_048" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1849828081 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.3146604, 0, -0.9492043, 0, 1, 0, 0.9492043, 0, -0.3146604, 356.57736, 21.595108, 261.40228)
+save_id = &"field_wheat_048"
+
+[node name="field_wheat_049" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1874843997 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.5673584, 0, -0.823471, 0, 1, 0, 0.823471, 0, 0.5673584, 258.78397, 20.45797, 304.96036)
+save_id = &"field_wheat_049"
+
+[node name="field_wheat_050" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=2109433874 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.52839243, 0, -0.8490003, 0, 1, 0, 0.8490003, 0, 0.52839243, 318.8532, 21.306498, 307.46982)
+save_id = &"field_wheat_050"
+
+[node name="field_wheat_051" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1370557432 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.23601656, 0, -0.971749, 0, 1, 0, 0.971749, 0, -0.23601656, 309.85913, 20.643097, 247.7502)
+save_id = &"field_wheat_051"
+
+[node name="field_wheat_052" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=1841136906 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.054277003, 0, 0.9985259, 0, 1, 0, -0.9985259, 0, -0.054277003, 322.237, 20.112692, 283.9902)
+save_id = &"field_wheat_052"
+
+[node name="field_wheat_053" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=2005013863 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.97828466, 0, -0.20726572, 0, 1, 0, 0.20726572, 0, 0.97828466, 309.87518, 21.562483, 307.88098)
+save_id = &"field_wheat_053"
+
+[node name="field_wheat_054" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=294461385 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(-0.9904616, 0, 0.13778926, 0, 1, 0, -0.13778926, 0, -0.9904616, 307.4784, 20.924652, 269.75308)
+save_id = &"field_wheat_054"
+
+[node name="field_wheat_055" type="StaticBody3D" parent="Patches/FieldWheat" unique_id=690533389 instance=ExtResource("59_0pqgu")]
+transform = Transform3D(0.7853899, 0, 0.6190014, 0, 1, 0, -0.6190014, 0, 0.7853899, 269.8191, 21.233671, 337.18216)
+save_id = &"field_wheat_055"
+
+[node name="FieldBarley" type="Node3D" parent="Patches" unique_id=190002091]
+
+[node name="field_barley_000" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=1100468288 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(-0.105141014, 0, -0.9944573, 0, 1, 0, 0.9944573, 0, -0.105141014, 368.67435, 20.837847, 396.48285)
+save_id = &"field_barley_000"
+
+[node name="field_barley_001" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=107625895 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(-0.9991533, 0, -0.04114119, 0, 1, 0, 0.04114119, 0, -0.9991533, 354.41943, 20.811514, 398.09033)
+save_id = &"field_barley_001"
+
+[node name="field_barley_002" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=687920701 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(-0.3069475, 0, -0.95172644, 0, 1, 0, 0.95172644, 0, -0.3069475, 349.91583, 21.53471, 324.6747)
+save_id = &"field_barley_002"
+
+[node name="field_barley_003" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=553922546 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(0.9988255, 0, -0.0484523, 0, 1, 0, 0.0484523, 0, 0.9988255, 350.53537, 21.801804, 335.34528)
+save_id = &"field_barley_003"
+
+[node name="field_barley_004" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=2036440518 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(-0.16401163, 0, 0.9864584, 0, 1, 0, -0.9864584, 0, -0.16401163, 369.54584, 21.024908, 391.9854)
+save_id = &"field_barley_004"
+
+[node name="field_barley_005" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=1238008101 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(-0.90325814, 0, -0.42909756, 0, 1, 0, 0.42909756, 0, -0.90325814, 337.6501, 20.664255, 332.53174)
+save_id = &"field_barley_005"
+
+[node name="field_barley_006" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=800879635 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(0.7282016, 0, -0.68536294, 0, 1, 0, 0.68536294, 0, 0.7282016, 370.4831, 21.743885, 324.5256)
+save_id = &"field_barley_006"
+
+[node name="field_barley_007" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=226615824 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(0.8939947, 0, -0.44807753, 0, 1, 0, 0.44807753, 0, 0.8939947, 372.65564, 21.37985, 388.68036)
+save_id = &"field_barley_007"
+
+[node name="field_barley_008" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=514680762 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(-0.7360304, 0, -0.6769485, 0, 1, 0, 0.6769485, 0, -0.7360304, 348.19855, 20.286165, 374.33734)
+save_id = &"field_barley_008"
+
+[node name="field_barley_009" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=537784784 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(0.02054262, 0, -0.999789, 0, 1, 0, 0.999789, 0, 0.02054262, 341.23654, 20.431032, 360.27625)
+save_id = &"field_barley_009"
+
+[node name="field_barley_010" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=1712160934 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(0.26254088, 0, 0.9649209, 0, 1, 0, -0.9649209, 0, 0.26254088, 409.28195, 20.871239, 356.53262)
+save_id = &"field_barley_010"
+
+[node name="field_barley_011" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=1523266425 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(-0.99765307, 0, 0.06847137, 0, 1, 0, -0.06847137, 0, -0.99765307, 407.43396, 21.719278, 346.87875)
+save_id = &"field_barley_011"
+
+[node name="field_barley_012" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=1835450184 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(0.99999326, 0, 0.003675852, 0, 1, 0, -0.003675852, 0, 0.99999326, 369.13898, 21.43941, 364.3526)
+save_id = &"field_barley_012"
+
+[node name="field_barley_013" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=982666811 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(0.964375, 0, 0.2645388, 0, 1, 0, -0.2645388, 0, 0.964375, 333.00803, 21.098162, 355.98514)
+save_id = &"field_barley_013"
+
+[node name="field_barley_014" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=1473909530 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(-0.070154496, 0, 0.9975361, 0, 1, 0, -0.9975361, 0, -0.070154496, 408.50378, 21.467468, 350.26193)
+save_id = &"field_barley_014"
+
+[node name="field_barley_015" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=87222345 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(0.19569181, 0, -0.98066545, 0, 1, 0, 0.98066545, 0, 0.19569181, 407.01883, 21.886778, 342.9648)
+save_id = &"field_barley_015"
+
+[node name="field_barley_016" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=1168763095 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(-0.9346584, 0, -0.355547, 0, 1, 0, 0.355547, 0, -0.9346584, 382.07248, 20.586294, 355.12415)
+save_id = &"field_barley_016"
+
+[node name="field_barley_017" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=1957252716 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(-0.508677, 0, 0.86095744, 0, 1, 0, -0.86095744, 0, -0.508677, 394.18658, 20.865444, 372.9418)
+save_id = &"field_barley_017"
+
+[node name="field_barley_018" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=98485607 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(-0.45370045, 0, -0.8911542, 0, 1, 0, 0.8911542, 0, -0.45370045, 346.2034, 20.778044, 393.51575)
+save_id = &"field_barley_018"
+
+[node name="field_barley_019" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=937926606 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(0.3893003, 0, -0.92111087, 0, 1, 0, 0.92111087, 0, 0.3893003, 413.12924, 22.132029, 319.00693)
+save_id = &"field_barley_019"
+
+[node name="field_barley_020" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=1169539565 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(0.92841274, 0, -0.37155047, 0, 1, 0, 0.37155047, 0, 0.92841274, 381.60446, 21.196234, 360.91666)
+save_id = &"field_barley_020"
+
+[node name="field_barley_021" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=344665345 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(-0.9949009, 0, 0.100857764, 0, 1, 0, -0.100857764, 0, -0.9949009, 351.7973, 21.25919, 348.35672)
+save_id = &"field_barley_021"
+
+[node name="field_barley_022" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=1477026758 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(-0.0764778, 0, 0.99707127, 0, 1, 0, -0.99707127, 0, -0.0764778, 335.38855, 20.84003, 337.07776)
+save_id = &"field_barley_022"
+
+[node name="field_barley_023" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=938396247 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(0.8776755, 0, -0.47925547, 0, 1, 0, 0.47925547, 0, 0.8776755, 359.6363, 22.152708, 340.8727)
+save_id = &"field_barley_023"
+
+[node name="field_barley_024" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=1541227977 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(0.9984918, 0, 0.054901138, 0, 1, 0, -0.054901138, 0, 0.9984918, 385.7361, 20.82918, 358.33008)
+save_id = &"field_barley_024"
+
+[node name="field_barley_025" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=1653823012 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(0.022290366, 0, 0.99975157, 0, 1, 0, -0.99975157, 0, 0.022290366, 379.64938, 20.754156, 346.66083)
+save_id = &"field_barley_025"
+
+[node name="field_barley_026" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=943573278 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(0.9942715, 0, 0.10688357, 0, 1, 0, -0.10688357, 0, 0.9942715, 335.59967, 20.819315, 364.59668)
+save_id = &"field_barley_026"
+
+[node name="field_barley_027" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=1828635438 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(0.97556555, 0, 0.21970856, 0, 1, 0, -0.21970856, 0, 0.97556555, 343.79523, 20.488495, 355.16656)
+save_id = &"field_barley_027"
+
+[node name="field_barley_028" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=32862567 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(-0.9382514, 0, -0.3459542, 0, 1, 0, 0.3459542, 0, -0.9382514, 334.24417, 20.270393, 325.92557)
+save_id = &"field_barley_028"
+
+[node name="field_barley_029" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=129671285 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(0.9489719, 0, 0.3153606, 0, 1, 0, -0.3153606, 0, 0.9489719, 416.26367, 20.844465, 353.95288)
+save_id = &"field_barley_029"
+
+[node name="field_barley_030" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=516109479 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(0.02377544, 0, 0.9997173, 0, 1, 0, -0.9997173, 0, 0.02377544, 363.7964, 21.404268, 352.0446)
+save_id = &"field_barley_030"
+
+[node name="field_barley_031" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=87640065 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(0.5771027, 0, 0.81667155, 0, 1, 0, -0.81667155, 0, 0.5771027, 376.99478, 21.710459, 321.58557)
+save_id = &"field_barley_031"
+
+[node name="field_barley_032" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=2078914628 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(-0.9340762, 0, 0.35707372, 0, 1, 0, -0.35707372, 0, -0.9340762, 335.0855, 21.198746, 341.71085)
+save_id = &"field_barley_032"
+
+[node name="field_barley_033" type="StaticBody3D" parent="Patches/FieldBarley" unique_id=1016382541 instance=ExtResource("62_vt6j2")]
+transform = Transform3D(0.7899647, 0, -0.6131524, 0, 1, 0, 0.6131524, 0, 0.7899647, 397.56476, 21.261236, 346.55585)
+save_id = &"field_barley_033"
+
+[node name="FieldOak" type="Node3D" parent="Patches" unique_id=586069350]
+
+[node name="field_oak_000" type="StaticBody3D" parent="Patches/FieldOak" unique_id=603606296 instance=ExtResource("1_1n5bp")]
+transform = Transform3D(-0.4299496, 0, 0.9028529, 0, 1, 0, -0.9028529, 0, -0.4299496, 274.62485, 22.857035, 395.72504)
+save_id = &"field_oak_000"
+
+[node name="field_oak_001" type="StaticBody3D" parent="Patches/FieldOak" unique_id=382401253 instance=ExtResource("1_1n5bp")]
+transform = Transform3D(0.9930564, 0, 0.11763921, 0, 1, 0, -0.11763921, 0, 0.9930564, 276.396, 20.239077, 245.50462)
+save_id = &"field_oak_001"
+
+[node name="field_oak_002" type="StaticBody3D" parent="Patches/FieldOak" unique_id=1006558174 instance=ExtResource("1_1n5bp")]
+transform = Transform3D(-0.61561644, 0, -0.78804594, 0, 1, 0, 0.78804594, 0, -0.61561644, 255.29263, 20.508654, 266.1312)
+save_id = &"field_oak_002"
+
+[node name="field_oak_003" type="StaticBody3D" parent="Patches/FieldOak" unique_id=1852514674 instance=ExtResource("1_1n5bp")]
+transform = Transform3D(0.5401155, 0, -0.84159094, 0, 1, 0, 0.84159094, 0, 0.5401155, 420.14917, 23.834362, 255.98926)
+save_id = &"field_oak_003"
+
+[node name="field_oak_004" type="StaticBody3D" parent="Patches/FieldOak" unique_id=376663810 instance=ExtResource("1_1n5bp")]
+transform = Transform3D(0.6974478, 0, 0.71663564, 0, 1, 0, -0.71663564, 0, 0.6974478, 348.18716, 21.134409, 418.09747)
+save_id = &"field_oak_004"
+
+[node name="field_oak_005" type="StaticBody3D" parent="Patches/FieldOak" unique_id=1797346446 instance=ExtResource("1_1n5bp")]
+transform = Transform3D(0.033188935, 0, -0.9994491, 0, 1, 0, 0.9994491, 0, 0.033188935, 304.45813, 20.749222, 361.5103)
+save_id = &"field_oak_005"
+
+[node name="field_oak_006" type="StaticBody3D" parent="Patches/FieldOak" unique_id=1550781404 instance=ExtResource("1_1n5bp")]
+transform = Transform3D(0.010052524, 0, -0.99994946, 0, 1, 0, 0.99994946, 0, 0.010052524, 418.81824, 23.888468, 397.1784)
+save_id = &"field_oak_006"
+
+[node name="field_oak_007" type="StaticBody3D" parent="Patches/FieldOak" unique_id=2098421886 instance=ExtResource("1_1n5bp")]
+transform = Transform3D(0.150535, 0, 0.98860466, 0, 1, 0, -0.98860466, 0, 0.150535, 427.8683, 22.606543, 376.92932)
+save_id = &"field_oak_007"
+
+[node name="field_oak_008" type="StaticBody3D" parent="Patches/FieldOak" unique_id=305590155 instance=ExtResource("1_1n5bp")]
+transform = Transform3D(0.4127944, 0, -0.91082424, 0, 1, 0, 0.91082424, 0, 0.4127944, 375.42554, 21.299398, 229.08093)
+save_id = &"field_oak_008"
+
+[node name="field_oak_009" type="StaticBody3D" parent="Patches/FieldOak" unique_id=145421050 instance=ExtResource("1_1n5bp")]
+transform = Transform3D(0.574048, 0, 0.81882167, 0, 1, 0, -0.81882167, 0, 0.574048, 392.61273, 21.424192, 396.74426)
+save_id = &"field_oak_009"
+
+[node name="field_oak_010" type="StaticBody3D" parent="Patches/FieldOak" unique_id=2032190859 instance=ExtResource("1_1n5bp")]
+transform = Transform3D(0.42777866, 0, -0.9038835, 0, 1, 0, 0.9038835, 0, 0.42777866, 422.9455, 22.40425, 301.44046)
+save_id = &"field_oak_010"
+
+[node name="QuarryRim" type="Node3D" parent="Patches" unique_id=903558811]
+
+[node name="quarry_rim_000" type="StaticBody3D" parent="Patches/QuarryRim" unique_id=725410297 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(0.3930265, 0, -0.9195271, 0, 1, 0, 0.9195271, 0, 0.3930265, -140.23691, 25.85, 35.1696)
+save_id = &"quarry_rim_000"
+
+[node name="quarry_rim_001" type="StaticBody3D" parent="Patches/QuarryRim" unique_id=71714602 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.8489119, 0, 0.5285344, 0, 1, 0, -0.5285344, 0, -0.8489119, -111.96513, 25.85, 144.86777)
+save_id = &"quarry_rim_001"
+
+[node name="quarry_rim_002" type="StaticBody3D" parent="Patches/QuarryRim" unique_id=1181956764 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.79030114, 0, 0.6127186, 0, 1, 0, -0.6127186, 0, -0.79030114, -170.24464, 25.85, 63.797012)
+save_id = &"quarry_rim_002"
+
+[node name="quarry_rim_003" type="StaticBody3D" parent="Patches/QuarryRim" unique_id=1837089775 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.23710132, 0, 0.9714849, 0, 1, 0, -0.9714849, 0, -0.23710132, -120.18919, 25.85, 145.93552)
+save_id = &"quarry_rim_003"
+
+[node name="quarry_rim_004" type="StaticBody3D" parent="Patches/QuarryRim" unique_id=475236854 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.9964479, 0, 0.08421154, 0, 1, 0, -0.08421154, 0, -0.9964479, -81.34073, 25.85, 44.165474)
+save_id = &"quarry_rim_004"
+
+[node name="quarry_rim_005" type="StaticBody3D" parent="Patches/QuarryRim" unique_id=362530812 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.89093673, 0, 0.4541274, 0, 1, 0, -0.4541274, 0, -0.89093673, -174.58862, 25.85, 100.343704)
+save_id = &"quarry_rim_005"
+
+[node name="QuarryL1" type="Node3D" parent="Patches" unique_id=619626834]
+
+[node name="quarry_l1_000" type="StaticBody3D" parent="Patches/QuarryL1" unique_id=1932141357 instance=ExtResource("14_ft0cb")]
+transform = Transform3D(-0.9302159, 0, -0.3670128, 0, 1, 0, 0.3670128, 0, -0.9302159, -109.91029, 20.85, 39.162987)
+save_id = &"quarry_l1_000"
+
+[node name="quarry_l1_001" type="StaticBody3D" parent="Patches/QuarryL1" unique_id=1900113070 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.97887933, 0, 0.204439, 0, 1, 0, -0.204439, 0, -0.97887933, -103.06114, 20.85, 43.692013)
+save_id = &"quarry_l1_001"
+
+[node name="quarry_l1_002" type="StaticBody3D" parent="Patches/QuarryL1" unique_id=236368661 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.98011875, 0, 0.19841178, 0, 1, 0, -0.19841178, 0, -0.98011875, -121.48885, 20.85, 38.383854)
+save_id = &"quarry_l1_002"
+
+[node name="quarry_l1_003" type="StaticBody3D" parent="Patches/QuarryL1" unique_id=358927193 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.105141014, 0, -0.9944573, 0, 1, 0, 0.9944573, 0, -0.105141014, -84.89494, 20.85, 53.63636)
+save_id = &"quarry_l1_003"
+
+[node name="quarry_l1_004" type="StaticBody3D" parent="Patches/QuarryL1" unique_id=1905106056 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.9991533, 0, -0.04114119, 0, 1, 0, 0.04114119, 0, -0.9991533, -81.798744, 20.850002, 58.010487)
+save_id = &"quarry_l1_004"
+
+[node name="quarry_l1_005" type="StaticBody3D" parent="Patches/QuarryL1" unique_id=2034942213 instance=ExtResource("14_ft0cb")]
+transform = Transform3D(-0.3069475, 0, -0.95172644, 0, 1, 0, 0.95172644, 0, -0.3069475, -76.20386, 20.85, 109.020164)
+save_id = &"quarry_l1_005"
+
+[node name="quarry_l1_006" type="StaticBody3D" parent="Patches/QuarryL1" unique_id=65780483 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(0.13219129, 0, -0.9912242, 0, 1, 0, 0.9912242, 0, 0.13219129, -75.17403, 20.85, 65.05733)
+save_id = &"quarry_l1_006"
+
+[node name="QuarryL2" type="Node3D" parent="Patches" unique_id=190799414]
+
+[node name="quarry_l2_000" type="StaticBody3D" parent="Patches/QuarryL2" unique_id=1151067629 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(0.72014475, 0, -0.6938239, 0, 1, 0, 0.6938239, 0, 0.72014475, -104.31335, 15.85, 51.768784)
+save_id = &"quarry_l2_000"
+
+[node name="quarry_l2_001" type="StaticBody3D" parent="Patches/QuarryL2" unique_id=608015996 instance=ExtResource("64_kunej")]
+transform = Transform3D(-0.9983561, 0, 0.05731578, 0, 1, 0, -0.05731578, 0, -0.9983561, -146.20999, 15.85, 64.81325)
+save_id = &"quarry_l2_001"
+
+[node name="quarry_l2_002" type="StaticBody3D" parent="Patches/QuarryL2" unique_id=716112855 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(0.90749866, 0, -0.4200549, 0, 1, 0, 0.4200549, 0, 0.90749866, -89.49017, 15.85, 64.19057)
+save_id = &"quarry_l2_002"
+
+[node name="quarry_l2_003" type="StaticBody3D" parent="Patches/QuarryL2" unique_id=1203200456 instance=ExtResource("14_ft0cb")]
+transform = Transform3D(0.12712398, 0, 0.99188685, 0, 1, 0, -0.99188685, 0, 0.12712398, -122.19075, 15.85, 50.00559)
+save_id = &"quarry_l2_003"
+
+[node name="quarry_l2_004" type="StaticBody3D" parent="Patches/QuarryL2" unique_id=1226915649 instance=ExtResource("14_ft0cb")]
+transform = Transform3D(0.77950794, 0, -0.6263923, 0, 1, 0, 0.6263923, 0, 0.77950794, -78.26796, 15.85, 94.11137)
+save_id = &"quarry_l2_004"
+
+[node name="quarry_l2_005" type="StaticBody3D" parent="Patches/QuarryL2" unique_id=1481241897 instance=ExtResource("64_kunej")]
+transform = Transform3D(0.3620123, 0, -0.9321733, 0, 1, 0, 0.9321733, 0, 0.3620123, -90.42629, 15.85, 116.22559)
+save_id = &"quarry_l2_005"
+
+[node name="quarry_l2_006" type="StaticBody3D" parent="Patches/QuarryL2" unique_id=1228840518 instance=ExtResource("64_kunej")]
+transform = Transform3D(0.54751647, 0, 0.8367949, 0, 1, 0, -0.8367949, 0, 0.54751647, -80.42006, 15.85, 79.64302)
+save_id = &"quarry_l2_006"
+
+[node name="QuarryL3" type="Node3D" parent="Patches" unique_id=2011915315]
+
+[node name="quarry_l3_000" type="StaticBody3D" parent="Patches/QuarryL3" unique_id=2062145479 instance=ExtResource("14_ft0cb")]
+transform = Transform3D(-0.9614072, 0, -0.27512938, 0, 1, 0, 0.27512938, 0, -0.9614072, -123.64737, 10.85, 60.33236)
+save_id = &"quarry_l3_000"
+
+[node name="quarry_l3_001" type="StaticBody3D" parent="Patches/QuarryL3" unique_id=1302627580 instance=ExtResource("64_kunej")]
+transform = Transform3D(-0.35154012, 0, -0.93617284, 0, 1, 0, 0.93617284, 0, -0.35154012, -90.11744, 10.85, 94.86023)
+save_id = &"quarry_l3_001"
+
+[node name="quarry_l3_002" type="StaticBody3D" parent="Patches/QuarryL3" unique_id=2058309192 instance=ExtResource("64_kunej")]
+transform = Transform3D(0.68372554, 0, -0.72973925, 0, 1, 0, 0.72973925, 0, 0.68372554, -110.4437, 10.85, 116.66182)
+save_id = &"quarry_l3_002"
+
+[node name="quarry_l3_003" type="StaticBody3D" parent="Patches/QuarryL3" unique_id=1210178576 instance=ExtResource("64_kunej")]
+transform = Transform3D(0.8173717, 0, 0.5761106, 0, 1, 0, -0.5761106, 0, 0.8173717, -146.80328, 10.85, 85.68242)
+save_id = &"quarry_l3_003"
+
+[node name="quarry_l3_004" type="StaticBody3D" parent="Patches/QuarryL3" unique_id=391557324 instance=ExtResource("64_kunej")]
+transform = Transform3D(-0.9762288, 0, 0.21674255, 0, 1, 0, -0.21674255, 0, -0.9762288, -89.672, 10.85, 82.5256)
+save_id = &"quarry_l3_004"
+
+[node name="quarry_l3_005" type="StaticBody3D" parent="Patches/QuarryL3" unique_id=174952204 instance=ExtResource("64_kunej")]
+transform = Transform3D(-0.8884531, 0, 0.45896736, 0, 1, 0, -0.45896736, 0, -0.8884531, -134.09518, 10.85, 65.95532)
+save_id = &"quarry_l3_005"
+
+[node name="QuarryL4" type="Node3D" parent="Patches" unique_id=480777758]
+
+[node name="quarry_l4_000" type="StaticBody3D" parent="Patches/QuarryL4" unique_id=1669611080 instance=ExtResource("14_ft0cb")]
+transform = Transform3D(-0.44512105, 0, -0.89547044, 0, 1, 0, 0.89547044, 0, -0.44512105, -99.91719, 5.85, 84.28649)
+save_id = &"quarry_l4_000"
+
+[node name="quarry_l4_001" type="StaticBody3D" parent="Patches/QuarryL4" unique_id=1456062453 instance=ExtResource("64_kunej")]
+transform = Transform3D(0.9734587, 0, -0.22886266, 0, 1, 0, 0.22886266, 0, 0.9734587, -100.47569, 5.85, 95.36785)
+save_id = &"quarry_l4_001"
+
+[node name="quarry_l4_002" type="StaticBody3D" parent="Patches/QuarryL4" unique_id=963970479 instance=ExtResource("14_ft0cb")]
+transform = Transform3D(0.061634563, 0, -0.9980988, 0, 1, 0, 0.9980988, 0, 0.061634563, -104.71418, 5.85, 98.85553)
+save_id = &"quarry_l4_002"
+
+[node name="quarry_l4_003" type="StaticBody3D" parent="Patches/QuarryL4" unique_id=638745043 instance=ExtResource("64_kunej")]
+transform = Transform3D(0.3643541, 0, -0.93126047, 0, 1, 0, 0.93126047, 0, 0.3643541, -131.40216, 5.85, 97.07223)
+save_id = &"quarry_l4_003"
+
+[node name="quarry_l4_004" type="StaticBody3D" parent="Patches/QuarryL4" unique_id=1483974142 instance=ExtResource("14_ft0cb")]
+transform = Transform3D(0.61522484, 0, -0.7883517, 0, 1, 0, 0.7883517, 0, 0.61522484, -123.327095, 5.85, 103.55386)
+save_id = &"quarry_l4_004"
+
+[node name="QuarryFloorRocks" type="Node3D" parent="Patches" unique_id=2020083468]
+
+[node name="quarry_floor_rocks_000" type="StaticBody3D" parent="Patches/QuarryFloorRocks" unique_id=581682671 instance=ExtResource("64_kunej")]
+transform = Transform3D(0.56831217, 0, 0.82281303, 0, 1, 0, -0.82281303, 0, 0.56831217, -123.837006, 0.85, 92.42244)
+save_id = &"quarry_floor_rocks_000"
+
+[node name="quarry_floor_rocks_001" type="StaticBody3D" parent="Patches/QuarryFloorRocks" unique_id=177244992 instance=ExtResource("14_ft0cb")]
+transform = Transform3D(-0.85198915, 0, 0.52355945, 0, 1, 0, -0.52355945, 0, -0.85198915, -110.55465, 0.85, 83.046936)
+save_id = &"quarry_floor_rocks_001"
+
+[node name="quarry_floor_rocks_002" type="StaticBody3D" parent="Patches/QuarryFloorRocks" unique_id=336239165 instance=ExtResource("14_ft0cb")]
+transform = Transform3D(-0.9937989, 0, -0.11119222, 0, 1, 0, 0.11119222, 0, -0.9937989, -115.441826, 0.85, 92.44555)
+save_id = &"quarry_floor_rocks_002"
+
+[node name="quarry_floor_rocks_003" type="StaticBody3D" parent="Patches/QuarryFloorRocks" unique_id=1745006242 instance=ExtResource("14_ft0cb")]
+transform = Transform3D(0.3449477, 0, 0.93862194, 0, 1, 0, -0.93862194, 0, 0.3449477, -120.010704, 0.85, 97.75638)
+save_id = &"quarry_floor_rocks_003"
+
+[node name="Grove1" type="Node3D" parent="Patches" unique_id=504924634]
+
+[node name="grove_1_000" type="StaticBody3D" parent="Patches/Grove1" unique_id=1353619336 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.76271284, 0, -0.6467373, 0, 1, 0, 0.6467373, 0, 0.76271284, -32.196587, 17.017874, 199.63286)
+save_id = &"grove_1_000"
+
+[node name="grove_1_001" type="StaticBody3D" parent="Patches/Grove1" unique_id=203420463 instance=ExtResource("1_1n5bp")]
+transform = Transform3D(-0.5447683, 0, -0.8385866, 0, 1, 0, 0.8385866, 0, -0.5447683, -39.77629, 19.28346, 191.82578)
+save_id = &"grove_1_001"
+
+[node name="grove_1_002" type="StaticBody3D" parent="Patches/Grove1" unique_id=938123904 instance=ExtResource("1_1n5bp")]
+transform = Transform3D(-0.35431653, 0, -0.9351255, 0, 1, 0, 0.9351255, 0, -0.35431653, -37.724457, 18.30933, 202.98372)
+save_id = &"grove_1_002"
+
+[node name="grove_1_003" type="StaticBody3D" parent="Patches/Grove1" unique_id=722608056 instance=ExtResource("1_1n5bp")]
+transform = Transform3D(-0.68111175, 0, -0.73217946, 0, 1, 0, 0.73217946, 0, -0.68111175, -44.292706, 20.27086, 193.28925)
+save_id = &"grove_1_003"
+
+[node name="grove_1_004" type="StaticBody3D" parent="Patches/Grove1" unique_id=358646822 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.21650358, 0, -0.9762818, 0, 1, 0, 0.9762818, 0, -0.21650358, -25.584162, 14.078099, 202.82236)
+save_id = &"grove_1_004"
+
+[node name="grove_1_005" type="StaticBody3D" parent="Patches/Grove1" unique_id=1904097548 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.9366389, 0, -0.35029647, 0, 1, 0, 0.35029647, 0, -0.9366389, -44.189335, 19.384233, 198.30334)
+save_id = &"grove_1_005"
+
+[node name="grove_1_006" type="StaticBody3D" parent="Patches/Grove1" unique_id=671675636 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.72416157, 0, -0.6896304, 0, 1, 0, 0.6896304, 0, 0.72416157, -33.63373, 17.306242, 194.02051)
+save_id = &"grove_1_006"
+
+[node name="Grove2" type="Node3D" parent="Patches" unique_id=725173324]
+
+[node name="grove_2_000" type="StaticBody3D" parent="Patches/Grove2" unique_id=1718140246 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(0.38038427, 0, 0.9248285, 0, 1, 0, -0.9248285, 0, 0.38038427, -41.869408, 23.831957, 8.710313)
+save_id = &"grove_2_000"
+
+[node name="grove_2_001" type="StaticBody3D" parent="Patches/Grove2" unique_id=1744999714 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(-0.89055264, 0, 0.45488024, 0, 1, 0, -0.45488024, 0, -0.89055264, -22.918816, 18.82002, 24.860466)
+save_id = &"grove_2_001"
+
+[node name="grove_2_002" type="StaticBody3D" parent="Patches/Grove2" unique_id=1167371227 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(0.19482243, 0, -0.98083854, 0, 1, 0, 0.98083854, 0, 0.19482243, -27.352192, 20.43616, 23.435686)
+save_id = &"grove_2_002"
+
+[node name="grove_2_003" type="StaticBody3D" parent="Patches/Grove2" unique_id=1708511068 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(-0.51820153, 0, 0.8552585, 0, 1, 0, -0.8552585, 0, -0.51820153, -26.760784, 21.111158, 14.489523)
+save_id = &"grove_2_003"
+
+[node name="grove_2_004" type="StaticBody3D" parent="Patches/Grove2" unique_id=306713268 instance=ExtResource("1_1n5bp")]
+transform = Transform3D(0.9917769, 0, 0.12797904, 0, 1, 0, -0.12797904, 0, 0.9917769, -30.725859, 21.54017, 11.908843)
+save_id = &"grove_2_004"
+
+[node name="grove_2_005" type="StaticBody3D" parent="Patches/Grove2" unique_id=1399521504 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.29311055, 0, -0.9560785, 0, 1, 0, 0.9560785, 0, -0.29311055, -42.952305, 23.937822, 18.516405)
+save_id = &"grove_2_005"
+
+[node name="grove_2_006" type="StaticBody3D" parent="Patches/Grove2" unique_id=353502614 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(-0.9975702, 0, -0.06966817, 0, 1, 0, 0.06966817, 0, -0.9975702, -34.401592, 22.06778, 14.122979)
+save_id = &"grove_2_006"
+
+[node name="Grove3" type="Node3D" parent="Patches" unique_id=1909291535]
+
+[node name="grove_3_000" type="StaticBody3D" parent="Patches/Grove3" unique_id=285359879 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(-0.90876603, 0, -0.41730607, 0, 1, 0, 0.41730607, 0, -0.90876603, -45.64173, 32.900375, 253.26685)
+save_id = &"grove_3_000"
+
+[node name="grove_3_001" type="StaticBody3D" parent="Patches/Grove3" unique_id=462182908 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(-0.96802634, 0, 0.25084847, 0, 1, 0, -0.25084847, 0, -0.96802634, -39.369495, 31.310934, 247.52594)
+save_id = &"grove_3_001"
+
+[node name="grove_3_002" type="StaticBody3D" parent="Patches/Grove3" unique_id=358395334 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(0.7089008, 0, 0.7053082, 0, 1, 0, -0.7053082, 0, 0.7089008, -46.380013, 32.94414, 264.43036)
+save_id = &"grove_3_002"
+
+[node name="grove_3_003" type="StaticBody3D" parent="Patches/Grove3" unique_id=1608198788 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(-0.96689, 0, 0.25519365, 0, 1, 0, -0.25519365, 0, -0.96689, -31.049568, 28.538902, 251.8469)
+save_id = &"grove_3_003"
+
+[node name="grove_3_004" type="StaticBody3D" parent="Patches/Grove3" unique_id=1032970313 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(-0.6336945, 0, -0.77358335, 0, 1, 0, 0.77358335, 0, -0.6336945, -41.642174, 32.39476, 259.79593)
+save_id = &"grove_3_004"
+
+[node name="grove_3_005" type="StaticBody3D" parent="Patches/Grove3" unique_id=1670692501 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.9999233, 0, 0.012383883, 0, 1, 0, -0.012383883, 0, 0.9999233, -50.19367, 33.2157, 255.7494)
+save_id = &"grove_3_005"
+
+[node name="grove_3_006" type="StaticBody3D" parent="Patches/Grove3" unique_id=2128492142 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.023415798, 0, -0.9997258, 0, 1, 0, 0.9997258, 0, -0.023415798, -33.413254, 29.198147, 248.41171)
+save_id = &"grove_3_006"
+
+[node name="Grove4" type="Node3D" parent="Patches" unique_id=1450991591]
+
+[node name="grove_4_000" type="StaticBody3D" parent="Patches/Grove4" unique_id=944999551 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(0.0037527115, 0, -0.99999297, 0, 1, 0, 0.99999297, 0, 0.0037527115, 186.25768, 12.637238, 297.95032)
+save_id = &"grove_4_000"
+
+[node name="grove_4_001" type="StaticBody3D" parent="Patches/Grove4" unique_id=1863416931 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(0.5211088, 0, -0.85349023, 0, 1, 0, 0.85349023, 0, 0.5211088, 186.442, 15.721371, 304.7945)
+save_id = &"grove_4_001"
+
+[node name="grove_4_002" type="StaticBody3D" parent="Patches/Grove4" unique_id=893308931 instance=ExtResource("1_1n5bp")]
+transform = Transform3D(0.0040405444, 0, 0.99999183, 0, 1, 0, -0.99999183, 0, 0.0040405444, 185.2536, 7.9988284, 282.8226)
+save_id = &"grove_4_002"
+
+[node name="grove_4_003" type="StaticBody3D" parent="Patches/Grove4" unique_id=786256152 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.72901946, 0, -0.68449295, 0, 1, 0, 0.68449295, 0, 0.72901946, 192.94482, 18.624393, 310.86975)
+save_id = &"grove_4_003"
+
+[node name="grove_4_004" type="StaticBody3D" parent="Patches/Grove4" unique_id=427904727 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.46804124, 0, -0.8837066, 0, 1, 0, 0.8837066, 0, 0.46804124, 193.05284, 13.082897, 293.38492)
+save_id = &"grove_4_004"
+
+[node name="grove_4_005" type="StaticBody3D" parent="Patches/Grove4" unique_id=1684051602 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.24573481, 0, -0.9693371, 0, 1, 0, 0.9693371, 0, 0.24573481, 194.60706, 16.588217, 304.53162)
+save_id = &"grove_4_005"
+
+[node name="grove_4_006" type="StaticBody3D" parent="Patches/Grove4" unique_id=1270629460 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.4865852, 0, 0.87363315, 0, 1, 0, -0.87363315, 0, -0.4865852, 183.78738, 10.168415, 292.07364)
+save_id = &"grove_4_006"
+
+[node name="Grove5" type="Node3D" parent="Patches" unique_id=1140322580]
+
+[node name="grove_5_000" type="StaticBody3D" parent="Patches/Grove5" unique_id=1812640124 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.17546287, 0, 0.98448604, 0, 1, 0, -0.98448604, 0, -0.17546287, 308.38556, 20.529245, 211.13354)
+save_id = &"grove_5_000"
+
+[node name="grove_5_001" type="StaticBody3D" parent="Patches/Grove5" unique_id=1423721054 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(0.6984955, 0, 0.71561444, 0, 1, 0, -0.71561444, 0, 0.6984955, 297.60144, 18.685703, 202.27374)
+save_id = &"grove_5_001"
+
+[node name="grove_5_002" type="StaticBody3D" parent="Patches/Grove5" unique_id=1924456811 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.9970952, 0, -0.07616465, 0, 1, 0, 0.07616465, 0, -0.9970952, 301.6335, 18.22119, 193.7666)
+save_id = &"grove_5_002"
+
+[node name="grove_5_003" type="StaticBody3D" parent="Patches/Grove5" unique_id=411053657 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.5724915, 0, -0.81991065, 0, 1, 0, 0.81991065, 0, -0.5724915, 304.6873, 20.342264, 204.29568)
+save_id = &"grove_5_003"
+
+[node name="grove_5_004" type="StaticBody3D" parent="Patches/Grove5" unique_id=406299547 instance=ExtResource("10_k7dwp")]
+transform = Transform3D(-0.70605487, 0, 0.7081571, 0, 1, 0, -0.7081571, 0, -0.70605487, 290.53287, 16.687931, 201.40894)
+save_id = &"grove_5_004"
+
+[node name="grove_5_005" type="StaticBody3D" parent="Patches/Grove5" unique_id=1237950063 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.90694636, 0, 0.42124614, 0, 1, 0, -0.42124614, 0, 0.90694636, 307.0918, 20.293112, 192.55754)
+save_id = &"grove_5_005"
+
+[node name="grove_5_006" type="StaticBody3D" parent="Patches/Grove5" unique_id=1749428360 instance=ExtResource("1_1n5bp")]
+transform = Transform3D(0.49255714, 0, -0.8702801, 0, 1, 0, 0.8702801, 0, 0.49255714, 311.9646, 20.914103, 208.23552)
+save_id = &"grove_5_006"
+
+[node name="Grove6" type="Node3D" parent="Patches" unique_id=769770188]
+
+[node name="grove_6_000" type="StaticBody3D" parent="Patches/Grove6" unique_id=326225172 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.49321696, 0, 0.8699063, 0, 1, 0, -0.8699063, 0, -0.49321696, 284.53604, 30.84178, -25.269058)
+save_id = &"grove_6_000"
+
+[node name="grove_6_001" type="StaticBody3D" parent="Patches/Grove6" unique_id=575662278 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.0022682368, 0, 0.99999744, 0, 1, 0, -0.99999744, 0, -0.0022682368, 282.27115, 29.63588, -14.837422)
+save_id = &"grove_6_001"
+
+[node name="grove_6_002" type="StaticBody3D" parent="Patches/Grove6" unique_id=584657966 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.93542445, 0, 0.35352665, 0, 1, 0, -0.35352665, 0, -0.93542445, 271.61877, 28.253511, -16.893078)
+save_id = &"grove_6_002"
+
+[node name="grove_6_003" type="StaticBody3D" parent="Patches/Grove6" unique_id=1925244516 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.9123312, 0, -0.40945292, 0, 1, 0, 0.40945292, 0, 0.9123312, 282.49527, 30.275728, -20.479376)
+save_id = &"grove_6_003"
+
+[node name="grove_6_004" type="StaticBody3D" parent="Patches/Grove6" unique_id=1903983748 instance=ExtResource("1_1n5bp")]
+transform = Transform3D(0.40438607, 0, -0.9145884, 0, 1, 0, 0.9145884, 0, 0.40438607, 277.97568, 29.472239, -25.202644)
+save_id = &"grove_6_004"
+
+[node name="grove_6_005" type="StaticBody3D" parent="Patches/Grove6" unique_id=1345153192 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.57706714, 0, 0.8166967, 0, 1, 0, -0.8166967, 0, -0.57706714, 275.34872, 28.374237, -12.027197)
+save_id = &"grove_6_005"
+
+[node name="grove_6_006" type="StaticBody3D" parent="Patches/Grove6" unique_id=1362852580 instance=ExtResource("12_a6dxe")]
+transform = Transform3D(-0.11837477, 0, 0.992969, 0, 1, 0, -0.992969, 0, -0.11837477, 267.1414, 26.708143, -14.446401)
+save_id = &"grove_6_006"
+
+[node name="Outcrop1" type="Node3D" parent="Patches" unique_id=1931250986]
+
+[node name="outcrop_1_000" type="StaticBody3D" parent="Patches/Outcrop1" unique_id=1879297270 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(0.76271284, 0, -0.6467373, 0, 1, 0, 0.6467373, 0, 0.76271284, 214.98587, 14.919333, 276.60107)
+save_id = &"outcrop_1_000"
+
+[node name="outcrop_1_001" type="StaticBody3D" parent="Patches/Outcrop1" unique_id=58015932 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.5447683, 0, -0.8385866, 0, 1, 0, 0.8385866, 0, -0.5447683, 210.56015, 13.699819, 272.04257)
+save_id = &"outcrop_1_001"
+
+[node name="outcrop_1_002" type="StaticBody3D" parent="Patches/Outcrop1" unique_id=1534702645 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.35431653, 0, -0.9351255, 0, 1, 0, 0.9351255, 0, -0.35431653, 211.7582, 14.845199, 278.55762)
+save_id = &"outcrop_1_002"
+
+[node name="outcrop_1_003" type="StaticBody3D" parent="Patches/Outcrop1" unique_id=780353642 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.68111175, 0, -0.73217946, 0, 1, 0, 0.73217946, 0, -0.68111175, 207.92307, 12.831987, 272.89706)
+save_id = &"outcrop_1_003"
+
+[node name="outcrop_1_004" type="StaticBody3D" parent="Patches/Outcrop1" unique_id=565248973 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.21650358, 0, -0.9762818, 0, 1, 0, 0.9762818, 0, -0.21650358, 218.84682, 16.701164, 278.46338)
+save_id = &"outcrop_1_004"
+
+[node name="Outcrop2" type="Node3D" parent="Patches" unique_id=1029339096]
+
+[node name="outcrop_2_000" type="StaticBody3D" parent="Patches/Outcrop2" unique_id=361447848 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(0.38038427, 0, 0.9248285, 0, 1, 0, -0.9248285, 0, 0.38038427, 5.4026895, 22.529312, -21.179502)
+save_id = &"outcrop_2_000"
+
+[node name="outcrop_2_001" type="StaticBody3D" parent="Patches/Outcrop2" unique_id=537403463 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.89055264, 0, 0.45488024, 0, 1, 0, -0.45488024, 0, -0.89055264, 16.145384, 16.188278, -12.024323)
+save_id = &"outcrop_2_001"
+
+[node name="outcrop_2_002" type="StaticBody3D" parent="Patches/Outcrop2" unique_id=1842903031 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(0.19482243, 0, -0.98083854, 0, 1, 0, 0.98083854, 0, 0.19482243, 13.632198, 17.469069, -12.832001)
+save_id = &"outcrop_2_002"
+
+[node name="outcrop_2_003" type="StaticBody3D" parent="Patches/Outcrop2" unique_id=1722827964 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.51820153, 0, 0.8552585, 0, 1, 0, -0.8552585, 0, -0.51820153, 13.967451, 19.620115, -17.903397)
+save_id = &"outcrop_2_003"
+
+[node name="outcrop_2_004" type="StaticBody3D" parent="Patches/Outcrop2" unique_id=751572224 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(0.9917769, 0, 0.12797904, 0, 1, 0, -0.12797904, 0, 0.9917769, 11.719734, 20.746748, -19.366327)
+save_id = &"outcrop_2_004"
+
+[node name="Outcrop3" type="Node3D" parent="Patches" unique_id=813553710]
+
+[node name="outcrop_3_000" type="StaticBody3D" parent="Patches/Outcrop3" unique_id=234088714 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.90876603, 0, -0.41730607, 0, 1, 0, 0.41730607, 0, -0.90876603, 338.08453, 27.90846, 61.319717)
+save_id = &"outcrop_3_000"
+
+[node name="outcrop_3_001" type="StaticBody3D" parent="Patches/Outcrop3" unique_id=2106970079 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.96802634, 0, 0.25084847, 0, 1, 0, -0.25084847, 0, -0.96802634, 342.65112, 29.55253, 57.139927)
+save_id = &"outcrop_3_001"
+
+[node name="outcrop_3_002" type="StaticBody3D" parent="Patches/Outcrop3" unique_id=1890239897 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(0.7089008, 0, 0.7053082, 0, 1, 0, -0.7053082, 0, 0.7089008, 337.547, 26.676691, 69.447525)
+save_id = &"outcrop_3_002"
+
+[node name="outcrop_3_003" type="StaticBody3D" parent="Patches/Outcrop3" unique_id=1658404033 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.96689, 0, 0.25519365, 0, 1, 0, -0.25519365, 0, -0.96689, 348.70865, 29.270552, 60.28589)
+save_id = &"outcrop_3_003"
+
+[node name="outcrop_3_004" type="StaticBody3D" parent="Patches/Outcrop3" unique_id=1983436575 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.6336945, 0, -0.77358335, 0, 1, 0, 0.77358335, 0, -0.6336945, 340.9965, 27.949553, 66.07336)
+save_id = &"outcrop_3_004"
+
+[node name="Outcrop4" type="Node3D" parent="Patches" unique_id=731981144]
+
+[node name="outcrop_4_000" type="StaticBody3D" parent="Patches/Outcrop4" unique_id=1825367134 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(0.0037527115, 0, -0.99999297, 0, 1, 0, 0.99999297, 0, 0.0037527115, 155.11365, 10.883328, 290.72113)
+save_id = &"outcrop_4_000"
+
+[node name="outcrop_4_001" type="StaticBody3D" parent="Patches/Outcrop4" unique_id=907224459 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(0.5211088, 0, -0.85349023, 0, 1, 0, 0.85349023, 0, 0.5211088, 155.23077, 12.84173, 295.0681)
+save_id = &"outcrop_4_001"
+
+[node name="outcrop_4_002" type="StaticBody3D" parent="Patches/Outcrop4" unique_id=830347284 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(0.0040405444, 0, 0.99999183, 0, 1, 0, -0.99999183, 0, 0.0040405444, 154.47588, 7.7720613, 281.113)
+save_id = &"outcrop_4_002"
+
+[node name="outcrop_4_003" type="StaticBody3D" parent="Patches/Outcrop4" unique_id=2007309816 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(0.72901946, 0, -0.68449295, 0, 1, 0, 0.68449295, 0, 0.72901946, 159.36092, 14.692165, 298.92673)
+save_id = &"outcrop_4_003"
+
+[node name="outcrop_4_004" type="StaticBody3D" parent="Patches/Outcrop4" unique_id=1310402480 instance=ExtResource("64_kunej")]
+transform = Transform3D(0.46804124, 0, -0.8837066, 0, 1, 0, 0.8837066, 0, 0.46804124, 159.42952, 9.912412, 287.82147)
+save_id = &"outcrop_4_004"
+
+[node name="Outcrop5" type="Node3D" parent="Patches" unique_id=1567150784]
+
+[node name="outcrop_5_000" type="StaticBody3D" parent="Patches/Outcrop5" unique_id=221733073 instance=ExtResource("14_ft0cb")]
+transform = Transform3D(-0.17546287, 0, 0.98448604, 0, 1, 0, -0.98448604, 0, -0.17546287, 232.52783, 22.985134, 346.10306)
+save_id = &"outcrop_5_000"
+
+[node name="outcrop_5_001" type="StaticBody3D" parent="Patches/Outcrop5" unique_id=1287492559 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(0.6984955, 0, 0.71561444, 0, 1, 0, -0.71561444, 0, 0.6984955, 227.54482, 24.1943, 342.00925)
+save_id = &"outcrop_5_001"
+
+[node name="outcrop_5_002" type="StaticBody3D" parent="Patches/Outcrop5" unique_id=188995534 instance=ExtResource("14_ft0cb")]
+transform = Transform3D(-0.9970952, 0, -0.07616465, 0, 1, 0, 0.07616465, 0, -0.9970952, 229.4079, 23.31051, 338.07837)
+save_id = &"outcrop_5_002"
+
+[node name="outcrop_5_003" type="StaticBody3D" parent="Patches/Outcrop5" unique_id=688273135 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.5724915, 0, -0.81991065, 0, 1, 0, 0.81991065, 0, -0.5724915, 230.81897, 23.46106, 342.9435)
+save_id = &"outcrop_5_003"
+
+[node name="outcrop_5_004" type="StaticBody3D" parent="Patches/Outcrop5" unique_id=1478027301 instance=ExtResource("11_8uhmp")]
+transform = Transform3D(-0.70605487, 0, 0.7081571, 0, 1, 0, -0.7081571, 0, -0.70605487, 224.27863, 25.024467, 341.60968)
+save_id = &"outcrop_5_004"

@@ -326,4 +326,4 @@ Generated worlds are gone (the procgen items above are history); Hearthvale is t
 - [ ] **The haven at dusk**: check Fireflies finds its pool on its own (it looks for still water); if not, give the haven a cluster.
 - [ ] **Hens hide in long grass** (they're life-size): clear the grass in the farm yard, or scale them up a touch.
 - [ ] **The new places' uses** (their own chunk): fruit from the orchard, wool from the shepherd's flock, flour from the mill for Rosa.
-- [ ] **`place_country.gd` found only two clear knolls** for lone oaks (it wanted four): loosen its rules or pick spots by hand.
+- [ ] **Only one lone oak on the knolls** (place_country.gd wanted four): place more by hand in the map editor (plans/map-editor.md).

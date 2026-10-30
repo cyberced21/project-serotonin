@@ -24,6 +24,7 @@ extends SceneTree
 ##
 ## Hand-placed buildings, props and ruins in main.tscn stand on the flats (the run lists any whose
 ## ground isn't at 0); the resource nodes under "Nodes" get their Y rewritten to the new ground.
+## The map editor's layout (scenes/layout.tscn) isn't moved: rebake it after (tools/bake_layout.gd).
 
 const WorldMap := preload("res://scripts/world_map.gd")
 
@@ -747,8 +748,8 @@ func _collect(node: Node, xform: Transform3D, depth: int, out: Array[Vector2]) -
 	for child in node.get_children():
 		if not child is Node3D or child is Terrain3D or child is Light3D or child.name == "Scenery":
 			continue
-		if child.scene_file_path.begins_with(BIOME_SCENES) or child.name == "Nodes":
-			continue  # built on the new ground at runtime / moved onto it by _rebake_nodes
+		if child.scene_file_path.begins_with(BIOME_SCENES) or child.name == "Nodes" or child.name == "Layout":
+			continue  # built on the new ground at runtime / moved onto it by _rebake_nodes / rebaked by tools/bake_layout.gd
 		var t := xform * (child as Node3D).transform
 		out.append(Vector2(t.origin.x, t.origin.z))
 		if depth < 2:
