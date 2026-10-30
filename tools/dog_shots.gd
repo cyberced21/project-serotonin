@@ -33,7 +33,7 @@ func _run() -> void:
 
 	# the strays by the pond
 	await _wait(1.0)
-	_view(Vector3(14, 0, 22), Vector3(9, 0, 17), 1.6)
+	_view(Vector3(60, 0, 92), Vector3(55, 0, 87), 1.6)
 	await _wait(2.0)
 	await _shot("strays")
 
@@ -45,11 +45,11 @@ func _run() -> void:
 	var dog := terrier
 	await _wait(1.0)
 	dog.set("scripted", true)
-	_view(Vector3(-4, 0, 6), Vector3(-3, 0, 3), 1.0)
-	_put(dog, Vector3(-3.2, 0, 4.3), Vector3(-4, 0, 6), 1)  # sitting, looking up at you
+	_view(Vector3(42, 0, 76), Vector3(43, 0, 73), 1.0)
+	_put(dog, Vector3(42.8, 0, 74.3), Vector3(42, 0, 76), 1)  # sitting, looking up at you
 	await _wait(1.5)
 	await _shot("sitting")
-	_put(dog, Vector3(-3.2, 0, 4.3), Vector3(-4, 0, 6), 4)  # being petted
+	_put(dog, Vector3(42.8, 0, 74.3), Vector3(42, 0, 76), 4)  # being petted
 	await _wait(0.4)
 	await _shot("petted")
 
@@ -60,8 +60,8 @@ func _run() -> void:
 	await _wait(1.0)
 	dog = get_first_node_in_group("dog") as Node3D
 	dog.set("scripted", true)
-	_view(Vector3(55, 0, 20), Vector3(50, 0, 15), 1.2)
-	_put(dog, Vector3(51.5, 0, 16), Vector3(42, 0, 6), 0)
+	_view(Vector3(83, 0, 108), Vector3(78, 0, 103), 1.2)
+	_put(dog, Vector3(79.5, 0, 104), Vector3(70, 0, 94), 0)
 	dog.set("_speed", 2.5)
 	await _wait(1.0)
 	await _shot("trotting")
@@ -71,8 +71,8 @@ func _run() -> void:
 	root.get_node("Lamps").set("has_lantern", true)
 	root.get_node("Lamps").call("set_lantern_lit", true)
 	dog.set("_player", player)
-	_view(Vector3(30, 0, 30), Vector3(28, 0, 27), 1.3)
-	_put(dog, Vector3(28.2, 0, 27.2), Vector3(30, 0, 30), 1)
+	_view(Vector3(76, 0, 100), Vector3(74, 0, 97), 1.3)
+	_put(dog, Vector3(74.2, 0, 97.2), Vector3(76, 0, 100), 1)
 	await _wait(2.0)
 	await _shot("lantern")
 

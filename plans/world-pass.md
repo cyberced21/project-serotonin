@@ -157,10 +157,12 @@ sparse, rocks sit out of place, the village looks randomly laid out. Branch `wor
 - Mine: the way-in cell's lamp hangs in a corner (the shaft's hole is over the middle).
 - Tests updated for the new places: test_dog, test_trophies, test_quarry. `tools/world_shots.gd` takes the tour (docs/images/world/).
 
-**Left in phase 2 (tomorrow):**
-- Read the last full test run (it was still going): the known failures before this work are test_lamps (timing; with more and longer roads "each lamp catches once" fails too), test_lantern, test_projects (count), test_trophy_wall (flaky), test_worlds (needs `--save-root=user://test_worlds`).
-- Run `tools/audit_world.gd` once more (last run: ruins buried by the quarry's long slope, fixed since; a Decor mesh clips the town hall's tier-1 bell frame: phase 4).
-- The forest trail detours east round a steep climb (317 m, one 13.6 m cut at (171, -93)): look at it in a window; phases 6-7 revisit the Pinewood (the haven's deer track).
+**Finished 2026-10-30:**
+- The full test run: everything passes but test_lantern and test_trophy_wall (both failing before this work, in docs/TODO.md). test_creek found ledges on the creek's west bank: the quarry road's `via` made it cross, hairpin back and run on an embankment along the bank. The via is gone and the router now charges for the creek's banks (`ROUTE_BANK_COST`), so the road crosses once at about (48, 127) and keeps ~14 m off. test_lamps waits for a long road's posts to go up; test_projects counts the mine's shoring.
+- `tools/audit_world.gd`: clean bar the known leftovers, four lamp footing stones sunk 2-5 cm into slopes, and the Decor mesh clipping the town hall's tier-1 bell frame (phase 4).
+- The old shot scripts (graphics_tour, dog_shots, market_shots, tavern_shots) moved to the bowl's coordinates, each view with its nearest place; the road and creek views are approximate until phase 9's tour. world_shots' pinewood_glade looks at the glade's ground from 30 m.
+
+**Carried on:**
+- The forest trail detours east round a steep climb (317 m, one 13.6 m cut at (171, -93)): phases 6-7 revisit the Pinewood (the haven's deer track).
 - Bare-dirt patches show on many slopes (the terrain shader paints dirt from a gentle slope): phase 6.
-- The shot list's pinewood_glade view looks at the ground; graphics_tour.gd / dog_shots.gd / market_shots.gd / tavern_shots.gd still use the old coordinates.
-- Commit phase 2 properly, then **phase 3: the assets page** (stop 2 for the user: buildings and props, animals, sounds, picked on a page).
+- Next: **phase 3, the assets page** (stop 2 for the user: buildings and props, animals, sounds, picked on a page).

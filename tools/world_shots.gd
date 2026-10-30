@@ -53,7 +53,7 @@ func _run() -> void:
 		["quarry_floor", Vector3(-118, 0, 100), Vector3(-118, 8, 60)],
 		["quarry_bridge", Vector3(80, 0, 40), Vector3(69, 0.5, 50)],
 		["footbridge_site", Vector3(76, 0, 74), Vector3(66, 0.5, 66)],
-		["pinewood_glade", Vector3(70, 0, -122), Vector3(76, 1.5, -131.5)],
+		["pinewood_glade", Vector3(56, 0, -108), Vector3(76, 0, -131.5)],
 		["frostpeak", Vector3(-30, 0, 40), Vector3(-98, 40, -54)],
 		["goldmeadow", Vector3(300, 0, 270), Vector3(338, 0, 318)],
 		["stillwater", Vector3(70, 0, 312), Vector3(38, 0, 338)],

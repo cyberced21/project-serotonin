@@ -83,6 +83,9 @@ func _check_wave(world: String, path_lamps: Node) -> void:
 	for i in 5:
 		await process_frame
 	var lamps: Array = path_lamps.get("_lamps")
+	# (a new road's posts go up one after another: a long road's last ones take seconds)
+	while lamps.any(func(l: Dictionary) -> bool: return float(l["delay"]) > 0.0):
+		await process_frame
 	var lit_by_day := 0
 	for l in lamps:
 		if float(l["level"]) > 0.0:

@@ -64,7 +64,7 @@ func _run() -> void:
 	_view(cart.global_position + Vector3(8, 0, 5), cart.global_position + Vector3.UP * 1.0)
 	await _wait(1.0)
 	await _shot("trader")
-	_view(Vector3(100, 0, 50), Vector3(92, 2, 34))
+	_view(Vector3(128, 0, 138), Vector3(120, 2, 122))
 	await _wait(1.0)
 	await _shot("square")
 	quit()

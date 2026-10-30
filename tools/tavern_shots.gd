@@ -44,20 +44,20 @@ func _run() -> void:
 	var tavern := get_first_node_in_group("tavern") as Node3D
 
 	# the ruin, by day, from across the square
-	_view(Vector3(97, 0, 47), tavern.global_position + Vector3.UP * 2.0)
+	_view(Vector3(125, 0, 135), tavern.global_position + Vector3.UP * 2.0)
 	await _run_to(11.0)
 	await _shot("ruin")
 
 	# breakfast on the terrace
 	await _run_to(7.3, 6.0)
-	_view(Vector3(91.0, 0, 35.8), Vector3(86.6, 0.8, 32.6))
+	_view(Vector3(119, 0, 123.8), Vector3(114.6, 0.8, 120.6))
 	await _wait(1.0)
 	await _shot("terrace")
 
 	# restored (tier 3), at night: from the square, then inside
 	village.call("set_tier", &"tavern", 3)
 	await _run_to(21.6, 19.0)
-	_view(Vector3(97, 0, 47.5), tavern.global_position + Vector3.UP * 1.8)
+	_view(Vector3(125, 0, 135.5), tavern.global_position + Vector3.UP * 1.8)
 	await _wait(1.0)
 	await _shot("tavern_night")
 	_view(tavern.to_global(Vector3(3.1, 0.08, 2.9)), tavern.to_global(Vector3(-2.4, 1.0, -2.0)))
@@ -68,7 +68,7 @@ func _run() -> void:
 	await _shot("stage_and_fire")
 	# the houses' windows from the square, lit and going dark
 	await _run_to(22.5)
-	_view(Vector3(101, 0, 41), Vector3(91, 1.5, 28))
+	_view(Vector3(129, 0, 129), Vector3(119, 1.5, 116))
 	await _wait(1.0)
 	await _shot("windows")
 

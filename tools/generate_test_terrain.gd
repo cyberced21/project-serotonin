@@ -139,6 +139,7 @@ const ROUTE_CELL := 4
 const ROUTE_SLOPE_COST := 160.0
 const ROUTE_WATER_COST := 300.0
 const ROUTE_CREEK_COST := 25.0
+const ROUTE_BANK_COST := 8.0  # (on its banks: a road there leaves a ledge above the water)
 ## The lines the roads were laid on, for the game (WorldMap.roads()).
 const ROADS_OUT := "res://scripts/world_roads.gd"
 
@@ -796,6 +797,8 @@ func _road_grid(h: PackedFloat32Array, baked: Array[Vector2]) -> AStarGrid2D:
 				cost += ROUTE_WATER_COST
 			elif _creek_mask[_pixel(w)] == 1:
 				cost += ROUTE_CREEK_COST  # (crossing it is fine: a bridge or a ford; running along it isn't)
+			elif _polyline_distance(w, WorldMap.CREEK) < WorldMap.CREEK_HALF_WIDTH + CREEK_BANK:
+				cost += ROUTE_BANK_COST
 			if w.distance_to(WorldMap.QUARRY_CENTER) < WorldMap.QUARRY_WALLS[0] + 1.0:
 				cost += ROUTE_WATER_COST
 			cost += _rim(w) * 4.0

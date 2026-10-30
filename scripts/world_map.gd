@@ -73,7 +73,7 @@ const ROADS: Array[Dictionary] = [
 		"from": Vector2(124, -6), "via": [Vector2(76, -131.5)],  # (on from the road's end, up past the spring)
 		"to": Vector2(61, -62.5)},
 	{"id": &"quarry_road", "title": "The road to the quarry", "kind": &"road",
-		"from": Vector2(58, 132), "via": [Vector2(26, 120)], "to": QUARRY_RIM_POINT},  # (straight over the creek)
+		"from": Vector2(58, 132), "to": QUARRY_RIM_POINT},  # (over the creek: the router keeps off its banks)
 	{"id": &"lake_road", "title": "The road to the lake", "kind": &"road",
 		"from": Vector2(118, 198), "to": Vector2(66, 316)},
 	{"id": &"peak_path", "title": "The path up Frostpeak", "kind": &"path",
