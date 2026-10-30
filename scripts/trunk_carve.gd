@@ -23,15 +23,16 @@ extends RefCounted
 ## How deep the notch is, per direction round the trunk (bins over a full turn).
 const BINS := 32
 ## The layers out to in: [toughness (work to cut through, in cuts at full weight), swatch of its
-## cut face]. The first two are the bark (each half of `bark` thick), the rest the wood.
+## cut face, its colour (the swatch's, for the slab it comes off in)]. The first two are the bark
+## (each half of `bark` thick), the rest the wood.
 const LAYERS := [
-	[0.6, Vector2(-1, -1)],  # outer bark (the model's own bark swatch)
-	[0.7, Vector2(0.5625, 0.3125)],  # inner bark: wood.4
-	[1.2, Vector2(0.9375, 0.3125)],  # sapwood: wood.7
-	[1.4, Vector2(0.8125, 0.3125)],  # wood.6
-	[1.6, Vector2(0.9375, 0.3125)],  # wood.7
-	[1.9, Vector2(0.6875, 0.3125)],  # heartwood: wood.5
-	[2.2, Vector2(0.5625, 0.3125)],  # wood.4
+	[0.6, Vector2(-1, -1), Color(0, 0, 0, 0)],  # outer bark (the model's own bark swatch, the node's bark_color)
+	[0.7, Vector2(0.5625, 0.3125), Color("8e5f39")],  # inner bark: wood.4
+	[1.2, Vector2(0.9375, 0.3125), Color("f0b583")],  # sapwood: wood.7
+	[1.4, Vector2(0.8125, 0.3125), Color("cc9568")],  # wood.6
+	[1.6, Vector2(0.9375, 0.3125), Color("f0b583")],  # wood.7
+	[1.9, Vector2(0.6875, 0.3125), Color("ab774d")],  # heartwood: wood.5
+	[2.2, Vector2(0.5625, 0.3125), Color("8e5f39")],  # wood.4
 ]
 const BARK_LAYERS := 2
 ## How far a hit dents a layer it hasn't cut through (share of the layer, at its full toughness).
@@ -205,6 +206,11 @@ func layers_through(b: int) -> int:
 ## The layer the notch has reached toward `dir` (its index: 0, 1 bark, then the wood).
 func layer_toward(dir: Vector3) -> int:
 	return layers_through(roundi(fposmod(atan2(dir.z, dir.x), TAU) / TAU * BINS) % BINS)
+
+
+## How thick layer `k` is (m, straight in where the notch began, or the bark's share before).
+func layer_thickness(k: int) -> float:
+	return _thick(k, 0) if not _radius.is_empty() else bark / BARK_LAYERS
 
 
 ## How much of the wood at the ring still stands: a share of its cross-section, from 1 (whole) down

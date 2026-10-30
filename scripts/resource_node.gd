@@ -60,6 +60,8 @@ const KNOT_AFTER := 3
 const KNOT_EXTRA := 3
 const KNOT_RADIUS := 0.16
 const KNOT_COLOR := Color("ffb347")
+## A layer of wood coming out of the notch: its snap (the clean cut's crack, quieter and higher), dB.
+const LAYER_POP_DB := -7.0
 ## Dominoes: a tree you fell lands hard, shaking loose this many times the logs; a falling trunk
 ## takes this share of the max hits off each tree it lands on.
 const DOMINOES_LOGS := 1.25
@@ -320,6 +322,8 @@ var _timer_label: Label3D
 var _ghost: Node3D
 var _ghost_outline: ShaderMaterial
 var _carve: TrunkCarve  # carve_notch: the notch in the trunk
+var _popped := PackedInt32Array()  # ... the layers the last hit cut through (TrunkCarve.LAYERS)
+var _pop_dir := Vector3.ZERO  # ... and where from (trunk space)
 var _trunk: MeshInstance3D  # ... the trunk it's carved into
 var _trunk_rest := Transform3D.IDENTITY  # ... where the trunk sits in the node, at rest
 var _stump: MeshInstance3D  # ... and what's left of it once the tree is down
@@ -546,7 +550,7 @@ func hit(info: HitInfo) -> bool:
 	if weak:
 		_weak_hit_feedback(info)
 	if _carve:
-		_carve_hit(info, before - hits_left)
+		_carve_hit(info, before - hits_left, _clean)
 		_tree_reacts(info, 1.0 - float(hits_left) / max_hits)
 	SaveGame.mark_dirty()
 	var collapsed := 0
@@ -608,6 +612,7 @@ func pull(info: HitInfo) -> void:
 	var tear := (info.normal * 0.6 + toward * 0.6).normalized()
 	if _carve:
 		_throw_chip(info, tear, _clean)
+		_pop_layers(info, tear)
 	else:
 		_spawn_fragment(info, tear)
 	if _seams.is_empty() and _links.is_empty():  # (a boulder of pieces only loses them along cracks / where struck)
@@ -1150,10 +1155,11 @@ func _fall_direction(info: HitInfo) -> Vector3:
 
 # --- notch ----------------------------------------------------------------------------------
 
-## The notch deepens toward the swinger (`cuts`: how many hits this one counted for), and the hit
-## moves onto the notch's surface, where the axe really bites and the chips fly from, instead of
-## the trunk's collision box.
-func _carve_hit(info: HitInfo, cuts: int) -> void:
+## The notch deepens toward the swinger (`cuts`: how many hits this one counted for; `finish`, a
+## clean cut, takes the rest of the layer it's in), and the hit moves onto the notch's surface,
+## where the axe really bites and the chips fly from, instead of the trunk's collision box. The
+## layers it cut through come off when the axe is pulled out (_pop_layers()).
+func _carve_hit(info: HitInfo, cuts: int, finish := false) -> void:
 	var to_trunk := _trunk.global_transform.affine_inverse()
 	var dir := to_trunk.basis * (info.from - info.position)
 	dir.y = 0.0
@@ -1161,7 +1167,8 @@ func _carve_hit(info: HitInfo, cuts: int) -> void:
 	var stripped := _blaze_area()
 	if not _carve.is_started() and dir.length_squared() > 0.0001:
 		_notch_from = dir.normalized()  # the notch's side (Back cut and Dominoes go by it)
-	_carve.hit(y, dir, cuts)
+	_popped = _carve.hit(y, dir, cuts, finish)
+	_pop_dir = dir
 	_trunk.mesh = _carve.carved()
 	info.position = _trunk.global_transform * _carve.bite_point(dir)
 	info.normal = (_trunk.global_basis * dir).normalized()
@@ -1170,6 +1177,39 @@ func _carve_hit(info: HitInfo, cuts: int) -> void:
 	var slabs := clampi(roundi((_blaze_area() - stripped) * 40.0), 0, 6)
 	for i in slabs + cuts:
 		_peel_bark(dir, i < slabs)
+
+
+## The layers the last hit cut through come away as the axe comes out: the bark in strips, the wood
+## in a slab of that layer's colour, with a snap (unless a clean cut's crack already played).
+func _pop_layers(info: HitInfo, push: Vector3) -> void:
+	var wood := false
+	for k in _popped:
+		if k < TrunkCarve.BARK_LAYERS:
+			for i in 2:
+				_peel_bark(_pop_dir, true)
+		else:
+			_throw_slab(info, push, k)
+			wood = true
+	if wood and not _clean and clean_layers:
+		Sfx.play_at(clean_layers, info.position, randf_range(1.15, 1.3), LAYER_POP_DB)
+	_popped.clear()
+
+
+## A layer of wood breaking out of the notch: a flat slab as wide as the notch's mouth, as thick as
+## the layer, in its colour.
+func _throw_slab(info: HitInfo, push: Vector3, k: int) -> void:
+	var slab := MeshInstance3D.new()
+	var wedge := PrismMesh.new()
+	wedge.left_to_right = 0.0
+	var thick := clampf(_carve.layer_thickness(k) * 1.3, 0.015, 0.05)
+	wedge.size = Vector3(randf_range(0.15, 0.22), thick, randf_range(0.1, 0.14))
+	slab.mesh = wedge
+	slab.material_override = NODE_SURFACE
+	var colour: Color = TrunkCarve.LAYERS[mini(k, TrunkCarve.LAYERS.size() - 1)][2]
+	slab.set_instance_shader_parameter("albedo", colour.darkened(randf_range(-0.04, 0.08)))
+	var rot := Basis.from_euler(Vector3(randf_range(-0.3, 0.3), randf() * TAU, randf_range(-0.3, 0.3)))
+	_throw(slab, Transform3D(rot, info.position + info.normal * 0.08), push.rotated(Vector3.UP, randf_range(-0.3, 0.3)),
+		debris_speed * randf_range(0.8, 1.0))
 
 
 ## How much bark the blaze has stripped so far (m of height, summed round the trunk's bins).
