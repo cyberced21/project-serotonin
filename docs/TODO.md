@@ -115,6 +115,14 @@ Plan and decisions: `plans/woodcutting-overhaul.md`.
 - [ ] **Crystal close-up:** no crystal rock in the overworld for `ore_closeup.gd` (they're in the mine): its glitter is unseen.
 - [ ] **Scenery rocks** (boulders, shore stones) aren't mined, so they keep their pieces.
 
+### Performance ([plans/crumbs.md](../plans/crumbs.md) phase 7)
+
+- [x] **Lamp shadows within 20 m, size-based draw distances, fixtures merged:** the village at dusk 13.2 ms → 8.1 ms (p95 16.5 → 10.9) on high at 1080p. `tools/perf_probe.gd` (windowed) and `tools/perf_census.gd` (headless) to measure.
+- [ ] **Merge buildings' tiers** too (~400 draws in the village): after their tier's pop-in, since that animates piece by piece.
+- [ ] **The sun's shadows** are the biggest cost left (four cascades to 140 m on high): a look decision.
+- [ ] **Unmeasured:** low and medium presets, other resolutions, the mine.
+- [ ] **`tools/test_lantern.gd` fails on main too** (found 2026-10-30): walking 5.8 m the lantern's fastest swing is 0.20 rad/s, under its creak speed. Not from crumbs or the performance pass.
+
 ## Tools and levels ([plans/tool-progression.md](../plans/tool-progression.md))
 
 - [x] **Tools gate, levels are soft:** `Tools` autoload, `tool_tier` on every node, under-level penalty and XP bonus (`Skills.UNDER_*`), the spear's gate soft too.

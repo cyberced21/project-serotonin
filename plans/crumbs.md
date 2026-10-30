@@ -139,3 +139,45 @@ Verified: tools/test_crumbs.gd (dents, no physics bodies, save round trips for r
 old wall save loading), test_ore_wall, test_quarry, the pace bench, close-ups in
 docs/images/ores/crumbs and docs/images/walls/crumbs (copper, iron, a wall). Unverified: played by
 hand, sound, crystal's glitter, gold and coal close-ups, frame time with many dug rocks on screen.
+
+## Phase 7: the performance pass (2026-10-30)
+
+Measured with `tools/perf_probe.gd` (windowed, 1920x1080, the high preset, vsync off, a fresh
+Hearthvale; `--experiments` measures each spot again with one suspect off) after
+`tools/perf_census.gd` (headless: what the world is made of). The census: 36.7k nodes, 17k
+MeshInstance3Ds, ~3,000 visible meshes with no draw distance (the village's fixtures 786, the
+orchard 338, reeds 348, wall stones 222). What the experiments found:
+
+- **Shadows were most of it.** On high every lit lamp cast an omni shadow, each re-drawing
+  everything round it six times: the village at dusk was 5,021 draw calls, 2,155 of them gone
+  with the lamps' shadows off.
+- **Meshes with no draw distance** were drawn at any range, and into every shadow cascade.
+- **The village's fixtures** (barns, the chapel, the orchard's trees...) were a few hundred kit
+  pieces each, a draw call apiece.
+- Not much: trees, critters and animals, buildings (~400 draws), lamp shadows once limited.
+  The high preset's effects cost GPU time as chosen: SSIL ~0.8 ms, grass 0.7–1.1, fog 0.3–0.4,
+  SSAO ~0.25.
+
+What changed:
+
+1. **Lamp shadows within 20 m** (`GraphicsSettings.LAMP_SHADOW_REACH`, the lights' own
+   distance fade); their light still reaches 60 m.
+2. **A draw distance by size** for meshes with none (`DETAIL_REACH`): under 0.6 m, 35 m; under
+   2 m, 80 m; bigger, always; times the preset's foliage_distance.
+3. **Fixtures merged** (`StaticMerge`): each state's still pieces drawn as one mesh a material,
+   shared by every copy of the model; wheels and glowing glass stay their own.
+
+| Spot | Before: ms (p95), draws | After: ms (p95), draws |
+|---|---|---|
+| village | 8.92 (10.92), 2,405 | 8.21 (10.79), 1,469 |
+| village at dusk | **13.20 (16.50), 5,021** | **8.14 (10.89), 2,354** |
+| square | 9.18 (11.10), 2,622 | 8.06 (10.25), 1,369 |
+| clearing | 9.54 (12.40), 1,768 | 8.87 (11.66), 1,664 |
+| quarry | 6.29 (8.89), 480 | 5.84 (8.16), 458 |
+| pinewood | 8.48 (11.46), 1,113 | 8.18 (11.22), 749 |
+| overlook | 11.16 (13.86), 3,389 | 8.35 (10.30), 1,671 |
+
+Frames are now GPU-bound everywhere (GPU 5–8 ms, CPU 1–2.6 ms). Left for later (docs/TODO.md):
+merging buildings' tiers (they pop in piece by piece when built, so it needs care); the sun's
+shadow distance on high (140 m, four cascades) is the biggest single cost left, a look choice.
+Unverified: the low and medium presets, other screens than 1080p, the mine.

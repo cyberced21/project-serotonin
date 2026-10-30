@@ -6,6 +6,11 @@ extends Node
 ## materials/world_environment.tres and the biome moods; this only turns costly parts on or off.
 ## Other systems read the values (the grass ring reads grass_density) and listen to `changed`.
 ## Debug menu: Graphics tab.
+##
+## Two things keep busy places cheap (plans/crumbs.md, phase 7): a lamp's shadow is cast only
+## within LAMP_SHADOW_REACH of the camera (each lamp's shadow re-draws everything round it six
+## times), and a small prop with no draw distance of its own gets one by its size (DETAIL_REACH),
+## so far-off cups, posts and flowers aren't drawn, nor drawn into the shadows.
 
 signal changed
 
@@ -36,6 +41,16 @@ var preset: StringName = DEFAULT_PRESET
 var values: Dictionary = PRESETS[DEFAULT_PRESET].duplicate()
 ## False: changes aren't written to settings.cfg (tools/graphics_tour.gd).
 var persist := true
+
+## Lamps cast shadows only this near the camera (m); their light reaches LAMP_REACH, fading out
+## over LAMP_FADE.
+const LAMP_SHADOW_REACH := 20.0
+const LAMP_REACH := 60.0
+const LAMP_FADE := 10.0
+## A prop drawn with no distance limit of its own, by its size (m, longest side): smaller than
+## [0] it's drawn to [1] m away, smaller than [2] to [3] m; bigger, always. Times foliage_distance.
+const DETAIL_REACH := [0.6, 35.0, 2.0, 80.0]
+var _detail_queue: Array[GeometryInstance3D] = []
 
 
 func _ready() -> void:
@@ -79,6 +94,11 @@ func _apply_all() -> void:
 
 
 func _on_node_added(n: Node) -> void:
+	if n is MeshInstance3D:
+		if _detail_queue.is_empty():
+			_reach_details.call_deferred()  # (once a frame: its mesh and place are set by then)
+		_detail_queue.append(n)
+		return
 	if n is WorldEnvironment or n is DirectionalLight3D or n is OmniLight3D:
 		var ref: WeakRef = weakref(n)  # (it may be gone by then: the mine rebuilds its lamps)
 		var later := func() -> void:
@@ -115,7 +135,32 @@ func _apply_to(n: Node) -> void:
 				if int(get_value(&"shadow_splits")) >= 4 else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS)
 		sun.directional_shadow_blend_splits = int(get_value(&"shadow_splits")) >= 4
 	elif n is OmniLight3D and (n.is_in_group("night_light") or n.is_in_group("path_light")):  # lamps
-		(n as OmniLight3D).shadow_enabled = get_value(&"light_shadows")
+		var lamp := n as OmniLight3D
+		lamp.shadow_enabled = get_value(&"light_shadows")
+		if not lamp.distance_fade_enabled:
+			lamp.distance_fade_enabled = true
+			lamp.distance_fade_begin = LAMP_REACH
+			lamp.distance_fade_length = LAMP_FADE
+		lamp.distance_fade_shadow = LAMP_SHADOW_REACH
+
+
+## Gives the meshes added this frame a draw distance by their size, where they have none.
+func _reach_details() -> void:
+	var scale: float = get_value(&"foliage_distance")
+	for g in _detail_queue:
+		if is_instance_valid(g) and g.is_inside_tree():
+			_reach_detail(g as MeshInstance3D, scale)
+	_detail_queue.clear()
+
+
+func _reach_detail(m: MeshInstance3D, scale: float) -> void:
+	if m.mesh == null or m.visibility_range_end > 0.0 or m.visibility_range_begin > 0.0 or not (m.layers & 1):
+		return  # (managed already, or not in the world's view: the tool in hand)
+	var size := m.mesh.get_aabb().get_longest_axis_size() * m.global_basis.get_scale().x
+	var reach := DETAIL_REACH[1] if size < DETAIL_REACH[0] else DETAIL_REACH[3] if size < DETAIL_REACH[2] else 0.0
+	if reach > 0.0:
+		m.visibility_range_end = reach * scale
+		m.visibility_range_end_margin = 4.0
 
 
 func _load() -> void:
