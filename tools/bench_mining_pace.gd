@@ -95,7 +95,7 @@ func _run() -> void:
 				await physics_frame
 				continue
 			var info: RefCounted = load("res://scripts/hit_info.gd").new(hit["position"], hit["normal"], hit["collider"], from)
-			tools.call("set_tier", &"pickaxe", 4)  # (any vein: the pace of digging, not the gating)
+			tools.call("set_tier", &"pickaxe", 0)  # (the face is stone and copper: the pick it needs)
 			wall.call("hit", info)
 			n += 1
 			await physics_frame

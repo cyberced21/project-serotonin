@@ -1854,16 +1854,7 @@ func _load_crumbs() -> void:
 func _bake_crumbs(base: String) -> Dictionary:
 	var pieces: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(base + ".pieces.json"))
 	var data: Dictionary = pieces.get("crumbs", {})
-	var inst := (load(base + "_crumbs.glb") as PackedScene).instantiate()
-	var meshes := {}
-	for m in inst.find_children("*", "MeshInstance3D", true, false):
-		var xform := Transform3D.IDENTITY
-		var n: Node = m
-		while n != inst:
-			xform = (n as Node3D).transform * xform if n is Node3D else xform
-			n = n.get_parent()
-		meshes[String(m.name)] = [(m as MeshInstance3D).mesh, xform]
-	inst.free()
+	var meshes := crumb_meshes(base + "_crumbs.glb")
 	var block_of := {}
 	for i in _pieces.size():
 		block_of[String(_pieces[i].name)] = i
@@ -1875,12 +1866,6 @@ func _bake_crumbs(base: String) -> Dictionary:
 		index[names[i]] = i
 	var crumbs := []
 	var volume := 0.0
-	var verts := PackedVector3Array()
-	var normals := PackedVector3Array()
-	var uvs := PackedVector2Array()
-	var uv2s := PackedVector2Array()
-	var colours := PackedColorArray()
-	var indices := PackedInt32Array()
 	for i in names.size():
 		var d: Dictionary = data[names[i]]
 		var mesh: Mesh = meshes[names[i]][0]
@@ -1889,10 +1874,27 @@ func _bake_crumbs(base: String) -> Dictionary:
 		for l: String in d["links"]:
 			if index.has(l):
 				links.append(index[l])
-		var block: int = block_of[d["block"]]
-		crumbs.append({"block": block, "mesh": mesh, "xform": xf, "centre": xf * mesh.get_aabb().get_center(),
+		crumbs.append({"block": block_of[d["block"]], "mesh": mesh, "xform": xf, "centre": xf * mesh.get_aabb().get_center(),
 			"volume": float(d["volume"]), "core": bool(d["core"]), "links": links})
 		volume += float(d["volume"])
+	var merged := merge_crumbs(crumbs)
+	return {"crumbs": crumbs, "mesh": merged, "volume": maxf(volume, 0.001),
+		"shatter_at": float(pieces.get("crumb_shatter_at", _shatter_at)), "swings": int(pieces.get("crumb_swings", max_hits))}
+
+
+## Crumbs ([{"mesh", "xform", "block"}]) as one mesh, each vertex carrying its crumb's index + 1 in
+## UV2.x and its piece's in UV2.y (node_surface.gdshaderinc hides the dug ones by them).
+static func merge_crumbs(crumbs: Array) -> ArrayMesh:
+	var verts := PackedVector3Array()
+	var normals := PackedVector3Array()
+	var uvs := PackedVector2Array()
+	var uv2s := PackedVector2Array()
+	var colours := PackedColorArray()
+	var indices := PackedInt32Array()
+	for i in crumbs.size():
+		var mesh: Mesh = crumbs[i]["mesh"]
+		var xf: Transform3D = crumbs[i]["xform"]
+		var block: int = crumbs[i]["block"]
 		for s in mesh.get_surface_count():
 			var arrays := mesh.surface_get_arrays(s)
 			var v: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
@@ -1919,8 +1921,22 @@ func _bake_crumbs(base: String) -> Dictionary:
 	arrays[Mesh.ARRAY_INDEX] = indices
 	var merged := ArrayMesh.new()
 	merged.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	return {"crumbs": crumbs, "mesh": merged, "volume": maxf(volume, 0.001),
-		"shatter_at": float(pieces.get("crumb_shatter_at", _shatter_at)), "swings": int(pieces.get("crumb_swings", max_hits))}
+	return merged
+
+
+## A crumb's model meshes by name, each with its transform from the model's root.
+static func crumb_meshes(path: String) -> Dictionary:
+	var inst := (load(path) as PackedScene).instantiate()
+	var meshes := {}
+	for m in inst.find_children("*", "MeshInstance3D", true, false):
+		var xform := Transform3D.IDENTITY
+		var n: Node = m
+		while n != inst:
+			xform = (n as Node3D).transform * xform if n is Node3D else xform
+			n = n.get_parent()
+		meshes[String(m.name)] = [(m as MeshInstance3D).mesh, xform]
+	inst.free()
+	return meshes
 
 
 ## Up close the crumbs are drawn, further off the pieces (after _limit_drawing, which set both).

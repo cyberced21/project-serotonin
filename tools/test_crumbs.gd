@@ -24,6 +24,7 @@ func _run() -> void:
 	root.add_child(_world)
 	var cam := Camera3D.new()
 	_world.add_child(cam)
+	cam.make_current()
 
 	for ore in ORES:
 		var node := await _rock(ore)
@@ -57,6 +58,44 @@ func _run() -> void:
 		copy.free()
 		_clear()
 
+	# an ore wall: up close its layers are drawn as crumbs; a swing digs a dent, and the dent and
+	# the pieces dug are saved; an older save (pieces only) still loads
+	root.get_node("Tools").call("set_tier", &"pickaxe", 4)
+	var run := _wall_run("a")
+	var wall: Node3D = run.get_node("Panel0")
+	cam.global_position = wall.global_transform * Vector3(0, 2.0, 3.0)
+	var started := Time.get_ticks_msec()
+	for f in 30:
+		await process_frame
+	print("  wall: crumbs drawn up close after %d ms" % (Time.get_ticks_msec() - started))
+	_check(wall.get("_crumb_meshes")[0] != null, "wall: the face is drawn as crumbs up close")
+	var out: Dictionary = wall.get("_crumbs_out")[0]
+	var gone: Dictionary = wall.get("_gone")[0]
+	var dug := 0
+	for attempt in 20:  # (until a swing lands off the loose slabs, which come down whole)
+		var from: Vector3 = wall.global_transform * Vector3(randf_range(-1.0, 1.0), randf_range(0.5, 3.5), 2.0)
+		var hit := root.world_3d.direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(from, from + wall.global_basis * Vector3(0, 0, -6), 1))
+		var before := gone.size()
+		if not hit.is_empty():
+			wall.call("hit", load("res://scripts/hit_info.gd").new(hit["position"], hit["normal"], hit["collider"], from))
+		await physics_frame
+		if not out.is_empty():
+			dug = gone.size() - before
+			break
+	_check(not out.is_empty(), "wall: a swing digs crumbs out")
+	_check(dug <= 2, "wall: ... a dent, not pieces (%d pieces gone)" % dug)
+	await physics_frame
+	_check(_thrown() == 0, "wall: nothing thrown as a physics body")
+	var saved: Dictionary = wall.call("to_dict")
+	run.free()
+	run = _wall_run("b")
+	wall = run.get_node("Panel0")
+	wall.call("from_dict", saved)
+	_check(wall.call("to_dict").get("crumbs", []) == saved.get("crumbs", []), "wall: the dent reloads the same")
+	wall.call("from_dict", {"gone": [[0, 1, 2], [], [], [], [], [], [], []]})
+	_check((wall.get("_gone")[0] as Dictionary).size() == 3, "wall: an older save, pieces only, loads")
+	run.free()
+
 	_world.free()
 	print("test_crumbs: %s" % ("all passed" if _failures == 0 else "%d FAILED" % _failures))
 	quit(1 if _failures > 0 else 0)
@@ -82,6 +121,20 @@ func _swing(node: Node3D) -> void:
 			node.call("hit", load("res://scripts/hit_info.gd").new(hit["position"], hit["normal"], node, from))
 			await physics_frame
 			return
+
+
+## One ore wall panel (a run of one: loaded, not named, as an -s script compiles before the
+## autoloads exist).
+func _wall_run(id: String) -> Node3D:
+	var run: Node3D = load("res://scripts/ore_wall_run.gd").new()
+	run.name = "Run_" + id
+	run.get("panels").append(Transform3D.IDENTITY)
+	run.get("templates").append(0)
+	run.get("seeds").append(5)
+	run.get("save_ids").append("test_crumbs_" + id)
+	_world.add_child(run)
+	run.call("build")
+	return run
 
 
 ## Rigid bodies other than ore pickups anywhere in the world.

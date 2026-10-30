@@ -96,3 +96,22 @@ crumbles into dust rather than tumbling through the world.
 
 The bench's swings land at random, so a wall layer reads lower than the 40–60 the ore-walls plan
 guessed. Target after crumbs: rocks within ±1 swing of these, wall layer ~1.5–2× (≈ 50–60).
+
+Those wall numbers were dug with the best pick, which under the old rule took 3–4 whole pieces a
+swing. Measured again with the pick the face needs (stone, layer 1 being stone and copper), the
+old rule takes **74** swings a layer (55–114), and that is the baseline the walls are tuned against.
+
+## Tuned (2026-10-30)
+
+| | Before | After | Knobs |
+|---|---|---|---|
+| copper | 5.3 | 5.1 (4–6) | crumb_swings 6 |
+| iron | 10.8 | 10.5 (9–11) | crumb_swings 11 |
+| coal | 8.6 | 8.9 (8–10) | crumb_swings 10 |
+| gold | 11.0 | 10.7 (7–13) | crumb_swings 7 (its tough shell adds hits) |
+| wall layer (stone pick) | 74 | 101 (93–110), ×1.36 | WALL_SPENT 0.25, WALL_KNOCK 2 |
+
+A rock of crumbs counts swings (`crumb_swings` in its .pieces.json); going by the share dug, as
+before, swung from 1 to 16 swings because a piece crumbling or a collapse is a big jump. The share
+still ends a rock early past a near-half collapse (`crumb_shatter_at` 0.45), and striking the fault
+counts two swings more.
