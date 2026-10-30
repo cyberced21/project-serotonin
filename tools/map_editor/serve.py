@@ -8,6 +8,7 @@ then open http://127.0.0.1:8765/
   GET  /api/layout   data/layout/hearthvale.json      POST /api/layout  saves it (one shape a line)
   GET  /api/catalog  data/layout/catalog.json
   GET  /api/baked    data/layout/baked.json            POST /api/bake    bakes the layout (tools/bake_layout.gd)
+  GET  /api/terrain_applied  the terrain shapes the land was last generated from
   GET  /map.png, /world.json  the land (tools/export_map.gd)  POST /api/map  redraws them
   POST /api/terrain  regenerates the terrain from the layout's terrain shapes, then redraws and rebakes
 """
@@ -25,6 +26,7 @@ ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 LAYOUT = os.path.join(ROOT, "data", "layout", "hearthvale.json")
 CATALOG = os.path.join(ROOT, "data", "layout", "catalog.json")
 BAKED = os.path.join(ROOT, "data", "layout", "baked.json")
+TERRAIN_APPLIED = os.path.join(ROOT, "data", "layout", "terrain_applied.json")  # what the land was last made from
 DEFAULT_GODOT = r"E:\Godot\Godot_v4.7.2-stable_win64.exe\Godot_v4.7.2-stable_win64_console.exe"
 # Bakes run the game headless: never in the player's real worlds.
 SAVE_ROOT = "--save-root=user://tool_worlds"
@@ -98,6 +100,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self._file(CATALOG)
         if path == "/api/baked":
             return self._file(BAKED)
+        if path == "/api/terrain_applied":
+            return self._file(TERRAIN_APPLIED)
         if path.startswith("/api/"):
             return self._json({"error": "no such thing"}, 404)
         if path.endswith(".py"):

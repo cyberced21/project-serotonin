@@ -115,6 +115,12 @@ func _run() -> void:
 	await process_frame  # (props join their groups as they enter the tree)
 	for p in layout.get("patches", []):
 		await _patch(p, groups["Patches"])
+	var water := Node3D.new()
+	water.name = "Water"
+	out_root.add_child(water)
+	for s in layout.get("terrain", []):
+		if s.get("type", "") == "pond" and s.has("center"):
+			water.add_child(_pond(s))
 
 	main.remove_child(world)
 	world.free()
@@ -427,6 +433,59 @@ func _patch(p: Dictionary, parent: Node3D) -> void:
 		baked.append([snappedf(g.x, 0.01), snappedf(g.z, 0.01), scene_ids.get(n.scene_file_path, "?")])
 	if placed < count:
 		_warn("patch %s found room for %d of %d" % [id, placed, count], centre, id)
+
+
+# --- ponds ---------------------------------------------------------------------------------------------
+
+## The water in a terrain pond (the generator digs its bowl): built like the ponds in main.tscn, a
+## WaterBody with its volume, surface, reeds and lilies, and fish if it says so.
+func _pond(s: Dictionary) -> Node3D:
+	var c := _v2(s["center"])
+	var span := float(s["radius"]) * 2.0 + 4.0
+	var body := Area3D.new()
+	body.name = String(s.get("id", "pond")).to_pascal_case()
+	body.set_script(load("res://scripts/water_body.gd"))
+	body.position = Vector3(c.x, 0, c.y)
+	body.collision_layer = 0
+	body.collision_mask = 0
+	var vol := CollisionShape3D.new()
+	vol.name = "Volume"
+	vol.position = Vector3(0, -1, 0)
+	var box := BoxShape3D.new()
+	box.size = Vector3(span, 3, span)
+	vol.shape = box
+	body.add_child(vol)
+	var dressing := Node3D.new()
+	dressing.name = "Dressing"
+	dressing.set_script(load("res://scripts/pond_dressing.gd"))
+	dressing.set("seed", hash(s.get("id", "pond")) % 1000)
+	dressing.set("reed_clumps", int(span * 0.35))
+	dressing.set("lily_pads", int(span * 0.45))
+	dressing.set("stones", int(span * 0.4))
+	body.add_child(dressing)
+	if s.get("fish", true):
+		var fish := Node3D.new()
+		fish.name = "Fish"
+		fish.set_script(load("res://scripts/fish_pond.gd"))
+		var perch: Resource = load("res://data/fish/perch.tres")
+		var schools: Array = fish.get("schools")  # (a typed array: filled, not replaced)
+		for school in [perch, perch, load("res://data/fish/trout.tres")]:
+			schools.append(school)
+		body.add_child(fish)
+	var surface := MeshInstance3D.new()
+	surface.name = "Surface"
+	surface.position = Vector3(0, -0.15, 0)
+	surface.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(span, span)
+	plane.subdivide_width = int(span) - 1
+	plane.subdivide_depth = int(span) - 1
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://shaders/water.gdshader")
+	plane.material = mat
+	surface.mesh = plane
+	body.add_child(surface)
+	return body
 
 
 # --- the report --------------------------------------------------------------------------------------

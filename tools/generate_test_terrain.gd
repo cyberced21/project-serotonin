@@ -25,6 +25,10 @@ extends SceneTree
 ## Hand-placed buildings, props and ruins in main.tscn stand on the flats (the run lists any whose
 ## ground isn't at 0); the resource nodes under "Nodes" get their Y rewritten to the new ground.
 ## The map editor's layout (scenes/layout.tscn) isn't moved: rebake it after (tools/bake_layout.gd).
+## Its terrain shapes (data/layout/hearthvale.json, "terrain": flats, hills and hollows, ponds,
+## roads and paths drawn in the editor) go on top of all that, before the relax pass; the roads are
+## laid after WorldMap.ROADS and written with them (WorldMap.roads() reads them back). The terrain
+## it applied is written to data/layout/terrain_applied.json, so the editor knows when it's stale.
 
 const WorldMap := preload("res://scripts/world_map.gd")
 
@@ -155,6 +159,10 @@ const ROUTE_CREEK_COST := 25.0
 const ROUTE_BANK_COST := 8.0  # (on its banks: a road there leaves a ledge above the water)
 ## The lines the roads were laid on, for the game (WorldMap.roads()).
 const ROADS_OUT := "res://scripts/world_roads.gd"
+const LAYOUT := "res://data/layout/hearthvale.json"
+const TERRAIN_APPLIED := "res://data/layout/terrain_applied.json"
+## A flat's or a hill's edge eases into the land over this much (m), unless it says otherwise.
+const SHAPE_SOFT := 10.0
 
 ## Hand-placed things other than the resource nodes (buildings, props, ruins) stand on the flats
 ## at height 0; the run lists any whose ground is off by more than this.
@@ -175,6 +183,8 @@ var _edge := FastNoiseLite.new()   # ragged biome borders
 var _creek_mask := PackedByteArray()  # 1 on the creek's channel and inner banks
 var _ramp_top: Array[float] = []   # per quarry wall: angle of its ramp's top end
 var _ramp_span: Array[float] = []  # per quarry wall: angle its ramp covers
+var _layout_terrain: Array = []  # the map editor's terrain shapes
+var _layout_roads: Array = []    # ...its roads and paths, as specs like WorldMap.ROADS
 
 
 func _initialize() -> void:
@@ -206,6 +216,7 @@ func _run() -> void:
 			var w := _world(x, y)
 			h[y * SIZE + x] = _biomes(w, base[y * SIZE + x]) + (_peak(w) + _rim(w)) * _off_quarry(w)
 	_glades(h)
+	_layout_shapes(h)
 	_relax(h)
 	_carve_creek(h)
 
@@ -234,6 +245,9 @@ func _run() -> void:
 	_report_moved(baked, h)
 	_report_slopes(h, ids)
 	_rebake_nodes(h)
+	var applied := FileAccess.open(TERRAIN_APPLIED, FileAccess.WRITE)
+	applied.store_string(JSON.stringify(_layout_terrain))
+	applied.close()
 
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DATA_DIR))
 	terrain.data.save_directory(DATA_DIR)
@@ -245,6 +259,12 @@ func _run() -> void:
 
 
 func _setup() -> void:
+	var layout: Variant = JSON.parse_string(FileAccess.get_file_as_string(LAYOUT)) if FileAccess.file_exists(LAYOUT) else null
+	if layout is Dictionary:
+		_layout_terrain = layout.get("terrain", [])
+		for s in _layout_terrain:
+			if s.get("type", "") in ["road", "path"] and s.get("points", []).size() >= 2:
+				_layout_roads.append({"id": StringName(s["id"]), "kind": StringName(s["type"]), "title": s.get("name", s["id"]), "ctrl": _v2s(s["points"])})
 	_noise.seed = 7
 	_noise.frequency = 0.0065
 	_noise.fractal_octaves = 3
@@ -741,6 +761,10 @@ func _baked_points() -> Array[Vector2]:
 	var out: Array[Vector2] = []
 	_collect(main, Transform3D.IDENTITY, 0, out)
 	main.free()
+	var layout: Variant = JSON.parse_string(FileAccess.get_file_as_string(LAYOUT)) if FileAccess.file_exists(LAYOUT) else null
+	if layout is Dictionary:  # the map editor's points: things put where they are on purpose
+		for pt in layout.get("points", []):
+			out.append(Vector2(float(pt["at"][0]), float(pt["at"][1])))
 	return out
 
 
@@ -790,7 +814,7 @@ func _carve_creek(h: PackedFloat32Array) -> void:
 func _lay_roads(h: PackedFloat32Array, ids: PackedByteArray, baked: Array[Vector2]) -> Dictionary:
 	var grid := _road_grid(h, baked)
 	var laid := {}
-	for spec in WorldMap.ROADS:
+	for spec in WorldMap.ROADS + _layout_roads:
 		var ctrl: Array = spec.get("ctrl", [])
 		if ctrl.is_empty():
 			var from: Vector2 = spec["from"]
@@ -891,7 +915,18 @@ func _write_roads(laid: Dictionary) -> void:
 		for p in pts:
 			nums.append("Vector2(%.2f, %.2f)" % [p.x, p.y])
 		lines.append("\t&\"%s\": [%s]," % [spec["id"], ", ".join(nums)])
+	for spec in _layout_roads:  # the map editor's
+		var nums := PackedStringArray()
+		for p in laid[spec["id"]]["pts"]:
+			nums.append("Vector2(%.2f, %.2f)" % [p.x, p.y])
+		lines.append("\t&\"%s\": [%s]," % [spec["id"], ", ".join(nums)])
 	lines.append("}")
+	lines.append("")
+	lines.append("## The map editor's roads and paths (data/layout/hearthvale.json), after WorldMap.ROADS.")
+	lines.append("const EXTRA := [")
+	for spec in _layout_roads:
+		lines.append("\t{\"id\": &\"%s\", \"kind\": &\"%s\", \"title\": %s}," % [spec["id"], spec["kind"], JSON.stringify(spec["title"])])
+	lines.append("]")
 	lines.append("")
 	var f := FileAccess.open(ROADS_OUT, FileAccess.WRITE)
 	f.store_string("\n".join(lines))
@@ -1059,3 +1094,77 @@ func _write_preview(path: String, h: PackedFloat32Array, ids: PackedByteArray) -
 			img.set_pixel(x, y, c * light)
 	img.save_png(path)
 	print("Preview written to ", path)
+
+
+# --- the map editor's terrain shapes ------------------------------------------------------------------
+
+static func _v2s(a: Array) -> Array[Vector2]:
+	var out: Array[Vector2] = []
+	for q in a:
+		out.append(Vector2(float(q[0]), float(q[1])))
+	return out
+
+
+## How much of shape `s` is at `w`: 1 inside, easing to 0 over `soft` m outside its edge.
+func _shape_weight(s: Dictionary, w: Vector2, soft: float) -> float:
+	var out := 0.0
+	if s.get("shape", "polygon") == "circle":
+		out = w.distance_to(Vector2(float(s["center"][0]), float(s["center"][1]))) - float(s["radius"])
+	else:
+		var poly := PackedVector2Array(_v2s(s["points"]))
+		if Geometry2D.is_point_in_polygon(w, poly):
+			return 1.0
+		out = INF
+		for i in poly.size():
+			out = minf(out, w.distance_to(Geometry2D.get_closest_point_to_segment(w, poly[i], poly[(i + 1) % poly.size()])))
+	return 1.0 if out <= 0.0 else 1.0 - smoothstep(0.0, maxf(soft, 0.01), out)
+
+
+## The box (in cells) a shape reaches, with its soft edge.
+func _shape_cells(s: Dictionary, soft: float) -> Rect2i:
+	var box: Rect2
+	if s.get("shape", "polygon") == "circle":
+		var r := float(s["radius"])
+		box = Rect2(Vector2(float(s["center"][0]), float(s["center"][1])) - Vector2(r, r), Vector2(r, r) * 2.0)
+	else:
+		var pts := _v2s(s["points"])
+		box = Rect2(pts[0], Vector2.ZERO)
+		for q in pts:
+			box = box.expand(q)
+	box = box.grow(soft + 1.0)
+	var a := Vector2i((box.position - Vector2(ORIGIN.x, ORIGIN.z)).floor())
+	var b := Vector2i((box.end - Vector2(ORIGIN.x, ORIGIN.z)).ceil())
+	return Rect2i(a.clamp(Vector2i.ZERO, Vector2i(SIZE, SIZE)), Vector2i.ZERO).expand(b.clamp(Vector2i.ZERO, Vector2i(SIZE, SIZE)))
+
+
+## Flats (the land eased to a height), hills and hollows (raised or lowered: a dome in a circle, a
+## plateau in a polygon) and ponds (dug to below the water: the bake adds their water), in order.
+func _layout_shapes(h: PackedFloat32Array) -> void:
+	for s in _layout_terrain:
+		var type: String = s.get("type", "")
+		if type not in ["flat", "raise", "pond"]:
+			continue
+		if (s.get("shape", "polygon") == "circle" and not s.has("center")) or (s.get("shape", "polygon") != "circle" and s.get("points", []).size() < 3):
+			continue
+		var soft := float(s.get("soft", SHAPE_SOFT))
+		var cells := _shape_cells(s, soft if type != "pond" else 10.0)
+		var dome: bool = type == "raise" and s.get("shape", "polygon") == "circle"
+		for y in range(cells.position.y, cells.end.y):
+			for x in range(cells.position.x, cells.end.x):
+				var w := _world(x, y)
+				var i := y * SIZE + x
+				match type:
+					"flat":
+						h[i] = lerpf(h[i], float(s.get("height", 0.0)), _shape_weight(s, w, soft))
+					"raise":
+						var k := 0.0
+						if dome:
+							var c := Vector2(float(s["center"][0]), float(s["center"][1]))
+							k = 1.0 - smoothstep(0.0, float(s["radius"]) + soft, w.distance_to(c))
+						else:
+							k = _shape_weight(s, w, soft)
+						h[i] += float(s.get("height", 5.0)) * k
+					"pond":
+						h[i] = _pond(w, h[i], {"center": Vector2(float(s["center"][0]), float(s["center"][1])),
+								"radius": float(s["radius"]), "depth": float(s.get("depth", 1.0))}, _shore)
+		print("terrain shape %s (%s) applied" % [s.get("id", "?"), type])

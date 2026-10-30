@@ -184,9 +184,12 @@ static func spline(ctrl: Array, loop: bool) -> PackedVector2Array:
 ## `half_width`.
 static func roads() -> Array[Dictionary]:
 	if _roads.is_empty():
-		var laid: Dictionary = load("res://scripts/world_roads.gd").LINES
-		for spec in ROADS:
-			var r := spec.duplicate()
+		var written: GDScript = load("res://scripts/world_roads.gd")
+		var laid: Dictionary = written.LINES
+		var specs: Array = ROADS.duplicate()
+		specs.append_array(written.get_script_constant_map().get("EXTRA", []))  # (the map editor's)
+		for spec in specs:
+			var r: Dictionary = spec.duplicate()
 			r["pts"] = PackedVector2Array(laid.get(spec["id"], []))
 			r["half_width"] = ROAD_HALF_WIDTH if spec["kind"] == &"road" else PATH_HALF_WIDTH
 			_roads.append(r)

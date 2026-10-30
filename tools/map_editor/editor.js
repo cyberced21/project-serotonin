@@ -673,9 +673,24 @@ const Editor = (() => {
 		return r;
 	};
 
+	/** The same JSON whatever order its keys are in. */
+	const canon = (v) => (Array.isArray(v) ? v.map(canon) : v && typeof v === "object"
+		? Object.fromEntries(Object.keys(v).sort().map((k) => [k, canon(v[k])])) : v);
+	const terrainChanged = async () => {
+		const applied = await get("/api/terrain_applied");
+		return JSON.stringify(canon(Array.isArray(applied) ? applied : [])) !== JSON.stringify(canon(clean().terrain || []));
+	};
+
 	E.bake = async () => {
 		if (!(await E.save())) return;
-		const r = await E.runGodot("/api/bake", "Baking (Godot is placing everything)");
+		let r;
+		if (await terrainChanged()) {
+			if (!confirm("The terrain shapes changed: regenerate the land (about a minute), redraw the map, then bake?")) { E.status("Saved; not baked."); return; }
+			r = await E.runGodot("/api/terrain", "Regenerating the land, then baking");
+			await E.reloadWorld();
+		} else {
+			r = await E.runGodot("/api/bake", "Baking (Godot is placing everything)");
+		}
 		E.baked = await get("/api/baked");
 		E.bakedStale = false;
 		refreshWarnings();
