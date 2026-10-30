@@ -90,8 +90,8 @@ const EAST_ROAD: Array[Vector2] = [Vector2(200, 126), Vector2(238, 120), Vector2
 ## The dirt path from the clearing to the green, as the terrain generator's valley follows it
 ## (ROADS has the line it was laid on). It crosses the creek just below the clearing's pond (the
 ## footbridge project).
-const VILLAGE_PATH: Array[Vector2] = [Vector2(56, 62), Vector2(72, 70), Vector2(88, 84), Vector2(102, 98),
-	Vector2(116, 114), Vector2(128, 128)]
+const VILLAGE_PATH: Array[Vector2] = [Vector2(56, 62), Vector2(72, 70), Vector2(86, 82), Vector2(96, 95),
+	Vector2(104, 104)]
 
 ## The creek (plans/world.md): from a spring under the north rim, through the clearing's pond, down
 ## the bowl's west side past the village and out through a gap in the rim into the lake. Its water

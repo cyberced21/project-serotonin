@@ -3,7 +3,7 @@ extends SceneTree
 ## the rim and each place, in a fresh Hearthvale with every building at its top tier, on a
 ## throwaway save root:
 ##   godot --path . --audio-driver Dummy --screen 1 --resolution 1280x720 -s res://tools/world_shots.gd -- --save-root=user://world_shots
-## Saves to docs/images/world/. (No game class names: an -s script compiles before the autoloads exist.)
+## Add `--only=green,farm_yard` for just those views. Saves to docs/images/world/. (No game class names: an -s script compiles before the autoloads exist.)
 
 const OUT := "res://docs/images/world"
 const SPEED := 10.0
@@ -59,7 +59,22 @@ func _run() -> void:
 		["stillwater", Vector3(70, 0, 312), Vector3(38, 0, 338)],
 		["east_road", Vector3(212, 0, 128), Vector3(320, 4, 130)],
 		["rim_east_down", Vector3(330, 0, 128), Vector3(128, 0, 128)],
+		# the village round its green (phases 4-5): the green from the town hall's door, the air,
+		# the farm yard, the chapel, the stores, the allotments
+		["green_from_hall", Vector3(129, 0, 104), Vector3(122, 0.5, 140)],
+		["village_air", Vector3(128, 70, 230), Vector3(130, 0, 140)],
+		["farm_yard", Vector3(158, 0, 176), Vector3(146, 1.5, 205)],
+		["chapel", Vector3(166, 0, 140), Vector3(180, 3, 150)],
+		["stores", Vector3(140, 0, 96), Vector3(160, 2, 82)],
+		["allotments", Vector3(98, 0, 182), Vector3(82, 0.5, 192)],
+		["washhouse", Vector3(92, 0, 140), Vector3(82, 1.5, 151)],
 	]
+	var only := ""
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--only="):
+			only = a.trim_prefix("--only=")
+	if only != "":
+		views = views.filter(func(v: Array) -> bool: return v[0] in only.split(","))
 	for v in views:
 		_view(v[1], v[2])
 		await _wait(1.2)

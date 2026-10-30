@@ -14,40 +14,42 @@ signal built(id: StringName, props: Array[Node3D])
 ## A bucket going down the well (for its sound): where.
 signal water_drawn(at: Vector3)
 
-## The noticeboard: [offset, facing].
-const NOTICEBOARD := [Vector2(9.0, -8.0), -0.84]
-## Hearthvale's square (its village isn't turned).
+## The noticeboard: [offset, facing]. Just off the ring west of the town hall's door, facing in.
+const NOTICEBOARD := [Vector2(-6.0, -27.5), 0.215]
+## The middle of Hearthvale's green (its village isn't turned). The pond lies just west of it.
 const HEARTHVALE_CENTER := Vector2(128, 128)
-## Each decoration's props: [model (models/village/props/<name>.glb), offset, facing].
+## Each decoration's props: [model (models/village/props/<name>.glb), offset, facing]. On the
+## green round its pond (plans/world-pass.md), each facing its middle.
 const PROPS := {
-	&"benches": [[&"bench", Vector2(4.0, -6.8), -0.53], [&"bench", Vector2(7.0, 4.0), -2.09]],
-	&"flower_boxes": [[&"planter", Vector2(-7.2, 0.3), 1.57], [&"planter", Vector2(-4.5, -7.5), 0.55],
-		[&"planter", Vector2(8.6, 3.4), -1.2], [&"planter", Vector2(-3.5, 7.6), 2.7]],
-	&"well": [[&"well", Vector2(-4.2, 1.8), 0.9]],
-	&"fountain": [[&"fountain", Vector2(0.0, 0.0), 0.0]],
-	# the doghouse (plans/dog.md), south of the square facing it: plain, then painted (it takes the
-	# plain one's place, his name on the sign), then a porch, a bowl and a blanket in front
-	&"kennel": [[&"doghouse", Vector2(-1.0, 13.0), 3.06]],
-	&"kennel_paint": [[&"doghouse_painted", Vector2(-1.0, 13.0), 3.06]],
-	# the trader's decorations (plans/market.md): baskets on the square's three lamp posts, a
+	&"benches": [[&"bench", Vector2(14.0, -12.0), -0.86], [&"bench", Vector2(13.0, 14.0), -2.39]],
+	&"flower_boxes": [[&"planter", Vector2(-16.0, -12.0), 0.93], [&"planter", Vector2(20.0, -6.0), -1.28],
+		[&"planter", Vector2(19.0, 12.0), -2.13], [&"planter", Vector2(6.0, 21.0), -2.86]],
+	&"well": [[&"well", Vector2(2.0, -13.0), 0.9]],
+	&"fountain": [[&"fountain", Vector2(11.0, 3.0), 0.0]],
+	# the doghouse (plans/dog.md), beside your home's door facing out: plain, then painted (it
+	# takes the plain one's place, his name on the sign), then a porch, a bowl and a blanket
+	&"kennel": [[&"doghouse", Vector2(-39.6, -17.3), 2.21]],
+	&"kennel_paint": [[&"doghouse_painted", Vector2(-39.6, -17.3), 2.21]],
+	# the trader's decorations (plans/market.md): baskets on the green's lamp posts, a
 	# weathervane, a painted cart by the market stall
-	&"deco_baskets": [[&"flower_basket", Vector2(-5.5, -6.5), 0.7], [&"flower_basket", Vector2(6.5, -5.5), -0.8],
-		[&"flower_basket", Vector2(2.0, 7.5), 3.0]],
-	&"deco_weathervane": [[&"weathervane", Vector2(-8.0, -6.0), 0.0]],
-	&"deco_cart": [[&"painted_cart", Vector2(-11.2, 3.6), 2.2]],
-	# Rosa's terrace (plans/tavern.md), against her bakery's south wall, facing the path
-	&"terrace": [[&"terrace", Vector2(-13.2, -7.4), 0.0]],
-	&"kennel_porch": [[&"doghouse_porch", Vector2(-0.96, 11.95), 3.06], [&"dog_bowl", Vector2(0.4, 11.5), 0.0],
-		[&"dog_blanket", Vector2(-1.9, 11.6), 2.6]],
+	&"deco_baskets": [[&"flower_basket", Vector2(-4.0, -18.0), 0.7], [&"flower_basket", Vector2(18.0, -8.5), -0.8],
+		[&"flower_basket", Vector2(17.0, 16.0), 3.0], [&"flower_basket", Vector2(-3.0, 20.0), 2.2]],
+	&"deco_weathervane": [[&"weathervane", Vector2(-10.0, -16.0), 0.0]],
+	&"deco_cart": [[&"painted_cart", Vector2(19.0, -2.0), -1.47]],
+	# Rosa's terrace (plans/tavern.md), against her bakery's side, facing the lane
+	&"terrace": [[&"terrace", Vector2(24.6, 34.7), 2.05]],
+	&"kennel_porch": [[&"doghouse_porch", Vector2(-38.79, -17.97), 2.21], [&"dog_bowl", Vector2(-37.55, -17.25), -0.85],
+		[&"dog_blanket", Vector2(-39.15, -18.9), 1.75]],
 }
-## The market stall (plans/market.md): west of the square, its counter facing it.
-const MARKET := [Vector2(-11.0, -2.0), 1.57]
+## The market stall (plans/market.md): on the green's east edge by the road east, its counter
+## facing the middle.
+const MARKET := [Vector2(20.0, 9.0), -1.99]
 ## Where your dog sleeps at night (Dog asks kennel_door()): in the doghouse's doorway, facing out.
-const KENNEL_DOOR := [Vector2(-0.98, 12.55), 3.06]
-## Bunting: strings between the square's three lamp posts (their offsets, as the village has
-## them), hung from just under the lamps.
-const BUNTING := [[Vector2(-5.5, -6.5), Vector2(6.5, -5.5)], [Vector2(6.5, -5.5), Vector2(2.0, 7.5)],
-	[Vector2(2.0, 7.5), Vector2(-5.5, -6.5)]]
+const KENNEL_DOOR := [Vector2(-39.25, -17.58), 2.21]
+## Bunting: strings between the green's lamp posts (their offsets, as the village has them), hung
+## from just under the lamps, round its east side.
+const BUNTING := [[Vector2(-4.0, -18.0), Vector2(18.0, -8.5)], [Vector2(18.0, -8.5), Vector2(17.0, 16.0)],
+	[Vector2(17.0, 16.0), Vector2(-3.0, 20.0)]]
 const BUNTING_HEIGHT := 2.3
 const TOK := preload("res://audio/ui/tok.wav")
 ## Sounds (audio/projects/SOURCES.md): a hammer on each blow, the well's crank and bucket, the
@@ -64,7 +66,7 @@ const FOUNTAIN_DB := -14.0
 ## anyone near (or if they don't get there within BUILDER_PATIENCE), the pieces pop in alone.
 const BUILDER_RANGE := 60.0
 const BUILDER_STAND := 1.6
-const BUILDER_PATIENCE := 20.0
+const BUILDER_PATIENCE := 45.0  # (the green is wide: the nearest free villager may be across it)
 const BLOW := 0.55
 const POP := 0.3
 ## The well: a villager within LIFE_RANGE every WELL_GAP seconds [min, max] by day (not from this

@@ -6,45 +6,42 @@ extends Node3D
 ## props and the pond. Points are world XZ (Hearthvale's village isn't turned); heights come from
 ## the ground where they walk. tools/village_layout.gd + tools/plot_village.py draw it from above.
 
-## The points. Round the square at about 4.6 m (clear of the fountain, the well and the benches),
-## then out along each lane.
+## The points (plans/world-pass.md, the pond green): a ring round the green and its pond, then a
+## short lane in to each door; the path from the clearing joins the ring at the north-west, past
+## your home.
 const POINTS := {
-	&"sq_n": Vector2(128, 123.2), &"sq_ne": Vector2(131.6, 124.6), &"sq_e": Vector2(132.8, 128.5),
-	&"sq_se": Vector2(131.4, 131.8), &"sq_s": Vector2(128, 133), &"sq_sw": Vector2(125.8, 132.2),
-	&"sq_nw": Vector2(124.6, 124.4),
-	# west, through the gap between the benches where the path from the clearing comes in
-	&"w_gap": Vector2(121.3, 126.85), &"market": Vector2(118.8, 126.6),
-	&"th_door": Vector2(135.6, 128.8),
-	&"wc_lane": Vector2(126.8, 120),
-	&"bk_bend": Vector2(121.2, 123), &"bk_lane": Vector2(120.6, 119.2), &"bk_front": Vector2(118.6, 115.4),
-	&"fi_lane": Vector2(122.2, 135.2), &"fi_side": Vector2(120.8, 140), &"fi_corner": Vector2(120.6, 145),
-	&"sm_lane": Vector2(133.4, 136.6), &"sm_front": Vector2(135, 140.8),
-	&"pr_lane": Vector2(130.4, 139.8), &"pr_front": Vector2(132.8, 145.4),
-	&"nb_front": Vector2(136, 123.4),
-	# Rosa's terrace, in front of it and round toward the lane to the bakery
-	&"terrace": Vector2(115.4, 122.4), &"tr_east": Vector2(119, 122.2),
-	# the tavern (plans/tavern.md): across from the benches, in at its door, the middle of the room
-	&"tv_east": Vector2(119.4, 133.6), &"tv_front": Vector2(113.6, 134), &"tv_in": Vector2(111.6, 134),
-	&"tv_mid": Vector2(108.8, 133.2),
-	# out to your home on the west rim (plans/home.md): between the terrace and the tavern, round
-	# the north of the tavern, along your home's north side, to its front (it faces west)
-	&"hm_east": Vector2(108, 126.6), &"hm_bend": Vector2(102, 125), &"hm_north": Vector2(92, 124), &"hm_front": Vector2(83.5, 128),
+	&"sq_n": Vector2(131.5, 102.7), &"sq_nne": Vector2(140.8, 105.9), &"sq_ne": Vector2(150.1, 115.2),
+	&"sq_e": Vector2(153.5, 128.0), &"sq_ese": Vector2(150.1, 140.8), &"sq_se": Vector2(140.8, 150.1),
+	&"sq_s": Vector2(128.0, 153.5), &"sq_ssw": Vector2(115.2, 150.1), &"sq_sw": Vector2(105.9, 140.8),
+	&"sq_w": Vector2(102.5, 128.0), &"sq_wnw": Vector2(105.9, 115.2), &"sq_nw": Vector2(115.2, 105.9),
+	&"th_front": Vector2(128.8, 102.8), &"wc_front": Vector2(109.9, 93.8), &"sm_front": Vector2(161.0, 97.9),
+	&"bk_front": Vector2(145.4, 161.0), &"pr_front": Vector2(102.6, 166.2),
+	&"nb_front": Vector2(122.4, 102.3),
+	# the fisher's hut on the pond's north bank (its dock in front): round to its side door
+	&"fi_side": Vector2(124.6, 123.0),
+	# the market stall, its counter facing the middle: in front of it, by way of the green
+	&"mk_way": Vector2(144.0, 131.0), &"market": Vector2(146.4, 136.3),
+	# a footpath across the green east of the pond, north to south (so nobody walks all round)
+	&"gr_n": Vector2(134.0, 113.0), &"gr_mid": Vector2(134.0, 124.0), &"gr_s": Vector2(133.0, 141.0),
+	# Rosa's terrace, beside the bakery
+	&"terrace": Vector2(153.9, 161.3), &"tr_east": Vector2(152.0, 158.2),
+	# the tavern (plans/tavern.md): its front, in at its door, the middle of the room
+	&"tv_front": Vector2(155.2, 114.5), &"tv_in": Vector2(158.2, 113.2), &"tv_mid": Vector2(161.1, 112.7),
+	# out to your home (plans/home.md) along the path from the clearing
+	&"path_in": Vector2(104.0, 104.0), &"hm_lane": Vector2(94.0, 101.0), &"hm_front": Vector2(86.4, 107.2),
 }
 const LINKS := [
-	[&"sq_n", &"sq_ne"], [&"sq_ne", &"sq_e"], [&"sq_e", &"sq_se"], [&"sq_se", &"sq_s"],
-	[&"sq_s", &"sq_sw"], [&"sq_sw", &"sq_nw"], [&"sq_nw", &"sq_n"],
-	[&"sq_nw", &"w_gap"], [&"w_gap", &"market"],
-	[&"sq_e", &"th_door"],
-	[&"sq_n", &"wc_lane"],
-	[&"sq_nw", &"bk_bend"], [&"bk_bend", &"bk_lane"], [&"bk_lane", &"bk_front"],
-	[&"sq_sw", &"fi_lane"], [&"fi_lane", &"fi_side"], [&"fi_side", &"fi_corner"],
-	[&"sq_se", &"sm_lane"], [&"sm_lane", &"sm_front"],
-	[&"sq_s", &"pr_lane"], [&"pr_lane", &"pr_front"],
-	[&"sq_ne", &"nb_front"],
-	[&"sq_sw", &"tv_east"], [&"fi_lane", &"tv_east"], [&"tv_east", &"tv_front"], [&"tv_front", &"tv_in"],
-	[&"tv_in", &"tv_mid"], [&"tv_front", &"terrace"],
-	[&"terrace", &"tr_east"], [&"tr_east", &"bk_bend"], [&"tr_east", &"bk_lane"],
-	[&"terrace", &"hm_east"], [&"hm_east", &"hm_bend"], [&"hm_bend", &"hm_north"], [&"hm_north", &"hm_front"],
+	[&"sq_n", &"sq_nne"], [&"sq_nne", &"sq_ne"], [&"sq_ne", &"sq_e"], [&"sq_e", &"sq_ese"],
+	[&"sq_ese", &"sq_se"], [&"sq_se", &"sq_s"], [&"sq_s", &"sq_ssw"], [&"sq_ssw", &"sq_sw"],
+	[&"sq_sw", &"sq_w"], [&"sq_w", &"sq_wnw"], [&"sq_wnw", &"sq_nw"], [&"sq_nw", &"sq_n"],
+	[&"sq_n", &"th_front"], [&"sq_nw", &"wc_front"], [&"sq_ne", &"sm_front"], [&"sq_nne", &"sm_front"], [&"sq_n", &"fi_side"],
+	[&"sq_se", &"bk_front"], [&"sq_ssw", &"pr_front"], [&"sq_n", &"nb_front"], [&"sq_nw", &"nb_front"],
+	[&"sq_e", &"mk_way"], [&"mk_way", &"market"],
+	[&"sq_n", &"gr_n"], [&"sq_nne", &"gr_n"], [&"gr_n", &"gr_mid"], [&"gr_mid", &"gr_s"], [&"gr_mid", &"mk_way"],
+	[&"gr_mid", &"fi_side"], [&"gr_s", &"sq_s"], [&"gr_s", &"sq_se"],
+	[&"terrace", &"tr_east"], [&"tr_east", &"bk_front"],
+	[&"sq_ne", &"tv_front"], [&"tv_front", &"tv_in"], [&"tv_in", &"tv_mid"],
+	[&"sq_nw", &"path_in"], [&"path_in", &"hm_lane"], [&"hm_lane", &"hm_front"],
 ]
 ## Somewhere closer than this is walked to straight, when nothing's in the way.
 const DIRECT := 8.0

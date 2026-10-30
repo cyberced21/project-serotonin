@@ -31,7 +31,7 @@ func _run() -> void:
 	print("%d projects, %d of them road lamps" % [all.size(), roads.size()])
 	for p in all:
 		print("  %-48s hall %d  %s" % [p["title"], p["hall"], p["cost"]])
-	_check(all.size() == 9 + roads.size() and roads.size() >= 5, "six decorations, the market stall, the bakery terrace, the mine's shoring and a road project per unlit stretch")
+	_check(all.size() == 12 + roads.size() and roads.size() >= 5, "six decorations, the market stall, the bakery terrace, the mine's shoring, three fixtures and a road project per unlit stretch")
 	_check(not projects.call("can_pay", &"benches"), "no goods, no benches")
 	inventory.call("add", &"wood", 40)
 	_check(projects.call("pay", &"benches") and projects.call("is_done", &"benches"), "paid for, the benches are done")
@@ -66,8 +66,8 @@ func _check_board(world: String, projects: Node) -> void:
 		return
 	var center: Vector2 = decor.get("center")
 	var off := Vector2(board.global_position.x, board.global_position.z).distance_to(center)
-	print("%s: the board stands %.1f m from the middle of the square, prompt: %s" % [world, off, board.call("prompt")])
-	_check(off > 7.0 and off < 16.0, "%s: by the square, not on it" % world)
+	print("%s: the board stands %.1f m from the middle of the green, prompt: %s" % [world, off, board.call("prompt")])
+	_check(off > 22.0 and off < 34.0, "%s: by the green, not on it" % world)
 	var player := get_first_node_in_group("player") as Node3D
 	player.global_position = board.global_position + board.global_basis.z * 2.0 + Vector3.UP
 	await _frames(3)

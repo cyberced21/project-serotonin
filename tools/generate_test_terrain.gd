@@ -95,7 +95,7 @@ const WATER_LEVEL := -0.15     # keep in sync with the ponds' WaterBody nodes in
 ## the water line (wading depth — no swimming). Keep in sync with the ponds in main.tscn.
 const PONDS := [
 	{"center": Vector2(66, 86), "radius": 9.0, "depth": 0.95},   # the clearing's pond
-	{"center": Vector2(116, 152), "radius": 7.0, "depth": 0.75},  # the village pond
+	{"center": Vector2(120, 132), "radius": 9.0, "depth": 0.75},  # the village pond, on the green
 	{"center": Vector2(38, 340), "radius": 14.0, "depth": 1.35},  # the lake
 ]
 ## The lake's flat basin beyond the south rim (hills ease up beyond radius over the ramp).
@@ -108,16 +108,28 @@ const VILLAGE_RAMP := 50.0
 const FIELD_BASE := WorldMap.BOWL_RIM_HEIGHT * 0.85
 ## Control-map texture id that marks the path (see shaders/terrain.gdshader, footsteps.gd).
 const PATH_TEXTURE := WorldMap.TEX_PATH
-## The path from the clearing over the pass into the village square.
+## The path from the clearing over the pass to the green's ring.
 const PATH := WorldMap.VILLAGE_PATH
-## Lanes from the square to each building's door (see the scenes in scenes/village/).
+## The ring round the village green (plans/world-pass.md, the pond green) and its lanes: out to
+## where each road starts, and in to each door (as scripts/village_paths.gd walks them).
+const RING_RADIUS := 25.5
+const RING_HALF_WIDTH := 1.3
 const LANES := [
-	[Vector2(128, 128), Vector2(135, 128)],                   # town hall
-	[Vector2(128, 128), Vector2(126, 119)],                    # woodcutter
-	[Vector2(128, 128), Vector2(133, 134), Vector2(136, 137)], # smithy
-	[Vector2(128, 128), Vector2(122, 134), Vector2(118, 138)],   # fisher
+	[Vector2(138, 104), Vector2(134, 80), Vector2(128, 58)],   # north, the road to the Pinewood
+	[Vector2(153, 127), Vector2(176, 127), Vector2(200, 126)], # east, the road east
+	[Vector2(146, 146), Vector2(162, 162), Vector2(178, 178)], # south-east, the road to Goldmeadow
+	[Vector2(127, 153), Vector2(122, 176), Vector2(118, 198)], # south, the road to the lake
+	[Vector2(103, 131), Vector2(80, 132), Vector2(58, 132)],   # west, the road to the quarry
+	[Vector2(131.5, 102.7), Vector2(128.8, 102.8)],           # town hall
+	[Vector2(115.2, 105.9), Vector2(109.9, 93.8)],            # woodcutter
+	[Vector2(150.1, 115.2), Vector2(161.0, 97.9)],            # smithy
+	[Vector2(150.1, 115.2), Vector2(155.2, 114.5)],           # tavern
+	[Vector2(131.5, 102.7), Vector2(124.6, 123.0)],           # the fisher's, on the pond's north bank
+	[Vector2(131.5, 102.7), Vector2(134.0, 113.0), Vector2(134.0, 124.0), Vector2(133.0, 141.0), Vector2(128.0, 153.5)], # across the green
+	[Vector2(140.8, 150.1), Vector2(145.4, 161.0), Vector2(152.0, 158.2), Vector2(153.9, 161.3)], # bakery, terrace
+	[Vector2(115.2, 150.1), Vector2(102.6, 166.2)],           # Edda's
+	[Vector2(104.0, 104.0), Vector2(94.0, 101.0), Vector2(86.4, 107.2)], # your home
 ]
-const SQUARE_RADIUS := 7.5
 const PATH_HALF_WIDTH := 1.6
 const LANE_HALF_WIDTH := 1.0
 
@@ -916,7 +928,7 @@ func _sample(h: PackedFloat32Array, w: Vector2) -> float:
 
 
 func _on_path(w: Vector2) -> bool:
-	if w.distance_to(VILLAGE_CENTER) < SQUARE_RADIUS:
+	if absf(w.distance_to(VILLAGE_CENTER) - RING_RADIUS) < RING_HALF_WIDTH:
 		return true
 	for lane in LANES:
 		if _polyline_distance(w, lane) < LANE_HALF_WIDTH:

@@ -24,7 +24,7 @@ transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -2.45, 0, 2.9)
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -2.65, 0, 4.5)
 
 [node name="Bench" type="Marker3D" parent="Spots"]
-transform = Transform3D(0.0000, 0, -1.0000, 0, 1, 0, 1.0000, 0, 0.0000, -4.45, 0, 12)
+transform = Transform3D(-0.3310, 0, -0.9436, 0, 1, 0, 0.9436, 0, -0.3310, -20.41, 0, 41.27)
 
 [node name="Villager" type="AnimatableBody3D" parent="."]
 script = ExtResource("3_villager")

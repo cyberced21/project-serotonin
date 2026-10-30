@@ -64,6 +64,34 @@
 [ext_resource type="Script" path="res://scripts/village_paths.gd" id="97_village_paths"]
 [ext_resource type="PackedScene" path="res://scenes/village/tavern.tscn" id="98_tavern"]
 [ext_resource type="PackedScene" path="res://scenes/village/home.tscn" id="99_home"]
+[ext_resource type="Script" path="res://scripts/fixture.gd" id="fx_script"]
+[ext_resource type="PackedScene" path="res://models/village/fx_barn.gltf" id="fx_barn"]
+[ext_resource type="PackedScene" path="res://models/village/fx_cart_shed.gltf" id="fx_cart_shed"]
+[ext_resource type="PackedScene" path="res://models/village/fx_chapel.gltf" id="fx_chapel"]
+[ext_resource type="PackedScene" path="res://models/village/fx_dovecote.gltf" id="fx_dovecote"]
+[ext_resource type="PackedScene" path="res://models/village/fx_empty_cottage.gltf" id="fx_empty_cottage"]
+[ext_resource type="PackedScene" path="res://models/village/fx_granary.gltf" id="fx_granary"]
+[ext_resource type="PackedScene" path="res://models/village/fx_ore_store.gltf" id="fx_ore_store"]
+[ext_resource type="PackedScene" path="res://models/village/fx_pump.gltf" id="fx_pump"]
+[ext_resource type="PackedScene" path="res://models/village/fx_ruined_cottage.gltf" id="fx_ruined_cottage"]
+[ext_resource type="PackedScene" path="res://models/village/fx_stable.gltf" id="fx_stable"]
+[ext_resource type="PackedScene" path="res://models/village/fx_storehouse.gltf" id="fx_storehouse"]
+[ext_resource type="PackedScene" path="res://models/village/fx_timber_yard.gltf" id="fx_timber_yard"]
+[ext_resource type="PackedScene" path="res://models/village/fx_washhouse.gltf" id="fx_washhouse"]
+[ext_resource type="PackedScene" path="res://models/village/fx_woodshed.gltf" id="fx_woodshed"]
+[ext_resource type="PackedScene" path="res://models/country/bush_with_flowers.glb" id="yd_bush_with_flowers"]
+[ext_resource type="PackedScene" path="res://models/country/cabbage.glb" id="yd_cabbage"]
+[ext_resource type="PackedScene" path="res://models/field/cart.glb" id="yd_cart"]
+[ext_resource type="PackedScene" path="res://models/country/crops.glb" id="yd_crops"]
+[ext_resource type="PackedScene" path="res://models/country/fence.glb" id="yd_fence"]
+[ext_resource type="PackedScene" path="res://models/country/flower_group.glb" id="yd_flower_group"]
+[ext_resource type="PackedScene" path="res://models/country/flowers_2.glb" id="yd_flowers_2"]
+[ext_resource type="PackedScene" path="res://models/field/hay_round.glb" id="yd_hay_round"]
+[ext_resource type="PackedScene" path="res://models/field/hay_stack.glb" id="yd_hay_stack"]
+[ext_resource type="PackedScene" path="res://models/country/hedge.glb" id="yd_hedge"]
+[ext_resource type="PackedScene" path="res://models/country/pumpkin.glb" id="yd_pumpkin"]
+[ext_resource type="PackedScene" path="res://models/country/turnip.glb" id="yd_turnip"]
+[ext_resource type="PackedScene" path="res://models/country/wheat.glb" id="yd_wheat"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_water"]
 render_priority = 0
@@ -325,7 +353,7 @@ rotation = Vector3(0, 3.93, 0)
 
 [node name="Tree6" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"tree_6"
-position = Vector3(55.5, -0.03, 67)
+position = Vector3(55.5, -0.04, 67)
 rotation = Vector3(0, 0.41, 0)
 
 [node name="Tree7" parent="Nodes" instance=ExtResource("3_tree")]
@@ -376,83 +404,83 @@ rotation = Vector3(0, 4.01, 0)
 
 [node name="VillageTree1" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"village_tree_1"
-position = Vector3(116, 0, 102)
+position = Vector3(176, 0.01, 66)
 rotation = Vector3(0, 0.7, 0)
 
 [node name="VillageTree2" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"village_tree_2"
-position = Vector3(121, 0, 99)
+position = Vector3(183, 0.01, 62)
 rotation = Vector3(0, 2.1, 0)
 
 [node name="VillageTree3" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"village_tree_3"
-position = Vector3(128, 0, 100)
+position = Vector3(189, 0, 69)
 rotation = Vector3(0, 4.4, 0)
 
 [node name="VillageTree4" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"village_tree_4"
-position = Vector3(134, 0, 101)
+position = Vector3(180, 0.02, 74)
 rotation = Vector3(0, 1.2, 0)
 
 [node name="VillageTree5" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"village_tree_5"
-position = Vector3(139, 0, 104)
+position = Vector3(187, 0.04, 77)
 rotation = Vector3(0, 5.5, 0)
 
 [node name="VillageTree6" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"village_tree_6"
-position = Vector3(112, 0, 107)
+position = Vector3(174, 0.01, 58)
 rotation = Vector3(0, 3.0, 0)
 
 [node name="VillageRock1" parent="Nodes" instance=ExtResource("4_rock")]
 save_id = &"village_rock_1"
-position = Vector3(151, 0, 137)
+position = Vector3(66, 0, 182)
 rotation = Vector3(0, 1.1, 0)
 
 [node name="VillageRock2" parent="Nodes" instance=ExtResource("4_rock")]
 save_id = &"village_rock_2"
-position = Vector3(154, 0.01, 143)
+position = Vector3(72, 0, 188)
 rotation = Vector3(0, 3.8, 0)
 
 [node name="VillageRock3" parent="Nodes" instance=ExtResource("4_rock")]
 save_id = &"village_rock_3"
-position = Vector3(150, 0.02, 149)
+position = Vector3(62, 0.04, 190)
 rotation = Vector3(0, 5.2, 0)
 
 [node name="VillageRock4" parent="Nodes" instance=ExtResource("4_rock")]
 save_id = &"village_rock_4"
-position = Vector3(155.5, 0.02, 149.5)
+position = Vector3(75, 0, 179)
 rotation = Vector3(0, 0.4, 0)
 required_level = 10
 
 [node name="Oak1" parent="Nodes" instance=ExtResource("25_oak")]
 save_id = &"oak_1"
-position = Vector3(108, 0, 112)
+position = Vector3(194, 0.04, 62)
 rotation = Vector3(0, 0.9, 0)
 
 [node name="Oak2" parent="Nodes" instance=ExtResource("25_oak")]
 save_id = &"oak_2"
-position = Vector3(144.5, 0, 108)
+position = Vector3(172, 0.03, 79)
 rotation = Vector3(0, 2.6, 0)
 
 [node name="Oak3" parent="Nodes" instance=ExtResource("25_oak")]
 save_id = &"oak_3"
-position = Vector3(118, 0, 95.5)
+position = Vector3(194, 0.04, 74)
 rotation = Vector3(0, 4.8, 0)
 
 [node name="IronRock1" parent="Nodes" instance=ExtResource("26_iron")]
 save_id = &"iron_rock_1"
-position = Vector3(157, 0, 135.5)
+position = Vector3(68, 0.03, 196)
 rotation = Vector3(0, 0.5, 0)
 
 [node name="IronRock2" parent="Nodes" instance=ExtResource("26_iron")]
 save_id = &"iron_rock_2"
-position = Vector3(159, 0.01, 144)
+position = Vector3(78, 0, 194)
 rotation = Vector3(0, 2.2, 0)
 
 [node name="IronRock3" parent="Nodes" instance=ExtResource("26_iron")]
 save_id = &"iron_rock_3"
-position = Vector3(152.5, 0.03, 153.5)
+position = Vector3(59, 0, 181)
 rotation = Vector3(0, 4.1, 0)
 
 [node name="Birch1" parent="Nodes" instance=ExtResource("50_birch")]
@@ -512,12 +540,12 @@ rotation = Vector3(0, 0.8, 0)
 
 [node name="CoalRock2" parent="Nodes" instance=ExtResource("52_coal")]
 save_id = &"coal_rock_2"
-position = Vector3(84, 0, 112)
+position = Vector3(82, 0, 185)
 rotation = Vector3(0, 2.6, 0)
 
 [node name="CoalRock3" parent="Nodes" instance=ExtResource("52_coal")]
 save_id = &"coal_rock_3"
-position = Vector3(90, 0, 82)
+position = Vector3(70, 0.01, 172)
 rotation = Vector3(0, 4.4, 0)
 
 [node name="GoldRock1" parent="Nodes" instance=ExtResource("53_gold")]
@@ -536,7 +564,7 @@ position = Vector3(-62, 46.93, -34)
 rotation = Vector3(0, 5.3, 0)
 
 [node name="VillagePond" type="Area3D" parent="."]
-position = Vector3(116, 0, 152)
+position = Vector3(120, 0, 132)
 collision_layer = 0
 collision_mask = 0
 script = ExtResource("7_water")
@@ -590,62 +618,58 @@ mesh = SubResource("PlaneMesh_lake")
 [node name="Village" type="Node3D" parent="."]
 
 [node name="TownHall" parent="Village" instance=ExtResource("14_town_hall")]
-position = Vector3(142, 0, 128)
-rotation = Vector3(0, -1.5708, 0)
+transform = Transform3D(1.0000, 0, 0.0000, 0, 1, 0, -0.0000, 0, 1.0000, 128, 0, 95)
 
 [node name="Woodcutter" parent="Village" instance=ExtResource("15_woodcutter")]
-position = Vector3(126, 0, 113)
+transform = Transform3D(0.8762, 0, 0.4819, 0, 1, 0, -0.4819, 0, 0.8762, 106, 0, 88)
 
 [node name="Smithy" parent="Village" instance=ExtResource("16_smithy")]
-position = Vector3(141, 0, 143)
-rotation = Vector3(0, -2.4, 0)
+transform = Transform3D(0.7270, 0, -0.6866, 0, 1, 0, 0.6866, 0, 0.7270, 162, 0, 92)
 
 [node name="Fisher" parent="Village" instance=ExtResource("17_fisher")]
-position = Vector3(116, 0, 142)
+transform = Transform3D(1.0000, 0, 0.0000, 0, 1, 0, -0.0000, 0, 1.0000, 120, 0, 120)
 
 [node name="BakerCottage" parent="Village" instance=ExtResource("55_baker")]
-position = Vector3(114, 0, 115)
-rotation = Vector3(0, 1.5708, 0)
+transform = Transform3D(-0.8849, 0, -0.4658, 0, 1, 0, 0.4658, 0, -0.8849, 148, 0, 166)
 
 [node name="ProspectorCottage" parent="Village" instance=ExtResource("56_prospector")]
-position = Vector3(134, 0, 151)
-rotation = Vector3(0, 3.1416, 0)
+transform = Transform3D(-0.8321, 0, 0.5547, 0, 1, 0, -0.5547, 0, -0.8321, 100, 0, 170)
 
 [node name="Tavern" parent="Village" instance=ExtResource("98_tavern")]
-position = Vector3(109, 0, 133)
-rotation = Vector3(0, 1.5708, 0)
+transform = Transform3D(0.4138, 0, -0.9104, 0, 1, 0, 0.9104, 0, 0.4138, 161, 0, 113)
 
 [node name="Home" parent="Village" instance=ExtResource("99_home")]
-position = Vector3(92, 0, 132)
-rotation = Vector3(0, -1.5708, 0)
+transform = Transform3D(-0.6000, 0, 0.8000, 0, 1, 0, -0.8000, 0, -0.6000, 80, 0, 112)
 
 [node name="Props" type="Node3D" parent="Village"]
 
 [node name="BenchA" type="StaticBody3D" parent="Village/Props"]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 121.5, 0, 125)
+transform = Transform3D(0.1649, 0, -0.9863, 0, 1, 0, 0.9863, 0, 0.1649, 108, 0, 134)
 script = ExtResource("18_prop")
 model = ExtResource("19_bench")
 
 [node name="BenchB" type="StaticBody3D" parent="Village/Props"]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 121.5, 0, 131.5)
+transform = Transform3D(0.7896, 0, 0.6136, 0, 1, 0, -0.6136, 0, 0.7896, 127, 0, 141)
 script = ExtResource("18_prop")
 model = ExtResource("19_bench")
 
 [node name="Lamp1" type="StaticBody3D" parent="Village/Props"]
-position = Vector3(122.5, 0, 121.5)
-rotation = Vector3(0, 2.4, 0)
+transform = Transform3D(-0.7374, 0, 0.6755, 0, 1, 0, -0.6755, 0, -0.7374, 124, 0, 110)
 script = ExtResource("18_prop")
 model = ExtResource("20_lamp")
 
 [node name="Lamp2" type="StaticBody3D" parent="Village/Props"]
-position = Vector3(134.5, 0, 122.5)
-rotation = Vector3(0, 0.8, 0)
+transform = Transform3D(0.6967, 0, 0.7174, 0, 1, 0, -0.7174, 0, 0.6967, 146, 0, 119.5)
 script = ExtResource("18_prop")
 model = ExtResource("20_lamp")
 
 [node name="Lamp3" type="StaticBody3D" parent="Village/Props"]
-position = Vector3(130, 0, 135.5)
-rotation = Vector3(0, -1.6, 0)
+transform = Transform3D(-0.0292, 0, -0.9996, 0, 1, 0, 0.9996, 0, -0.0292, 145, 0, 144)
+script = ExtResource("18_prop")
+model = ExtResource("20_lamp")
+
+[node name="Lamp4" type="StaticBody3D" parent="Village/Props"]
+transform = Transform3D(0.9211, 0, 0.3894, 0, 1, 0, -0.3894, 0, 0.9211, 125, 0, 148)
 script = ExtResource("18_prop")
 model = ExtResource("20_lamp")
 
@@ -656,35 +680,636 @@ script = ExtResource("18_prop")
 model = ExtResource("23_signpost")
 
 [node name="Signpost" type="StaticBody3D" parent="Village/Props"]
-position = Vector3(106.5, 0, 119)
-rotation = Vector3(0, 0.3, 0)
+transform = Transform3D(0.6967, 0, -0.7174, 0, 1, 0, 0.7174, 0, 0.6967, 102, 0, 107)
 script = ExtResource("18_prop")
 model = ExtResource("23_signpost")
 
 [node name="Barrel1" type="StaticBody3D" parent="Village/Props"]
-position = Vector3(145.5, 0, 147.5)
+transform = Transform3D(-0.0721, 0, 0.9974, 0, 1, 0, -0.9974, 0, -0.0721, 166.2, 0, 87.2)
 script = ExtResource("18_prop")
 model = ExtResource("21_barrel")
 
 [node name="Barrel2" type="StaticBody3D" parent="Village/Props"]
-position = Vector3(146.2, 0, 146.6)
-rotation = Vector3(0, 1.0, 0)
+transform = Transform3D(-0.8783, 0, 0.4782, 0, 1, 0, -0.4782, 0, -0.8783, 165.2, 0, 86.6)
 script = ExtResource("18_prop")
 model = ExtResource("21_barrel")
 
 [node name="Crates1" type="StaticBody3D" parent="Village/Props"]
-position = Vector3(112.5, 0, 139.5)
-rotation = Vector3(0, 0.5, 0)
+transform = Transform3D(0.8776, 0, 0.4794, 0, 1, 0, -0.4794, 0, 0.8776, 116.5, 0, 117.5)
 script = ExtResource("18_prop")
 model = ExtResource("22_crates")
 
 [node name="Crates2" type="StaticBody3D" parent="Village/Props"]
-position = Vector3(136.5, 0, 119.5)
-rotation = Vector3(0, -0.4, 0)
+transform = Transform3D(0.3892, 0, 0.9211, 0, 1, 0, -0.9211, 0, 0.3892, 121.5, 0, 92)
 script = ExtResource("18_prop")
 model = ExtResource("22_crates")
 
 [node name="Pinewood" parent="." instance=ExtResource("57_pinewood")]
+
+[node name="Fixtures" type="Node3D" parent="Village"]
+
+[node name="Barn" type="Node3D" parent="Village/Fixtures"]
+transform = Transform3D(-1.0000, 0, 0.0000, 0, 1, 0, -0.0000, 0, -1.0000, 150, 0, 199)
+script = ExtResource("fx_script")
+model = ExtResource("fx_barn")
+project = &"restore_barn"
+
+[node name="Granary" type="Node3D" parent="Village/Fixtures"]
+transform = Transform3D(-0.6616, 0, -0.7498, 0, 1, 0, 0.7498, 0, -0.6616, 167, 0, 205)
+script = ExtResource("fx_script")
+model = ExtResource("fx_granary")
+project = &"mend_granary"
+doors_open = false
+
+[node name="CartShed" type="Node3D" parent="Village/Fixtures"]
+transform = Transform3D(0.0555, 0, -0.9985, 0, 1, 0, 0.9985, 0, 0.0555, 168, 0, 189)
+script = ExtResource("fx_script")
+model = ExtResource("fx_cart_shed")
+
+[node name="Stable" type="Node3D" parent="Village/Fixtures"]
+transform = Transform3D(0.0000, 0, 1.0000, 0, 1, 0, -1.0000, 0, 0.0000, 131, 0, 190)
+script = ExtResource("fx_script")
+model = ExtResource("fx_stable")
+
+[node name="Storehouse" type="Node3D" parent="Village/Fixtures"]
+transform = Transform3D(0.7593, 0, -0.6508, 0, 1, 0, 0.6508, 0, 0.7593, 150, 0, 76)
+script = ExtResource("fx_script")
+model = ExtResource("fx_storehouse")
+
+[node name="TimberYard" type="Node3D" parent="Village/Fixtures"]
+transform = Transform3D(0.7894, 0, 0.6139, 0, 1, 0, -0.6139, 0, 0.7894, 92, 0, 70)
+script = ExtResource("fx_script")
+model = ExtResource("fx_timber_yard")
+
+[node name="OreStore" type="Node3D" parent="Village/Fixtures"]
+transform = Transform3D(-0.5300, 0, -0.8480, 0, 1, 0, 0.8480, 0, -0.5300, 178, 0, 102)
+script = ExtResource("fx_script")
+model = ExtResource("fx_ore_store")
+
+[node name="Woodshed" type="Node3D" parent="Village/Fixtures"]
+transform = Transform3D(-0.8944, 0, 0.4472, 0, 1, 0, -0.4472, 0, -0.8944, 74, 0, 124)
+script = ExtResource("fx_script")
+model = ExtResource("fx_woodshed")
+
+[node name="Washhouse" type="Node3D" parent="Village/Fixtures"]
+transform = Transform3D(-0.4167, 0, 0.9091, 0, 1, 0, -0.9091, 0, -0.4167, 80, 0, 150)
+script = ExtResource("fx_script")
+model = ExtResource("fx_washhouse")
+
+[node name="Chapel" type="Node3D" parent="Village/Fixtures"]
+transform = Transform3D(-0.3896, 0, -0.9210, 0, 1, 0, 0.9210, 0, -0.3896, 180, 0, 150)
+script = ExtResource("fx_script")
+model = ExtResource("fx_chapel")
+
+[node name="Dovecote" type="Node3D" parent="Village/Fixtures"]
+transform = Transform3D(0.8253, 0, 0.5646, 0, 1, 0, -0.5646, 0, 0.8253, 176, 0, 164)
+script = ExtResource("fx_script")
+model = ExtResource("fx_dovecote")
+
+[node name="Pump" type="Node3D" parent="Village/Fixtures"]
+transform = Transform3D(-0.5914, 0, -0.8064, 0, 1, 0, 0.8064, 0, -0.5914, 158, 0, 150)
+script = ExtResource("fx_script")
+model = ExtResource("fx_pump")
+
+[node name="EmptyCottage" type="Node3D" parent="Village/Fixtures"]
+transform = Transform3D(0.8725, 0, 0.4886, 0, 1, 0, -0.4886, 0, 0.8725, 114, 0, 70)
+script = ExtResource("fx_script")
+model = ExtResource("fx_empty_cottage")
+project = &"open_cottage"
+doors_open = false
+
+[node name="EmptyCottage2" type="Node3D" parent="Village/Fixtures"]
+transform = Transform3D(-0.0995, 0, -0.9950, 0, 1, 0, 0.9950, 0, -0.0995, 192, 0, 165)
+script = ExtResource("fx_script")
+model = ExtResource("fx_empty_cottage")
+doors_open = false
+
+[node name="RuinedCottage" type="Node3D" parent="Village/Fixtures"]
+transform = Transform3D(-0.6644, 0, 0.7474, 0, 1, 0, -0.7474, 0, -0.6644, 62, 0, 166)
+script = ExtResource("fx_script")
+model = ExtResource("fx_ruined_cottage")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[node name="Yards" type="Node3D" parent="Village"]
+
+[node name="Rick1" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(1.0000, 0, 0.0000, 0, 1, 0, -0.0000, 0, 1.0000, 134.00, 0, 206.00)
+script = ExtResource("18_prop")
+model = ExtResource("yd_hay_stack")
+snap_to_ground = true
+
+[node name="Rick2" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(0.9211, 0, 0.3894, 0, 1, 0, -0.3894, 0, 0.9211, 138.00, 0, 210.00)
+script = ExtResource("18_prop")
+model = ExtResource("yd_hay_stack")
+snap_to_ground = true
+
+[node name="Rick3" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(0.6967, 0, 0.7174, 0, 1, 0, -0.7174, 0, 0.6967, 131.00, 0, 211.00)
+script = ExtResource("18_prop")
+model = ExtResource("yd_hay_round")
+snap_to_ground = true
+
+[node name="Rick4" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(0.3624, 0, 0.9320, 0, 1, 0, -0.9320, 0, 0.3624, 136.00, 0, 214.00)
+script = ExtResource("18_prop")
+model = ExtResource("yd_hay_round")
+snap_to_ground = true
+
+[node name="Rick5" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.0292, 0, 0.9996, 0, 1, 0, -0.9996, 0, -0.0292, 141.00, 0, 205.00)
+script = ExtResource("18_prop")
+model = ExtResource("yd_hay_round")
+snap_to_ground = true
+
+[node name="Cart" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(0.9985, 0, 0.0555, 0, 1, 0, -0.0555, 0, 0.9985, 167.88, 0, 188.71)
+script = ExtResource("18_prop")
+model = ExtResource("yd_cart")
+snap_to_ground = true
+
+[node name="PenFence1" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(1.0000, 0, 0.0000, 0, 1, 0, -0.0000, 0, 1.0000, 146.05, 0, 220.00)
+script = ExtResource("18_prop")
+model = ExtResource("yd_fence")
+snap_to_ground = true
+own_materials = true
+
+[node name="PenFence2" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(1.0000, 0, 0.0000, 0, 1, 0, -0.0000, 0, 1.0000, 151.95, 0, 220.00)
+script = ExtResource("18_prop")
+model = ExtResource("yd_fence")
+snap_to_ground = true
+own_materials = true
+
+[node name="PenFence3" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(1.0000, 0, 0.0000, 0, 1, 0, -0.0000, 0, 1.0000, 146.05, 0, 228.00)
+script = ExtResource("18_prop")
+model = ExtResource("yd_fence")
+snap_to_ground = true
+own_materials = true
+
+[node name="PenFence4" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(1.0000, 0, 0.0000, 0, 1, 0, -0.0000, 0, 1.0000, 151.95, 0, 228.00)
+script = ExtResource("18_prop")
+model = ExtResource("yd_fence")
+snap_to_ground = true
+own_materials = true
+
+[node name="PenFence5" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(0.0000, 0, 1.0000, 0, 1, 0, -1.0000, 0, 0.0000, 143.00, 0, 224.40)
+script = ExtResource("18_prop")
+model = ExtResource("yd_fence")
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(1.2, 1, 1)
+
+[node name="PenFence6" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(0.0000, 0, 1.0000, 0, 1, 0, -1.0000, 0, 0.0000, 155.00, 0, 224.00)
+script = ExtResource("18_prop")
+model = ExtResource("yd_fence")
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(1.36, 1, 1)
+
+[node name="Bed1_1" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.7809, 0, 0.6247, 0, 1, 0, -0.6247, 0, -0.7809, 87.05, 0, 196.92)
+script = ExtResource("18_prop")
+model = ExtResource("yd_cabbage")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Bed1_2" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9306, 0, 0.3660, 0, 1, 0, -0.3660, 0, -0.9306, 85.17, 0, 195.42)
+script = ExtResource("18_prop")
+model = ExtResource("yd_cabbage")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Bed1_3" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9972, 0, 0.0747, 0, 1, 0, -0.0747, 0, -0.9972, 88.17, 0, 195.51)
+script = ExtResource("18_prop")
+model = ExtResource("yd_cabbage")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Bed1_4" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9747, 0, -0.2234, 0, 1, 0, 0.2234, 0, -0.9747, 86.30, 0, 194.01)
+script = ExtResource("18_prop")
+model = ExtResource("yd_cabbage")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Bed2_1" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.7809, 0, 0.6247, 0, 1, 0, -0.6247, 0, -0.7809, 82.75, 0, 193.48)
+script = ExtResource("18_prop")
+model = ExtResource("yd_pumpkin")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Bed2_2" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9306, 0, 0.3660, 0, 1, 0, -0.3660, 0, -0.9306, 80.88, 0, 191.98)
+script = ExtResource("18_prop")
+model = ExtResource("yd_pumpkin")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Bed2_3" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9972, 0, 0.0747, 0, 1, 0, -0.0747, 0, -0.9972, 83.88, 0, 192.08)
+script = ExtResource("18_prop")
+model = ExtResource("yd_pumpkin")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Bed2_4" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9747, 0, -0.2234, 0, 1, 0, 0.2234, 0, -0.9747, 82.00, 0, 190.58)
+script = ExtResource("18_prop")
+model = ExtResource("yd_pumpkin")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Bed3_1" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.7809, 0, 0.6247, 0, 1, 0, -0.6247, 0, -0.7809, 78.46, 0, 190.05)
+script = ExtResource("18_prop")
+model = ExtResource("yd_turnip")
+snap_to_ground = true
+own_materials = true
+collide = false
+model_scale = Vector3(0.6, 0.6, 0.6)
+
+[node name="Bed3_2" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9306, 0, 0.3660, 0, 1, 0, -0.3660, 0, -0.9306, 76.58, 0, 188.55)
+script = ExtResource("18_prop")
+model = ExtResource("yd_turnip")
+snap_to_ground = true
+own_materials = true
+collide = false
+model_scale = Vector3(0.6, 0.6, 0.6)
+
+[node name="Bed3_3" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9972, 0, 0.0747, 0, 1, 0, -0.0747, 0, -0.9972, 79.58, 0, 188.64)
+script = ExtResource("18_prop")
+model = ExtResource("yd_turnip")
+snap_to_ground = true
+own_materials = true
+collide = false
+model_scale = Vector3(0.6, 0.6, 0.6)
+
+[node name="Bed3_4" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9747, 0, -0.2234, 0, 1, 0, 0.2234, 0, -0.9747, 77.71, 0, 187.14)
+script = ExtResource("18_prop")
+model = ExtResource("yd_turnip")
+snap_to_ground = true
+own_materials = true
+collide = false
+model_scale = Vector3(0.6, 0.6, 0.6)
+
+[node name="Bed4_1" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.7809, 0, 0.6247, 0, 1, 0, -0.6247, 0, -0.7809, 90.29, 0, 192.86)
+script = ExtResource("18_prop")
+model = ExtResource("yd_crops")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Bed4_2" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9306, 0, 0.3660, 0, 1, 0, -0.3660, 0, -0.9306, 88.42, 0, 191.36)
+script = ExtResource("18_prop")
+model = ExtResource("yd_crops")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Bed4_3" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9972, 0, 0.0747, 0, 1, 0, -0.0747, 0, -0.9972, 91.42, 0, 191.45)
+script = ExtResource("18_prop")
+model = ExtResource("yd_crops")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Bed4_4" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9747, 0, -0.2234, 0, 1, 0, 0.2234, 0, -0.9747, 89.54, 0, 189.95)
+script = ExtResource("18_prop")
+model = ExtResource("yd_crops")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Bed5_1" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.7809, 0, 0.6247, 0, 1, 0, -0.6247, 0, -0.7809, 86.00, 0, 189.42)
+script = ExtResource("18_prop")
+model = ExtResource("yd_wheat")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Bed5_2" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9306, 0, 0.3660, 0, 1, 0, -0.3660, 0, -0.9306, 84.12, 0, 187.92)
+script = ExtResource("18_prop")
+model = ExtResource("yd_wheat")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Bed5_3" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9972, 0, 0.0747, 0, 1, 0, -0.0747, 0, -0.9972, 87.12, 0, 188.02)
+script = ExtResource("18_prop")
+model = ExtResource("yd_wheat")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Bed5_4" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9747, 0, -0.2234, 0, 1, 0, 0.2234, 0, -0.9747, 85.25, 0, 186.52)
+script = ExtResource("18_prop")
+model = ExtResource("yd_wheat")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Bed6_1" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.7809, 0, 0.6247, 0, 1, 0, -0.6247, 0, -0.7809, 81.70, 0, 185.99)
+script = ExtResource("18_prop")
+model = ExtResource("yd_cabbage")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Bed6_2" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9306, 0, 0.3660, 0, 1, 0, -0.3660, 0, -0.9306, 79.83, 0, 184.49)
+script = ExtResource("18_prop")
+model = ExtResource("yd_cabbage")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Bed6_3" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9972, 0, 0.0747, 0, 1, 0, -0.0747, 0, -0.9972, 82.83, 0, 184.58)
+script = ExtResource("18_prop")
+model = ExtResource("yd_cabbage")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Bed6_4" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9747, 0, -0.2234, 0, 1, 0, 0.2234, 0, -0.9747, 80.95, 0, 183.08)
+script = ExtResource("18_prop")
+model = ExtResource("yd_cabbage")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="AllotHedge1" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.7809, 0, 0.6247, 0, 1, 0, -0.6247, 0, -0.7809, 93.87, 0, 190.47)
+script = ExtResource("18_prop")
+model = ExtResource("yd_hedge")
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(1, 0.65, 0.75)
+
+[node name="AllotHedge2" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.7809, 0, 0.6247, 0, 1, 0, -0.6247, 0, -0.7809, 92.46, 0, 189.34)
+script = ExtResource("18_prop")
+model = ExtResource("yd_hedge")
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(1, 0.65, 0.75)
+
+[node name="AllotHedge3" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.7809, 0, 0.6247, 0, 1, 0, -0.6247, 0, -0.7809, 91.06, 0, 188.22)
+script = ExtResource("18_prop")
+model = ExtResource("yd_hedge")
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(1, 0.65, 0.75)
+
+[node name="AllotHedge4" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.7809, 0, 0.6247, 0, 1, 0, -0.6247, 0, -0.7809, 89.65, 0, 187.10)
+script = ExtResource("18_prop")
+model = ExtResource("yd_hedge")
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(1, 0.65, 0.75)
+
+[node name="AllotHedge5" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.7809, 0, 0.6247, 0, 1, 0, -0.6247, 0, -0.7809, 88.25, 0, 185.97)
+script = ExtResource("18_prop")
+model = ExtResource("yd_hedge")
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(1, 0.65, 0.75)
+
+[node name="AllotHedge6" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.7809, 0, 0.6247, 0, 1, 0, -0.6247, 0, -0.7809, 86.84, 0, 184.85)
+script = ExtResource("18_prop")
+model = ExtResource("yd_hedge")
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(1, 0.65, 0.75)
+
+[node name="AllotHedge7" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.7809, 0, 0.6247, 0, 1, 0, -0.6247, 0, -0.7809, 85.44, 0, 183.72)
+script = ExtResource("18_prop")
+model = ExtResource("yd_hedge")
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(1, 0.65, 0.75)
+
+[node name="AllotHedge8" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.7809, 0, 0.6247, 0, 1, 0, -0.6247, 0, -0.7809, 84.03, 0, 182.60)
+script = ExtResource("18_prop")
+model = ExtResource("yd_hedge")
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(1, 0.65, 0.75)
+
+[node name="BakerGardenL" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.8849, 0, -0.4658, 0, 1, 0, 0.4658, 0, -0.8849, 147.75, 0, 160.59)
+script = ExtResource("18_prop")
+model = ExtResource("yd_flower_group")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="BakerGardenR" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.3768, 0, -0.9263, 0, 1, 0, 0.9263, 0, -0.3768, 143.64, 0, 162.87)
+script = ExtResource("18_prop")
+model = ExtResource("yd_bush_with_flowers")
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(0.7, 0.7, 0.7)
+
+[node name="BakerGardenF" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.8849, 0, -0.4658, 0, 1, 0, 0.4658, 0, -0.8849, 146.81, 0, 160.30)
+script = ExtResource("18_prop")
+model = ExtResource("yd_flowers_2")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="EddaGardenL" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.8321, 0, 0.5547, 0, 1, 0, -0.5547, 0, -0.8321, 104.08, 0, 168.03)
+script = ExtResource("18_prop")
+model = ExtResource("yd_flower_group")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="EddaGardenR" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9937, 0, -0.1118, 0, 1, 0, 0.1118, 0, -0.9937, 100.11, 0, 165.51)
+script = ExtResource("18_prop")
+model = ExtResource("yd_bush_with_flowers")
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(0.7, 0.7, 0.7)
+
+[node name="EddaGardenF" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.8321, 0, 0.5547, 0, 1, 0, -0.5547, 0, -0.8321, 103.88, 0, 167.06)
+script = ExtResource("18_prop")
+model = ExtResource("yd_flowers_2")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="HomeGardenL" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.6000, 0, 0.8000, 0, 1, 0, -0.8000, 0, -0.6000, 87.22, 0, 109.46)
+script = ExtResource("18_prop")
+model = ExtResource("yd_flower_group")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="HomeGardenR" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.9743, 0, 0.2253, 0, 1, 0, -0.2253, 0, -0.9743, 84.32, 0, 105.76)
+script = ExtResource("18_prop")
+model = ExtResource("yd_bush_with_flowers")
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(0.7, 0.7, 0.7)
+
+[node name="HomeGardenF" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.6000, 0, 0.8000, 0, 1, 0, -0.8000, 0, -0.6000, 87.36, 0, 108.48)
+script = ExtResource("18_prop")
+model = ExtResource("yd_flowers_2")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="EmptyGardenL" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(0.8725, 0, 0.4886, 0, 1, 0, -0.4886, 0, 0.8725, 113.90, 0, 74.53)
+script = ExtResource("18_prop")
+model = ExtResource("yd_flower_group")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="EmptyGardenR" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(0.3526, 0, 0.9358, 0, 1, 0, -0.9358, 0, 0.3526, 117.95, 0, 72.14)
+script = ExtResource("18_prop")
+model = ExtResource("yd_bush_with_flowers")
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(0.7, 0.7, 0.7)
+
+[node name="EmptyGardenF" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(0.8725, 0, 0.4886, 0, 1, 0, -0.4886, 0, 0.8725, 114.85, 0, 74.80)
+script = ExtResource("18_prop")
+model = ExtResource("yd_flowers_2")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Empty2GardenL" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.0995, 0, -0.9950, 0, 1, 0, 0.9950, 0, -0.0995, 188.35, 0, 162.32)
+script = ExtResource("18_prop")
+model = ExtResource("yd_flower_group")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Empty2GardenR" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(0.5649, 0, -0.8251, 0, 1, 0, 0.8251, 0, 0.5649, 187.98, 0, 167.01)
+script = ExtResource("18_prop")
+model = ExtResource("yd_bush_with_flowers")
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(0.7, 0.7, 0.7)
+
+[node name="Empty2GardenF" type="StaticBody3D" parent="Village/Yards"]
+transform = Transform3D(-0.0995, 0, -0.9950, 0, 1, 0, 0.9950, 0, -0.0995, 187.58, 0, 162.95)
+script = ExtResource("18_prop")
+model = ExtResource("yd_flowers_2")
+snap_to_ground = true
+own_materials = true
+collide = false
 
 [node name="Decor" type="Node3D" parent="Village"]
 script = ExtResource("92_village_decor")
@@ -719,8 +1344,8 @@ sun = NodePath("../Sun")
 environment = NodePath("../WorldEnvironment")
 
 [node name="Player" parent="." instance=ExtResource("1_player")]
-position = Vector3(85, 0.1, 132)
-rotation = Vector3(0, -1.5708, 0)
+position = Vector3(88.3, 0.1, 105.8)
+rotation = Vector3(0, 2.2143, 0)
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("2_hud")

@@ -174,3 +174,44 @@ sparse, rocks sit out of place, the village looks randomly laid out. Branch `wor
   - **Old things:** a shrine, two benches, the modular ruins pack.
   - **Sounds (Freesound CC0):** sheep 210511 + lambs 692899; cow 513565; hens 830091, 823065; rooster 719773; ducks 188376, 719115; horse 416873; deer bark 696776; rabbit thump 386007; blackbird 725332, chaffinch 725054; wood pigeon 607224, skylark 387426; tawny owl 745208; squirrel 111393; bees 521116; frogs 745965; fish splash 507094; water wheel 195324; brook 474288; small waterfall 395377; meadow insects 134950; crickets at night 402734; wind in grass 853991; farmyard 488050; chapel bell 852491; gate creak 397687; hand washing 810878; hay 776155 ("the sound is good, just cut the voices").
   - No CC0 squirrel or butterfly model: squirrels and butterflies get simple models of our own.
+
+## Where it stands (2026-10-30): phases 4 and 5 built
+
+**Phase 4, the pond green** (the plans page's green 3, fitted to the ground on a drawing to scale:
+the page's plots put the town hall and the tavern on the north and east lanes):
+- The green (22 m across the middle, at (128, 128)) with the village pond on it at (120, 132), and a
+  walking ring round it at 25.5 m. Five lanes leave the ring to where the roads start (north to the
+  Pinewood, east, south-east to Goldmeadow, south to the lake, west to the quarry); the path from the
+  clearing joins the ring at the north-west, past your home. A footpath crosses the green east of
+  the pond.
+- Every house faces the green: the town hall at twelve (128, 95), the tavern at three (161, 113),
+  the smithy, the woodcutter's, the bakery, Edda's, your home on the clearing path (80, 112). The
+  fisher's hut stands on the pond's north bank, its dock in the water (the page's spot was 14 m
+  from the pond: the dock ended on grass).
+- `VillagePaths`: the ring (sq_*), a lane in to every door, the market and noticeboard by way of
+  the green, the cross path; `VillageDecor`'s spots round the green (benches, planters, the well,
+  the fountain, lamp posts and bunting, the market stall on the east edge, the noticeboard by the
+  town hall, the kennel by your door); the trader parks behind the stall. New game: you start
+  before your home. The old village's starter trees and rocks moved out to a copse (NE) and an
+  outcrop (SW) until phase 6 places them.
+- Villagers step out briskly (`Villager.BRISK`) on walks over 20 m, and go further for breakfast
+  on the terrace and a night at the tavern (`OUTING_RANGE`): the village is three times as wide.
+- Not done: **roomier top-tier interiors** (each house's top tier rebuilt bigger and refurnished):
+  left for its own pass (docs/TODO.md).
+
+**Phase 5, the village fixtures** (`Fixture`, `tools/blender/kit_fixtures.py`, built from the kit):
+- The farm yard south-south-east of the green: the old barn (walk-in; "Restore the old barn"), the
+  granary on staddle stones ("Mend the granary"), the cart shed and its cart, the stable, hay
+  ricks, a pen. The stores by the roads out: the storehouse (walk-in), the ore and coal store by the
+  smithy, the timber yard by the woodcutter's, the woodshed by your home. The chapel (walk-in, pews
+  as seats, a bell turret) east of the green, the washhouse and its washing lines west, the
+  dovecote, the pump, the allotments (six beds of the picked crops in a hedge), two empty cottages
+  (one opens with "Open up an empty cottage"), a ruined cottage; flowers by the cottage doors.
+- The three fixture projects have no effect beyond the look yet (Open: their effects).
+- Scenery and spawned nodes keep clear of fixtures; a prop that doesn't collide keeps its real
+  footprint clear (the crop beds).
+- The picked models are in models/country/ and models/animals/ (SOURCES.md in each). Of the picked
+  "animals", the rabbit, bunny, one frog and the pigeon are Quaternius *characters* (upright, waving):
+  phase 8 needs to look at them in the game before using them as wildlife.
+
+**Next:** phase 6, the country.

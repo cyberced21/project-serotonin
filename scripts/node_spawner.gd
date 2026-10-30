@@ -221,6 +221,9 @@ func _collect_taken() -> void:
 	for b in get_tree().get_nodes_in_group("building"):
 		var g := (b as Node3D).global_position
 		_taken.append(Vector3(g.x, g.z, (b as Building).footprint_radius() + building_margin))
+	for f in get_tree().get_nodes_in_group("fixture"):
+		var g := (f as Node3D).global_position
+		_taken.append(Vector3(g.x, g.z, (f as Fixture).footprint_radius() + building_margin))
 	var player := get_tree().get_first_node_in_group("player") as Node3D
 	if player:
 		_taken.append(Vector3(player.global_position.x, player.global_position.z, spawn_radius))

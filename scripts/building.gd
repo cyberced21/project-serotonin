@@ -688,7 +688,7 @@ func _make_burst(amount: int, lifetime: float, color: Color, size: float) -> CPU
 	return p
 
 
-func _make_smoke() -> CPUParticles3D:
+static func _make_smoke() -> CPUParticles3D:
 	var p := CPUParticles3D.new()
 	p.name = "Smoke"
 	p.amount = 14

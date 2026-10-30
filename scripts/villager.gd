@@ -27,12 +27,19 @@ const CLINK_SFX := preload("res://audio/tavern/clink.wav")
 const NPC_LAYER := 1 << 6
 ## A point on the way somewhere counts as passed this close (so they round corners smoothly).
 const WAYPOINT_REACH := 0.6
+## A walk longer than this (m, along the paths) is taken briskly, this much faster.
+const BRISK_FROM := 20.0
+const BRISK := 1.9
 ## Seats further than this are too far to bother with.
 const SEAT_RANGE := 45.0
+## Breakfast on Rosa's terrace and a night at the tavern are worth a longer walk (each is across
+## the green from most houses).
+const OUTING_RANGE := 90.0
 ## Your porch is further out than that, on the west rim (plans/home.md).
 const PORCH_RANGE := 120.0
-## A stroll round the square goes through these of the network's points, in order.
-const SQUARE_ROUND: Array[StringName] = [&"sq_n", &"sq_ne", &"sq_e", &"sq_se", &"sq_s", &"sq_sw", &"sq_nw"]
+## A stroll round the green goes through these of the network's points, in order.
+const SQUARE_ROUND: Array[StringName] = [&"sq_n", &"sq_nne", &"sq_ne", &"sq_e", &"sq_ese", &"sq_se",
+	&"sq_s", &"sq_ssw", &"sq_sw", &"sq_w", &"sq_wnw", &"sq_nw"]
 
 @export var model: PackedScene
 @export var work := Work.CHOP
@@ -559,7 +566,7 @@ func _next_spot() -> Marker3D:
 					return rounds.pick_random()
 			else:
 				if _seat == null:
-					_claim_seat(&"terrace")
+					_claim_seat(&"terrace", "seat", OUTING_RANGE)
 				if _seat:
 					return _seat
 		VillagerDay.Part.TAVERN:
@@ -570,13 +577,13 @@ func _next_spot() -> Marker3D:
 					return _seat
 				var old := _seat
 				_seat = null
-				if _claim_seat(&"", "stage"):
+				if _claim_seat(&"", "stage", OUTING_RANGE):
 					if old and is_instance_valid(old) and old.has_meta(&"taken_by") and old.get_meta(&"taken_by") == self:
 						old.remove_meta(&"taken_by")
 					return _seat
 				_seat = old
-			if _seat == null and _claim_seat(&"tavern") == null:
-				_claim_seat(&"tavern", "stand_spot")
+			if _seat == null and _claim_seat(&"tavern", "seat", OUTING_RANGE) == null:
+				_claim_seat(&"tavern", "stand_spot", OUTING_RANGE)
 			if _seat:
 				return _seat
 			var tavern := get_tree().get_first_node_in_group("tavern") as Building
@@ -796,7 +803,19 @@ func _walk_to(m: Marker3D) -> void:
 	_route = _route_to(m.global_position)
 	_walk_from = global_position
 	_speed = 0.0
+	if not _watching:  # a long way across the village (the green is wide): they step out
+		_hurry = BRISK if _route_length() > BRISK_FROM else 1.0
 	state = State.WALK
+
+
+## How far the walk ahead is, along its route.
+func _route_length() -> float:
+	var total := 0.0
+	var at := global_position
+	for p in _route:
+		total += Vector2(p.x - at.x, p.z - at.z).length()
+		at = p
+	return total
 
 
 ## The way to `to`: along the village's paths (VillagePaths) when there are some, else straight.

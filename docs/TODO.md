@@ -314,3 +314,10 @@ Generated worlds are gone (the procgen items above are history); Hearthvale is t
 - [x] **The way out is a cage in a shaft** over the way-in cell (`MineShaft`): E rings for it and it comes down out of the roof, E again rides it up to the quarry; you come down in it, and it goes back up once you've stepped off. Replaces the door on the wall.
 - [x] **The mine's mouth** stood half sunk in the quarry's sloping wall: it stands at the foot of the slope now with a timbered passage back into the rock (`MineMouth._depth`).
 - [ ] **Play the shaft:** the cage is the inter-level lift's posts and boards (no walls or gate), the shaft's rock is the level's; the rope's creak is the lift sound.
+
+## The world pass ([plans/world-pass.md](../plans/world-pass.md), branch `world-pass`)
+
+- [ ] **Roomier top-tier interiors** (phase 4, not done): each house's top tier rebuilt toward the planned size (up to 10 x 12 m) and refurnished, its seats, beds, spots and add-ons moved to suit (`tools/blender/kit_buildings.py`), then test_interiors, test_home, test_visits, test_day.
+- [ ] **Fixture projects' effects**: restoring the barn, mending the granary and opening a cottage only change how they look; first guesses at a small effect each (plans/world-pass.md, "Open").
+- [ ] **The picked rabbit, bunny, frog and pigeon are characters** (Quaternius, upright, with Wave and Punch): look at them in the game before using them as wildlife (phase 8), else simple models of our own.
+- [ ] **Walks across the green take longer**: villagers walk briskly over 20 m (`Villager.BRISK`) and go further for the terrace and the tavern (`OUTING_RANGE`); watch test_day's timings and how it feels in play.

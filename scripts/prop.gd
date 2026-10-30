@@ -18,6 +18,10 @@ const PALETTE := preload("res://materials/node_palette.tres")
 ## Keep the model's own materials (the CC0 pack pieces with painted textures, models/mine/)
 ## instead of the palette.
 @export var own_materials := false
+## The model's size (picked CC0 models come at all scales: a toy windmill, a 2 m high wall).
+@export var model_scale := Vector3.ONE
+
+var _radius := 0.5  # half the widest side of the model's footprint
 
 
 func _ready() -> void:
@@ -28,6 +32,7 @@ func _ready() -> void:
 		if not is_nan(h):
 			global_position.y = h - sink
 	var inst := model.instantiate() as Node3D
+	inst.scale = model_scale
 	add_child(inst)
 	var bounds := AABB()
 	var first := true
@@ -40,6 +45,8 @@ func _ready() -> void:
 		var box := global_transform.affine_inverse() * mesh.global_transform * mesh.get_aabb()
 		bounds = box if first else bounds.merge(box)
 		first = false
+	if not first:
+		_radius = maxf(bounds.size.x, bounds.size.z) * 0.5
 	if collide and collision_from_mesh:
 		for m in inst.find_children("*", "MeshInstance3D", true, false):
 			var mesh := m as MeshInstance3D
@@ -62,4 +69,4 @@ func footprint_radius() -> float:
 		var box := (c as CollisionShape3D).shape as BoxShape3D if c is CollisionShape3D else null
 		if box:
 			return maxf(box.size.x, box.size.z) * 0.5
-	return 0.5
+	return _radius

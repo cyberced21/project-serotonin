@@ -1,7 +1,7 @@
 extends Node
 ## Village projects (plans/projects.md): things you pay for to make the village prettier, pinned
-## on the noticeboard in the square. Two kinds:
-##   spots: decorations with set places round the square (benches, flower boxes, a well,
+## on the noticeboard by the green. Two kinds:
+##   spots: decorations with set places round the green (benches, flower boxes, a well,
 ##     bunting, a fountain) and the mended footbridge; done ones are saved here, per world;
 ##   road lamps: one per road stretch not lit from the start (the Lamps autoload keeps which are
 ##     lit, so that's where a road project's "done" lives).
@@ -16,16 +16,20 @@ signal changed
 
 ## The decorations, in the board's order: [id, title, what it adds, cost, town hall tier, needs].
 const SPOTS := [
-	[&"benches", "Benches round the square", "Two more benches by the square: somewhere to sit when the lamps come on.", {&"wood": 10}, 1],
-	[&"flower_boxes", "Flower boxes", "Planters full of flowers round the square.", {&"birch": 8, &"wheat": 6}, 1],
-	[&"well", "A well in the square", "A stone well with a bucket on a rope. Someone will always be drawing water.", {&"ore": 20, &"wood": 15}, 2],
-	[&"bunting", "Bunting", "Strings of little flags between the square's lamps.", {&"birch": 10, &"barley": 8}, 2],
-	[&"fountain", "A fountain", "A little fountain in the middle of the square, splashing away.", {&"iron": 30, &"gold": 10, &"oak": 20}, 3],
+	[&"benches", "Benches round the green", "Two more benches on the green: somewhere to sit when the lamps come on.", {&"wood": 10}, 1],
+	[&"flower_boxes", "Flower boxes", "Planters full of flowers round the green.", {&"birch": 8, &"wheat": 6}, 1],
+	[&"well", "A well on the green", "A stone well with a bucket on a rope. Someone will always be drawing water.", {&"ore": 20, &"wood": 15}, 2],
+	[&"bunting", "Bunting", "Strings of little flags between the green's lamps.", {&"birch": 10, &"barley": 8}, 2],
+	[&"fountain", "A fountain", "A little fountain on the green, splashing away.", {&"iron": 30, &"gold": 10, &"oak": 20}, 3],
 	[&"footbridge", "Mend the footbridge", "Planks across the water, so you stop wading.", {&"oak": 30, &"iron": 10}, 3],
 	[&"terrace", "A terrace at the bakery", "Tables and stools under a striped awning outside Rosa's bakery: breakfast in the morning sun.", {&"wood": 15, &"birch": 8, &"wheat": 6}, 2],
-	[&"kennel", "A kennel for your dog", "A little wooden house by the square: somewhere of his own to sleep at night.", {&"wood": 15}, 1, &"dog"],
+	[&"kennel", "A kennel for your dog", "A little wooden house by your door: somewhere of his own to sleep at night.", {&"wood": 15}, 1, &"dog"],
 	[&"kennel_paint", "Paint it and hang his name", "Cream walls, a red roof and a sign over the door with his name on it.", {&"birch": 10, &"wheat": 6, &"barley": 4}, 1, &"kennel"],
-	[&"market", "A market stall", "A stall in the square with a striped awning, where you can swap what you have plenty of for what you need.", {&"wood": 20, &"birch": 10, &"wheat": 8}, 1],
+	[&"market", "A market stall", "A stall on the green with a striped awning, where you can swap what you have plenty of for what you need.", {&"wood": 20, &"birch": 10, &"wheat": 8}, 1],
+	# the village's fixtures (plans/world-pass.md, phase 5): Fixture shows each one put right
+	[&"mend_granary", "Mend the granary", "Straighten the old granary on its stones and patch its walls, so the grain keeps dry.", {&"wood": 15, &"oak": 8, &"ore": 6}, 1],
+	[&"restore_barn", "Restore the old barn", "New planks and doors for the barn by the farm yard, and hay stacked to the rafters.", {&"wood": 30, &"pine": 15, &"wheat": 10}, 2],
+	[&"open_cottage", "Open up an empty cottage", "Air out the shuttered cottage north of the green, light a fire and hang flower boxes: ready for a newcomer.", {&"wood": 20, &"birch": 10, &"iron": 4}, 2],
 	[&"retaining_wall", "Shore up the road east", "A timber wall to hold the slope back, so the landslide's road stays open and traders can come over the pass. Dig out the boulders first.", {&"wood": 25, &"pine": 15, &"iron": 6}, 2, &"slide"],
 	[&"kennel_porch", "A bowl, a blanket and a porch", "A deck out front with a rail, a water bowl and a checked blanket to flop on.", {&"oak": 12, &"iron": 4}, 2, &"kennel_paint"],
 	# the mine under the quarry (plans/mine.md): "mine:" needs are the Mine's (a shaft dug into,
