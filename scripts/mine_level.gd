@@ -354,6 +354,8 @@ func _dress_cells() -> void:
 			if across != Vector3.ZERO and (c.x + c.y) % 2 == 0 and k not in ["C", "K", "S"]:
 				_prop("frame_square", FRAME, o, across)
 				_lamp(o + Vector3.UP * 2.98, LAMP)
+			elif k == "E" and n == 0:  # the shaft's hole is over the middle: the lamp hangs in a corner
+				_lamp(o + Vector3(SHAFT / 2 + 0.3, HEIGHT - 0.02, SHAFT / 2 + 0.3), LAMP_PLAIN)
 			elif k in ["E", "L", "R"] or (k in ["C", "K"] and (c.x * 3 + c.y) % 2 == 0):
 				_lamp(o + Vector3.UP * (HEIGHT - 0.02), LAMP_PLAIN)
 		if k in ["C", "."] and h % 5 == 0:  # a heap of spoil against a wall

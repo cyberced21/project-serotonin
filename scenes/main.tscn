@@ -228,7 +228,7 @@ material = SubResource("Terrain3DMaterial_lowpoly")
 assets = ExtResource("6_terrain_assets")
 
 [node name="Pond" type="Area3D" parent="."]
-position = Vector3(20, 0, 16)
+position = Vector3(66, 0, 86)
 collision_layer = 0
 collision_mask = 0
 script = ExtResource("7_water")
@@ -255,43 +255,43 @@ script = ExtResource("93_creek")
 [node name="Ruins" type="Node3D" parent="."]
 
 [node name="Step050" type="StaticBody3D" parent="Ruins"]
-position = Vector3(-3, 0.25, -10)
+position = Vector3(43, 0.25, 60)
 script = ExtResource("18_prop")
 model = ExtResource("40_ruin")
 collision_size = Vector3(1.5, 0.5, 1.5)
 
 [node name="Step100" type="StaticBody3D" parent="Ruins"]
-position = Vector3(-3, 0.5, -12)
+position = Vector3(43, 0.5, 58)
 script = ExtResource("18_prop")
 model = ExtResource("41_ruin")
 collision_size = Vector3(1.5, 1, 1.5)
 
 [node name="Step150" type="StaticBody3D" parent="Ruins"]
-position = Vector3(-3, 0.75, -14)
+position = Vector3(43, 0.75, 56)
 script = ExtResource("18_prop")
 model = ExtResource("42_ruin")
 collision_size = Vector3(1.5, 1.5, 1.5)
 
 [node name="Ledge120" type="StaticBody3D" parent="Ruins"]
-position = Vector3(3, 0.6, -12)
+position = Vector3(49, 0.6, 58)
 script = ExtResource("18_prop")
 model = ExtResource("43_ruin")
 collision_size = Vector3(3, 1.2, 2)
 
 [node name="Wall250" type="StaticBody3D" parent="Ruins"]
-position = Vector3(0, 1.25, -18)
+position = Vector3(46, 1.25, 52)
 script = ExtResource("18_prop")
 model = ExtResource("44_ruin")
 collision_size = Vector3(8, 2.5, 1)
 
 [node name="Ramp" type="StaticBody3D" parent="Ruins"]
-transform = Transform3D(1, 0, 0, 0, 0.94, 0.342, 0, -0.342, 0.94, 16, 1, -8)
+transform = Transform3D(1, 0, 0, 0, 0.94, 0.342, 0, -0.342, 0.94, 62, 1, 62)
 script = ExtResource("18_prop")
 model = ExtResource("45_ruin")
 collision_size = Vector3(3, 0.3, 7)
 
 [node name="Pillar" type="StaticBody3D" parent="Ruins"]
-position = Vector3(-16, 1.5, -8)
+position = Vector3(30, 1.5, 62)
 script = ExtResource("18_prop")
 model = ExtResource("46_ruin")
 collision_size = Vector3(1, 3, 1)
@@ -300,243 +300,243 @@ collision_size = Vector3(1, 3, 1)
 
 [node name="Tree1" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"tree_1"
-position = Vector3(-9, 0, -4)
+position = Vector3(37, 0, 66)
 rotation = Vector3(0, 1.49, 0)
 
 [node name="Tree2" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"tree_2"
-position = Vector3(-6, 0, -5.5)
+position = Vector3(40, 0, 64.5)
 rotation = Vector3(0, 3.42, 0)
 
 [node name="Tree3" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"tree_3"
-position = Vector3(-11, 0.01, 1)
+position = Vector3(35, 0, 71)
 rotation = Vector3(0, 2.32, 0)
 
 [node name="Tree4" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"tree_4"
-position = Vector3(-7, 0, 3)
+position = Vector3(39, 0, 73)
 rotation = Vector3(0, 3.79, 0)
 
 [node name="Tree5" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"tree_5"
-position = Vector3(6, 0, -5)
+position = Vector3(52, 0, 65)
 rotation = Vector3(0, 3.93, 0)
 
 [node name="Tree6" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"tree_6"
-position = Vector3(9.5, 0, -3)
+position = Vector3(55.5, -0.03, 67)
 rotation = Vector3(0, 0.41, 0)
 
 [node name="Tree7" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"tree_7"
-position = Vector3(12, 0, 2.5)
+position = Vector3(58, 0, 72.5)
 rotation = Vector3(0, 0.08, 0)
 
 [node name="Tree8" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"tree_8"
-position = Vector3(-14, 0, -2)
+position = Vector3(32, 0, 68)
 rotation = Vector3(0, 5.26, 0)
 
 [node name="Tree9" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"tree_9"
-position = Vector3(3, 0, 6)
+position = Vector3(49, 0, 76)
 rotation = Vector3(0, 1.63, 0)
 
 [node name="Tree10" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"tree_10"
-position = Vector3(-3, 0, 7)
+position = Vector3(43, 0, 77)
 rotation = Vector3(0, 1.47, 0)
 
 [node name="Rock1" parent="Nodes" instance=ExtResource("4_rock")]
 save_id = &"rock_1"
-position = Vector3(4, 0, -1)
+position = Vector3(50, 0, 69)
 rotation = Vector3(0, 6.25, 0)
 
 [node name="Rock2" parent="Nodes" instance=ExtResource("4_rock")]
 save_id = &"rock_2"
-position = Vector3(8, 0, 2)
+position = Vector3(54, 0, 72)
 rotation = Vector3(0, 2.95, 0)
 
 [node name="Rock3" parent="Nodes" instance=ExtResource("4_rock")]
 save_id = &"rock_3"
-position = Vector3(-2, 0, -4.5)
+position = Vector3(44, 0, 65.5)
 rotation = Vector3(0, 5.25, 0)
 required_level = 10
 
 [node name="Rock4" parent="Nodes" instance=ExtResource("4_rock")]
 save_id = &"rock_4"
-position = Vector3(10, 0, 5.5)
+position = Vector3(56, 0, 75.5)
 rotation = Vector3(0, 2.99, 0)
 
 [node name="Rock5" parent="Nodes" instance=ExtResource("4_rock")]
 save_id = &"rock_5"
-position = Vector3(-10, 0, 5.5)
+position = Vector3(36, 0, 75.5)
 rotation = Vector3(0, 4.01, 0)
 
 [node name="VillageTree1" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"village_tree_1"
-position = Vector3(88, 0, 14)
+position = Vector3(116, 0, 102)
 rotation = Vector3(0, 0.7, 0)
 
 [node name="VillageTree2" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"village_tree_2"
-position = Vector3(93, 0, 11)
+position = Vector3(121, 0, 99)
 rotation = Vector3(0, 2.1, 0)
 
 [node name="VillageTree3" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"village_tree_3"
-position = Vector3(100, 0, 12)
+position = Vector3(128, 0, 100)
 rotation = Vector3(0, 4.4, 0)
 
 [node name="VillageTree4" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"village_tree_4"
-position = Vector3(106, 0, 13)
+position = Vector3(134, 0, 101)
 rotation = Vector3(0, 1.2, 0)
 
 [node name="VillageTree5" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"village_tree_5"
-position = Vector3(111, 0, 16)
+position = Vector3(139, 0, 104)
 rotation = Vector3(0, 5.5, 0)
 
 [node name="VillageTree6" parent="Nodes" instance=ExtResource("3_tree")]
 save_id = &"village_tree_6"
-position = Vector3(84, 0, 19)
+position = Vector3(112, 0, 107)
 rotation = Vector3(0, 3.0, 0)
 
 [node name="VillageRock1" parent="Nodes" instance=ExtResource("4_rock")]
 save_id = &"village_rock_1"
-position = Vector3(123, 0, 49)
+position = Vector3(151, 0, 137)
 rotation = Vector3(0, 1.1, 0)
 
 [node name="VillageRock2" parent="Nodes" instance=ExtResource("4_rock")]
 save_id = &"village_rock_2"
-position = Vector3(126, 0, 55)
+position = Vector3(154, 0.01, 143)
 rotation = Vector3(0, 3.8, 0)
 
 [node name="VillageRock3" parent="Nodes" instance=ExtResource("4_rock")]
 save_id = &"village_rock_3"
-position = Vector3(122, 0, 61)
+position = Vector3(150, 0.02, 149)
 rotation = Vector3(0, 5.2, 0)
 
 [node name="VillageRock4" parent="Nodes" instance=ExtResource("4_rock")]
 save_id = &"village_rock_4"
-position = Vector3(127.5, 0, 61.5)
+position = Vector3(155.5, 0.02, 149.5)
 rotation = Vector3(0, 0.4, 0)
 required_level = 10
 
 [node name="Oak1" parent="Nodes" instance=ExtResource("25_oak")]
 save_id = &"oak_1"
-position = Vector3(80, 0, 24)
+position = Vector3(108, 0, 112)
 rotation = Vector3(0, 0.9, 0)
 
 [node name="Oak2" parent="Nodes" instance=ExtResource("25_oak")]
 save_id = &"oak_2"
-position = Vector3(116.5, 0, 20)
+position = Vector3(144.5, 0, 108)
 rotation = Vector3(0, 2.6, 0)
 
 [node name="Oak3" parent="Nodes" instance=ExtResource("25_oak")]
 save_id = &"oak_3"
-position = Vector3(90, 0, 7.5)
+position = Vector3(118, 0, 95.5)
 rotation = Vector3(0, 4.8, 0)
 
 [node name="IronRock1" parent="Nodes" instance=ExtResource("26_iron")]
 save_id = &"iron_rock_1"
-position = Vector3(129, 0, 47.5)
+position = Vector3(157, 0, 135.5)
 rotation = Vector3(0, 0.5, 0)
 
 [node name="IronRock2" parent="Nodes" instance=ExtResource("26_iron")]
 save_id = &"iron_rock_2"
-position = Vector3(131, 0, 56)
+position = Vector3(159, 0.01, 144)
 rotation = Vector3(0, 2.2, 0)
 
 [node name="IronRock3" parent="Nodes" instance=ExtResource("26_iron")]
 save_id = &"iron_rock_3"
-position = Vector3(124.5, 0, 65.5)
+position = Vector3(152.5, 0.03, 153.5)
 rotation = Vector3(0, 4.1, 0)
 
 [node name="Birch1" parent="Nodes" instance=ExtResource("50_birch")]
 save_id = &"birch_1"
-position = Vector3(-34, 0.11, -6)
+position = Vector3(12, 0, 64)
 rotation = Vector3(0, 0.4, 0)
 
 [node name="Birch2" parent="Nodes" instance=ExtResource("50_birch")]
 save_id = &"birch_2"
-position = Vector3(-37, 0.06, 2)
+position = Vector3(9, 0, 72)
 rotation = Vector3(0, 2.0, 0)
 
 [node name="Birch3" parent="Nodes" instance=ExtResource("50_birch")]
 save_id = &"birch_3"
-position = Vector3(-32, 0, 9)
+position = Vector3(14, 0, 79)
 rotation = Vector3(0, 3.3, 0)
 
 [node name="Birch4" parent="Nodes" instance=ExtResource("50_birch")]
 save_id = &"birch_4"
-position = Vector3(-40, 0.02, -12)
+position = Vector3(6, 0, 58)
 rotation = Vector3(0, 5.0, 0)
 
 [node name="Birch5" parent="Nodes" instance=ExtResource("50_birch")]
 save_id = &"birch_5"
-position = Vector3(-30, 0, 15)
+position = Vector3(16, 0, 85)
 rotation = Vector3(0, 1.1, 0)
 
 [node name="Pine1" parent="Nodes" instance=ExtResource("51_pine")]
 save_id = &"pine_1"
-position = Vector3(-10, 0.39, -50)
+position = Vector3(36, 0.06, 20)
 rotation = Vector3(0, 0.3, 0)
 
 [node name="Pine2" parent="Nodes" instance=ExtResource("51_pine")]
 save_id = &"pine_2"
-position = Vector3(5, 0.93, -55)
+position = Vector3(51, 0.1, 15)
 rotation = Vector3(0, 1.7, 0)
 
 [node name="Pine3" parent="Nodes" instance=ExtResource("51_pine")]
 save_id = &"pine_3"
-position = Vector3(18, 0.1, -48)
+position = Vector3(64, 0.02, 22)
 rotation = Vector3(0, 2.9, 0)
 
 [node name="Pine4" parent="Nodes" instance=ExtResource("51_pine")]
 save_id = &"pine_4"
-position = Vector3(-22, 2.89, -58)
+position = Vector3(24, 3.37, 12)
 rotation = Vector3(0, 4.2, 0)
 
 [node name="Pine5" parent="Nodes" instance=ExtResource("51_pine")]
 save_id = &"pine_5"
-position = Vector3(-4, 2.89, -62)
+position = Vector3(42, 1.32, 8)
 rotation = Vector3(0, 5.6, 0)
 
 [node name="CoalRock1" parent="Nodes" instance=ExtResource("52_coal")]
 save_id = &"coal_rock_1"
-position = Vector3(48, 0, 0)
+position = Vector3(94, 0, 70)
 rotation = Vector3(0, 0.8, 0)
 
 [node name="CoalRock2" parent="Nodes" instance=ExtResource("52_coal")]
 save_id = &"coal_rock_2"
-position = Vector3(56, 0, 24)
+position = Vector3(84, 0, 112)
 rotation = Vector3(0, 2.6, 0)
 
 [node name="CoalRock3" parent="Nodes" instance=ExtResource("52_coal")]
 save_id = &"coal_rock_3"
-position = Vector3(44, 0, 12)
+position = Vector3(90, 0, 82)
 rotation = Vector3(0, 4.4, 0)
 
 [node name="GoldRock1" parent="Nodes" instance=ExtResource("53_gold")]
 save_id = &"gold_rock_1"
-position = Vector3(-62, 31.84, -60)
+position = Vector3(-68, 39.64, -22)
 rotation = Vector3(0, 1.0, 0)
 
 [node name="GoldRock2" parent="Nodes" instance=ExtResource("53_gold")]
 save_id = &"gold_rock_2"
-position = Vector3(-70, 27.55, -48)
+position = Vector3(-76, 35, -10)
 rotation = Vector3(0, 3.5, 0)
 
 [node name="GoldRock3" parent="Nodes" instance=ExtResource("53_gold")]
 save_id = &"gold_rock_3"
-position = Vector3(-56, 36.69, -72)
+position = Vector3(-62, 46.93, -34)
 rotation = Vector3(0, 5.3, 0)
 
 [node name="VillagePond" type="Area3D" parent="."]
-position = Vector3(88, 0, 64)
+position = Vector3(116, 0, 152)
 collision_layer = 0
 collision_mask = 0
 script = ExtResource("7_water")
@@ -562,7 +562,7 @@ cast_shadow = 0
 mesh = SubResource("PlaneMesh_village_water")
 
 [node name="Lake" type="Area3D" parent="."]
-position = Vector3(-16, 0, 76)
+position = Vector3(38, 0, 340)
 collision_layer = 0
 collision_mask = 0
 script = ExtResource("7_water")
@@ -590,96 +590,96 @@ mesh = SubResource("PlaneMesh_lake")
 [node name="Village" type="Node3D" parent="."]
 
 [node name="TownHall" parent="Village" instance=ExtResource("14_town_hall")]
-position = Vector3(114, 0, 40)
+position = Vector3(142, 0, 128)
 rotation = Vector3(0, -1.5708, 0)
 
 [node name="Woodcutter" parent="Village" instance=ExtResource("15_woodcutter")]
-position = Vector3(98, 0, 25)
+position = Vector3(126, 0, 113)
 
 [node name="Smithy" parent="Village" instance=ExtResource("16_smithy")]
-position = Vector3(113, 0, 55)
+position = Vector3(141, 0, 143)
 rotation = Vector3(0, -2.4, 0)
 
 [node name="Fisher" parent="Village" instance=ExtResource("17_fisher")]
-position = Vector3(88, 0, 54)
+position = Vector3(116, 0, 142)
 
 [node name="BakerCottage" parent="Village" instance=ExtResource("55_baker")]
-position = Vector3(86, 0, 27)
+position = Vector3(114, 0, 115)
 rotation = Vector3(0, 1.5708, 0)
 
 [node name="ProspectorCottage" parent="Village" instance=ExtResource("56_prospector")]
-position = Vector3(106, 0, 63)
+position = Vector3(134, 0, 151)
 rotation = Vector3(0, 3.1416, 0)
 
 [node name="Tavern" parent="Village" instance=ExtResource("98_tavern")]
-position = Vector3(81, 0, 45)
+position = Vector3(109, 0, 133)
 rotation = Vector3(0, 1.5708, 0)
 
 [node name="Home" parent="Village" instance=ExtResource("99_home")]
-position = Vector3(64, 0, 44)
+position = Vector3(92, 0, 132)
 rotation = Vector3(0, -1.5708, 0)
 
 [node name="Props" type="Node3D" parent="Village"]
 
 [node name="BenchA" type="StaticBody3D" parent="Village/Props"]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 93.5, 0, 37)
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 121.5, 0, 125)
 script = ExtResource("18_prop")
 model = ExtResource("19_bench")
 
 [node name="BenchB" type="StaticBody3D" parent="Village/Props"]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 93.5, 0, 43.5)
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 121.5, 0, 131.5)
 script = ExtResource("18_prop")
 model = ExtResource("19_bench")
 
 [node name="Lamp1" type="StaticBody3D" parent="Village/Props"]
-position = Vector3(94.5, 0, 33.5)
+position = Vector3(122.5, 0, 121.5)
 rotation = Vector3(0, 2.4, 0)
 script = ExtResource("18_prop")
 model = ExtResource("20_lamp")
 
 [node name="Lamp2" type="StaticBody3D" parent="Village/Props"]
-position = Vector3(106.5, 0, 34.5)
+position = Vector3(134.5, 0, 122.5)
 rotation = Vector3(0, 0.8, 0)
 script = ExtResource("18_prop")
 model = ExtResource("20_lamp")
 
 [node name="Lamp3" type="StaticBody3D" parent="Village/Props"]
-position = Vector3(102, 0, 47.5)
+position = Vector3(130, 0, 135.5)
 rotation = Vector3(0, -1.6, 0)
 script = ExtResource("18_prop")
 model = ExtResource("20_lamp")
 
 [node name="LakeSignpost" type="StaticBody3D" parent="Village/Props"]
-position = Vector3(-0.5, 0, 17.5)
+position = Vector3(45.5, 0, 87.5)
 rotation = Vector3(0, 2.0, 0)
 script = ExtResource("18_prop")
 model = ExtResource("23_signpost")
 
 [node name="Signpost" type="StaticBody3D" parent="Village/Props"]
-position = Vector3(78.5, 0, 31)
+position = Vector3(106.5, 0, 119)
 rotation = Vector3(0, 0.3, 0)
 script = ExtResource("18_prop")
 model = ExtResource("23_signpost")
 
 [node name="Barrel1" type="StaticBody3D" parent="Village/Props"]
-position = Vector3(117.5, 0, 59.5)
+position = Vector3(145.5, 0, 147.5)
 script = ExtResource("18_prop")
 model = ExtResource("21_barrel")
 
 [node name="Barrel2" type="StaticBody3D" parent="Village/Props"]
-position = Vector3(118.2, 0, 58.6)
+position = Vector3(146.2, 0, 146.6)
 rotation = Vector3(0, 1.0, 0)
 script = ExtResource("18_prop")
 model = ExtResource("21_barrel")
 
 [node name="Crates1" type="StaticBody3D" parent="Village/Props"]
-position = Vector3(84.5, 0, 51.5)
+position = Vector3(112.5, 0, 139.5)
 rotation = Vector3(0, 0.5, 0)
 script = ExtResource("18_prop")
 model = ExtResource("22_crates")
 
 [node name="Crates2" type="StaticBody3D" parent="Village/Props"]
-position = Vector3(108.5, 0, 31.5)
+position = Vector3(136.5, 0, 119.5)
 rotation = Vector3(0, -0.4, 0)
 script = ExtResource("18_prop")
 model = ExtResource("22_crates")
@@ -710,6 +710,7 @@ script = ExtResource("91_path_lamps")
 
 [node name="Scenery" type="Node3D" parent="."]
 script = ExtResource("27_scatter")
+area = Rect2(-92, -92, 440, 440)
 layers = Array[ExtResource("28_layer")]([SubResource("Layer_grass"), SubResource("Layer_flowers_warm"), SubResource("Layer_flowers_cool"), SubResource("Layer_bush_round"), SubResource("Layer_bush_low"), SubResource("Layer_boulder_big"), SubResource("Layer_boulder_flat")])
 
 [node name="Sky" type="Node" parent="." node_paths=PackedStringArray("sun", "environment")]
@@ -718,7 +719,7 @@ sun = NodePath("../Sun")
 environment = NodePath("../WorldEnvironment")
 
 [node name="Player" parent="." instance=ExtResource("1_player")]
-position = Vector3(57, 0.1, 44)
+position = Vector3(85, 0.1, 132)
 rotation = Vector3(0, -1.5708, 0)
 
 [node name="HUD" type="CanvasLayer" parent="."]

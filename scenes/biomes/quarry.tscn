@@ -131,7 +131,7 @@ entries = Array[ExtResource("2_entry")]([SubResource("Copper")])
 count = 6
 seed = 21
 save_prefix = "quarry_rim"
-ring = Vector4(-175, -15, 57, 63)
+ring = Vector4(-118, 88, 57, 63)
 allowed_ids = Array[int]([0, 5])
 spacing = 6.0
 min_normal_y = 0.85
@@ -143,7 +143,7 @@ entries = Array[ExtResource("2_entry")]([SubResource("CopperOften"), SubResource
 count = 7
 seed = 22
 save_prefix = "quarry_l1"
-ring = Vector4(-175, -15, 45.8, 50.2)
+ring = Vector4(-118, 88, 45.8, 50.2)
 allowed_ids = Array[int]([5])
 spacing = 5.0
 min_normal_y = 0.85
@@ -155,7 +155,7 @@ entries = Array[ExtResource("2_entry")]([SubResource("Copper"), SubResource("Coa
 count = 7
 seed = 23
 save_prefix = "quarry_l2"
-ring = Vector4(-175, -15, 35.8, 40.2)
+ring = Vector4(-118, 88, 35.8, 40.2)
 allowed_ids = Array[int]([5])
 spacing = 5.0
 min_normal_y = 0.85
@@ -167,7 +167,7 @@ entries = Array[ExtResource("2_entry")]([SubResource("Coal"), SubResource("IronO
 count = 6
 seed = 24
 save_prefix = "quarry_l3"
-ring = Vector4(-175, -15, 25.8, 30.2)
+ring = Vector4(-118, 88, 25.8, 30.2)
 allowed_ids = Array[int]([5])
 spacing = 5.0
 min_normal_y = 0.85
@@ -179,7 +179,7 @@ entries = Array[ExtResource("2_entry")]([SubResource("Coal"), SubResource("IronO
 count = 5
 seed = 25
 save_prefix = "quarry_l4"
-ring = Vector4(-175, -15, 15.8, 20.2)
+ring = Vector4(-118, 88, 15.8, 20.2)
 allowed_ids = Array[int]([5])
 spacing = 5.0
 min_normal_y = 0.85
@@ -191,7 +191,7 @@ entries = Array[ExtResource("2_entry")]([SubResource("Coal"), SubResource("Iron"
 count = 4
 seed = 26
 save_prefix = "quarry_floor_rocks"
-ring = Vector4(-175, -15, 2, 10)
+ring = Vector4(-118, 88, 2, 10)
 allowed_ids = Array[int]([5])
 spacing = 5.0
 min_normal_y = 0.85
@@ -209,45 +209,45 @@ script = ExtResource("19_mine")
 [node name="Props" type="Node3D" parent="."]
 
 [node name="ScaffoldHighA" type="StaticBody3D" parent="Props"]
-position = Vector3(-131.80, 16.00, -15.00)
+position = Vector3(-74.8, 16.00, 88)
 rotation = Vector3(0, 1.5708, 0)
 script = ExtResource("8_prop")
 model = ExtResource("m_scaffold_high")
 
 [node name="ScaffoldLowA" type="StaticBody3D" parent="Props"]
-position = Vector3(-133.40, 16.00, -15.00)
+position = Vector3(-76.4, 16.00, 88)
 rotation = Vector3(0, 1.5708, 0)
 script = ExtResource("8_prop")
 model = ExtResource("m_scaffold_low")
 
 [node name="ScaffoldHighB" type="StaticBody3D" parent="Props"]
-position = Vector3(-166.77, 6.00, -36.16)
+position = Vector3(-109.77, 6.00, 66.84)
 rotation = Vector3(0, 2.7708, 0)
 script = ExtResource("8_prop")
 model = ExtResource("m_scaffold_high")
 
 [node name="ScaffoldLowB" type="StaticBody3D" parent="Props"]
-position = Vector3(-167.35, 6.00, -34.67)
+position = Vector3(-110.35, 6.00, 68.33)
 rotation = Vector3(0, 2.7708, 0)
 script = ExtResource("8_prop")
 model = ExtResource("m_scaffold_low")
 
 [node name="LadderA" type="StaticBody3D" parent="Props"]
-position = Vector3(-143.47, 11.00, -5.25)
+position = Vector3(-86.47, 11.00, 97.75)
 rotation = Vector3(0, 4.4124, 0)
 script = ExtResource("8_prop")
 model = ExtResource("m_ladder")
 collide = false
 
 [node name="LadderB" type="StaticBody3D" parent="Props"]
-position = Vector3(-186.57, 1.00, -8.04)
+position = Vector3(-129.57, 1.00, 94.96)
 rotation = Vector3(0, 2.1124, 0)
 script = ExtResource("8_prop")
 model = ExtResource("m_ladder")
 collide = false
 
 [node name="Crane" type="StaticBody3D" parent="Props"]
-position = Vector3(-117.68, 19.6, 2.73)
+position = Vector3(-60.68, 19.6, 105.73)
 rotation = Vector3(0, -1.8708, 0)
 script = ExtResource("8_prop")
 model = ExtResource("m_crane")
@@ -258,5 +258,5 @@ sink = 0.1
 [node name="Scenery" type="Node3D" parent="."]
 script = ExtResource("9_scatter")
 layers = Array[ExtResource("10_layer")]([SubResource("Layer_rubble"), SubResource("Layer_boulders"), SubResource("Layer_fern"), SubResource("Layer_flowers_warm"), SubResource("Layer_flowers_cool"), SubResource("Layer_tufts")])
-area = Rect2(-245, -85, 140, 140)
+area = Rect2(-188, 18, 140, 140)
 seed = 3

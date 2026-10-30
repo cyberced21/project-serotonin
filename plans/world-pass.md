@@ -3,6 +3,16 @@
 Grilled 2026-10-29. Umbrella: [cozy.md](cozy.md), "After cozy": the world feels too tight and too
 sparse, rocks sit out of place, the village looks randomly laid out. Branch `world-pass` off `main`.
 
+## Picked (2026-10-29, [the plans page](world-pass-plans.html))
+
+- **Map C, the bowl:** the village low in a wide, shallow bowl; every place on the hills round its
+  rim, each up its own road like the spokes of a wheel. The creek falls from the north rim as a
+  little waterfall, crosses the bowl past the green and leaves south to Stillwater.
+- **Green 3, the pond green:** a round green with the village pond on it (Ollie's fish, ducks), the
+  well and a big old tree beside; everything faces in round it like a clock: the town hall at
+  twelve, the tavern at three, the fisher's hut on the pond's bank. The farm a yard of its own to
+  the south, the stores to the north by the roads out.
+
 ## The map
 
 - **768 x 768 m** (3 x 3 Terrain3D regions, a region being one 256 m tile of terrain data; today
@@ -133,3 +143,24 @@ sparse, rocks sit out of place, the village looks randomly laid out. Branch `wor
 - The frame rate with the bigger world, the animals and more scenery (watch the scatter's draw
   distance and the number of animals near you).
 - Where the market stall and the trader's road meet the new village.
+
+## Where it stands (2026-10-29, end of day): phase 2 mostly built
+
+**Done (branch `world-pass`, uncommitted work committed as "World pass 2 (in progress)"):**
+- The land at 768 m: `tools/generate_test_terrain.gd` makes the bowl (`_bowl`, `SPOKES` notches, Goldmeadow's plateau at `FIELD_BASE`, the lake's basin past the south rim, softer creek banks); hills' range 17 -> 12. The world spans -256..512, so **the village is at (128, 128)**, not (0, 0) (Terrain3D regions sit on a 256 m grid).
+- `WorldMap`: every place's new centre, the roads as spokes from the green's edge, the creek (spring under the north rim, through the clearing's pond, down the bowl's west side to the lake), `biome_warp()` shared with the generator. The Biome autoload's cards use the warped shapes now.
+- Everything placed by hand moved with its place (one translation each, the Pinewood and Goldmeadow 1.5x): main.tscn, the three biome scenes, village_paths / village_decor / trader / landslide / dog_home / creek. The one-off script that did it is gone (scratch); the offsets are in the commit.
+- The Clearing sits at (46, 66), ~100 m from the green (the page drew it overlapping the bigger village).
+- Road bridges: `Creek._build_road_bridges` puts a road-wide `Footbridge` where a road crosses (the quarry road); the path from the clearing keeps its footbridge project.
+- Road-lamp projects are priced by a road's average distance from the green (`PathLamps`, `Projects.NEAR_VILLAGE` 140): every road now starts at the green's edge.
+- Old saves: `Player.WORLD_VERSION` 2; a position saved before the bowl is dropped (you start by your home).
+- Mine: the way-in cell's lamp hangs in a corner (the shaft's hole is over the middle).
+- Tests updated for the new places: test_dog, test_trophies, test_quarry. `tools/world_shots.gd` takes the tour (docs/images/world/).
+
+**Left in phase 2 (tomorrow):**
+- Read the last full test run (it was still going): the known failures before this work are test_lamps (timing; with more and longer roads "each lamp catches once" fails too), test_lantern, test_projects (count), test_trophy_wall (flaky), test_worlds (needs `--save-root=user://test_worlds`).
+- Run `tools/audit_world.gd` once more (last run: ruins buried by the quarry's long slope, fixed since; a Decor mesh clips the town hall's tier-1 bell frame: phase 4).
+- The forest trail detours east round a steep climb (317 m, one 13.6 m cut at (171, -93)): look at it in a window; phases 6-7 revisit the Pinewood (the haven's deer track).
+- Bare-dirt patches show on many slopes (the terrain shader paints dirt from a gentle slope): phase 6.
+- The shot list's pinewood_glade view looks at the ground; graphics_tour.gd / dog_shots.gd / market_shots.gd / tavern_shots.gd still use the old coordinates.
+- Commit phase 2 properly, then **phase 3: the assets page** (stop 2 for the user: buildings and props, animals, sounds, picked on a page).

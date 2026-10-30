@@ -15,8 +15,8 @@ const PACK_UP := 0.80
 const GONE := 0.87
 ## Where she parks: beside the market stall (village frame offset, as VillageDecor uses), and how
 ## she gets there from the end of the road east (world XZ).
-const PARK := Vector2(89.0, 32.0)
-const TOWN_WAY: Array[Vector2] = [Vector2(110, 28), Vector2(96, 31)]
+const PARK := Vector2(117, 120)
+const TOWN_WAY: Array[Vector2] = [Vector2(138, 116), Vector2(124, 119)]
 const CART := preload("res://models/village/props/trader_cart.glb")
 ## Sounds (audio/trader/SOURCES.md): hooves and wheels while she drives (looped from the cart), the
 ## horse snorting now and then while parked.

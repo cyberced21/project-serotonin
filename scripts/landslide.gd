@@ -21,7 +21,7 @@ const BOULDERS := [
 	[Vector2(-2.2, 3.2), 1.1], [Vector2(0.4, 3.6), 1.2], [Vector2(3.2, 2.8), 1.0],
 ]
 ## About where on the road east the slide came down.
-const NEAR := Vector2(198, 18)
+const NEAR := Vector2(300, 128)
 ## The wall stands this far uphill of the road's middle.
 const WALL_OFFSET := 4.6
 

@@ -84,7 +84,7 @@ size = Vector3(4.2, 9, 4.2)
 [node name="Props" type="Node3D" parent="."]
 
 [node name="Windmill" type="StaticBody3D" parent="Props"]
-position = Vector3(194.00, 0, 139.00)
+position = Vector3(381.5, 0, 286.5)
 rotation = Vector3(0, -2.3562, 0)
 script = ExtResource("7_windmill")
 model = ExtResource("14_windmill")
@@ -97,105 +97,105 @@ position = Vector3(0, 4.5, 0)
 shape = SubResource("Box_tower")
 
 [node name="Fence0" type="StaticBody3D" parent="Props"]
-position = Vector3(114.10, 0, 138.66)
+position = Vector3(261.65, 0, 285.99)
 rotation = Vector3(0, -1.2208, 0)
 script = ExtResource("6_prop")
 model = ExtResource("m_fence")
 snap_to_ground = true
 
 [node name="Fence1" type="StaticBody3D" parent="Props"]
-position = Vector3(115.26, 0, 141.85)
+position = Vector3(263.39, 0, 290.77)
 rotation = Vector3(0, -1.2208, 0)
 script = ExtResource("6_prop")
 model = ExtResource("m_fence")
 snap_to_ground = true
 
 [node name="Fence2" type="StaticBody3D" parent="Props"]
-position = Vector3(116.43, 0, 145.05)
+position = Vector3(265.14, 0, 295.58)
 rotation = Vector3(0, -1.2208, 0)
 script = ExtResource("6_prop")
 model = ExtResource("m_fence")
 snap_to_ground = true
 
 [node name="Fence3" type="StaticBody3D" parent="Props"]
-position = Vector3(117.59, 0, 148.24)
+position = Vector3(266.88, 0, 300.36)
 rotation = Vector3(0, -1.2208, 0)
 script = ExtResource("6_prop")
 model = ExtResource("m_fence")
 snap_to_ground = true
 
 [node name="Fence4" type="StaticBody3D" parent="Props"]
-position = Vector3(118.76, 0, 151.44)
+position = Vector3(268.64, 0, 305.16)
 rotation = Vector3(0, -1.2208, 0)
 script = ExtResource("6_prop")
 model = ExtResource("m_fence")
 snap_to_ground = true
 
 [node name="Fence5" type="StaticBody3D" parent="Props"]
-position = Vector3(115.89, 0, 134.81)
+position = Vector3(264.34, 0, 280.22)
 rotation = Vector3(0, 0.3500, 0)
 script = ExtResource("6_prop")
 model = ExtResource("m_fence")
 snap_to_ground = true
 
 [node name="Fence6" type="StaticBody3D" parent="Props"]
-position = Vector3(119.08, 0, 133.65)
+position = Vector3(269.12, 0, 278.48)
 rotation = Vector3(0, 0.3500, 0)
 script = ExtResource("6_prop")
 model = ExtResource("m_fence")
 snap_to_ground = true
 
 [node name="Fence7" type="StaticBody3D" parent="Props"]
-position = Vector3(125.47, 0, 131.32)
+position = Vector3(278.7, 0, 274.98)
 rotation = Vector3(0, 0.3500, 0)
 script = ExtResource("6_prop")
 model = ExtResource("m_fence")
 snap_to_ground = true
 
 [node name="Fence8" type="StaticBody3D" parent="Props"]
-position = Vector3(128.66, 0, 130.15)
+position = Vector3(283.49, 0, 273.23)
 rotation = Vector3(0, 0.3500, 0)
 script = ExtResource("6_prop")
 model = ExtResource("m_fence")
 snap_to_ground = true
 
 [node name="HayRound0" type="StaticBody3D" parent="Props"]
-position = Vector3(122.34, 0, 139.38)
+position = Vector3(274.01, 0, 287.07)
 rotation = Vector3(0, 0.3500, 0)
 script = ExtResource("6_prop")
 model = ExtResource("m_hay_round")
 snap_to_ground = true
 
 [node name="HayRound1" type="StaticBody3D" parent="Props"]
-position = Vector3(128.75, 0, 142.36)
+position = Vector3(283.62, 0, 291.54)
 rotation = Vector3(0, 1.2500, 0)
 script = ExtResource("6_prop")
 model = ExtResource("m_hay_round")
 snap_to_ground = true
 
 [node name="HayRound2" type="StaticBody3D" parent="Props"]
-position = Vector3(126.96, 0, 146.21)
+position = Vector3(280.94, 0, 297.31)
 rotation = Vector3(0, 2.1500, 0)
 script = ExtResource("6_prop")
 model = ExtResource("m_hay_round")
 snap_to_ground = true
 
 [node name="HayStack0" type="StaticBody3D" parent="Props"]
-position = Vector3(215.00, 0, 132.00)
+position = Vector3(413, 0, 276)
 rotation = Vector3(0, 0.3500, 0)
 script = ExtResource("6_prop")
 model = ExtResource("m_hay_stack")
 snap_to_ground = true
 
 [node name="HayStack1" type="StaticBody3D" parent="Props"]
-position = Vector3(217.00, 0, 201.00)
+position = Vector3(416, 0, 379.5)
 rotation = Vector3(0, 1.9000, 0)
 script = ExtResource("6_prop")
 model = ExtResource("m_hay_stack")
 snap_to_ground = true
 
 [node name="Cart" type="StaticBody3D" parent="Props"]
-position = Vector3(207.00, 0, 111.00)
+position = Vector3(401, 0, 244.5)
 rotation = Vector3(0, 2.4000, 0)
 script = ExtResource("6_prop")
 model = ExtResource("m_cart")
@@ -204,10 +204,10 @@ snap_to_ground = true
 [node name="Wheat" type="Node3D" parent="."]
 script = ExtResource("1_spawner")
 entries = Array[ExtResource("2_entry")]([SubResource("Entry_Wheat")])
-count = 25
+count = 56
 seed = 21
 save_prefix = "field_wheat"
-area = Rect2(105, 100, 90, 75)
+area = Rect2(248, 228, 135, 112.5)
 allowed_ids = Array[int]([6])
 spacing = 3.5
 path_clearance = 0.5
@@ -216,10 +216,10 @@ hotspot_share = 0.0
 [node name="Barley" type="Node3D" parent="."]
 script = ExtResource("1_spawner")
 entries = Array[ExtResource("2_entry")]([SubResource("Entry_Barley")])
-count = 15
+count = 34
 seed = 22
 save_prefix = "field_barley"
-area = Rect2(160, 160, 60, 60)
+area = Rect2(330.5, 318, 90, 90)
 allowed_ids = Array[int]([6])
 spacing = 3.5
 path_clearance = 0.5
@@ -228,10 +228,10 @@ hotspot_share = 0.0
 [node name="Oaks" type="Node3D" parent="."]
 script = ExtResource("1_spawner")
 entries = Array[ExtResource("2_entry")]([SubResource("Entry_Oak")])
-count = 5
+count = 11
 seed = 23
 save_prefix = "field_oak"
-area = Rect2(100, 95, 135, 135)
+area = Rect2(240.5, 220.5, 202.5, 202.5)
 allowed_ids = Array[int]([4])
 spacing = 20.0
 path_clearance = 0.5
@@ -240,6 +240,6 @@ hotspot_share = 0.0
 [node name="Scenery" type="Node3D" parent="."]
 script = ExtResource("8_scatter")
 layers = Array[ExtResource("9_layer")]([SubResource("Layer_wheat"), SubResource("Layer_grass"), SubResource("Layer_flowers_warm"), SubResource("Layer_flowers_cool")])
-area = Rect2(95, 90, 145, 145)
+area = Rect2(233, 213, 217.5, 217.5)
 seed = 4
 node_radius = 1.2

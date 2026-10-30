@@ -7,6 +7,8 @@ extends StaticBody3D
 ## (on_bridge(): player.gd's wading and Footsteps ask).
 
 const WIDTH := 2.2
+## Road bridges (Creek: where a road crosses it) are built wider.
+const ROAD_WIDTH := 5.6
 const ARCH := 0.35  # how much higher the middle is than the ends
 const LIFT := 0.12  # the ends' deck over the ground
 const PLANK := 0.24
@@ -16,6 +18,7 @@ const WOOD_DARK := Color(0.36, 0.24, 0.14)
 
 var from := Vector3.ZERO
 var to := Vector3.ZERO
+var width := WIDTH
 
 
 func _ready() -> void:
@@ -29,24 +32,24 @@ func _ready() -> void:
 	for i in n:  # planks across, each a hair different, following the arch
 		var t := (i + 0.5) / n
 		var p := deck_at(t)
-		var plank := _box(Vector3(WIDTH * randf_range(0.96, 1.0), 0.06, PLANK), light)
+		var plank := _box(Vector3(width * randf_range(0.96, 1.0), 0.06, PLANK), light)
 		plank.transform = Transform3D(_basis(along, across, _slope(t)).rotated(Vector3.UP, randf_range(-0.03, 0.03)), p)
 	for side: float in [-1.0, 1.0]:
 		for i in 9:  # a stringer under each edge, in short straight bits along the curve
 			var a := deck_at(i / 9.0)
 			var b := deck_at((i + 1) / 9.0)
-			var mid := (a + b) * 0.5 + across * side * (WIDTH * 0.5 - 0.08) + Vector3.DOWN * 0.1
+			var mid := (a + b) * 0.5 + across * side * (width * 0.5 - 0.08) + Vector3.DOWN * 0.1
 			var beam := _box(Vector3(0.12, 0.14, a.distance_to(b) + 0.02), dark)
 			beam.transform = Transform3D(_basis(along, across, (b.y - a.y) / maxf(Vector2(b.x - a.x, b.z - a.z).length(), 0.01)), mid)
 		var posts := maxi(2, int(span / 2.0) + 1)
 		for i in posts:
 			var t := float(i) / (posts - 1)
-			var base := deck_at(t) + across * side * (WIDTH * 0.5 - 0.05)
+			var base := deck_at(t) + across * side * (width * 0.5 - 0.05)
 			var post := _box(Vector3(0.09, RAIL_HEIGHT, 0.09), dark)
 			post.position = base + Vector3.UP * RAIL_HEIGHT * 0.5
 		for i in 9:
-			var a := deck_at(i / 9.0) + across * side * (WIDTH * 0.5 - 0.05) + Vector3.UP * RAIL_HEIGHT
-			var b := deck_at((i + 1) / 9.0) + across * side * (WIDTH * 0.5 - 0.05) + Vector3.UP * RAIL_HEIGHT
+			var a := deck_at(i / 9.0) + across * side * (width * 0.5 - 0.05) + Vector3.UP * RAIL_HEIGHT
+			var b := deck_at((i + 1) / 9.0) + across * side * (width * 0.5 - 0.05) + Vector3.UP * RAIL_HEIGHT
 			var rail := _box(Vector3(0.07, 0.07, a.distance_to(b) + 0.02), light)
 			rail.transform = Transform3D(_basis(along, across, (b.y - a.y) / maxf(Vector2(b.x - a.x, b.z - a.z).length(), 0.01)), (a + b) * 0.5)
 	# walk on it: a box per half (up the arch and down), and rails you can't fall through
@@ -56,7 +59,7 @@ func _ready() -> void:
 		var b := deck_at(half + 0.25)
 		var shape := CollisionShape3D.new()
 		var box := BoxShape3D.new()
-		box.size = Vector3(WIDTH, 0.2, a.distance_to(b) + 0.3)
+		box.size = Vector3(width, 0.2, a.distance_to(b) + 0.3)
 		shape.shape = box
 		shape.transform = Transform3D(_basis(along, across, (b.y - a.y) / maxf(Vector2(b.x - a.x, b.z - a.z).length(), 0.01)), c + Vector3.DOWN * 0.08)
 		add_child(shape)
@@ -65,7 +68,7 @@ func _ready() -> void:
 		var box := BoxShape3D.new()
 		box.size = Vector3(0.1, RAIL_HEIGHT, span)
 		shape.shape = box
-		shape.transform = Transform3D(_basis(along, across, 0.0), deck_at(0.5) + across * side * (WIDTH * 0.5) + Vector3.UP * RAIL_HEIGHT * 0.5)
+		shape.transform = Transform3D(_basis(along, across, 0.0), deck_at(0.5) + across * side * (width * 0.5) + Vector3.UP * RAIL_HEIGHT * 0.5)
 		add_child(shape)
 
 
@@ -87,7 +90,7 @@ static func on_bridge(tree: SceneTree, pos: Vector3) -> bool:
 			continue
 		var side := absf(rel.cross(flat.normalized()))
 		var deck := b.deck_at(clampf(t, 0.0, 1.0)).y
-		if side < WIDTH * 0.5 + 0.2 and pos.y > deck - 0.4 and pos.y < deck + 1.0:
+		if side < b.width * 0.5 + 0.2 and pos.y > deck - 0.4 and pos.y < deck + 1.0:
 			return true
 	return false
 

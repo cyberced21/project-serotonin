@@ -32,7 +32,7 @@ func _run() -> void:
 		await process_frame
 
 	# a record with its label
-	var r: Dictionary = T.call("found", &"log", Vector3(100, 0, 40))
+	var r: Dictionary = T.call("found", &"log", Vector3(128, 0, 128))
 	_check(String(T.call("label", r)).begins_with("Trophy log, ") and String(T.call("label", r)).contains("day "),
 			"a trophy log, labelled: %s" % T.call("label", r))
 
@@ -50,9 +50,9 @@ func _run() -> void:
 	T.get("carried").clear()
 
 	# fish: Huge yes, Big no
-	T.call("fish", &"perch", 2, Vector3(-16, 0, 74))
+	T.call("fish", &"perch", 2, Vector3(38, 0, 338))
 	_check(T.get("carried").is_empty(), "a Big fish isn't a trophy")
-	T.call("fish", &"pike", 3, Vector3(-16, 0, 74))
+	T.call("fish", &"pike", 3, Vector3(38, 0, 338))
 	var fish: Dictionary = T.get("carried")[0] if not T.get("carried").is_empty() else {}
 	_check(not fish.is_empty() and T.call("title", fish) == "Huge pike" and String(T.call("label", fish)).contains("Stillwater"),
 			"a Huge pike from the lake: %s" % T.call("label", fish))
@@ -75,7 +75,7 @@ func _run() -> void:
 	_check(finds.has("feather") and finds.has("shell"), "a feather at the peak and a shell on the shore")
 	if finds.has("feather"):
 		var p: Array = finds["feather"]
-		_check(Vector2(p[0], p[2]).distance_to(Vector2(-92, -92)) < 35.0, "...the feather near the summit")
+		_check(Vector2(p[0], p[2]).distance_to(Vector2(-98, -54)) < 35.0, "...the feather near the summit")
 		var node: Node = home.get("_find_nodes")["feather"]
 		var had: int = T.get("carried").size()
 		node.call("interact")
@@ -84,7 +84,7 @@ func _run() -> void:
 	if finds.has("shell"):
 		var p: Array = finds["shell"]
 		var depth: float = load("res://scripts/water_body.gd").depth_at(self, Vector3(p[0], p[1] + 0.05, p[2]))
-		_check(depth <= 0.0 and Vector2(p[0], p[2]).distance_to(Vector2(-16, 74)) < 90.0, "...the shell on dry ground by the lake")
+		_check(depth <= 0.0 and Vector2(p[0], p[2]).distance_to(Vector2(38, 338)) < 90.0, "...the shell on dry ground by the lake")
 		root.get_node("DayNight").set("time", load("res://scripts/villager_day.gd").time_at(13.0))
 		for i in 3:
 			await process_frame

@@ -5,7 +5,7 @@ extends SceneTree
 ##   godot --headless --path . -s res://tools/test_quarry.gd -- --save-root=user://tmp
 ## (No game class names: an -s script compiles before the autoloads exist.)
 
-const CENTER := Vector2(-175, -15)
+const CENTER := Vector2(-118, 88)  # (WorldMap.QUARRY_CENTER)
 
 var _fails := 0
 

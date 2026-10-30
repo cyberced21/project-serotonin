@@ -15,34 +15,44 @@ const TEX_FIELD := 4     # meadow
 const TEX_QUARRY := 5    # quarry stone
 const TEX_CROP := 6      # crop squares in the field
 
-## The original places (keep in sync with tools/generate_test_terrain.gd): the Biome autoload
-## tells them apart by distance.
-const CLEARING_CENTER := Vector2(0, -4)
-const VILLAGE_CENTER := Vector2(100, 40)
-const LAKE_CENTER := Vector2(-16, 74)
-const PEAK_CENTER := Vector2(-92, -92)
+## The places (plans/world-pass.md, map C): Hearthvale low in the middle of a wide bowl, the
+## others on the hills round its rim, each up its own road. The world spans -256..512 on both axes
+## (3 x 3 Terrain3D regions of 256 m), so the middle is (128, 128). Keep in sync with
+## tools/generate_test_terrain.gd; the Biome autoload tells them apart.
+const WORLD_MIN := -256.0
+const WORLD_SIZE := 768.0
+const VILLAGE_CENTER := Vector2(128, 128)
+## The village's flat (the green, the lanes, the yards round them) and the bowl round it: flat
+## floor out to BOWL_FLOOR, rising to BOWL_RIM_HEIGHT by BOWL_RIM.
+const VILLAGE_RADIUS := 72.0
+const BOWL_FLOOR := 115.0
+const BOWL_RIM := 250.0
+const BOWL_RIM_HEIGHT := 22.0
+const CLEARING_CENTER := Vector2(46, 66)
+const LAKE_CENTER := Vector2(38, 338)
+const PEAK_CENTER := Vector2(-98, -54)
 
-## Greystone Quarry: a stepped pit on a mountain shoulder west of the peak.
-const QUARRY_CENTER := Vector2(-175, -15)
+## Greystone Quarry: a stepped pit on the west rim, past the peak's foot.
+const QUARRY_CENTER := Vector2(-118, 88)
 const QUARRY_RIM_HEIGHT := 26.0
 const QUARRY_LEVEL_DROP := 5.0
 ## Radii of the walls between levels, outermost first: rim | 1 | 2 | 3 | 4 | floor.
 const QUARRY_WALLS: Array[float] = [55.0, 45.0, 35.0, 25.0, 15.0]
 const QUARRY_APRON := 10.0  # flat ground round the rim
-const QUARRY_SLOPE := 75.0  # then the mountainside falls away over about this
-## Direction (radians, from the centre) of the haul road's top, where the spur from the ring arrives.
+const QUARRY_SLOPE := 120.0  # then the hillside falls away over about this (gently: the road climbs it)
+## Direction (radians, from the centre) of the haul road's top, where the road from the village arrives.
 const QUARRY_ROAD_ANGLE := -0.4636
 
-## Goldmeadow: a broad plain of gentle swells, crop squares and dirt tracks.
-const FIELD_CENTER := Vector2(165, 160)
-const FIELD_RADIUS := 65.0
-const FIELD_RAMP := 30.0
+## Goldmeadow: a broad plain of gentle swells, crop squares and dirt tracks, on the south-east rim.
+const FIELD_CENTER := Vector2(338, 318)
+const FIELD_RADIUS := 97.0
+const FIELD_RAMP := 45.0
 
-## The Pinewood: an ellipse over the northern hills, with flattened glades along the trail.
-const FOREST_CENTER := Vector2(20, -125)
-const FOREST_RADII := Vector2(115, 72)
-const GLADES: Array[Vector2] = [Vector2(-18, -92), Vector2(28, -112), Vector2(-8, -138)]
-const GLADE_RADIUS := 9.0
+## The Pinewood: an ellipse over the northern rim hills, with flattened glades along the trail.
+const FOREST_CENTER := Vector2(118, -112)
+const FOREST_RADII := Vector2(172, 108)
+const GLADES: Array[Vector2] = [Vector2(61, -62.5), Vector2(130, -92.5), Vector2(76, -131.5)]
+const GLADE_RADIUS := 13.5
 
 ## The roads and paths (plans/world.md): the terrain generator lays each one along the land (a
 ## least-cost route over the slopes from `from` through any `via` points to `to`, unless `ctrl`
@@ -50,67 +60,85 @@ const GLADE_RADIUS := 9.0
 ## writes the lines it laid to scripts/world_roads.gd; roads() reads them back. `join` starts a
 ## road on another one, at its point nearest `from`. `lamps`: a stretch the Lamps can light, its
 ## points running out from the village end. Order matters: a road can only join one laid before it.
+## In the bowl every road is a spoke out from the green's edge to its place on the rim.
 const ROAD_HALF_WIDTH := 2.5
 const PATH_HALF_WIDTH := 1.6
-const QUARRY_RIM_POINT := Vector2(-122, -42)  # on the apron where the haul road leaves the rim (QUARRY_ROAD_ANGLE)
+const QUARRY_RIM_POINT := Vector2(-65, 61)  # on the apron where the haul road leaves the rim (QUARRY_ROAD_ANGLE)
 const ROADS: Array[Dictionary] = [
 	{"id": &"village_path", "title": "The path from the clearing", "kind": &"path", "village": true, "reverse": true,
-		"ctrl": [Vector2(22, -2), Vector2(42, 6), Vector2(62, 20), Vector2(80, 34), Vector2(100, 40)]},
-	{"id": &"lake_path", "title": "The path to the lake", "kind": &"path",
-		"ctrl": [Vector2(-3, 16), Vector2(-6, 32), Vector2(-11, 48), Vector2(-15, 59)]},
+		"ctrl": VILLAGE_PATH},
+	{"id": &"village_road", "title": "The road to the Pinewood", "kind": &"road", "village": true,
+		"from": Vector2(128, 58), "to": Vector2(124, -6)},
 	{"id": &"forest_trail", "title": "The forest trail", "kind": &"path",
-		"ctrl": [Vector2(1, -26), Vector2(-2, -52), Vector2(3, -67), Vector2(-12, -80), Vector2(-18, -92),
-			Vector2(5, -104), Vector2(28, -112), Vector2(14, -128), Vector2(-8, -138), Vector2(-2, -150)]},
+		"from": Vector2(124, -6), "via": [Vector2(76, -131.5)],  # (on from the road's end, up past the spring)
+		"to": Vector2(61, -62.5)},
 	{"id": &"quarry_road", "title": "The road to the quarry", "kind": &"road",
-		"from": Vector2(-30, -8), "via": [Vector2(-92, 28)], "to": QUARRY_RIM_POINT},
-	{"id": &"lake_road", "title": "The road round the lake", "kind": &"road",
-		"from": Vector2(-42, 84), "to": Vector2(-80, -22), "join_end": &"quarry_road"},
+		"from": Vector2(58, 132), "via": [Vector2(26, 120)], "to": QUARRY_RIM_POINT},  # (straight over the creek)
+	{"id": &"lake_road", "title": "The road to the lake", "kind": &"road",
+		"from": Vector2(118, 198), "to": Vector2(66, 316)},
 	{"id": &"peak_path", "title": "The path up Frostpeak", "kind": &"path",
-		"from": Vector2(-98, -32), "join": &"quarry_road", "to": Vector2(-80, -62)},
+		"from": Vector2(-20, 80), "join": &"quarry_road", "to": Vector2(-76, -14)},
 	{"id": &"field_road", "title": "The road to Goldmeadow", "kind": &"road",
-		"from": Vector2(128, 62), "to": Vector2(150, 130)},
-	{"id": &"village_road", "title": "The village road", "kind": &"road", "village": true,
-		"from": Vector2(112, 10), "to": Vector2(74, -86)},
+		"from": Vector2(178, 178), "to": Vector2(268, 252)},
 	{"id": &"east_road", "title": "The road east", "kind": &"road", "village": true, "ctrl": EAST_ROAD},
 ]
-## The road east (plans/market.md): from the village up through a pass in the eastern rim hills to
-## the world's edge, the way traders come. The terrain generator cuts the pass along it.
-const EAST_ROAD: Array[Vector2] = [Vector2(126, 34), Vector2(150, 30), Vector2(176, 22), Vector2(202, 18),
-	Vector2(226, 16), Vector2(252, 14)]
+## The road east (plans/market.md): from the green's east edge up through a pass in the eastern
+## rim hills to the world's edge, the way traders come. The terrain generator cuts the pass along it.
+const EAST_ROAD: Array[Vector2] = [Vector2(200, 126), Vector2(238, 120), Vector2(278, 126), Vector2(318, 134),
+	Vector2(358, 132), Vector2(398, 124), Vector2(438, 122), Vector2(478, 128), Vector2(512, 130)]
 
-## The dirt paths from the clearing, as the terrain generator's valleys follow them (ROADS has
-## the lines they were laid on): over to the village square, and south to the lake shore.
-const VILLAGE_PATH: Array[Vector2] = [Vector2(22, -2), Vector2(42, 6), Vector2(62, 20), Vector2(80, 34), Vector2(100, 40)]
-const LAKE_PATH: Array[Vector2] = [Vector2(-3, 16), Vector2(-6, 32), Vector2(-11, 48), Vector2(-15, 59)]
+## The dirt path from the clearing to the green, as the terrain generator's valley follows it
+## (ROADS has the line it was laid on). It crosses the creek just below the clearing's pond (the
+## footbridge project).
+const VILLAGE_PATH: Array[Vector2] = [Vector2(56, 62), Vector2(72, 70), Vector2(88, 84), Vector2(102, 98),
+	Vector2(116, 114), Vector2(128, 128)]
 
-## The creek (plans/world.md): from a spring at the foot of the Pinewood hills, down its own
-## shallow vale past the clearing, through the clearing's pond and on into the lake. Its water is
-## level the whole way (at the ponds' height), built by scripts/creek.gd; the terrain generator
+## The creek (plans/world.md): from a spring under the north rim, through the clearing's pond, down
+## the bowl's west side past the village and out through a gap in the rim into the lake. Its water
+## is level the whole way (at the ponds' height), built by scripts/creek.gd; the terrain generator
 ## carves its bed along the same spline.
 const CREEK: Array[Vector2] = [
-	Vector2(36, -70), Vector2(31, -50), Vector2(35, -30), Vector2(31, -10), Vector2(26, 4),
-	Vector2(20, 16), Vector2(18, 26), Vector2(11, 39), Vector2(3, 51), Vector2(-5, 61),
+	Vector2(90, -36), Vector2(94, -12), Vector2(86, 16), Vector2(72, 44), Vector2(66, 70), Vector2(66, 86),
+	Vector2(62, 108), Vector2(46, 138), Vector2(36, 178), Vector2(38, 223), Vector2(42, 268), Vector2(40, 308),
+	Vector2(38, 333),
 ]
 const CREEK_HALF_WIDTH := 1.8
 ## Deep pools scoured out at bends (salmon lie in them), near these points.
-const CREEK_POOLS: Array[Vector2] = [Vector2(33, -40), Vector2(13, 36)]
+const CREEK_POOLS: Array[Vector2] = [Vector2(86, 16), Vector2(38, 223)]
 const CREEK_POOL_RADIUS := 3.2
 
-const QUARRY_CENTER_3 := Vector3(-175, 0, -15)
+const QUARRY_CENTER_3 := Vector3(-118, 0, 88)
 ## Debug-menu teleports: name -> [where, look at].
 const LANDMARKS := {
-	"The Pinewood": [Vector3(20, 0, -106), Vector3(28, 0, -112)],
-	"Quarry rim": [Vector3(-122, 0, -41), QUARRY_CENTER_3],
-	"Quarry floor": [Vector3(-175, 0, -8), QUARRY_CENTER_3],
-	"Goldmeadow": [Vector3(150, 0, 140), Vector3(165, 0, 160)],
-	"The spring": [Vector3(40, 0, -78), Vector3(36, 0, -70)],
-	"The footbridge": [Vector3(26, 0, 10), Vector3(28, 0, 0)],
-	"Frostpeak": [Vector3(-80, 0, -80), Vector3(-92, 0, -92)],
+	"Hearthvale": [Vector3(128, 0, 150), Vector3(128, 0, 128)],
+	"The clearing": [Vector3(56, 0, 76), Vector3(46, 0, 66)],
+	"The Pinewood": [Vector3(118, 0, -83.5), Vector3(130, 0, -92.5)],
+	"Quarry rim": [Vector3(-65, 0, 62), QUARRY_CENTER_3],
+	"Quarry floor": [Vector3(-118, 0, 95), QUARRY_CENTER_3],
+	"Goldmeadow": [Vector3(315.5, 0, 288), Vector3(338, 0, 318)],
+	"Stillwater": [Vector3(66, 0, 316), Vector3(38, 0, 338)],
+	"The spring": [Vector3(96, 0, -44), Vector3(90, 0, -36)],
+	"The footbridge": [Vector3(60, 0, 72), Vector3(66, 0, 64)],
+	"Frostpeak": [Vector3(-86, 0, -42), Vector3(-98, 0, -54)],
 }
 
 
 static var _roads: Array[Dictionary] = []
 static var _creek: PackedVector2Array
+static var _warp: Array[FastNoiseLite] = []
+
+
+## Where the biomes' outlines are measured from: pushed around by two sizes of noise, so no border
+## is an ellipse or a circle. The terrain generator paints the ground by it and the Biome autoload
+## tells the places apart by it, so a place's card comes where its ground does.
+static func biome_warp(w: Vector2) -> Vector2:
+	if _warp.is_empty():
+		for spec in [[31, 0.004], [32, 0.004], [17, 0.03]]:  # (the generator's warp and edge noise)
+			var n := FastNoiseLite.new()
+			n.seed = spec[0]
+			n.frequency = spec[1]
+			_warp.append(n)
+	return w + Vector2(_warp[0].get_noise_2dv(w * 2.0), _warp[1].get_noise_2dv(w * 2.0)) * 24.0 			+ Vector2(_warp[2].get_noise_2dv(w), _warp[2].get_noise_2dv(w + Vector2(91, 37))) * 6.0
 
 
 ## Points about 1 m apart along a Catmull-Rom spline through `ctrl` (closed if `loop`). The

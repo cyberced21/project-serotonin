@@ -6,7 +6,7 @@ extends Node3D
 ## (DogNamePanel) asks his name and coat; he's yours, and the other two wander off.
 
 ## Where the strays nap: round the clearing's pond, clear of the creek and the ruins.
-const STRAY_SPOTS: Array[Vector2] = [Vector2(7, 14), Vector2(10, 28), Vector2(32, 23)]
+const STRAY_SPOTS: Array[Vector2] = [Vector2(53, 84), Vector2(56, 98), Vector2(78, 93)]
 ## Strays come by day only: between these times of day (DayNight.time).
 const STRAYS_FROM := DayNight.SUNRISE + 0.01
 const STRAYS_UNTIL := DayNight.SUNSET - 0.05

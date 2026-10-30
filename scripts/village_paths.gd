@@ -9,26 +9,26 @@ extends Node3D
 ## The points. Round the square at about 4.6 m (clear of the fountain, the well and the benches),
 ## then out along each lane.
 const POINTS := {
-	&"sq_n": Vector2(100.0, 35.2), &"sq_ne": Vector2(103.6, 36.6), &"sq_e": Vector2(104.8, 40.5),
-	&"sq_se": Vector2(103.4, 43.8), &"sq_s": Vector2(100.0, 45.0), &"sq_sw": Vector2(97.8, 44.2),
-	&"sq_nw": Vector2(96.6, 36.4),
+	&"sq_n": Vector2(128, 123.2), &"sq_ne": Vector2(131.6, 124.6), &"sq_e": Vector2(132.8, 128.5),
+	&"sq_se": Vector2(131.4, 131.8), &"sq_s": Vector2(128, 133), &"sq_sw": Vector2(125.8, 132.2),
+	&"sq_nw": Vector2(124.6, 124.4),
 	# west, through the gap between the benches where the path from the clearing comes in
-	&"w_gap": Vector2(93.3, 38.85), &"market": Vector2(90.8, 38.6),
-	&"th_door": Vector2(107.6, 40.8),
-	&"wc_lane": Vector2(98.8, 32.0),
-	&"bk_bend": Vector2(93.2, 35.0), &"bk_lane": Vector2(92.6, 31.2), &"bk_front": Vector2(90.6, 27.4),
-	&"fi_lane": Vector2(94.2, 47.2), &"fi_side": Vector2(92.8, 52.0), &"fi_corner": Vector2(92.6, 57.0),
-	&"sm_lane": Vector2(105.4, 48.6), &"sm_front": Vector2(107.0, 52.8),
-	&"pr_lane": Vector2(102.4, 51.8), &"pr_front": Vector2(104.8, 57.4),
-	&"nb_front": Vector2(108.0, 35.4),
+	&"w_gap": Vector2(121.3, 126.85), &"market": Vector2(118.8, 126.6),
+	&"th_door": Vector2(135.6, 128.8),
+	&"wc_lane": Vector2(126.8, 120),
+	&"bk_bend": Vector2(121.2, 123), &"bk_lane": Vector2(120.6, 119.2), &"bk_front": Vector2(118.6, 115.4),
+	&"fi_lane": Vector2(122.2, 135.2), &"fi_side": Vector2(120.8, 140), &"fi_corner": Vector2(120.6, 145),
+	&"sm_lane": Vector2(133.4, 136.6), &"sm_front": Vector2(135, 140.8),
+	&"pr_lane": Vector2(130.4, 139.8), &"pr_front": Vector2(132.8, 145.4),
+	&"nb_front": Vector2(136, 123.4),
 	# Rosa's terrace, in front of it and round toward the lane to the bakery
-	&"terrace": Vector2(87.4, 34.4), &"tr_east": Vector2(91.0, 34.2),
+	&"terrace": Vector2(115.4, 122.4), &"tr_east": Vector2(119, 122.2),
 	# the tavern (plans/tavern.md): across from the benches, in at its door, the middle of the room
-	&"tv_east": Vector2(91.4, 45.6), &"tv_front": Vector2(85.6, 46.0), &"tv_in": Vector2(83.6, 46.0),
-	&"tv_mid": Vector2(80.8, 45.2),
+	&"tv_east": Vector2(119.4, 133.6), &"tv_front": Vector2(113.6, 134), &"tv_in": Vector2(111.6, 134),
+	&"tv_mid": Vector2(108.8, 133.2),
 	# out to your home on the west rim (plans/home.md): between the terrace and the tavern, round
 	# the north of the tavern, along your home's north side, to its front (it faces west)
-	&"hm_east": Vector2(80.0, 38.6), &"hm_bend": Vector2(74.0, 37.0), &"hm_north": Vector2(64.0, 36.0), &"hm_front": Vector2(55.5, 40.0),
+	&"hm_east": Vector2(108, 126.6), &"hm_bend": Vector2(102, 125), &"hm_north": Vector2(92, 124), &"hm_front": Vector2(83.5, 128),
 }
 const LINKS := [
 	[&"sq_n", &"sq_ne"], [&"sq_ne", &"sq_e"], [&"sq_e", &"sq_se"], [&"sq_se", &"sq_s"],

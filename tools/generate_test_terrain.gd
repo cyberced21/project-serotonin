@@ -4,10 +4,11 @@ extends SceneTree
 ## Add `-- --preview=<file.png>` to also write a top-down map of the result (surface ids, shaded).
 ## WARNING: overwrites any sculpting you've done in res://terrain_data.
 ##
-## Layout (plans/world.md): one rolling land, broad warped hills with soft crests, that eases
-## down into the places instead of having them stamped on. The clearing (where the trees, rocks
-## and ruins sit, at height 0), the village to the east and the lake basin to the south are
-## flats whose edges wander outward, joined by shallow valleys along the dirt paths between them.
+## Layout (plans/world.md, plans/world-pass.md map C): a wide shallow bowl with Hearthvale low in
+## its middle, rising to rim hills where the other places sit, each up its own road through a
+## notch in the rim. Broad warped hills with soft crests roll over it all, gentler on the bowl's
+## floor. The village, the clearing just outside it (where the trees, rocks and ruins sit) and the
+## lake basin beyond the south rim are flats at height 0 whose edges wander outward.
 ## The clearing and village have wading ponds, the lake is wider and deeper (still wadeable);
 ## their water surfaces live in main.tscn at WATER_LEVEL. Frostpeak is one broad mountain in the
 ## north-west, and the world's edge rises into high hills all round so the valley feels closed in.
@@ -26,9 +27,9 @@ extends SceneTree
 
 const WorldMap := preload("res://scripts/world_map.gd")
 
-const SIZE := 512                       # heightmap pixels = metres (vertex spacing 1); 2x2 regions
+const SIZE := 768                       # heightmap pixels = metres (vertex spacing 1); 3x3 regions
 const ORIGIN := Vector3(-256, 0, -256)  # world position of pixel (0, 0) — must sit on the region grid
-const CLEARING_CENTER := Vector2(0, -4)
+const CLEARING_CENTER := WorldMap.CLEARING_CENTER
 const CLEARING_RADIUS := 28.0
 const HILL_RAMP := 55.0                 # metres over which the hills rise out of the clearing
 ## The flats' edges wander outward by up to this much (never inward: what's placed on them stays
@@ -37,21 +38,28 @@ const FLAT_GROW := 24.0
 ## The hills: broad, rounded, warped so nothing reads as a circle. Height = HILL_BASE + up to
 ## HILL_RANGE, eased down to the flats.
 const HILL_BASE := 3.0
-const HILL_RANGE := 17.0
+const HILL_RANGE := 12.0  # (the bowl's rim already lifts them: gentler on top of it)
 const WARP := 38.0                      # how far (m) the hills' noise is pushed around
 ## Between the places the paths run along valleys: the hills keep this share of their height on
 ## the valley floor, easing back to full over VALLEY_RAMP.
 const VALLEY_FLOOR := 0.22
 const VALLEY_HALF := 5.0
 const VALLEY_RAMP := 42.0
+## The roads out of the bowl climb through notches in its rim: along a spoke from the village to
+## each place the land keeps this share of its height, easing back over VALLEY_RAMP.
+const SPOKE_FLOOR := 0.5
+## How much of the hills' roll the bowl's floor keeps (the rim keeps it all), and how far the rim
+## wanders in and out (m).
+const BOWL_HILLS := 0.3
+const BOWL_WANDER := 28.0
 ## The creek (WorldMap.CREEK) runs down a vale of its own: the hills keep this share of their
 ## height along it, easing back over CREEK_VALE. Its channel is CREEK_DEPTH deep under the water
 ## (CREEK_POOL_DEPTH in the pools), and its banks ease up over CREEK_BANK.
 const CREEK_VALE_FLOOR := 0.05
-const CREEK_VALE := 48.0
+const CREEK_VALE := 70.0  # (wide: it cuts through the bowl's rim to the lake)
 const CREEK_DEPTH := 0.55
 const CREEK_POOL_DEPTH := 1.2
-const CREEK_BANK := 8.0
+const CREEK_BANK := 12.0
 ## Biome borders: each biome's ground thins out into the plain grass over this wide a belt.
 const BORDER_BELT := 22.0
 ## Goldmeadow's swells ease into the hills over this much.
@@ -62,17 +70,17 @@ const RIM_HEIGHT := 24.0
 ## Frostpeak: a summit with spurs running down from it and a high shoulder to the west, each a
 ## ridge with a rounded crest and steep flanks (rock where steeper than ~47°, snow on the gentler
 ## high ground: shaders/terrain.gdshader), gullies cut down its sides.
-const PEAK_CENTER := Vector2(-92, -92)
+const PEAK_CENTER := WorldMap.PEAK_CENTER
 const PEAK_RADIUS := 76.0
 const PEAK_HEIGHT := 66.0
 ## [from, to, crest height at each end, flank steepness at each end (rise per metre)]
 const PEAK_RIDGES := [
-	[Vector2(-92, -92), Vector2(-92, -92), 66.0, 66.0, 1.0, 1.0],     # the summit
-	[Vector2(-92, -92), Vector2(-50, -64), 64.0, 10.0, 1.3, 0.55],    # the north-east spur
-	[Vector2(-92, -92), Vector2(-98, -42), 62.0, 12.0, 1.25, 0.55],   # the south spur
-	[Vector2(-92, -92), Vector2(-84, -150), 62.0, 8.0, 1.2, 0.5],     # the north spur
-	[Vector2(-92, -92), Vector2(-126, -104), 60.0, 44.0, 1.4, 0.9],   # up to the shoulder
-	[Vector2(-126, -104), Vector2(-152, -132), 44.0, 10.0, 0.9, 0.5], # and down off it
+	[Vector2(-98, -54), Vector2(-98, -54), 66.0, 66.0, 1.0, 1.0],     # the summit
+	[Vector2(-98, -54), Vector2(-56, -26), 64.0, 10.0, 1.3, 0.55],    # the north-east spur
+	[Vector2(-98, -54), Vector2(-104, -4), 62.0, 12.0, 1.25, 0.55],   # the south spur
+	[Vector2(-98, -54), Vector2(-90, -112), 62.0, 8.0, 1.2, 0.5],     # the north spur
+	[Vector2(-98, -54), Vector2(-132, -66), 60.0, 44.0, 1.4, 0.9],   # up to the shoulder
+	[Vector2(-132, -66), Vector2(-158, -94), 44.0, 10.0, 0.9, 0.5], # and down off it
 ]
 const PEAK_CREST := 5.0  # how rounded the crests are (m)
 ## Steepest rise per metre the relax pass leaves between neighbouring cells, along x or z (so
@@ -86,28 +94,28 @@ const WATER_LEVEL := -0.15     # keep in sync with the ponds' WaterBody nodes in
 ## Ponds: centre, radius (roughly where the bed rises to the water line), deepest point below
 ## the water line (wading depth — no swimming). Keep in sync with the ponds in main.tscn.
 const PONDS := [
-	{"center": Vector2(20, 16), "radius": 9.0, "depth": 0.95},   # the clearing's pond
-	{"center": Vector2(88, 64), "radius": 7.0, "depth": 0.75},   # the village pond
-	{"center": Vector2(-16, 76), "radius": 14.0, "depth": 1.35},  # the lake
+	{"center": Vector2(66, 86), "radius": 9.0, "depth": 0.95},   # the clearing's pond
+	{"center": Vector2(116, 152), "radius": 7.0, "depth": 0.75},  # the village pond
+	{"center": Vector2(38, 340), "radius": 14.0, "depth": 1.35},  # the lake
 ]
-## The lake's flat basin (hills ease up beyond radius over the ramp).
-const LAKE_BASIN := {"center": Vector2(-16, 74), "radius": 26.0, "ramp": 50.0}
-## The path from the clearing south over the hills to the lake shore.
-const LAKE_PATH := [Vector2(-3, 16), Vector2(-6, 32), Vector2(-11, 48), Vector2(-15, 59)]
+## The lake's flat basin beyond the south rim (hills ease up beyond radius over the ramp).
+const LAKE_BASIN := {"center": WorldMap.LAKE_CENTER, "radius": 26.0, "ramp": 85.0}
 
-const VILLAGE_CENTER := Vector2(100, 40)  # the middle of the village square
-const VILLAGE_RADIUS := 36.0
+const VILLAGE_CENTER := WorldMap.VILLAGE_CENTER  # the middle of the village green
+const VILLAGE_RADIUS := WorldMap.VILLAGE_RADIUS
 const VILLAGE_RAMP := 50.0
+## Goldmeadow's plain sits up on the rim: its swells ride on this height.
+const FIELD_BASE := WorldMap.BOWL_RIM_HEIGHT * 0.85
 ## Control-map texture id that marks the path (see shaders/terrain.gdshader, footsteps.gd).
 const PATH_TEXTURE := WorldMap.TEX_PATH
 ## The path from the clearing over the pass into the village square.
-const PATH := [Vector2(22, -2), Vector2(42, 6), Vector2(62, 20), Vector2(80, 34), Vector2(100, 40)]
+const PATH := WorldMap.VILLAGE_PATH
 ## Lanes from the square to each building's door (see the scenes in scenes/village/).
 const LANES := [
-	[Vector2(100, 40), Vector2(107, 40)],                   # town hall
-	[Vector2(100, 40), Vector2(98, 31)],                    # woodcutter
-	[Vector2(100, 40), Vector2(105, 46), Vector2(108, 49)], # smithy
-	[Vector2(100, 40), Vector2(94, 46), Vector2(90, 50)],   # fisher
+	[Vector2(128, 128), Vector2(135, 128)],                   # town hall
+	[Vector2(128, 128), Vector2(126, 119)],                    # woodcutter
+	[Vector2(128, 128), Vector2(133, 134), Vector2(136, 137)], # smithy
+	[Vector2(128, 128), Vector2(122, 134), Vector2(118, 138)],   # fisher
 ]
 const SQUARE_RADIUS := 7.5
 const PATH_HALF_WIDTH := 1.6
@@ -130,6 +138,7 @@ const PATH_SHOULDER := 16.0
 const ROUTE_CELL := 4
 const ROUTE_SLOPE_COST := 160.0
 const ROUTE_WATER_COST := 300.0
+const ROUTE_CREEK_COST := 25.0
 ## The lines the roads were laid on, for the game (WorldMap.roads()).
 const ROADS_OUT := "res://scripts/world_roads.gd"
 
@@ -262,15 +271,31 @@ func _world(x: int, y: int) -> Vector2:
 func _height(w: Vector2) -> float:
 	# a product, not a min: where two places' rims meet there's no crease
 	var outside := _rise(w, CLEARING_CENTER, CLEARING_RADIUS, HILL_RAMP) 			* _rise(w, VILLAGE_CENTER, VILLAGE_RADIUS, VILLAGE_RAMP) 			* _rise(w, LAKE_BASIN["center"], LAKE_BASIN["radius"], LAKE_BASIN["ramp"])
-	for path in [PATH, LAKE_PATH, WorldMap.EAST_ROAD]:
+	for path in [PATH, WorldMap.EAST_ROAD]:
 		var v := smoothstep(VALLEY_HALF, VALLEY_HALF + VALLEY_RAMP, _polyline_distance(w, path))
 		outside *= lerpf(VALLEY_FLOOR, 1.0, v)
+	for to in SPOKES:
+		var v := smoothstep(VALLEY_HALF, VALLEY_HALF + VALLEY_RAMP, _polyline_distance(w, [VILLAGE_CENTER, to]))
+		outside *= lerpf(SPOKE_FLOOR, 1.0, v)
 	var c := smoothstep(WorldMap.CREEK_HALF_WIDTH, CREEK_VALE, _polyline_distance(w, WorldMap.CREEK))
 	outside *= lerpf(CREEK_VALE_FLOOR, 1.0, c)
-	var h := outside * _hills(w)
+	var rim := _bowl(w)
+	var h := outside * (rim * WorldMap.BOWL_RIM_HEIGHT + _hills(w) * lerpf(BOWL_HILLS, 1.0, rim))
 	for pond in PONDS:
 		h = _pond(w, h, pond, _shore)
 	return h
+
+
+## Where the roads climb out of the bowl: a notch along the line from the village to each.
+const SPOKES: Array[Vector2] = [WorldMap.QUARRY_RIM_POINT, Vector2(124, -6), Vector2(66, 316), Vector2(268, 252)]
+
+
+## The bowl: 0 on its floor out to WorldMap.BOWL_FLOOR, rising smoothly to 1 on its rim by
+## WorldMap.BOWL_RIM, the rim wandering in and out so it isn't a circle.
+func _bowl(w: Vector2) -> float:
+	var r := w.distance_to(VILLAGE_CENTER) + _warp_y.get_noise_2dv(w * 1.7) * BOWL_WANDER
+	var t := clampf((r - WorldMap.BOWL_FLOOR) / (WorldMap.BOWL_RIM - WorldMap.BOWL_FLOOR), 0.0, 1.0)
+	return t * t * t * (t * (t * 6.0 - 15.0) + 10.0)
 
 
 ## 0 on a place's flat (its edge wandering out by up to FLAT_GROW), easing to 1 over `ramp`.
@@ -387,12 +412,14 @@ func _biomes(w: Vector2, h: float) -> float:
 	elif d < outer + WorldMap.QUARRY_SLOPE + 30.0:
 		# the mountainside falls away from the apron over a wandering distance, not a ring
 		var dw := d + (_biome_warp(w).distance_to(q) - d) * smoothstep(outer, outer + 15.0, d)
-		h = lerpf(WorldMap.QUARRY_RIM_HEIGHT, h, smoothstep(outer, outer + WorldMap.QUARRY_SLOPE, dw))
+		var lifted := lerpf(WorldMap.QUARRY_RIM_HEIGHT, h, smoothstep(outer, outer + WorldMap.QUARRY_SLOPE, dw))
+		# (its long hillside never lifts the flats: the clearing's ruins and the village stay at 0)
+		h += (lifted - h) * _rise(w, CLEARING_CENTER, CLEARING_RADIUS, HILL_RAMP) * _rise(w, VILLAGE_CENTER, VILLAGE_RADIUS, VILLAGE_RAMP)
 	var fd := _biome_warp(w).distance_to(WorldMap.FIELD_CENTER)
 	var inside := 1.0 - smoothstep(WorldMap.FIELD_RADIUS - 10.0, WorldMap.FIELD_RADIUS + FIELD_RAMP, fd)
 	inside *= smoothstep(VILLAGE_RADIUS + FLAT_GROW, VILLAGE_RADIUS + FLAT_GROW + 25.0, w.distance_to(VILLAGE_CENTER))  # (not on the village's flat)
 	if inside > 0.0:
-		h = lerpf(h, 0.8 + (_swell.get_noise_2dv(w) * 0.5 + 0.5) * 3.5, inside)
+		h = lerpf(h, FIELD_BASE + 0.8 + (_swell.get_noise_2dv(w) * 0.5 + 0.5) * 3.5, inside)
 	return h
 
 
@@ -465,8 +492,7 @@ func _biome_id(w: Vector2) -> int:
 ## Where the biomes' outlines are measured from: pushed around by two sizes of noise, so no border
 ## is an ellipse or a circle.
 func _biome_warp(w: Vector2) -> Vector2:
-	return w + Vector2(_warp_x.get_noise_2dv(w * 2.0), _warp_y.get_noise_2dv(w * 2.0)) * 24.0 \
-			+ Vector2(_edge.get_noise_2dv(w), _edge.get_noise_2dv(w + Vector2(91, 37))) * 6.0
+	return WorldMap.biome_warp(w)  # (shared with the Biome autoload, so its cards follow the ground)
 
 
 ## True inside `inner`, false past `outer`, and in between a scatter of cells that thins out
@@ -765,8 +791,11 @@ func _road_grid(h: PackedFloat32Array, baked: Array[Vector2]) -> AStarGrid2D:
 			var g := Vector2(_sample(h, w + Vector2(r, 0)) - _sample(h, w - Vector2(r, 0)),
 					_sample(h, w + Vector2(0, r)) - _sample(h, w - Vector2(0, r))).length() / ROUTE_CELL
 			var cost := 1.0 + ROUTE_SLOPE_COST * g * g
-			if _sample(h, w) < WATER_LEVEL + 0.25 or _creek_mask[_pixel(w)] == 1:
+			# (under the water line: the bowl's floor and the flats sit at 0, just above it)
+			if _sample(h, w) < WATER_LEVEL - 0.05 and _creek_mask[_pixel(w)] == 0:
 				cost += ROUTE_WATER_COST
+			elif _creek_mask[_pixel(w)] == 1:
+				cost += ROUTE_CREEK_COST  # (crossing it is fine: a bridge or a ford; running along it isn't)
 			if w.distance_to(WorldMap.QUARRY_CENTER) < WorldMap.QUARRY_WALLS[0] + 1.0:
 				cost += ROUTE_WATER_COST
 			cost += _rim(w) * 4.0
@@ -914,13 +943,16 @@ func _report_road(spec: Dictionary, r: Dictionary, before: PackedFloat32Array) -
 	var length := 0.0
 	var steepest := 0.0
 	var cut := 0.0
+	var cut_at := Vector2.ZERO
 	for i in pts.size():
-		cut = maxf(cut, _sample(before, pts[i]) - heights[i])
+		if _sample(before, pts[i]) - heights[i] > cut:
+			cut = _sample(before, pts[i]) - heights[i]
+			cut_at = pts[i]
 		if i > 0:
 			var d := pts[i].distance_to(pts[i - 1])
 			length += d
 			steepest = maxf(steepest, absf(heights[i] - heights[i - 1]) / maxf(d, 0.01))
-	print("%-14s %4.0f m, steepest grade %.3f, deepest cut %.1f m" % [spec["id"], length, steepest, cut])
+	print("%-14s %4.0f m, steepest grade %.3f, deepest cut %.1f m (at %s)" % [spec["id"], length, steepest, cut, cut_at.round()])
 
 
 ## Lists hand-placed things (not the resource nodes: _rebake_nodes moves those) whose ground isn't

@@ -102,21 +102,21 @@ visible_distance = 60.0
 [node name="Trees" type="Node3D" parent="."]
 script = ExtResource("1_spawner")
 entries = Array[ExtResource("2_entry")]([SubResource("Entry_pine"), SubResource("Entry_birch")])
-count = 100
+count = 225
 seed = 4
 save_prefix = "forest"
-area = Rect2(-95, -197, 230, 150)
+area = Rect2(-54.5, -220, 345, 225)
 allowed_ids = Array[int]([3])
 spacing = 5.0
-hotspots = PackedVector3Array(-18, -92, 15, 28, -112, 15, -8, -138, 15, -12, -80, 7, 5, -104, 7, 14, -128, 7, -2, -150, 7)
+hotspots = PackedVector3Array(61, -62.5, 22.5, 130, -92.5, 22.5, 76, -131.5, 22.5, 70, -44.5, 10.5, 95.5, -80.5, 10.5, 109, -116.5, 10.5, 85, -149.5, 10.5)
 hotspot_share = 0.55
-ellipse = Vector4(20, -125, 115, 72)
+ellipse = Vector4(118, -112, 172.5, 108)
 
 [node name="Scenery" type="Node3D" parent="."]
 script = ExtResource("5_scatter")
 layers = Array[ExtResource("6_layer")]([SubResource("Layer_canopy_pine"), SubResource("Layer_canopy_young"), SubResource("Layer_canopy_birch"), SubResource("Layer_fern"), SubResource("Layer_mushrooms"), SubResource("Layer_grass")])
-area = Rect2(-95, -197, 230, 150)
+area = Rect2(-54.5, -220, 345, 225)
 seed = 2
 node_radius = 2.2
 clear_spots = PackedVector3Array(-18, -92, 8, 28, -112, 8, -8, -138, 8)
-edge_ellipse = Vector4(20, -125, 115, 72)
+edge_ellipse = Vector4(118, -112, 172.5, 108)

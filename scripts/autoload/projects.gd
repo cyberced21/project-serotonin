@@ -39,9 +39,9 @@ const SPOTS := [
 	[&"mine_shoring_3", "Shore up the third level", "Frames and lamps through the deep level, among the crystals.", {&"pine": 30, &"iron": 12, &"gold": 6}, 3, &"mine_lift_3"],
 	[&"mine_rails", "Rails and a minecart", "Rails from the mine's way in down to the deepest level the lift reaches, and a cart to ride them.", {&"iron": 40, &"wood": 30, &"coal": 15}, 2, &"mine_lift"],
 ]
-## Road lamps: a stretch near the village (one that comes within NEAR_VILLAGE m of the square)
-## is cheaper and opens at once; the far roads wait for the town hall's second tier.
-const NEAR_VILLAGE := 70.0
+## Road lamps: a stretch near the village (one that keeps within NEAR_VILLAGE m of the green on
+## average: PathLamps) is cheaper and opens at once; the far roads wait for the town hall's second tier.
+const NEAR_VILLAGE := 140.0
 const ROAD_NEAR := {&"wood": 10, &"ore": 5, &"coal": 3}
 const ROAD_FAR := {&"wood": 15, &"iron": 8, &"coal": 5}
 const ROAD_PREFIX := "lamps:"

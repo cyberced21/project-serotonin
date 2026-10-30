@@ -41,7 +41,7 @@ func _run() -> void:
 	await _stop_and_sit()
 	await _gather()
 	# over the hills at a jog: the clearing west to the quarry's mountainside
-	await _walk(PackedVector2Array([Vector2(-20, -6), Vector2(-60, 10), Vector2(-95, 20)]), 5.5, "over the hills")
+	await _walk(PackedVector2Array([Vector2(26, 64), Vector2(-14, 80), Vector2(-49, 90)]), 5.5, "over the hills")
 	await _teleport()
 	await _pet()
 	await _water()
@@ -100,12 +100,12 @@ func _water() -> void:
 				for s in c.get_children():
 					if s.get("fish") is Array:
 						schools.append(s)
-	_place(Vector3(-16, 0, 100), Vector2(0, -1))
+	_place(Vector3(38, 0, 364), Vector2(0, -1))
 	await _seconds(5.0)
 	var max_depth := 0.0
 	var got_wet := false
 	var fled := 0
-	for target: Vector2 in [Vector2(-16, 84), Vector2(-16, 74)]:
+	for target: Vector2 in [Vector2(38, 348), Vector2(38, 338)]:
 		var from := Vector2(player.global_position.x, player.global_position.z)
 		await _walk_quiet(from, target, 2.0)
 		for i in 60 * 6:
@@ -122,7 +122,7 @@ func _water() -> void:
 	_check(max_depth <= 0.95, "...but waits where it's too deep for him (deepest %.2f m)" % max_depth)
 	_check(fled == 0, "fish don't flee from him (%d fleeing fish-frames)" % fled)
 	_shook = false
-	await _walk_quiet(Vector2(-16, 74), Vector2(-16, 104), 3.0)
+	await _walk_quiet(Vector2(38, 338), Vector2(38, 368), 3.0)
 	for i in 60 * 8:
 		await physics_frame
 		_shook = _shook or dog.get("state") == 5
@@ -138,12 +138,12 @@ func _carry_lantern() -> void:
 	lamps.set("has_lantern", true)
 	lamps.call("set_lantern_lit", true)
 	var held: Node3D = player.get("lantern")
-	_place(Vector3(0, 0, 40), Vector2(0, -1))
+	_place(Vector3(46, 0, 110), Vector2(0, -1))
 	await _seconds(3.0)
 	var in_mouth := dog.find_child("Lantern", true, false) as Node3D
 	_check(dog.call("carrying") and in_mouth and in_mouth.visible, "at night he carries the lantern in his mouth")
 	_check(not held.visible, "...and the one on your belt is gone")
-	await _walk_quiet(Vector2(0, 40), Vector2(0, 10), 3.0)
+	await _walk_quiet(Vector2(46, 110), Vector2(46, 80), 3.0)
 	var ahead := dog.global_position - player.global_position
 	_check(ahead.z < 0.0, "walking, he goes ahead of you to light the way (%.1f m ahead)" % -ahead.z)
 	# (headless can't capture the mouse, so the raise key never reaches the lantern: hold it up by hand)
@@ -167,7 +167,7 @@ func _hints() -> void:
 	var rock: Node3D = null
 	for n in get_nodes_in_group("gatherable"):
 		var node := n as Node3D
-		if node.get("skill") == &"mining" and node.global_position.distance_to(Vector3(0, 0, -4)) < 30.0:
+		if node.get("skill") == &"mining" and node.global_position.distance_to(Vector3(46, 0, 66)) < 30.0:
 			rock = node
 			break
 	_check(rock != null, "(a rock in the clearing to hint at)")
@@ -198,7 +198,7 @@ func _night_and_kennel() -> void:
 	var projects := root.get_node("Projects")
 	day_night.set("frozen", true)
 	day_night.set("time", 0.95)
-	_place(Vector3(-20, 0, 40), Vector2(0, -1))
+	_place(Vector3(26, 0, 110), Vector2(0, -1))
 	await _seconds(14.0)
 	var gap := Vector2(dog.global_position.x - player.global_position.x, dog.global_position.z - player.global_position.z).length()
 	_check(dog.get("state") == 2 and dog.get("_sleeping") and gap < 1.8, "at night, standing still: he dozes at your feet (%.1f m)" % gap)
@@ -218,12 +218,12 @@ func _night_and_kennel() -> void:
 	_check((decor.call("props_of", &"kennel_porch") as Array).size() == 3, "the porch, the bowl and the blanket")
 	# night in the village: off to bed
 	var door: Transform3D = decor.call("kennel_door")
-	_place(Vector3(100, 0, 40), Vector2(0, 1))
+	_place(Vector3(128, 0, 128), Vector2(0, 1))
 	await _seconds(25.0)  # (he runs over from where you were)
 	gap = Vector2(dog.global_position.x - door.origin.x, dog.global_position.z - door.origin.z).length()
 	_check(gap < 1.0 and dog.get("state") == 2 and dog.get("_sleeping"), "night in the village: asleep in the kennel's doorway (%.1f m off)" % gap)
 	day_night.set("time", 0.3)
-	_place(Vector3(100, 0, 25), Vector2(0, -1))
+	_place(Vector3(128, 0, 113), Vector2(0, -1))
 	await _seconds(3.0)
 	gap = Vector2(dog.global_position.x - door.origin.x, dog.global_position.z - door.origin.z).length()
 	_check(gap < 1.0 and dog.get("state") == 1, "in the morning he waits there (%.1f m off)" % gap)

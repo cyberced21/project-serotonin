@@ -86,10 +86,13 @@ func _ready() -> void:
 		hearthvale()
 	var listed: Array[Dictionary] = []
 	for s in stretches:
-		var closest := INF  # how near it comes to the square (cheaper lamps near the village)
+		# how far out it runs on average (cheaper lamps near the village: every road in the bowl
+		# starts at the green's edge, so the nearest point says nothing)
+		var reach := 0.0
 		for p in s["pts"]:
-			closest = minf(closest, (p as Vector2).distance_to(village_center))
-		listed.append({"id": s["id"], "title": s["title"], "closest": closest})
+			reach += (p as Vector2).distance_to(village_center)
+		reach /= maxf(s["pts"].size(), 1)
+		listed.append({"id": s["id"], "title": s["title"], "closest": reach})
 	Lamps.stretches = listed
 	Lamps.changed.connect(_rebuild)
 	_rebuild()

@@ -90,15 +90,16 @@ func biome_at(p: Vector3) -> StringName:
 		return &"quarry"
 	if w.distance_to(WorldMap.PEAK_CENTER) < 55.0:  # (not by height: the rim hills climb as high)
 		return &"frostpeak"
-	if w.distance_to(WorldMap.FIELD_CENTER) < WorldMap.FIELD_RADIUS + 12.0:
+	var q := WorldMap.biome_warp(w)  # (the shapes the ground is painted by)
+	if q.distance_to(WorldMap.FIELD_CENTER) < WorldMap.FIELD_RADIUS + 12.0:
 		return &"goldmeadow"
-	if ((w - WorldMap.FOREST_CENTER) / WorldMap.FOREST_RADII).length() < 1.0:
+	if ((q - WorldMap.FOREST_CENTER) / WorldMap.FOREST_RADII).length() < 1.0:
 		return &"pinewood"
-	if w.distance_to(WorldMap.VILLAGE_CENTER) < 70.0:
+	if w.distance_to(WorldMap.VILLAGE_CENTER) < WorldMap.VILLAGE_RADIUS + 10.0:
 		return &"hearthvale"
 	if w.distance_to(WorldMap.LAKE_CENTER) < 55.0:
 		return &"stillwater"
-	if w.distance_to(WorldMap.CLEARING_CENTER) < 70.0:
+	if w.distance_to(WorldMap.CLEARING_CENTER) < 40.0:
 		return &"clearing"
 	return &""
 

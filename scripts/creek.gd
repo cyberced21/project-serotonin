@@ -21,7 +21,7 @@ const FLOW := 0.45
 ## The surface reaches this far past the channel's edge, under the soft banks.
 const SURFACE_MARGIN := 1.5
 ## Other water the creek runs into: [centre, radius] (the clearing's pond, the lake).
-const OTHER_WATER := [[Vector2(20, 16), 10.0], [Vector2(-16, 74), 15.0]]
+const OTHER_WATER := [[Vector2(66, 86), 10.0], [Vector2(38, 340), 15.0]]
 
 
 func _ready() -> void:
@@ -29,6 +29,42 @@ func _ready() -> void:
 	var pts := WorldMap.creek()
 	_build_surface(pts)
 	_build_stretches(pts)
+	_build_road_bridges.call_deferred(pts)
+
+
+## A bridge wherever a road crosses (the village path's footbridge is a project: VillageDecor):
+## the road's width, over the channel and its banks.
+func _build_road_bridges(pts: PackedVector2Array) -> void:
+	const REACH := 4.8  # past the channel's middle, each side, along the road
+	var terrain := get_tree().get_first_node_in_group("terrain") as Terrain3D
+	for r in WorldMap.roads():
+		if r["kind"] != &"road":
+			continue
+		var road: PackedVector2Array = r["pts"]
+		var best := [-1, -1]
+		var best_d := 4.0  # (within 2 m)
+		for i in road.size():
+			for k in range(0, pts.size(), 2):
+				var d := road[i].distance_squared_to(pts[k])
+				if d < best_d:
+					best_d = d
+					best = [i, k]
+		if best[0] < 0:
+			continue
+		var along := (road[mini(best[0] + 3, road.size() - 1)] - road[maxi(best[0] - 3, 0)]).normalized()
+		var mid: Vector2 = pts[best[1]]
+		var bridge := Footbridge.new()
+		bridge.width = Footbridge.ROAD_WIDTH
+		for end: float in [-1.0, 1.0]:
+			var at := mid + along * REACH * end
+			var h: float = terrain.data.get_height(Vector3(at.x, 0, at.y)) if terrain and terrain.data else 0.0
+			var p := Vector3(at.x, 0.0 if is_nan(h) else h, at.y)
+			if end < 0.0:
+				bridge.from = p
+			else:
+				bridge.to = p
+		bridge.name = "Bridge_%s" % r["id"]
+		add_child(bridge)
 
 
 static func in_other_water(p: Vector2) -> bool:

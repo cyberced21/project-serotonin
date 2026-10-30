@@ -175,6 +175,8 @@ const PET_MASK := 1 << 8
 ## Farming's wide blade (Perks): how far off the crosshair's line the sickle still catches a sheaf,
 ## in m per unit of the perk's bonus (so about 0.36 m at level 50).
 const WIDE_BLADE_PER_BONUS := 1.0
+## The world's layout a saved position belongs to: 2 since the world pass (the bowl).
+const WORLD_VERSION := 2
 const STAND_HEIGHT := 1.8
 const CROUCH_HEIGHT := 1.0
 const STAND_EYE := 1.6
@@ -300,7 +302,7 @@ func _ready() -> void:
 
 func to_dict() -> Dictionary:
 	return {
-		"x": global_position.x, "y": global_position.y, "z": global_position.z,
+		"x": global_position.x, "y": global_position.y, "z": global_position.z, "world": WORLD_VERSION,
 		"yaw": rotation.y, "pitch": _pitch,
 	}
 
@@ -308,6 +310,8 @@ func to_dict() -> Dictionary:
 func from_dict(d: Dictionary) -> void:
 	if not d.has("z"):
 		return  # save from the 2D version — spawn at the default position instead
+	if int(d.get("world", 1)) < WORLD_VERSION:
+		return  # saved before the world was laid out again (plans/world-pass.md): start by your home
 	global_position = Vector3(float(d["x"]), float(d["y"]), float(d["z"]))
 	# saved before the land was reshaped (plans/world.md)? never load under the ground (above it, you
 	# just land: you may be on a roof or a scaffold)

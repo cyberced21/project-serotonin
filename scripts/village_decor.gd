@@ -17,7 +17,7 @@ signal water_drawn(at: Vector3)
 ## The noticeboard: [offset, facing].
 const NOTICEBOARD := [Vector2(9.0, -8.0), -0.84]
 ## Hearthvale's square (its village isn't turned).
-const HEARTHVALE_CENTER := Vector2(100, 40)
+const HEARTHVALE_CENTER := Vector2(128, 128)
 ## Each decoration's props: [model (models/village/props/<name>.glb), offset, facing].
 const PROPS := {
 	&"benches": [[&"bench", Vector2(4.0, -6.8), -0.53], [&"bench", Vector2(7.0, 4.0), -2.09]],
