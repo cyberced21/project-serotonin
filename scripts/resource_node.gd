@@ -163,6 +163,8 @@ const CRACKING_LAYER := 1 << 10
 ## Pebbles (a tree: wood chips) that pile up around the base as it's worn down, until it grows
 ## back (0 = none).
 @export_range(0, 64) var lingering_rubble := 0
+## What breaks off glitters as it crumbles (crystal): see Crumble.
+@export var crumble_glitter := false
 
 @export_group("Audio")
 @export var hit_sfx: AudioStream
@@ -669,8 +671,17 @@ func _break(info: HitInfo) -> void:
 		Sfx.play_at(clean_layers, info.position, 0.6, 3.0)
 	else:
 		_play(break_audio, break_sfx)
-	for c in _intact_chunks():
-		_pop_chunk(c, info.away(), debris_speed * 0.7)
+	if _crumbles() and _merged:  # what's left of the rock slumps into its dust in one piece
+		var rest := _merged.duplicate() as MeshInstance3D
+		rest.set_instance_shader_parameter("pieces_gone", _merged.get_instance_shader_parameter("pieces_gone"))
+		var xform := _merged.global_transform
+		for c in _intact_chunks():
+			c.visible = false
+		_queue_refit()
+		Crumble.slump(get_parent(), rest, xform, info.away(), hit_fx, chip_color, ore_color, [get_rid()], crumble_glitter, 0.12)
+	else:
+		for c in _intact_chunks():
+			_pop_chunk(c, info.away(), debris_speed * 0.7)
 	_show_depleted()
 	Juice.shake(shake_break)
 	if topple:
@@ -1303,7 +1314,25 @@ func _pop_chunk(chunk: MeshInstance3D, push: Vector3, speed: float) -> void:
 		_clear_fault()
 		create_tween().tween_callback(_place_fault).set_delay(FAULT_DELAY)
 	var piece := chunk.duplicate() as MeshInstance3D
-	_throw(piece, chunk.global_transform.orthonormalized(), push, speed)
+	if _crumbles():
+		_crumble_away(piece, chunk.global_transform.orthonormalized(), push, 0.6, _ore_pieces.has(chunk))
+	else:
+		_throw(piece, chunk.global_transform.orthonormalized(), push, speed)
+
+
+## Mined rock crumbles away into dust rather than being thrown (plans/crumbs.md); trees' chips,
+## twigs and logs still fly.
+func _crumbles() -> bool:
+	return skill == &"mining"
+
+
+## `piece` (not yet in the tree) at `xform` comes away: it falls to the ground and puffs into dust,
+## or slumps where it stood if it's big (Crumble).
+func _crumble_away(piece: MeshInstance3D, xform: Transform3D, push: Vector3, puff := 0.6, ore := false) -> void:
+	if _merged:
+		piece.layers = _merged.layers  # (a stand-in for a piece of the merged mesh: drawn on its own now)
+	Crumble.bit(get_parent(), piece, xform, push, hit_fx, chip_color, ore_color if ore or crumble_glitter else Color(0, 0, 0, 0),
+		puff, [get_rid()], crumble_glitter)
 
 
 ## A small piece of whatever was struck, torn out at the hit point on every hit.
@@ -1322,7 +1351,10 @@ func _spawn_fragment(info: HitInfo, push: Vector3) -> void:
 	else:
 		piece = _nearest(intact, info.position).duplicate() as MeshInstance3D
 	var rot := Basis.from_euler(Vector3(randf(), randf(), randf()) * TAU)
-	_throw(piece, Transform3D(rot, info.position + info.normal * 0.06), push, debris_speed * 0.8, size)
+	if _crumbles():
+		_crumble_away(piece, Transform3D(rot.scaled(Vector3.ONE * size), info.position + info.normal * 0.06), push, 0.0)
+	else:
+		_throw(piece, Transform3D(rot, info.position + info.normal * 0.06), push, debris_speed * 0.8, size)
 
 
 ## Puts `piece` (scaled by `piece_scale`) in a debris rigid body at `xform` and flings it.

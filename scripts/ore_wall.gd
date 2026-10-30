@@ -708,12 +708,21 @@ func _drop_slab(k: int, slab: PackedInt32Array, info: HitInfo) -> void:
 	var c := global_transform * _slab_centre(k, slab)
 	slabs_dropped += 1
 	var xp := 0
+	var drawn: MeshInstance3D = null  # (a loose slab is drawn on its own: it slumps out as one)
+	for key: int in _slab_mesh:
+		if key / 100 == k and _layer_slabs(k)[key % 100] == slab:
+			drawn = _slab_mesh[key]
+	if drawn:
+		var whole := drawn.duplicate() as MeshInstance3D
+		whole.set_instance_shader_parameter("aim_piece", -1.0)
+		Crumble.slump(get_parent(), whole, drawn.global_transform, global_basis.z, hit_fx, chip_color, Color(0, 0, 0, 0), [get_rid()])
+		_gravel(c, 8)
 	for i in slab:
 		if _is_gone(k, i):
 			continue
 		var kind := _ore_of([k, i])
 		xp += ORES[kind]["xp"] if kind != STONE else xp_per_hit
-		_pop_piece(k, i, info)
+		_pop_piece(k, i, info, drawn != null)
 	_popup_at = c + global_basis.z * 0.6
 	PopupText.spawn(get_parent(), _popup_at + Vector3.UP * 0.5, "Slab!", ore_color, 13)
 	_award_xp(xp * 2, true)
@@ -845,23 +854,27 @@ func _knock_out_from(struck: Array, info: HitInfo, extra: int) -> Array:
 	return out
 
 
-## Takes a piece out of the wall and throws a copy of it.
-func _pop_piece(k: int, i: int, info: HitInfo) -> void:
+## Takes a piece out of the wall: it falls out of the face and crumbles to dust at the foot
+## (Crumble), leaving a little gravel. `quiet`: just gone (a slab slumps as one).
+func _pop_piece(k: int, i: int, info: HitInfo, quiet := false) -> void:
 	_gone[k][i] = true
 	_drop_shape(k, i)
 	var kind := _ore_of([k, i])
-	var piece := MeshInstance3D.new()
-	piece.mesh = _piece(k, i)["mesh"]
-	piece.material_override = ROCK_MATERIAL
-	if kind != STONE:  # (thrown, it's drawn without its vein: tinted the ore's colour instead)
-		piece.set_instance_shader_parameter("albedo", Color.WHITE.lerp(ORES[kind]["color"], 0.45))
-	var xf: Transform3D = global_transform * (_piece(k, i)["xform"] as Transform3D)
-	var out := (global_basis * Vector3(0, 0.3, 1)).normalized()
-	_throw(piece, xf.orthonormalized(), (out + (info.from - info.position).normalized() * 0.3).normalized(), debris_speed * 0.6)
 	var c := global_transform * (_piece(k, i)["centre"] as Vector3)
+	var ore_tint: Color = ORES[kind]["color"] if kind != STONE else Color(0, 0, 0, 0)
+	if not quiet:
+		var piece := MeshInstance3D.new()
+		piece.mesh = _piece(k, i)["mesh"]
+		piece.material_override = ROCK_MATERIAL
+		if kind != STONE:  # (on its own it's drawn without its vein: tinted the ore's colour instead)
+			piece.set_instance_shader_parameter("albedo", Color.WHITE.lerp(ORES[kind]["color"], 0.45))
+		var xf: Transform3D = global_transform * (_piece(k, i)["xform"] as Transform3D)
+		var out := (global_basis * Vector3(0, 0.3, 1)).normalized()
+		Crumble.bit(get_parent(), piece, xf.orthonormalized(), (out + (info.from - info.position).normalized() * 0.3).normalized(),
+			hit_fx, chip_color, ore_tint, 0.5, [get_rid()])
+		_gravel(c, 2)
 	if hit_fx:
-		HitFx.spawn(hit_fx, get_parent(), c, info.normal, -info.normal, chip_color,
-			ORES[kind]["color"] if kind != STONE else Color(0, 0, 0, 0), 0.6)
+		HitFx.spawn(hit_fx, get_parent(), c, info.normal, -info.normal, chip_color, ore_tint, 0.6)
 	if kind != STONE:  # a piece of vein: its ore spills out toward you
 		var toward := -info.away()
 		var vel := toward * randf_range(1.0, 2.0) + Vector3.UP * randf_range(2.5, 3.5) \
@@ -922,7 +935,19 @@ func pull(info: HitInfo) -> void:
 	piece.material_override = NODE_SURFACE
 	piece.set_instance_shader_parameter("albedo", chip_color)
 	var rot := Basis.from_euler(Vector3(randf(), randf(), randf()) * TAU)
-	_throw(piece, Transform3D(rot, info.position + info.normal * 0.06), (info.normal - info.away() * 0.6).normalized(), debris_speed * 0.8, 0.12)
+	Crumble.bit(get_parent(), piece, Transform3D(rot.scaled(Vector3.ONE * 0.12), info.position + info.normal * 0.06),
+		(info.normal - info.away() * 0.6).normalized(), hit_fx, chip_color, Color(0, 0, 0, 0), 0.0, [get_rid()])
+
+
+var _gravel_mm: Crumble.Gravel
+
+
+## A few specks of gravel on the ground under `at` (world), fading after a while.
+func _gravel(at: Vector3, count: int) -> void:
+	if _gravel_mm == null:
+		_gravel_mm = Crumble.Gravel.new()
+		add_child(_gravel_mm)
+	_gravel_mm.add(at, count, chip_color, [get_rid()])
 
 
 ## Debug and tools: the first `n` layers dug out at once.
