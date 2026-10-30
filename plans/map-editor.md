@@ -15,6 +15,29 @@ points** (landmarks) and **terrain shapes**, in a lightweight editor. Branch `ma
 - **Bake on save:** a headless Godot script turns the layout into a scene, like `country.tscn`
   today: the same nodes every run, and the diff readable in git.
 
+## As built (2026-10-30)
+
+All six phases on `map-editor`, one commit each. ![The editor](../docs/images/map-editor/editor.jpg)
+
+- **Run it:** `python tools/map_editor/serve.py`, open http://127.0.0.1:8765/. Tools: Select (1),
+  Patch (2), Line (3), Point (4), Terrain (5). Save writes `data/layout/hearthvale.json` (one shape
+  a line); Save & bake runs `tools/bake_layout.gd` (~15 s), or, when the terrain shapes changed,
+  the terrain generator, `tools/export_map.gd` and the bake (~75 s).
+- **The import** (`tools/import_layout.gd`, run once) gave 28 patches (the Pinewood as one big
+  patch plus its 7 glade and trail spots, Goldmeadow's wheat, barley and oaks, the quarry's six
+  rings, 6 groves, 5 outcrops), 55 lines (the country's hedges and walls) and 44 points (the lone
+  oak, the creek's bank plants, the standing stone, shrine, bench, ruined farmstead, and the
+  clearing's hand-placed trees and rocks with their old save ids). It bakes 456 gatherables.
+  `place_country.gd`, `country.tscn` and the biomes' NodeSpawners are gone.
+- **The bake** reuses NodeSpawner (now able to fill a polygon) in the running world, then writes
+  fresh copies of what it placed, trimmed to transform and save id, so the gatherable scenes keep
+  their tuning; no `unique_id`s, so a re-bake only diffs what moved.
+- **Terrain shapes** go on before the generator's relax pass, which still eases anything steeper
+  than ~24°: a hill has to be wide for its height (the panel says how steep its sides are).
+- **Checks:** `tools/test_layout.gd` (catalog loads, shapes whole, bake in step with the layout,
+  save ids unique); `test_quarry`, `test_worlds`, `test_paths`, `test_creek`, `test_ore_wall` pass.
+- Open items: docs/TODO.md, "The map editor".
+
 ## How it fits together
 
 ```
