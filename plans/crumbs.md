@@ -105,13 +105,37 @@ old rule takes **74** swings a layer (55–114), and that is the baseline the wa
 
 | | Before | After | Knobs |
 |---|---|---|---|
-| copper | 5.3 | 5.1 (4–6) | crumb_swings 6 |
-| iron | 10.8 | 10.5 (9–11) | crumb_swings 11 |
-| coal | 8.6 | 8.9 (8–10) | crumb_swings 10 |
-| gold | 11.0 | 10.7 (7–13) | crumb_swings 7 (its tough shell adds hits) |
+| copper | 5.3 | 4.8 (4–6) | crumb_swings 6 |
+| iron | 10.8 | 10.3 (9–11) | crumb_swings 11 |
+| coal | 8.6 | 9.2 (8–10) | crumb_swings 10 |
+| gold | 11.0 | 10.9 (8–15) | crumb_swings 7 (its tough shell adds hits) |
 | wall layer (stone pick) | 74 | 101 (93–110), ×1.36 | WALL_SPENT 0.25, WALL_KNOCK 2 |
 
 A rock of crumbs counts swings (`crumb_swings` in its .pieces.json); going by the share dug, as
 before, swung from 1 to 16 swings because a piece crumbling or a collapse is a big jump. The share
-still ends a rock early past a near-half collapse (`crumb_shatter_at` 0.45), and striking the fault
-counts two swings more.
+only ends a rock that's all but gone (`crumb_shatter_at` 0.9); a collapse counts one swing more,
+striking the fault two.
+
+## As built (2026-10-30, branch `crumbs`, phases 1–6)
+
+Where the build differs from the decisions above:
+
+- **Crumbs come from the committed models, not a fresh bake** (`make_crumbs.py`): the models
+  re-baked by today's `make_models.py` don't come out byte-identical, so re-baking would have moved
+  every piece, and every saved wall dig with it.
+- **More crumbs than budgeted:** a rock is 366–613 crumbs (copper 423, iron 613), not ~250, at the
+  13 cm asked for; a wall layer ~620 (budget 800). Held to the frame rate by drawing crumbs only
+  within CRUMB_NEAR (16 m), the pieces' mesh beyond (visibility ranges, no script). The mask is a
+  64-wide R8 texture per rock / wall layer (the 96-bit instance mask couldn't hold them).
+- **Rocks count swings** rather than going by how much is dug (see Tuned). A collapse counts one
+  swing more, the fault two; the share dug only ends a rock that's all but gone (0.9).
+- **A swing picks the crumb nearest the hit**, the skin before a core (CORE_SHY 0.2 m), its
+  neighbours preferring the same piece on walls.
+- **Load:** the first rock of each ore 80–115 ms (then ~12 ms a rock), each wall template's layer
+  ~80 ms, read while the world loads (the face and the layer behind), not on walking up.
+- **Disk:** ~103 MB of crumb models (docs/TODO.md).
+
+Verified: tools/test_crumbs.gd (dents, no physics bodies, save round trips for rocks and walls, an
+old wall save loading), test_ore_wall, test_quarry, the pace bench, close-ups in
+docs/images/ores/crumbs and docs/images/walls/crumbs (copper, iron, a wall). Unverified: played by
+hand, sound, crystal's glitter, gold and coal close-ups, frame time with many dug rocks on screen.

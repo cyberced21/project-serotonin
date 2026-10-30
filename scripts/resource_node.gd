@@ -2006,6 +2006,8 @@ func _dig_crumbs(info: HitInfo, count: int) -> int:
 		var away := (global_basis * (to_local(_piece_centre(c)) - _shape_centre)).normalized()
 		_pop_chunk(c, away * 0.3, 0.0)
 		_spill_ore(c, info)
+	if not falling.is_empty():  # (an undercut: a swing's worth more)
+		_swings_left -= COLLAPSE_SWINGS
 	_hits_from_pieces()
 	_update_piece_mask()
 	return falling.size()
@@ -2052,8 +2054,9 @@ const FAULT_RADIUS := 0.35
 const FAULT_REACH := 1.1
 const FAULT_BREAK := 6
 const FAULT_DELAY := 0.8
-## A rock of crumbs: striking the fault counts as this many swings more.
+## A rock of crumbs: striking the fault counts as this many swings more, and a collapse this many.
 const FAULT_SWINGS := 2
+const COLLAPSE_SWINGS := 1
 ## How far the loose piece stands out (m, at least: a big one up to 1.8 times it), how far it tips out at the top (radians), how long it
 ## takes to work loose, and how often it settles (s, between).
 const FAULT_GAP := 0.045

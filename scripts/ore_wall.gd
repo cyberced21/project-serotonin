@@ -125,6 +125,8 @@ func _ready() -> void:
 	_make_veins()
 	_fit_box()
 	_refresh_layers()
+	for k in range(front, mini(front + 2, LAYERS)):  # (read now, while the world loads, not in a hitch when you walk up)
+		_layer_crumbs(k)
 	SaveGame.register(StringName("wall:" + String(save_id)) if not save_id.is_empty() else StringName("wall:%s" % get_path()), self)
 	set_process(true)
 
