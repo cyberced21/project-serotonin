@@ -69,7 +69,7 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 - [ ] **Iron, not yet measured or played:** swings to break it now (it no longer topples: `knock` 0, `shatter_at` 0.5, like copper), and how it sits next to the other ores in a real world.
 - [ ] **Playtest the other ores** and tune: swings per ore (`knock`, `shatter_at` in `make_models.py`), how often you find the fault, ore spill rate, glint (`ore_roughness` / `ore_metallic` / `ore_glow`), the dirt patch on quarry sand.
 - [ ] **Sounds** for knocking pieces out, collapses and faults still reuse the split and break sounds.
-- [ ] **`.pieces.json` in exports:** add `*.json` to the export include filter when an export preset exists.
+- [x] **`.pieces.json` in exports:** `*.json` is in the Windows Playtest preset's include filter (they're read with FileAccess).
 - [ ] **The seam-crack code** in `resource_node.gd` (and `fractured()`) is now used only by `models/designs/`; drop it if those designs go.
 - [ ] **Icons** don't show the baked shade (Workbench renders palette colour only).
 
@@ -124,7 +124,7 @@ Plan and decisions: `plans/woodcutting-overhaul.md`.
 - [ ] **Merge buildings' tiers** too (~400 draws in the village): after their tier's pop-in, since that animates piece by piece.
 - [ ] **The sun's shadows** are the biggest cost left (four cascades to 140 m on high): a look decision.
 - [ ] **Unmeasured:** low and medium presets, other resolutions, the mine.
-- [ ] **`tools/test_lantern.gd` fails on main too** (found 2026-10-30): walking 5.8 m the lantern's fastest swing is 0.20 rad/s, under its creak speed. Not from crumbs or the performance pass.
+- [x] **`tools/test_lantern.gd` failed on main** (found 2026-10-30): a steady stroll on the smoothed land swings the lantern ~0.2 rad/s, under the old 0.25 creak speed. `Lantern.CREAK_SPEED` is 0.15 now (loudness still full at 1.5 rad/s, `CREAK_FULL`); listen whether walking creaks too often.
 
 ## Tools and levels ([plans/tool-progression.md](../plans/tool-progression.md))
 
@@ -135,7 +135,7 @@ Plan and decisions: `plans/woodcutting-overhaul.md`.
 - [ ] **Play it by hand.** Everything is bot-tested and screenshotted only: the gate and the under-level penalty (is the 40% floor, reached 10 levels under, too forgiving?), the recipe quantities (`Tools.RECIPES`, first guesses), and the cutscene's pacing (8.6 s; ~9.3 s real with the blows' hit-stops).
 - [ ] **Listen to the forge and tool sounds** (`tools/synth_forge.py`): flare, drone, the three blows, hiss, reveal swell, thunder, bell, beam, shockwave, and the copper / iron / crystal rings. All unheard.
 - [ ] **Greta's hammer pose** in the cutscene is the arm only (her work animation's hammer stays in her hand); a real hammer swing and the blank in her tongs would sell it more.
-- [ ] **`SaveGame.register` and freed nodes:** registering a save id whose previous owner was freed errors ("Trying to assign invalid previously freed instance", the typed `old` in `register`). Seen only in a test that reused ids; would bite a scene reload that re-registers.
+- [x] **`SaveGame.register` and freed nodes** (already fixed in Ore walls 3, `old` is untyped; re-checked 2026-10-30): registering a save id whose previous owner was freed errors ("Trying to assign invalid previously freed instance", the typed `old` in `register`). Seen only in a test that reused ids; would bite a scene reload that re-registers.
 - [ ] **Levels: per-level perks and talent choices** — the next plan, [plans/levels.md](../plans/levels.md).
 
 ## Village
@@ -261,7 +261,7 @@ Generated worlds are gone (the procgen items above are history); Hearthvale is t
 - [x] **Frostpeak shaped:** a summit, three spurs and a high western shoulder (`PEAK_RIDGES`), rounded crests, steep flanks that read as rock bands, snow on the gentler high ground, gullies down the sides; the relax pass leaves its faces alone.
 - [ ] **Biome cards vs ground:** `Biome.biome_at` still uses the plain shapes (ellipse, discs); the painted ground now uses warped ones, so a card can come a few metres early or late.
 - [x] **Saves:** a saved position under the new ground loads on top of it (`Player.from_dict`); one in the air just lands.
-- [ ] **Flaky tests:** `test_lamps` (lamps catching by full night, timing) and `test_fireflies` (a cricket voice fading in) fail now and then; both did on `main` before this.
+- [ ] **Flaky tests:** `test_lamps` (lamps catching by full night, timing) and `test_fireflies` (a cricket voice fading in) fail now and then; both did on `main` before this. (3 of 3 passes each on 2026-10-30.)
 
 ## The dog ([plans/dog.md](../plans/dog.md), branch `dog`)
 
@@ -290,7 +290,7 @@ Generated worlds are gone (the procgen items above are history); Hearthvale is t
 - [ ] **Saves while sitting:** a save taken seated puts you back on the seat's spot standing (inside the stool); harmless, but could stand you up first.
 - [ ] **Villagers on the dice seat** play only against you; two villagers could play each other.
 - [ ] **The keeper and Ollie have no house of their own** at the tavern (Maud "lives upstairs": she goes in at the door).
-- [ ] **test_lamps and test_lantern fail on main too** (found on this branch): "all burning by full night (48 of 52)" and "walking swings it enough to creak".
+- [x] **test_lamps and test_lantern failed on main too** (found on this branch; both pass 2026-10-30): "all burning by full night (48 of 52)" and "walking swings it enough to creak".
 
 ## Your home, interiors and add-ons ([plans/home.md](../plans/home.md), branch `home`)
 
@@ -298,7 +298,7 @@ Generated worlds are gone (the procgen items above are history); Hearthvale is t
 - [ ] **Play it:** bot-tested and Blender-rendered only, never seen in a game window. Costs, the visit rate, the note chance, well rested's size are guesses.
 - [x] **The trophy wall** ([plans/trophies.md](../plans/trophies.md)): trophies as labelled records, the seven finds, the picked models, hanging, the mantel, visitor remarks, the mayor's framed note. `test_trophies`, `test_trophy_wall`.
 - [ ] **Trophies, play them:** the rates are guesses (one about every hour or two); the feather and shell glint is a plain emissive mesh. (They now chime when you come near, and the dog finds them: plans/mine.md.)
-- [ ] **`test_trophy_wall` fails one check** ("swap: the pike up, the log back in your pack", a call on a null node); it failed before the mine work too.
+- [x] **`test_trophy_wall` failed one check** ("swap"): the test waited 0.3 s of game time, but the panel's reopen guard (`just_closed`, 250 ms) counts real time, and headless frames ran ahead of the clock. It waits out the guard now.
 - [x] **Second add-on slots** and forks for every building, the town hall's, the prospector's and the tavern's too (plans/mine.md phase 9). Villagers still only react to your home's add-ons.
 - [x] **The tavern** rebuilt from the kit as the long hall (plans/mine.md phase 10); its top tier is 8 x 12, not the 8 x 14 picked, to stay clear of your home.
 - [ ] **Interiors are smaller than planned** (6 x 6 to 8 x 10, not up to 10 x 12) to fit the village's plots; the world pass after cozy can give them room.

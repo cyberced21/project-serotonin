@@ -37,7 +37,8 @@ const CREAKS: Array[AudioStream] = [preload("res://audio/lamps/creak_1.wav"),
 	preload("res://audio/lamps/creak_2.wav"), preload("res://audio/lamps/creak_3.wav"),
 	preload("res://audio/lamps/creak_4.wav")]
 const LIGHT_SOUND := preload("res://audio/lamps/light.wav")
-const CREAK_SPEED := 0.25
+const CREAK_SPEED := 0.15  # (a steady stroll peaks ~0.2 on the smoothed land)
+const CREAK_FULL := 1.5  # (rad/s at full creak volume)
 const CREAK_GAP := Vector2(0.7, 1.4)
 const CREAK_DB := -24.0
 const LIGHT_DB := -9.0
@@ -116,7 +117,7 @@ func _sounds(delta: float) -> void:
 	var speed := _swing_speed.length()
 	if visible and speed > CREAK_SPEED and _creak_wait <= 0.0:
 		_creak_wait = randf_range(CREAK_GAP.x, CREAK_GAP.y)
-		var loud := linear_to_db(clampf(speed / (CREAK_SPEED * 6.0), 0.4, 1.0))
+		var loud := linear_to_db(clampf(speed / CREAK_FULL, 0.4, 1.0))
 		Sfx.play(CREAKS.pick_random(), randf_range(0.92, 1.08), CREAK_DB + loud, &"Movement")
 
 

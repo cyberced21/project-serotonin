@@ -53,19 +53,19 @@ func _run() -> void:
 	_check(T.get("hung").get(plaque.get("place")) == log and plaque.get("_shown") != null,
 			"the trophy log hangs there: %s" % plaque.call("prompt"))
 	_check(not T.get("carried").has(log), "...out of your pack")
-	await create_timer(0.3).timeout
+	await _past_close_guard(panel)
 	panel.call("open", plaque)
 	panel.call("hang", pike)
 	await process_frame
 	_check(T.get("hung").get(plaque.get("place")) == pike and T.get("carried").has(log), "swap: the pike up, the log back in your pack")
-	await create_timer(0.3).timeout
+	await _past_close_guard(panel)
 	panel.call("open", plaque)
 	panel.call("take_down")
 	await process_frame
 	_check(not T.get("hung").has(plaque.get("place")) and T.get("carried").has(pike), "take it down: back in your pack")
 
 	# a visitor remarks on it
-	await create_timer(0.3).timeout  # (the panel ignores an E right after closing)
+	await _past_close_guard(panel)
 	panel.call("open", plaque)
 	panel.call("hang", pike)
 	var ollie: Node = null
@@ -119,6 +119,13 @@ func _places(home: Node, t: int) -> Array:
 		if c.get("place") != null and String(c.get("place")) != "":
 			out.append(c)
 	return out
+
+
+## The panel ignores an E right after closing (`just_closed`, real time): wait it out. A game-time
+## timer isn't enough, headless frames can run ahead of the clock.
+func _past_close_guard(panel: Node) -> void:
+	while panel.call("just_closed"):
+		await process_frame
 
 
 func _check(ok: bool, what: String) -> void:
