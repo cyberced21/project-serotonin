@@ -1,8 +1,8 @@
 extends SceneTree
 ## Checks the map editor's land shaping (plans/terrain-editing.md): runs the terrain generator as a
 ## dry run (it writes nothing) on a copy of the layout with a river drawn down into the lake, a
-## pond dug on open ground, another drawn as an outline, and the lake deepened, then reads what it
-## did:
+## pond dug on open ground, another drawn as an outline, and the lake made an outline (as the
+## editor's "Make it an outline" does) and deepened, then reads what it did:
 ##   - the river's bed is under the water all the way down its middle, about as deep as it asked
 ##   - each pond is dug about as deep as it asked, the lake too
 ##   - a patch of Frostpeak's flank smoothed comes out much less bumpy
@@ -32,6 +32,15 @@ func _initialize() -> void:
 	for s in layout["terrain"]:
 		if s["id"] == "lake":
 			s["depth"] = LAKE_DEPTH
+			var c := Vector2(s["center"][0], s["center"][1])
+			s["points"] = []
+			for k in 12:
+				var q := c + Vector2.from_angle(k * PI / 6.0) * float(s["radius"])
+				s["points"].append([q.x, q.y])
+			s["shape"] = "polygon"
+			s["shelf"] = 10.0
+			s.erase("center")
+			s.erase("radius")
 	var f := FileAccess.open(SHAPED, FileAccess.WRITE)
 	f.store_string(JSON.stringify(layout))
 	f.close()

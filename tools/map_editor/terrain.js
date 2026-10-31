@@ -188,6 +188,18 @@
 					E.changed(true);
 				};
 				box.append(E.field("Fish", fish));
+				if (isCircle(o)) {  // (the same pond, its id, fish and water kept: drag its corners to reshape it)
+					box.append(E.el("button", { onclick: () => {
+						E.commit();
+						const [cx, cz] = o.center;
+						o.points = Array.from({ length: 12 }, (_, k) => [E.round(cx + Math.cos(k * Math.PI / 6) * o.radius), E.round(cz + Math.sin(k * Math.PI / 6) * o.radius)]);
+						o.shape = "polygon";
+						o.shelf = Math.round(o.radius * 0.7);
+						delete o.center;
+						delete o.radius;
+						E.changed();
+					} }, "Make it an outline"));
+				}
 				box.append(E.el("p", { class: "muted" }, "Up to about 1.4 m: you wade, you don't swim. Its water is at -0.15 m; dug into higher ground it sits in a hollow (a flat round it looks kinder)."
 					+ (isCircle(o) ? "" : " The shelf: how far in from the shore it's at its deepest.")));
 			}

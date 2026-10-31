@@ -73,6 +73,25 @@ ponds, and raise, lower, flatten and smooth ground. Save & bake regenerates the 
    deepest point moved down. Tests: `python tools/run_tests.py layout terrain_shapes creek dog
    terrain_follows` (and whatever else the phases touched).
 
+## As built
+
+- Phases 1-4 as planned. Extra: layout ponds are dug again after the relax pass (it filled a
+  bowl dug into a hillside) and kept from the second one; `scripts/map/map_data.gd` skips water a
+  rebake freed (the bake frees the old Layout, which now has water in it: it crashed).
+- Phase 5: `tools/test_water.gd` checks the layout's water in game, whatever the layout has (each
+  pond as deep as asked with its fish; each river wet, wadeable and flowing all the way). End to
+  end, in the editor: a 5 m river drawn from the western hills into the lake and the lake set to
+  1.6 m, Save & bake (it asked to regenerate the land: 113 s for land, map and bake), then
+  `test_water`: the river wet all 62 sampled points with its current, the lake 1.60 m at its
+  deepest. That river was thrown away after (the layout stays as committed).
+- How to use it: Terrain tool → River: click along it from its source down (start it up a hill,
+  end it in a pond, the lake or the creek), Enter; width/depth/vale in the panel. Pond: Circle or
+  Outline. Click the lake (or the clearing's pond) to change its depth or drag its middle and edge;
+  "Make it an outline" turns it into a 12-cornered outline (same id, fish and water) whose corners
+  drag and add like a patch's. Save & bake regenerates the land when terrain changed.
+- Known: a river's water is level, so up in the hills its vale cuts a groove down to the water
+  (the steeper the hill, the deeper the groove at its source). Start rivers low, or in a hollow.
+
 ## Not in this pass
 
 - Sloped rivers (water that falls with the land), waterfalls.
