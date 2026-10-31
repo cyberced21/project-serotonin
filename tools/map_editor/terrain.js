@@ -2,7 +2,12 @@
 // top of its own hills, before anything stands on it.
 //   flat   the land eased to `height` m inside (a polygon or a circle), over `soft` m round it
 //   raise  raised by `height` m (negative: lowered): a dome in a circle, a plateau in a polygon
-//   pond   dug to `depth` m below the water, a circle; the bake adds its water (and fish)
+//   smooth the land inside blurred over `strength` m (bumps and ledges eased), over `soft` m round it
+//   pond   dug to `depth` m below the water, a circle or an outline (deepest `shelf` m in from its
+//          shore); the bake adds its water (and `fish`: a list of species). The clearing's pond and
+//          the lake (ids pond, lake) are ponds here too: deepen, move or reshape them.
+//   river  a line: a channel `width` m wide and `depth` m deep under the water, through a vale
+//          eased down over `vale` m each side; the bake adds its water (plans/terrain-editing.md)
 //   road / path   a line the generator lays a gravel road or a dirt path along
 // Baking with terrain changed regenerates the land (about a minute), redraws the map, then bakes.
 "use strict";
@@ -12,18 +17,39 @@
 	const TYPES = {
 		flat: { label: "Flat", color: "#d8c890" },
 		raise: { label: "Hill / hollow", color: "#c08a5a" },
+		smooth: { label: "Smooth", color: "#9fb87a" },
 		pond: { label: "Pond", color: "#4f8fc0" },
+		river: { label: "River", color: "#3f7fb5" },
 		road: { label: "Road", color: "#e2ded2" },
 		path: { label: "Path", color: "#b0875e" },
 	};
 	const HALF = { road: 2.5, path: 1.6 };  // (WorldMap.ROAD_HALF_WIDTH, PATH_HALF_WIDTH)
-	const isLine = (o) => o.type === "road" || o.type === "path";
+	const half = (o) => (o.type === "river" ? (o.width ?? 4) / 2 : HALF[o.type]);
+	const isLine = (o) => o.type === "road" || o.type === "path" || o.type === "river";
+	// A river runs smoothed through its points, as the game smooths it (WorldMap.spline: Catmull-Rom).
+	const spline = (ctrl) => {
+		if (ctrl.length < 3) return ctrl;
+		const out = [], m = ctrl.length;
+		for (let s = 0; s < m - 1; s++) {
+			const p0 = ctrl[Math.max(s - 1, 0)], p1 = ctrl[s], p2 = ctrl[s + 1], p3 = ctrl[Math.min(s + 2, m - 1)];
+			const steps = Math.max(1, Math.ceil(E.dist(p1[0], p1[1], p2[0], p2[1]) / 2));
+			for (let k = 0; k < steps; k++) {
+				const t = k / steps, t2 = t * t, t3 = t2 * t;
+				out.push([0, 1].map((j) => 0.5 * (2 * p1[j] + (p2[j] - p0[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2
+					+ (3 * p1[j] - p0[j] - 3 * p2[j] + p3[j]) * t3)));
+			}
+		}
+		out.push(ctrl[m - 1]);
+		return out;
+	};
 	const isCircle = (o) => o.shape === "circle";
 
 	const describe = (o) => {
 		if (o.type === "flat") return `flat at ${o.height} m`;
 		if (o.type === "raise") return o.height >= 0 ? `hill +${o.height} m` : `hollow ${o.height} m`;
+		if (o.type === "smooth") return `smoothed over ${o.strength ?? 4} m`;
 		if (o.type === "pond") return `pond ${o.depth} m deep`;
+		if (o.type === "river") return `river ${o.width ?? 4} m wide, ${o.depth ?? 0.8} m deep`;
 		return `${o.type}, ${Math.round(E.polyLength(o.points))} m`;
 	};
 
@@ -34,15 +60,28 @@
 		draw(ctx, o, selected) {
 			const col = TYPES[o.type].color;
 			if (isLine(o)) {
-				E.path(o.points, false);
+				const river = o.type === "river";
 				ctx.lineCap = "round";
 				ctx.lineJoin = "round";
-				ctx.lineWidth = Math.max(3, HALF[o.type] * 2 * E.view.s) + (selected ? 4 : 2);
+				if (river) {  // its vale, faintly: where the land is eased down to it
+					E.path(spline(o.points), false);
+					ctx.lineWidth = (half(o) + (o.vale ?? 30)) * 2 * E.view.s;
+					ctx.strokeStyle = "rgba(63, 127, 181, 0.08)";
+					ctx.stroke();
+				}
+				E.path(river ? spline(o.points) : o.points, false);
+				ctx.lineWidth = Math.max(3, half(o) * 2 * E.view.s) + (selected ? 4 : 2);
 				ctx.strokeStyle = selected ? "#fff" : "rgba(20, 20, 15, 0.7)";
 				ctx.stroke();
-				ctx.lineWidth = Math.max(2, HALF[o.type] * 2 * E.view.s);
+				ctx.lineWidth = Math.max(2, half(o) * 2 * E.view.s);
 				ctx.strokeStyle = col;
 				ctx.stroke();
+				if (river && selected) {
+					const [sx, sy] = E.toScreen(o.points[0][0], o.points[0][1]);
+					ctx.font = "11px system-ui, sans-serif";
+					ctx.fillStyle = "#fff";
+					ctx.fillText(describe(o), sx + 8, sy - 8);
+				}
 				return;
 			}
 			if (isCircle(o)) {
@@ -50,7 +89,7 @@
 				ctx.beginPath();
 				ctx.arc(sx, sy, o.radius * E.view.s, 0, Math.PI * 2);
 			} else E.path(o.points, true);
-			ctx.fillStyle = o.type === "pond" ? "rgba(70, 130, 190, 0.55)" : o.type === "raise"
+			ctx.fillStyle = o.type === "pond" ? "rgba(70, 130, 190, 0.55)" : o.type === "smooth" ? "rgba(160, 185, 120, 0.22)" : o.type === "raise"
 				? (o.height >= 0 ? "rgba(200, 140, 90, 0.22)" : "rgba(60, 70, 120, 0.25)") : "rgba(230, 215, 150, 0.22)";
 			ctx.fill();
 			ctx.lineWidth = selected ? 2.5 : 1.5;
@@ -86,7 +125,7 @@
 					const a = o.points[i - 1], b = o.points[i];
 					best = Math.min(best, E.segDist(x, z, a[0], a[1], b[0], b[1]));
 				}
-				return best < tol + HALF[o.type] ? best : false;
+				return best < tol + half(o) ? best : false;
 			}
 			if (isCircle(o)) return E.dist(x, z, o.center[0], o.center[1]) <= o.radius + tol ? Math.PI * o.radius * o.radius : false;
 			return E.inPoly(x, z, o.points) ? E.polyArea(o.points) : false;
@@ -137,20 +176,53 @@
 					`Its sides: about ${deg}°.` + (deg > 20 ? " Steeper than ~24° (with the land's own slope) gets eased down: make it wider or lower." : "")));
 			}
 			if (o.type === "pond") {
-				box.append(E.field("Depth (m)", E.input(o, "depth", "number", { step: 0.05, min: 0.2 })));
-				box.append(E.field("Fish", E.input(o, "fish", "check", { default: true })));
-				box.append(E.el("p", { class: "muted" }, "Up to about 1.4 m: you wade, you don't swim. A pond up a hill wants a flat under it at the water's height (-0.15 m) first, or its water floats."));
+				box.append(E.field("Depth (m)", E.input(o, "depth", "number", { step: 0.05, min: 0.2, refresh: true })));
+				if (!isCircle(o)) box.append(E.field("Shelf (m)", E.input(o, "shelf", "number", { step: 0.5, min: 1, default: 6 })));
+				// fish: a list of species (data/fish/), true for perch and trout, false for none
+				const names = Array.isArray(o.fish) ? o.fish.join(", ") : o.fish === false ? "" : "perch, perch, trout";
+				const fish = E.el("input", { type: "text", value: names, title: "Species from data/fish/ (perch, trout, pike, char, grayling, salmon), a school each; empty: none" });
+				fish.onchange = () => {
+					const list = fish.value.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
+					E.commit();
+					o.fish = list.length ? list : false;
+					E.changed(true);
+				};
+				box.append(E.field("Fish", fish));
+				if (isCircle(o)) {  // (the same pond, its id, fish and water kept: drag its corners to reshape it)
+					box.append(E.el("button", { onclick: () => {
+						E.commit();
+						const [cx, cz] = o.center;
+						o.points = Array.from({ length: 12 }, (_, k) => [E.round(cx + Math.cos(k * Math.PI / 6) * o.radius), E.round(cz + Math.sin(k * Math.PI / 6) * o.radius)]);
+						o.shape = "polygon";
+						o.shelf = Math.round(o.radius * 0.7);
+						delete o.center;
+						delete o.radius;
+						E.changed();
+					} }, "Make it an outline"));
+				}
+				box.append(E.el("p", { class: "muted" }, "Up to about 1.4 m: you wade, you don't swim. Its water is at -0.15 m; dug into higher ground it sits in a hollow (a flat round it looks kinder)."
+					+ (isCircle(o) ? "" : " The shelf: how far in from the shore it's at its deepest.")));
 			}
-			if (o.type === "flat" || o.type === "raise") box.append(E.field("Soft edge (m)", E.input(o, "soft", "number", { step: 1, min: 0, default: 10 })));
+			if (o.type === "smooth") {
+				box.append(E.field("Strength (m)", E.input(o, "strength", "number", { step: 1, min: 1, default: 4, refresh: true })));
+				box.append(E.el("p", { class: "muted" }, "Each spot eased toward the average of the land this far round it: 2-3 m takes off bumps and ledges, 8+ m rounds off whole hills. The land keeps its overall height."));
+			}
+			if (o.type === "flat" || o.type === "raise" || o.type === "smooth") box.append(E.field("Soft edge (m)", E.input(o, "soft", "number", { step: 1, min: 0, default: 10 })));
 			if (isCircle(o)) box.append(E.field("Radius (m)", E.input(o, "radius", "number", { step: 0.5, min: 1 })));
-			if (isLine(o)) box.append(E.el("p", { class: "muted" }, "The generator lays it along this line, easing its slope; a road should start on another road or path."));
+			if (o.type === "river") {
+				box.append(E.field("Width (m)", E.input(o, "width", "number", { step: 0.5, min: 1, default: 4, refresh: true })));
+				box.append(E.field("Depth (m)", E.input(o, "depth", "number", { step: 0.05, min: 0.2, default: 0.8, refresh: true })));
+				box.append(E.field("Vale (m)", E.input(o, "vale", "number", { step: 5, min: 0, default: 30, refresh: true })));
+				box.append(E.field("Fish", E.input(o, "fish", "check", { default: true })));
+				box.append(E.el("p", { class: "muted" }, "Its water sits at the ponds' level (-0.15 m): where it runs through higher ground the land is eased down to it over the vale, each side. Up to about 1.4 m deep: you wade it. Roads that cross it get a bridge."));
+			} else if (isLine(o)) box.append(E.el("p", { class: "muted" }, "The generator lays it along this line, easing its slope; a road should start on another road or path."));
 			box.append(E.el("p", { class: "muted" }, "Terrain changes regenerate the land on the next bake (about a minute)."));
 		},
 	});
 
 	// --- the brush ------------------------------------------------------------------------------------
 
-	const brush = { type: "flat", shape: "polygon", height: 0, depth: 0.9 };
+	const brush = { type: "flat", shape: "polygon", height: 0, depth: 0.9, width: 4, riverDepth: 0.8, strength: 4 };
 	let corners = [];
 	let pressAt = null;
 	let hover = null;
@@ -166,10 +238,12 @@
 		const o = { id: E.uniqueId(brush.type), type: brush.type, ...extra };
 		if (brush.type === "flat") { o.height = brush.height; o.soft = 10; }
 		if (brush.type === "raise") { o.height = brush.height || 5; o.soft = isCircle(o) ? 0 : 10; }
-		if (brush.type === "pond") { o.depth = brush.depth; o.fish = true; }
+		if (brush.type === "smooth") { o.strength = brush.strength; o.soft = 6; }
+		if (brush.type === "pond") { o.depth = brush.depth; o.fish = true; if (!isCircle(o)) o.shelf = 6; }
+		if (brush.type === "river") { o.width = brush.width; o.depth = brush.riverDepth; o.fish = true; }
 		return o;
 	};
-	const shapeFor = () => (brush.type === "pond" ? "circle" : isLine(brush) ? "line" : brush.shape);
+	const shapeFor = () => (isLine(brush) ? "line" : brush.shape);
 	const finish = () => {
 		const s = shapeFor();
 		if (s === "line" && corners.length >= 2) add(make({ name: TYPES[brush.type].label, points: corners }));
@@ -181,7 +255,7 @@
 	E.registerTool({
 		id: "terrain",
 		label: "Terrain",
-		title: "Shape the land: flats, hills, ponds, roads",
+		title: "Shape the land: flats, hills and hollows, smoothing, ponds, rivers, roads",
 		options(box) {
 			const el = E.el;
 			const types = el("span", { class: "row" });
@@ -198,16 +272,38 @@
 				hgt.onchange = () => { brush.height = Number(hgt.value); };
 				box.append(shapes, el("span", { class: "muted" }, brush.type === "flat" ? "height (m)" : "up / down (m)"), hgt);
 			}
+			if (brush.type === "smooth") {
+				const shapes = el("span", { class: "row" });
+				for (const [s, label] of [["polygon", "Polygon"], ["circle", "Circle"]]) {
+					shapes.append(el("button", { class: s === brush.shape ? "on" : "", onclick: () => { brush.shape = s; corners = []; rebuild(); } }, label));
+				}
+				const st = el("input", { type: "number", step: "1", min: "1", value: brush.strength, title: "How far round each spot it averages (m)" });
+				st.onchange = () => { brush.strength = Number(st.value); };
+				box.append(shapes, el("span", { class: "muted" }, "strength (m)"), st);
+			}
 			if (brush.type === "pond") {
+				const shapes = el("span", { class: "row" });
+				for (const [s, label] of [["polygon", "Outline"], ["circle", "Circle"]]) {
+					shapes.append(el("button", { class: s === brush.shape ? "on" : "", onclick: () => { brush.shape = s; corners = []; rebuild(); } }, label));
+				}
+				box.append(shapes);
 				const d = el("input", { type: "number", step: "0.05", min: "0.2", value: brush.depth });
 				d.onchange = () => { brush.depth = Number(d.value); };
 				box.append(el("span", { class: "muted" }, "depth (m)"), d);
+			}
+			if (brush.type === "river") {
+				const wd = el("input", { type: "number", step: "0.5", min: "1", value: brush.width });
+				wd.onchange = () => { brush.width = Number(wd.value); };
+				const d = el("input", { type: "number", step: "0.05", min: "0.2", value: brush.riverDepth });
+				d.onchange = () => { brush.riverDepth = Number(d.value); };
+				box.append(el("span", { class: "muted" }, "width (m)"), wd, el("span", { class: "muted" }, "depth (m)"), d);
 			}
 		},
 		hint() {
 			const s = shapeFor();
 			if (s === "circle") return "Drag from the middle out to the edge.";
 			if (corners.length) return `${corners.length} points: click to add, double-click / Enter to finish, Backspace to take one back, Esc to drop it`;
+			if (brush.type === "river") return "Click along where it runs, from its source down to where it ends (in a pond or the lake, say).";
 			return s === "line" ? "Click along where it runs (start it on a road or path)." : "Click the corners.";
 		},
 		down(x, z) {

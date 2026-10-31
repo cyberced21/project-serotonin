@@ -105,7 +105,7 @@ func _sample_row(y: int) -> void:
 		at.y = h
 		var depth := 0.0
 		for wb: Array in _waters:
-			if (wb[1] as Rect2).has_point(p) and wb[0].contains(at):
+			if (wb[1] as Rect2).has_point(p) and is_instance_valid(wb[0]) and wb[0].contains(at):  # (a rebake frees the layout's)
 				depth = maxf(depth, float(wb[0].surface_height) - h)
 		var tex: int = data.get_control_base_id(at)
 		var biome := Biome.biome_at(at)

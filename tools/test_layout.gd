@@ -3,7 +3,7 @@ extends SceneTree
 ##   - every scene and model in data/layout/catalog.json loads
 ##   - the layout's shapes are whole: unique ids, things the catalog has, enough corners, counts
 ##   - scenes/layout.tscn loads and is in step with the layout: each patch baked at least 90% of
-##     its count and no more, every point and line there, a pond's water for each pond
+##     its count and no more, every point and line there, the water for each pond and river
 ##   - every gatherable's save id is unique (with main.tscn's), and the report has every one
 ##   godot --headless --path . -s res://tools/test_layout.gd -- --save-root=user://tool_worlds
 ## (No game class names: an -s script compiles before the autoloads exist.)
@@ -78,7 +78,7 @@ func _shapes_whole(layout: Dictionary, catalog: Dictionary) -> void:
 		var t: String = pt["type"]
 		_check(catalog["gatherables"].has(t) or catalog["props"].has(t) or catalog["fixtures"].has(t), "point %s's %s is in the catalog" % [pt["id"], t])
 	for s in layout.get("terrain", []):
-		_check(s.get("type", "") in ["flat", "raise", "pond", "road", "path"], "terrain %s's type is known" % s["id"])
+		_check(s.get("type", "") in ["flat", "raise", "smooth", "pond", "river", "road", "path"], "terrain %s's type is known" % s["id"])
 
 
 func _baked_in_step(layout: Dictionary, catalog: Dictionary, report: Dictionary) -> void:
@@ -121,12 +121,16 @@ func _baked_in_step(layout: Dictionary, catalog: Dictionary, report: Dictionary)
 			if String(row.name).begins_with(String(l["id"]).to_pascal_case() + "_"):
 				any = true
 		_check(any, "line %s is baked (some of it)" % l["id"])
-	var ponds := 0
-	for s in layout.get("terrain", []):
-		if s.get("type", "") == "pond":
-			ponds += 1
+	var waters := 0
 	var water := baked.get_node_or_null("Water")
-	_check((water.get_child_count() if water else 0) == ponds, "every pond has its water")
+	for s in layout.get("terrain", []):
+		if s.get("type", "") in ["pond", "river"]:
+			waters += 1
+			var n := water.get_node_or_null(NodePath(String(s["id"]).to_pascal_case())) if water else null
+			_check(n != null, "%s %s has its water" % [s["type"], s["id"]])
+			if n and s["type"] == "river":
+				_check(n.get("points") is PackedVector2Array and n.get("points").size() == s["points"].size(), "river %s's water follows it" % s["id"])
+	_check((water.get_child_count() if water else 0) == waters, "every pond and river has its water, and nothing else")
 	_check(gatherables == report.get("nodes", []).size(), "the report lists every gatherable (%d vs %d)" % [gatherables, report.get("nodes", []).size()])
 	baked.free()
 	# none clash with main.tscn's own (the places' orchard trees, the haven's flower...)

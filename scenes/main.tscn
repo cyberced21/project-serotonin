@@ -10,8 +10,6 @@
 [ext_resource type="Script" path="res://scripts/fish_pond.gd" id="9_fish_pond"]
 [ext_resource type="Resource" path="res://data/fish/perch.tres" id="10_perch"]
 [ext_resource type="Resource" path="res://data/fish/trout.tres" id="11_trout"]
-[ext_resource type="Resource" path="res://data/fish/pike.tres" id="12_pike"]
-[ext_resource type="Resource" path="res://data/fish/char.tres" id="54_char"]
 [ext_resource type="Script" path="res://scripts/pond_dressing.gd" id="13_dressing"]
 [ext_resource type="PackedScene" path="res://scenes/village/town_hall.tscn" id="14_town_hall"]
 [ext_resource type="PackedScene" path="res://scenes/village/woodcutter.tscn" id="15_woodcutter"]
@@ -116,15 +114,6 @@
 render_priority = 0
 shader = ExtResource("8_water_shader")
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_water"]
-material = SubResource("ShaderMaterial_water")
-size = Vector2(26, 26)
-subdivide_width = 25
-subdivide_depth = 25
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_pond"]
-size = Vector3(26, 3, 26)
-
 [sub_resource type="PlaneMesh" id="PlaneMesh_village_water"]
 material = SubResource("ShaderMaterial_water")
 size = Vector2(22, 22)
@@ -133,15 +122,6 @@ subdivide_depth = 21
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_village_pond"]
 size = Vector3(22, 3, 22)
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_lake"]
-material = SubResource("ShaderMaterial_water")
-size = Vector2(36, 36)
-subdivide_width = 35
-subdivide_depth = 35
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_lake"]
-size = Vector3(36, 3, 36)
 
 [sub_resource type="Terrain3DMaterial" id="Terrain3DMaterial_lowpoly"]
 shader_override_enabled = true
@@ -286,28 +266,6 @@ collision_mode = 3
 material = SubResource("Terrain3DMaterial_lowpoly")
 assets = ExtResource("6_terrain_assets")
 
-[node name="Pond" type="Area3D" parent="."]
-position = Vector3(66, 0, 86)
-collision_layer = 0
-collision_mask = 0
-script = ExtResource("7_water")
-
-[node name="Volume" type="CollisionShape3D" parent="Pond"]
-position = Vector3(0, -1, 0)
-shape = SubResource("BoxShape3D_pond")
-
-[node name="Dressing" type="Node3D" parent="Pond"]
-script = ExtResource("13_dressing")
-
-[node name="Fish" type="Node3D" parent="Pond"]
-script = ExtResource("9_fish_pond")
-schools = Array[Resource]([ExtResource("10_perch"), ExtResource("10_perch"), ExtResource("11_trout"), ExtResource("12_pike")])
-
-[node name="Surface" type="MeshInstance3D" parent="Pond"]
-position = Vector3(0, -0.15, 0)
-cast_shadow = 0
-mesh = SubResource("PlaneMesh_water")
-
 [node name="Creek" type="Node3D" parent="."]
 script = ExtResource("93_creek")
 
@@ -354,32 +312,6 @@ position = Vector3(30, 1.5, 62)
 script = ExtResource("18_prop")
 model = ExtResource("46_ruin")
 collision_size = Vector3(1, 3, 1)
-
-[node name="Lake" type="Area3D" parent="."]
-position = Vector3(38, 0, 340)
-collision_layer = 0
-collision_mask = 0
-script = ExtResource("7_water")
-
-[node name="Volume" type="CollisionShape3D" parent="Lake"]
-position = Vector3(0, -1, 0)
-shape = SubResource("BoxShape3D_lake")
-
-[node name="Dressing" type="Node3D" parent="Lake"]
-script = ExtResource("13_dressing")
-seed = 31
-reed_clumps = 14
-lily_pads = 20
-stones = 18
-
-[node name="Fish" type="Node3D" parent="Lake"]
-script = ExtResource("9_fish_pond")
-schools = Array[Resource]([ExtResource("11_trout"), ExtResource("11_trout"), ExtResource("10_perch"), ExtResource("54_char"), ExtResource("54_char")])
-
-[node name="Surface" type="MeshInstance3D" parent="Lake"]
-position = Vector3(0, -0.15, 0)
-cast_shadow = 0
-mesh = SubResource("PlaneMesh_lake")
 
 [node name="Village" type="Node3D" parent="."]
 

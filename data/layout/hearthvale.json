@@ -1,6 +1,9 @@
 {
 	"version": 1,
-	"terrain": [],
+	"terrain": [
+		{"center":[66,86],"depth":0.95,"fish":["perch","perch","trout","pike"],"id":"pond","lilies":14,"name":"Clearing pond","radius":9.0,"reeds":9,"seed":7,"shape":"circle","stones":12,"type":"pond"},
+		{"center":[38,340],"depth":1.35,"fish":["trout","trout","perch","char","char"],"id":"lake","lilies":20,"name":"Stillwater (the lake)","radius":14.0,"reeds":14,"seed":31,"shape":"circle","stones":18,"type":"pond"}
+	],
 	"patches": [
 		{"biome":"pinewood","center":[61,-62.5],"count":18,"ground":["forest"],"id":"forest_spot1","inner":0,"items":{"birch":1.8,"pine":2},"name":"Pinewood Trees, spot 1","radius":22.5,"seed":400,"shape":"circle","spacing":5},
 		{"biome":"pinewood","center":[130,-92.5],"count":18,"ground":["forest"],"id":"forest_spot2","inner":0,"items":{"birch":1.8,"pine":2},"name":"Pinewood Trees, spot 2","radius":22.5,"seed":401,"shape":"circle","spacing":5},

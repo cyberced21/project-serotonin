@@ -29,6 +29,8 @@ extends SceneTree
 ## roads and paths drawn in the editor) go on top of all that, before the relax pass; the roads are
 ## laid after WorldMap.ROADS and written with them (WorldMap.roads() reads them back). The terrain
 ## it applied is written to data/layout/terrain_applied.json, so the editor knows when it's stale.
+## Its rivers (plans/terrain-editing.md, LayoutWater) get a vale with the other shapes and a channel
+## carved with the creek's; the layout bake gives them, and its ponds, their water.
 ## The layout's anchors (plans/map-editor-places.md) stand the buildings, fixtures and places: each
 ## with a `pad` gets level ground under it (at the height of the land at its middle), the village
 ## flat and the bowl sit round the green's anchor, the village pond is dug where its node is, the
@@ -74,6 +76,8 @@ const CREEK_VALE := 70.0  # (wide: it cuts through the bowl's rim to the lake)
 const CREEK_DEPTH := 0.55
 const CREEK_POOL_DEPTH := 1.2
 const CREEK_BANK := 12.0
+## A layout river's banks ease up from its channel over this much (m): plans/terrain-editing.md.
+const RIVER_BANK := 8.0
 ## Biome borders: each biome's ground thins out into the plain grass over this wide a belt.
 const BORDER_BELT := 22.0
 ## Goldmeadow's swells ease into the hills over this much.
@@ -106,13 +110,15 @@ const RELAX_PASSES := 80
 const DATA_DIR := "res://terrain_data"
 const WATER_LEVEL := -0.15     # keep in sync with the ponds' WaterBody nodes in main.tscn
 ## Ponds: centre, radius (roughly where the bed rises to the water line), deepest point below
-## the water line (wading depth — no swimming). Keep in sync with the ponds in main.tscn. The village
-## pond's centre is where its node (Village/Green/VillagePond) stands, the green moved or turned.
+## the water line (wading depth — no swimming). The village pond's centre is where its node
+## (Village/Green/VillagePond) stands, the green moved or turned. A pond the layout has (by id: the
+## clearing's pond and the lake are the map editor's, plans/terrain-editing.md) is dug as the layout
+## has it instead, and the layout bake gives it its water.
 const VILLAGE_POND := 1
 const PONDS := [
-	{"center": Vector2(66, 86), "radius": 9.0, "depth": 0.95},   # the clearing's pond
-	{"center": Vector2(120, 132), "radius": 9.0, "depth": 0.75},  # the village pond, on the green
-	{"center": Vector2(38, 340), "radius": 14.0, "depth": 1.35},  # the lake
+	{"id": "pond", "center": Vector2(66, 86), "radius": 9.0, "depth": 0.95},   # the clearing's pond
+	{"id": "village_pond", "center": Vector2(120, 132), "radius": 9.0, "depth": 0.75},  # on the green
+	{"id": "lake", "center": Vector2(38, 340), "radius": 14.0, "depth": 1.35},  # the lake
 ]
 ## The lake's flat basin beyond the south rim (hills ease up beyond radius over the ramp).
 const LAKE_BASIN := {"center": WorldMap.LAKE_CENTER, "radius": 26.0, "ramp": 85.0}
@@ -199,7 +205,8 @@ var _shore := FastNoiseLite.new()  # makes the pond outlines irregular
 var _rings := FastNoiseLite.new()  # makes the quarry's walls wander
 var _swell := FastNoiseLite.new()  # the field's rolling swells
 var _edge := FastNoiseLite.new()   # ragged biome borders
-var _creek_mask := PackedByteArray()  # 1 on the creek's channel and inner banks
+var _creek_mask := PackedByteArray()  # 1 on the creek's channel and inner banks (and the rivers')
+var _pond_mask := PackedByteArray()  # 1 in the layout's ponds (dug again after the relax pass)
 var _ramp_top: Array[float] = []   # per quarry wall: angle of its ramp's top end
 var _ramp_span: Array[float] = []  # per quarry wall: angle its ramp covers
 var _layout_terrain: Array = []  # the map editor's terrain shapes
@@ -215,6 +222,7 @@ func _run() -> void:
 		if arg.begins_with("--layout="):
 			_layout_path = arg.trim_prefix("--layout=")
 			LayoutAnchors.use_file(_layout_path)
+			LayoutWater.use_file(_layout_path)
 		elif arg == "--dry-run":
 			_dry = true
 	VILLAGE_CENTER = WorldMap.village_center()
@@ -247,10 +255,12 @@ func _run() -> void:
 	_level_pads(h)
 	_relax(h)
 	_carve_creek(h)
+	_redig_ponds(h)
 
 	var baked := _baked_points()
 	var laid := _lay_roads(h, ids, baked)
 	_relax(h)  # again: smooths any seam where two roads' banks (or a hairpin's legs) meet
+	_report_water(h)
 
 	var img := Image.create_empty(SIZE, SIZE, false, Image.FORMAT_RF)
 	for y in SIZE:
@@ -302,6 +312,11 @@ func _setup() -> void:
 	var layout: Variant = JSON.parse_string(FileAccess.get_file_as_string(_layout_path)) if FileAccess.file_exists(_layout_path) else null
 	if layout is Dictionary:
 		_layout_terrain = layout.get("terrain", [])
+		for p in LayoutWater.ponds():  # (a built-in pond the layout has: as the layout has it)
+			for k in _ponds.size():
+				if _ponds[k]["id"] == p.get("id"):
+					_ponds[k] = {"id": p["id"], "center": p["centre"], "radius": p.get("radius", p["reach"]),
+							"depth": float(p.get("depth", 1.0)), "outline": p["outline"], "shelf": p.get("shelf", LayoutWater.SHELF)}
 		for s in _layout_terrain:
 			if s.get("type", "") in ["road", "path"] and s.get("points", []).size() >= 2:
 				_layout_roads.append({"id": StringName(s["id"]), "kind": StringName(s["type"]), "title": s.get("name", s["id"]), "ctrl": _v2s(s["points"])})
@@ -441,7 +456,8 @@ func _relax(h: PackedFloat32Array) -> void:
 		for x in SIZE:
 			var w := _world(x, y)
 			var crags := 1.0 - smoothstep(PEAK_RADIUS * 0.6, PEAK_RADIUS * 1.0, w.distance_to(PEAK_CENTER))
-			var keep := _in_pit(w) or (not _creek_mask.is_empty() and _creek_mask[y * SIZE + x] == 1)
+			var i := y * SIZE + x
+			var keep := _in_pit(w) or (not _creek_mask.is_empty() and _creek_mask[i] == 1) or (not _pond_mask.is_empty() and _pond_mask[i] == 1)
 			limit[y * SIZE + x] = 0.0 if keep else MAX_SLOPE + crags * PEAK_SLOPE
 	for pass_i in RELAX_PASSES:
 		var changed := 0
@@ -463,14 +479,46 @@ func _relax(h: PackedFloat32Array) -> void:
 
 
 ## No hills right next to the water, then a shallow bowl with a gently sloping shore.
+## A pond is a built-in one ({center, radius, depth}) or the layout's (LayoutWater.ponds(): a circle
+## or an outline).
 func _pond(w: Vector2, h: float, pond: Dictionary, shore: FastNoiseLite) -> float:
-	var r: float = pond["radius"]
-	var pd: float = w.distance_to(pond["center"]) + shore.get_noise_2dv(w) * 2.0
-	h *= smoothstep(r + 2.0, r + 8.0, pd)
-	var bowl := 1.0 - smoothstep(r * 0.3, r + 1.5, pd)  # 1 mid-pond, 0 past the shore
+	if w.distance_to(_pond_centre(pond)) > float(pond.get("reach", pond.get("radius"))) + 12.0:
+		return h  # (well clear of it: the shore's noise is 2 m at most, the land eases over 8)
+	var e := _shore_edge(pond, w, shore)
+	h *= smoothstep(2.0, 8.0, e.x)
+	var bowl := 1.0 - smoothstep(-e.y, 1.5, e.x)  # 1 mid-pond, 0 past the shore
 	if bowl > 0.0:
 		h = minf(h, (WATER_LEVEL - float(pond["depth"])) * bowl)
 	return h
+
+
+## How far `w` is out from the pond's (wandering) shore, m (negative inside), and how far in from
+## it the pond is deepest.
+func _shore_edge(pond: Dictionary, w: Vector2, shore: FastNoiseLite) -> Vector2:
+	var noise := shore.get_noise_2dv(w) * 2.0
+	var outline: PackedVector2Array = pond.get("outline", PackedVector2Array())
+	if not outline.is_empty():
+		return Vector2(LayoutWater.shore_distance(pond, w) + noise, float(pond.get("shelf", LayoutWater.SHELF)))
+	var r := float(pond["radius"])
+	return Vector2(w.distance_to(_pond_centre(pond)) - r + noise, r * 0.7)
+
+
+## A built-in pond's centre, or a layout one's (LayoutWater's `centre`: its `center` is as written).
+static func _pond_centre(pond: Dictionary) -> Vector2:
+	return pond["centre"] if pond.has("centre") else pond["center"]
+
+
+## The layout's ponds dug again after the relax pass (which fills a bowl dug into a hillside), and
+## kept from the next one (_pond_mask).
+func _redig_ponds(h: PackedFloat32Array) -> void:
+	_pond_mask.resize(SIZE * SIZE)
+	for pond in LayoutWater.ponds():
+		_for_pixels_near(pond["centre"], float(pond["reach"]) + 4.0, func(i: int, w: Vector2) -> void:
+			var e := _shore_edge(pond, w, _shore)
+			var bowl := 1.0 - smoothstep(-e.y, 1.5, e.x)
+			if bowl > 0.0:
+				h[i] = minf(h[i], (WATER_LEVEL - float(pond["depth"])) * bowl)
+				_pond_mask[i] = 1)
 
 
 # --- biomes -----------------------------------------------------------------------------------
@@ -816,33 +864,92 @@ func _collect(node: Node, xform: Transform3D, depth: int, out: Array[Vector2]) -
 			_collect(child, t, depth + 1, out)
 
 
-## The creek's channel along its vale: a rounded bed under the water (deeper in the pools), soft
-## banks easing up to the ground. Level water the whole way, so the bed only ever goes down.
+## The creek's channel along its vale, and the layout's rivers' (plans/terrain-editing.md).
 func _carve_creek(h: PackedFloat32Array) -> void:
-	var pts := WorldMap.creek()
-	var half := WorldMap.CREEK_HALF_WIDTH
+	_creek_mask.resize(SIZE * SIZE)
+	_carve_channel(h, WorldMap.creek(), WorldMap.CREEK_HALF_WIDTH, CREEK_BANK, func(w: Vector2) -> float:
+		var depth := CREEK_DEPTH
+		for pool in WorldMap.CREEK_POOLS:
+			depth = lerpf(depth, CREEK_POOL_DEPTH, 1.0 - smoothstep(0.0, WorldMap.CREEK_POOL_RADIUS, w.distance_to(pool)))
+		return depth)
+	for r in LayoutWater.rivers():
+		var depth := float(r.get("depth", 0.8))
+		_carve_channel(h, r["pts"], r["half"], RIVER_BANK, func(_w: Vector2) -> float: return depth)
+		print("terrain shape %s (river) carved" % r.get("id", "?"))
+
+
+## A channel along `pts`: a rounded bed under the water (`depth(w)` deep in the middle), soft banks
+## easing up to the ground over `bank` m. Level water the whole way, so the bed only ever goes down.
+## The channel and its inner banks go in the creek's mask (the relax pass and the roads leave them).
+func _carve_channel(h: PackedFloat32Array, pts: PackedVector2Array, half: float, bank: float, depth: Callable) -> void:
 	var nearest: Dictionary[int, float] = {}
 	for p in pts:
-		_for_pixels_near(p, half + CREEK_BANK, func(i: int, w: Vector2) -> void:
+		_for_pixels_near(p, half + bank, func(i: int, w: Vector2) -> void:
 			var d := w.distance_to(p)
 			if d < nearest.get(i, INF):
 				nearest[i] = d)
-	_creek_mask.resize(SIZE * SIZE)
 	for i in nearest:
 		var d: float = nearest[i]
 		var w := _world(i % SIZE, i / SIZE)
 		if d < half + 2.5:
 			_creek_mask[i] = 1
 		if d < half:
-			var depth := CREEK_DEPTH
-			for pool in WorldMap.CREEK_POOLS:
-				depth = lerpf(depth, CREEK_POOL_DEPTH, 1.0 - smoothstep(0.0, WorldMap.CREEK_POOL_RADIUS, w.distance_to(pool)))
 			var u := d / half
-			h[i] = minf(h[i], WATER_LEVEL - depth * (1.0 - u * u))
+			h[i] = minf(h[i], WATER_LEVEL - float(depth.call(w)) * (1.0 - u * u))
 		else:
-			var t := smoothstep(half, half + CREEK_BANK, d)
-			var bank := WATER_LEVEL + 0.1 + (d - half) * 0.15
-			h[i] = minf(h[i], lerpf(bank, h[i], t))
+			var t := smoothstep(half, half + bank, d)
+			var top := WATER_LEVEL + 0.1 + (d - half) * 0.15
+			h[i] = minf(h[i], lerpf(top, h[i], t))
+
+
+## Whether `w` is on a layout river's channel or banks (by its points: near enough for the router).
+func _near_river(w: Vector2) -> bool:
+	for r in LayoutWater.rivers():
+		if _polyline_distance(w, r["ctrl"]) < float(r["half"]) + RIVER_BANK:
+			return true
+	return false
+
+
+## A river's vale (before the relax pass): the land along it eased down to just above the water
+## over its `vale` m each side, so it runs through hills the way the creek runs through the rim.
+## Only ever lowers.
+func _river_vale(h: PackedFloat32Array, r: Dictionary) -> void:
+	var half: float = r["half"]
+	var vale := float(r.get("vale", LayoutWater.VALE))
+	var pts: PackedVector2Array = r["pts"]
+	var nearest: Dictionary[int, float] = {}
+	for k in range(0, pts.size(), 2):  # (every other point: plenty this far out)
+		var p := pts[k]
+		_for_pixels_near(p, half + vale, func(i: int, w: Vector2) -> void:
+			var d := w.distance_to(p)
+			if d < nearest.get(i, INF):
+				nearest[i] = d)
+	var top := WATER_LEVEL + 0.25
+	for i in nearest:
+		h[i] = minf(h[i], lerpf(top, h[i], smoothstep(half, half + vale, nearest[i])))
+
+
+## What the water came out like, for the report (and test_terrain_shapes): each river's bed down
+## its middle (shallowest and deepest under the water), each layout pond's deepest point.
+func _report_water(h: PackedFloat32Array) -> void:
+	var rivers := {}
+	for r in LayoutWater.rivers():
+		var lo := INF
+		var hi := -INF
+		for p: Vector2 in r["pts"]:
+			var b := WATER_LEVEL - _sample(h, p)
+			lo = minf(lo, b)
+			hi = maxf(hi, b)
+		rivers[String(r.get("id", "?"))] = {"shallowest": snappedf(lo, 0.01), "deepest": snappedf(hi, 0.01)}
+	var ponds := {}
+	for p in LayoutWater.ponds():
+		var deepest := [0.0]  # (an Array: the lambda sets it)
+		_for_pixels_near(p["centre"], p["reach"], func(i: int, w: Vector2) -> void:
+			if LayoutWater.shore_distance(p, w) < 0.0:
+				deepest[0] = maxf(deepest[0], WATER_LEVEL - h[i]))
+		ponds[String(p.get("id", "?"))] = {"deepest": snappedf(deepest[0], 0.01)}
+	_report["rivers"] = rivers
+	_report["layout_ponds"] = ponds
 
 
 ## Lays WorldMap.ROADS in order: each along its fixed line or a least-cost route over the land,
@@ -920,7 +1027,7 @@ func _road_grid(h: PackedFloat32Array, baked: Array[Vector2]) -> AStarGrid2D:
 				cost += ROUTE_WATER_COST
 			elif _creek_mask[_pixel(w)] == 1:
 				cost += ROUTE_CREEK_COST  # (crossing it is fine: a bridge or a ford; running along it isn't)
-			elif _polyline_distance(w, WorldMap.CREEK) < WorldMap.CREEK_HALF_WIDTH + CREEK_BANK:
+			elif _polyline_distance(w, WorldMap.CREEK) < WorldMap.CREEK_HALF_WIDTH + CREEK_BANK or _near_river(w):
 				cost += ROUTE_BANK_COST
 			if w.distance_to(WorldMap.QUARRY_CENTER) < WorldMap.QUARRY_WALLS[0] + 1.0:
 				cost += ROUTE_WATER_COST
@@ -1121,7 +1228,7 @@ func _in_water(p: Vector2) -> bool:
 	for pond in _ponds:
 		if p.distance_to(pond["center"]) < float(pond["radius"]) + 2.0:
 			return true
-	return false
+	return LayoutWater.in_pond(p, 2.0)
 
 
 ## How steep the land is, leaving out the peak and the rim: shares of the cells by slope, and
@@ -1213,17 +1320,36 @@ func _shape_cells(s: Dictionary, soft: float) -> Rect2i:
 
 
 ## Flats (the land eased to a height), hills and hollows (raised or lowered: a dome in a circle, a
-## plateau in a polygon) and ponds (dug to below the water: the bake adds their water), in order.
+## plateau in a polygon), smoothed ground (blurred over `strength` m), ponds (dug to below the water:
+## the bake adds their water) and rivers' vales (their channels are carved after the relax pass,
+## with the creek's), in order.
 func _layout_shapes(h: PackedFloat32Array) -> void:
 	for s in _layout_terrain:
 		var type: String = s.get("type", "")
-		if type not in ["flat", "raise", "pond"]:
+		if type == "river":
+			for r in LayoutWater.rivers():
+				if r.get("id") == s.get("id"):
+					_river_vale(h, r)
+			continue
+		if type not in ["flat", "raise", "pond", "smooth"]:
 			continue
 		if (s.get("shape", "polygon") == "circle" and not s.has("center")) or (s.get("shape", "polygon") != "circle" and s.get("points", []).size() < 3):
 			continue
+		var pond := {}
+		if type == "pond":
+			if PONDS.any(func(b: Dictionary) -> bool: return b["id"] == s.get("id")):
+				continue  # (dug with the land: _height)
+			for p in LayoutWater.ponds():
+				if p.get("id") == s.get("id"):
+					pond = p
 		var soft := float(s.get("soft", SHAPE_SOFT))
 		var cells := _shape_cells(s, soft if type != "pond" else 10.0)
 		var dome: bool = type == "raise" and s.get("shape", "polygon") == "circle"
+		var blurred := PackedFloat32Array()
+		var rough := 0.0
+		if type == "smooth":
+			blurred = _blurred(h, cells, maxi(int(round(float(s.get("strength", 4.0)))), 1))
+			rough = _roughness(h, s)
 		for y in range(cells.position.y, cells.end.y):
 			for x in range(cells.position.x, cells.end.x):
 				var w := _world(x, y)
@@ -1240,9 +1366,67 @@ func _layout_shapes(h: PackedFloat32Array) -> void:
 							k = _shape_weight(s, w, soft)
 						h[i] += float(s.get("height", 5.0)) * k
 					"pond":
-						h[i] = _pond(w, h[i], {"center": Vector2(float(s["center"][0]), float(s["center"][1])),
-								"radius": float(s["radius"]), "depth": float(s.get("depth", 1.0))}, _shore)
+						if pond:
+							h[i] = _pond(w, h[i], pond, _shore)
+					"smooth":
+						var b := blurred[(y - cells.position.y) * cells.size.x + (x - cells.position.x)]
+						h[i] = lerpf(h[i], b, _shape_weight(s, w, soft))
+		if type == "smooth":  # (how bumpy it was and is: test_terrain_shapes)
+			if not _report.has("smoothed"):
+				_report["smoothed"] = {}
+			_report["smoothed"][String(s.get("id", "?"))] = {"before": snappedf(rough, 0.001), "after": snappedf(_roughness(h, s), 0.001)}
 		print("terrain shape %s (%s) applied" % [s.get("id", "?"), type])
+
+
+## The heights over `cells` blurred over about `r` m (a box blur, twice each way: near a Gaussian),
+## from the land round them too. One value a cell, row by row.
+func _blurred(h: PackedFloat32Array, cells: Rect2i, r: int) -> PackedFloat32Array:
+	var big := cells.grow(r * 2).intersection(Rect2i(0, 0, SIZE, SIZE))
+	var w := big.size.x
+	var buf := PackedFloat32Array()
+	buf.resize(w * big.size.y)
+	for y in big.size.y:
+		for x in w:
+			buf[y * w + x] = h[(big.position.y + y) * SIZE + big.position.x + x]
+	for pass_i in 4:  # x, y, x, y
+		var along_x := pass_i % 2 == 0
+		var out := buf.duplicate()
+		var n := w if along_x else big.size.y
+		var lines := big.size.y if along_x else w
+		for l in lines:
+			for k in n:
+				var sum := 0.0
+				var cnt := 0
+				for d in range(-r, r + 1):
+					var j := k + d
+					if j < 0 or j >= n:
+						continue
+					sum += buf[l * w + j] if along_x else buf[j * w + l]
+					cnt += 1
+				out[(l * w + k) if along_x else (k * w + l)] = sum / cnt
+		buf = out
+	var res := PackedFloat32Array()
+	res.resize(cells.size.x * cells.size.y)
+	for y in cells.size.y:
+		for x in cells.size.x:
+			res[y * cells.size.x + x] = buf[(cells.position.y - big.position.y + y) * w + cells.position.x - big.position.x + x]
+	return res
+
+
+## How bumpy the land is inside shape `s`: the mean of how far each cell is off its four
+## neighbours' average (m).
+func _roughness(h: PackedFloat32Array, s: Dictionary) -> float:
+	var cells := _shape_cells(s, 0.0)
+	var sum := 0.0
+	var n := 0
+	for y in range(maxi(cells.position.y, 1), mini(cells.end.y, SIZE - 1)):
+		for x in range(maxi(cells.position.x, 1), mini(cells.end.x, SIZE - 1)):
+			if _shape_weight(s, _world(x, y), 0.0) < 1.0:
+				continue
+			var i := y * SIZE + x
+			sum += absf(h[i] - (h[i - 1] + h[i + 1] + h[i - SIZE] + h[i + SIZE]) * 0.25)
+			n += 1
+	return sum / maxi(n, 1)
 
 
 # --- the layout's anchors (plans/map-editor-places.md) -------------------------------------------
@@ -1362,7 +1546,7 @@ func _in_pond(w: Vector2) -> bool:
 	for pond in _ponds:
 		if w.distance_to(pond["center"]) < float(pond["radius"]) + 1.0:
 			return true
-	return false
+	return LayoutWater.in_pond(w, 1.0)
 
 
 ## The mill's wheel turns in the creek: say so when it's been put somewhere dry.
