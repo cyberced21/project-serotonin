@@ -62,6 +62,8 @@ const KNOT_RADIUS := 0.16
 const KNOT_COLOR := Color("ffb347")
 ## A layer of wood coming out of the notch: its snap (the clean cut's crack, quieter and higher), dB.
 const LAYER_POP_DB := -7.0
+## A tree falling toward whoever felled it swings at least this far (degrees) aside of them.
+const FALL_ASIDE := 60.0
 ## Dominoes: a tree you fell lands hard, shaking loose this many times the logs; a falling trunk
 ## takes this share of the max hits off each tree it lands on.
 const DOMINOES_LOGS := 1.25
@@ -322,6 +324,8 @@ var _timer_label: Label3D
 var _ghost: Node3D
 var _ghost_outline: ShaderMaterial
 var _carve: TrunkCarve  # carve_notch: the notch in the trunk
+var _plain := PackedFloat32Array()  # ... the stability after each cut of a plain chop (0 cuts first)
+var _fall_at := 0.0  # ... the stability it falls at: between a plain chop's last two cuts
 var _popped := PackedInt32Array()  # ... the layers the last hit cut through (TrunkCarve.LAYERS)
 var _pop_dir := Vector3.ZERO  # ... and where from (trunk space)
 var _trunk: MeshInstance3D  # ... the trunk it's carved into
@@ -453,6 +457,8 @@ func _setup_carve() -> void:
 		push_warning("%s: carve_notch needs a Body_Trunk mesh" % name)
 		return
 	_carve = TrunkCarve.new(_trunk.mesh, notch_band, bark_thickness, notch_depth, max_hits)
+	_plain = _plain_chop()
+	_fall_at = (_plain[max_hits - 1] + _plain[max_hits]) * 0.5
 	_trunk_rest = global_transform.affine_inverse() * _trunk.global_transform
 	for m in _trunk.get_parent().get_children():
 		if m is MeshInstance3D and m != _trunk:
@@ -539,9 +545,8 @@ func hit(info: HitInfo) -> bool:
 	var tip := cracks and _is_tip_hit(info)
 	_clean = _carve != null and _is_clean_cut(info)
 	var talent := _woodcutting_talents(info, cuts) if skill == &"woodcutting" else {}
-	hits_left = maxi(hits_left - cuts - (1 if double else 0) - (weak_point_extra_hits if weak else 0)
-		- (crack_tip_extra_hits if tip else 0) - (clean_cut_extra_hits if _clean else 0)
-		- talent.get("extra", 0), 0)
+	var took: int = cuts + (1 if double else 0) + (weak_point_extra_hits if weak else 0) 		+ (crack_tip_extra_hits if tip else 0) + (clean_cut_extra_hits if _clean else 0) + talent.get("extra", 0)
+	hits_left = maxi(hits_left - took, 0)
 	# under-levelled, a plain hit can fall short of a whole cut: it marks the node but takes nothing
 	var bit := hits_left < before
 	if bit and skill == &"woodcutting" and hits_left > 0:
@@ -550,7 +555,8 @@ func hit(info: HitInfo) -> bool:
 	if weak:
 		_weak_hit_feedback(info)
 	if _carve:
-		_carve_hit(info, before - hits_left, _clean)
+		_carve_hit(info, took, _clean)
+		hits_left = _hits_from_stability()  # (the notch decides when a tree goes, not the count)
 		_tree_reacts(info, 1.0 - float(hits_left) / max_hits)
 	SaveGame.mark_dirty()
 	var collapsed := 0
@@ -1137,20 +1143,29 @@ func _make_leaves() -> CPUParticles3D:
 	return p
 
 
-## Which way a notched tree falls: sideways to the swinger and a little away, never onto them.
-## Whichever side is clear of other trees, else either.
+## Which way a notched tree falls: toward its notch (the side it was begun on: the wood left
+## behind it is the hinge that steers it), but never onto the swinger: if they stand in its path it
+## swings at least FALL_ASIDE aside, the way it leans if that's clear of other trees, else the other.
 func _fall_direction(info: HitInfo) -> Vector3:
-	var away := info.away()
-	var sides: Array[Vector3] = [away.cross(Vector3.UP), -away.cross(Vector3.UP)]
-	sides.shuffle()
+	var notch := _notch_dir()
+	var toward_you := -info.away()
+	toward_you.y = 0.0
+	toward_you = toward_you.normalized()
+	if notch.length_squared() < 0.5:
+		notch = toward_you.cross(Vector3.UP)
+	var off := notch.signed_angle_to(toward_you, Vector3.UP)  # (from the notch round to you)
+	if absf(off) >= deg_to_rad(FALL_ASIDE):
+		return notch
+	var leans := -signf(off) if off != 0.0 else (1.0 if randf() < 0.5 else -1.0)
 	var space := get_world_3d().direct_space_state
 	var from := global_position + Vector3.UP * 2.0
-	for side in sides:
-		var dir := (side + away * 0.35).normalized()
+	var dir := Vector3.ZERO
+	for side in [leans, -leans]:
+		dir = toward_you.rotated(Vector3.UP, side * deg_to_rad(FALL_ASIDE))
 		var query := PhysicsRayQueryParameters3D.create(from, from + dir * 3.5, WORLD_LAYER, [get_rid()])
 		if space.intersect_ray(query).is_empty():
 			return dir
-	return (sides[0] + away * 0.35).normalized()
+	return toward_you.rotated(Vector3.UP, leans * deg_to_rad(FALL_ASIDE))
 
 
 # --- notch ----------------------------------------------------------------------------------
@@ -1210,6 +1225,32 @@ func _throw_slab(info: HitInfo, push: Vector3, k: int) -> void:
 	var rot := Basis.from_euler(Vector3(randf_range(-0.3, 0.3), randf() * TAU, randf_range(-0.3, 0.3)))
 	_throw(slab, Transform3D(rot, info.position + info.normal * 0.08), push.rotated(Vector3.UP, randf_range(-0.3, 0.3)),
 		debris_speed * randf_range(0.8, 1.0))
+
+
+## A plain chop's stability, cut by cut (TrunkCarve.plain_chop() straight in at the middle of the
+## band), worked out once per trunk and tree.
+static var _plain_chops := {}
+func _plain_chop() -> PackedFloat32Array:
+	var key := "%d %s %s %d" % [_trunk.mesh.get_instance_id(), bark_thickness, notch_depth, max_hits]
+	if not _plain_chops.has(key):
+		_plain_chops[key] = _carve.plain_chop((notch_band.x + notch_band.y) * 0.5, Vector3.RIGHT, max_hits)
+	return _plain_chops[key]
+
+
+## Swings left for the notch as it stands: 0 once the wood left at the ring can't hold the tree up
+## (it falls), else the count kept so far, held to what a plain chop has left at this stability
+## (a plain chop's own count stays as it was; cutting round the trunk or a knot moves it on).
+func _hits_from_stability() -> int:
+	var left := _carve.stability()
+	if left <= _fall_at:
+		return 0
+	var first := 0  # the plain cuts that bring it this low: from the first ...
+	while first < max_hits - 1 and _plain[first] > left + 0.0001:
+		first += 1
+	var last := first  # ... to the last that leave it standing this high
+	while last < max_hits - 1 and _plain[last + 1] >= left - 0.0001:
+		last += 1
+	return max_hits - clampi(max_hits - hits_left, first, last)
 
 
 ## How much bark the blaze has stripped so far (m of height, summed round the trunk's bins).
@@ -2698,14 +2739,9 @@ func _notch_dir() -> Vector3:
 	return world.normalized()
 
 
-## Back cut and Dominoes fell a tree the way a feller would: toward its notch (with Back cut,
-## that's away from you, the back cut's on your side). Otherwise `usual` (sideways, clear of you).
+## Every tree falls toward its notch now (_fall_direction()), as Back cut and Dominoes once made
+## it: the talents leave the way it falls alone.
 func _talent_fall(usual: Vector3) -> Vector3:
-	var t := Skills.talents
-	if t.has(&"dominoes") or t.has(&"back_cut"):
-		var n := _notch_dir()
-		if n.length_squared() > 0.5:
-			return n
 	return usual
 
 
