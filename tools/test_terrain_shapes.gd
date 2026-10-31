@@ -5,6 +5,7 @@ extends SceneTree
 ## did:
 ##   - the river's bed is under the water all the way down its middle, about as deep as it asked
 ##   - each pond is dug about as deep as it asked, the lake too
+##   - a patch of Frostpeak's flank smoothed comes out much less bumpy
 ##   godot --headless --path . -s res://tools/test_terrain_shapes.gd
 ## Takes about a minute (one terrain run). (No game class names: an -s script compiles before the
 ## autoloads exist.)
@@ -17,6 +18,7 @@ const SHAPES := [
 	{"id": "test_river", "type": "river", "points": [[-70, 262], [-40, 292], [-8, 318], [26, 336]], "width": 5.0, "depth": 0.9},
 	{"id": "test_pond", "type": "pond", "shape": "circle", "center": [-30, 210], "radius": 9.0, "depth": 1.1},
 	{"id": "test_outline", "type": "pond", "shape": "polygon", "points": [[176, 290], [204, 286], [214, 306], [196, 322], [174, 312]], "depth": 1.0},
+	{"id": "test_smooth", "type": "smooth", "shape": "circle", "center": [-80, -42], "radius": 16.0, "strength": 6.0, "soft": 6.0},
 ]
 ## The lake, deepened to this.
 const LAKE_DEPTH := 1.8
@@ -47,6 +49,7 @@ func _initialize() -> void:
 	if report is Dictionary:
 		_river(report)
 		_pond(report)
+		_smooth(report)
 	if failures.is_empty():
 		print("test_terrain_shapes: PASS")
 		quit(0)
@@ -80,3 +83,12 @@ func _pond(report: Dictionary) -> void:
 			continue
 		print("%s: %s" % [want[0], p])
 		_check(absf(float(p["deepest"]) - want[1]) < 0.25, "%s is dug about as deep as it asked (%.2f m of %.2f)" % [want[0], p["deepest"], want[1]])
+
+
+func _smooth(report: Dictionary) -> void:
+	var sm: Dictionary = report.get("smoothed", {}).get("test_smooth", {})
+	_check(not sm.is_empty(), "the smoothing is reported")
+	if sm.is_empty():
+		return
+	print("smoothed: %s" % sm)
+	_check(float(sm["after"]) < float(sm["before"]) * 0.5, "the smoothed ground is much less bumpy (%.3f -> %.3f)" % [sm["before"], sm["after"]])

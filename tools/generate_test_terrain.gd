@@ -1320,8 +1320,9 @@ func _shape_cells(s: Dictionary, soft: float) -> Rect2i:
 
 
 ## Flats (the land eased to a height), hills and hollows (raised or lowered: a dome in a circle, a
-## plateau in a polygon), ponds (dug to below the water: the bake adds their water) and rivers'
-## vales (their channels are carved after the relax pass, with the creek's), in order.
+## plateau in a polygon), smoothed ground (blurred over `strength` m), ponds (dug to below the water:
+## the bake adds their water) and rivers' vales (their channels are carved after the relax pass,
+## with the creek's), in order.
 func _layout_shapes(h: PackedFloat32Array) -> void:
 	for s in _layout_terrain:
 		var type: String = s.get("type", "")
@@ -1330,7 +1331,7 @@ func _layout_shapes(h: PackedFloat32Array) -> void:
 				if r.get("id") == s.get("id"):
 					_river_vale(h, r)
 			continue
-		if type not in ["flat", "raise", "pond"]:
+		if type not in ["flat", "raise", "pond", "smooth"]:
 			continue
 		if (s.get("shape", "polygon") == "circle" and not s.has("center")) or (s.get("shape", "polygon") != "circle" and s.get("points", []).size() < 3):
 			continue
@@ -1344,6 +1345,11 @@ func _layout_shapes(h: PackedFloat32Array) -> void:
 		var soft := float(s.get("soft", SHAPE_SOFT))
 		var cells := _shape_cells(s, soft if type != "pond" else 10.0)
 		var dome: bool = type == "raise" and s.get("shape", "polygon") == "circle"
+		var blurred := PackedFloat32Array()
+		var rough := 0.0
+		if type == "smooth":
+			blurred = _blurred(h, cells, maxi(int(round(float(s.get("strength", 4.0)))), 1))
+			rough = _roughness(h, s)
 		for y in range(cells.position.y, cells.end.y):
 			for x in range(cells.position.x, cells.end.x):
 				var w := _world(x, y)
@@ -1362,7 +1368,65 @@ func _layout_shapes(h: PackedFloat32Array) -> void:
 					"pond":
 						if pond:
 							h[i] = _pond(w, h[i], pond, _shore)
+					"smooth":
+						var b := blurred[(y - cells.position.y) * cells.size.x + (x - cells.position.x)]
+						h[i] = lerpf(h[i], b, _shape_weight(s, w, soft))
+		if type == "smooth":  # (how bumpy it was and is: test_terrain_shapes)
+			if not _report.has("smoothed"):
+				_report["smoothed"] = {}
+			_report["smoothed"][String(s.get("id", "?"))] = {"before": snappedf(rough, 0.001), "after": snappedf(_roughness(h, s), 0.001)}
 		print("terrain shape %s (%s) applied" % [s.get("id", "?"), type])
+
+
+## The heights over `cells` blurred over about `r` m (a box blur, twice each way: near a Gaussian),
+## from the land round them too. One value a cell, row by row.
+func _blurred(h: PackedFloat32Array, cells: Rect2i, r: int) -> PackedFloat32Array:
+	var big := cells.grow(r * 2).intersection(Rect2i(0, 0, SIZE, SIZE))
+	var w := big.size.x
+	var buf := PackedFloat32Array()
+	buf.resize(w * big.size.y)
+	for y in big.size.y:
+		for x in w:
+			buf[y * w + x] = h[(big.position.y + y) * SIZE + big.position.x + x]
+	for pass_i in 4:  # x, y, x, y
+		var along_x := pass_i % 2 == 0
+		var out := buf.duplicate()
+		var n := w if along_x else big.size.y
+		var lines := big.size.y if along_x else w
+		for l in lines:
+			for k in n:
+				var sum := 0.0
+				var cnt := 0
+				for d in range(-r, r + 1):
+					var j := k + d
+					if j < 0 or j >= n:
+						continue
+					sum += buf[l * w + j] if along_x else buf[j * w + l]
+					cnt += 1
+				out[(l * w + k) if along_x else (k * w + l)] = sum / cnt
+		buf = out
+	var res := PackedFloat32Array()
+	res.resize(cells.size.x * cells.size.y)
+	for y in cells.size.y:
+		for x in cells.size.x:
+			res[y * cells.size.x + x] = buf[(cells.position.y - big.position.y + y) * w + cells.position.x - big.position.x + x]
+	return res
+
+
+## How bumpy the land is inside shape `s`: the mean of how far each cell is off its four
+## neighbours' average (m).
+func _roughness(h: PackedFloat32Array, s: Dictionary) -> float:
+	var cells := _shape_cells(s, 0.0)
+	var sum := 0.0
+	var n := 0
+	for y in range(maxi(cells.position.y, 1), mini(cells.end.y, SIZE - 1)):
+		for x in range(maxi(cells.position.x, 1), mini(cells.end.x, SIZE - 1)):
+			if _shape_weight(s, _world(x, y), 0.0) < 1.0:
+				continue
+			var i := y * SIZE + x
+			sum += absf(h[i] - (h[i - 1] + h[i + 1] + h[i - SIZE] + h[i + SIZE]) * 0.25)
+			n += 1
+	return sum / maxi(n, 1)
 
 
 # --- the layout's anchors (plans/map-editor-places.md) -------------------------------------------
