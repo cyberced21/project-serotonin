@@ -83,7 +83,13 @@ you swim across and dive into, where you can spear fish on the bed.
    the shaders are not yet seen rendered.
    Sound candidates (34 CC0 Freesound takes, 5 slots: strokes, diving in, under the water, coming
    up for air, climbing out) on https://claude.ai/artifact/7BV7SbNtD5tVcoeuzE6bKL; previews kept in
-   E:/Godot/downloads/water-sounds. Picks pending, wired in phase 7.
+   E:/Godot/downloads/water-sounds. **Picked** (wire in phase 7): strokes 372518 "lake swimming"
+   (dawidwmika); diving in 529793 "dive.wav" (bruno.auzet); under the water 482167 "Underwater
+   Ambience" (Tim_Verberne); coming up for air 169931 "Gasp Inhale" (u3190); climbing out 637948
+   "water movement body step out of pool splash drips" (kyles).
+   Stills (`tools/water_shots.gd`, docs/images/water/): first take far too dark and the mirror
+   let the hills show through; murk brightened, absorption eased, mirror opaque, night floor 0.16.
+   Phase 4 todo seen there: the lake bed is grass/sand blotches (wants a silt/sand bed).
 3. **Waves.** `WaterWaves` (GDScript) + the shader's Gerstner sum on `water_time`, wind-led;
    subdivided surfaces for lake, ponds, creek; swimmer and float bob with them; creek flow streaks.
 4. **Depth look.** Per-colour absorption, subtle depth-safe refraction, caustics on beds and rocks,

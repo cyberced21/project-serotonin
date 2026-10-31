@@ -63,7 +63,7 @@ func _process(delta: float) -> void:
 	var water := WaterBody.surface_at(get_tree(), eye) if player and player.get("swimming") else null
 	under = water != null and eye.y < water.surface_height
 	visible = under
-	RenderingServer.global_shader_parameter_set(&"under_light", lerpf(1.0, 0.06, DayNight.darkness()))
+	RenderingServer.global_shader_parameter_set(&"under_light", lerpf(1.0, 0.16, DayNight.darkness()))
 	if under:
 		for m in [_view, _murk]:
 			m.set_shader_parameter("surface_height", water.surface_height)

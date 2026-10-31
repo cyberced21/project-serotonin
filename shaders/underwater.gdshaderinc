@@ -10,10 +10,10 @@ uniform float surface_height = -0.15;
 uniform float max_distance = 40.0;
 // Light lost per metre of water, per colour: red goes first, then green, so the far side of the
 // lake goes teal, then deep blue.
-uniform vec3 absorb = vec3(0.32, 0.075, 0.05);
+uniform vec3 absorb = vec3(0.2, 0.055, 0.04);
 // How quickly the water's own murk (scattered light, `murk_color`) fills in the distance.
-uniform float scatter = 0.09;
-uniform vec3 murk_color : source_color = vec3(0.06, 0.2, 0.22);
+uniform float scatter = 0.065;
+uniform vec3 murk_color : source_color = vec3(0.2, 0.5, 0.52);
 // Daylight under the water (1 by day, low at night; UnderwaterView sets it): the murk is only as
 // bright as the light getting in.
 global uniform float under_light;

@@ -36,6 +36,9 @@ uniform float reflectivity : hint_range(0.0, 1.0) = 0.75;
 // under the water (UnderwaterView sets it).
 uniform float window_cos = 0.66;
 uniform vec3 window_tint : source_color = vec3(0.55, 0.78, 0.8);
+// Outside the window the surface mirrors the water below it: the underwater murk's colour
+// (keep near underwater.gdshaderinc's murk_color).
+uniform vec3 mirror_color : source_color = vec3(0.18, 0.46, 0.48);
 global uniform float under_light;
 
 uniform sampler2D depth_tex : hint_depth_texture, filter_nearest;
@@ -97,8 +100,8 @@ void fragment() {
 		float rim = window * (1.0 - smoothstep(window_cos + 0.03, window_cos + 0.14, c));
 		NORMAL = normalize((VIEW_MATRIX * vec4(-n, 0.0)).xyz);
 		ALBEDO = vec3(0.0);
-		EMISSION = mix(deep_color * 0.35, window_tint * (1.0 + rim * 0.8), window) * under_light;
-		ALPHA = mix(0.96, 0.35, window);  // (the sky and the trees show through the window)
+		EMISSION = mix(mirror_color, window_tint * (1.0 + rim * 0.8), window) * under_light;
+		ALPHA = mix(1.0, 0.35, window);  // (the sky and the trees show through the window)
 		ROUGHNESS = 0.3;
 		SPECULAR = 0.0;
 	} else {
