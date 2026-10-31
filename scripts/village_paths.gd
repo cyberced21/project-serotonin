@@ -1,48 +1,19 @@
 class_name VillagePaths
 extends Node3D
-## The village's walking network (plans/tavern.md): points round the square and along the lanes to
-## each door, linked into a graph. Villagers going anywhere further than a few steps follow the
-## shortest chain of points (route()), so they keep to the paths instead of cutting through houses,
-## props and the pond. Points are world XZ (Hearthvale's village isn't turned); heights come from
+## The village's walking network (plans/tavern.md): the map editor's walkway lines
+## (data/layout/hearthvale.json, type "walkway": plans/map-editor-places.md) linked into a graph.
+## Villagers going anywhere further than a few steps follow the shortest chain of points (route()),
+## so they keep to the paths instead of cutting through houses, props and the pond. Lines join
+## where a corner of one lands on (or next to) another; a building's door that no walkway comes
+## near is linked to the nearest one, so a moved building still has a way in. Heights come from
 ## the ground where they walk. tools/village_layout.gd + tools/plot_village.py draw it from above.
 
-## The points (plans/world-pass.md, the pond green): a ring round the green and its pond, then a
-## short lane in to each door; the path from the clearing joins the ring at the north-west, past
-## your home.
-const POINTS := {
-	&"sq_n": Vector2(131.5, 102.7), &"sq_nne": Vector2(140.8, 105.9), &"sq_ne": Vector2(150.1, 115.2),
-	&"sq_e": Vector2(153.5, 128.0), &"sq_ese": Vector2(150.1, 140.8), &"sq_se": Vector2(140.8, 150.1),
-	&"sq_s": Vector2(128.0, 153.5), &"sq_ssw": Vector2(115.2, 150.1), &"sq_sw": Vector2(105.9, 140.8),
-	&"sq_w": Vector2(102.5, 128.0), &"sq_wnw": Vector2(105.9, 115.2), &"sq_nw": Vector2(115.2, 105.9),
-	&"th_front": Vector2(128.8, 102.8), &"wc_front": Vector2(109.9, 93.8), &"sm_front": Vector2(161.0, 97.9),
-	&"bk_front": Vector2(145.4, 161.0), &"pr_front": Vector2(102.6, 166.2),
-	&"nb_front": Vector2(122.4, 102.3),
-	# the fisher's hut on the pond's north bank (its dock in front): round to its side door
-	&"fi_side": Vector2(124.6, 123.0),
-	# the market stall, its counter facing the middle: in front of it, by way of the green
-	&"mk_way": Vector2(144.0, 131.0), &"market": Vector2(146.4, 136.3),
-	# a footpath across the green east of the pond, north to south (so nobody walks all round)
-	&"gr_n": Vector2(134.0, 113.0), &"gr_mid": Vector2(134.0, 124.0), &"gr_s": Vector2(133.0, 141.0),
-	# Rosa's terrace, beside the bakery
-	&"terrace": Vector2(153.9, 161.3), &"tr_east": Vector2(152.0, 158.2),
-	# the tavern (plans/tavern.md): its front, in at its door, the middle of the room
-	&"tv_front": Vector2(155.2, 114.5), &"tv_in": Vector2(158.2, 113.2), &"tv_mid": Vector2(161.1, 112.7),
-	# out to your home (plans/home.md) along the path from the clearing
-	&"path_in": Vector2(104.0, 104.0), &"hm_lane": Vector2(94.0, 101.0), &"hm_front": Vector2(86.4, 107.2),
-}
-const LINKS := [
-	[&"sq_n", &"sq_nne"], [&"sq_nne", &"sq_ne"], [&"sq_ne", &"sq_e"], [&"sq_e", &"sq_ese"],
-	[&"sq_ese", &"sq_se"], [&"sq_se", &"sq_s"], [&"sq_s", &"sq_ssw"], [&"sq_ssw", &"sq_sw"],
-	[&"sq_sw", &"sq_w"], [&"sq_w", &"sq_wnw"], [&"sq_wnw", &"sq_nw"], [&"sq_nw", &"sq_n"],
-	[&"sq_n", &"th_front"], [&"sq_nw", &"wc_front"], [&"sq_ne", &"sm_front"], [&"sq_nne", &"sm_front"], [&"sq_n", &"fi_side"],
-	[&"sq_se", &"bk_front"], [&"sq_ssw", &"pr_front"], [&"sq_n", &"nb_front"], [&"sq_nw", &"nb_front"],
-	[&"sq_e", &"mk_way"], [&"mk_way", &"market"],
-	[&"sq_n", &"gr_n"], [&"sq_nne", &"gr_n"], [&"gr_n", &"gr_mid"], [&"gr_mid", &"gr_s"], [&"gr_mid", &"mk_way"],
-	[&"gr_mid", &"fi_side"], [&"gr_s", &"sq_s"], [&"gr_s", &"sq_se"],
-	[&"terrace", &"tr_east"], [&"tr_east", &"bk_front"],
-	[&"sq_ne", &"tv_front"], [&"tv_front", &"tv_in"], [&"tv_in", &"tv_mid"],
-	[&"sq_nw", &"path_in"], [&"path_in", &"hm_lane"], [&"hm_lane", &"hm_front"],
-]
+const LAYOUT := "res://data/layout/hearthvale.json"
+## Corners closer than this are one point; a line's end this close to another line joins it there.
+const JOIN := 0.75
+## A door with a network point this close is reached already (its own short lane in); else the
+## nearest walkway gets a point where it passes closest, for the last step in.
+const DOOR_REACH := 4.0
 ## Somewhere closer than this is walked to straight, when nothing's in the way.
 const DIRECT := 8.0
 ## How wide a villager is, and how high the check for things in the way runs (above the ground,
@@ -56,13 +27,133 @@ var _names: Array[StringName] = []
 var _terrain: Terrain3D
 
 
+var _ring: PackedVector2Array  # the walkway villagers stroll round the green by (its "stroll" line)
+
+
 func _ready() -> void:
 	add_to_group("village_paths")
-	for n: StringName in POINTS:
-		_astar.add_point(_names.size(), POINTS[n])
-		_names.append(n)
-	for l in LINKS:
-		_astar.connect_points(_names.find(l[0]), _names.find(l[1]))
+	var walks := walkways()
+	for l in walks:
+		if l.get("stroll", false):
+			_ring = _pts(l)
+	var doors := PackedVector2Array()
+	for b in get_tree().get_nodes_in_group("building"):
+		var door := b.call("spot", "Door") as Node3D if b.has_method("spot") else null
+		if door:
+			doors.append(_flat(door.global_position))
+	var g := graph(walks, doors)
+	var pts: PackedVector2Array = g["points"]
+	for i in pts.size():
+		_astar.add_point(i, pts[i])
+		_names.append(StringName("w%d" % i))
+	for l in g["links"]:
+		_astar.connect_points(l[0], l[1])
+
+
+## The layout's walkway lines.
+static func walkways() -> Array:
+	var layout: Variant = JSON.parse_string(FileAccess.get_file_as_string(LAYOUT)) if FileAccess.file_exists(LAYOUT) else null
+	var out := []
+	if layout is Dictionary:
+		for l in layout.get("lines", []):
+			if l.get("type", "") == "walkway" and l.get("points", []).size() >= 2:
+				out.append(l)
+	return out
+
+
+## The network from walkway `lines` and the `doors` it must reach: {points: PackedVector2Array,
+## links: [[i, j], ...]}. Corners within JOIN are one point; an end of a line within JOIN of another
+## line's leg splits that leg there; a door with no point within DOOR_REACH gets one on the nearest
+## leg, where it passes closest (the step from there onto the door isn't part of the network, as
+## for every door).
+static func graph(lines: Array, doors: PackedVector2Array) -> Dictionary:
+	var pts: Array[Vector2] = []  # (an Array: the lambdas below add to it, and they'd copy a packed one)
+	var links := {}  # Vector2i(lo, hi) -> true
+	var ends: Array[int] = []
+	var at := func(p: Vector2) -> int:
+		for i in pts.size():
+			if pts[i].distance_to(p) < JOIN:
+				return i
+		pts.append(p)
+		return pts.size() - 1
+	var link := func(a: int, b: int) -> void:
+		if a != b:
+			links[Vector2i(mini(a, b), maxi(a, b))] = true
+	for l in lines:
+		var line := _pts(l)
+		var prev: int = at.call(line[0])
+		ends.append(prev)
+		for k in range(1, line.size()):
+			var here: int = at.call(line[k])
+			link.call(prev, here)
+			prev = here
+		ends.append(prev)
+	# ends landing on another line's leg (a T): split the leg there
+	for e in ends:
+		var best := _nearest_leg(pts, links, pts[e], [e])
+		if not best.is_empty() and float(best["d"]) < JOIN:
+			_split(pts, links, best, e)
+	for door in doors:
+		var near := false
+		for p in pts:
+			if p.distance_to(door) < DOOR_REACH:
+				near = true
+				break
+		if near or links.is_empty():
+			continue
+		var best := _nearest_leg(pts, links, door, [])
+		var spot := pts.size()
+		pts.append(best["at"])
+		_split(pts, links, best, spot)
+	var out := []
+	for k: Vector2i in links:
+		out.append([k.x, k.y])
+	return {"points": PackedVector2Array(pts), "links": out}
+
+
+## The leg (a link) nearest `p`, leaving out legs touching `skip`: {leg: Vector2i, at: the spot on it, d: how far}.
+static func _nearest_leg(pts: Array[Vector2], links: Dictionary, p: Vector2, skip: Array) -> Dictionary:
+	var best := {}
+	for k: Vector2i in links:
+		if k.x in skip or k.y in skip:
+			continue
+		var q := Geometry2D.get_closest_point_to_segment(p, pts[k.x], pts[k.y])
+		var d := q.distance_to(p)
+		if best.is_empty() or d < float(best["d"]):
+			best = {"leg": k, "at": q, "d": d}
+	return best
+
+
+## Splits leg `best` at point `i` (which joins it): a-i-b instead of a-b, or i linked to the leg's
+## end when the spot is right at one.
+static func _split(pts: Array[Vector2], links: Dictionary, best: Dictionary, i: int) -> void:
+	var k: Vector2i = best["leg"]
+	var q: Vector2 = best["at"]
+	for e in [k.x, k.y]:
+		if pts[e].distance_to(q) < JOIN:
+			links[Vector2i(mini(e, i), maxi(e, i))] = true
+			return
+	links.erase(k)
+	for e in [k.x, k.y]:
+		links[Vector2i(mini(e, i), maxi(e, i))] = true
+
+
+static func _pts(l: Dictionary) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for p in l.get("points", []):
+		out.append(Vector2(float(p[0]), float(p[1])))
+	return out
+
+
+## The stroll round the green (the walkway marked "stroll"), its corners on the ground.
+func ring() -> PackedVector3Array:
+	var out := PackedVector3Array()
+	var n := _ring.size()
+	if n > 1 and _ring[0].distance_to(_ring[n - 1]) < JOIN:
+		n -= 1  # (closed: its last corner is its first)
+	for i in n:
+		out.append(Vector3(_ring[i].x, _height(Vector3(_ring[i].x, 0.0, _ring[i].y)), _ring[i].y))
+	return out
 
 
 ## Where to walk, in order, to get from `from` to `to` (world positions): the network's points on
@@ -122,11 +213,13 @@ func is_clear(a: Vector3, b: Vector3) -> bool:
 ## Everything as plain data, for tools/village_layout.gd.
 func dump() -> Dictionary:
 	var pts := {}
-	for n in _names:
-		pts[String(n)] = [POINTS[n].x, POINTS[n].y]
 	var links := []
-	for l in LINKS:
-		links.append([String(l[0]), String(l[1])])
+	for id in _names.size():
+		var p := _astar.get_point_position(id)
+		pts[String(_names[id])] = [p.x, p.y]
+		for other in _astar.get_point_connections(id):
+			if other > id:
+				links.append([String(_names[id]), String(_names[other])])
 	return {"points": pts, "links": links}
 
 

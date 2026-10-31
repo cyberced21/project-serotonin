@@ -23,7 +23,8 @@
 		"hedge":     {"label": "Hedge",           "model": "res://models/country/hedge.glb", "scale": [1, 1, 1],      "spacing": 1.7,  "color": "#4f7d3a"},
 		"wall":      {"label": "Stone wall",      "model": "res://models/country/wall.glb",  "scale": [1, 0.55, 1],   "spacing": 1.95, "color": "#9a958a"},
 		"low_wall":  {"label": "Tumbledown wall", "model": "res://models/country/wall.glb",  "scale": [1, 0.4, 1],    "spacing": 2.1,  "color": "#b5ad9c"},
-		"fence":     {"label": "Field fence",     "model": "res://models/field/fence.glb",   "scale": [1, 1, 1],      "spacing": 5.1,  "color": "#8b6a43"}
+		"fence":     {"label": "Field fence",     "model": "res://models/field/fence.glb",   "scale": [1, 1, 1],      "spacing": 5.1,  "color": "#8b6a43"},
+		"walkway":   {"label": "Walkway (villagers)", "walk": true, "color": "#f2d16b"}
 	},
 	"props": {
 		"standing_stone": {"label": "Standing stone", "model": "res://models/scenery/boulder_big.glb", "scale": [0.7, 2.6, 0.6], "collide": true, "own_materials": false},

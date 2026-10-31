@@ -286,6 +286,8 @@ func _line(l: Dictionary, parent: Node3D) -> void:
 		_warn("line %s: no %s in the catalog, or under two points" % [id, type], pts[0] if pts.size() > 0 else Vector2.ZERO, id)
 		return
 	var c: Dictionary = catalog["lines"][type]
+	if c.get("walk", false):
+		return  # a walkway: nothing to build, the villagers read it (VillagePaths)
 	var gate_every := float(l.get("gate_every", 0.0))
 	var gate := float(l.get("gate", 4.0))
 	# walk it a metre at a time, cutting it where it can't stand and at the gates

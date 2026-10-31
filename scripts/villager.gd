@@ -38,8 +38,6 @@ const OUTING_RANGE := 90.0
 ## Your porch is further out than that, on the west rim (plans/home.md).
 const PORCH_RANGE := 120.0
 ## A stroll round the green goes through these of the network's points, in order.
-const SQUARE_ROUND: Array[StringName] = [&"sq_n", &"sq_nne", &"sq_ne", &"sq_e", &"sq_ese", &"sq_se",
-	&"sq_s", &"sq_ssw", &"sq_sw", &"sq_w", &"sq_wnw", &"sq_nw"]
 
 @export var model: PackedScene
 @export var work := Work.CHOP
@@ -744,16 +742,17 @@ func gesture_throw() -> void:
 func _stroll_spot() -> Marker3D:
 	if _paths == null:
 		_paths = get_tree().get_first_node_in_group("village_paths") as VillagePaths
-	if _paths == null:
+	var ring := _paths.ring() if _paths else PackedVector3Array()  # (the stroll walkway round the green)
+	if ring.is_empty():
 		return _pick_spot()
 	if _stroll == null:
 		_stroll = Marker3D.new()
 		_stroll.name = "Stroll"
 		_stroll.top_level = true
 		add_child(_stroll)
-		_stroll_i = randi() % SQUARE_ROUND.size()
-	_stroll_i = (_stroll_i + 1) % SQUARE_ROUND.size()
-	var p := _paths.named(SQUARE_ROUND[_stroll_i])
+		_stroll_i = randi() % ring.size()
+	_stroll_i = (_stroll_i + 1) % ring.size()
+	var p := ring[_stroll_i]
 	var middle := VillageDecor.HEARTHVALE_CENTER
 	_stroll.global_transform = Transform3D(Basis(Vector3.UP, atan2(middle.x - p.x, middle.y - p.z)), p)
 	return _stroll

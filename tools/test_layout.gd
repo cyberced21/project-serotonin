@@ -114,6 +114,8 @@ func _baked_in_step(layout: Dictionary, catalog: Dictionary, report: Dictionary)
 			save_ids[sid] = true
 	var lines := baked.get_node("Lines")
 	for l in layout["lines"]:
+		if catalog["lines"].get(l["type"], {}).get("walk", false):
+			continue  # (walkways build nothing)
 		var any := false
 		for row in lines.get_children():
 			if String(row.name).begins_with(String(l["id"]).to_pascal_case() + "_"):

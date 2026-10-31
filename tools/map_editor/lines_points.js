@@ -8,6 +8,7 @@
 	const E = Editor;
 
 	const lineColor = (o) => (E.catalog.lines[o.type] || {}).color || "#c0c0c0";
+	const isWalk = (o) => !!(E.catalog.lines[o.type] || {}).walk;
 
 	E.registerKind("lines", {
 		label: "Line",
@@ -23,7 +24,8 @@
 			ctx.stroke();
 			ctx.lineWidth = Math.max(1.5, E.view.s * 1.1);
 			ctx.strokeStyle = lineColor(o);
-			if (o.gate_every > 0) ctx.setLineDash([o.gate_every * E.view.s, (o.gate || 4) * E.view.s]);
+			if (isWalk(o)) ctx.setLineDash([Math.max(3, E.view.s), Math.max(3, E.view.s)]);  // (nothing built: dotted)
+			else if (o.gate_every > 0) ctx.setLineDash([o.gate_every * E.view.s, (o.gate || 4) * E.view.s]);
 			ctx.stroke();
 			ctx.setLineDash([]);
 		},
@@ -55,6 +57,11 @@
 			box.append(E.field("Id", E.input(o, "id", "text", { readonly: true })));
 			box.append(E.field("What", E.input(o, "type", "select", { options: types, refresh: true })));
 			box.append(E.field("Length", E.el("span", {}, `${Math.round(E.polyLength(o.points))} m, ${o.points.length} corners`)));
+			if (isWalk(o)) {
+				box.append(E.field("Stroll", E.input(o, "stroll", "check", { default: false })));
+				box.append(E.el("p", { class: "muted" }, "A walkway: where villagers walk (nothing is built). Lines join where a corner lands on another line; a door with no walkway within 4 m is joined to the nearest one. Stroll: the loop villagers stroll round the green (one line, ends meeting)."));
+				return;
+			}
 			box.append(E.field("Gate every (m)", E.input(o, "gate_every", "number", { step: 1, min: 0, default: 0 })));
 			box.append(E.field("Gate (m)", E.input(o, "gate", "number", { step: 0.5, min: 1, default: 4 })));
 			box.append(E.field("Cut at roads", E.input(o, "clip", "check", { default: true })));

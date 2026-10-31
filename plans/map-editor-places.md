@@ -29,6 +29,15 @@ Branch `places` off `main`, one commit a phase.
   global transforms before and after: no position moved, turns within 0.1°). `tools/test_anchors.gd`.
   `audit_world.gd` skips the flying critters by their `Critters` script now, not by path.
   `tools/import_layout.gd` (run once, long ago) doesn't write anchors: don't re-run it.
+- **Phase 2 (2026-10-30):** a `walkway` line kind (catalog `"walk": true`, no model: the bake
+  builds nothing). Today's network (32 points, 39 links) imported as 20 walkway lines, the green's
+  ring one closed line marked `stroll` (villagers' strolls round the square follow it:
+  `VillagePaths.ring()`). `VillagePaths.graph()` builds the network from them: corners within
+  0.75 m are one point, a line's end landing on another's leg splits it, and a building's `Door`
+  with no point within 4 m gets one on the nearest leg (the last step onto a door stays off the
+  network, as before). The imported graph is today's, link for link, but for the noticeboard's
+  link now running through the town hall's front (which sat on it). The editor draws walkways
+  dotted and gives them a Stroll box instead of gates. `tools/test_walkways.gd`.
 
 ## What moves
 
