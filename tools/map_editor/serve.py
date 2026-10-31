@@ -8,7 +8,8 @@ then open http://127.0.0.1:8765/
   GET  /api/layout   data/layout/hearthvale.json      POST /api/layout  saves it (one shape a line)
   GET  /api/catalog  data/layout/catalog.json
   GET  /api/baked    data/layout/baked.json            POST /api/bake    bakes the layout (tools/bake_layout.gd)
-  GET  /api/terrain_applied  the terrain shapes the land was last generated from
+  GET  /api/terrain_applied  the terrain shapes and anchors the land was last generated from
+  GET  /api/terrain_report   the last terrain run's report (its warnings: a road across a pad...)
   GET  /map.png, /world.json  the land (tools/export_map.gd)  POST /api/map  redraws them
   POST /api/terrain  regenerates the terrain from the layout's terrain shapes, then redraws and rebakes
 """
@@ -27,6 +28,7 @@ LAYOUT = os.path.join(ROOT, "data", "layout", "hearthvale.json")
 CATALOG = os.path.join(ROOT, "data", "layout", "catalog.json")
 BAKED = os.path.join(ROOT, "data", "layout", "baked.json")
 TERRAIN_APPLIED = os.path.join(ROOT, "data", "layout", "terrain_applied.json")  # what the land was last made from
+TERRAIN_REPORT = os.path.join(HERE, "terrain_report.json")  # the last terrain run's report (its warnings)
 DEFAULT_GODOT = r"E:\Godot\Godot_v4.7.2-stable_win64.exe\Godot_v4.7.2-stable_win64_console.exe"
 # Bakes run the game headless: never in the player's real worlds.
 SAVE_ROOT = "--save-root=user://tool_worlds"
@@ -51,7 +53,9 @@ def write_layout(data):
 
 
 def run_godot(script, timeout=900):
-    cmd = [godot, "--headless", "--audio-driver", "Dummy", "--path", ROOT, "-s", script, "--", SAVE_ROOT]
+    """Runs a headless Godot script (or [script, its own args...]) and sums up what it said."""
+    script, extra = (script[0], list(script[1:])) if isinstance(script, list) else (script, [])
+    cmd = [godot, "--headless", "--audio-driver", "Dummy", "--path", ROOT, "-s", script, "--", SAVE_ROOT, *extra]
     started = time.time()
     p = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout)
     out = p.stdout + p.stderr
@@ -102,6 +106,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self._file(BAKED)
         if path == "/api/terrain_applied":
             return self._file(TERRAIN_APPLIED)
+        if path == "/api/terrain_report":
+            return self._file(TERRAIN_REPORT) if os.path.exists(TERRAIN_REPORT) else self._json({"warnings": []})
         if path.startswith("/api/"):
             return self._json({"error": "no such thing"}, 404)
         if path.endswith(".py"):
@@ -126,7 +132,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self._json({"ok": True})
         scripts = {"/api/bake": ["res://tools/bake_layout.gd"],
                    "/api/map": ["res://tools/export_map.gd"],
-                   "/api/terrain": ["res://tools/generate_test_terrain.gd", "res://tools/export_map.gd", "res://tools/bake_layout.gd"]}
+                   "/api/terrain": [["res://tools/generate_test_terrain.gd", "--report=" + TERRAIN_REPORT],
+                                    "res://tools/export_map.gd", "res://tools/bake_layout.gd"]}
         if path in scripts:
             if not busy.acquire(blocking=False):
                 return self._json({"ok": False, "errors": ["Godot is already running a bake"]}, 409)

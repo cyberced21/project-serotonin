@@ -64,3 +64,4 @@ h3 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing
 .help p { margin: 0; color: var(--muted); font-size: 12px; }
 .chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .chips label { display: inline-flex; gap: 3px; align-items: center; background: var(--panel-2); padding: 1px 6px; border-radius: 4px; }
+#props p.bad { color: var(--warn); }

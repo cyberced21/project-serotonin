@@ -79,7 +79,7 @@ func _mill(report: Dictionary, mill_at: Vector2) -> void:
 		_check(end.distance_to(want) < 3.0, "...ending at the moved mill (%s, wants %s)" % [end, want])
 	var warned := false
 	for w in report.get("warnings", []):
-		warned = warned or String(w).contains("mill's wheel")
+		warned = warned or (String(w["msg"]).contains("mill's wheel") and w["ref"] == "watermill")
 	_check(warned, "a mill off the creek is warned about (its wheel %s m from it)" % report.get("mill_wheel_from_creek", "?"))
 
 
@@ -102,7 +102,7 @@ func _pads(report: Dictionary) -> void:
 			continue
 		if not pad.get("road", false):
 			off.append("%s %.2f m" % [id, pad["off"]])
-		elif not " ".join(PackedStringArray(report.get("warnings", []))).contains(String(id) + "'s ground"):
+		elif not report.get("warnings", []).any(func(w: Dictionary) -> bool: return w["ref"] == id):
 			unwarned.append(id)
 	_check(off.is_empty(), "every pad no road crosses is level (off: %s)" % ", ".join(off))
 	_check(unwarned.is_empty(), "a pad a road crosses is warned about (not: %s)" % ", ".join(unwarned))

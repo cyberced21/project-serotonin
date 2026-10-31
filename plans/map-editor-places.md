@@ -69,6 +69,19 @@ Branch `places` off `main`, one commit a phase.
   today's generator makes, from before this plan, so the terrain is left as it is until it's
   rebuilt on purpose (the editor's Save & bake does it when terrain or an anchor changed).
   Still fixed: the two drawn road lines (`VILLAGE_PATH`, `EAST_ROAD`) don't follow a moved green.
+- **Phase 5 (2026-10-30):** the editor's Buildings layer (`tools/map_editor/buildings.js`, the
+  layout's `anchors`): each drawn as its footprint, turned (`tools/export_map.gd` writes each one's
+  box, door, kind and name in its own frame to `world.json`'s `anchors`), with a notch on its
+  front and its door; places and the green dashed. Drag to move, drag the round handle in front to
+  turn (15° steps, Shift for any angle), or type x, z and turn in the panel; no adding, deleting or
+  copying. Warnings as you go (in the list and on the map, clickable): two buildings overlapping, a
+  door more than 4 m from a walkway, a road through one, one standing in water or on a slope of
+  more than 3 m corner to corner, the mill's wheel off the creek. Save & bake re-runs the terrain
+  when an anchor moved as well as when a terrain shape changed (`terrain_applied.json` now records
+  both; the old record, shapes only, counts the anchors as unchanged), and shows that run's own
+  warnings (a road across a pad, the mill off the creek: `tools/map_editor/terrain_report.json`).
+  Today's layout has no warnings. Checked in the browser pane: drag, turn, the warnings, Delete
+  doing nothing, undo; nothing saved.
 
 ## What moves
 

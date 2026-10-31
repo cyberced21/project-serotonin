@@ -13,3 +13,6 @@ docs/images/walls/scratch/
 
 # Exported builds (export_presets.cfg)
 /build/
+
+# The map editor's last terrain run (tools/map_editor/serve.py)
+tools/map_editor/terrain_report.json

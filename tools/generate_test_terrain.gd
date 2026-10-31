@@ -36,7 +36,8 @@ extends SceneTree
 ## out to the mill, orchard and shepherd's hill end at their place.
 ##   -- --layout=<file>   read the layout (anchors, walkways, terrain shapes) from another file
 ##   -- --dry-run         write nothing (terrain, roads, main.tscn, the applied terrain)
-##   -- --report=<file>   write what it did as JSON: each pad's flatness, each road's ends, warnings
+##   -- --report=<file>   write what it did as JSON: each pad's flatness, each road's ends, the ponds,
+##                        warnings ({msg, at, ref}: a road across a pad, the mill's wheel out of the creek)
 
 const WorldMap := preload("res://scripts/world_map.gd")
 
@@ -276,8 +277,8 @@ func _run() -> void:
 	if not _dry:
 		_write_roads(laid)
 		_rebake_nodes(h)
-		var applied := FileAccess.open(TERRAIN_APPLIED, FileAccess.WRITE)
-		applied.store_string(JSON.stringify(_layout_terrain))
+		var applied := FileAccess.open(TERRAIN_APPLIED, FileAccess.WRITE)  # (the editor re-runs this when either changes)
+		applied.store_string(JSON.stringify({"terrain": _layout_terrain, "anchors": LayoutAnchors.anchors()}))
 		applied.close()
 		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DATA_DIR))
 		terrain.data.save_directory(DATA_DIR)
@@ -1318,7 +1319,7 @@ func _report_pads(h: PackedFloat32Array) -> void:
 		_report["pads"][pad["id"]] = {"at": [c.x, c.y], "r": pad["r"], "height": snappedf(mean, 0.01), "off": snappedf(worst, 0.01), "road": crossed[0]}
 		if crossed[0] and worst > 0.15:
 			var msg := "a road runs across %s's ground (%.1f m off level): move one of them" % [pad["id"], worst]
-			_report["warnings"].append(msg)
+			_report["warnings"].append({"msg": msg, "at": [c.x, c.y], "ref": pad["id"]})
 			print("WARNING: " + msg)
 
 
@@ -1338,5 +1339,5 @@ func _check_mill() -> void:
 	_report["mill_wheel_from_creek"] = snappedf(d, 0.1)
 	if d > WorldMap.CREEK_HALF_WIDTH + WHEEL_REACH:
 		var msg := "the mill's wheel is %.0f m from the creek: it won't turn in water there" % (d - WorldMap.CREEK_HALF_WIDTH)
-		_report["warnings"].append(msg)
+		_report["warnings"].append({"msg": msg, "at": [at.x, at.y], "ref": "watermill"})
 		print("WARNING: " + msg)

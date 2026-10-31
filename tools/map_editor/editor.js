@@ -1,5 +1,6 @@
 // The map editor (plans/map-editor.md): the map, the view, selection, undo, the panels, saving
-// and baking. What can be placed lives in its own file (patches.js, lines_points.js, terrain.js),
+// and baking. What can be placed lives in its own file (patches.js, lines_points.js, terrain.js,
+// buildings.js),
 // each registering its kind of shape (how it draws, is hit, moves, and its properties) and its
 // drawing tools.
 "use strict";
@@ -12,7 +13,7 @@ const Editor = (() => {
 		tool: null,
 		sel: [],              // [{kind, obj}]
 		view: { cx: 128, cz: 128, s: 1.2 },
-		show: { map: true, overlays: true, labels: true, terrain: true, patches: true, lines: true, points: true, baked: true, warnings: true },
+		show: { map: true, overlays: true, labels: true, terrain: true, patches: true, anchors: true, lines: true, points: true, baked: true, warnings: true },
 		dirty: false,
 		bakedStale: false,
 	};
@@ -128,9 +129,10 @@ const Editor = (() => {
 	};
 	E.isSelected = (obj) => E.sel.some((s) => s.obj === obj);
 	E.deleteSelected = () => {
-		if (!E.sel.length) return;
+		if (!E.sel.length || E.sel.every((s) => E.kinds[s.kind].fixed)) return;
 		E.commit();
 		for (const { kind, obj } of E.sel) {
+			if (E.kinds[kind].fixed) continue;  // (one of a kind: it can move, not go)
 			const list = E.layout[kind];
 			const i = list.indexOf(obj);
 			if (i >= 0) list.splice(i, 1);
@@ -143,6 +145,7 @@ const Editor = (() => {
 		E.commit();
 		const made = [];
 		for (const { kind, obj } of E.sel) {
+			if (E.kinds[kind].fixed) continue;
 			const copy = JSON.parse(JSON.stringify(obj));
 			copy.id = E.uniqueId(obj.id.replace(/_\d+$/, ""));
 			delete copy.save_id;
@@ -167,7 +170,7 @@ const Editor = (() => {
 	/** The topmost shape under world (x, z): points over lines over terrain over patches, smaller patches first. */
 	const pick = (x, z) => {
 		const tol = 7 / E.view.s;
-		const order = ["points", "lines", "terrain", "patches"];
+		const order = ["points", "lines", "anchors", "terrain", "patches"];
 		for (const kind of order) {
 			const spec = E.kinds[kind];
 			if (!spec || !E.show[kind]) continue;
@@ -204,13 +207,13 @@ const Editor = (() => {
 			ctx.drawImage(mapImg, sx, sy, w.size * E.view.s, w.size * E.view.s);
 		}
 		if (w && E.show.overlays) drawOverlays();
-		for (const kind of ["terrain", "patches", "lines", "points"]) {
+		for (const kind of ["terrain", "patches", "anchors", "lines", "points"]) {
 			const spec = E.kinds[kind];
 			if (!spec || !E.show[kind]) continue;
 			for (const o of E.layout[kind] || []) spec.draw(ctx, o, E.isSelected(o));
 		}
 		if (E.show.baked && E.baked && E.baked.nodes) drawBaked();
-		if (E.show.warnings && E.baked && E.baked.warnings) drawWarnings();
+		if (E.show.warnings) drawWarnings();
 		if (w && E.show.labels) drawLabels();
 		drawHandles();
 		if (E.tool && E.tool.preview) E.tool.preview(ctx);
@@ -274,7 +277,7 @@ const Editor = (() => {
 	const drawWarnings = () => {
 		ctx.font = "bold 13px system-ui, sans-serif";
 		ctx.textAlign = "center";
-		for (const w of E.baked.warnings) {
+		for (const w of E.allWarnings()) {
 			const [sx, sy] = E.toScreen(w.at[0], w.at[1]);
 			ctx.beginPath();
 			ctx.moveTo(sx, sy - 9); ctx.lineTo(sx + 8, sy + 6); ctx.lineTo(sx - 8, sy + 6); ctx.closePath();
@@ -391,7 +394,7 @@ const Editor = (() => {
 		const box = document.getElementById("list");
 		const q = document.getElementById("filter").value.trim().toLowerCase();
 		box.textContent = "";
-		for (const kind of ["terrain", "patches", "lines", "points"]) {
+		for (const kind of ["anchors", "terrain", "patches", "lines", "points"]) {
 			const spec = E.kinds[kind];
 			if (!spec) continue;
 			const items = (E.layout[kind] || []).filter((o) => !q || spec.title(o).toLowerCase().includes(q) || (o.id || "").includes(q));
@@ -410,7 +413,7 @@ const Editor = (() => {
 	const refreshLayers = () => {
 		const box = document.getElementById("layers");
 		box.textContent = "";
-		const names = { map: "Land", overlays: "Buildings", labels: "Names", terrain: "Terrain", patches: "Patches", lines: "Lines", points: "Points", baked: "Baked nodes", warnings: "Warnings" };
+		const names = { map: "Land", anchors: "Buildings", overlays: "Other things", labels: "Names", terrain: "Terrain", patches: "Patches", lines: "Lines", points: "Points", baked: "Baked nodes", warnings: "Warnings" };
 		for (const k in names) {
 			const c = el("input", { type: "checkbox", onchange: () => { E.show[k] = c.checked; E.draw(); } });
 			c.checked = E.show[k];
@@ -418,12 +421,17 @@ const Editor = (() => {
 		}
 	};
 
+	/** Every warning to show: the last bake's, the last terrain run's, and the buildings' own (live). */
+	E.allWarnings = () => [...((E.baked || {}).warnings || []),
+		...((E.terrainReport || {}).warnings || []).filter((w) => w && typeof w === "object"),
+		...(E.liveWarnings ? E.liveWarnings() : [])];
+	E.refreshWarnings = () => refreshWarnings();
 	const refreshWarnings = () => {
 		const box = document.getElementById("warnings");
 		box.textContent = "";
 		const b = E.baked || {};
 		document.getElementById("bakeinfo").textContent = b.baked ? `${b.baked.replace("T", " ")}, ${(b.nodes || []).length} nodes` : "none yet";
-		const ws = b.warnings || [];
+		const ws = E.allWarnings();
 		if (!ws.length) { box.append(el("p", { class: "muted" }, b.baked ? "No warnings." : "")); return; }
 		for (const w of ws) {
 			box.append(el("div", {
@@ -676,18 +684,26 @@ const Editor = (() => {
 	/** The same JSON whatever order its keys are in. */
 	const canon = (v) => (Array.isArray(v) ? v.map(canon) : v && typeof v === "object"
 		? Object.fromEntries(Object.keys(v).sort().map((k) => [k, canon(v[k])])) : v);
+	/** Whether the land is out of date: the terrain shapes, or where the anchored buildings and places
+	 * stand (their pads), differ from what it was last made from. (An old record has no anchors: then
+	 * only the shapes count.) */
 	const terrainChanged = async () => {
 		const applied = await get("/api/terrain_applied");
-		return JSON.stringify(canon(Array.isArray(applied) ? applied : [])) !== JSON.stringify(canon(clean().terrain || []));
+		const shapes = Array.isArray(applied) ? applied : (applied && applied.terrain) || [];
+		if (JSON.stringify(canon(shapes)) !== JSON.stringify(canon(clean().terrain || []))) return true;
+		if (!applied || Array.isArray(applied) || !applied.anchors) return false;
+		const stand = (list) => JSON.stringify(canon((list || []).map((a) => ({ id: a.id, at: a.at, yaw: a.yaw }))));
+		return stand(applied.anchors) !== stand(clean().anchors);
 	};
 
 	E.bake = async () => {
 		if (!(await E.save())) return;
 		let r;
 		if (await terrainChanged()) {
-			if (!confirm("The terrain shapes changed: regenerate the land (about a minute), redraw the map, then bake?")) { E.status("Saved; not baked."); return; }
+			if (!confirm("The terrain shapes or the buildings moved: regenerate the land (about a minute), redraw the map, then bake?")) { E.status("Saved; not baked."); return; }
 			r = await E.runGodot("/api/terrain", "Regenerating the land, then baking");
 			await E.reloadWorld();
+			E.terrainReport = await get("/api/terrain_report");
 		} else {
 			r = await E.runGodot("/api/bake", "Baking (Godot is placing everything)");
 		}
@@ -714,8 +730,8 @@ const Editor = (() => {
 		ctx = canvas.getContext("2d");
 		canvas.tabIndex = 0;
 		E.status("Loading…");
-		[E.layout, E.catalog, E.baked] = await Promise.all([get("/api/layout"), get("/api/catalog"), get("/api/baked")]);
-		for (const k of ["terrain", "patches", "lines", "points"]) E.layout[k] = E.layout[k] || [];
+		[E.layout, E.catalog, E.baked, E.terrainReport] = await Promise.all([get("/api/layout"), get("/api/catalog"), get("/api/baked"), get("/api/terrain_report")]);
+		for (const k of ["terrain", "patches", "lines", "points", "anchors"]) E.layout[k] = E.layout[k] || [];
 		await E.reloadWorld();
 		buildToolbar();
 		E.setTool(SELECT);

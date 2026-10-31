@@ -9,6 +9,7 @@ extends SceneTree
 ## (No game class names: an -s script compiles before the autoloads exist.)
 
 const WorldMapC := preload("res://scripts/world_map.gd")
+const AnchorsC := preload("res://scripts/layout_anchors.gd")
 const OUT_DIR := "res://tools/map_editor/"
 const WATER_LEVEL := -0.15
 ## The heights the editor reads back (under the cursor, for slopes) are on a grid this coarse (m).
@@ -86,10 +87,18 @@ func _run() -> void:
 	var cl := WorldMapC.creek()
 	for k in range(0, cl.size(), 3):
 		creek.append([snappedf(cl[k].x, 0.1), snappedf(cl[k].y, 0.1)])
+	var main := current_scene
+	var anchored := {}  # node -> anchor id
+	var anchors := {}
+	for a in AnchorsC.anchors():
+		var n := main.get_node_or_null(NodePath(String(a["node"]))) as Node3D
+		if n:
+			anchored[n] = String(a["id"])
+			anchors[String(a["id"])] = _anchor_shape(n)
 	var things := []
 	for g in ["building", "fixture", "prop"]:
 		for n in get_nodes_in_group(g):
-			if _in_layout(n):
+			if _in_layout(n) or _anchored(n, anchored):
 				continue
 			var p := (n as Node3D).global_position
 			var r := float(n.call("footprint_radius")) if n.has_method("footprint_radius") else 1.0
@@ -103,12 +112,49 @@ func _run() -> void:
 	var world := {
 		"origin": [origin.x, origin.y], "size": size, "water_level": WATER_LEVEL,
 		"height_step": HEIGHT_STEP, "heights": heights, "roads": roads, "creek": creek,
-		"things": things, "labels": labels,
+		"things": things, "labels": labels, "anchors": anchors,
 	}
 	var f := FileAccess.open(OUT_DIR + "world.json", FileAccess.WRITE)
 	f.store_string(JSON.stringify(world))
 	print("map: %dx%d, %d roads, %d things -> %s" % [size, size, roads.size(), things.size(), OUT_DIR])
 	quit()
+
+
+## What the editor draws for an anchored thing, in its own frame (it turns and moves with the anchor):
+## the box round its meshes (every tier; for a place, all of it), its door, its kind and name.
+func _anchor_shape(n: Node3D) -> Dictionary:
+	var inv := n.global_transform.affine_inverse()
+	var box := Rect2()
+	var any := false
+	for m in n.find_children("*", "MeshInstance3D", true, false):
+		var mi := m as MeshInstance3D
+		if mi.mesh == null or mi.is_in_group("critter"):
+			continue
+		var aabb: AABB = (inv * mi.global_transform) * mi.get_aabb()
+		var r := Rect2(aabb.position.x, aabb.position.z, aabb.size.x, aabb.size.z)
+		if r.size.x > 60.0 or r.size.y > 60.0:
+			continue  # (a ground plane or the like, not the thing)
+		box = r if not any else box.merge(r)
+		any = true
+	if not any:
+		box = Rect2(-2, -2, 4, 4)
+	var door := n.get_node_or_null("Spots/Door") as Node3D
+	var d: Variant = null
+	if door:
+		var p := inv * door.global_position
+		d = [snappedf(p.x, 0.1), snappedf(p.z, 0.1)]
+	var def: Variant = n.get("def")
+	var kind := "building" if n.is_in_group("building") else "fixture" if n.is_in_group("fixture") else "green" if n.name == &"Green" else "place"
+	return {"box": [snappedf(box.position.x, 0.1), snappedf(box.position.y, 0.1), snappedf(box.end.x, 0.1), snappedf(box.end.y, 0.1)],
+		"door": d, "kind": kind, "name": def.display_name if def else String(n.name).capitalize()}
+
+
+func _anchored(n: Node, anchored: Dictionary) -> bool:
+	while n:
+		if anchored.has(n):
+			return true
+		n = n.get_parent()
+	return false
 
 
 func _in_layout(n: Node) -> bool:
