@@ -173,7 +173,13 @@ func is_unlocked() -> bool:
 
 ## The marker the villager uses for `spot` (Door, Bench, Work1..3), or null.
 func spot(spot_name: String) -> Marker3D:
-	return get_node_or_null("Spots/" + spot_name) as Marker3D
+	var own := get_node_or_null("Spots/" + spot_name) as Marker3D
+	if own:
+		return own
+	# a spot out on the village green (the square they gather on, a bench there) is the green's:
+	# Village/Green/<id>_<spot>, so it stays put when the building moves (plans/map-editor-places.md)
+	var green := get_parent().get_node_or_null("Green") if get_parent() else null
+	return green.get_node_or_null("%s_%s" % [def.id, spot_name]) as Marker3D if green and def else null
 
 
 ## The work spot for the current tier (Work3 at tier 3 if there is one, else the highest below).

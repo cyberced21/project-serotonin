@@ -475,7 +475,7 @@ func _kennel(pp: Vector3) -> bool:
 		var bed := home.mark("DogBed")
 		if bed:
 			door = bed.global_transform
-	var in_village := _flat(pp - Vector3(WorldMap.VILLAGE_CENTER.x, 0.0, WorldMap.VILLAGE_CENTER.y)) < VILLAGE_RANGE \
+	var in_village := _flat(pp - Vector3(WorldMap.village_center().x, 0.0, WorldMap.village_center().y)) < VILLAGE_RANGE \
 			or (home != null and _flat(pp - home.global_position) < HOME_RANGE)
 	if door == null or (night and not in_village):
 		_home = false

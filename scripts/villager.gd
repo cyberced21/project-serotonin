@@ -753,7 +753,7 @@ func _stroll_spot() -> Marker3D:
 		_stroll_i = randi() % ring.size()
 	_stroll_i = (_stroll_i + 1) % ring.size()
 	var p := ring[_stroll_i]
-	var middle := VillageDecor.HEARTHVALE_CENTER
+	var middle := WorldMap.village_center()
 	_stroll.global_transform = Transform3D(Basis(Vector3.UP, atan2(middle.x - p.x, middle.y - p.z)), p)
 	return _stroll
 

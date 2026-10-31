@@ -355,32 +355,6 @@ script = ExtResource("18_prop")
 model = ExtResource("46_ruin")
 collision_size = Vector3(1, 3, 1)
 
-[node name="VillagePond" type="Area3D" parent="."]
-position = Vector3(120, 0, 132)
-collision_layer = 0
-collision_mask = 0
-script = ExtResource("7_water")
-
-[node name="Volume" type="CollisionShape3D" parent="VillagePond"]
-position = Vector3(0, -1, 0)
-shape = SubResource("BoxShape3D_village_pond")
-
-[node name="Dressing" type="Node3D" parent="VillagePond"]
-script = ExtResource("13_dressing")
-seed = 23
-reed_clumps = 6
-lily_pads = 9
-stones = 9
-
-[node name="Fish" type="Node3D" parent="VillagePond"]
-script = ExtResource("9_fish_pond")
-schools = Array[Resource]([ExtResource("10_perch"), ExtResource("10_perch"), ExtResource("11_trout")])
-
-[node name="Surface" type="MeshInstance3D" parent="VillagePond"]
-position = Vector3(0, -0.15, 0)
-cast_shadow = 0
-mesh = SubResource("PlaneMesh_village_water")
-
 [node name="Lake" type="Area3D" parent="."]
 position = Vector3(38, 0, 340)
 collision_layer = 0
@@ -433,37 +407,83 @@ transform = Transform3D(0.4138, 0, -0.9104, 0, 1, 0, 0.9104, 0, 0.4138, 161, 0, 
 [node name="Home" parent="Village" instance=ExtResource("99_home")]
 transform = Transform3D(-0.6000, 0, 0.8000, 0, 1, 0, -0.8000, 0, -0.6000, 80, 0, 112)
 
+[node name="Green" type="Node3D" parent="Village"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 128, 0, 128)
+
+[node name="BenchA" type="StaticBody3D" parent="Village/Green"]
+transform = Transform3D(0.1649, 0, -0.9863, 0, 1, 0, 0.9863, 0, 0.1649, -20, 0, 6)
+script = ExtResource("18_prop")
+model = ExtResource("19_bench")
+
+[node name="BenchB" type="StaticBody3D" parent="Village/Green"]
+transform = Transform3D(0.7896, 0, 0.6136, 0, 1, 0, -0.6136, 0, 0.7896, -1, 0, 13)
+script = ExtResource("18_prop")
+model = ExtResource("19_bench")
+
+[node name="Lamp1" type="StaticBody3D" parent="Village/Green"]
+transform = Transform3D(-0.7374, 0, 0.6755, 0, 1, 0, -0.6755, 0, -0.7374, -4, 0, -18)
+script = ExtResource("18_prop")
+model = ExtResource("20_lamp")
+
+[node name="Lamp2" type="StaticBody3D" parent="Village/Green"]
+transform = Transform3D(0.6967, 0, 0.7174, 0, 1, 0, -0.7174, 0, 0.6967, 18, 0, -8.5)
+script = ExtResource("18_prop")
+model = ExtResource("20_lamp")
+
+[node name="Lamp3" type="StaticBody3D" parent="Village/Green"]
+transform = Transform3D(-0.0292, 0, -0.9996, 0, 1, 0, 0.9996, 0, -0.0292, 17, 0, 16)
+script = ExtResource("18_prop")
+model = ExtResource("20_lamp")
+
+[node name="Lamp4" type="StaticBody3D" parent="Village/Green"]
+transform = Transform3D(0.9211, 0, 0.3894, 0, 1, 0, -0.3894, 0, 0.9211, -3, 0, 20)
+script = ExtResource("18_prop")
+model = ExtResource("20_lamp")
+
+[node name="Crates1" type="StaticBody3D" parent="Village/Green"]
+transform = Transform3D(0.8776, 0, 0.4794, 0, 1, 0, -0.4794, 0, 0.8776, -11.5, 0, -10.5)
+script = ExtResource("18_prop")
+model = ExtResource("22_crates")
+
+[node name="VillagePond" type="Area3D" parent="Village/Green"]
+position = Vector3(-8, 0, 4)
+collision_layer = 0
+collision_mask = 0
+script = ExtResource("7_water")
+
+[node name="Volume" type="CollisionShape3D" parent="Village/Green/VillagePond"]
+position = Vector3(0, -1, 0)
+shape = SubResource("BoxShape3D_village_pond")
+
+[node name="Dressing" type="Node3D" parent="Village/Green/VillagePond"]
+script = ExtResource("13_dressing")
+seed = 23
+reed_clumps = 6
+lily_pads = 9
+stones = 9
+
+[node name="Fish" type="Node3D" parent="Village/Green/VillagePond"]
+script = ExtResource("9_fish_pond")
+schools = Array[Resource]([ExtResource("10_perch"), ExtResource("10_perch"), ExtResource("11_trout")])
+
+[node name="Surface" type="MeshInstance3D" parent="Village/Green/VillagePond"]
+position = Vector3(0, -0.15, 0)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_village_water")
+
+[node name="baker_cottage_Square" type="Marker3D" parent="Village/Green"]
+transform = Transform3D(-0.8849, 0, -0.4658, 0, 1, 0, 0.4658, 0, -0.8849, 8.85, 0, 16.82)
+
+[node name="prospector_cottage_Square" type="Marker3D" parent="Village/Green"]
+transform = Transform3D(-0.8321, 0, 0.5547, 0, 1, 0, -0.5547, 0, -0.8321, -10.54, 0, 15.81)
+
+[node name="fisher_Bench" type="Marker3D" parent="Village/Green"]
+transform = Transform3D(0.7893, 0, 0.614, 0, 1, 0, -0.614, 0, 0.7893, -1, 0, 13)
+
+[node name="woodcutter_Bench" type="Marker3D" parent="Village/Green"]
+transform = Transform3D(0.165, 0, -0.9863, 0, 1, 0, 0.9863, 0, 0.165, -20, 0, 6)
+
 [node name="Props" type="Node3D" parent="Village"]
-
-[node name="BenchA" type="StaticBody3D" parent="Village/Props"]
-transform = Transform3D(0.1649, 0, -0.9863, 0, 1, 0, 0.9863, 0, 0.1649, 108, 0, 134)
-script = ExtResource("18_prop")
-model = ExtResource("19_bench")
-
-[node name="BenchB" type="StaticBody3D" parent="Village/Props"]
-transform = Transform3D(0.7896, 0, 0.6136, 0, 1, 0, -0.6136, 0, 0.7896, 127, 0, 141)
-script = ExtResource("18_prop")
-model = ExtResource("19_bench")
-
-[node name="Lamp1" type="StaticBody3D" parent="Village/Props"]
-transform = Transform3D(-0.7374, 0, 0.6755, 0, 1, 0, -0.6755, 0, -0.7374, 124, 0, 110)
-script = ExtResource("18_prop")
-model = ExtResource("20_lamp")
-
-[node name="Lamp2" type="StaticBody3D" parent="Village/Props"]
-transform = Transform3D(0.6967, 0, 0.7174, 0, 1, 0, -0.7174, 0, 0.6967, 146, 0, 119.5)
-script = ExtResource("18_prop")
-model = ExtResource("20_lamp")
-
-[node name="Lamp3" type="StaticBody3D" parent="Village/Props"]
-transform = Transform3D(-0.0292, 0, -0.9996, 0, 1, 0, 0.9996, 0, -0.0292, 145, 0, 144)
-script = ExtResource("18_prop")
-model = ExtResource("20_lamp")
-
-[node name="Lamp4" type="StaticBody3D" parent="Village/Props"]
-transform = Transform3D(0.9211, 0, 0.3894, 0, 1, 0, -0.3894, 0, 0.9211, 125, 0, 148)
-script = ExtResource("18_prop")
-model = ExtResource("20_lamp")
 
 [node name="LakeSignpost" type="StaticBody3D" parent="Village/Props"]
 position = Vector3(45.5, 0, 87.5)
@@ -485,11 +505,6 @@ model = ExtResource("21_barrel")
 transform = Transform3D(-0.8783, 0, 0.4782, 0, 1, 0, -0.4782, 0, -0.8783, 165.2, 0, 86.6)
 script = ExtResource("18_prop")
 model = ExtResource("21_barrel")
-
-[node name="Crates1" type="StaticBody3D" parent="Village/Props"]
-transform = Transform3D(0.8776, 0, 0.4794, 0, 1, 0, -0.4794, 0, 0.8776, 116.5, 0, 117.5)
-script = ExtResource("18_prop")
-model = ExtResource("22_crates")
 
 [node name="Crates2" type="StaticBody3D" parent="Village/Props"]
 transform = Transform3D(0.3892, 0, 0.9211, 0, 1, 0, -0.9211, 0, 0.3892, 121.5, 0, 92)

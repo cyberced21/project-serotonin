@@ -95,7 +95,7 @@ func biome_at(p: Vector3) -> StringName:
 		return &"goldmeadow"
 	if ((q - WorldMap.FOREST_CENTER) / WorldMap.FOREST_RADII).length() < 1.0:
 		return &"pinewood"
-	if w.distance_to(WorldMap.VILLAGE_CENTER) < WorldMap.VILLAGE_RADIUS + 10.0:
+	if w.distance_to(WorldMap.village_center()) < WorldMap.VILLAGE_RADIUS + 10.0:
 		return &"hearthvale"
 	if w.distance_to(WorldMap.LAKE_CENTER) < 55.0:
 		return &"stillwater"

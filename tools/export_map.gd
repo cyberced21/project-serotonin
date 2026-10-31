@@ -20,13 +20,13 @@ const COLORS := {
 	6: Color(0.88, 0.74, 0.36),
 }
 const PLACES := [
-	["Hearthvale", WorldMapC.VILLAGE_CENTER], ["The Clearing", WorldMapC.CLEARING_CENTER],
+	["The Clearing", WorldMapC.CLEARING_CENTER],
 	["Stillwater", WorldMapC.LAKE_CENTER], ["Frostpeak", WorldMapC.PEAK_CENTER],
 	["Greystone Quarry", WorldMapC.QUARRY_CENTER], ["Goldmeadow", WorldMapC.FIELD_CENTER],
 	["The Pinewood", WorldMapC.FOREST_CENTER],
 ]
 ## The places the map editor moves (their anchors): name, anchor id.
-const ANCHORED_PLACES := [["The watermill", &"watermill"], ["The orchard", &"orchard"],
+const ANCHORED_PLACES := [["Hearthvale", &"green"], ["The watermill", &"watermill"], ["The orchard", &"orchard"],
 	["Shepherd's hill", &"shepherds_hill"], ["The haven", &"haven"]]
 
 

@@ -163,6 +163,7 @@
 		{"at":[100.0,170.0],"id":"prospector","node":"Village/ProspectorCottage","yaw":146.31},
 		{"at":[161.0,113.0],"id":"tavern","node":"Village/Tavern","yaw":-65.56},
 		{"at":[80.0,112.0],"id":"home","node":"Village/Home","yaw":126.87},
+		{"at":[128.0,128.0],"id":"green","node":"Village/Green","yaw":0.0},
 		{"at":[150.0,199.0],"id":"barn","node":"Village/Fixtures/Barn","yaw":180.0},
 		{"at":[167.0,205.0],"id":"granary","node":"Village/Fixtures/Granary","yaw":-131.42},
 		{"at":[168.0,189.0],"id":"cart_shed","node":"Village/Fixtures/CartShed","yaw":-86.82},

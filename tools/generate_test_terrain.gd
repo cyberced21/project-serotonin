@@ -106,7 +106,7 @@ const PONDS := [
 ## The lake's flat basin beyond the south rim (hills ease up beyond radius over the ramp).
 const LAKE_BASIN := {"center": WorldMap.LAKE_CENTER, "radius": 26.0, "ramp": 85.0}
 
-const VILLAGE_CENTER := WorldMap.VILLAGE_CENTER  # the middle of the village green
+var VILLAGE_CENTER := WorldMap.village_center()  # the middle of the village green (its anchor)
 const VILLAGE_RADIUS := WorldMap.VILLAGE_RADIUS
 const VILLAGE_RAMP := 50.0
 ## Goldmeadow's plain sits up on the rim: its swells ride on this height.

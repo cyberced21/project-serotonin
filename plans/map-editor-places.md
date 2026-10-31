@@ -38,6 +38,19 @@ Branch `places` off `main`, one commit a phase.
   network, as before). The imported graph is today's, link for link, but for the noticeboard's
   link now running through the town hall's front (which sat on it). The editor draws walkways
   dotted and gives them a Stroll box instead of gates. `tools/test_walkways.gd`.
+- **Phase 3 (2026-10-30):** a `Village/Green` node at the green's middle (128, 128), anchor
+  `green`, with the green's own things under it: its two benches, four lamps, the crates by the
+  fisher's hut and the village pond (its water and fish; the pond's dug bed is the terrain's, phase
+  4). `VillageDecor` takes its middle and turn from that node, so the noticeboard, market stall,
+  well, fountain, planters, bunting and the rest turn round the green. The kennel (and its door,
+  porch, bowl, blanket) is in your home's frame, Rosa's terrace in her bakery's
+  (`VillageDecor.frame_of`). The four spots that reached out to the green (Rosa's and Edda's
+  Square, the fisher's and woodcutter's Bench) are markers on the green now
+  (`Village/Green/<building id>_<spot>`), which `Building.spot()` falls back to; the town hall's
+  Square (12.5 m out, its own front) stays its own. `WorldMap.VILLAGE_CENTER` became
+  `village_center()` (the green's anchor), for the biome cards, the dog, the lamps, the trader and
+  the terrain generator. `tools/test_green.gd` turns your home, the lodge and the green a quarter
+  and moves the bakery 20 m, and checks each spot went with its owner.
 
 ## What moves
 

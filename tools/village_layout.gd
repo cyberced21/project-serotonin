@@ -44,7 +44,7 @@ func _run() -> void:
 				d["spots"].append({"b": e["id"], "name": String(m.name), "at": _xz(m.global_position),
 					"face": _xz(m.global_basis.z)})
 	var main := current_scene
-	for path in ["Village/Props", "Village/Decor", "PathLamps", "Trader", "DogHome"]:
+	for path in ["Village/Props", "Village/Green", "Village/Decor", "PathLamps", "Trader", "DogHome"]:
 		var n := main.get_node_or_null(path) as Node3D
 		if n:
 			for box in _boxes(n):

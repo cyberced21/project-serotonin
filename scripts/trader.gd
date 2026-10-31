@@ -265,7 +265,7 @@ func _build_path() -> void:
 			var road: PackedVector2Array = (r["pts"] as PackedVector2Array).duplicate()
 			if road.is_empty():
 				return
-			if road[0].distance_to(WorldMap.VILLAGE_CENTER) < road[road.size() - 1].distance_to(WorldMap.VILLAGE_CENTER):
+			if road[0].distance_to(WorldMap.village_center()) < road[road.size() - 1].distance_to(WorldMap.village_center()):
 				road.reverse()  # (from the far end)
 			_path = road
 			for p in TOWN_WAY:

@@ -21,7 +21,7 @@ const TEX_CROP := 6      # crop squares in the field
 ## tools/generate_test_terrain.gd; the Biome autoload tells them apart.
 const WORLD_MIN := -256.0
 const WORLD_SIZE := 768.0
-const VILLAGE_CENTER := Vector2(128, 128)
+## The middle of the village green is the map editor's (its anchor, "green": village_center()).
 ## The village's flat (the green, the lanes, the yards round them) and the bowl round it: flat
 ## floor out to BOWL_FLOOR, rising to BOWL_RIM_HEIGHT by BOWL_RIM.
 const VILLAGE_RADIUS := 72.0
@@ -141,6 +141,11 @@ const LANDMARKS := {
 ## Where anchored place `id` stands (LayoutAnchors; the origin if the layout has no such anchor).
 static func site(id: StringName) -> Vector2:
 	return LayoutAnchors.at(id, Vector2.ZERO)
+
+
+## The middle of the village green (its anchor; the bowl and the village's flat are round it).
+static func village_center() -> Vector2:
+	return LayoutAnchors.at(&"green", Vector2(128, 128))
 
 
 static func haven_center() -> Vector2:

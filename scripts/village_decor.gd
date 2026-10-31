@@ -2,8 +2,10 @@ class_name VillageDecor
 extends Node3D
 ## The village's projects in the world (plans/projects.md): the noticeboard in the square, and each
 ## decoration's props at their set spots once it's done. Spots are offsets from the middle of the
-## square (`center`), turned with the village (`angle`). Facings are in the same village frame (a prop's
-## front, +Z, toward the square). The spots keep off the lanes to the houses.
+## green (`center`: the Village/Green node, which the map editor moves and turns), turned with it
+## (`angle`). Facings are in the same frame (a prop's front, +Z, toward the square). A few belong to
+## a building instead (the kennel by your home, Rosa's terrace): they're in that building's frame,
+## so they go where it goes. The spots keep off the lanes to the houses.
 ## A project paid for just now is built where you can see it (P7): the nearest villager walks
 ## over and hammers, and each piece pops up out of the ground with a wooden tok, then a cheer.
 ## (Loading a world, or ticking one in the debug menu, just puts it there.)
@@ -16,10 +18,9 @@ signal water_drawn(at: Vector3)
 
 ## The noticeboard: [offset, facing]. Just off the ring west of the town hall's door, facing in.
 const NOTICEBOARD := [Vector2(-6.0, -27.5), 0.215]
-## The middle of Hearthvale's green (its village isn't turned). The pond lies just west of it.
-const HEARTHVALE_CENTER := Vector2(128, 128)
-## Each decoration's props: [model (models/village/props/<name>.glb), offset, facing]. On the
-## green round its pond (plans/world-pass.md), each facing its middle.
+## Each decoration's props: [model (models/village/props/<name>.glb), offset, facing, and the
+## building whose frame they're in (else the green's)]. On the green round its pond
+## (plans/world-pass.md), each facing its middle.
 const PROPS := {
 	&"benches": [[&"bench", Vector2(14.0, -12.0), -0.86], [&"bench", Vector2(13.0, 14.0), -2.39]],
 	&"flower_boxes": [[&"planter", Vector2(-16.0, -12.0), 0.93], [&"planter", Vector2(20.0, -6.0), -1.28],
@@ -28,8 +29,8 @@ const PROPS := {
 	&"fountain": [[&"fountain", Vector2(11.0, 3.0), 0.0]],
 	# the doghouse (plans/dog.md), beside your home's door facing out: plain, then painted (it
 	# takes the plain one's place, his name on the sign), then a porch, a bowl and a blanket
-	&"kennel": [[&"doghouse", Vector2(-39.6, -17.3), 2.21]],
-	&"kennel_paint": [[&"doghouse_painted", Vector2(-39.6, -17.3), 2.21]],
+	&"kennel": [[&"doghouse", Vector2(-4.0, 7.5), 0.0, &"home"]],
+	&"kennel_paint": [[&"doghouse_painted", Vector2(-4.0, 7.5), 0.0, &"home"]],
 	# the trader's decorations (plans/market.md): baskets on the green's lamp posts, a
 	# weathervane, a painted cart by the market stall
 	&"deco_baskets": [[&"flower_basket", Vector2(-4.0, -18.0), 0.7], [&"flower_basket", Vector2(18.0, -8.5), -0.8],
@@ -37,15 +38,16 @@ const PROPS := {
 	&"deco_weathervane": [[&"weathervane", Vector2(-10.0, -16.0), 0.0]],
 	&"deco_cart": [[&"painted_cart", Vector2(19.0, -2.0), -1.47]],
 	# Rosa's terrace (plans/tavern.md), against her bakery's side, facing the lane
-	&"terrace": [[&"terrace", Vector2(24.6, 34.7), 2.05]],
-	&"kennel_porch": [[&"doghouse_porch", Vector2(-38.79, -17.97), 2.21], [&"dog_bowl", Vector2(-37.55, -17.25), -0.85],
-		[&"dog_blanket", Vector2(-39.15, -18.9), 1.75]],
+	&"terrace": [[&"terrace", Vector2(-5.61, 0.78), 4.707, &"baker_cottage"]],
+	&"kennel_porch": [[&"doghouse_porch", Vector2(-3.95, 8.55), 0.0, &"home"], [&"dog_bowl", Vector2(-5.27, 9.11), -3.064, &"home"],
+		[&"dog_blanket", Vector2(-2.99, 8.82), -0.464, &"home"]],
 }
 ## The market stall (plans/market.md): on the green's east edge by the road east, its counter
 ## facing the middle.
 const MARKET := [Vector2(20.0, 9.0), -1.99]
-## Where your dog sleeps at night (Dog asks kennel_door()): in the doghouse's doorway, facing out.
-const KENNEL_DOOR := [Vector2(-39.25, -17.58), 2.21]
+## Where your dog sleeps at night (Dog asks kennel_door()): in the doghouse's doorway, facing out
+## (your home's frame).
+const KENNEL_DOOR := [Vector2(-3.99, 7.95), 0.0, &"home"]
 ## Bunting: strings between the green's lamp posts (their offsets, as the village has them), hung
 ## from just under the lamps, round its east side.
 const BUNTING := [[Vector2(-4.0, -18.0), Vector2(18.0, -8.5)], [Vector2(18.0, -8.5), Vector2(17.0, 16.0)],
@@ -76,8 +78,9 @@ const LIFE_RANGE := 45.0
 const WELL_GAP := Vector2(40.0, 90.0)
 const WELL_TIME := 4.0
 
-## Middle of the square (world XZ) and how far the village is turned (radians).
-var center := HEARTHVALE_CENTER
+## Middle of the green (world XZ) and how far it's turned (radians, Vector2.rotated's sense: the
+## opposite of a turn about +Y). From the Village/Green node in _ready.
+var center := Vector2(128, 128)
 var angle := 0.0
 ## Where the footbridge goes: [from, to] (world XZ), or [] for none: where the village path
 ## crosses the creek (found in _ready).
@@ -91,6 +94,10 @@ var _drawing: Villager  # the one at the well now
 
 func _ready() -> void:
 	add_to_group("village_decor")
+	var green := get_parent().get_node_or_null("Green") as Node3D if get_parent() else null
+	if green:
+		center = Vector2(green.global_position.x, green.global_position.z)
+		angle = -green.global_rotation.y
 	board = Noticeboard.new()
 	board.name = "Noticeboard"
 	board.transform = frame(NOTICEBOARD[0], NOTICEBOARD[1])
@@ -215,9 +222,29 @@ func frame(offset: Vector2, facing: float) -> Transform3D:
 func kennel_door() -> Variant:
 	if not _built.has(&"kennel"):
 		return null
-	var t := frame(KENNEL_DOOR[0], KENNEL_DOOR[1])
-	t.origin = _ground(KENNEL_DOOR[0])
+	var t := frame_of(KENNEL_DOOR[0], KENNEL_DOOR[1], KENNEL_DOOR[2])
+	t.origin = _ground_at(Vector2(t.origin.x, t.origin.z))
 	return t
+
+
+## A transform at `offset`, facing `facing`, in building `owner`'s frame if one's named, else the
+## green's (frame()).
+func frame_of(offset: Vector2, facing: float, owner: StringName = &"") -> Transform3D:
+	if owner == &"":
+		return frame(offset, facing)
+	var b := _building(owner)
+	if b == null:
+		push_warning("VillageDecor: no %s to stand by" % owner)
+		return frame(offset, facing)
+	var at := b.global_transform * Vector3(offset.x, 0.0, offset.y)
+	return Transform3D(Basis(Vector3.UP, b.global_rotation.y + facing), Vector3(at.x, 0.0, at.z))
+
+
+func _building(id: StringName) -> Node3D:
+	for b in get_tree().get_nodes_in_group("building"):
+		if b.get("def") and b.get("def").id == id:
+			return b
+	return null
 
 
 ## Puts up what's done and isn't standing yet; takes down what isn't done (the debug menu).
@@ -383,7 +410,7 @@ func _make(id: StringName) -> Array[Node3D]:
 		prop.model = load("res://models/village/props/%s.glb" % p[0])
 		prop.snap_to_ground = true
 		prop.name = "%s_%d" % [p[0], out.size()]
-		prop.transform = frame(p[1], p[2])
+		prop.transform = frame_of(p[1], p[2], p[3] if p.size() > 3 else &"")
 		prop.collision_from_mesh = p[0] == &"terrace"  # (you can walk in among the tables)
 		add_child(prop)
 		out.append(prop)

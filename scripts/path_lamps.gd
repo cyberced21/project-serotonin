@@ -349,7 +349,7 @@ static func _xz(v: Vector3) -> Vector2:
 ## Hearthvale: the clearing's paths to the village and the lake, the village's road out to the
 ## ring, the ring cut at each turn-off, and the spurs to the lake shore, the field and the quarry.
 func hearthvale() -> void:
-	village_center = WorldMap.VILLAGE_CENTER
+	village_center = WorldMap.village_center()
 	stretches = []
 	for r in WorldMap.roads():
 		stretches.append(_stretch(r["id"], r["title"], r["pts"], r["half_width"], r.get("village", false)))
