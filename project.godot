@@ -94,3 +94,7 @@ grass_pusher={
 "type": "vec3",
 "value": Vector3(0, -1000, 0)
 }
+under_light={
+"type": "float",
+"value": 1.0
+}

@@ -72,10 +72,15 @@ you swim across and dive into, where you can spear fish on the bed.
    is coarse on the drop) — floats eye 0.14 m up, paddles 2.2 / 3.2 m/s, tools put away, walks out
    up the shelf, jump at a bank to mantle. Dog: goes round deep water to you on the far side;
    strays nap on dry bank. New `test_swim`; all 40 tests pass. Stills not taken (needs a window).
-2. **Diving + underwater.** Dive / rise, swim along the look in 3D, the breath ring and gentle
-   surfacing; the camera under water (tint, fade, surface from below, `cull_disabled` with a
-   front/back branch), muffled sound buses. Sound candidates page published here so you can pick
-   while I keep going. `test_swim` covers dive → out of breath → float up.
+2. **Diving + underwater.** ✅ Hold crouch to dive; under (eye 0.35 m down) you swim where you
+   look, Space rises, left alone you drift up (0.8 m/s); the water brakes a jump in (12 m/s²).
+   Breath 25 s under, back in 4 s; out of it you float up and can't dive till it's full
+   (`BreathRing` round the crosshair). `UnderwaterView` (camera child): two full-screen passes,
+   multiply by per-colour absorption then add murk, by the water between the eye and the pixel
+   (the depth buffer, or the surface plane for rays going up); `under_light` global dims it at
+   night. The water shader's back face: Snell's window onto the sky, dark mirror outside it. A
+   low-pass on Effects / Ambience / Movement / Music (half). `test_swim` covers it all headless;
+   the shaders are not yet seen rendered.
 3. **Waves.** `WaterWaves` (GDScript) + the shader's Gerstner sum on `water_time`, wind-led;
    subdivided surfaces for lake, ponds, creek; swimmer and float bob with them; creek flow streaks.
 4. **Depth look.** Per-colour absorption, subtle depth-safe refraction, caustics on beds and rocks,

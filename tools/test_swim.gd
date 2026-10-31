@@ -5,6 +5,8 @@ extends SceneTree
 ##     your eye just above the water (not walking the bed), tools put away
 ##   - you swim across and walk out up the far shelf
 ##   - dropped in from above the middle you go under, then come back up to float
+##   - crouch dives (the view under, sounds muffled, breath running down), let go and you drift up;
+##     out of breath you float up and can't dive till it's back
 ##   godot --headless --path . -s res://tools/test_swim.gd -- --save-root=user://tool_worlds
 ## (No game class names: an -s script compiles before the autoloads exist.)
 
@@ -110,14 +112,66 @@ func _run() -> void:
 	# dropped in over the middle: under, then back up to float
 	player.call("teleport", Vector3(c.x, surface + 3.0, c.y))
 	var lowest := INF
-	for i in 60 * 5:
+	for i in 60 * 7:
 		await physics_frame
 		lowest = minf(lowest, player.global_position.y)
 	var rest := surface - (1.6 - 0.14)
 	print("dropped in: down to %.2f below floating, settled %.2f off it" % [rest - lowest, player.global_position.y - rest])
 	_check(lowest < rest - 0.2, "a drop in goes under first")
 	_check(absf(player.global_position.y - rest) < 0.1 and absf(player.velocity.y) < 0.2, "then floats, settled")
+	await _dive(player, surface)
 	_done()
+
+
+## Phase 2: crouch dives, under you're muffled and your breath runs down, let go and you drift up;
+## run out and you float up whatever you press, and can't dive again till it's back.
+func _dive(player: CharacterBody3D, surface: float) -> void:
+	var view: Node = player.get_node("Head/Camera3D/Underwater")
+	Input.action_press("crouch")
+	await _seconds(2.0)
+	var eye := player.global_position.y + 1.6
+	print("dived: eye %.2f m under, breath %.2f" % [surface - eye, player.get("breath")])
+	_check(player.get("head_under") and surface - eye > 1.5, "crouch dives (eye %.2f m under)" % (surface - eye))
+	_check(float(player.get("breath")) < 0.97, "breath runs down under water")
+	_check(view.get("under") and view.get("visible"), "the view's under water")
+	_check(_muffled(), "sounds are muffled under water")
+	Input.action_release("crouch")
+	var y := player.global_position.y
+	await _seconds(1.5)
+	_check(player.global_position.y > y + 0.2, "let go, you drift back up")
+	Input.action_press("crouch")
+	await _seconds(0.5)
+	player.set("breath", 0.04)  # (as if you'd stayed down)
+	var surfaced := -1.0
+	for i in 60 * 8:
+		await physics_frame
+		if player.get("winded") and not player.get("head_under"):
+			surfaced = i / 60.0
+			break
+	print("out of breath: back up in %.1f s" % surfaced)
+	_check(surfaced > 0.0, "out of breath, you float up even holding crouch")
+	await _seconds(1.0)
+	_check(not player.get("head_under"), "...and can't dive again straight away")
+	_check(not view.get("under") and not _muffled(), "back up: the view and the sound are clear again")
+	await _seconds(3.5)
+	_check(not player.get("winded"), "breath back after a few seconds")
+	await _seconds(1.0)
+	_check(player.get("head_under"), "...then crouch dives again")
+	Input.action_release("crouch")
+
+
+func _muffled() -> bool:
+	var bus := AudioServer.get_bus_index(&"Effects")
+	for k in AudioServer.get_bus_effect_count(bus):
+		var e := AudioServer.get_bus_effect(bus, k)
+		if e is AudioEffectLowPassFilter and e.resource_name == "Underwater":
+			return AudioServer.is_bus_effect_enabled(bus, k) and (e as AudioEffectLowPassFilter).cutoff_hz < 2000.0
+	return false
+
+
+func _seconds(s: float) -> void:
+	for i in int(s * 60.0):
+		await physics_frame
 
 
 func _done() -> void:

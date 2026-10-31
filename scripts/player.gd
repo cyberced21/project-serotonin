@@ -71,6 +71,13 @@ extends CharacterBody3D
 @export var swim_buoyancy := 14.0
 ## The gentle rise and fall of the view while floating (m).
 @export var swim_bob := 0.025
+## Under the water: how hard it slows you (m/s²), and with nothing pressed, how fast you drift
+## back up (m/s).
+@export var swim_drag := 12.0
+@export var swim_drift := 0.8
+## Seconds of breath under water, and to get it all back at the surface.
+@export var breath_time := 25.0
+@export var breath_refill := 4.0
 
 @export_group("Crouch")
 @export var crouch_speed := 2.5
@@ -203,6 +210,9 @@ const SIT_EYE := 1.12
 const SEAT_REACH := 2.6
 const SEAT_AIM := 0.2
 const CROUCH_EYE := 0.9
+## With your eye this far (m) under the surface you're swimming under it (where you look), not
+## floating at it.
+const DIVE_UNDER := 0.35
 
 enum State { NORMAL, MANTLE }
 
@@ -276,6 +286,11 @@ var _dip_vel := 0.0
 var _step_lift := 0.0  # how far the eye still trails a step up (m, eased away)
 ## True while swimming (deep water, _swim): tools put away, no gathering.
 var swimming := false
+## Your head's under the water (breath runs down), how much breath is left (0..1), and whether you
+## ran out (you float up and can't dive till it's full again).
+var head_under := false
+var breath := 1.0
+var winded := false
 var _swim_time := 0.0  # (for the float's bob)
 # the held tool
 var _grip_rest := Transform3D.IDENTITY  # the grip this frame: rest, or turning to the swing grip
@@ -292,6 +307,14 @@ func _ready() -> void:
 	_seat_prompt = SeatPrompt.new()
 	_seat_prompt.name = "SeatPrompt"
 	add_child(_seat_prompt)
+	var ring := BreathRing.new()
+	ring.name = "Breath"
+	ring.player = self
+	$Reticle.add_child(ring)
+	var under := UnderwaterView.new()
+	under.name = "Underwater"
+	under.player = self
+	camera.add_child(under)
 	for a: Node in [mantle_audio, footsteps]:
 		a.set("bus", &"Movement")
 	_base_fov = Settings.fov()
@@ -383,7 +406,7 @@ func _process(delta: float) -> void:
 	var run := clampf(inverse_lerp(walk_speed, sprint_speed, speed), 0.0, 1.0)
 	_bob_phase = fmod(_bob_phase + speed / lerpf(footsteps.walk_stride, footsteps.sprint_stride, run) * PI * delta, TAU)
 	var bob := (0.5 - absf(sin(_bob_phase))) * _bob_amp
-	if swimming:  # floating: the view rises and falls with the water
+	if swimming and not head_under:  # floating: the view rises and falls with the water
 		_swim_time += delta
 		bob += sin(_swim_time * 1.7) * swim_bob
 	# landing dip: a critically damped spring back up, stepped with its exact solution so a long
@@ -507,6 +530,7 @@ func _move(delta: float) -> void:
 	# off a jump you fall in first
 	var under := water.surface_height - global_position.y if water else 0.0
 	swimming = water_depth > 0.0 and under > swim_depth - (0.15 if swimming else 0.0)
+	_breathe(delta, water)
 	if swimming:
 		_swim(delta, water, input, wish)
 		return
@@ -568,25 +592,56 @@ func _move(delta: float) -> void:
 	camera.base_fov = _base_fov  # (+ impact kicks)
 
 
-## Floating in deep water: paddle where you face (yaw only), the water easing you to a float with
-## your eye just above it. Jump at a bank while swimming at it to climb out (the mantle).
+## Swimming in deep water. At the surface: paddle where you face (yaw only), the water easing you
+## to a float with your eye just above it; jump at a bank while swimming at it to climb out (the
+## mantle). Hold crouch to dive: under, you swim where you look, Space rises, crouch sinks, and
+## left alone you drift gently back up. Out of breath (breath), you float up whatever you press
+## and can't dive again till you've got it back.
 func _swim(delta: float, water: WaterBody, input: Vector2, wish: Vector2) -> void:
 	_coyote = 0.0
 	_jump_buffer -= delta
 	if Input.is_action_just_pressed("jump"):
 		_jump_buffer = jump_buffer
-	if input.y < -0.3 and _jump_buffer > 0.0 and _try_mantle():
+	if input.y < -0.3 and _jump_buffer > 0.0 and not head_under and _try_mantle():
 		return
 	var fast := Input.is_action_pressed("sprint") and input.y < 0.0
-	var target := wish * (swim_sprint_speed if fast else swim_speed) * (1.0 + Village.stat(&"run_speed"))
-	var horizontal := Vector2(velocity.x, velocity.z).move_toward(target, swim_accel * delta)
-	var rest := water.surface_height - (STAND_EYE - swim_eye_above)  # where the feet float
-	var k := swim_buoyancy
-	velocity.y += ((rest - global_position.y) * k - velocity.y * 2.0 * sqrt(k)) * delta
-	velocity.x = horizontal.x
-	velocity.z = horizontal.y
+	var speed := (swim_sprint_speed if fast else swim_speed) * (1.0 + Village.stat(&"run_speed"))
+	var eye := global_position.y + STAND_EYE
+	var dive := Input.is_action_pressed("crouch") and not winded
+	if dive or eye < water.surface_height - DIVE_UNDER:
+		var target := camera.global_basis * Vector3(input.x, 0.0, input.y) * speed
+		if winded:
+			target.y = swim_speed
+		elif dive or Input.is_action_pressed("jump"):
+			target.y = swim_speed * (0.8 if Input.is_action_pressed("jump") else -0.8)
+		elif input == Vector2.ZERO:
+			target.y = swim_drift
+		# (the water brakes you harder than you can stroke: a jump in doesn't carry you to the bed)
+		var rate := swim_accel if target.length() > velocity.length() else swim_drag
+		velocity = velocity.move_toward(target, rate * delta)
+	else:
+		var horizontal := Vector2(velocity.x, velocity.z).move_toward(wish * speed, swim_accel * delta)
+		var rest := water.surface_height - (STAND_EYE - swim_eye_above)  # where the feet float
+		var k := swim_buoyancy
+		velocity.y += ((rest - global_position.y) * k - velocity.y * 2.0 * sqrt(k)) * delta
+		velocity.x = horizontal.x
+		velocity.z = horizontal.y
 	move_and_slide()
 	camera.base_fov = _base_fov
+
+
+## Breath (plans/water.md): it runs down while your head's under, BREATH_TIME to empty, and comes
+## back quickly once it's out. Run out and you're winded till it's full again (_swim floats you up).
+func _breathe(delta: float, water: WaterBody) -> void:
+	head_under = water != null and global_position.y + STAND_EYE < water.surface_height
+	if head_under:
+		breath = maxf(breath - delta / breath_time, 0.0)
+		if breath == 0.0:
+			winded = true
+	else:
+		breath = minf(breath + delta / breath_refill, 1.0)
+		if breath == 1.0:
+			winded = false
 
 
 func _on_land(fall_speed: float) -> void:
