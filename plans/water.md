@@ -81,6 +81,9 @@ you swim across and dive into, where you can spear fish on the bed.
    night. The water shader's back face: Snell's window onto the sky, dark mirror outside it. A
    low-pass on Effects / Ambience / Movement / Music (half). `test_swim` covers it all headless;
    the shaders are not yet seen rendered.
+   Sound candidates (34 CC0 Freesound takes, 5 slots: strokes, diving in, under the water, coming
+   up for air, climbing out) on https://claude.ai/artifact/7BV7SbNtD5tVcoeuzE6bKL; previews kept in
+   E:/Godot/downloads/water-sounds. Picks pending, wired in phase 7.
 3. **Waves.** `WaterWaves` (GDScript) + the shader's Gerstner sum on `water_time`, wind-led;
    subdivided surfaces for lake, ponds, creek; swimmer and float bob with them; creek flow streaks.
 4. **Depth look.** Per-colour absorption, subtle depth-safe refraction, caustics on beds and rocks,
