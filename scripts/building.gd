@@ -75,6 +75,7 @@ var _upgrading := false
 func _ready() -> void:
 	assert(def, "Building needs a BuildingDef")
 	add_to_group("building")
+	_settle()
 	Village.register_building(def)
 	var bench := spot("Bench")
 	if bench:  # anyone may sit there at dusk; its villager first (Villager._claim_seat)
@@ -121,6 +122,29 @@ func marks(t: int) -> Array[Marker3D]:
 
 
 ## The tier on show's marker named `mark_name` (a Bed, a Hearth...), or null.
+## Onto its level ground (the terrain generator's pad under it): a building the map editor moved off
+## the village's flat stands at the land's height there. Within 10 cm it's left where it is.
+func _settle() -> void:
+	var terrain := get_tree().get_first_node_in_group("terrain") as Terrain3D
+	if terrain and terrain.data:
+		var h: float = terrain.data.get_height(global_position)
+		if not is_nan(h) and absf(h - global_position.y) > 0.1:
+			global_position.y = h
+
+
+## Where the building's door is, for the walkways: its Door spot, else (your home) where visitors
+## stand at it in its top tier that has one (the tent has none).
+func door_point() -> Marker3D:
+	var door := spot("Door")
+	if door:
+		return door
+	for t in range(4, 0, -1):
+		for m in marks(t):
+			if m.name == "Visit":
+				return m
+	return null
+
+
 func mark(mark_name: String) -> Marker3D:
 	for m in marks(tier_shown):
 		if m.name == mark_name:

@@ -115,6 +115,8 @@ func _run() -> void:
 	await process_frame  # (props join their groups as they enter the tree)
 	for p in layout.get("patches", []):
 		await _patch(p, groups["Patches"])
+	await physics_frame
+	await _check_walkways()
 	var water := Node3D.new()
 	water.name = "Water"
 	out_root.add_child(water)
@@ -184,6 +186,79 @@ func _read_json(path: String) -> Dictionary:
 		return {}
 	var d: Variant = JSON.parse_string(f.get_as_text())
 	return d if d is Dictionary else {}
+
+
+## Each leg of the villagers' walkways (VillagePaths, built from the layout's walkway lines) clear of
+## everything a finished village has standing: props, the lamps along the roads, what was just placed
+## (a building's own tiers aren't counted: see _only_buildings_in). A blocked one is warned about, at its middle, naming the walkway line nearest it.
+func _check_walkways() -> void:
+	var paths := get_first_node_in_group("village_paths")
+	if paths == null:
+		return
+	# everything a finished village has standing: every project done (the lamps along the roads, the
+	# green's decorations), as tools/test_paths.gd checks it (this world's thrown away, never saved)
+	var projects := root.get_node("Projects")
+	for p in projects.call("all"):
+		projects.call("set_done", p["id"], true)
+	for i in 30:
+		await physics_frame
+	var walks := []
+	for l in layout.get("lines", []):
+		if catalog["lines"].get(l.get("type", ""), {}).get("walk", false):
+			walks.append(l)
+	var doors := PackedVector2Array()  # (the network as this layout makes it: VillagePaths.graph)
+	for bd in get_nodes_in_group("building"):
+		var door := bd.call("door_point") as Node3D if bd.has_method("door_point") else null
+		if door:
+			doors.append(Vector2(door.global_position.x, door.global_position.z))
+	var g: Dictionary = load("res://scripts/village_paths.gd").graph(walks, doors)
+	var gp: PackedVector2Array = g["points"]
+	for link in g["links"]:
+		var a := _ground3(gp[link[0]])
+		var b := _ground3(gp[link[1]])
+		if paths.call("is_clear", a, b) or _only_buildings_in(a, b):
+			continue
+		var mid := Vector2((a.x + b.x) * 0.5, (a.z + b.z) * 0.5)
+		var ref := ""
+		var best := INF
+		for l in walks:
+			var pts := _pts(l["points"])
+			for i in pts.size() - 1:
+				var d := Geometry2D.get_closest_point_to_segment(mid, pts[i], pts[i + 1]).distance_to(mid)
+				if d < best:
+					best = d
+					ref = String(l["id"])
+		_warn("walkway %s is blocked near (%.0f, %.0f): something stands in it" % [ref, mid.x, mid.y], mid, ref)
+
+
+## Whether all that stands in the leg a-b belongs to a building (its tiers change: a ruin's boarded
+## door opens when it's built, and tools/test_paths.gd walks every top tier), so it isn't a blockage.
+func _only_buildings_in(a: Vector3, b: Vector3) -> bool:
+	var space := (world as Node3D).get_world_3d().direct_space_state
+	var q := PhysicsShapeQueryParameters3D.new()
+	var ball := SphereShape3D.new()
+	ball.radius = 0.3
+	q.shape = ball
+	q.collision_mask = 1
+	var any := false
+	for k in 21:
+		var p := a.lerp(b, k / 20.0)
+		q.transform = Transform3D(Basis.IDENTITY, Vector3(p.x, terrain.data.get_height(p) + 0.7, p.z))
+		for r in space.intersect_shape(q, 8):
+			var c: Node = r["collider"]
+			if c is Terrain3D or c.get_class() == "Terrain3D":
+				continue
+			var n := c
+			while n and not n.is_in_group("building"):
+				n = n.get_parent()
+			if n == null:
+				return false
+			any = true
+	return any
+
+
+func _ground3(p: Vector2) -> Vector3:
+	return Vector3(p.x, terrain.data.get_height(Vector3(p.x, 0, p.y)), p.y)
 
 
 func _warn(msg: String, at: Vector2, ref := "") -> void:

@@ -154,6 +154,8 @@ var _lanes: Array = []  # every lane painted: the road lanes and the walkways' l
 var _pads: Array = []  # [{id, at, r}]
 var _scene_points: Array[Vector2] = []  # where hand-placed things stand (see _baked_points)
 var _road_mask := PackedByteArray()  # 1 where a road or path was laid (its bed and banks)
+var _pad_cells := {}  # anchor id -> the router cells its pad made costly
+var _anchored_nodes := {}  # (while reading the scene) anchored node -> true
 
 ## The quarry's haul road: each ramp runs along the inside of a wall, this wide, climbing one
 ## level over RAMP_LENGTH metres; the next ramp down starts RAMP_GAP metres further round.
@@ -278,7 +280,8 @@ func _run() -> void:
 		_write_roads(laid)
 		_rebake_nodes(h)
 		var applied := FileAccess.open(TERRAIN_APPLIED, FileAccess.WRITE)  # (the editor re-runs this when either changes)
-		applied.store_string(JSON.stringify({"terrain": _layout_terrain, "anchors": LayoutAnchors.anchors()}))
+		applied.store_string(JSON.stringify({"terrain": _layout_terrain, "anchors": LayoutAnchors.anchors(),
+				"walkways": VillagePaths.walkways(_layout_path)}))
 		applied.close()
 		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DATA_DIR))
 		terrain.data.save_directory(DATA_DIR)
@@ -809,7 +812,7 @@ func _collect(node: Node, xform: Transform3D, depth: int, out: Array[Vector2]) -
 			continue  # built on the new ground at runtime / moved onto it by _rebake_nodes / rebaked by tools/bake_layout.gd
 		var t := xform * (child as Node3D).transform
 		out.append(Vector2(t.origin.x, t.origin.z))
-		if depth < 2:
+		if depth < 2 or _anchored_nodes.has(child):  # (an anchored thing's own pieces too: a yard's ricks, the allotments' beds)
 			_collect(child, t, depth + 1, out)
 
 
@@ -852,19 +855,33 @@ func _lay_roads(h: PackedFloat32Array, ids: PackedByteArray, baked: Array[Vector
 		if ctrl.is_empty():
 			var from: Vector2 = spec["from"]
 			var to: Vector2 = spec["to"]
+			var moved_place := false
 			if spec.has("place"):  # (its end in the place's frame: where the place stands now)
 				to = WorldMap.in_frame(spec["place"], to)
+				moved_place = WorldMap.site(spec["place"]).distance_to(spec.get("drawn_at", WorldMap.site(spec["place"]))) > 1.0
 			if from.distance_to(GREEN_HOME) < WorldMap.VILLAGE_RADIUS + 5.0:  # (a spoke out of the village: from the green's lane)
 				from = _on_green(from)
-			if spec.has("join"):
+			if moved_place:  # (the place moved away: off whichever road passes nearest it now)
+				var best := INF
+				for id in laid:
+					var near := _nearest_on(laid[id], to)
+					if near.distance_to(to) < best:
+						best = near.distance_to(to)
+						from = near
+			elif spec.has("join"):
 				from = _nearest_on(laid[spec["join"]], from)
 			if spec.has("join_end"):
 				to = _nearest_on(laid[spec["join_end"]], to)
 			var stops: Array = [from] + spec.get("via", []) + [to]
+			var own: Array = _pad_cells.get(String(spec.get("place", "")), [])  # (a path may come onto its own place's ground)
+			for c in own:
+				grid.set_point_weight_scale(c, grid.get_point_weight_scale(c) - ROUTE_WATER_COST)
 			ctrl = []
 			for k in stops.size() - 1:
 				var leg := _route(grid, stops[k], stops[k + 1])
 				ctrl.append_array(leg if k == 0 else leg.slice(1))
+			for c in own:
+				grid.set_point_weight_scale(c, grid.get_point_weight_scale(c) + ROUTE_WATER_COST)
 		var road: bool = spec["kind"] == &"road"
 		var half := WorldMap.ROAD_HALF_WIDTH if road else WorldMap.PATH_HALF_WIDTH
 		var before := h.duplicate()
@@ -913,6 +930,19 @@ func _road_grid(h: PackedFloat32Array, baked: Array[Vector2]) -> AStarGrid2D:
 		var c := _world_cell(p)
 		if grid.is_in_boundsv(c):
 			grid.set_point_weight_scale(c, grid.get_point_weight_scale(c) + ROUTE_WATER_COST)
+	_pad_cells.clear()
+	for pad in _pads:  # a building's whole ground, not only its middle: a road's middle goes round it
+		var reach: float = pad["r"]
+		var cells: Array[Vector2i] = []
+		_pad_cells[pad["id"]] = cells
+		var lo := _world_cell(pad["at"] - Vector2(reach, reach))
+		var hi := _world_cell(pad["at"] + Vector2(reach, reach))
+		for cy in range(lo.y, hi.y + 1):
+			for cx in range(lo.x, hi.x + 1):
+				var c := Vector2i(cx, cy)
+				if grid.is_in_boundsv(c) and _cell_world(c).distance_to(pad["at"]) < reach:
+					grid.set_point_weight_scale(c, grid.get_point_weight_scale(c) + ROUTE_WATER_COST)
+					cells.append(c)
 	return grid
 
 
@@ -1223,7 +1253,12 @@ func _layout_shapes(h: PackedFloat32Array) -> void:
 func _read_scene() -> void:
 	var main := (load(MAIN_SCENE) as PackedScene).instantiate()
 	LayoutAnchors.apply(main)
+	for a in LayoutAnchors.anchors():
+		var an := main.get_node_or_null(NodePath(String(a["node"])))
+		if an:
+			_anchored_nodes[an] = true
 	_collect(main, Transform3D.IDENTITY, 0, _scene_points)
+	_anchored_nodes.clear()
 	var doors := PackedVector2Array()
 	var village := main.get_node_or_null("Village")
 	for b in (village.get_children() if village else []):

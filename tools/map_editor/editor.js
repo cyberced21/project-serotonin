@@ -684,16 +684,20 @@ const Editor = (() => {
 	/** The same JSON whatever order its keys are in. */
 	const canon = (v) => (Array.isArray(v) ? v.map(canon) : v && typeof v === "object"
 		? Object.fromEntries(Object.keys(v).sort().map((k) => [k, canon(v[k])])) : v);
-	/** Whether the land is out of date: the terrain shapes, or where the anchored buildings and places
-	 * stand (their pads), differ from what it was last made from. (An old record has no anchors: then
-	 * only the shapes count.) */
+	/** Whether the land is out of date: the terrain shapes, where the anchored buildings and places
+	 * stand (their pads), or the walkways (the lanes painted along them) differ from what it was last
+	 * made from. (An old record has no anchors or walkways: then only the shapes count.) */
 	const terrainChanged = async () => {
 		const applied = await get("/api/terrain_applied");
 		const shapes = Array.isArray(applied) ? applied : (applied && applied.terrain) || [];
 		if (JSON.stringify(canon(shapes)) !== JSON.stringify(canon(clean().terrain || []))) return true;
 		if (!applied || Array.isArray(applied) || !applied.anchors) return false;
 		const stand = (list) => JSON.stringify(canon((list || []).map((a) => ({ id: a.id, at: a.at, yaw: a.yaw }))));
-		return stand(applied.anchors) !== stand(clean().anchors);
+		if (stand(applied.anchors) !== stand(clean().anchors)) return true;
+		if (!applied.walkways) return false;  // (the lanes are painted along the walkways: redrawn ones need the land redone)
+		const walks = (list) => JSON.stringify(canon((list || []).map((l) => ({ id: l.id, points: l.points }))));
+		const mine = clean().lines.filter((l) => (E.catalog.lines[l.type] || {}).walk);
+		return walks(applied.walkways) !== walks(mine);
 	};
 
 	E.bake = async () => {

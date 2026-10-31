@@ -90,13 +90,15 @@ const ROADS: Array[Dictionary] = [
 		"from": Vector2(178, 178), "to": Vector2(268, 252)},
 	{"id": &"east_road", "title": "The road east", "kind": &"road", "village": true, "ctrl": EAST_ROAD},
 	# the new places' footpaths (plans/world-pass.md, phase 7), each off a road laid before it
-	# (`to` in the place's own frame: the path ends where the place is, moved or turned)
-	{"id": &"mill_path", "title": "The path to the mill", "kind": &"path",
-		"from": Vector2(100, 206), "join": &"lake_road", "place": &"watermill", "to": Vector2(5, -8)},
-	{"id": &"orchard_path", "title": "The path to the orchard", "kind": &"path",
-		"from": Vector2(150, 50), "join": &"village_road", "place": &"orchard", "to": Vector2(-14, 8)},
-	{"id": &"shepherd_path", "title": "The path up the shepherd's hill", "kind": &"path",
-		"from": Vector2(330, 120), "join": &"east_road", "place": &"shepherds_hill", "to": Vector2(-6, 14)},
+	# (`to` in the place's own frame: the path ends where the place is, moved or turned; `drawn_at`
+	# is where the place stood when `from` and `join` were drawn: moved away, the path leaves the
+	# road nearest it instead)
+	{"id": &"mill_path", "title": "The path to the mill", "kind": &"path", "from": Vector2(100, 206), "join": &"lake_road",
+		"place": &"watermill", "to": Vector2(5, -8), "drawn_at": Vector2(42, 200)},
+	{"id": &"orchard_path", "title": "The path to the orchard", "kind": &"path", "from": Vector2(150, 50), "join": &"village_road",
+		"place": &"orchard", "to": Vector2(-14, 8), "drawn_at": Vector2(200, 62)},
+	{"id": &"shepherd_path", "title": "The path up the shepherd's hill", "kind": &"path", "from": Vector2(330, 120), "join": &"east_road",
+		"place": &"shepherds_hill", "to": Vector2(-6, 14), "drawn_at": Vector2(360, 18)},
 ]
 ## The road east (plans/market.md): from the green's east edge up through a pass in the eastern
 ## rim hills to the world's edge, the way traders come. The terrain generator cuts the pass along it.

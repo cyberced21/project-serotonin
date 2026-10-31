@@ -141,7 +141,7 @@ func _anchor_shape(n: Node3D) -> Dictionary:
 		any = true
 	if not any:
 		box = Rect2(-2, -2, 4, 4)
-	var door := n.get_node_or_null("Spots/Door") as Node3D
+	var door := n.call("door_point") as Node3D if n.has_method("door_point") else null
 	var d: Variant = null
 	if door:
 		var p := inv * door.global_position

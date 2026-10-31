@@ -37,7 +37,7 @@ func _ready() -> void:
 			_ring = _pts(l)
 	var doors := PackedVector2Array()
 	for b in get_tree().get_nodes_in_group("building"):
-		var door := b.call("spot", "Door") as Node3D if b.has_method("spot") else null
+		var door := b.call("door_point") as Node3D if b.has_method("door_point") else null
 		if door:
 			doors.append(_flat(door.global_position))
 	var g := graph(walks, doors)

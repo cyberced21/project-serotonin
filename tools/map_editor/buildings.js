@@ -133,6 +133,16 @@
 		return E.inPoly(p[0][0], p[0][1], q) || E.inPoly(q[0][0], q[0][1], p);
 	};
 	const solid = (o) => ["building", "fixture"].includes(shape(o).kind) || o.id === "watermill";
+	const closest = (p, a, b) => {
+		const dx = b[0] - a[0], dz = b[1] - a[1], l = dx * dx + dz * dz;
+		const t = l ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dz) / l)) : 0;
+		return [a[0] + t * dx, a[1] + t * dz];
+	};
+	/** A map point in anchor `o`'s own frame. */
+	const toLocal = (o, p) => {
+		const a = (o.yaw || 0) * Math.PI / 180, c = Math.cos(a), s = Math.sin(a), dx = p[0] - o.at[0], dz = p[1] - o.at[1];
+		return [dx * c - dz * s, dx * s + dz * c];
+	};
 	const polyDist = (x, z, pts) => {
 		let best = Infinity;
 		for (let i = 1; i < pts.length; i++) best = Math.min(best, E.segDist(x, z, ...pts[i - 1], ...pts[i]));
@@ -155,8 +165,15 @@
 			}
 			const d = door(a);
 			if (d && walks.length) {
-				const near = Math.min(...walks.map((l) => polyDist(d[0], d[1], l.points)));
+				let near = Infinity, at = null;
+				for (const l of walks) for (let s = 1; s < l.points.length; s++) {
+					const q = closest(d, l.points[s - 1], l.points[s]);
+					const dd = E.dist(d[0], d[1], q[0], q[1]);
+					if (dd < near) { near = dd; at = q; }
+				}
 				if (near > DOOR_REACH) warn(a, `its door is ${Math.round(near)} m from a walkway (villagers will cut straight across: draw a lane)`);
+				else if (at && near > 1 && toLocal(a, at)[1] < shape(a).door[1] - 1)
+					warn(a, "the walkway nearest its door comes from behind it (villagers would walk through it): draw the lane round to its front");
 			}
 			for (const r of E.world.roads || []) {
 				let crossed = false;

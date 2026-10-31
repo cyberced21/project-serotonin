@@ -15,7 +15,7 @@ hand-build Hearthvale: drag the buildings and places where you want them and hav
 
 ## As built
 
-Branch `places` off `main`, one commit a phase.
+Branch `places` off `main`, one commit a phase. All seven phases built (2026-10-31).
 
 - **Phase 1 (2026-10-30):** `data/layout/hearthvale.json` has 27 `anchors` (`{id, node, at, yaw}`:
   the 8 buildings, the 15 `Village/Fixtures`, the watermill, orchard, shepherd's hill and haven),
@@ -94,6 +94,33 @@ Branch `places` off `main`, one commit a phase.
   of their own (`Village/Yards/Allotments`, anchor `allotments`). 76 nodes moved, none by a hair.
   The editor's footprint of a building or fixture leaves out the props and animals parked under it
   (the barn's box is the barn, not its pen).
+- **Phase 7 (2026-10-31), the real thing:** moved the tavern down by the lake road (78, 292),
+  turned to face the water, the orchard to the far side of the green (103, 299), and turned your
+  home a quarter; drew a walkway out to the tavern and redrew your home's lane to its new door;
+  regenerated the land, baked, exported, and ran every test and the audit. Then put it all back
+  (the layout, terrain, roads and baked files are as committed). What it found, all fixed:
+  - **Roads ran through buildings.** The router only made the middle cell of a hand-placed thing
+    costly; now a pad's whole ground is (a place's own path may still come onto its place's ground).
+    The orchard's new path had gone through the town hall, the fisher's hut and Edda's cottage.
+  - **A moved place's path still left from its old road** (the orchard's from the Pinewood road,
+    273 m across the bowl): moved away from where it was drawn (`drawn_at`), it now leaves the road
+    nearest it (25 m off the lake road).
+  - **Buildings kept height 0** off the village's flat: they settle onto their pad now
+    (`Building._settle`, only when more than 10 cm off, so the village doesn't move).
+  - **Your home had no door** for the walkways or the editor (it has a `Visit` marker, cabin and
+    up): `Building.door_point()`.
+  - **Walkway edits didn't repaint the lanes** (scenery grew on a new one): the editor re-runs the
+    land when the walkways changed too (`terrain_applied.json` records them).
+  - **Nothing checked a walkway was walkable:** the bake now walks every leg of the layout's walkway
+    network in a finished village (every project done, so the road lamps stand; a building's own
+    tiers don't count) and warns where one's blocked. Run beside a road, a walkway meets its lamp
+    posts (3.4 m out): put it on the road. The editor also warns when the walkway nearest a door
+    comes from behind the building.
+  - **The generator lost the yards' pieces** (phase 6 put them a level deeper): it now looks inside
+    every anchored thing, so roads keep off the ricks and the allotments as before.
+  With those, the moved world passes everything but `test_day`'s tavern evening (the tavern 150 m
+  from the green: its timings are the old spot's), and the audit finds nothing the moves caused.
+  Today's layout: roads identical to before, no warnings, the baked layout byte for byte.
 
 ## What moves
 
