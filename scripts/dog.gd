@@ -54,6 +54,8 @@ const SNIFF_AFTER := 14.0
 const SNIFF_RANGE := 3.5
 ## He won't go into water deeper than this (m); he floats, paddling, once it's past his legs.
 const DEEP := 0.9
+## Going round deep water to you on the far side, he heads this far (m) along its edge at a time.
+const ROUND_STEP := 4.0
 ## How long a pat makes him wiggle, and how long a shake takes.
 const PET_TIME := 1.8
 const SHAKE_TIME := 1.3
@@ -132,6 +134,7 @@ var _next_sniff := SNIFF_AFTER
 var _pet_left := 0.0
 var _shake_left := 0.0
 var _wet := 0.0      # how long he's been in the water
+var _round_side := 1.0  # which way round deep water he last went (keeps to it)
 var _paddling := false
 var _watch := Vector3.INF  # the float, while you fish
 var _lantern: Node3D       # in his mouth (built with the model)
@@ -657,21 +660,38 @@ func _spray() -> void:
 			RodFishing.splash(get_parent(), global_position + Vector3.UP * (_leg + 0.15), 0.35))
 
 
-## `to`, unless the way there runs into water deeper than DEEP: then the last spot before it (he
-## waits on the bank). From deep water (popped in, or the water rose) he may always head out.
+## `to`, unless the way there runs into water deeper than DEEP: then round its edge if `to` is on
+## the far side (a deep pond between you), or the last spot before it (he waits on the bank while
+## you swim). From deep water (popped in, or the water rose) he may always head out.
 func _shore(from: Vector3, to: Vector3) -> Vector3:
 	var tree := get_tree()
 	if WaterBody.depth_at(tree, from) > DEEP:
 		return to
 	var flat := Vector3(to.x - from.x, 0.0, to.z - from.z)
-	var n := int(flat.length() / 0.5)
+	var last := _dry_until(from, flat)
+	if last == from + flat:
+		return to
+	if WaterBody.depth_at(tree, to) <= DEEP:
+		for turn: float in [0.5, 0.9, 1.3, 1.7]:  # (his side first, so he doesn't dither between them)
+			for side: float in [_round_side, -_round_side]:
+				var way := flat.normalized().rotated(Vector3.UP, turn * side) * ROUND_STEP
+				if _dry_until(from, way) == from + way:
+					_round_side = side
+					return from + way
+	return last
+
+
+## How far he gets along `way` from `from` before water deeper than DEEP: the last dry spot (the
+## whole way when it's dry).
+func _dry_until(from: Vector3, way: Vector3) -> Vector3:
+	var n := maxi(int(way.length() / 0.5), 1)
 	var last := from
 	for i in range(1, n + 1):
-		var p := from + flat * (float(i) / n)
-		if WaterBody.depth_at(tree, p) > DEEP:
+		var p := from + way * (float(i) / n)
+		if WaterBody.depth_at(get_tree(), p) > DEEP:
 			return last
 		last = p
-	return to
+	return from + way
 
 
 ## Standing about a while: now and then off a few metres to sniff, then back.

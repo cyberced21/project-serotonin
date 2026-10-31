@@ -74,7 +74,7 @@ const BOWL_WANDER := 28.0
 const CREEK_VALE_FLOOR := 0.05
 const CREEK_VALE := 70.0  # (wide: it cuts through the bowl's rim to the lake)
 const CREEK_DEPTH := 0.55
-const CREEK_POOL_DEPTH := 1.2
+const CREEK_POOL_DEPTH := 2.0
 const CREEK_BANK := 12.0
 ## A layout river's banks ease up from its channel over this much (m): plans/terrain-editing.md.
 const RIVER_BANK := 8.0
@@ -109,19 +109,23 @@ const PEAK_SLOPE := 1.2
 const RELAX_PASSES := 80
 const DATA_DIR := "res://terrain_data"
 const WATER_LEVEL := -0.15     # keep in sync with the ponds' WaterBody nodes in main.tscn
+## Water deeper than SHELF_DEPTH (swimming water, plans/water.md) keeps a wadeable shelf this deep
+## and up to SHORE_SHELF m wide round its shore before it drops away (_bed).
+const SHELF_DEPTH := 0.9
+const SHORE_SHELF := 5.0
 ## Ponds: centre, radius (roughly where the bed rises to the water line), deepest point below
-## the water line (wading depth — no swimming). The village pond's centre is where its node
+## the water line. The village pond's centre is where its node
 ## (Village/Green/VillagePond) stands, the green moved or turned. A pond the layout has (by id: the
 ## clearing's pond and the lake are the map editor's, plans/terrain-editing.md) is dug as the layout
 ## has it instead, and the layout bake gives it its water.
 const VILLAGE_POND := 1
 const PONDS := [
-	{"id": "pond", "center": Vector2(66, 86), "radius": 9.0, "depth": 0.95},   # the clearing's pond
+	{"id": "pond", "center": Vector2(66, 86), "radius": 9.0, "depth": 2.5},   # the clearing's pond
 	{"id": "village_pond", "center": Vector2(120, 132), "radius": 9.0, "depth": 0.75},  # on the green
-	{"id": "lake", "center": Vector2(38, 340), "radius": 14.0, "depth": 1.35},  # the lake
+	{"id": "lake", "center": Vector2(38, 340), "radius": 22.0, "depth": 5.0},  # the lake
 ]
 ## The lake's flat basin beyond the south rim (hills ease up beyond radius over the ramp).
-const LAKE_BASIN := {"center": WorldMap.LAKE_CENTER, "radius": 26.0, "ramp": 85.0}
+const LAKE_BASIN := {"center": WorldMap.LAKE_CENTER, "radius": 34.0, "ramp": 85.0}
 
 var VILLAGE_CENTER := WorldMap.village_center()  # the middle of the village green (its anchor)
 const VILLAGE_RADIUS := WorldMap.VILLAGE_RADIUS
@@ -486,10 +490,24 @@ func _pond(w: Vector2, h: float, pond: Dictionary, shore: FastNoiseLite) -> floa
 		return h  # (well clear of it: the shore's noise is 2 m at most, the land eases over 8)
 	var e := _shore_edge(pond, w, shore)
 	h *= smoothstep(2.0, 8.0, e.x)
+	var bed := _bed(pond, e)
+	return minf(h, bed) if not is_nan(bed) else h
+
+
+## The bed under a pond at `e` (_shore_edge): a shallow bowl down to its depth, or, for water too
+## deep to wade (plans/water.md), a wadeable shelf round the shore first, then the drop to the
+## deep middle. NAN past the shore.
+static func _bed(pond: Dictionary, e: Vector2) -> float:
 	var bowl := 1.0 - smoothstep(-e.y, 1.5, e.x)  # 1 mid-pond, 0 past the shore
-	if bowl > 0.0:
-		h = minf(h, (WATER_LEVEL - float(pond["depth"])) * bowl)
-	return h
+	if bowl <= 0.0:
+		return NAN
+	var depth := float(pond["depth"])
+	if depth <= SHELF_DEPTH:
+		return (WATER_LEVEL - depth) * bowl
+	var shelf := minf(SHORE_SHELF, e.y * 0.5)  # (a small pond's shelf is narrower)
+	var wade := 1.0 - smoothstep(-shelf, 1.5, e.x)
+	var drop := 1.0 - smoothstep(-e.y, -shelf, e.x)
+	return (WATER_LEVEL - SHELF_DEPTH) * wade - (depth - SHELF_DEPTH) * drop
 
 
 ## How far `w` is out from the pond's (wandering) shore, m (negative inside), and how far in from
@@ -514,10 +532,9 @@ func _redig_ponds(h: PackedFloat32Array) -> void:
 	_pond_mask.resize(SIZE * SIZE)
 	for pond in LayoutWater.ponds():
 		_for_pixels_near(pond["centre"], float(pond["reach"]) + 4.0, func(i: int, w: Vector2) -> void:
-			var e := _shore_edge(pond, w, _shore)
-			var bowl := 1.0 - smoothstep(-e.y, 1.5, e.x)
-			if bowl > 0.0:
-				h[i] = minf(h[i], (WATER_LEVEL - float(pond["depth"])) * bowl)
+			var bed := _bed(pond, _shore_edge(pond, w, _shore))
+			if not is_nan(bed):
+				h[i] = minf(h[i], bed)
 				_pond_mask[i] = 1)
 
 
@@ -867,11 +884,14 @@ func _collect(node: Node, xform: Transform3D, depth: int, out: Array[Vector2]) -
 ## The creek's channel along its vale, and the layout's rivers' (plans/terrain-editing.md).
 func _carve_creek(h: PackedFloat32Array) -> void:
 	_creek_mask.resize(SIZE * SIZE)
-	_carve_channel(h, WorldMap.creek(), WorldMap.CREEK_HALF_WIDTH, CREEK_BANK, func(w: Vector2) -> float:
-		var depth := CREEK_DEPTH
-		for pool in WorldMap.CREEK_POOLS:
-			depth = lerpf(depth, CREEK_POOL_DEPTH, 1.0 - smoothstep(0.0, WorldMap.CREEK_POOL_RADIUS, w.distance_to(pool)))
-		return depth)
+	_carve_channel(h, WorldMap.creek(), WorldMap.CREEK_HALF_WIDTH, CREEK_BANK, func(_w: Vector2) -> float: return CREEK_DEPTH)
+	# the pools: a round bowl wider than the channel, its rim easing in flat so the banks don't
+	# drop away at the water's edge
+	for pool in WorldMap.CREEK_POOLS:
+		_for_pixels_near(pool, WorldMap.CREEK_POOL_RADIUS, func(i: int, w: Vector2) -> void:
+			var u := minf(w.distance_to(pool) / WorldMap.CREEK_POOL_RADIUS, 1.0)
+			h[i] = minf(h[i], WATER_LEVEL - CREEK_POOL_DEPTH * (1.0 - u * u) * (1.0 - u * u))
+			_creek_mask[i] = 1)
 	for r in LayoutWater.rivers():
 		var depth := float(r.get("depth", 0.8))
 		_carve_channel(h, r["pts"], r["half"], RIVER_BANK, func(_w: Vector2) -> float: return depth)

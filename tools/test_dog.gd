@@ -59,7 +59,10 @@ func _meet() -> void:
 	if strays.size() < 3:
 		return
 	var shepherd: Node3D = strays.filter(func(d: Node) -> bool: return d.get("breed") == &"shepherd")[0]
-	_place(shepherd.global_position + Vector3(2, 0, 0), Vector2(-1, 0))
+	# beside him on the bank's dry side (away from the pond: in its shallows he'd get wet, and shake)
+	var pond := Vector3(66, 0, 86)
+	var away := Vector3(shepherd.global_position.x - pond.x, 0, shepherd.global_position.z - pond.z).normalized()
+	_place(shepherd.global_position + away * 2.0, Vector2(-away.x, -away.z))
 	await _frames(30)
 	_check(shepherd.get("state") == 1, "close by, a stray sits up and watches you")
 	print("prompt: %s" % shepherd.call("prompt"))

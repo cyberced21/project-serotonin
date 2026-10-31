@@ -55,6 +55,23 @@ extends CharacterBody3D
 ## Depth (m) at which wading is at its slowest.
 @export var wade_full_depth := 0.9
 
+@export_group("Swim")
+## Water deeper than this (m, surface to bed) is swum, not waded (plans/water.md). The lake's and
+## the ponds' shelves (0.9 m) stay wading water.
+@export var swim_depth := 1.35
+## A calm paddle, and the steadier crawl Shift gives.
+@export var swim_speed := 2.2
+@export var swim_sprint_speed := 3.2
+## Easing into a stroke and gliding to a stop: water is slower to both than the ground.
+@export var swim_accel := 3.5
+## How far the eye rides above the water while floating (m).
+@export var swim_eye_above := 0.14
+## How hard the water lifts you back to floating (a spring, critically damped, so you dip in from a
+## jump and come back up without bobbing on).
+@export var swim_buoyancy := 14.0
+## The gentle rise and fall of the view while floating (m).
+@export var swim_bob := 0.025
+
 @export_group("Crouch")
 @export var crouch_speed := 2.5
 ## Seconds to go fully down / up.
@@ -257,6 +274,9 @@ var _bob_amp := 0.0
 var _dip := 0.0  # landing dip spring (m, + = down)
 var _dip_vel := 0.0
 var _step_lift := 0.0  # how far the eye still trails a step up (m, eased away)
+## True while swimming (deep water, _swim): tools put away, no gathering.
+var swimming := false
+var _swim_time := 0.0  # (for the float's bob)
 # the held tool
 var _grip_rest := Transform3D.IDENTITY  # the grip this frame: rest, or turning to the swing grip
 var _grip_default := Transform3D.IDENTITY  # the Grip node's own placement: everyone's rest pose
@@ -363,6 +383,9 @@ func _process(delta: float) -> void:
 	var run := clampf(inverse_lerp(walk_speed, sprint_speed, speed), 0.0, 1.0)
 	_bob_phase = fmod(_bob_phase + speed / lerpf(footsteps.walk_stride, footsteps.sprint_stride, run) * PI * delta, TAU)
 	var bob := (0.5 - absf(sin(_bob_phase))) * _bob_amp
+	if swimming:  # floating: the view rises and falls with the water
+		_swim_time += delta
+		bob += sin(_swim_time * 1.7) * swim_bob
 	# landing dip: a critically damped spring back up, stepped with its exact solution so a long
 	# frame (a load, a shader compile) can't make it overshoot and run away with the camera
 	var w := sqrt(90.0)  # stiffness 90
@@ -460,7 +483,7 @@ func _physics_process(delta: float) -> void:
 				and not _swinging and not _panel_just_closed():
 			_talk_target.interact()
 	elif Input.is_action_pressed("gather") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED \
-			and is_on_floor() and _state == State.NORMAL and not _swinging and _cooldown <= 0.0:
+			and is_on_floor() and not swimming and _state == State.NORMAL and not _swinging and _cooldown <= 0.0:
 		if _target and _target.skill == &"woodcutting" and Skills.talents.has(&"power_swing"):
 			_charge = 0.0 if _charge < 0.0 else _charge + delta  # Power swing: hold, then let go
 		elif _target:
@@ -477,7 +500,16 @@ func _move(delta: float) -> void:
 	var wish_dir := transform.basis * Vector3(input.x, 0.0, input.y)
 	var wish := Vector2(wish_dir.x, wish_dir.z)
 	var on_bridge := Footbridge.on_bridge(get_tree(), global_position)  # (over a ford, but dry)
-	var water_depth := 0.0 if on_bridge else WaterBody.depth_at(get_tree(), global_position)
+	var water: WaterBody = null if on_bridge else WaterBody.surface_at(get_tree(), global_position)
+	var water_depth := water.depth_here(global_position) if water else 0.0
+	# deep water is swum (a little less deep to stop, so the edge of the drop doesn't flicker). By how
+	# far your feet are under the surface, not the bed's height: that's coarse on a steep drop, and
+	# off a jump you fall in first
+	var under := water.surface_height - global_position.y if water else 0.0
+	swimming = water_depth > 0.0 and under > swim_depth - (0.15 if swimming else 0.0)
+	if swimming:
+		_swim(delta, water, input, wish)
+		return
 	var wading := lerpf(1.0, wade_slow, clampf(water_depth / wade_full_depth, 0.0, 1.0))
 
 	# gravity + coyote time
@@ -536,6 +568,27 @@ func _move(delta: float) -> void:
 	camera.base_fov = _base_fov  # (+ impact kicks)
 
 
+## Floating in deep water: paddle where you face (yaw only), the water easing you to a float with
+## your eye just above it. Jump at a bank while swimming at it to climb out (the mantle).
+func _swim(delta: float, water: WaterBody, input: Vector2, wish: Vector2) -> void:
+	_coyote = 0.0
+	_jump_buffer -= delta
+	if Input.is_action_just_pressed("jump"):
+		_jump_buffer = jump_buffer
+	if input.y < -0.3 and _jump_buffer > 0.0 and _try_mantle():
+		return
+	var fast := Input.is_action_pressed("sprint") and input.y < 0.0
+	var target := wish * (swim_sprint_speed if fast else swim_speed) * (1.0 + Village.stat(&"run_speed"))
+	var horizontal := Vector2(velocity.x, velocity.z).move_toward(target, swim_accel * delta)
+	var rest := water.surface_height - (STAND_EYE - swim_eye_above)  # where the feet float
+	var k := swim_buoyancy
+	velocity.y += ((rest - global_position.y) * k - velocity.y * 2.0 * sqrt(k)) * delta
+	velocity.x = horizontal.x
+	velocity.z = horizontal.y
+	move_and_slide()
+	camera.base_fov = _base_fov
+
+
 func _on_land(fall_speed: float) -> void:
 	footsteps.land(fall_speed)
 	if fall_speed > 2.0:
@@ -544,7 +597,7 @@ func _on_land(fall_speed: float) -> void:
 
 ## Smoothly lowers the eye and shrinks the capsule while crouching.
 func _update_crouch(delta: float) -> void:
-	var want := 1.0 if (Input.is_action_pressed("crouch") or not _can_stand()) and _state != State.MANTLE else 0.0
+	var want := 1.0 if (Input.is_action_pressed("crouch") or not _can_stand()) and _state != State.MANTLE and not swimming else 0.0
 	_crouch = move_toward(_crouch, want, delta / crouch_transition)
 	var height := lerpf(STAND_HEIGHT, CROUCH_HEIGHT, _crouch)
 	body_shape.height = height
@@ -775,6 +828,15 @@ func _update_target() -> void:
 	if rodfishing.is_busy():  # the rod stays in hand until the float's back (or the fish is)
 		_clear_targets()
 		_equip(&"rod")
+		dot.scale = Vector2.ONE
+		hover_label.text = ""
+		return
+	if swimming:  # tools put away: nothing to gather, talk to or fish from out here
+		_clear_targets()
+		spearfishing.clear_target()
+		rodfishing.clear_target()
+		if not _swinging:
+			_equip(&"")
 		dot.scale = Vector2.ONE
 		hover_label.text = ""
 		return

@@ -201,6 +201,7 @@ whatever you hit.
 | Sprint / air dash (in the air) | Shift |
 | Jump / mantle (jump at a ledge while moving forward) / wall run (jump alongside a wall at speed) | Space |
 | Crouch / slide (crouch while running fast, or land holding it) | Ctrl or C |
+| Swim (deep water: the lake, the middle of the clearing pond; paddle where you face, Shift for a steadier crawl, jump at a bank to climb out) | WASD / Shift / Space |
 | Gather (axe, pickaxe or sickle: whichever fits what you aim at) / spear (hold) / rod: cast (hold, release on the whip), then click when the float goes under | Left mouse or E |
 | Swap the fishing tool: spear / rod | Q |
 | Rod: bow when a hooked fish jumps | Right mouse or Q |

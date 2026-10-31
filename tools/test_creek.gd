@@ -37,7 +37,7 @@ func _run() -> void:
 		var depth: float = water_body.depth_at(self, at)
 		if depth < 0.2:
 			dry += 1
-		elif depth > 1.6:
+		elif depth > 1.6 and not _in_pool(p):  # (the salmon pools are a dip: plans/water.md)
 			deep += 1
 		var body: Node = water_body.surface_at(self, at)
 		var in_creek: bool = body != null and body.get_parent() == get_first_node_in_group("creek")
@@ -71,6 +71,14 @@ func _run() -> void:
 	_check(species.has(&"grayling") and species.has(&"salmon"), "grayling and salmon live in it")
 	print("test_creek: %s" % ("PASS" if _fails == 0 else "%d FAILED" % _fails))
 	quit(1 if _fails else 0)
+
+
+func _in_pool(p: Vector2) -> bool:
+	var world_map := load("res://scripts/world_map.gd")
+	for pool: Vector2 in world_map.CREEK_POOLS:
+		if p.distance_to(pool) < float(world_map.CREEK_POOL_RADIUS):
+			return true
+	return false
 
 
 func _fish_ponds(creek: Node) -> Array:
