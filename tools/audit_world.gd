@@ -20,7 +20,7 @@ extends SceneTree
 const VIS_LAYER := 1 << 24
 const WORLD_MASK := 1
 ## Never part of the world: the player's own view and the UI.
-const NOT_WORLD := ["Viewmodel", "Player", "HUD", "Canvas", "Life/Critters"]  # (the butterflies, bees and birds fly)
+const NOT_WORLD := ["Viewmodel", "Player", "HUD", "Canvas"]
 ## Names (a node's or its parent's) that are meant to hang, fly, flutter or float on the water:
 ## they still hold things up, but aren't reported.
 const SKIP := ["Smoke", "Firefl", "Grass", "Water", "Surface", "Ripple", "Fish", "Ghost", "Villager",
@@ -369,6 +369,11 @@ var _uf := {}  # union-find over meshes in contact
 
 func _skipped(n: Node) -> bool:
 	var p := String(n.get_path())
+	var up := n
+	while up:  # the butterflies, bees and birds fly (a Critters swarm, in Life or under a place)
+		if up.get_script() is Script and (up.get_script() as Script).get_global_name() == &"Critters":
+			return true
+		up = up.get_parent()
 	for s in NOT_WORLD:
 		if p.contains(s):
 			return true

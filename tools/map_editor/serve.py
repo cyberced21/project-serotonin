@@ -38,7 +38,7 @@ busy = threading.Lock()  # one Godot run at a time
 def write_layout(data):
     """One shape a line, so the file diffs well in git (as tools/import_layout.gd writes it)."""
     parts = ['{\n\t"version": %d,' % data.get("version", 1)]
-    keys = ["terrain", "patches", "lines", "points"]
+    keys = ["terrain", "patches", "lines", "points", "anchors"]
     for i, key in enumerate(keys):
         rows = ["\t\t" + json.dumps(item, separators=(",", ":"), sort_keys=True) for item in data.get(key, [])]
         body = ("\n" + ",\n".join(rows) + "\n\t") if rows else ""

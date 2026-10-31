@@ -515,7 +515,7 @@ func _biome_id(w: Vector2) -> int:
 		return _crop_id(w, q)
 	if _dither(w, fd, WorldMap.FIELD_RADIUS + 6.0, WorldMap.FIELD_RADIUS + 6.0 + BORDER_BELT):
 		return WorldMap.TEX_FIELD
-	var hd := w.distance_to(WorldMap.HAVEN_CENTER)  # the hidden haven: open grass in the forest
+	var hd := w.distance_to(WorldMap.haven_center())  # the hidden haven: open grass in the forest
 	if hd < WorldMap.HAVEN_RADIUS - 3.0 or _dither(w, hd, WorldMap.HAVEN_RADIUS - 3.0, WorldMap.HAVEN_RADIUS + 1.0):
 		return WorldMap.TEX_DEFAULT
 	var f := ((q - WorldMap.FOREST_CENTER) / WorldMap.FOREST_RADII).length() * WorldMap.FOREST_RADII.y
@@ -569,7 +569,7 @@ func _glades(h: PackedFloat32Array) -> void:
 	var glades: Array = []
 	for g in WorldMap.GLADES:
 		glades.append([g, WorldMap.GLADE_RADIUS])
-	glades.append([WorldMap.HAVEN_CENTER, WorldMap.HAVEN_RADIUS])  # (the hidden haven, plans/world-pass.md)
+	glades.append([WorldMap.haven_center(), WorldMap.HAVEN_RADIUS])  # (the hidden haven, plans/world-pass.md)
 	for gr in glades:
 		var g: Vector2 = gr[0]
 		var r: float = gr[1]
@@ -583,9 +583,9 @@ func _glades(h: PackedFloat32Array) -> void:
 ## not a pond at the bowl's water level). Haven lifts its water to match.
 func _haven_pool(h: PackedFloat32Array) -> void:
 	var pool: Dictionary = WorldMap.HAVEN_POOL
-	var c: Vector2 = pool["center"]
+	var c := WorldMap.haven_pool_center()
 	var r: float = pool["radius"]
-	var top := _sample(h, WorldMap.HAVEN_CENTER)
+	var top := _sample(h, WorldMap.haven_center())
 	_for_pixels_near(c, r + 2.0, func(i: int, w: Vector2) -> void:
 		var d := w.distance_to(c)
 		if d < r:
@@ -758,6 +758,7 @@ func _nearest_sample(r: Dictionary, to: Vector2) -> int:
 func _baked_points() -> Array[Vector2]:
 	var scene := load("res://scenes/main.tscn") as PackedScene
 	var main := scene.instantiate()
+	LayoutAnchors.apply(main)  # (where the map editor put the buildings and places)
 	var out: Array[Vector2] = []
 	_collect(main, Transform3D.IDENTITY, 0, out)
 	main.free()

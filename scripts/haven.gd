@@ -9,7 +9,7 @@ extends Node3D
 @export var radius := 18.0
 ## Its spring pool (a WaterBody): up here, its water sits at the glade's height (the terrain
 ## generator digs it there), so it's lifted to match before it sets itself up.
-@export var pool_path := NodePath("../HavenPool")
+@export var pool_path := NodePath("HavenPool")
 ## Where the flower lies, in the haven's frame.
 @export var flower_at := Vector3(2.5, 0.0, -1.0)
 

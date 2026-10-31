@@ -23,10 +23,11 @@ const PLACES := [
 	["Hearthvale", WorldMapC.VILLAGE_CENTER], ["The Clearing", WorldMapC.CLEARING_CENTER],
 	["Stillwater", WorldMapC.LAKE_CENTER], ["Frostpeak", WorldMapC.PEAK_CENTER],
 	["Greystone Quarry", WorldMapC.QUARRY_CENTER], ["Goldmeadow", WorldMapC.FIELD_CENTER],
-	["The Pinewood", WorldMapC.FOREST_CENTER], ["The watermill", WorldMapC.MILL_SITE],
-	["The orchard", WorldMapC.ORCHARD_SITE], ["Shepherd's hill", WorldMapC.SHEPHERD_SITE],
-	["The haven", WorldMapC.HAVEN_CENTER],
+	["The Pinewood", WorldMapC.FOREST_CENTER],
 ]
+## The places the map editor moves (their anchors): name, anchor id.
+const ANCHORED_PLACES := [["The watermill", &"watermill"], ["The orchard", &"orchard"],
+	["Shepherd's hill", &"shepherds_hill"], ["The haven", &"haven"]]
 
 
 func _initialize() -> void:
@@ -96,6 +97,9 @@ func _run() -> void:
 	var labels := []
 	for p in PLACES:
 		labels.append([p[1].x, p[1].y, p[0]])
+	for p in ANCHORED_PLACES:
+		var at: Vector2 = WorldMapC.site(p[1])
+		labels.append([at.x, at.y, p[0]])
 	var world := {
 		"origin": [origin.x, origin.y], "size": size, "water_level": WATER_LEVEL,
 		"height_step": HEIGHT_STEP, "heights": heights, "roads": roads, "creek": creek,

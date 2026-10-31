@@ -55,15 +55,12 @@ const GLADES: Array[Vector2] = [Vector2(61, -62.5), Vector2(130, -92.5), Vector2
 const GLADE_RADIUS := 13.5
 ## The new places (plans/world-pass.md, phase 7): the watermill on the creek below the village, the
 ## orchard on the slope north-east of it, the shepherd's hill up on the rim north of the road east,
-## and the hidden haven deep in the Pinewood's south, on its gentlest ground, its spring pool, the
-## faint deer track to it from the forest trail.
-const MILL_SITE := Vector2(42, 200)
-const ORCHARD_SITE := Vector2(200, 62)
-const SHEPHERD_SITE := Vector2(360, 18)
-const HAVEN_CENTER := Vector2(111, -163)
+## and the hidden haven deep in the Pinewood's south, its spring pool. Where they stand is the map
+## editor's (their anchors in data/layout/hearthvale.json: plans/map-editor-places.md), so they're
+## read, not constants: site(&"watermill"), site(&"orchard"), site(&"shepherds_hill"), haven_center().
 const HAVEN_RADIUS := 16.0
-const HAVEN_POOL := {"center": Vector2(114, -161), "radius": 3.5, "depth": 0.5}
-const HAVEN_TRACK: Array[Vector2] = [Vector2(101, -131), Vector2(104, -140), Vector2(106, -149), Vector2(109, -156)]
+## The haven's spring pool, in the haven's frame (it turns with the haven).
+const HAVEN_POOL := {"offset": Vector2(3, 2), "radius": 3.5, "depth": 0.5}
 
 ## The roads and paths (plans/world.md): the terrain generator lays each one along the land (a
 ## least-cost route over the slopes from `from` through any `via` points to `to`, unless `ctrl`
@@ -139,6 +136,22 @@ const LANDMARKS := {
 	"The footbridge": [Vector3(60, 0, 72), Vector3(66, 0, 64)],
 	"Frostpeak": [Vector3(-86, 0, -42), Vector3(-98, 0, -54)],
 }
+
+
+## Where anchored place `id` stands (LayoutAnchors; the origin if the layout has no such anchor).
+static func site(id: StringName) -> Vector2:
+	return LayoutAnchors.at(id, Vector2.ZERO)
+
+
+static func haven_center() -> Vector2:
+	return site(&"haven")
+
+
+## The middle of the haven's spring pool on the map.
+static func haven_pool_center() -> Vector2:
+	var o: Vector2 = HAVEN_POOL["offset"]
+	var w := Vector3(o.x, 0.0, o.y).rotated(Vector3.UP, LayoutAnchors.yaw(&"haven"))
+	return haven_center() + Vector2(w.x, w.z)
 
 
 static var _roads: Array[Dictionary] = []
