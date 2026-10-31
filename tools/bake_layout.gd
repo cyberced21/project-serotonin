@@ -121,7 +121,7 @@ func _run() -> void:
 	water.name = "Water"
 	out_root.add_child(water)
 	for s in layout.get("terrain", []):
-		if s.get("type", "") == "pond" and s.has("center"):
+		if s.get("type", "") == "pond" and (s.has("center") or s.get("points", []).size() >= 3):
 			water.add_child(_pond(s))
 		elif s.get("type", "") == "river" and s.get("points", []).size() >= 2:
 			water.add_child(_river(s))
@@ -516,11 +516,24 @@ func _patch(p: Dictionary, parent: Node3D) -> void:
 
 # --- ponds and rivers ---------------------------------------------------------------------------------------------
 
-## The water in a terrain pond (the generator digs its bowl): built like the ponds in main.tscn, a
-## WaterBody with its volume, surface, reeds and lilies, and fish if it says so.
+## The water in a terrain pond (the generator digs its bowl), a circle or an outline: a WaterBody
+## with its volume and surface over the whole of it (the land hides what's past the shore), reeds
+## and lilies (`seed`, `reeds`, `lilies`, `stones`, or as many as its size wants), and fish: `fish`
+## a list of data/fish species, or true for perch and trout, or false.
 func _pond(s: Dictionary) -> Node3D:
-	var c := _v2(s["center"])
-	var span := float(s["radius"]) * 2.0 + 4.0
+	var c := Vector2.ZERO
+	var size := Vector2.ZERO
+	if s.get("shape", "circle" if s.has("center") else "polygon") == "circle":
+		c = _v2(s["center"])
+		size = Vector2.ONE * float(s["radius"]) * 2.0
+	else:
+		var bounds := Rect2(_v2(s["points"][0]), Vector2.ZERO)
+		for q in s["points"]:
+			bounds = bounds.expand(_v2(q))
+		c = bounds.get_center()
+		size = bounds.size
+	size += Vector2(8, 8)  # (the shore wanders out a little)
+	var span := (size.x + size.y) * 0.5
 	var body := Area3D.new()
 	body.name = String(s.get("id", "pond")).to_pascal_case()
 	body.set_script(load("res://scripts/water_body.gd"))
@@ -531,34 +544,40 @@ func _pond(s: Dictionary) -> Node3D:
 	vol.name = "Volume"
 	vol.position = Vector3(0, -1, 0)
 	var box := BoxShape3D.new()
-	box.size = Vector3(span, 3, span)
+	box.size = Vector3(size.x, 3, size.y)
 	vol.shape = box
 	body.add_child(vol)
 	var dressing := Node3D.new()
 	dressing.name = "Dressing"
 	dressing.set_script(load("res://scripts/pond_dressing.gd"))
-	dressing.set("seed", hash(s.get("id", "pond")) % 1000)
-	dressing.set("reed_clumps", int(span * 0.35))
-	dressing.set("lily_pads", int(span * 0.45))
-	dressing.set("stones", int(span * 0.4))
+	dressing.set("seed", int(s.get("seed", hash(s.get("id", "pond")) % 1000)))
+	dressing.set("reed_clumps", int(s.get("reeds", span * 0.35)))
+	dressing.set("lily_pads", int(s.get("lilies", span * 0.45)))
+	dressing.set("stones", int(s.get("stones", span * 0.4)))
 	body.add_child(dressing)
-	if s.get("fish", true):
+	var species: Variant = s.get("fish", true)
+	if species is bool:
+		species = ["perch", "perch", "trout"] if species else []
+	if not (species as Array).is_empty():
 		var fish := Node3D.new()
 		fish.name = "Fish"
 		fish.set_script(load("res://scripts/fish_pond.gd"))
-		var perch: Resource = load("res://data/fish/perch.tres")
 		var schools: Array = fish.get("schools")  # (a typed array: filled, not replaced)
-		for school in [perch, perch, load("res://data/fish/trout.tres")]:
-			schools.append(school)
+		for id in species:
+			var path := "res://data/fish/%s.tres" % id
+			if ResourceLoader.exists(path):
+				schools.append(load(path))
+			else:
+				_warn("pond %s: no fish %s (data/fish/)" % [s.get("id", "?"), id], c, s.get("id", ""))
 		body.add_child(fish)
 	var surface := MeshInstance3D.new()
 	surface.name = "Surface"
 	surface.position = Vector3(0, -0.15, 0)
 	surface.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var plane := PlaneMesh.new()
-	plane.size = Vector2(span, span)
-	plane.subdivide_width = int(span) - 1
-	plane.subdivide_depth = int(span) - 1
+	plane.size = size
+	plane.subdivide_width = int(size.x) - 1
+	plane.subdivide_depth = int(size.y) - 1
 	var mat := ShaderMaterial.new()
 	mat.shader = load("res://shaders/water.gdshader")
 	plane.material = mat

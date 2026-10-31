@@ -110,13 +110,15 @@ const RELAX_PASSES := 80
 const DATA_DIR := "res://terrain_data"
 const WATER_LEVEL := -0.15     # keep in sync with the ponds' WaterBody nodes in main.tscn
 ## Ponds: centre, radius (roughly where the bed rises to the water line), deepest point below
-## the water line (wading depth — no swimming). Keep in sync with the ponds in main.tscn. The village
-## pond's centre is where its node (Village/Green/VillagePond) stands, the green moved or turned.
+## the water line (wading depth — no swimming). The village pond's centre is where its node
+## (Village/Green/VillagePond) stands, the green moved or turned. A pond the layout has (by id: the
+## clearing's pond and the lake are the map editor's, plans/terrain-editing.md) is dug as the layout
+## has it instead, and the layout bake gives it its water.
 const VILLAGE_POND := 1
 const PONDS := [
-	{"center": Vector2(66, 86), "radius": 9.0, "depth": 0.95},   # the clearing's pond
-	{"center": Vector2(120, 132), "radius": 9.0, "depth": 0.75},  # the village pond, on the green
-	{"center": Vector2(38, 340), "radius": 14.0, "depth": 1.35},  # the lake
+	{"id": "pond", "center": Vector2(66, 86), "radius": 9.0, "depth": 0.95},   # the clearing's pond
+	{"id": "village_pond", "center": Vector2(120, 132), "radius": 9.0, "depth": 0.75},  # on the green
+	{"id": "lake", "center": Vector2(38, 340), "radius": 14.0, "depth": 1.35},  # the lake
 ]
 ## The lake's flat basin beyond the south rim (hills ease up beyond radius over the ramp).
 const LAKE_BASIN := {"center": WorldMap.LAKE_CENTER, "radius": 26.0, "ramp": 85.0}
@@ -310,6 +312,11 @@ func _setup() -> void:
 	var layout: Variant = JSON.parse_string(FileAccess.get_file_as_string(_layout_path)) if FileAccess.file_exists(_layout_path) else null
 	if layout is Dictionary:
 		_layout_terrain = layout.get("terrain", [])
+		for p in LayoutWater.ponds():  # (a built-in pond the layout has: as the layout has it)
+			for k in _ponds.size():
+				if _ponds[k]["id"] == p.get("id"):
+					_ponds[k] = {"id": p["id"], "center": p["centre"], "radius": p.get("radius", p["reach"]),
+							"depth": float(p.get("depth", 1.0)), "outline": p["outline"], "shelf": p.get("shelf", LayoutWater.SHELF)}
 		for s in _layout_terrain:
 			if s.get("type", "") in ["road", "path"] and s.get("points", []).size() >= 2:
 				_layout_roads.append({"id": StringName(s["id"]), "kind": StringName(s["type"]), "title": s.get("name", s["id"]), "ctrl": _v2s(s["points"])})
@@ -475,6 +482,8 @@ func _relax(h: PackedFloat32Array) -> void:
 ## A pond is a built-in one ({center, radius, depth}) or the layout's (LayoutWater.ponds(): a circle
 ## or an outline).
 func _pond(w: Vector2, h: float, pond: Dictionary, shore: FastNoiseLite) -> float:
+	if w.distance_to(_pond_centre(pond)) > float(pond.get("reach", pond.get("radius"))) + 12.0:
+		return h  # (well clear of it: the shore's noise is 2 m at most, the land eases over 8)
 	var e := _shore_edge(pond, w, shore)
 	h *= smoothstep(2.0, 8.0, e.x)
 	var bowl := 1.0 - smoothstep(-e.y, 1.5, e.x)  # 1 mid-pond, 0 past the shore
@@ -491,7 +500,12 @@ func _shore_edge(pond: Dictionary, w: Vector2, shore: FastNoiseLite) -> Vector2:
 	if not outline.is_empty():
 		return Vector2(LayoutWater.shore_distance(pond, w) + noise, float(pond.get("shelf", LayoutWater.SHELF)))
 	var r := float(pond["radius"])
-	return Vector2(w.distance_to(pond.get("center", pond.get("centre"))) - r + noise, r * 0.7)
+	return Vector2(w.distance_to(_pond_centre(pond)) - r + noise, r * 0.7)
+
+
+## A built-in pond's centre, or a layout one's (LayoutWater's `centre`: its `center` is as written).
+static func _pond_centre(pond: Dictionary) -> Vector2:
+	return pond["centre"] if pond.has("centre") else pond["center"]
 
 
 ## The layout's ponds dug again after the relax pass (which fills a bowl dug into a hillside), and
@@ -1320,6 +1334,13 @@ func _layout_shapes(h: PackedFloat32Array) -> void:
 			continue
 		if (s.get("shape", "polygon") == "circle" and not s.has("center")) or (s.get("shape", "polygon") != "circle" and s.get("points", []).size() < 3):
 			continue
+		var pond := {}
+		if type == "pond":
+			if PONDS.any(func(b: Dictionary) -> bool: return b["id"] == s.get("id")):
+				continue  # (dug with the land: _height)
+			for p in LayoutWater.ponds():
+				if p.get("id") == s.get("id"):
+					pond = p
 		var soft := float(s.get("soft", SHAPE_SOFT))
 		var cells := _shape_cells(s, soft if type != "pond" else 10.0)
 		var dome: bool = type == "raise" and s.get("shape", "polygon") == "circle"
@@ -1339,8 +1360,8 @@ func _layout_shapes(h: PackedFloat32Array) -> void:
 							k = _shape_weight(s, w, soft)
 						h[i] += float(s.get("height", 5.0)) * k
 					"pond":
-						h[i] = _pond(w, h[i], {"center": Vector2(float(s["center"][0]), float(s["center"][1])),
-								"radius": float(s["radius"]), "depth": float(s.get("depth", 1.0))}, _shore)
+						if pond:
+							h[i] = _pond(w, h[i], pond, _shore)
 		print("terrain shape %s (%s) applied" % [s.get("id", "?"), type])
 
 

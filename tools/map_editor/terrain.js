@@ -2,7 +2,9 @@
 // top of its own hills, before anything stands on it.
 //   flat   the land eased to `height` m inside (a polygon or a circle), over `soft` m round it
 //   raise  raised by `height` m (negative: lowered): a dome in a circle, a plateau in a polygon
-//   pond   dug to `depth` m below the water, a circle; the bake adds its water (and fish)
+//   pond   dug to `depth` m below the water, a circle or an outline (deepest `shelf` m in from its
+//          shore); the bake adds its water (and `fish`: a list of species). The clearing's pond and
+//          the lake (ids pond, lake) are ponds here too: deepen, move or reshape them.
 //   river  a line: a channel `width` m wide and `depth` m deep under the water, through a vale
 //          eased down over `vale` m each side; the bake adds its water (plans/terrain-editing.md)
 //   road / path   a line the generator lays a gravel road or a dirt path along
@@ -171,9 +173,20 @@
 					`Its sides: about ${deg}°.` + (deg > 20 ? " Steeper than ~24° (with the land's own slope) gets eased down: make it wider or lower." : "")));
 			}
 			if (o.type === "pond") {
-				box.append(E.field("Depth (m)", E.input(o, "depth", "number", { step: 0.05, min: 0.2 })));
-				box.append(E.field("Fish", E.input(o, "fish", "check", { default: true })));
-				box.append(E.el("p", { class: "muted" }, "Up to about 1.4 m: you wade, you don't swim. A pond up a hill wants a flat under it at the water's height (-0.15 m) first, or its water floats."));
+				box.append(E.field("Depth (m)", E.input(o, "depth", "number", { step: 0.05, min: 0.2, refresh: true })));
+				if (!isCircle(o)) box.append(E.field("Shelf (m)", E.input(o, "shelf", "number", { step: 0.5, min: 1, default: 6 })));
+				// fish: a list of species (data/fish/), true for perch and trout, false for none
+				const names = Array.isArray(o.fish) ? o.fish.join(", ") : o.fish === false ? "" : "perch, perch, trout";
+				const fish = E.el("input", { type: "text", value: names, title: "Species from data/fish/ (perch, trout, pike, char, grayling, salmon), a school each; empty: none" });
+				fish.onchange = () => {
+					const list = fish.value.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
+					E.commit();
+					o.fish = list.length ? list : false;
+					E.changed(true);
+				};
+				box.append(E.field("Fish", fish));
+				box.append(E.el("p", { class: "muted" }, "Up to about 1.4 m: you wade, you don't swim. Its water is at -0.15 m; dug into higher ground it sits in a hollow (a flat round it looks kinder)."
+					+ (isCircle(o) ? "" : " The shelf: how far in from the shore it's at its deepest.")));
 			}
 			if (o.type === "flat" || o.type === "raise") box.append(E.field("Soft edge (m)", E.input(o, "soft", "number", { step: 1, min: 0, default: 10 })));
 			if (isCircle(o)) box.append(E.field("Radius (m)", E.input(o, "radius", "number", { step: 0.5, min: 1 })));
@@ -206,11 +219,11 @@
 		const o = { id: E.uniqueId(brush.type), type: brush.type, ...extra };
 		if (brush.type === "flat") { o.height = brush.height; o.soft = 10; }
 		if (brush.type === "raise") { o.height = brush.height || 5; o.soft = isCircle(o) ? 0 : 10; }
-		if (brush.type === "pond") { o.depth = brush.depth; o.fish = true; }
+		if (brush.type === "pond") { o.depth = brush.depth; o.fish = true; if (!isCircle(o)) o.shelf = 6; }
 		if (brush.type === "river") { o.width = brush.width; o.depth = brush.riverDepth; o.fish = true; }
 		return o;
 	};
-	const shapeFor = () => (brush.type === "pond" ? "circle" : isLine(brush) ? "line" : brush.shape);
+	const shapeFor = () => (isLine(brush) ? "line" : brush.shape);
 	const finish = () => {
 		const s = shapeFor();
 		if (s === "line" && corners.length >= 2) add(make({ name: TYPES[brush.type].label, points: corners }));
@@ -240,6 +253,11 @@
 				box.append(shapes, el("span", { class: "muted" }, brush.type === "flat" ? "height (m)" : "up / down (m)"), hgt);
 			}
 			if (brush.type === "pond") {
+				const shapes = el("span", { class: "row" });
+				for (const [s, label] of [["polygon", "Outline"], ["circle", "Circle"]]) {
+					shapes.append(el("button", { class: s === brush.shape ? "on" : "", onclick: () => { brush.shape = s; corners = []; rebuild(); } }, label));
+				}
+				box.append(shapes);
 				const d = el("input", { type: "number", step: "0.05", min: "0.2", value: brush.depth });
 				d.onchange = () => { brush.depth = Number(d.value); };
 				box.append(el("span", { class: "muted" }, "depth (m)"), d);

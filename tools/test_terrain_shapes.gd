@@ -1,9 +1,10 @@
 extends SceneTree
 ## Checks the map editor's land shaping (plans/terrain-editing.md): runs the terrain generator as a
-## dry run (it writes nothing) on a copy of the layout with a river drawn down into the lake and a
-## pond dug on open ground, then reads what it did:
+## dry run (it writes nothing) on a copy of the layout with a river drawn down into the lake, a
+## pond dug on open ground, another drawn as an outline, and the lake deepened, then reads what it
+## did:
 ##   - the river's bed is under the water all the way down its middle, about as deep as it asked
-##   - the pond is dug about as deep as it asked
+##   - each pond is dug about as deep as it asked, the lake too
 ##   godot --headless --path . -s res://tools/test_terrain_shapes.gd
 ## Takes about a minute (one terrain run). (No game class names: an -s script compiles before the
 ## autoloads exist.)
@@ -11,11 +12,14 @@ extends SceneTree
 const LAYOUT := "res://data/layout/hearthvale.json"
 const SHAPED := "user://test_terrain_shapes_layout.json"
 const REPORT := "user://test_terrain_shapes_report.json"
-## The shapes drawn: a river from the hills west of the lake into it, and a pond in Goldmeadow.
+## The shapes drawn: a river from the hills west of the lake into it, a pond and an outlined one.
 const SHAPES := [
 	{"id": "test_river", "type": "river", "points": [[-70, 262], [-40, 292], [-8, 318], [26, 336]], "width": 5.0, "depth": 0.9},
 	{"id": "test_pond", "type": "pond", "shape": "circle", "center": [-30, 210], "radius": 9.0, "depth": 1.1},
+	{"id": "test_outline", "type": "pond", "shape": "polygon", "points": [[176, 290], [204, 286], [214, 306], [196, 322], [174, 312]], "depth": 1.0},
 ]
+## The lake, deepened to this.
+const LAKE_DEPTH := 1.8
 
 var failures := PackedStringArray()
 
@@ -23,6 +27,9 @@ var failures := PackedStringArray()
 func _initialize() -> void:
 	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(LAYOUT))
 	layout["terrain"].append_array(SHAPES.duplicate(true))
+	for s in layout["terrain"]:
+		if s["id"] == "lake":
+			s["depth"] = LAKE_DEPTH
 	var f := FileAccess.open(SHAPED, FileAccess.WRITE)
 	f.store_string(JSON.stringify(layout))
 	f.close()
@@ -66,9 +73,10 @@ func _river(report: Dictionary) -> void:
 
 
 func _pond(report: Dictionary) -> void:
-	var p: Dictionary = report.get("layout_ponds", {}).get("test_pond", {})
-	_check(not p.is_empty(), "the pond is reported")
-	if p.is_empty():
-		return
-	print("pond: %s" % p)
-	_check(absf(float(p["deepest"]) - 1.1) < 0.25, "it's dug about as deep as it asked (%.2f m of 1.1)" % p["deepest"])
+	for want in [["test_pond", 1.1], ["test_outline", 1.0], ["lake", LAKE_DEPTH]]:
+		var p: Dictionary = report.get("layout_ponds", {}).get(want[0], {})
+		_check(not p.is_empty(), "pond %s is reported" % want[0])
+		if p.is_empty():
+			continue
+		print("%s: %s" % [want[0], p])
+		_check(absf(float(p["deepest"]) - want[1]) < 0.25, "%s is dug about as deep as it asked (%.2f m of %.2f)" % [want[0], p["deepest"], want[1]])

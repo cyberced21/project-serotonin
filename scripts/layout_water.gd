@@ -84,7 +84,7 @@ static func _load() -> void:
 			"pond":
 				var p := s.duplicate()
 				p["outline"] = PackedVector2Array()
-				if s.get("shape", "circle") == "circle":
+				if s.get("shape", "circle" if s.has("center") else "polygon") == "circle":
 					if not s.has("center"):
 						continue
 					p["centre"] = _v2(s["center"])

@@ -21,8 +21,6 @@ const GRAYLING_EVERY := 3
 const FLOW := 0.45
 ## The surface reaches this far past the channel's edge, under the soft banks.
 const SURFACE_MARGIN := 1.5
-## Other water the creek runs into: [centre, radius] (the clearing's pond, the lake).
-const OTHER_WATER := [[Vector2(66, 86), 10.0], [Vector2(38, 340), 15.0]]
 
 ## Half the channel's width (m) and whether its stretches hold fish.
 var half_width := WorldMap.CREEK_HALF_WIDTH
@@ -85,10 +83,9 @@ func _build_road_bridges(pts: PackedVector2Array) -> void:
 		add_child(bridge)
 
 
+## Whether `p` is in other water the creek runs into: the layout's ponds (the clearing's pond, the
+## lake: LayoutWater).
 static func in_other_water(p: Vector2) -> bool:
-	for w in OTHER_WATER:
-		if p.distance_to(w[0]) < float(w[1]):
-			return true
 	return LayoutWater.in_pond(p, 1.0)
 
 
