@@ -269,8 +269,9 @@ func _simulate(lvl: int, tier: int, axe: int, id: StringName) -> Dictionary:
 			momentum = mini(momentum + 1, player.momentum_max)
 		last_fell = t - AFTER_FELL
 		_fell(i, state, t, has.call(&"grove_keeper"), _old_growth(i, id))
-		if has.call(&"dominoes"):  # it falls toward its notch: back the way you came
-			for j in _crushed(i, came_from, choppable, state, t):
+		if has.call(&"dominoes"):  # it falls toward its notch, swung aside of you (ResourceNode.FALL_ASIDE)
+			var fall := came_from.rotated(deg_to_rad(RN.FALL_ASIDE) * (1.0 if rng.randf() < 0.5 else -1.0))
+			for j in _crushed(i, fall, choppable, state, t):
 				crushes += 1
 				var s: Dictionary = _stats[trees[j]["scene"]]
 				state[j]["hits_left"] = maxi(state[j]["hits_left"] - ceili(s["max_hits"] * RN.CRUSH_SHARE), 0)
@@ -353,27 +354,22 @@ func _crushed(i: int, dir: Vector2, eligible: Array[int], state: Array, t: float
 
 
 ## Chopping one tree down, swing by swing, as ResourceNode.hit counts it. The notch deepens by
-## each swing's hits over the tree's max (the first on bark a share ON_BARK of that); a swing into
-## a notch that's clean_cut_after deep is a clean cut (for a `human` share of them).
+## each swing's hits over the tree's max; a swing into a notch that's clean_cut_after deep is a
+## clean cut (for a `human` share of them). Every tree has a knot (plans/logging.md): the bot spots
+## it a `human` share of the time (always when Heartwood makes it glow) and strikes it second swing.
 func _chop(i: int, st: Dictionary, lvl: int, axe: int, id: StringName, momentum: int, rng: RandomNumberGenerator) -> Dictionary:
 	var s: Dictionary = _stats[trees[i]["scene"]]
 	var max_hits: int = s["max_hits"]
 	var hits: int = st["hits_left"]
 	var tough: float = RN.OLD_GROWTH_TOUGH if _old_growth(i, id) else 1.0
 	var per_hit := (1.0 + maxi(axe - s["tier"], 0)) / tough
-	var on_bark: float = load("res://scripts/trunk_carve.gd").ON_BARK
 	var front := 0.0  # notch depth (share of a full notch) on your side, and on the far side
 	var back := 0.0
-	var front_barked := false
-	var back_barked := false
 	var on_back := false
 	var went_round := false
 	var cut := 0.0
 	var chain := 0
-	var bites := 0
-	var knot := false
-	var knot_done := false
-	var knot_grows := false
+	var knot := rng.randf() < (1.0 if id == &"heartwood" else human)
 	var fine_cut := false
 	var time := 0.0
 	var xp := 0.0
@@ -392,7 +388,7 @@ func _chop(i: int, st: Dictionary, lvl: int, axe: int, id: StringName, momentum:
 		cut += per_hit
 		var cuts := int(cut)
 		cut -= cuts
-		var at_knot := knot  # the bot aims at a knot when there is one (not at the notch: no clean cut)
+		var at_knot := knot and swings == 2  # (aimed at the knot, not the notch: no clean cut)
 		var depth := back if on_back else front
 		var clean: bool = not at_knot and not on_back and depth >= s["clean_after"] and rng.randf() < human
 		var extra: int = s["clean_extra"] if clean else 0
@@ -407,7 +403,8 @@ func _chop(i: int, st: Dictionary, lvl: int, axe: int, id: StringName, momentum:
 				extra += maxi((RN.POWER_CLEAN_HITS if clean else RN.POWER_HITS) - (cuts + (s["clean_extra"] if clean else 0)), 0)
 			if at_knot:
 				extra += RN.KNOT_EXTRA
-				rare.append(&"heartwood")
+				if id == &"heartwood" and rng.randf() < RN.HEARTWOOD_CHANCE:
+					rare.append(&"heartwood")
 				knot = false
 			if st["fine"] and clean and not fine_cut:
 				fine_cut = true
@@ -418,18 +415,9 @@ func _chop(i: int, st: Dictionary, lvl: int, axe: int, id: StringName, momentum:
 		if took > 0:
 			var share := float(took) / max_hits
 			if on_back:
-				back += share * (on_bark if not back_barked else 1.0)
-				back_barked = true
+				back += share
 			else:
-				front += share * (on_bark if not front_barked else 1.0)
-				front_barked = true
-			if hits > 0:
-				bites += 1
-				if bites == 1:
-					knot_grows = rng.randf() < RN.KNOT_CHANCE
-				if id == &"heartwood" and bites == RN.KNOT_AFTER and knot_grows and not knot_done:
-					knot = true
-					knot_done = true
+				front += share
 	var logs: float = s["drops"] * (RN.FINE_GRAIN_DROPS if fine_cut else 1.0) \
 		* (RN.OLD_GROWTH_DROPS if _old_growth(i, id) else 1) * (RN.DOMINOES_LOGS if id == &"dominoes" else 1.0)
 	if _old_growth(i, id):

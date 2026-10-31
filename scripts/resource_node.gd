@@ -46,20 +46,25 @@ const TALENT_COLOR := Color("ffe9a8")
 ## Chain cut: the most extra hits a run of clean cuts reaches.
 const CHAIN_MAX := 3
 ## Back cut: once the notch is this deep (share of a full notch, as for a clean cut), a hit from
-## more than this far round from its side counts this many times.
+## more than this far round from its side counts this many times: it cracks the hinge.
 const BACK_CUT_AFTER := 0.25
 const BACK_CUT_ANGLE := 120.0
 const BACK_CUT_TIMES := 4
 ## Power swing: a full charge counts as this many hits, or this many on a clean cut.
 const POWER_HITS := 4
 const POWER_CLEAN_HITS := 7
-## Heartwood: this share of trees grow a knot; it shows after this many biting hits; hitting it
-## takes this many extra.
-const KNOT_CHANCE := 0.12
-const KNOT_AFTER := 3
+## The knot every tree grows (plans/logging.md): striking it (aimed within KNOT_RADIUS) cracks
+## this many extra cuts in; how much darker than the bark it is; Heartwood's glow round it.
 const KNOT_EXTRA := 3
 const KNOT_RADIUS := 0.16
+const KNOT_DARK := 0.45
 const KNOT_COLOR := Color("ffb347")
+## Heartwood: the share of struck knots that give a heartwood log (tools/talent_model.gd balances it).
+const HEARTWOOD_CHANCE := 0.12
+## A layer of wood coming out of the notch: its snap (the clean cut's crack, quieter and higher), dB.
+const LAYER_POP_DB := -7.0
+## A tree falling toward whoever felled it swings at least this far (degrees) aside of them.
+const FALL_ASIDE := 60.0
 ## Dominoes: a tree you fell lands hard, shaking loose this many times the logs; a falling trunk
 ## takes this share of the max hits off each tree it lands on.
 const DOMINOES_LOGS := 1.25
@@ -322,6 +327,10 @@ var _timer_label: Label3D
 var _ghost: Node3D
 var _ghost_outline: ShaderMaterial
 var _carve: TrunkCarve  # carve_notch: the notch in the trunk
+var _plain := PackedFloat32Array()  # ... the stability after each cut of a plain chop (0 cuts first)
+var _fall_at := 0.0  # ... the stability it falls at: between a plain chop's last two cuts
+var _popped := PackedInt32Array()  # ... the layers the last hit cut through (TrunkCarve.LAYERS)
+var _pop_dir := Vector3.ZERO  # ... and where from (trunk space)
 var _trunk: MeshInstance3D  # ... the trunk it's carved into
 var _trunk_rest := Transform3D.IDENTITY  # ... where the trunk sits in the node, at rest
 var _stump: MeshInstance3D  # ... and what's left of it once the tree is down
@@ -366,7 +375,8 @@ func _ready() -> void:
 		_refresh_old_growth()
 		Skills.talents.changed.connect(func(s: StringName) -> void:
 			if s == &"woodcutting":
-				_refresh_old_growth())
+				_refresh_old_growth()
+				_place_knot())
 
 
 ## Moves the model's meshes into Visual/Body, Visual/Chunks and Rubble by name prefix, replacing
@@ -451,7 +461,10 @@ func _setup_carve() -> void:
 	if _trunk == null or not _trunk.mesh is ArrayMesh:
 		push_warning("%s: carve_notch needs a Body_Trunk mesh" % name)
 		return
-	_carve = TrunkCarve.new(_trunk.mesh, notch_band, bark_thickness)
+	_carve = TrunkCarve.new(_trunk.mesh, notch_band, bark_thickness, notch_depth, max_hits)
+	_plain = _plain_chop()
+	_fall_at = (_plain[max_hits - 1] + _plain[max_hits]) * 0.5
+	_grow_knot()
 	_trunk_rest = global_transform.affine_inverse() * _trunk.global_transform
 	for m in _trunk.get_parent().get_children():
 		if m is MeshInstance3D and m != _trunk:
@@ -538,9 +551,8 @@ func hit(info: HitInfo) -> bool:
 	var tip := cracks and _is_tip_hit(info)
 	_clean = _carve != null and _is_clean_cut(info)
 	var talent := _woodcutting_talents(info, cuts) if skill == &"woodcutting" else {}
-	hits_left = maxi(hits_left - cuts - (1 if double else 0) - (weak_point_extra_hits if weak else 0)
-		- (crack_tip_extra_hits if tip else 0) - (clean_cut_extra_hits if _clean else 0)
-		- talent.get("extra", 0), 0)
+	var took: int = cuts + (1 if double else 0) + (weak_point_extra_hits if weak else 0) 		+ (crack_tip_extra_hits if tip else 0) + (clean_cut_extra_hits if _clean else 0) + talent.get("extra", 0)
+	hits_left = maxi(hits_left - took, 0)
 	# under-levelled, a plain hit can fall short of a whole cut: it marks the node but takes nothing
 	var bit := hits_left < before
 	if bit and skill == &"woodcutting" and hits_left > 0:
@@ -549,7 +561,8 @@ func hit(info: HitInfo) -> bool:
 	if weak:
 		_weak_hit_feedback(info)
 	if _carve:
-		_carve_hit(info, before - hits_left)
+		_carve_hit(info, took, _clean)
+		hits_left = _hits_from_stability()  # (the notch decides when a tree goes, not the count)
 		_tree_reacts(info, 1.0 - float(hits_left) / max_hits)
 	SaveGame.mark_dirty()
 	var collapsed := 0
@@ -611,6 +624,7 @@ func pull(info: HitInfo) -> void:
 	var tear := (info.normal * 0.6 + toward * 0.6).normalized()
 	if _carve:
 		_throw_chip(info, tear, _clean)
+		_pop_layers(info, tear)
 	else:
 		_spawn_fragment(info, tear)
 	if _seams.is_empty() and _links.is_empty():  # (a boulder of pieces only loses them along cracks / where struck)
@@ -785,6 +799,7 @@ func to_dict() -> Dictionary:
 func from_dict(d: Dictionary) -> void:
 	if _carve and d.has("notch"):
 		_carve.from_dict(d["notch"])
+		_place_knot()
 	_fine_next = d.get("fine", false) and d.has("respawn_left")
 	_fine_grained = d.get("fine", false) and not d.has("respawn_left")
 	if d.has("respawn_left"):
@@ -1160,28 +1175,38 @@ func _make_leaves() -> CPUParticles3D:
 	return p
 
 
-## Which way a notched tree falls: sideways to the swinger and a little away, never onto them.
-## Whichever side is clear of other trees, else either.
+## Which way a notched tree falls: toward its notch (the side it was begun on: the wood left
+## behind it is the hinge that steers it), but never onto the swinger: if they stand in its path it
+## swings at least FALL_ASIDE aside, the way it leans if that's clear of other trees, else the other.
 func _fall_direction(info: HitInfo) -> Vector3:
-	var away := info.away()
-	var sides: Array[Vector3] = [away.cross(Vector3.UP), -away.cross(Vector3.UP)]
-	sides.shuffle()
+	var notch := _notch_dir()
+	var toward_you := -info.away()
+	toward_you.y = 0.0
+	toward_you = toward_you.normalized()
+	if notch.length_squared() < 0.5:
+		notch = toward_you.cross(Vector3.UP)
+	var off := notch.signed_angle_to(toward_you, Vector3.UP)  # (from the notch round to you)
+	if absf(off) >= deg_to_rad(FALL_ASIDE):
+		return notch
+	var leans := -signf(off) if off != 0.0 else (1.0 if randf() < 0.5 else -1.0)
 	var space := get_world_3d().direct_space_state
 	var from := global_position + Vector3.UP * 2.0
-	for side in sides:
-		var dir := (side + away * 0.35).normalized()
+	var dir := Vector3.ZERO
+	for side in [leans, -leans]:
+		dir = toward_you.rotated(Vector3.UP, side * deg_to_rad(FALL_ASIDE))
 		var query := PhysicsRayQueryParameters3D.create(from, from + dir * 3.5, WORLD_LAYER, [get_rid()])
 		if space.intersect_ray(query).is_empty():
 			return dir
-	return (sides[0] + away * 0.35).normalized()
+	return toward_you.rotated(Vector3.UP, leans * deg_to_rad(FALL_ASIDE))
 
 
 # --- notch ----------------------------------------------------------------------------------
 
-## The notch deepens toward the swinger (`cuts`: how many hits this one counted for), and the hit
-## moves onto the notch's surface, where the axe really bites and the chips fly from, instead of
-## the trunk's collision box.
-func _carve_hit(info: HitInfo, cuts: int) -> void:
+## The notch deepens toward the swinger (`cuts`: how many hits this one counted for; `finish`, a
+## clean cut, takes the rest of the layer it's in), and the hit moves onto the notch's surface,
+## where the axe really bites and the chips fly from, instead of the trunk's collision box. The
+## layers it cut through come off when the axe is pulled out (_pop_layers()).
+func _carve_hit(info: HitInfo, cuts: int, finish := false) -> void:
 	var to_trunk := _trunk.global_transform.affine_inverse()
 	var dir := to_trunk.basis * (info.from - info.position)
 	dir.y = 0.0
@@ -1189,8 +1214,13 @@ func _carve_hit(info: HitInfo, cuts: int) -> void:
 	var stripped := _blaze_area()
 	if not _carve.is_started() and dir.length_squared() > 0.0001:
 		_notch_from = dir.normalized()  # the notch's side (Back cut and Dominoes go by it)
-	_carve.hit(y, dir, notch_depth * cuts / max_hits)
+	_popped = _carve.hit(y, dir, cuts, finish)
+	_pop_dir = dir
 	_trunk.mesh = _carve.carved()
+	if _knot_struck:
+		_crack_knot(info, dir)
+	elif _knot and _knot.visible and _carve.knot_bared():
+		_lose_knot()
 	info.position = _trunk.global_transform * _carve.bite_point(dir)
 	info.normal = (_trunk.global_basis * dir).normalized()
 	# the bark that came away flies off in slabs, more the more of it went; then a flake or two
@@ -1198,6 +1228,65 @@ func _carve_hit(info: HitInfo, cuts: int) -> void:
 	var slabs := clampi(roundi((_blaze_area() - stripped) * 40.0), 0, 6)
 	for i in slabs + cuts:
 		_peel_bark(dir, i < slabs)
+
+
+## The layers the last hit cut through come away as the axe comes out: the bark in strips, the wood
+## in a slab of that layer's colour, with a snap (unless a clean cut's crack already played).
+func _pop_layers(info: HitInfo, push: Vector3) -> void:
+	var wood := false
+	for k in _popped:
+		if k < TrunkCarve.BARK_LAYERS:
+			for i in 2:
+				_peel_bark(_pop_dir, true)
+		else:
+			_throw_slab(info, push, k)
+			wood = true
+	if wood and not _clean and clean_layers:
+		Sfx.play_at(clean_layers, info.position, randf_range(1.15, 1.3), LAYER_POP_DB)
+	_popped.clear()
+
+
+## A layer of wood breaking out of the notch: a flat slab as wide as the notch's mouth, as thick as
+## the layer, in its colour.
+func _throw_slab(info: HitInfo, push: Vector3, k: int) -> void:
+	var slab := MeshInstance3D.new()
+	var wedge := PrismMesh.new()
+	wedge.left_to_right = 0.0
+	var thick := clampf(_carve.layer_thickness(k) * 1.3, 0.015, 0.05)
+	wedge.size = Vector3(randf_range(0.15, 0.22), thick, randf_range(0.1, 0.14))
+	slab.mesh = wedge
+	slab.material_override = NODE_SURFACE
+	var colour: Color = TrunkCarve.LAYERS[mini(k, TrunkCarve.LAYERS.size() - 1)][2]
+	slab.set_instance_shader_parameter("albedo", colour.darkened(randf_range(-0.04, 0.08)))
+	var rot := Basis.from_euler(Vector3(randf_range(-0.3, 0.3), randf() * TAU, randf_range(-0.3, 0.3)))
+	_throw(slab, Transform3D(rot, info.position + info.normal * 0.08), push.rotated(Vector3.UP, randf_range(-0.3, 0.3)),
+		debris_speed * randf_range(0.8, 1.0))
+
+
+## A plain chop's stability, cut by cut (TrunkCarve.plain_chop() straight in at the middle of the
+## band), worked out once per trunk and tree.
+static var _plain_chops := {}
+func _plain_chop() -> PackedFloat32Array:
+	var key := "%d %s %s %d" % [_trunk.mesh.get_instance_id(), bark_thickness, notch_depth, max_hits]
+	if not _plain_chops.has(key):
+		_plain_chops[key] = _carve.plain_chop((notch_band.x + notch_band.y) * 0.5, Vector3.RIGHT, max_hits)
+	return _plain_chops[key]
+
+
+## Swings left for the notch as it stands: 0 once the wood left at the ring can't hold the tree up
+## (it falls), else the count kept so far, held to what a plain chop has left at this stability
+## (a plain chop's own count stays as it was; cutting round the trunk or a knot moves it on).
+func _hits_from_stability() -> int:
+	var left := _carve.stability()
+	if left <= _fall_at:
+		return 0
+	var first := 0  # the plain cuts that bring it this low: from the first ...
+	while first < max_hits - 1 and _plain[first] > left + 0.0001:
+		first += 1
+	var last := first  # ... to the last that leave it standing this high
+	while last < max_hits - 1 and _plain[last + 1] >= left - 0.0001:
+		last += 1
+	return max_hits - clampi(max_hits - hits_left, first, last)
 
 
 ## How much bark the blaze has stripped so far (m of height, summed round the trunk's bins).
@@ -2918,11 +3007,11 @@ static func _crack_dot(img: Image, cx: float, y: int, radius: float, color: Colo
 # heartwood, grove keeper, old growth). Each asks Skills.talents.has() at the moment it matters.
 
 var _notch_from := Vector3.ZERO  # trunk space: the side the notch was begun on (ZERO: not yet)
-var _knot_grows := false  # Heartwood: this tree has a knot to find (rolled as it grows)
 var _chain := 0  # Chain cut: clean cuts in a row on this tree
-var _bites := 0  # biting hits on this tree since it grew (Heartwood's knot comes after a few)
-var _knot: MeshInstance3D  # Heartwood: the glowing knot, while it shows
-var _knot_done := false  # ... once per tree
+var _bites := 0  # biting hits on this tree since it grew
+var _knot: MeshInstance3D  # the tree's knot (a burl on the bark: TrunkCarve.knot_*), on the trunk
+var _knot_glow: MeshInstance3D  # ... and Heartwood's glow round it
+var _knot_struck := false  # ... this hit landed on it (a crack runs in: _crack_knot())
 var _bonus_items: Array[StringName] = []  # heartwood / trophy logs to drop with the logs
 var _fine_grained := false  # Grove keeper: regrown fine-grained (the first clean cut doubles drops)
 var _fine_next := false  # ... and growing back that way
@@ -2943,18 +3032,25 @@ func _woodcutting_talents(info: HitInfo, cuts: int) -> Dictionary:
 		if _chain >= 2:
 			extra += mini(_chain - 1, CHAIN_MAX)
 			say.append("Chain ×%d" % _chain)
-	if t.has(&"back_cut") and _is_back_cut(info):
+	if t.has(&"back_cut") and _is_back_cut(info):  # the hinge cracks: a sharp crack and the trunk groans
 		extra += cuts * (BACK_CUT_TIMES - 1)
 		say.append("Back cut!")
+		if clean_layers:
+			Sfx.play_at(clean_layers, info.position, 0.85, LAYER_POP_DB + 4.0)
+		if creak_layers:
+			_groan(global_position + Vector3.UP * 2.0, 0.95, -6.0)
 	if info.power and t.has(&"power_swing"):
 		var normal := cuts + (clean_cut_extra_hits if _clean else 0)
 		extra += maxi((POWER_CLEAN_HITS if _clean else POWER_HITS) - normal, 0)
 		say.append("Power!")
-	if _knot and _knot.visible and _aimed_near(info, _knot.global_position, KNOT_RADIUS * _window_scale()):
+	_knot_struck = _knot != null and _knot.visible and _aimed_near(info, _knot.global_position, KNOT_RADIUS * _window_scale())
+	if _knot_struck:  # (every tree's knot, a talent or not: plans/logging.md)
 		extra += KNOT_EXTRA
-		_bonus_items.append(&"heartwood")
-		_knot.visible = false
-		say.append("Heartwood!")
+		if t.has(&"heartwood") and randf() < HEARTWOOD_CHANCE:
+			_bonus_items.append(&"heartwood")
+			say.append("Heartwood!")
+		else:
+			say.append("Knot!")
 	if _fine_grained and _clean and not _fine_cut:
 		_fine_cut = true
 		say.append("Fine grain!")
@@ -2993,56 +3089,94 @@ func _notch_dir() -> Vector3:
 	return world.normalized()
 
 
-## Back cut and Dominoes fell a tree the way a feller would: toward its notch (with Back cut,
-## that's away from you, the back cut's on your side). Otherwise `usual` (sideways, clear of you).
+## Every tree falls toward its notch now (_fall_direction()), as Back cut and Dominoes once made
+## it: the talents leave the way it falls alone.
 func _talent_fall(usual: Vector3) -> Vector3:
-	var t := Skills.talents
-	if t.has(&"dominoes") or t.has(&"back_cut"):
-		var n := _notch_dir()
-		if n.length_squared() > 0.5:
-			return n
 	return usual
 
 
-## After a biting hit: Heartwood's knot shows once the tree's taken a few.
+## After a biting hit (bench_bot.gd counts them).
 func _after_bite() -> void:
 	_bites += 1
-	if _bites == 1:
-		_knot_grows = randf() < KNOT_CHANCE  # (rolled once a tree, on its first bite)
-	if _bites == KNOT_AFTER and _knot_grows and not _knot_done and Skills.talents.has(&"heartwood") and _trunk:
-		_knot_done = true
-		_show_knot()
 
 
-## The knot: a warm glow on the trunk, somewhere round the side you're facing.
-func _show_knot() -> void:
+# --- the knot -------------------------------------------------------------------------------
+# plans/logging.md: the tree's fault. Every tree grows a knot, a dark burl in the bark somewhere
+# round the chopping band; struck, a crack runs in from it (KNOT_EXTRA more cuts there, its
+# layers coming off together). Once a tree, lost if the notch's stripped bark reaches it first.
+# Heartwood makes it glow and drop a heartwood log.
+
+## A fresh tree's knot: anywhere round the trunk, in the band but clear of its ends.
+func _grow_knot() -> void:
+	_carve.grow_knot(randf() * TAU, randf_range(notch_band.x + 0.1, notch_band.y - 0.1))
+	_place_knot()
+
+
+## The knot on the trunk where TrunkCarve says it grew (hidden once gone), glowing with Heartwood.
+func _place_knot() -> void:
+	if _carve == null or is_nan(_carve.knot_angle):
+		return
 	if _knot == null:
 		_knot = MeshInstance3D.new()
-		_knot.name = "HeartwoodKnot"
+		_knot.name = "Knot"
+		var burl := SphereMesh.new()
+		burl.radius = 0.06
+		burl.height = 0.12
+		burl.radial_segments = 8
+		burl.rings = 4
+		_knot.mesh = burl
+		_knot.material_override = NODE_SURFACE
+		_knot.set_instance_shader_parameter("albedo", bark_color.darkened(KNOT_DARK))
+		_trunk.add_child(_knot)  # (it sways with the trunk)
+		_knot_glow = MeshInstance3D.new()
 		var orb := SphereMesh.new()
-		orb.radius = 0.07
-		orb.height = 0.1
+		orb.radius = 0.08
+		orb.height = 0.16
 		var mat := StandardMaterial3D.new()
 		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		mat.albedo_color = KNOT_COLOR
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.albedo_color = Color(KNOT_COLOR, 0.45)
 		orb.material = mat
-		_knot.mesh = orb
-		_knot.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		add_child(_knot)
-		var pulse := _knot.create_tween().set_loops()
-		pulse.tween_property(_knot, "scale", Vector3.ONE * 1.3, 0.5).set_trans(Tween.TRANS_SINE)
-		pulse.tween_property(_knot, "scale", Vector3.ONE * 0.85, 0.5).set_trans(Tween.TRANS_SINE)
-	var player := get_tree().get_first_node_in_group("player") as Node3D
-	var toward := (player.global_position - global_position) if player else Vector3.FORWARD
-	toward.y = 0.0
-	var dir := toward.normalized().rotated(Vector3.UP, randf_range(-1.0, 1.0))
-	var local := _trunk.global_transform.affine_inverse().basis * dir
-	local.y = 0.0
-	var y := (_carve.ring if _carve and _carve.is_started() else 1.0) + randf_range(0.35, 0.8)
-	var r := (_carve.radius_at(y, local) if _carve else 0.25) + 0.02
-	_knot.global_position = _trunk.global_transform * (Vector3(0, y, 0) + local.normalized() * r)
-	_knot.visible = true
-	PopupText.spawn(get_parent(), _knot.global_position + Vector3.UP * 0.3, "A knot!", KNOT_COLOR, 8)
+		_knot_glow.mesh = orb
+		_knot_glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_knot.add_child(_knot_glow)
+		var pulse := _knot_glow.create_tween().set_loops()
+		pulse.tween_property(_knot_glow, "scale", Vector3.ONE * 1.25, 0.6).set_trans(Tween.TRANS_SINE)
+		pulse.tween_property(_knot_glow, "scale", Vector3.ONE * 0.9, 0.6).set_trans(Tween.TRANS_SINE)
+	var out := _carve.knot_dir()
+	# a squashed burl standing a little proud of the bark, its long axis up the trunk
+	_knot.transform = Transform3D(Basis.looking_at(-out).scaled(Vector3(1.0, 1.0, 0.5)),
+		_carve.knot_point() + out * 0.01)
+	_knot.visible = not _carve.knot_gone
+	_knot_glow.visible = Skills.talents.has(&"heartwood")
+
+
+## The knot struck: it bursts off and a crack runs in (the hit's extra cuts already went in, from
+## its side), with a deep crack and a groan.
+func _crack_knot(info: HitInfo, dir: Vector3) -> void:
+	_knot_struck = false
+	_carve.knot_gone = true
+	_knot.visible = false
+	for i in 3:
+		_peel_bark(dir, true)
+	_throw_chip(info, info.normal, true)
+	if clean_layers:
+		Sfx.play_at(clean_layers, info.position, 0.75, 2.0)
+	if creak_layers:
+		_groan(global_position + Vector3.UP * 2.0, 1.1, -4.0)
+	Juice.shake(shake_break * 0.4)
+
+
+## The notch's stripped bark has reached the knot: it comes away with the bark, wasted.
+func _lose_knot() -> void:
+	_carve.knot_gone = true
+	_knot.visible = false
+	var chip := MeshInstance3D.new()
+	chip.mesh = _knot.mesh
+	chip.material_override = NODE_SURFACE
+	chip.set_instance_shader_parameter("albedo", bark_color.darkened(KNOT_DARK))
+	var out := (_trunk.global_basis * _carve.knot_dir()).normalized()
+	_throw(chip, Transform3D(Basis(), _knot.global_position), out + Vector3.UP * 0.3, debris_speed * 0.5)
 
 
 ## When the tree's down: Momentum's count, Grove keeper's quick and fine regrowth, Old growth's
@@ -3068,8 +3202,8 @@ func _regrown() -> void:
 	_chain = 0
 	_bites = 0
 	_notch_from = Vector3.ZERO
-	_knot_grows = false
-	_knot_done = false
+	if _carve:
+		_grow_knot()
 	_fine_cut = false
 	_fine_grained = _fine_next
 	_fine_next = false

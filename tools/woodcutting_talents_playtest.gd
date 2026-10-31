@@ -128,12 +128,10 @@ func _power_swing() -> void:
 func _heartwood() -> void:
 	_only(&"heartwood")
 	var tree = _tree()
-	await _strike(tree, Vector3.RIGHT)
-	tree.set("_knot_grows", true)  # (only KNOT_CHANCE of trees grow one: make this one of them)
-	for i in 2:
-		await _strike(tree, Vector3.RIGHT)
 	var knot: Node3D = tree.get("_knot")
-	_check(knot != null and knot.visible, "heartwood: a knot shows after three bites")
+	var glow: Node3D = tree.get("_knot_glow")
+	_check(knot != null and knot.visible, "heartwood: the tree has its knot")
+	_check(glow != null and glow.visible, "heartwood: the knot glows")
 	if knot:
 		var took := await _strike(tree, Vector3.RIGHT, false, knot.global_position)
 		var bonus: Array = tree.get("_bonus_items")
