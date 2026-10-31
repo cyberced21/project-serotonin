@@ -126,10 +126,13 @@ func _anchor_shape(n: Node3D) -> Dictionary:
 	var inv := n.global_transform.affine_inverse()
 	var box := Rect2()
 	var any := false
+	var kind := "building" if n.is_in_group("building") else "fixture" if n.is_in_group("fixture") else "green" if n.name == &"Green" else "place"
 	for m in n.find_children("*", "MeshInstance3D", true, false):
 		var mi := m as MeshInstance3D
 		if mi.mesh == null or mi.is_in_group("critter"):
 			continue
+		if kind in ["building", "fixture"] and _carried(mi, n):
+			continue  # (its garden, a rick, a hen: the box is the building's own)
 		var aabb: AABB = (inv * mi.global_transform) * mi.get_aabb()
 		var r := Rect2(aabb.position.x, aabb.position.z, aabb.size.x, aabb.size.z)
 		if r.size.x > 60.0 or r.size.y > 60.0:
@@ -144,9 +147,19 @@ func _anchor_shape(n: Node3D) -> Dictionary:
 		var p := inv * door.global_position
 		d = [snappedf(p.x, 0.1), snappedf(p.z, 0.1)]
 	var def: Variant = n.get("def")
-	var kind := "building" if n.is_in_group("building") else "fixture" if n.is_in_group("fixture") else "green" if n.name == &"Green" else "place"
 	return {"box": [snappedf(box.position.x, 0.1), snappedf(box.position.y, 0.1), snappedf(box.end.x, 0.1), snappedf(box.end.y, 0.1)],
 		"door": d, "kind": kind, "name": def.display_name if def else String(n.name).capitalize()}
+
+
+## Whether mesh `m` belongs to a prop or an animal parked under anchored `top` (not to `top` itself).
+func _carried(m: Node, top: Node) -> bool:
+	var p := m.get_parent()
+	while p and p != top:
+		var sc: Script = p.get_script()
+		if sc and sc.resource_path.get_file() in ["prop.gd", "animal.gd"]:
+			return true
+		p = p.get_parent()
+	return false
 
 
 func _anchored(n: Node, anchored: Dictionary) -> bool:

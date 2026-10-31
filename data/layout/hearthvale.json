@@ -152,7 +152,9 @@
 		{"at":[94,70],"id":"coal_rock_1","save_id":"coal_rock_1","type":"coal","yaw":45.8},
 		{"at":[-68,-22],"id":"gold_rock_1","save_id":"gold_rock_1","type":"gold","yaw":57.3},
 		{"at":[-76,-10],"id":"gold_rock_2","save_id":"gold_rock_2","type":"gold","yaw":200.5},
-		{"at":[-62,-34],"id":"gold_rock_3","save_id":"gold_rock_3","type":"gold","yaw":303.7}
+		{"at":[-62,-34],"id":"gold_rock_3","save_id":"gold_rock_3","type":"gold","yaw":303.7},
+		{"at":[45.5,87.5],"id":"lake_signpost","type":"signpost","yaw":114.59},
+		{"at":[102.0,107.0],"id":"signpost","type":"signpost","yaw":-45.84}
 	],
 	"anchors": [
 		{"at":[128.0,95.0],"id":"town_hall","node":"Village/TownHall","pad":12.2,"yaw":0.0},
@@ -182,6 +184,7 @@
 		{"at":[42.0,200.0],"id":"watermill","node":"Places/Watermill","pad":7.6,"yaw":0.0},
 		{"at":[200.0,62.0],"id":"orchard","node":"Places/Orchard","yaw":0.0},
 		{"at":[360.0,18.0],"id":"shepherds_hill","node":"Places/ShepherdsHill","yaw":0.0},
-		{"at":[111.0,-163.0],"id":"haven","node":"Places/Haven","yaw":0.0}
+		{"at":[111.0,-163.0],"id":"haven","node":"Places/Haven","yaw":0.0},
+		{"at":[85.2,189.1],"id":"allotments","node":"Village/Yards/Allotments","yaw":0.0}
 	]
 }

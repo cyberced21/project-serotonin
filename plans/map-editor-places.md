@@ -82,6 +82,18 @@ Branch `places` off `main`, one commit a phase.
   warnings (a road across a pad, the mill off the creek: `tools/map_editor/terrain_report.json`).
   Today's layout has no warnings. Checked in the browser pane: drag, turn, the warnings, Delete
   doing nothing, undo; nothing saved.
+- **Phase 6 (2026-10-30):** 18 more props in the catalog, so they can be put anywhere as points:
+  signpost, two lamp posts (village and rustic: they light after dark like the green's), the
+  village bench, barrel, crates, the hay cart, a rick and a round bale, a length of fence, a hedge
+  bush, cabbages, pumpkins, turnips, a vegetable bed, a garden row of wheat and garden flowers. The
+  two signposts left `main.tscn` for the layout's points. The rest of the yards and loose props
+  went under what they belong to, so they move with it: each cottage's garden (Rosa's, Edda's,
+  your home's, the two empty cottages'), the smithy's barrels, the town hall's crates, the cart at
+  its shed, and the barn's ricks, pen, hens, chicks, rooster and farmyard sounds; the washhouse's
+  and the chapel's sounds went under them too. The allotments (24 beds in 8 hedges) are a place
+  of their own (`Village/Yards/Allotments`, anchor `allotments`). 76 nodes moved, none by a hair.
+  The editor's footprint of a building or fixture leaves out the props and animals parked under it
+  (the barn's box is the barn, not its pen).
 
 ## What moves
 

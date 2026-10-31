@@ -20,6 +20,7 @@
 [ext_resource type="PackedScene" path="res://models/country/wall.glb" id="18_e6c8o"]
 [ext_resource type="Script" path="res://scripts/fixture.gd" id="20_2kw4o"]
 [ext_resource type="PackedScene" path="res://models/village/fx_ruined_cottage.gltf" id="21_vqbv3"]
+[ext_resource type="PackedScene" path="res://models/village/props/signpost.glb" id="56_t2o6s"]
 [ext_resource type="PackedScene" path="res://scenes/wheat_sheaf.tscn" id="59_0pqgu"]
 [ext_resource type="PackedScene" path="res://scenes/barley_sheaf.tscn" id="62_vt6j2"]
 [ext_resource type="PackedScene" path="res://scenes/iron_rock.tscn" id="64_kunej"]
@@ -253,6 +254,18 @@ save_id = &"gold_rock_2"
 [node name="GoldRock3" type="StaticBody3D" parent="Points" instance=ExtResource("15_dtu00")]
 transform = Transform3D(0.55484426, 0, -0.83195424, 0, 1, 0, 0.83195424, 0, 0.55484426, -62, 46.77614, -34)
 save_id = &"gold_rock_3"
+
+[node name="LakeSignpost" type="StaticBody3D" parent="Points"]
+transform = Transform3D(-0.4161221, 0, 0.90930873, 0, 1, 0, -0.90930873, 0, -0.4161221, 45.5, 0, 87.5)
+script = ExtResource("2_ll70m")
+model = ExtResource("56_t2o6s")
+snap_to_ground = true
+
+[node name="Signpost" type="StaticBody3D" parent="Points"]
+transform = Transform3D(0.69666445, 0, -0.71739715, 0, 1, 0, 0.71739715, 0, 0.69666445, 102, 0, 107)
+script = ExtResource("2_ll70m")
+model = ExtResource("56_t2o6s")
+snap_to_ground = true
 
 [node name="Lines" type="Node3D" parent="."]
 
@@ -2324,3 +2337,5 @@ save_id = &"outcrop_5_003"
 [node name="outcrop_5_004" type="StaticBody3D" parent="Patches/Outcrop5" instance=ExtResource("11_8uhmp")]
 transform = Transform3D(-0.70605487, 0, 0.7081571, 0, 1, 0, -0.7081571, 0, -0.70605487, 224.27863, 25.024467, 341.60968)
 save_id = &"outcrop_5_004"
+
+[node name="Water" type="Node3D" parent="."]

@@ -34,7 +34,24 @@
 		"bush_flowers":   {"label": "Flowering bush", "model": "res://models/country/bush_with_flowers.glb", "collide": false},
 		"bush_berries":   {"label": "Berry bush",     "model": "res://models/country/bush_with_berries.glb", "collide": false},
 		"flowers":        {"label": "Wildflowers",    "model": "res://models/country/flowers.glb", "collide": false},
-		"flower_group":   {"label": "Flower clump",   "model": "res://models/country/flower_group.glb", "collide": false}
+		"flower_group":   {"label": "Flower clump",   "model": "res://models/country/flower_group.glb", "collide": false},
+		"flowers_2":      {"label": "Garden flowers", "model": "res://models/country/flowers_2.glb", "collide": false},
+		"signpost":       {"label": "Signpost",       "model": "res://models/village/props/signpost.glb", "collide": true, "own_materials": false},
+		"lamp_post":      {"label": "Lamp post",      "model": "res://models/village/props/lamp_post.glb", "collide": true, "own_materials": false},
+		"lamp_rustic":    {"label": "Lamp post (rustic)", "model": "res://models/village/props/lamp_post_rustic.glb", "collide": true, "own_materials": false},
+		"village_bench":  {"label": "Bench (village)", "model": "res://models/village/props/bench.glb", "collide": true, "own_materials": false},
+		"barrel":         {"label": "Barrel",         "model": "res://models/village/props/barrel.glb", "collide": true, "own_materials": false},
+		"crates":         {"label": "Crates",         "model": "res://models/village/props/crates.glb", "collide": true, "own_materials": false},
+		"cart":           {"label": "Hay cart",       "model": "res://models/field/cart.glb", "collide": true, "own_materials": false},
+		"hay_stack":      {"label": "Hay rick",       "model": "res://models/field/hay_stack.glb", "collide": true, "own_materials": false},
+		"hay_round":      {"label": "Round bale",     "model": "res://models/field/hay_round.glb", "collide": true, "own_materials": false},
+		"pen_fence":      {"label": "Fence (a length)", "model": "res://models/country/fence.glb", "collide": true},
+		"hedge_bit":      {"label": "Hedge (a bush)", "model": "res://models/country/hedge.glb", "scale": [1, 0.65, 0.75], "collide": true},
+		"cabbage":        {"label": "Cabbages",       "model": "res://models/country/cabbage.glb", "collide": false},
+		"pumpkin":        {"label": "Pumpkins",       "model": "res://models/country/pumpkin.glb", "collide": false},
+		"turnip":         {"label": "Turnips",        "model": "res://models/country/turnip.glb", "scale": [0.6, 0.6, 0.6], "collide": false},
+		"veg_bed":        {"label": "Vegetable bed",  "model": "res://models/country/crops.glb", "collide": false},
+		"garden_wheat":   {"label": "Wheat (a garden row)", "model": "res://models/country/wheat.glb", "collide": false}
 	},
 	"fixtures": {
 		"ruined_farmstead": {"label": "Ruined farmstead", "model": "res://models/village/fx_ruined_cottage.gltf", "radius": 8}
