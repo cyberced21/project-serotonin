@@ -2,48 +2,9 @@
 
 [ext_resource type="Script" path="res://scripts/scenery_scatter.gd" id="5_scatter"]
 [ext_resource type="Script" path="res://scripts/scatter_layer.gd" id="6_layer"]
-[ext_resource type="PackedScene" path="res://models/scenery/canopy_pine.glb" id="7_canopy_pine"]
-[ext_resource type="PackedScene" path="res://models/scenery/canopy_pine_young.glb" id="8_canopy_young"]
-[ext_resource type="PackedScene" path="res://models/scenery/canopy_birch.glb" id="9_canopy_birch"]
 [ext_resource type="PackedScene" path="res://models/scenery/fern.glb" id="10_fern"]
 [ext_resource type="PackedScene" path="res://models/scenery/mushrooms.glb" id="11_mushrooms"]
 [ext_resource type="PackedScene" path="res://models/scenery/grass_tuft.glb" id="12_grass"]
-
-[sub_resource type="Resource" id="Layer_canopy_pine"]
-script = ExtResource("6_layer")
-model = ExtResource("7_canopy_pine")
-density = 2.0
-scale_range = Vector2(1.45, 2.2)
-min_normal_y = 0.75
-sway = 0.05
-allowed_ids = Array[int]([3])
-collide = true
-collision_size = Vector3(0.5, 4, 0.5)
-clearance = 1.0
-
-[sub_resource type="Resource" id="Layer_canopy_young"]
-script = ExtResource("6_layer")
-model = ExtResource("8_canopy_young")
-density = 0.9
-scale_range = Vector2(1.2, 1.8)
-min_normal_y = 0.75
-sway = 0.08
-allowed_ids = Array[int]([3])
-collide = true
-collision_size = Vector3(0.35, 2.5, 0.35)
-clearance = 0.8
-
-[sub_resource type="Resource" id="Layer_canopy_birch"]
-script = ExtResource("6_layer")
-model = ExtResource("9_canopy_birch")
-density = 0.4
-scale_range = Vector2(1.45, 2.0)
-min_normal_y = 0.75
-sway = 0.08
-allowed_ids = Array[int]([3])
-collide = true
-collision_size = Vector3(0.3, 4, 0.3)
-clearance = 1.0
 
 [sub_resource type="Resource" id="Layer_fern"]
 script = ExtResource("6_layer")
@@ -85,7 +46,7 @@ visible_distance = 60.0
 
 [node name="Scenery" type="Node3D" parent="."]
 script = ExtResource("5_scatter")
-layers = Array[ExtResource("6_layer")]([SubResource("Layer_canopy_pine"), SubResource("Layer_canopy_young"), SubResource("Layer_canopy_birch"), SubResource("Layer_fern"), SubResource("Layer_mushrooms"), SubResource("Layer_grass")])
+layers = Array[ExtResource("6_layer")]([SubResource("Layer_fern"), SubResource("Layer_mushrooms"), SubResource("Layer_grass")])
 area = Rect2(-54.5, -220, 345, 225)
 seed = 2
 node_radius = 2.2

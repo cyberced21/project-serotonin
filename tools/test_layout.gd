@@ -5,6 +5,7 @@ extends SceneTree
 ##   - scenes/layout.tscn loads and is in step with the layout: each patch baked at least 90% of
 ##     its count and no more, every point and line there, a pond's water for each pond
 ##   - every gatherable's save id is unique (with main.tscn's), and the report has every one
+##   - a stand patch is baked as a stand (plans/pinewood-stand.md), its kinds with their variants
 ##   godot --headless --path . -s res://tools/test_layout.gd -- --save-root=user://tool_worlds
 ## (No game class names: an -s script compiles before the autoloads exist.)
 
@@ -45,6 +46,8 @@ func _catalog_loads(catalog: Dictionary) -> void:
 		_check(int(catalog["gatherables"][id]["tier"]) in [0, 1, 2, 3], "catalog gatherable %s has a tier" % id)
 	for sec in ["lines", "props", "fixtures"]:
 		for id in catalog[sec]:
+			if catalog[sec][id].get("walk", false):
+				continue  # (walkways build nothing)
 			_check(load(catalog[sec][id]["model"]) != null, "catalog %s %s's model loads" % [sec, id])
 	for kind in catalog["tiers"]:
 		for t in catalog["tiers"][kind]:
@@ -81,6 +84,13 @@ func _shapes_whole(layout: Dictionary, catalog: Dictionary) -> void:
 		_check(s.get("type", "") in ["flat", "raise", "pond", "road", "path"], "terrain %s's type is known" % s["id"])
 
 
+## How many gatherables a baked patch holds: its nodes, or a stand's trees.
+static func _trees_in(holder: Node) -> int:
+	if holder == null:
+		return 0
+	return (holder.get("spots") as PackedVector3Array).size() if holder.has_method("key_of") else holder.get_child_count()
+
+
 func _baked_in_step(layout: Dictionary, catalog: Dictionary, report: Dictionary) -> void:
 	var scene := load(BAKED) as PackedScene
 	_check(scene != null, "scenes/layout.tscn loads")
@@ -93,11 +103,23 @@ func _baked_in_step(layout: Dictionary, catalog: Dictionary, report: Dictionary)
 	var patches := baked.get_node("Patches")
 	for p in layout["patches"]:
 		var holder := patches.get_node_or_null(NodePath(String(p["id"]).to_pascal_case()))
-		var n := holder.get_child_count() if holder else 0
+		var stand: bool = p.get("stand", false)
+		_check(holder == null or stand == holder.has_method("key_of"),
+				"patch %s is %s (stale bake)" % [p["id"], "a stand" if stand else "not a stand"])
+		var n := _trees_in(holder)
 		var want := int(p["count"])
 		_check(n <= want and n >= int(floor(want * 0.9)) - 1 or (holder and n == want),
 				"patch %s baked %d of %d (stale bake, or no room)" % [p["id"], n, want])
 	for holder in patches.get_children():
+		if holder.has_method("key_of"):  # a stand (ForestStand): its trees are baked in as lists
+			for i in _trees_in(holder):
+				gatherables += 1
+				var key := String(holder.call("key_of", i))
+				_check(not save_ids.has(key), "save id %s is unique" % key)
+				save_ids[key] = true
+			_check((holder.get("entries") as Array).all(func(e: Resource) -> bool: return not e.get("variants").is_empty()),
+					"stand %s's kinds have their variants" % holder.name)
+			continue
 		for n in holder.get_children():
 			gatherables += 1
 			var sid := String(n.get("save_id"))

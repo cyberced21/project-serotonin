@@ -1,6 +1,8 @@
 // Patches (plans/map-editor.md): an area — a polygon or a circle, a circle with an inner radius
 // being a ring — that the bake fills with gatherables of a kind and tier (the items' mix), `count`
 // of them, `spacing` apart, on the grounds it allows. Reshaping a patch keeps its density.
+// A wood patch can be a stand (`stand`, thinning over its last `fringe` metres): a whole wood of
+// choppable trees the game draws as copies (plans/pinewood-stand.md).
 "use strict";
 
 (() => {
@@ -42,7 +44,7 @@
 
 	E.registerKind("patches", {
 		label: "Patch",
-		title: (o) => `${o.name || o.id}  ·  ${KINDS[main(o).kind] || ""} ${TIER_NAMES[tierOf(o)]} ×${o.count}`,
+		title: (o) => `${o.name || o.id}  ·  ${o.stand ? "Stand" : KINDS[main(o).kind] || ""} ${TIER_NAMES[tierOf(o)]} ×${o.count}`,
 		color: (o) => main(o).color,
 		draw(ctx, o, selected) {
 			const col = main(o).color;
@@ -67,7 +69,7 @@
 				const [sx, sy] = E.toScreen(x, z);
 				ctx.font = "11px system-ui, sans-serif";
 				ctx.textAlign = "center";
-				const t = `${TIER_NAMES[tierOf(o)]} ×${o.count}`;
+				const t = `${o.stand ? "stand " : ""}${TIER_NAMES[tierOf(o)]} ×${o.count}`;
 				ctx.lineWidth = 3;
 				ctx.strokeStyle = "rgba(15, 15, 10, 0.75)";
 				ctx.strokeText(t, sx, sy + 4);
@@ -189,6 +191,25 @@
 		box.append(E.field("Count", E.input(o, "count", "number", { step: 1, min: 1, refresh: true })));
 		box.append(E.field("Per 1000 m²", el("div", { class: "row" }, dens, el("span", { class: "muted" }, `${Math.round(a)} m²`))));
 		box.append(E.field("Spacing (m)", E.input(o, "spacing", "number", { step: 0.5, min: 1 })));
+		// a stand: a whole wood, every tree choppable, drawn cheaply (plans/pinewood-stand.md)
+		if (m.kind === "wood") {
+			const st = el("input", { type: "checkbox" });
+			st.checked = !!o.stand;
+			st.onchange = () => {
+				E.commit();
+				if (st.checked) {
+					o.stand = true;
+					if (o.fringe === undefined) o.fringe = 20;
+				} else {
+					delete o.stand;
+					delete o.fringe;
+				}
+				E.changed();
+			};
+			box.append(E.field("Stand", el("label", {}, st, " a whole wood")));
+			box.append(el("p", { class: "muted" }, "Every tree choppable, as many as you like: the game draws them as cheap copies and swaps in a real tree as you come near."));
+			if (o.stand) box.append(E.field("Fringe (m)", E.input(o, "fringe", "number", { step: 1, min: 0, title: "It thins out over this last stretch to its edge" })));
+		}
 		if (o.shape === "circle") {
 			box.append(E.field("Radius (m)", E.input(o, "radius", "number", { step: 0.5, min: 1, refresh: true })));
 			box.append(E.field("Inner (m)", E.input(o, "inner", "number", { step: 0.5, min: 0, refresh: true, default: 0 })));
