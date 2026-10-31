@@ -21,6 +21,8 @@ const COOLDOWN := 1.5
 ## How far below the float the fish holds while it tells (m).
 const UNDER := 0.16
 const FLOAT_SCALE := 1.8
+## A strike this long (s) before the take, after the tap-tap, still hooks: you read the beat.
+const EARLY_GRACE := 0.12
 
 var water: WaterBody
 var bite := Bite.NONE
@@ -73,6 +75,13 @@ func strike() -> StringName:
 	match bite:
 		Bite.TAKE:
 			bite = Bite.NONE  # the fish is RodFishing's now; no more drawing fish in
+			fish = null
+			remove_from_group("lure")
+			return &"hooked"
+		Bite.TELLS when _take_due_in() <= EARLY_GRACE:  # right on the beat, a hair early
+			take_age = 0.0
+			take_window = _strike_window()
+			bite = Bite.NONE
 			fish = null
 			remove_from_group("lure")
 			return &"hooked"
@@ -249,10 +258,21 @@ func _play_tells(delta: float) -> void:
 			&"take":
 				bite = Bite.TAKE
 				take_age = 0.0
-				take_window = fish.species.strike_window * (1.0 + Perks.bonus(&"fishing", &"hands")) * (1.0 + window_bonus)
+				take_window = _strike_window()
 				_nudge_fish(0.12)
 				WaterRipple.spawn(water, global_position, 1.8, 0.7)
 		tell.emit(kind)
+
+
+func _strike_window() -> float:
+	return fish.species.strike_window * (1.0 + Perks.bonus(&"fishing", &"hands")) * (1.0 + window_bonus)
+
+
+## Seconds until the take, once only the take is left to come (after the tap-tap); INF before.
+func _take_due_in() -> float:
+	if _tell_i != _tells.size() - 1 or _tell_i == 0 or _tells[_tell_i - 1]["kind"] != &"tap":
+		return INF
+	return _tells[_tell_i]["t"] - _t
 
 
 ## Pushes the fish up into the float for a tell (it mouths it).

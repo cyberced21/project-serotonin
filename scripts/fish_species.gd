@@ -67,7 +67,7 @@ extends Resource
 ## The two quick twitches right before the take.
 @export var tap_tap := true
 ## Seconds to strike (yank it out) once the float dunks under, before the fish spits the hook.
-@export var strike_window := 0.25
+@export var strike_window := 0.5
 ## Pike: no nibbles and no tap-tap; it sits under the float for a while, then slams it.
 @export var ambush := false
 
