@@ -27,9 +27,11 @@ whatever you hit.
   - The pickaxe squares up when you look at a rock, then swings overhead and comes down pick-first on the crosshair.
 - **Woodcutting: trees you notch and fell.**
   - The felling axe swings flat from the side: pulled back to the right, then across, biting level into the trunk at the crosshair.
-  - Every hit carves a real notch into the trunk: a V with a sloped upper face and a flat lower one, deepest on your side, in pale cut wood. Bark flakes off round its rim. Walk round the tree and the notch widens round there.
-  - Aim into the notch's mouth for a **clean cut** (an extra hit, double XP, a bigger chip and a sharp snap).
-  - The canopy shakes and drops leaves with every hit. Near the end the tree sways and creaks; the last hit snaps it, it hangs on the hinge for a moment, then falls sideways to you (never onto you), toward whichever side is clear. It lands with a slump and spills logs.
+  - Every hit carves a real notch into the trunk: a V with a sloped upper face and a flat lower one, deepest on your side. Walk round the tree and the notch widens round there.
+  - The trunk is **layers**: two of bark, then five of wood, pale sapwood down to dark heartwood. Each hit works at the layer it has reached; when it's through, the layer breaks away as the axe comes out (bark in strips, wood in a slab of its colour) and the notch steps deeper. The notch's faces show each ring's colour.
+  - Aim into the notch's mouth for a **clean cut**: it takes the whole layer at once (plus an extra hit, double XP, a bigger chip and a sharp snap).
+  - Every tree has a **knot**, a dark burl somewhere in the bark round the chopping band. Strike it and a crack runs in, several layers coming off at once. Cut the notch past it first and it's stripped away with the bark.
+  - The tree stands on the wood left at the notch. When too little is left it goes by itself (a plain chop from one side still takes 15 / 20 / 25 swings). It falls toward its notch, steered by the uncut hinge, but swings aside if you stand in its path. The canopy shakes and drops leaves with every hit; near the end the tree sways and creaks, the last of the wood snaps, it hangs on the hinge for a moment, then lands with a slump and spills logs.
   - What's left is the cut stump, growth rings and all, until the tree grows back. A half-cut tree keeps its notch through saving and loading.
   - Four trees, each its own look: a round starter tree, a slim white birch dashed with black, a broad oak on buttress roots, and a tall pine of ragged cones. The forest's background trees match them.
 - **Skills and tools:** Woodcutting, Mining, Fishing and Farming, each with XP and levels.

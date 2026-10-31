@@ -55,6 +55,26 @@ work in `trunk_carve.gd`, the notch and talent functions, and the tree's own hel
    stability fall; re-run it and the talent tests.
 6. **Wrap-up.** docs/TODO.md, README notes, as-built notes here.
 
+## As built (2026-10-30)
+
+All six phases on `logging`, headless-checked, **unplayed**.
+
+- `TrunkCarve.LAYERS` holds each layer's toughness, swatch and colour; `pace` (work per cut) is set
+  so a tree's `max_hits` plain cuts take exactly all seven layers straight in. A hit's spread is
+  scaled so the bin nearest it takes the whole hit. `DENT` 0.3 of a layer shows between pops.
+- Stability is the wood (not bark) left at the ring, as a share of its cross-section. A plain chop
+  leaves about 0.78; the fall point is measured per trunk (`ResourceNode._plain_chop()`, cached) and
+  sits between the last two cuts. `hits_left` is the count kept, clamped to the plain cuts that
+  match the current stability, so a plain chop counts exactly as before. A notch from one side and a
+  back cut from the other took 16 swings on a 15-swing tree.
+- The knot is `TrunkCarve.knot_*` (saved with the notch), drawn by `ResourceNode._place_knot()` as a
+  child of the trunk so it sways with it. One strike took the bark and the first sapwood layer.
+- Heartwood's log is a chance (`HEARTWOOD_CHANCE` 0.12) now that every tree has a knot: every strike
+  paying out read +229% in the model.
+- `from_dict` gained one line (`_place_knot()`), near the crumbs branch's edit there; it should merge
+  cleanly but check when both land.
+- Open (docs/TODO.md): playtest, the three sounds wanted, Dominoes at `--human=0.7`.
+
 ## Out of scope
 
 - Bucking the fallen trunk into logs (still in docs/TODO.md).

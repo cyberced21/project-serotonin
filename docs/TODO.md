@@ -34,7 +34,10 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 
 ## Gathering
 
-- [ ] **Deepen tree logging** (asked 2026-10-27): long fells are fine (trees now take 15/20/25 hits), but chopping isn't interactive enough yet. Later: cut bigger and bigger notches into trees, so where and how you cut matters more as you go (the notch is `TrunkCarve`; the woodcutting talents in `ResourceNode` lean on it). Re-check the talents with `tools/talent_model.gd` after.
+- [x] **Deepen tree logging** ([plans/logging.md](../plans/logging.md), branch `logging`): the trunk in layers (2 bark, 5 wood) that break away as slabs, clean cuts finishing a layer, the tree going when its wood gives out and falling toward its notch, a knot on every tree (struck: a crack takes several layers), Back cut cracking the hinge, Heartwood's knot glowing. Talents re-checked with `tools/talent_model.gd`.
+- [ ] **Logging, unplayed:** headless-checked only (`tools/test_logging.gd`, `tools/test_logging_world.gd`). Not seen in motion: the layer colours in the notch, the slabs, the knot's look and whether it's easy to spot, the fall toward the notch.
+- [ ] **Logging sounds:** the layer pop, knot crack and hinge crack reuse the clean-cut and creak stacks. Wanted from a CC0 pick (on a page): a wood slab popping free, a knot cracking open, the hinge splitting.
+- [ ] **Dominoes vs Heartwood at `--human=0.7`:** +58% vs +27% (trees fall 60° aside of you now and crush more neighbours); fine at the default bot. Tune `CRUSH_SHARE` / `DOMINOES_LOGS` or `HEARTWOOD_CHANCE` after a playtest.
 - [x] **Weak points:** a glowing diamond on one chunk. A swing aimed at it counts an extra hit, gives double XP and a "Weak spot!" burst, then the spot moves (`ResourceNode` *Weak point* group).
 - [x] **True tool sinking:** during the bite, a world copy of the tool sticks with its edge buried in the node. The held fist stays on screen holding the handle (`player.gd` `_stick_in_world`).
 - [x] **Clean respawn ghost:** one silhouette outline via the stencil buffer (`ResourceNode.ghost_silhouette`, on by default).
