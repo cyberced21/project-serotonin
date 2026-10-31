@@ -31,6 +31,7 @@ func _run() -> void:
 	for path in TREES:
 		await _test_plain(path)
 	await _test_both_sides("res://scenes/tree.tscn")
+	await _test_knot("res://scenes/tree.tscn")
 	_finish()
 
 
@@ -58,6 +59,13 @@ func _plant(path: String) -> Node3D:
 	return tree
 
 
+## A planted tree with its knot out of the way (a plain chop that happens across it would crack it).
+func _plant_plain(path: String) -> Node3D:
+	var tree := await _plant(path)
+	(tree.get("_knot") as Node3D).visible = false
+	return tree
+
+
 ## A swing from `dir`: the first at the notch's height, the rest a little above its mouth (plain,
 ## not clean cuts: those are aimed into it).
 func _swing(tree: Node3D, dir: Vector3) -> Object:
@@ -69,7 +77,7 @@ func _swing(tree: Node3D, dir: Vector3) -> Object:
 
 
 func _test_plain(path: String) -> void:
-	var tree := await _plant(path)
+	var tree := await _plant_plain(path)
 	var name := path.get_file().get_basename()
 	var max_hits: int = tree.get("max_hits")
 	var dir := Vector3(1, 0, 0.2).normalized()
@@ -105,7 +113,7 @@ func _test_plain(path: String) -> void:
 ## Notched from one side, then cut from the other (a back cut): it still comes down, and falls toward
 ## the notch, away from the second side.
 func _test_both_sides(path: String) -> void:
-	var tree := await _plant(path)
+	var tree := await _plant_plain(path)
 	var max_hits: int = tree.get("max_hits")
 	var dir := Vector3(0, 0, 1)
 	for i in max_hits / 2:
@@ -120,6 +128,44 @@ func _test_both_sides(path: String) -> void:
 		var fall: Vector3 = tree.call("_fall_direction", info)
 		_check(fall.dot(dir) > 0.7, "a back-cut tree falls toward its notch (%s)" % fall)
 	print("  both sides: felled in %d swings" % swings)
+	await _clear(tree)
+
+
+## Every tree grows a knot; struck, a crack takes several layers off at once and the knot's gone
+## (and saved gone); on another tree, the bark stripped round a notch beside it takes it away.
+func _test_knot(path: String) -> void:
+	var tree := await _plant(path)
+	var knot: Node3D = tree.get("_knot")
+	_check(knot != null and knot.visible, "a fresh tree has a knot")
+	if knot == null:
+		return
+	var out := knot.global_position - tree.global_position
+	out.y = 0.0
+	out = out.normalized()
+	var info: Object = _hit_info.new(knot.global_position, out, tree, knot.global_position + out * 1.4)
+	tree.call("hit", info)
+	var popped: PackedInt32Array = (tree.get("_popped") as PackedInt32Array).duplicate()
+	var carve: RefCounted = tree.get("_carve")
+	_check(not knot.visible and carve.knot_gone, "the struck knot is gone")
+	_check(popped.size() >= 3, "a struck knot cracks several layers off at once (%s)" % popped)
+	var saved: Dictionary = carve.to_dict()
+	_check(saved.has("knot") and saved["knot"][2] == true, "the knot's saved gone")
+	print("  knot: one strike took layers %s, stability %.2f" % [popped, carve.stability()])
+	await _clear(tree)
+
+	tree = await _plant(path)
+	knot = tree.get("_knot")
+	carve = tree.get("_carve")
+	out = knot.global_position - tree.global_position
+	out.y = 0.0
+	var beside := out.normalized().rotated(Vector3.UP, deg_to_rad(35.0))
+	var y: float = carve.knot_y
+	var swings := 0
+	while knot.visible and swings < 6:
+		var at := tree.global_position + Vector3.UP * y + beside * 0.3
+		tree.call("hit", _hit_info.new(at, beside, tree, at + beside * 1.4 + Vector3.UP * 0.4))  # (aimed down past it)
+		swings += 1
+	_check(not knot.visible and carve.knot_gone, "a notch cut beside the knot strips it away (%d swings)" % swings)
 	await _clear(tree)
 
 

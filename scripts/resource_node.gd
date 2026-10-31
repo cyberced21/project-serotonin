@@ -53,12 +53,11 @@ const BACK_CUT_TIMES := 4
 ## Power swing: a full charge counts as this many hits, or this many on a clean cut.
 const POWER_HITS := 4
 const POWER_CLEAN_HITS := 7
-## Heartwood: this share of trees grow a knot; it shows after this many biting hits; hitting it
-## takes this many extra.
-const KNOT_CHANCE := 0.12
-const KNOT_AFTER := 3
+## The knot every tree grows (plans/logging.md): striking it (aimed within KNOT_RADIUS) cracks
+## this many extra cuts in; how much darker than the bark it is; Heartwood's glow round it.
 const KNOT_EXTRA := 3
 const KNOT_RADIUS := 0.16
+const KNOT_DARK := 0.45
 const KNOT_COLOR := Color("ffb347")
 ## A layer of wood coming out of the notch: its snap (the clean cut's crack, quieter and higher), dB.
 const LAYER_POP_DB := -7.0
@@ -371,7 +370,8 @@ func _ready() -> void:
 		_refresh_old_growth()
 		Skills.talents.changed.connect(func(s: StringName) -> void:
 			if s == &"woodcutting":
-				_refresh_old_growth())
+				_refresh_old_growth()
+				_place_knot())
 
 
 ## Moves the model's meshes into Visual/Body, Visual/Chunks and Rubble by name prefix, replacing
@@ -459,6 +459,7 @@ func _setup_carve() -> void:
 	_carve = TrunkCarve.new(_trunk.mesh, notch_band, bark_thickness, notch_depth, max_hits)
 	_plain = _plain_chop()
 	_fall_at = (_plain[max_hits - 1] + _plain[max_hits]) * 0.5
+	_grow_knot()
 	_trunk_rest = global_transform.affine_inverse() * _trunk.global_transform
 	for m in _trunk.get_parent().get_children():
 		if m is MeshInstance3D and m != _trunk:
@@ -775,6 +776,7 @@ func to_dict() -> Dictionary:
 func from_dict(d: Dictionary) -> void:
 	if _carve and d.has("notch"):
 		_carve.from_dict(d["notch"])
+		_place_knot()
 	_fine_next = d.get("fine", false) and d.has("respawn_left")
 	_fine_grained = d.get("fine", false) and not d.has("respawn_left")
 	if d.has("respawn_left"):
@@ -1185,6 +1187,10 @@ func _carve_hit(info: HitInfo, cuts: int, finish := false) -> void:
 	_popped = _carve.hit(y, dir, cuts, finish)
 	_pop_dir = dir
 	_trunk.mesh = _carve.carved()
+	if _knot_struck:
+		_crack_knot(info, dir)
+	elif _knot and _knot.visible and _carve.knot_bared():
+		_lose_knot()
 	info.position = _trunk.global_transform * _carve.bite_point(dir)
 	info.normal = (_trunk.global_basis * dir).normalized()
 	# the bark that came away flies off in slabs, more the more of it went; then a flake or two
@@ -2664,11 +2670,11 @@ static func _crack_dot(img: Image, cx: float, y: int, radius: float, color: Colo
 # heartwood, grove keeper, old growth). Each asks Skills.talents.has() at the moment it matters.
 
 var _notch_from := Vector3.ZERO  # trunk space: the side the notch was begun on (ZERO: not yet)
-var _knot_grows := false  # Heartwood: this tree has a knot to find (rolled as it grows)
 var _chain := 0  # Chain cut: clean cuts in a row on this tree
-var _bites := 0  # biting hits on this tree since it grew (Heartwood's knot comes after a few)
-var _knot: MeshInstance3D  # Heartwood: the glowing knot, while it shows
-var _knot_done := false  # ... once per tree
+var _bites := 0  # biting hits on this tree since it grew
+var _knot: MeshInstance3D  # the tree's knot (a burl on the bark: TrunkCarve.knot_*), on the trunk
+var _knot_glow: MeshInstance3D  # ... and Heartwood's glow round it
+var _knot_struck := false  # ... this hit landed on it (a crack runs in: _crack_knot())
 var _bonus_items: Array[StringName] = []  # heartwood / trophy logs to drop with the logs
 var _fine_grained := false  # Grove keeper: regrown fine-grained (the first clean cut doubles drops)
 var _fine_next := false  # ... and growing back that way
@@ -2696,11 +2702,14 @@ func _woodcutting_talents(info: HitInfo, cuts: int) -> Dictionary:
 		var normal := cuts + (clean_cut_extra_hits if _clean else 0)
 		extra += maxi((POWER_CLEAN_HITS if _clean else POWER_HITS) - normal, 0)
 		say.append("Power!")
-	if _knot and _knot.visible and _aimed_near(info, _knot.global_position, KNOT_RADIUS * _window_scale()):
+	_knot_struck = _knot != null and _knot.visible and _aimed_near(info, _knot.global_position, KNOT_RADIUS * _window_scale())
+	if _knot_struck:  # (every tree's knot, a talent or not: plans/logging.md)
 		extra += KNOT_EXTRA
-		_bonus_items.append(&"heartwood")
-		_knot.visible = false
-		say.append("Heartwood!")
+		if t.has(&"heartwood"):
+			_bonus_items.append(&"heartwood")
+			say.append("Heartwood!")
+		else:
+			say.append("Knot!")
 	if _fine_grained and _clean and not _fine_cut:
 		_fine_cut = true
 		say.append("Fine grain!")
@@ -2745,45 +2754,88 @@ func _talent_fall(usual: Vector3) -> Vector3:
 	return usual
 
 
-## After a biting hit: Heartwood's knot shows once the tree's taken a few.
+## After a biting hit (bench_bot.gd counts them).
 func _after_bite() -> void:
 	_bites += 1
-	if _bites == 1:
-		_knot_grows = randf() < KNOT_CHANCE  # (rolled once a tree, on its first bite)
-	if _bites == KNOT_AFTER and _knot_grows and not _knot_done and Skills.talents.has(&"heartwood") and _trunk:
-		_knot_done = true
-		_show_knot()
 
 
-## The knot: a warm glow on the trunk, somewhere round the side you're facing.
-func _show_knot() -> void:
+# --- the knot -------------------------------------------------------------------------------
+# plans/logging.md: the tree's fault. Every tree grows a knot, a dark burl in the bark somewhere
+# round the chopping band; struck, a crack runs in from it (KNOT_EXTRA more cuts there, its
+# layers coming off together). Once a tree, lost if the notch's stripped bark reaches it first.
+# Heartwood makes it glow and drop a heartwood log.
+
+## A fresh tree's knot: anywhere round the trunk, in the band but clear of its ends.
+func _grow_knot() -> void:
+	_carve.grow_knot(randf() * TAU, randf_range(notch_band.x + 0.1, notch_band.y - 0.1))
+	_place_knot()
+
+
+## The knot on the trunk where TrunkCarve says it grew (hidden once gone), glowing with Heartwood.
+func _place_knot() -> void:
+	if _carve == null or is_nan(_carve.knot_angle):
+		return
 	if _knot == null:
 		_knot = MeshInstance3D.new()
-		_knot.name = "HeartwoodKnot"
+		_knot.name = "Knot"
+		var burl := SphereMesh.new()
+		burl.radius = 0.06
+		burl.height = 0.12
+		burl.radial_segments = 8
+		burl.rings = 4
+		_knot.mesh = burl
+		_knot.material_override = NODE_SURFACE
+		_knot.set_instance_shader_parameter("albedo", bark_color.darkened(KNOT_DARK))
+		_trunk.add_child(_knot)  # (it sways with the trunk)
+		_knot_glow = MeshInstance3D.new()
 		var orb := SphereMesh.new()
-		orb.radius = 0.07
-		orb.height = 0.1
+		orb.radius = 0.08
+		orb.height = 0.16
 		var mat := StandardMaterial3D.new()
 		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		mat.albedo_color = KNOT_COLOR
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.albedo_color = Color(KNOT_COLOR, 0.45)
 		orb.material = mat
-		_knot.mesh = orb
-		_knot.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		add_child(_knot)
-		var pulse := _knot.create_tween().set_loops()
-		pulse.tween_property(_knot, "scale", Vector3.ONE * 1.3, 0.5).set_trans(Tween.TRANS_SINE)
-		pulse.tween_property(_knot, "scale", Vector3.ONE * 0.85, 0.5).set_trans(Tween.TRANS_SINE)
-	var player := get_tree().get_first_node_in_group("player") as Node3D
-	var toward := (player.global_position - global_position) if player else Vector3.FORWARD
-	toward.y = 0.0
-	var dir := toward.normalized().rotated(Vector3.UP, randf_range(-1.0, 1.0))
-	var local := _trunk.global_transform.affine_inverse().basis * dir
-	local.y = 0.0
-	var y := (_carve.ring if _carve and _carve.is_started() else 1.0) + randf_range(0.35, 0.8)
-	var r := (_carve.radius_at(y, local) if _carve else 0.25) + 0.02
-	_knot.global_position = _trunk.global_transform * (Vector3(0, y, 0) + local.normalized() * r)
-	_knot.visible = true
-	PopupText.spawn(get_parent(), _knot.global_position + Vector3.UP * 0.3, "A knot!", KNOT_COLOR, 8)
+		_knot_glow.mesh = orb
+		_knot_glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_knot.add_child(_knot_glow)
+		var pulse := _knot_glow.create_tween().set_loops()
+		pulse.tween_property(_knot_glow, "scale", Vector3.ONE * 1.25, 0.6).set_trans(Tween.TRANS_SINE)
+		pulse.tween_property(_knot_glow, "scale", Vector3.ONE * 0.9, 0.6).set_trans(Tween.TRANS_SINE)
+	var out := _carve.knot_dir()
+	# a squashed burl standing a little proud of the bark, its long axis up the trunk
+	_knot.transform = Transform3D(Basis.looking_at(-out).scaled(Vector3(1.0, 1.0, 0.5)),
+		_carve.knot_point() + out * 0.01)
+	_knot.visible = not _carve.knot_gone
+	_knot_glow.visible = Skills.talents.has(&"heartwood")
+
+
+## The knot struck: it bursts off and a crack runs in (the hit's extra cuts already went in, from
+## its side), with a deep crack and a groan.
+func _crack_knot(info: HitInfo, dir: Vector3) -> void:
+	_knot_struck = false
+	_carve.knot_gone = true
+	_knot.visible = false
+	for i in 3:
+		_peel_bark(dir, true)
+	_throw_chip(info, info.normal, true)
+	if clean_layers:
+		Sfx.play_at(clean_layers, info.position, 0.75, 2.0)
+	if creak_layers:
+		_groan(global_position + Vector3.UP * 2.0, 1.1, -4.0)
+	Juice.shake(shake_break * 0.4)
+
+
+## The notch's stripped bark has reached the knot: it comes away with the bark, wasted.
+func _lose_knot() -> void:
+	_carve.knot_gone = true
+	_knot.visible = false
+	var chip := MeshInstance3D.new()
+	chip.mesh = _knot.mesh
+	chip.material_override = NODE_SURFACE
+	chip.set_instance_shader_parameter("albedo", bark_color.darkened(KNOT_DARK))
+	var out := (_trunk.global_basis * _carve.knot_dir()).normalized()
+	_throw(chip, Transform3D(Basis(), _knot.global_position), out + Vector3.UP * 0.3, debris_speed * 0.5)
 
 
 ## When the tree's down: Momentum's count, Grove keeper's quick and fine regrowth, Old growth's
@@ -2809,8 +2861,8 @@ func _regrown() -> void:
 	_chain = 0
 	_bites = 0
 	_notch_from = Vector3.ZERO
-	_knot_grows = false
-	_knot_done = false
+	if _carve:
+		_grow_knot()
 	_fine_cut = false
 	_fine_grained = _fine_next
 	_fine_next = false

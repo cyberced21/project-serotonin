@@ -50,8 +50,6 @@ const BLAZE_STEP := 0.21
 const BLAZE_MAX := 0.5
 ## How far round the trunk the stripping reaches (like SPREAD): an oval blaze on the side struck.
 const BLAZE_SPREAD := 3.5
-## How much of a hit on bark goes into the wood under it (the rest strips the bark).
-const ON_BARK := 0.35
 ## A face this far off its original direction is cut wood rather than bark (dot of normals).
 const CUT_FACE := 0.97
 ## Palette swatches (art/palette.json "uv", same space as the model's UVs): the notch's cut faces
@@ -81,6 +79,11 @@ var work := PackedFloat32Array()
 var fall_share := 0.65
 ## How much work one cut puts in at full weight (set so a tree's max_hits cuts reach fall_share).
 var pace := 1.0
+## The tree's knot (plans/logging.md): which way round the trunk (radians, as the bins), how high
+## (mesh space), and whether it's gone (struck, or cut away under the blaze). NAN: none grown yet.
+var knot_angle := NAN
+var knot_y := 0.0
+var knot_gone := false
 ## How far up and down from the ring the bark is stripped, per direction (bins as `depth`; 0 = whole).
 var blaze := PackedFloat32Array()
 ## How thick the bark is (m).
@@ -243,12 +246,19 @@ func plain_chop(y: float, dir: Vector3, cuts: int) -> PackedFloat32Array:
 
 func to_dict() -> Dictionary:
 	var snap := func(v: float) -> float: return snappedf(v, 0.001)
-	return {"ring": snappedf(ring, 0.001), "depth": Array(depth).map(snap), "work": Array(work).map(snap),
+	var d := {"ring": snappedf(ring, 0.001), "depth": Array(depth).map(snap), "work": Array(work).map(snap),
 		"blaze": Array(blaze).map(snap)}
+	if not is_nan(knot_angle):
+		d["knot"] = [snappedf(knot_angle, 0.001), snappedf(knot_y, 0.001), knot_gone]
+	return d
 
 
 func from_dict(d: Dictionary) -> void:
 	reset()
+	if d.get("knot") is Array and d["knot"].size() >= 3:
+		knot_angle = float(d["knot"][0])
+		knot_y = float(d["knot"][1])
+		knot_gone = bool(d["knot"][2])
 	if not d.has("ring") or not d.has("depth"):
 		return
 	_set_ring(_nearest_ring(float(d["ring"])))  # (snapped back onto a ring, in case the model changed)
@@ -260,6 +270,27 @@ func from_dict(d: Dictionary) -> void:
 	saved = d.get("blaze", [])
 	for b in BINS:  # (a save from before the bark had layers: stripped just round the notch)
 		blaze[b] = float(saved[b]) if b < saved.size() else (depth[b] / SLOPE_UP + 0.03 if depth[b] > bark else 0.0)
+
+
+## A new knot grows (a fresh tree): `angle` round the trunk, `y` up it.
+func grow_knot(angle: float, y: float) -> void:
+	knot_angle = angle
+	knot_y = y
+	knot_gone = false
+
+
+## Which way the knot is (mesh space, horizontal) and where on the bark it sits.
+func knot_dir() -> Vector3:
+	return Vector3(cos(knot_angle), 0.0, sin(knot_angle))
+
+
+func knot_point() -> Vector3:
+	return Vector3(0.0, knot_y, 0.0) + knot_dir() * radius_at(knot_y, knot_dir())
+
+
+## The bark stripped round the notch has reached the knot (it's cut away with it).
+func knot_bared() -> bool:
+	return is_started() and not is_nan(knot_angle) and blaze_toward(knot_dir()) > absf(knot_y - ring) + 0.02
 
 
 ## How deep the notch is toward `dir` (interpolated between bins).
