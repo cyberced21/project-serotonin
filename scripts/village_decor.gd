@@ -140,12 +140,12 @@ func _draw_water(v: Villager, well: Node3D) -> void:
 	v.set("_watching", true)  # busy
 	v.call("_walk_to", mark)
 	var waited := 0.0
-	while is_instance_valid(v) and waited < BUILDER_PATIENCE and _flat_gap(v, mark) > 0.3:
+	while _still_here([v]) and waited < BUILDER_PATIENCE and _flat_gap(v, mark) > 0.3:
 		if v.state != Villager.State.WALK:
 			v.call("_walk_to", mark)
 		waited += get_process_delta_time()
 		await get_tree().process_frame
-	if is_instance_valid(v) and waited < BUILDER_PATIENCE:
+	if _still_here([v, well]) and waited < BUILDER_PATIENCE:
 		v.scripted = true
 		v.script_place(v.global_position, well.global_position)
 		water_drawn.emit(well.global_position)
@@ -155,10 +155,17 @@ func _draw_water(v: Villager, well: Node3D) -> void:
 			v.script_pose(&"ArmR", -1.5, 0.1, Vector3(0, 0.08, 0))
 			v.script_pose(&"ArmL", -1.1, -0.1)
 			await get_tree().create_timer(0.4).timeout
+			if not _still_here([v]):
+				break
 			v.script_pose(&"ArmR", -0.9, 0.1, Vector3(0, -0.04, 0))
 			v.script_pose(&"ArmL", -0.9, -0.1)
 			await get_tree().create_timer(0.4).timeout
-		v.scripted = false
+			if not _still_here([v]):
+				break
+		if is_instance_valid(v):
+			v.scripted = false
+	if not is_inside_tree():  # (the world was left mid-way: it's all going)
+		return
 	if is_instance_valid(v):
 		v.set("_watching", false)
 	_release(v, mark)
@@ -253,25 +260,34 @@ func _build_in_view(pieces: Array[Node3D]) -> void:
 		builder.set("_watching", true)  # busy: no stopping to chat on the way (cheer() clears it)
 		builder.call("_walk_to", mark)
 		var waited := 0.0
-		while is_instance_valid(builder) and waited < BUILDER_PATIENCE and _flat_gap(builder, mark) > 0.4:
+		while _still_here([builder]) and waited < BUILDER_PATIENCE and _flat_gap(builder, mark) > 0.4:
 			if builder.state != Villager.State.WALK and builder.state != Villager.State.CHEER:
 				builder.call("_walk_to", mark)  # (talking to you, or it finished a walk elsewhere)
 			waited += get_process_delta_time()
 			await get_tree().process_frame
+		if not is_inside_tree():
+			return
 		_release(builder, mark, false)
 		if is_instance_valid(builder):
 			builder.set("_hurry", 1.0)
 			builder.scripted = true
 			builder.script_place(builder.global_position, spot)
 	for i in pieces.size():
+		if not is_inside_tree():
+			return
 		if is_instance_valid(builder) and builder.scripted:
 			builder.script_pose(&"ArmR", -2.3, 0.05)  # raise...
 			await get_tree().create_timer(BLOW * 0.55).timeout
-			builder.script_pose(&"ArmR", -0.6, 0.05)  # ...and down
-			_sound(HAMMERS.pick_random(), builder.global_position + Vector3.UP, HAMMER_DB, randf_range(0.94, 1.06))
+			if not is_inside_tree():
+				return
+			if _still_here([builder]):
+				builder.script_pose(&"ArmR", -0.6, 0.05)  # ...and down
+				_sound(HAMMERS.pick_random(), builder.global_position + Vector3.UP, HAMMER_DB, randf_range(0.94, 1.06))
 			await get_tree().create_timer(BLOW * 0.15).timeout
 		else:
 			await get_tree().create_timer(BLOW * 0.7).timeout
+		if not is_inside_tree():
+			return
 		var p := pieces[i]
 		if not is_instance_valid(p):
 			continue
@@ -280,9 +296,21 @@ func _build_in_view(pieces: Array[Node3D]) -> void:
 		t.tween_property(p, "scale", homes[i], POP).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		_tok(p.global_position, 1.0 + 0.08 * i)
 		await get_tree().create_timer(BLOW * 0.3).timeout
-	if is_instance_valid(builder) and builder.scripted:
+	if _still_here([builder]) and builder.scripted:
 		builder.scripted = false
 		builder.cheer()
+
+
+## Whether a scripted bit (water, building) can go on: the village is still in the world (saving
+## and quitting takes it away while these wait on frames and timers) and so is each of `nodes`.
+## (An untyped list: a freed node can't be passed as a Node3D, and it equals null.)
+func _still_here(nodes: Array) -> bool:
+	if not is_inside_tree():
+		return false
+	for n in nodes:
+		if not is_instance_valid(n) or not (n as Node).is_inside_tree():
+			return false
+	return true
 
 
 static func _flat_gap(a: Node3D, b: Node3D) -> float:
