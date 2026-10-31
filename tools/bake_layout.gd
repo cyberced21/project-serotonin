@@ -123,6 +123,8 @@ func _run() -> void:
 	for s in layout.get("terrain", []):
 		if s.get("type", "") == "pond" and s.has("center"):
 			water.add_child(_pond(s))
+		elif s.get("type", "") == "river" and s.get("points", []).size() >= 2:
+			water.add_child(_river(s))
 
 	main.remove_child(world)
 	world.free()
@@ -512,7 +514,7 @@ func _patch(p: Dictionary, parent: Node3D) -> void:
 		_warn("patch %s found room for %d of %d" % [id, placed, count], centre, id)
 
 
-# --- ponds ---------------------------------------------------------------------------------------------
+# --- ponds and rivers ---------------------------------------------------------------------------------------------
 
 ## The water in a terrain pond (the generator digs its bowl): built like the ponds in main.tscn, a
 ## WaterBody with its volume, surface, reeds and lilies, and fish if it says so.
@@ -563,6 +565,18 @@ func _pond(s: Dictionary) -> Node3D:
 	surface.mesh = plane
 	body.add_child(surface)
 	return body
+
+
+## The water in a river (the generator carves its channel): a River, which builds its surface,
+## stretches and bridges when it's ready, along the same smoothed line.
+func _river(s: Dictionary) -> Node3D:
+	var river := Node3D.new()
+	river.name = String(s.get("id", "river")).to_pascal_case()
+	river.set_script(load("res://scripts/river.gd"))
+	river.set("points", _pts(s["points"]))
+	river.set("width", float(s.get("width", 4.0)))
+	river.set("has_fish", bool(s.get("fish", true)))
+	return river
 
 
 # --- the report --------------------------------------------------------------------------------------
