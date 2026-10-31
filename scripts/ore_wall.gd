@@ -99,6 +99,11 @@ var _grit_in := 3.0
 var _gave := false
 ## Seconds until a spent seam is whole again (0: not spent).
 var regrow_left := 0.0
+## Layer -> {crumb: true} for the crumbs dug out of pieces still there (plans/crumbs.md).
+var _crumbs_out: Array[Dictionary] = []
+## Layer -> its crumbs drawn (made once the player's near), and the texture hiding the dug ones.
+var _crumb_meshes: Array[MeshInstance3D] = []
+var _crumb_masks := {}  # layer -> [Image, ImageTexture]
 
 static var _cache := {}  # template -> its pieces (see _template)
 
@@ -112,10 +117,16 @@ func _ready() -> void:
 	for k in LAYERS:
 		_gone[k] = {}
 	_layer_mesh.resize(LAYERS)
+	_crumb_meshes.resize(LAYERS)
+	_crumbs_out.resize(LAYERS)
+	for k in LAYERS:
+		_crumbs_out[k] = {}
 	hits_left = 1
 	_make_veins()
 	_fit_box()
 	_refresh_layers()
+	for k in range(front, mini(front + 2, LAYERS)):  # (read now, while the world loads, not in a hitch when you walk up)
+		_layer_crumbs(k)
 	SaveGame.register(StringName("wall:" + String(save_id)) if not save_id.is_empty() else StringName("wall:%s" % get_path()), self)
 	set_process(true)
 
@@ -142,6 +153,8 @@ func _process(delta: float) -> void:
 	if near != _near:
 		_near = near
 		_rebuild_shapes()
+		if _near:
+			_refresh_layers()  # (up close the layers are drawn as their crumbs)
 
 
 # --- the template ----------------------------------------------------------------------------
@@ -339,6 +352,11 @@ func _refresh_layers() -> void:
 		var want := k >= drawn.x and k <= drawn.y and front < LAYERS
 		if want and _layer_mesh[k] == null:
 			_layer_mesh[k] = _make_layer(k)
+		if want and _near and _crumb_meshes[k] == null and not _layer_crumbs(k).is_empty():
+			_crumb_meshes[k] = _make_crumb_layer(k)
+		if _crumb_meshes[k]:
+			_crumb_meshes[k].visible = want
+			_crumb_meshes[k].cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if k == front else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		if _layer_mesh[k]:
 			_layer_mesh[k].visible = want
 			if want:
@@ -398,6 +416,17 @@ func _update_mask(k: int) -> void:
 		if i < 96:
 			words[i / 24] |= 1 << (i % 24)
 	_layer_mesh[k].set_instance_shader_parameter("pieces_gone", Vector4(words[0], words[1], words[2], words[3]))
+	if _crumb_meshes[k]:
+		var hide := {}
+		for i: int in hidden:
+			hide[i] = true
+		var mask: Array = _crumb_masks[k]
+		var img: Image = mask[0]
+		var crumbs: Array = _layer_crumbs(k)["crumbs"]
+		for c in crumbs.size():
+			var out: bool = _crumbs_out[k].has(c) or hide.has(crumbs[c]["block"])
+			img.set_pixel(c % CRUMB_ROW, c / CRUMB_ROW, Color(1, 0, 0) if out else Color(0, 0, 0))
+		(mask[1] as ImageTexture).update(img)
 
 
 # --- light -----------------------------------------------------------------------------------
@@ -527,8 +556,9 @@ func _popup_pos() -> Vector3:
 
 func _show_aim() -> void:
 	for k in LAYERS:
-		if _layer_mesh[k]:
-			_layer_mesh[k].set_instance_shader_parameter("aim_piece", float(_aimed[1]) if not _aimed.is_empty() and _aimed[0] == k else -1.0)
+		for m in [_layer_mesh[k], _crumb_meshes[k]]:
+			if m:
+				m.set_instance_shader_parameter("aim_piece", float(_aimed[1]) if not _aimed.is_empty() and _aimed[0] == k else -1.0)
 	for key: int in _slab_mesh:  # (a loose slab's pieces are drawn there)
 		_slab_mesh[key].set_instance_shader_parameter("aim_piece", float(_aimed[1]) if not _aimed.is_empty() and _aimed[0] == key / 100 else -1.0)
 
@@ -708,12 +738,21 @@ func _drop_slab(k: int, slab: PackedInt32Array, info: HitInfo) -> void:
 	var c := global_transform * _slab_centre(k, slab)
 	slabs_dropped += 1
 	var xp := 0
+	var drawn: MeshInstance3D = null  # (a loose slab is drawn on its own: it slumps out as one)
+	for key: int in _slab_mesh:
+		if key / 100 == k and _layer_slabs(k)[key % 100] == slab:
+			drawn = _slab_mesh[key]
+	if drawn:
+		var whole := drawn.duplicate() as MeshInstance3D
+		whole.set_instance_shader_parameter("aim_piece", -1.0)
+		Crumble.slump(get_parent(), whole, drawn.global_transform, global_basis.z, hit_fx, chip_color, Color(0, 0, 0, 0), [get_rid()])
+		_gravel(c, 8)
 	for i in slab:
 		if _is_gone(k, i):
 			continue
 		var kind := _ore_of([k, i])
 		xp += ORES[kind]["xp"] if kind != STONE else xp_per_hit
-		_pop_piece(k, i, info)
+		_pop_piece(k, i, info, drawn != null)
 	_popup_at = c + global_basis.z * 0.6
 	PopupText.spawn(get_parent(), _popup_at + Vector3.UP * 0.5, "Slab!", ore_color, 13)
 	_award_xp(xp * 2, true)
@@ -780,7 +819,9 @@ func _settle_grit() -> void:
 func hit(info: HitInfo) -> bool:
 	if not is_available():
 		return false
-	var struck := _piece_at(info.position, info.normal)
+	var crumb := _crumb_at(info.position)  # (a layer of crumbs: the crumb struck says which piece)
+	var struck := [crumb[0], _layer_crumbs(crumb[0])["crumbs"][crumb[1]]["block"]] if not crumb.is_empty() \
+		else _piece_at(info.position, info.normal)
 	if struck.is_empty():
 		return false
 	_popup_at = info.position + info.normal * 0.3
@@ -810,7 +851,8 @@ func hit(info: HitInfo) -> bool:
 	if double:
 		PopupText.spawn(get_parent(), info.position + Vector3.UP * 0.5, "Sharp!", SHARP_COLOR, 9)
 	# a piece and maybe a neighbour; a better pick takes a neighbour or two more
-	var out := _knock_out_from(struck, info, randi_range(0, 1) + mini(cuts - 1, 2) + (1 if double else 0))
+	var out := _dig_crumbs_from(crumb, info, mini(cuts - 1, 2) + (1 if double else 0)) if not crumb.is_empty() \
+		else _knock_out_from(struck, info, randi_range(0, 1) + mini(cuts - 1, 2) + (1 if double else 0))
 	Sfx.play_at(hit_layers, info.position, randf_range(0.95, 1.05) - TIER_PITCH * _tool_tier(),
 		(2.0 if out.size() > 2 else 0.0) + TIER_DB * _tool_tier())
 	var xp := 0
@@ -845,23 +887,34 @@ func _knock_out_from(struck: Array, info: HitInfo, extra: int) -> Array:
 	return out
 
 
-## Takes a piece out of the wall and throws a copy of it.
-func _pop_piece(k: int, i: int, info: HitInfo) -> void:
+## Takes a piece out of the wall: it falls out of the face and crumbles to dust at the foot
+## (Crumble), leaving a little gravel. `quiet`: just gone (a slab slumps as one).
+func _pop_piece(k: int, i: int, info: HitInfo, quiet := false, by_crumbs := false) -> void:
 	_gone[k][i] = true
 	_drop_shape(k, i)
 	var kind := _ore_of([k, i])
-	var piece := MeshInstance3D.new()
-	piece.mesh = _piece(k, i)["mesh"]
-	piece.material_override = ROCK_MATERIAL
-	if kind != STONE:  # (thrown, it's drawn without its vein: tinted the ore's colour instead)
-		piece.set_instance_shader_parameter("albedo", Color.WHITE.lerp(ORES[kind]["color"], 0.45))
-	var xf: Transform3D = global_transform * (_piece(k, i)["xform"] as Transform3D)
-	var out := (global_basis * Vector3(0, 0.3, 1)).normalized()
-	_throw(piece, xf.orthonormalized(), (out + (info.from - info.position).normalized() * 0.3).normalized(), debris_speed * 0.6)
 	var c := global_transform * (_piece(k, i)["centre"] as Vector3)
+	var ore_tint: Color = ORES[kind]["color"] if kind != STONE else Color(0, 0, 0, 0)
+	if by_crumbs:  # dug at crumb by crumb: what's left of it crumbles the same way
+		var puffs := 1
+		for n: int in _layer_crumbs(k)["by_block"].get(i, []):
+			if not _crumbs_out[k].has(n):
+				_wall_crumb_out(k, n, info, 0.5 if puffs > 0 else 0.0)
+				puffs -= 1
+		_gravel(c, 2)
+	elif not quiet:
+		var piece := MeshInstance3D.new()
+		piece.mesh = _piece(k, i)["mesh"]
+		piece.material_override = ROCK_MATERIAL
+		if kind != STONE:  # (on its own it's drawn without its vein: tinted the ore's colour instead)
+			piece.set_instance_shader_parameter("albedo", Color.WHITE.lerp(ORES[kind]["color"], 0.45))
+		var xf: Transform3D = global_transform * (_piece(k, i)["xform"] as Transform3D)
+		var out := (global_basis * Vector3(0, 0.3, 1)).normalized()
+		Crumble.bit(get_parent(), piece, xf.orthonormalized(), (out + (info.from - info.position).normalized() * 0.3).normalized(),
+			hit_fx, chip_color, ore_tint, 0.5, [get_rid()])
+		_gravel(c, 2)
 	if hit_fx:
-		HitFx.spawn(hit_fx, get_parent(), c, info.normal, -info.normal, chip_color,
-			ORES[kind]["color"] if kind != STONE else Color(0, 0, 0, 0), 0.6)
+		HitFx.spawn(hit_fx, get_parent(), c, info.normal, -info.normal, chip_color, ore_tint, 0.6)
 	if kind != STONE:  # a piece of vein: its ore spills out toward you
 		var toward := -info.away()
 		var vel := toward * randf_range(1.0, 2.0) + Vector3.UP * randf_range(2.5, 3.5) \
@@ -905,6 +958,8 @@ func _dug(info: HitInfo) -> void:
 func _layer_cleared() -> void:
 	if _layer_mesh[front - 1]:
 		_layer_mesh[front - 1].visible = false
+	if _crumb_meshes[front - 1]:
+		_crumb_meshes[front - 1].visible = false
 	var at := global_transform * Vector3(0, HEIGHT * 0.6, -front * LAYER_DEPTH)
 	if front >= LAYERS:
 		PopupText.spawn(get_parent(), at, "Bedrock!", ore_color, 12)
@@ -922,7 +977,19 @@ func pull(info: HitInfo) -> void:
 	piece.material_override = NODE_SURFACE
 	piece.set_instance_shader_parameter("albedo", chip_color)
 	var rot := Basis.from_euler(Vector3(randf(), randf(), randf()) * TAU)
-	_throw(piece, Transform3D(rot, info.position + info.normal * 0.06), (info.normal - info.away() * 0.6).normalized(), debris_speed * 0.8, 0.12)
+	Crumble.bit(get_parent(), piece, Transform3D(rot.scaled(Vector3.ONE * 0.12), info.position + info.normal * 0.06),
+		(info.normal - info.away() * 0.6).normalized(), hit_fx, chip_color, Color(0, 0, 0, 0), 0.0, [get_rid()])
+
+
+var _gravel_mm: Crumble.Gravel
+
+
+## A few specks of gravel on the ground under `at` (world), fading after a while.
+func _gravel(at: Vector3, count: int) -> void:
+	if _gravel_mm == null:
+		_gravel_mm = Crumble.Gravel.new()
+		add_child(_gravel_mm)
+	_gravel_mm.add(at, count, chip_color, [get_rid()])
 
 
 ## Debug and tools: the first `n` layers dug out at once.
@@ -974,6 +1041,7 @@ func _regrow() -> void:
 	regrow_left = 0.0
 	for k in LAYERS:
 		_gone[k].clear()
+		_crumbs_out[k].clear()
 	front = 0
 	for k in LAYERS:
 		if _layer_mesh[k]:
@@ -991,13 +1059,190 @@ func ore_count(k: int) -> Dictionary:
 	return out
 
 
+# --- crumbs ----------------------------------------------------------------------------------
+# (plans/crumbs.md) Every piece is baked into crumbs (tools/blender/make_crumbs.py, a glb a layer:
+# models/walls/panel_<n>_L<k>_crumbs.glb): a skin of ~13 cm crumbs on the face side and a core
+# behind. A swing takes the crumb nearest the hit and a couple of its neighbours; once a piece has
+# lost WALL_SPENT of its skin, or its core, the rest of it crumbles. Pieces are still what's
+# saved, held up, gated by ore and paid for. Up close (CRUMB_NEAR) a layer is drawn as its crumbs.
+
+## Neighbours a swing takes besides the crumb struck (a better pick, a Sharp! hit: more).
+const WALL_KNOCK := 2
+## A piece crumbles once this share of its skin is dug out.
+const WALL_SPENT := 0.25
+
+static var _crumb_layers := {}  # template * 100 + layer -> {"crumbs", "mesh", "by_block"} ({}: none)
+static var _crumb_data := {}  # template -> the crumbs table of its .pieces.json
+
+
+## Layer k's crumbs (shared by every panel cut like this one): [{"block" (piece index), "mesh",
+## "xform" and "centre" (panel space), "core", "links"}], their merged mesh, and piece -> crumbs.
+func _layer_crumbs(k: int) -> Dictionary:
+	var key := template * 100 + k
+	if _crumb_layers.has(key):
+		return _crumb_layers[key]
+	var base := "res://models/walls/panel_%d" % template
+	var path := "%s_L%d_crumbs.glb" % [base, k]
+	if not ResourceLoader.exists(path):
+		_crumb_layers[key] = {}
+		return {}
+	if not _crumb_data.has(template):
+		_crumb_data[template] = JSON.parse_string(FileAccess.get_file_as_string(base + ".pieces.json")).get("crumbs", {})
+	var data: Dictionary = _crumb_data[template]
+	var meshes := ResourceNode.crumb_meshes(path)
+	var block_of := {}
+	var pieces := _layer_pieces(k)
+	for i in pieces.size():
+		block_of[pieces[i]["name"]] = i
+	var names: Array = meshes.keys().filter(func(n: String) -> bool:
+		return data.has(n) and block_of.has(data[n]["block"]))
+	names.sort()
+	var index := {}
+	for i in names.size():
+		index[names[i]] = i
+	var crumbs := []
+	var by_block := {}
+	for i in names.size():
+		var d: Dictionary = data[names[i]]
+		var mesh: Mesh = meshes[names[i]][0]
+		var xf: Transform3D = meshes[names[i]][1]
+		var links := PackedInt32Array()
+		for l: String in d["links"]:
+			if index.has(l):
+				links.append(index[l])
+		var block: int = block_of[d["block"]]
+		crumbs.append({"block": block, "mesh": mesh, "xform": xf, "centre": xf * mesh.get_aabb().get_center(),
+			"core": bool(d["core"]), "links": links})
+		(by_block.get_or_add(block, []) as Array).append(i)
+	var out := {"crumbs": crumbs, "mesh": ResourceNode.merge_crumbs(crumbs), "by_block": by_block}
+	_crumb_layers[key] = out
+	return out
+
+
+## Layer k drawn as its crumbs, up close; the layer's pieces take over further off.
+func _make_crumb_layer(k: int) -> MeshInstance3D:
+	var crumbs: Dictionary = _layer_crumbs(k)
+	var img := Image.create_empty(CRUMB_ROW, ceili(float(crumbs["crumbs"].size()) / CRUMB_ROW), false, Image.FORMAT_R8)
+	var tex := ImageTexture.create_from_image(img)
+	_crumb_masks[k] = [img, tex]
+	var mat := _layer_mesh[k].material_override.duplicate() as ShaderMaterial
+	mat.set_shader_parameter("use_crumbs", true)
+	mat.set_shader_parameter("crumbs_gone", tex)
+	var m := MeshInstance3D.new()
+	m.name = "Crumbs%d" % k
+	m.mesh = crumbs["mesh"]
+	m.material_override = mat
+	m.layers = _layer_mesh[k].layers
+	m.visibility_range_end = CRUMB_NEAR
+	m.visibility_range_end_margin = 1.0
+	visual.add_child(m)
+	_surfaces.append(m)
+	_dress(m)
+	_layer_mesh[k].visibility_range_begin = CRUMB_NEAR
+	_layer_mesh[k].visibility_range_begin_margin = 1.0
+	return m
+
+
+## The crumb still there nearest a point on the wall (world), in the layers drawn, as [layer,
+## crumb]; the skin before a core. Empty when the layers have no crumbs.
+func _crumb_at(point: Vector3) -> Array:
+	var p := to_local(point)
+	var drawn := _drawn_layers()
+	var best: Array = []
+	var best_d := INF
+	for k in range(drawn.x, drawn.y + 1):
+		var layer := _layer_crumbs(k)
+		if layer.is_empty():
+			return []
+		var crumbs: Array = layer["crumbs"]
+		for c in crumbs.size():
+			if _crumbs_out[k].has(c) or _is_gone(k, crumbs[c]["block"]):
+				continue
+			var d := (crumbs[c]["centre"] as Vector3).distance_to(p) + (CORE_SHY if crumbs[c]["core"] else 0.0)
+			if d < best_d:
+				best_d = d
+				best = [k, c]
+	return best
+
+
+## A swing on a wall of crumbs: the crumb struck and WALL_KNOCK + `extra` of its neighbours come
+## out (not a vein your pick can't take, nor a loose slab's); a piece that's lost enough crumbles.
+## The pieces that came out, as [layer, index].
+func _dig_crumbs_from(struck: Array, info: HitInfo, extra: int) -> Array:
+	var k: int = struck[0]
+	var crumbs: Array = _layer_crumbs(k)["crumbs"]
+	var at := to_local(info.position)
+	var take: Array = [struck[1]]
+	if not crumbs[struck[1]]["core"]:
+		var near: Array = Array(crumbs[struck[1]]["links"]).filter(func(o: int) -> bool:
+			var b: int = crumbs[o]["block"]
+			return not _crumbs_out[k].has(o) and not crumbs[o]["core"] and not _is_gone(k, b) \
+				and Tools.can_work(tool_type, _tier_of(_ore_of([k, b]))) and _slab_holding([k, b]).is_empty())
+		var own: int = crumbs[struck[1]]["block"]  # (the piece struck first: the dent goes into it)
+		near.sort_custom(func(a: int, b: int) -> bool:
+			var da := (crumbs[a]["centre"] as Vector3).distance_to(at) + (0.0 if crumbs[a]["block"] == own else 0.25)
+			var db := (crumbs[b]["centre"] as Vector3).distance_to(at) + (0.0 if crumbs[b]["block"] == own else 0.25)
+			return da < db)
+		take.append_array(near.slice(0, WALL_KNOCK + maxi(extra, 0)))
+	var touched := {}
+	for c: int in take:
+		_wall_crumb_out(k, c, info, 0.4 if c == struck[1] else 0.0)
+		touched[crumbs[c]["block"]] = true
+	var out: Array = []
+	for b: int in touched:
+		if not _is_gone(k, b) and _wall_spent(k, b):
+			_pop_piece(k, b, info, false, true)
+			out.append([k, b])
+	return out
+
+
+## Piece i of layer k has lost its core, or WALL_SPENT of its skin.
+func _wall_spent(k: int, i: int) -> bool:
+	var crumbs: Array = _layer_crumbs(k)["crumbs"]
+	var skin := 0
+	var dug := 0
+	for c: int in _layer_crumbs(k)["by_block"].get(i, []):
+		if crumbs[c]["core"]:
+			if _crumbs_out[k].has(c):
+				return true
+			continue
+		skin += 1
+		dug += 1 if _crumbs_out[k].has(c) else 0
+	return skin == 0 or float(dug) / skin >= WALL_SPENT
+
+
+## Crumb c of layer k comes out of the face and crumbles to dust at the foot (Crumble).
+func _wall_crumb_out(k: int, c: int, info: HitInfo, puff: float) -> void:
+	_crumbs_out[k][c] = true
+	var crumb: Dictionary = _layer_crumbs(k)["crumbs"][c]
+	var kind := _ore_of([k, crumb["block"]])
+	var piece := MeshInstance3D.new()
+	piece.mesh = crumb["mesh"]
+	piece.material_override = ROCK_MATERIAL
+	if kind != STONE:  # (on its own it's drawn without its vein: tinted the ore's colour instead)
+		piece.set_instance_shader_parameter("albedo", Color.WHITE.lerp(ORES[kind]["color"], 0.45))
+	var out := (global_basis * Vector3(0, 0.3, 1)).normalized()
+	Crumble.bit(get_parent(), piece, global_transform * (crumb["xform"] as Transform3D),
+		(out + (info.from - info.position).normalized() * 0.3).normalized(), hit_fx, chip_color,
+		ORES[kind]["color"] if kind != STONE else Color(0, 0, 0, 0), puff, [get_rid()])
+	if puff > 0.0:
+		_gravel(global_transform * (crumb["centre"] as Vector3), 1)
+
+
 # --- saving ----------------------------------------------------------------------------------
 
 func to_dict() -> Dictionary:
 	var gone := []
+	var crumbs := []
 	for k in LAYERS:
 		gone.append(_gone[k].keys())
-	return {"gone": gone, "regrow": regrow_left} if regrow_left > 0.0 else {"gone": gone}
+		crumbs.append(_crumbs_out[k].keys())
+	var d := {"gone": gone}
+	if crumbs.any(func(l: Array) -> bool: return not l.is_empty()):
+		d["crumbs"] = crumbs
+	if regrow_left > 0.0:
+		d["regrow"] = regrow_left
+	return d
 
 
 func from_dict(d: Dictionary) -> void:
@@ -1009,6 +1254,11 @@ func from_dict(d: Dictionary) -> void:
 		for i in gone[k]:
 			if int(i) < _layer_pieces(k).size():
 				_gone[k][int(i)] = true
+	var crumbs: Array = d.get("crumbs", [])
+	for k in mini(crumbs.size(), LAYERS):
+		_crumbs_out[k].clear()
+		for c in crumbs[k]:
+			_crumbs_out[k][int(c)] = true
 	front = 0
 	while front < LAYERS and _gone[front].size() >= _layer_pieces(front).size():
 		front += 1

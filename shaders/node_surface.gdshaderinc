@@ -85,6 +85,11 @@ bool piece_gone(int i) {
 	float word = w == 0 ? pieces_gone.x : w == 1 ? pieces_gone.y : w == 2 ? pieces_gone.z : pieces_gone.w;
 	return ((uint(word) >> uint(i - w * 24)) & 1u) == 1u;
 }
+// Crumbs (plans/crumbs.md): a mesh of crumbs, drawn up close, has the crumb's index + 1 in UV2.x
+// and its piece's in UV2.y; crumbs_gone holds a texel a crumb, CRUMB_ROW to a row (red: dug out).
+const int CRUMB_ROW = 64;
+uniform bool use_crumbs = false;
+uniform sampler2D crumbs_gone : filter_nearest, repeat_disable;
 #endif
 
 #ifdef WALL
@@ -135,12 +140,20 @@ void vertex() {
 #ifdef ROCK
 	v_shade = COLOR;
 	int piece = int(UV2.x + 0.5) - 1;
+	bool gone = false;
+	if (use_crumbs) {
+		int crumb = piece;
+		piece = int(UV2.y + 0.5) - 1;
+		gone = crumb >= 0 && texelFetch(crumbs_gone, ivec2(crumb % CRUMB_ROW, crumb / CRUMB_ROW), 0).r > 0.5;
+	} else {
+		gone = piece >= 0 && piece < 96 && piece_gone(piece);
+	}
 #ifdef WALL
 	v_panel = VERTEX;
 	v_panel_normal = NORMAL;
 	v_piece = piece;
 #endif
-	if (piece >= 0 && piece < 96 && piece_gone(piece)) {
+	if (gone) {
 		VERTEX = vec3(0.0);  // every corner on one point: the triangle draws nothing
 	}
 #endif

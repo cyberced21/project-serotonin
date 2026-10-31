@@ -163,6 +163,8 @@ const CRACKING_LAYER := 1 << 10
 ## Pebbles (a tree: wood chips) that pile up around the base as it's worn down, until it grows
 ## back (0 = none).
 @export_range(0, 64) var lingering_rubble := 0
+## What breaks off glitters as it crumbles (crystal): see Crumble.
+@export var crumble_glitter := false
 
 @export_group("Audio")
 @export var hit_sfx: AudioStream
@@ -357,6 +359,7 @@ func _ready() -> void:
 		SaveGame.register(StringName("node:" + save_id), self, path_key)
 	_build_weak_point()  # after loading, so it lands on a chunk that's still there
 	_limit_drawing(self)
+	_split_crumb_ranges()
 	if glow_at_night:
 		_setup_glow()
 	if skill == &"woodcutting":
@@ -669,8 +672,24 @@ func _break(info: HitInfo) -> void:
 		Sfx.play_at(clean_layers, info.position, 0.6, 3.0)
 	else:
 		_play(break_audio, break_sfx)
-	for c in _intact_chunks():
-		_pop_chunk(c, info.away(), debris_speed * 0.7)
+	if _crumbles() and _merged:  # what's left of the rock slumps into its dust in one piece
+		var drawn := _crumb_mesh if _crumb_mesh else _merged
+		var rest := drawn.duplicate() as MeshInstance3D
+		rest.set_instance_shader_parameter("pieces_gone", _merged.get_instance_shader_parameter("pieces_gone"))
+		rest.visibility_range_begin = 0.0
+		rest.visibility_range_end = 0.0
+		if _crumb_mesh:  # (its own copy of what's dug: the rock's is cleared when it grows back)
+			var mat := _crumb_mesh.material_override.duplicate() as ShaderMaterial
+			mat.set_shader_parameter("crumbs_gone", ImageTexture.create_from_image(_crumb_img))
+			rest.material_override = mat
+		var xform := drawn.global_transform
+		for c in _intact_chunks():
+			c.visible = false
+		_queue_refit()
+		Crumble.slump(get_parent(), rest, xform, info.away(), hit_fx, chip_color, ore_color, [get_rid()], crumble_glitter, 0.12)
+	else:
+		for c in _intact_chunks():
+			_pop_chunk(c, info.away(), debris_speed * 0.7)
 	_show_depleted()
 	Juice.shake(shake_break)
 	if topple:
@@ -756,6 +775,8 @@ func to_dict() -> Dictionary:
 				gone.append(i)
 		d["gone"] = gone
 		d["spilled"] = _spilled
+		if not _crumb_gone.is_empty():  # (and the crumbs dug out of the pieces still there)
+			d["crumbs"] = _crumb_gone.keys()
 	if _carve and _carve.is_started():  # (a felled tree keeps its notch until it regrows: the stump)
 		d["notch"] = _carve.to_dict()
 	return d
@@ -780,6 +801,10 @@ func from_dict(d: Dictionary) -> void:
 			for i in d["gone"]:
 				if int(i) < _pieces.size():
 					_pieces[int(i)].visible = false
+			for i in d.get("crumbs", []):
+				if int(i) < _crumbs.size():
+					_crumb_gone[int(i)] = true
+			_swings_left = mini(hits_left, _crumb_swings)
 			_spilled = int(d.get("spilled", 0))
 			_queue_refit()
 			return
@@ -818,6 +843,9 @@ func _reset_visuals() -> void:
 	if not _links.is_empty():
 		_drops_owed = _drop_count()
 		_spilled = 0
+		_crumb_gone.clear()
+		_swings_left = _crumb_swings
+		_update_piece_mask()
 		_tough.clear()
 		for piece in _tough_pieces:
 			_tough[piece] = 1
@@ -1302,8 +1330,33 @@ func _pop_chunk(chunk: MeshInstance3D, push: Vector3, speed: float) -> void:
 	if chunk == _fault_piece:  # knocked out some other way: the fault opens up elsewhere
 		_clear_fault()
 		create_tween().tween_callback(_place_fault).set_delay(FAULT_DELAY)
+	if _block_crumbs.has(chunk):  # a rock of crumbs: what's left of the piece crumbles, crumb by crumb
+		var puffs := 2
+		for i: int in _block_crumbs[chunk]:
+			if not _crumb_gone.has(i):
+				_crumb_out(i, push, 0.6 if puffs > 0 else 0.0)
+				puffs -= 1
+		return
 	var piece := chunk.duplicate() as MeshInstance3D
-	_throw(piece, chunk.global_transform.orthonormalized(), push, speed)
+	if _crumbles():
+		_crumble_away(piece, chunk.global_transform.orthonormalized(), push, 0.6, _ore_pieces.has(chunk))
+	else:
+		_throw(piece, chunk.global_transform.orthonormalized(), push, speed)
+
+
+## Mined rock crumbles away into dust rather than being thrown (plans/crumbs.md); trees' chips,
+## twigs and logs still fly.
+func _crumbles() -> bool:
+	return skill == &"mining"
+
+
+## `piece` (not yet in the tree) at `xform` comes away: it falls to the ground and puffs into dust,
+## or slumps where it stood if it's big (Crumble).
+func _crumble_away(piece: MeshInstance3D, xform: Transform3D, push: Vector3, puff := 0.6, ore := false) -> void:
+	if _merged:
+		piece.layers = _merged.layers  # (a stand-in for a piece of the merged mesh: drawn on its own now)
+	Crumble.bit(get_parent(), piece, xform, push, hit_fx, chip_color, ore_color if ore or crumble_glitter else Color(0, 0, 0, 0),
+		puff, [get_rid()], crumble_glitter)
 
 
 ## A small piece of whatever was struck, torn out at the hit point on every hit.
@@ -1322,7 +1375,10 @@ func _spawn_fragment(info: HitInfo, push: Vector3) -> void:
 	else:
 		piece = _nearest(intact, info.position).duplicate() as MeshInstance3D
 	var rot := Basis.from_euler(Vector3(randf(), randf(), randf()) * TAU)
-	_throw(piece, Transform3D(rot, info.position + info.normal * 0.06), push, debris_speed * 0.8, size)
+	if _crumbles():
+		_crumble_away(piece, Transform3D(rot.scaled(Vector3.ONE * size), info.position + info.normal * 0.06), push, 0.0)
+	else:
+		_throw(piece, Transform3D(rot, info.position + info.normal * 0.06), push, debris_speed * 0.8, size)
 
 
 ## Puts `piece` (scaled by `piece_scale`) in a debris rigid body at `xform` and flings it.
@@ -1398,7 +1454,7 @@ func _fit_collision() -> void:
 		var to_visual := visual.global_transform.affine_inverse()
 		for m in visual.find_children("*", "MeshInstance3D", true, false):
 			var mesh := m as MeshInstance3D
-			if not mesh.visible or mesh.mesh == null or mesh == _merged or mesh == _loose:
+			if not mesh.visible or mesh.mesh == null or mesh == _merged or mesh == _loose or mesh == _crumb_mesh:
 				continue
 			var xform := to_visual * mesh.global_transform
 			for s in mesh.mesh.get_surface_count():
@@ -1509,6 +1565,7 @@ func _load_links() -> void:
 	for piece in _links:
 		_rest_y[piece] = (chunks.transform * piece.transform * piece.get_aabb().get_center()).y
 	_merge_pieces()
+	_load_crumbs()
 
 
 ## Builds (or takes from the cache) the one mesh all the pieces are drawn as, and turns the pieces
@@ -1623,6 +1680,7 @@ func _update_piece_mask() -> void:
 		if not _pieces[i].visible or (_loose and _pieces[i] == _fault_piece):  # (the loose one is drawn on its own)
 			words[i / 24] |= 1 << (i % 24)
 	_merged.set_instance_shader_parameter("pieces_gone", Vector4(words[0], words[1], words[2], words[3]))
+	_update_crumb_mask()
 
 
 ## An ore spilling out of a piece as it comes away, while the rock still owes more than one.
@@ -1664,6 +1722,10 @@ func _knock_out(info: HitInfo, count: int) -> int:
 					near.append(o)
 	near.sort_custom(func(a: MeshInstance3D, b: MeshInstance3D) -> bool:
 		return _piece_centre(a).distance_squared_to(at) < _piece_centre(b).distance_squared_to(at))
+	if not _crumbs.is_empty():
+		_swings_left -= count + (FAULT_SWINGS if fault else 0)
+		if not fault:
+			return _dig_crumbs(info, count)
 	var extra := _knock + count - 1
 	var out: Array = [struck] + near.filter(func(c: MeshInstance3D) -> bool: return fault or _tough.get(c, 0) == 0) 		.slice(0, FAULT_BREAK - 1 if fault else randi_range(extra, extra + 1))
 	if fault:
@@ -1686,6 +1748,14 @@ func _knock_out(info: HitInfo, count: int) -> int:
 ## hits_left from how much of the rock is gone (0 once it's time to shatter).
 func _hits_from_pieces() -> void:
 	var gone := 1.0 - float(_intact_chunks().size()) / _links.size()
+	if not _crumbs.is_empty():  # (crumbs: by swings, and sooner if a lot has come away at once)
+		var out := 0.0
+		for i in _crumbs.size():
+			if _crumb_gone.has(i) or not _pieces[_crumbs[i]["block"]].visible:
+				out += _crumbs[i]["volume"]
+		gone = out / _crumb_volume
+		hits_left = 0 if gone >= _shatter_at or _swings_left <= 0 else _swings_left
+		return
 	hits_left = 0 if gone >= _shatter_at else maxi(1, ceili((_shatter_at - gone) / _shatter_at * max_hits))
 
 
@@ -1716,6 +1786,266 @@ func _unsupported() -> Array[MeshInstance3D]:
 	return out
 
 
+# --- crumbs ---------------------------------------------------------------------------------
+# (plans/crumbs.md) Each piece of a rock is baked into crumbs (tools/blender/make_crumbs.py,
+# <model>_crumbs.glb): a skin of ~13 cm crumbs over its outside and a core for the rest. A swing
+# takes out the crumb nearest the hit and a couple of its neighbours, a dent the size of the pick;
+# once a piece has lost SKIN_SPENT of its skin, or its core, the rest of it crumbles. Pieces are
+# still what holds the rock up, faults and saves go by. Up close the crumbs are drawn (one mesh, a
+# texel a crumb in crumbs_gone hiding the dug ones); past CRUMB_NEAR the pieces' mesh is.
+
+const CRUMB_NEAR := 16.0
+const CRUMB_ROW := 64  # (node_surface.gdshaderinc's CRUMB_ROW)
+## Neighbours a swing takes besides the crumb struck (a better pick or a Sharp! hit: more).
+const CRUMB_KNOCK := 2
+## A core is struck only when no skin crumb is this much nearer (m): a swing bites the skin first.
+const CORE_SHY := 0.2
+## A piece crumbles once this share of its skin is out.
+const SKIN_SPENT := 0.5
+
+## [{"block" (index in _pieces), "mesh", "xform" and "centre" (chunks space), "volume", "core",
+## "links" (crumb indices)}], shared by every rock of the model. Empty: no crumbs.
+var _crumbs: Array = []
+var _crumb_gone := {}  # crumb index -> true, for the crumbs of pieces still there
+var _block_crumbs := {}  # piece -> its crumbs' indices
+var _crumb_volume := 0.0
+## Biting swings a rock of crumbs takes (its .pieces.json's crumb_swings), and how many it has left:
+## steadier than going by how much is dug, which jumps when a piece crumbles.
+var _crumb_swings := 0
+var _swings_left := 0
+var _crumb_mesh: MeshInstance3D
+var _crumb_img: Image
+var _crumb_tex: ImageTexture
+static var _crumb_cache := {}  # model path -> {"crumbs", "mesh", "volume"}
+
+
+func _load_crumbs() -> void:
+	_crumbs = []
+	_block_crumbs.clear()
+	var base := model.resource_path.get_basename()
+	if not ResourceLoader.exists(base + "_crumbs.glb"):
+		return
+	var cached: Dictionary = _crumb_cache.get(model.resource_path, {})
+	if cached.is_empty():
+		cached = _bake_crumbs(base)
+		_crumb_cache[model.resource_path] = cached
+	_crumbs = cached["crumbs"]
+	_crumb_volume = cached["volume"]
+	_shatter_at = cached["shatter_at"]
+	_crumb_swings = cached["swings"]
+	max_hits = _crumb_swings  # (what stress, and a saved hits_left, are measured against)
+	for i in _crumbs.size():
+		(_block_crumbs.get_or_add(_pieces[_crumbs[i]["block"]], []) as Array).append(i)
+	_crumb_img = Image.create_empty(CRUMB_ROW, ceili(float(_crumbs.size()) / CRUMB_ROW), false, Image.FORMAT_R8)
+	_crumb_tex = ImageTexture.create_from_image(_crumb_img)
+	var mat := ROCK_MATERIAL.duplicate() as ShaderMaterial
+	mat.set_shader_parameter("use_crumbs", true)
+	mat.set_shader_parameter("crumbs_gone", _crumb_tex)
+	if _crumb_mesh == null:
+		_crumb_mesh = MeshInstance3D.new()
+		_crumb_mesh.name = "Crumbs"
+		visual.add_child(_crumb_mesh)
+	_crumb_mesh.mesh = cached["mesh"]
+	_crumb_mesh.transform = chunks.transform
+	_crumb_mesh.material_override = mat
+
+
+## The model's crumbs, read and merged into one mesh (UV2: crumb + 1, piece + 1).
+func _bake_crumbs(base: String) -> Dictionary:
+	var pieces: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(base + ".pieces.json"))
+	var data: Dictionary = pieces.get("crumbs", {})
+	var meshes := crumb_meshes(base + "_crumbs.glb")
+	var block_of := {}
+	for i in _pieces.size():
+		block_of[String(_pieces[i].name)] = i
+	var names: Array = data.keys().filter(func(n: String) -> bool:
+		return meshes.has(n) and block_of.has(data[n]["block"]))
+	names.sort()
+	var index := {}
+	for i in names.size():
+		index[names[i]] = i
+	var crumbs := []
+	var volume := 0.0
+	for i in names.size():
+		var d: Dictionary = data[names[i]]
+		var mesh: Mesh = meshes[names[i]][0]
+		var xf: Transform3D = meshes[names[i]][1]
+		var links := PackedInt32Array()
+		for l: String in d["links"]:
+			if index.has(l):
+				links.append(index[l])
+		crumbs.append({"block": block_of[d["block"]], "mesh": mesh, "xform": xf, "centre": xf * mesh.get_aabb().get_center(),
+			"volume": float(d["volume"]), "core": bool(d["core"]), "links": links})
+		volume += float(d["volume"])
+	var merged := merge_crumbs(crumbs)
+	return {"crumbs": crumbs, "mesh": merged, "volume": maxf(volume, 0.001),
+		"shatter_at": float(pieces.get("crumb_shatter_at", _shatter_at)), "swings": int(pieces.get("crumb_swings", max_hits))}
+
+
+## Crumbs ([{"mesh", "xform", "block"}]) as one mesh, each vertex carrying its crumb's index + 1 in
+## UV2.x and its piece's in UV2.y (node_surface.gdshaderinc hides the dug ones by them).
+static func merge_crumbs(crumbs: Array) -> ArrayMesh:
+	var verts := PackedVector3Array()
+	var normals := PackedVector3Array()
+	var uvs := PackedVector2Array()
+	var uv2s := PackedVector2Array()
+	var colours := PackedColorArray()
+	var indices := PackedInt32Array()
+	for i in crumbs.size():
+		var mesh: Mesh = crumbs[i]["mesh"]
+		var xf: Transform3D = crumbs[i]["xform"]
+		var block: int = crumbs[i]["block"]
+		for s in mesh.get_surface_count():
+			var arrays := mesh.surface_get_arrays(s)
+			var v: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+			var n: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+			var uv: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV] if arrays[Mesh.ARRAY_TEX_UV] else PackedVector2Array()
+			var col: PackedColorArray = arrays[Mesh.ARRAY_COLOR] if arrays[Mesh.ARRAY_COLOR] else PackedColorArray()
+			var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX] else PackedInt32Array(range(v.size()))
+			var at := verts.size()
+			for k in v.size():
+				verts.append(xf * v[k])
+				normals.append((xf.basis * n[k]).normalized())
+				uvs.append(uv[k] if not uv.is_empty() else Vector2.ZERO)
+				uv2s.append(Vector2(i + 1, block + 1))
+				colours.append(col[k] if not col.is_empty() else Color.WHITE)
+			for k in idx:
+				indices.append(at + k)
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_TEX_UV2] = uv2s
+	arrays[Mesh.ARRAY_COLOR] = colours
+	arrays[Mesh.ARRAY_INDEX] = indices
+	var merged := ArrayMesh.new()
+	merged.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return merged
+
+
+## A crumb's model meshes by name, each with its transform from the model's root.
+static func crumb_meshes(path: String) -> Dictionary:
+	var inst := (load(path) as PackedScene).instantiate()
+	var meshes := {}
+	for m in inst.find_children("*", "MeshInstance3D", true, false):
+		var xform := Transform3D.IDENTITY
+		var n: Node = m
+		while n != inst:
+			xform = (n as Node3D).transform * xform if n is Node3D else xform
+			n = n.get_parent()
+		meshes[String(m.name)] = [(m as MeshInstance3D).mesh, xform]
+	inst.free()
+	return meshes
+
+
+## Up close the crumbs are drawn, further off the pieces (after _limit_drawing, which set both).
+func _split_crumb_ranges() -> void:
+	if _crumb_mesh == null:
+		return
+	_crumb_mesh.layers = _merged.layers
+	_crumb_mesh.visibility_range_end = CRUMB_NEAR
+	_crumb_mesh.visibility_range_end_margin = 1.0
+	_crumb_mesh.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_DISABLED
+	_merged.visibility_range_begin = CRUMB_NEAR
+	_merged.visibility_range_begin_margin = 1.0
+
+
+func _update_crumb_mask() -> void:
+	if _crumb_mesh == null:
+		return
+	for i in _crumbs.size():
+		var block: MeshInstance3D = _pieces[_crumbs[i]["block"]]
+		var gone := _crumb_gone.has(i) or not block.visible or (_loose != null and block == _fault_piece)
+		_crumb_img.set_pixel(i % CRUMB_ROW, i / CRUMB_ROW, Color(1, 0, 0) if gone else Color(0, 0, 0))
+	_crumb_tex.update(_crumb_img)
+
+
+func _crumb_centre(i: int) -> Vector3:
+	return chunks.global_transform * (_crumbs[i]["centre"] as Vector3)
+
+
+## A swing on a rock of crumbs: the crumb nearest the hit comes out with a couple of its neighbours
+## (a dent); a piece that's lost enough of itself crumbles, and anything left hanging falls. Sets
+## hits_left. The pieces that fell.
+func _dig_crumbs(info: HitInfo, count: int) -> int:
+	var at := info.position
+	var best := -1
+	var best_d := INF
+	for i in _crumbs.size():
+		if _crumb_gone.has(i) or not _pieces[_crumbs[i]["block"]].visible:
+			continue
+		var d := _crumb_centre(i).distance_to(at) + (CORE_SHY if _crumbs[i]["core"] else 0.0)
+		if d < best_d:
+			best_d = d
+			best = i
+	if best < 0:
+		hits_left = 0
+		return 0
+	var out: Array[int] = [best]
+	if not _crumbs[best]["core"]:
+		var near: Array = Array(_crumbs[best]["links"]).filter(func(o: int) -> bool:
+			return not _crumb_gone.has(o) and not _crumbs[o]["core"] and _pieces[_crumbs[o]["block"]].visible)
+		near.sort_custom(func(a: int, b: int) -> bool:
+			return _crumb_centre(a).distance_squared_to(at) < _crumb_centre(b).distance_squared_to(at))
+		var extra := CRUMB_KNOCK + count - 1
+		out.append_array(near.slice(0, randi_range(extra, extra + 1)))
+	var touched := {}
+	for i in out:
+		var block: MeshInstance3D = _pieces[_crumbs[i]["block"]]
+		var away := (global_basis * (to_local(_crumb_centre(i)) - _shape_centre)).normalized()
+		_crumb_out(i, _split_push(away, info), 0.5 if i == best else 0.0)
+		touched[block] = true
+	for block: MeshInstance3D in touched:
+		if block.visible and _spent(block):
+			var away := (global_basis * (to_local(_piece_centre(block)) - _shape_centre)).normalized()
+			_pop_chunk(block, _split_push(away, info), 0.0)
+			_spill_ore(block, info)
+	var falling := _unsupported()
+	for c in falling:
+		var away := (global_basis * (to_local(_piece_centre(c)) - _shape_centre)).normalized()
+		_pop_chunk(c, away * 0.3, 0.0)
+		_spill_ore(c, info)
+	if not falling.is_empty():  # (an undercut: a swing's worth more)
+		_swings_left -= COLLAPSE_SWINGS
+	_hits_from_pieces()
+	_update_piece_mask()
+	return falling.size()
+
+
+## The piece has lost its core, or SKIN_SPENT of its skin.
+func _spent(block: MeshInstance3D) -> bool:
+	var skin := 0
+	var out := 0
+	for i: int in _block_crumbs.get(block, []):
+		if _crumbs[i]["core"]:
+			if _crumb_gone.has(i):
+				return true
+			continue
+		skin += 1
+		out += 1 if _crumb_gone.has(i) else 0
+	return skin == 0 or float(out) / skin >= SKIN_SPENT
+
+
+## Some crumbs of the piece are out already.
+func _dented(block: MeshInstance3D) -> bool:
+	for i: int in _block_crumbs.get(block, []):
+		if _crumb_gone.has(i):
+			return true
+	return false
+
+
+## Crumb i comes out: it falls out of its dent and crumbles to dust (Crumble).
+func _crumb_out(i: int, push: Vector3, puff: float) -> void:
+	_crumb_gone[i] = true
+	var c: Dictionary = _crumbs[i]
+	var piece := MeshInstance3D.new()
+	piece.mesh = c["mesh"]
+	piece.material_override = ROCK_MATERIAL
+	_dress(piece)
+	_crumble_away(piece, chunks.global_transform * (c["xform"] as Transform3D), push, puff, _ore_pieces.has(_pieces[c["block"]]))
+
+
 ## The fault: one piece of an ore rock that has worked loose. It stands a few cm proud of the rest,
 ## tipped out at the top, so a dark gap opens round it; every few seconds it settles with a tick
 ## and lets a pinch of grit fall. Find it and hit it and a whole cluster breaks out (FAULT_BREAK
@@ -1724,6 +2054,9 @@ const FAULT_RADIUS := 0.35
 const FAULT_REACH := 1.1
 const FAULT_BREAK := 6
 const FAULT_DELAY := 0.8
+## A rock of crumbs: striking the fault counts as this many swings more, and a collapse this many.
+const FAULT_SWINGS := 2
+const COLLAPSE_SWINGS := 1
 ## How far the loose piece stands out (m, at least: a big one up to 1.8 times it), how far it tips out at the top (radians), how long it
 ## takes to work loose, and how often it settles (s, between).
 const FAULT_GAP := 0.045
@@ -1743,7 +2076,7 @@ func _place_fault() -> void:
 		return
 	var spots := []  # [piece, point, normal], node space: outside faces on the sides, off the ground
 	for piece in _pieces:
-		if not piece.visible:
+		if not piece.visible or _dented(piece):  # (drawn whole when it works loose)
 			continue
 		var tris := _piece_tris(piece)
 		var centres: PackedVector3Array = tris[0]
@@ -1795,8 +2128,9 @@ func _work_loose(piece: MeshInstance3D) -> void:
 	shadow.x = centre.x
 	shadow.y = centre.y
 	shadow.z = centre.z
-	for g in [_merged, _loose]:
-		g.set_instance_shader_parameter("fault_shadow", shadow)
+	for g in [_merged, _loose, _crumb_mesh]:
+		if g:
+			g.set_instance_shader_parameter("fault_shadow", shadow)
 	# out (further for a bigger piece), and tipped about its foot: a horizontal axis along the
 	# rock's face, under the piece
 	var axis := out.cross(Vector3.UP).normalized()
@@ -1867,8 +2201,9 @@ func _clear_fault() -> void:
 		_surfaces.erase(_loose)
 		_loose.queue_free()
 		_loose = null
-	if _merged:
-		_merged.set_instance_shader_parameter("fault_shadow", Vector4.ZERO)
+	for g in [_merged, _crumb_mesh]:
+		if g:
+			g.set_instance_shader_parameter("fault_shadow", Vector4.ZERO)
 	_fault_piece = null
 	_update_piece_mask()
 
