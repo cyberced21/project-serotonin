@@ -269,8 +269,9 @@ func _simulate(lvl: int, tier: int, axe: int, id: StringName) -> Dictionary:
 			momentum = mini(momentum + 1, player.momentum_max)
 		last_fell = t - AFTER_FELL
 		_fell(i, state, t, has.call(&"grove_keeper"), _old_growth(i, id))
-		if has.call(&"dominoes"):  # it falls toward its notch: back the way you came
-			for j in _crushed(i, came_from, choppable, state, t):
+		if has.call(&"dominoes"):  # it falls toward its notch, swung aside of you (ResourceNode.FALL_ASIDE)
+			var fall := came_from.rotated(deg_to_rad(RN.FALL_ASIDE) * (1.0 if rng.randf() < 0.5 else -1.0))
+			for j in _crushed(i, fall, choppable, state, t):
 				crushes += 1
 				var s: Dictionary = _stats[trees[j]["scene"]]
 				state[j]["hits_left"] = maxi(state[j]["hits_left"] - ceili(s["max_hits"] * RN.CRUSH_SHARE), 0)
@@ -402,7 +403,7 @@ func _chop(i: int, st: Dictionary, lvl: int, axe: int, id: StringName, momentum:
 				extra += maxi((RN.POWER_CLEAN_HITS if clean else RN.POWER_HITS) - (cuts + (s["clean_extra"] if clean else 0)), 0)
 			if at_knot:
 				extra += RN.KNOT_EXTRA
-				if id == &"heartwood":
+				if id == &"heartwood" and rng.randf() < RN.HEARTWOOD_CHANCE:
 					rare.append(&"heartwood")
 				knot = false
 			if st["fine"] and clean and not fine_cut:

@@ -46,7 +46,7 @@ const TALENT_COLOR := Color("ffe9a8")
 ## Chain cut: the most extra hits a run of clean cuts reaches.
 const CHAIN_MAX := 3
 ## Back cut: once the notch is this deep (share of a full notch, as for a clean cut), a hit from
-## more than this far round from its side counts this many times.
+## more than this far round from its side counts this many times: it cracks the hinge.
 const BACK_CUT_AFTER := 0.25
 const BACK_CUT_ANGLE := 120.0
 const BACK_CUT_TIMES := 4
@@ -59,6 +59,8 @@ const KNOT_EXTRA := 3
 const KNOT_RADIUS := 0.16
 const KNOT_DARK := 0.45
 const KNOT_COLOR := Color("ffb347")
+## Heartwood: the share of struck knots that give a heartwood log (tools/talent_model.gd balances it).
+const HEARTWOOD_CHANCE := 0.12
 ## A layer of wood coming out of the notch: its snap (the clean cut's crack, quieter and higher), dB.
 const LAYER_POP_DB := -7.0
 ## A tree falling toward whoever felled it swings at least this far (degrees) aside of them.
@@ -2695,9 +2697,13 @@ func _woodcutting_talents(info: HitInfo, cuts: int) -> Dictionary:
 		if _chain >= 2:
 			extra += mini(_chain - 1, CHAIN_MAX)
 			say.append("Chain ×%d" % _chain)
-	if t.has(&"back_cut") and _is_back_cut(info):
+	if t.has(&"back_cut") and _is_back_cut(info):  # the hinge cracks: a sharp crack and the trunk groans
 		extra += cuts * (BACK_CUT_TIMES - 1)
 		say.append("Back cut!")
+		if clean_layers:
+			Sfx.play_at(clean_layers, info.position, 0.85, LAYER_POP_DB + 4.0)
+		if creak_layers:
+			_groan(global_position + Vector3.UP * 2.0, 0.95, -6.0)
 	if info.power and t.has(&"power_swing"):
 		var normal := cuts + (clean_cut_extra_hits if _clean else 0)
 		extra += maxi((POWER_CLEAN_HITS if _clean else POWER_HITS) - normal, 0)
@@ -2705,7 +2711,7 @@ func _woodcutting_talents(info: HitInfo, cuts: int) -> Dictionary:
 	_knot_struck = _knot != null and _knot.visible and _aimed_near(info, _knot.global_position, KNOT_RADIUS * _window_scale())
 	if _knot_struck:  # (every tree's knot, a talent or not: plans/logging.md)
 		extra += KNOT_EXTRA
-		if t.has(&"heartwood"):
+		if t.has(&"heartwood") and randf() < HEARTWOOD_CHANCE:
 			_bonus_items.append(&"heartwood")
 			say.append("Heartwood!")
 		else:
