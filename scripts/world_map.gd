@@ -90,12 +90,13 @@ const ROADS: Array[Dictionary] = [
 		"from": Vector2(178, 178), "to": Vector2(268, 252)},
 	{"id": &"east_road", "title": "The road east", "kind": &"road", "village": true, "ctrl": EAST_ROAD},
 	# the new places' footpaths (plans/world-pass.md, phase 7), each off a road laid before it
+	# (`to` in the place's own frame: the path ends where the place is, moved or turned)
 	{"id": &"mill_path", "title": "The path to the mill", "kind": &"path",
-		"from": Vector2(100, 206), "join": &"lake_road", "to": Vector2(47, 192)},
+		"from": Vector2(100, 206), "join": &"lake_road", "place": &"watermill", "to": Vector2(5, -8)},
 	{"id": &"orchard_path", "title": "The path to the orchard", "kind": &"path",
-		"from": Vector2(150, 50), "join": &"village_road", "to": Vector2(186, 70)},
+		"from": Vector2(150, 50), "join": &"village_road", "place": &"orchard", "to": Vector2(-14, 8)},
 	{"id": &"shepherd_path", "title": "The path up the shepherd's hill", "kind": &"path",
-		"from": Vector2(330, 120), "join": &"east_road", "to": Vector2(354, 32)},
+		"from": Vector2(330, 120), "join": &"east_road", "place": &"shepherds_hill", "to": Vector2(-6, 14)},
 ]
 ## The road east (plans/market.md): from the green's east edge up through a pass in the eastern
 ## rim hills to the world's edge, the way traders come. The terrain generator cuts the pass along it.
@@ -143,6 +144,12 @@ static func site(id: StringName) -> Vector2:
 	return LayoutAnchors.at(id, Vector2.ZERO)
 
 
+## Offset `local` in anchored place `id`'s frame (turned with it), on the map.
+static func in_frame(id: StringName, local: Vector2) -> Vector2:
+	var w := Vector3(local.x, 0.0, local.y).rotated(Vector3.UP, LayoutAnchors.yaw(id))
+	return site(id) + Vector2(w.x, w.z)
+
+
 ## The middle of the village green (its anchor; the bowl and the village's flat are round it).
 static func village_center() -> Vector2:
 	return LayoutAnchors.at(&"green", Vector2(128, 128))
@@ -154,9 +161,7 @@ static func haven_center() -> Vector2:
 
 ## The middle of the haven's spring pool on the map.
 static func haven_pool_center() -> Vector2:
-	var o: Vector2 = HAVEN_POOL["offset"]
-	var w := Vector3(o.x, 0.0, o.y).rotated(Vector3.UP, LayoutAnchors.yaw(&"haven"))
-	return haven_center() + Vector2(w.x, w.z)
+	return in_frame(&"haven", HAVEN_POOL["offset"])
 
 
 static var _roads: Array[Dictionary] = []

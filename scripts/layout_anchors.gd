@@ -11,6 +11,8 @@ extends Node
 
 const LAYOUT := "res://data/layout/hearthvale.json"
 
+## The layout file read (tools can point it at another: use_file()).
+static var layout_path := LAYOUT
 static var _anchors: Array = []
 static var _loaded := false
 
@@ -19,11 +21,18 @@ func _enter_tree() -> void:
 	apply(get_parent())
 
 
+## Reads the anchors from `path` instead (the terrain generator's --layout, for a test).
+static func use_file(path: String) -> void:
+	layout_path = path
+	_loaded = false
+	_anchors = []
+
+
 ## The layout's anchors (read once).
 static func anchors() -> Array:
 	if not _loaded:
 		_loaded = true
-		var layout: Variant = JSON.parse_string(FileAccess.get_file_as_string(LAYOUT)) if FileAccess.file_exists(LAYOUT) else null
+		var layout: Variant = JSON.parse_string(FileAccess.get_file_as_string(layout_path)) if FileAccess.file_exists(layout_path) else null
 		if layout is Dictionary:
 			_anchors = layout.get("anchors", [])
 	return _anchors

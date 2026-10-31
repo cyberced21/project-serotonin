@@ -8,7 +8,6 @@ extends Node3D
 ## near is linked to the nearest one, so a moved building still has a way in. Heights come from
 ## the ground where they walk. tools/village_layout.gd + tools/plot_village.py draw it from above.
 
-const LAYOUT := "res://data/layout/hearthvale.json"
 ## Corners closer than this are one point; a line's end this close to another line joins it there.
 const JOIN := 0.75
 ## A door with a network point this close is reached already (its own short lane in); else the
@@ -50,9 +49,11 @@ func _ready() -> void:
 		_astar.connect_points(l[0], l[1])
 
 
-## The layout's walkway lines.
-static func walkways() -> Array:
-	var layout: Variant = JSON.parse_string(FileAccess.get_file_as_string(LAYOUT)) if FileAccess.file_exists(LAYOUT) else null
+## The layout's walkway lines (from `path`, else the file LayoutAnchors reads).
+static func walkways(path := "") -> Array:
+	if path == "":
+		path = LayoutAnchors.layout_path
+	var layout: Variant = JSON.parse_string(FileAccess.get_file_as_string(path)) if FileAccess.file_exists(path) else null
 	var out := []
 	if layout is Dictionary:
 		for l in layout.get("lines", []):

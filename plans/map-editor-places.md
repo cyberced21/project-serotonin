@@ -51,6 +51,24 @@ Branch `places` off `main`, one commit a phase.
   `village_center()` (the green's anchor), for the biome cards, the dog, the lamps, the trader and
   the terrain generator. `tools/test_green.gd` turns your home, the lodge and the green a quarter
   and moves the bakery 20 m, and checks each spot went with its owner.
+- **Phase 4 (2026-10-30):** the terrain generator reads main.tscn as the anchors stand it. 24
+  anchors have a `pad` (their footprint + 1 m: the 8 buildings, 15 fixtures and the mill) and get
+  level ground at the land's height at their middle, easing out over 6 m, ponds left alone (the
+  fisher's hut is on the bank). The village pond is dug where `Village/Green/VillagePond` is; the
+  lanes painted are the walkway network (`VillagePaths.graph`) plus each door's step onto it, and
+  the five lanes from the ring out to the roads turn and move with the green, as do the village
+  ends of the roads out; the paths to the mill, orchard and shepherd's hill end in their place's
+  frame (`"place"` in `WorldMap.ROADS`, `WorldMap.in_frame`). New: `--layout=<file>`,
+  `--dry-run`, `--report=<file>` (each pad's flatness and whether a road crossed it, each road's
+  ends, the ponds, warnings: a road across a pad, the mill's wheel out of the creek).
+  `tools/test_terrain_follows.gd` (a dry run with the mill moved 60 m and the green turned).
+  Against today's generator, today's layout changes the land by at most 9 cm (the pads levelling
+  the barn, cart shed and the other south-east fixtures, which stood up to 26 cm off) and paints
+  the short lanes to the market stall and the noticeboard. **Not regenerated:** the committed
+  `terrain_data/` is already 8,000 cells (up to 3.8 m, the Frostpeak path and the Pinewood) off what
+  today's generator makes, from before this plan, so the terrain is left as it is until it's
+  rebuilt on purpose (the editor's Save & bake does it when terrain or an anchor changed).
+  Still fixed: the two drawn road lines (`VILLAGE_PATH`, `EAST_ROAD`) don't follow a moved green.
 
 ## What moves
 

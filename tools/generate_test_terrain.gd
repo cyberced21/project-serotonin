@@ -29,6 +29,14 @@ extends SceneTree
 ## roads and paths drawn in the editor) go on top of all that, before the relax pass; the roads are
 ## laid after WorldMap.ROADS and written with them (WorldMap.roads() reads them back). The terrain
 ## it applied is written to data/layout/terrain_applied.json, so the editor knows when it's stale.
+## The layout's anchors (plans/map-editor-places.md) stand the buildings, fixtures and places: each
+## with a `pad` gets level ground under it (at the height of the land at its middle), the village
+## flat and the bowl sit round the green's anchor, the village pond is dug where its node is, the
+## lanes painted are the villagers' walkways (and the step from each door to them), and the paths
+## out to the mill, orchard and shepherd's hill end at their place.
+##   -- --layout=<file>   read the layout (anchors, walkways, terrain shapes) from another file
+##   -- --dry-run         write nothing (terrain, roads, main.tscn, the applied terrain)
+##   -- --report=<file>   write what it did as JSON: each pad's flatness, each road's ends, warnings
 
 const WorldMap := preload("res://scripts/world_map.gd")
 
@@ -97,7 +105,9 @@ const RELAX_PASSES := 80
 const DATA_DIR := "res://terrain_data"
 const WATER_LEVEL := -0.15     # keep in sync with the ponds' WaterBody nodes in main.tscn
 ## Ponds: centre, radius (roughly where the bed rises to the water line), deepest point below
-## the water line (wading depth — no swimming). Keep in sync with the ponds in main.tscn.
+## the water line (wading depth — no swimming). Keep in sync with the ponds in main.tscn. The village
+## pond's centre is where its node (Village/Green/VillagePond) stands, the green moved or turned.
+const VILLAGE_POND := 1
 const PONDS := [
 	{"center": Vector2(66, 86), "radius": 9.0, "depth": 0.95},   # the clearing's pond
 	{"center": Vector2(120, 132), "radius": 9.0, "depth": 0.75},  # the village pond, on the green
@@ -115,28 +125,34 @@ const FIELD_BASE := WorldMap.BOWL_RIM_HEIGHT * 0.85
 const PATH_TEXTURE := WorldMap.TEX_PATH
 ## The path from the clearing over the pass to the green's ring.
 const PATH := WorldMap.VILLAGE_PATH
-## The ring round the village green (plans/world-pass.md, the pond green) and its lanes: out to
-## where each road starts, and in to each door (as scripts/village_paths.gd walks them).
+## The ring round the village green (plans/world-pass.md, the pond green) and the lanes from it out
+## to where each road starts (drawn with the green at GREEN_HOME: they turn and move with it). The
+## lanes in to the doors are the villagers' walkways (the layout's, as VillagePaths links them).
 const RING_RADIUS := 25.5
 const RING_HALF_WIDTH := 1.3
-const LANES := [
+const GREEN_HOME := Vector2(128, 128)
+const ROAD_LANES := [
 	[Vector2(138, 104), Vector2(134, 80), Vector2(128, 58)],   # north, the road to the Pinewood
 	[Vector2(153, 127), Vector2(176, 127), Vector2(200, 126)], # east, the road east
 	[Vector2(146, 146), Vector2(162, 162), Vector2(178, 178)], # south-east, the road to Goldmeadow
 	[Vector2(127, 153), Vector2(122, 176), Vector2(118, 198)], # south, the road to the lake
 	[Vector2(103, 131), Vector2(80, 132), Vector2(58, 132)],   # west, the road to the quarry
-	[Vector2(131.5, 102.7), Vector2(128.8, 102.8)],           # town hall
-	[Vector2(115.2, 105.9), Vector2(109.9, 93.8)],            # woodcutter
-	[Vector2(150.1, 115.2), Vector2(161.0, 97.9)],            # smithy
-	[Vector2(150.1, 115.2), Vector2(155.2, 114.5)],           # tavern
-	[Vector2(131.5, 102.7), Vector2(124.6, 123.0)],           # the fisher's, on the pond's north bank
-	[Vector2(131.5, 102.7), Vector2(134.0, 113.0), Vector2(134.0, 124.0), Vector2(133.0, 141.0), Vector2(128.0, 153.5)], # across the green
-	[Vector2(140.8, 150.1), Vector2(145.4, 161.0), Vector2(152.0, 158.2), Vector2(153.9, 161.3)], # bakery, terrace
-	[Vector2(115.2, 150.1), Vector2(102.6, 166.2)],           # Edda's
-	[Vector2(104.0, 104.0), Vector2(94.0, 101.0), Vector2(86.4, 107.2)], # your home
 ]
+## A pad's level ground eases into the land over this much past its radius (m).
+const PAD_SOFT := 6.0
+## The mill's wheel wants water: warn when it's further than this from the creek's edge (m).
+const WHEEL_REACH := 1.5
 const PATH_HALF_WIDTH := 1.6
 const LANE_HALF_WIDTH := 1.0
+
+var _layout_path := LAYOUT
+var _dry := false
+var _report := {"pads": {}, "roads": {}, "warnings": []}
+var _ponds: Array = PONDS.duplicate(true)
+var _lanes: Array = []  # every lane painted: the road lanes and the walkways' legs, on the map
+var _pads: Array = []  # [{id, at, r}]
+var _scene_points: Array[Vector2] = []  # where hand-placed things stand (see _baked_points)
+var _road_mask := PackedByteArray()  # 1 where a road or path was laid (its bed and banks)
 
 ## The quarry's haul road: each ramp runs along the inside of a wall, this wide, climbing one
 ## level over RAMP_LENGTH metres; the next ramp down starts RAMP_GAP metres further round.
@@ -192,10 +208,18 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--layout="):
+			_layout_path = arg.trim_prefix("--layout=")
+			LayoutAnchors.use_file(_layout_path)
+		elif arg == "--dry-run":
+			_dry = true
+	VILLAGE_CENTER = WorldMap.village_center()
 	var terrain := Terrain3D.new()
 	root.add_child(terrain)
 	await process_frame
 	_setup()
+	_read_scene()
 
 	var base := PackedFloat32Array()
 	base.resize(SIZE * SIZE)
@@ -217,6 +241,7 @@ func _run() -> void:
 			h[y * SIZE + x] = _biomes(w, base[y * SIZE + x]) + (_peak(w) + _rim(w)) * _off_quarry(w)
 	_glades(h)
 	_layout_shapes(h)
+	_level_pads(h)
 	_relax(h)
 	_carve_creek(h)
 
@@ -241,25 +266,36 @@ func _run() -> void:
 				var w := _world(x, y)
 				terrain.data.set_control_base_id(Vector3(w.x, 0, w.y), id)
 				painted += 1
-	_write_roads(laid)
 	_report_moved(baked, h)
 	_report_slopes(h, ids)
-	_rebake_nodes(h)
-	var applied := FileAccess.open(TERRAIN_APPLIED, FileAccess.WRITE)
-	applied.store_string(JSON.stringify(_layout_terrain))
-	applied.close()
-
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DATA_DIR))
-	terrain.data.save_directory(DATA_DIR)
-	print("Saved terrain to ", DATA_DIR, " (", painted, " painted cells)")
+	_report_pads(h)
+	_check_mill()
+	_report["ponds"] = []
+	for pond in _ponds:
+		_report["ponds"].append([pond["center"].x, pond["center"].y])
+	if not _dry:
+		_write_roads(laid)
+		_rebake_nodes(h)
+		var applied := FileAccess.open(TERRAIN_APPLIED, FileAccess.WRITE)
+		applied.store_string(JSON.stringify(_layout_terrain))
+		applied.close()
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DATA_DIR))
+		terrain.data.save_directory(DATA_DIR)
+		print("Saved terrain to ", DATA_DIR, " (", painted, " painted cells)")
+	else:
+		print("Dry run: nothing written (", painted, " painted cells)")
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--preview="):
 			_write_preview(arg.trim_prefix("--preview="), h, ids)
+		elif arg.begins_with("--report="):
+			var f := FileAccess.open(arg.trim_prefix("--report="), FileAccess.WRITE)
+			f.store_string(JSON.stringify(_report, "\t"))
+			f.close()
 	quit()
 
 
 func _setup() -> void:
-	var layout: Variant = JSON.parse_string(FileAccess.get_file_as_string(LAYOUT)) if FileAccess.file_exists(LAYOUT) else null
+	var layout: Variant = JSON.parse_string(FileAccess.get_file_as_string(_layout_path)) if FileAccess.file_exists(_layout_path) else null
 	if layout is Dictionary:
 		_layout_terrain = layout.get("terrain", [])
 		for s in _layout_terrain:
@@ -315,7 +351,7 @@ func _height(w: Vector2) -> float:
 	outside *= lerpf(CREEK_VALE_FLOOR, 1.0, c)
 	var rim := _bowl(w)
 	var h := outside * (rim * WorldMap.BOWL_RIM_HEIGHT + _hills(w) * lerpf(BOWL_HILLS, 1.0, rim))
-	for pond in PONDS:
+	for pond in _ponds:
 		h = _pond(w, h, pond, _shore)
 	return h
 
@@ -756,13 +792,8 @@ func _nearest_sample(r: Dictionary, to: Vector2) -> int:
 ## Where everything placed by hand in main.tscn stands (ruins, buildings, props, water), leaving
 ## out the biome scenes and the resource nodes.
 func _baked_points() -> Array[Vector2]:
-	var scene := load("res://scenes/main.tscn") as PackedScene
-	var main := scene.instantiate()
-	LayoutAnchors.apply(main)  # (where the map editor put the buildings and places)
-	var out: Array[Vector2] = []
-	_collect(main, Transform3D.IDENTITY, 0, out)
-	main.free()
-	var layout: Variant = JSON.parse_string(FileAccess.get_file_as_string(LAYOUT)) if FileAccess.file_exists(LAYOUT) else null
+	var out: Array[Vector2] = _scene_points.duplicate()  # (read by _read_scene, as the anchors stand them)
+	var layout: Variant = JSON.parse_string(FileAccess.get_file_as_string(_layout_path)) if FileAccess.file_exists(_layout_path) else null
 	if layout is Dictionary:  # the map editor's points: things put where they are on purpose
 		for pt in layout.get("points", []):
 			out.append(Vector2(float(pt["at"][0]), float(pt["at"][1])))
@@ -820,6 +851,10 @@ func _lay_roads(h: PackedFloat32Array, ids: PackedByteArray, baked: Array[Vector
 		if ctrl.is_empty():
 			var from: Vector2 = spec["from"]
 			var to: Vector2 = spec["to"]
+			if spec.has("place"):  # (its end in the place's frame: where the place stands now)
+				to = WorldMap.in_frame(spec["place"], to)
+			if from.distance_to(GREEN_HOME) < WorldMap.VILLAGE_RADIUS + 5.0:  # (a spoke out of the village: from the green's lane)
+				from = _on_green(from)
 			if spec.has("join"):
 				from = _nearest_on(laid[spec["join"]], from)
 			if spec.has("join_end"):
@@ -832,11 +867,19 @@ func _lay_roads(h: PackedFloat32Array, ids: PackedByteArray, baked: Array[Vector
 		var road: bool = spec["kind"] == &"road"
 		var half := WorldMap.ROAD_HALF_WIDTH if road else WorldMap.PATH_HALF_WIDTH
 		var before := h.duplicate()
+		if _road_mask.is_empty():
+			_road_mask.resize(SIZE * SIZE)
 		var r := _make_route(ctrl, false, half, ROAD_GRADE if road else PATH_GRADE, 24.0 if road else 10.0, h)
 		_apply_route(r, h, ids, WorldMap.TEX_ROAD if road else PATH_TEXTURE,
 				ROAD_SHOULDER if road else PATH_SHOULDER, 99.0, 10.0 if road else 6.0, true)
 		laid[spec["id"]] = r
+		for i in h.size():
+			if absf(h[i] - before[i]) > 0.01:
+				_road_mask[i] = 1
 		_report_road(spec, r, before)
+		var pts: PackedVector2Array = r["pts"]
+		if pts.size() > 1:
+			_report["roads"][String(spec["id"])] = [[pts[0].x, pts[0].y], [pts[-1].x, pts[-1].y]]
 	return laid
 
 
@@ -991,7 +1034,7 @@ func _sample(h: PackedFloat32Array, w: Vector2) -> float:
 func _on_path(w: Vector2) -> bool:
 	if absf(w.distance_to(VILLAGE_CENTER) - RING_RADIUS) < RING_HALF_WIDTH:
 		return true
-	for lane in LANES:
+	for lane in _lanes:
 		if _polyline_distance(w, lane) < LANE_HALF_WIDTH:
 			return true
 	return false
@@ -1044,7 +1087,7 @@ func _report_moved(points: Array[Vector2], h: PackedFloat32Array) -> void:
 
 
 func _in_water(p: Vector2) -> bool:
-	for pond in PONDS:
+	for pond in _ponds:
 		if p.distance_to(pond["center"]) < float(pond["radius"]) + 2.0:
 			return true
 	return false
@@ -1169,3 +1212,131 @@ func _layout_shapes(h: PackedFloat32Array) -> void:
 						h[i] = _pond(w, h[i], {"center": Vector2(float(s["center"][0]), float(s["center"][1])),
 								"radius": float(s["radius"]), "depth": float(s.get("depth", 1.0))}, _shore)
 		print("terrain shape %s (%s) applied" % [s.get("id", "?"), type])
+
+
+# --- the layout's anchors (plans/map-editor-places.md) -------------------------------------------
+
+## Reads main.tscn as the anchors stand it: where every hand-placed thing is (for the road router and
+## the moved-ground report), the doors (for the lanes in to them), the village pond, the mill's wheel,
+## and the pads.
+func _read_scene() -> void:
+	var main := (load(MAIN_SCENE) as PackedScene).instantiate()
+	LayoutAnchors.apply(main)
+	_collect(main, Transform3D.IDENTITY, 0, _scene_points)
+	var doors := PackedVector2Array()
+	var village := main.get_node_or_null("Village")
+	for b in (village.get_children() if village else []):
+		var door := b.get_node_or_null("Spots/Door") as Node3D
+		if door:
+			var p := _global(door)
+			doors.append(Vector2(p.x, p.z))
+	var pond := main.get_node_or_null("Village/Green/VillagePond") as Node3D
+	if pond:
+		var p := _global(pond)
+		_ponds[VILLAGE_POND]["center"] = Vector2(p.x, p.z)
+	var wheel := main.get_node_or_null("Places/Watermill/MillWheel") as Node3D
+	if wheel:
+		var p := _global(wheel)
+		_report["mill_wheel"] = [p.x, p.z]
+	main.free()
+	for lane in ROAD_LANES:
+		var pts: Array = []
+		for p in lane:
+			pts.append(_on_green(p))
+		_lanes.append(pts)
+	var g := VillagePaths.graph(VillagePaths.walkways(_layout_path), doors)
+	var gp: PackedVector2Array = g["points"]
+	for l in g["links"]:
+		_lanes.append([gp[l[0]], gp[l[1]]])
+	for d in doors:  # the last step from the network onto each door
+		var best := INF
+		var near := Vector2.ZERO
+		for l in g["links"]:
+			var q := Geometry2D.get_closest_point_to_segment(d, gp[l[0]], gp[l[1]])
+			if q.distance_to(d) < best:
+				best = q.distance_to(d)
+				near = q
+		if best < INF and best > 0.1:
+			_lanes.append([near, d])
+	for a in LayoutAnchors.anchors():
+		if float(a.get("pad", 0.0)) > 0.0:
+			_pads.append({"id": String(a["id"]), "at": Vector2(float(a["at"][0]), float(a["at"][1])), "r": float(a["pad"])})
+
+
+func _global(n: Node3D) -> Vector3:
+	var t := n.transform
+	var p := n.get_parent()
+	while p is Node3D:
+		t = (p as Node3D).transform * t
+		p = p.get_parent()
+	return t.origin
+
+
+## A point drawn with the green at GREEN_HOME, unturned: where it is with the green at its anchor.
+func _on_green(p: Vector2) -> Vector2:
+	return WorldMap.in_frame(&"green", p - GREEN_HOME)
+
+
+## Level ground under each anchored thing with a pad: at the land's height at its middle, easing into
+## the land round it. Ponds are left alone (a hut on the bank doesn't fill the water in).
+func _level_pads(h: PackedFloat32Array) -> void:
+	for pad in _pads:
+		var c: Vector2 = pad["at"]
+		var r: float = pad["r"]
+		var top := _sample(h, c)
+		_for_pixels_near(c, r + PAD_SOFT, func(i: int, w: Vector2) -> void:
+			if _in_pond(w):
+				return
+			var k := 1.0 - smoothstep(r, r + PAD_SOFT, w.distance_to(c))
+			h[i] = lerpf(h[i], top, k))
+
+
+## How level each pad came out after everything (roads, the creek and the relax pass have been at
+## it): the most the dry ground under its middle (70% of its radius; not a pond or the creek) is off
+## its own mean, and whether a road or path was laid across it. A pad a road spoilt is warned about.
+func _report_pads(h: PackedFloat32Array) -> void:
+	for pad in _pads:
+		var c: Vector2 = pad["at"]
+		var core: float = pad["r"] * 0.7
+		var heights := []
+		var crossed := [false]  # (an Array: the lambda sets it)
+		_for_pixels_near(c, core, func(i: int, w: Vector2) -> void:
+			if w.distance_to(c) >= core or (not _creek_mask.is_empty() and _creek_mask[i] == 1) or _in_pond(w):
+				return
+			heights.append(h[i])
+			if not _road_mask.is_empty() and _road_mask[i] == 1:
+				crossed[0] = true)
+		if heights.is_empty():
+			continue
+		var mean := 0.0
+		for v in heights:
+			mean += v
+		mean /= heights.size()
+		var worst := 0.0
+		for v in heights:
+			worst = maxf(worst, absf(v - mean))
+		_report["pads"][pad["id"]] = {"at": [c.x, c.y], "r": pad["r"], "height": snappedf(mean, 0.01), "off": snappedf(worst, 0.01), "road": crossed[0]}
+		if crossed[0] and worst > 0.15:
+			var msg := "a road runs across %s's ground (%.1f m off level): move one of them" % [pad["id"], worst]
+			_report["warnings"].append(msg)
+			print("WARNING: " + msg)
+
+
+func _in_pond(w: Vector2) -> bool:
+	for pond in _ponds:
+		if w.distance_to(pond["center"]) < float(pond["radius"]) + 1.0:
+			return true
+	return false
+
+
+## The mill's wheel turns in the creek: say so when it's been put somewhere dry.
+func _check_mill() -> void:
+	if not _report.has("mill_wheel"):
+		return
+	var at := Vector2(_report["mill_wheel"][0], _report["mill_wheel"][1])
+	var d := _polyline_distance(at, Array(WorldMap.creek()))
+	_report["mill_wheel_from_creek"] = snappedf(d, 0.1)
+	if d > WorldMap.CREEK_HALF_WIDTH + WHEEL_REACH:
+		var msg := "the mill's wheel is %.0f m from the creek: it won't turn in water there" % (d - WorldMap.CREEK_HALF_WIDTH)
+		_report["warnings"].append(msg)
+		print("WARNING: " + msg)
