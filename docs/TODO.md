@@ -108,6 +108,24 @@ Plan and decisions: `plans/woodcutting-overhaul.md`.
 - [ ] **The notch on birch** shows less (pale cut wood on white bark); a darker cut colour for it if it reads poorly.
 - [ ] **Bucking the fallen trunk into logs** with more swings (left out of this overhaul).
 
+### Crumbs ([plans/crumbs.md](../plans/crumbs.md), branch `crumbs`)
+
+- [x] **Dust, not physics:** mined rock pops out, falls on a worked-out arc to the ground and puffs into dust (`Crumble`); a rock's last swing slumps the rest into a cloud; wall slabs slump out whole; gravel at a wall's foot fades after 20 s.
+- [x] **Crumbs:** every rock and wall piece baked into ~13 cm crumbs (`tools/blender/make_crumbs.py`, reading the committed models so pieces and saves don't change). A swing digs the crumb struck and two neighbours; a piece crumbles once its core or enough of its skin is out. Drawn as crumbs within 16 m, pieces beyond.
+- [x] **Pace kept:** rocks within a swing of before (`crumb_swings`); a wall layer 1.36x the swings with the pick it needs.
+- [ ] **Playtest:** unplayed and unheard. Dent size (CRUMB_KNOCK, WALL_KNOCK), how soon a piece crumbles (SKIN_SPENT 0.5, WALL_SPENT 0.25), whether the falling bits read as rock or as confetti, the dust amount.
+- [ ] **Disk:** the crumb models are ~103 MB (32 wall layers of ~3 MB, the rocks 3–4 MB each): the repo and the playtest zip grow. Could drop the per-crumb vertex colour to bytes, or bake walls with fewer split edges.
+- [ ] **Crystal close-up:** no crystal rock in the overworld for `ore_closeup.gd` (they're in the mine): its glitter is unseen.
+- [ ] **Scenery rocks** (boulders, shore stones) aren't mined, so they keep their pieces.
+
+### Performance ([plans/crumbs.md](../plans/crumbs.md) phase 7)
+
+- [x] **Lamp shadows within 20 m, size-based draw distances, fixtures merged:** the village at dusk 13.2 ms → 8.1 ms (p95 16.5 → 10.9) on high at 1080p. `tools/perf_probe.gd` (windowed) and `tools/perf_census.gd` (headless) to measure.
+- [ ] **Merge buildings' tiers** too (~400 draws in the village): after their tier's pop-in, since that animates piece by piece.
+- [ ] **The sun's shadows** are the biggest cost left (four cascades to 140 m on high): a look decision.
+- [ ] **Unmeasured:** low and medium presets, other resolutions, the mine.
+- [ ] **`tools/test_lantern.gd` fails on main too** (found 2026-10-30): walking 5.8 m the lantern's fastest swing is 0.20 rad/s, under its creak speed. Not from crumbs or the performance pass.
+
 ## Tools and levels ([plans/tool-progression.md](../plans/tool-progression.md))
 
 - [x] **Tools gate, levels are soft:** `Tools` autoload, `tool_tier` on every node, under-level penalty and XP bonus (`Skills.UNDER_*`), the spear's gate soft too.

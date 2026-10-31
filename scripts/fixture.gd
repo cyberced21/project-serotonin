@@ -149,6 +149,10 @@ func _build() -> void:
 			if g is MeshInstance3D and String(g.name).to_lower().contains("windowglass") \
 					and (s[1] as AABB).has_point((g.transform * (g as MeshInstance3D).get_aabb()).get_center()):
 				g.transform = (s[2] as Transform3D) * g.transform
+	for t: int in _states:  # the pieces that never change drawn as one mesh (StaticMerge)
+		var turning: Array = _wheels.get(t, [])
+		StaticMerge.merge(_states[t], "%s:%d:%s" % [model.resource_path, t, doors_open],
+			func(m: MeshInstance3D) -> bool: return m.is_in_group("night_glow") or turning.has(m))
 
 
 func _show(t: int, pop: bool) -> void:
