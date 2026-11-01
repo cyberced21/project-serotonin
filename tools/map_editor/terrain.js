@@ -177,6 +177,10 @@
 			}
 			if (o.type === "pond") {
 				box.append(E.field("Depth (m)", E.input(o, "depth", "number", { step: 0.05, min: 0.2, refresh: true })));
+				// (tools/generate_test_terrain.gd _bed, plans/water.md: the shelf and where swimming starts)
+				box.append(E.el("p", { class: "muted" }, o.depth > 0.9
+					? `Wadeable ${0.9} m shelf round its shore (up to 5 m wide), then down to ${o.depth} m: swum past ~1.35 m, dived in past ~2 m.`
+					: "Wadeable all over (deeper than 1.35 m is swum)."));
 				if (!isCircle(o)) box.append(E.field("Shelf (m)", E.input(o, "shelf", "number", { step: 0.5, min: 1, default: 6 })));
 				// fish: a list of species (data/fish/), true for perch and trout, false for none
 				const names = Array.isArray(o.fish) ? o.fish.join(", ") : o.fish === false ? "" : "perch, perch, trout";

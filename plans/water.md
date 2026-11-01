@@ -101,16 +101,32 @@ you swim across and dive into, where you can spear fish on the bed.
    ripples drift with the current (`flow_speed`), faint slick streaks run along it. `test_swim`
    checks the lake's waves (~0.13 m) and that your eye stays within 5 cm of its float height.
    Stills: lake_waves, creek (docs/images/water/); the riding lily pads not yet seen rendered.
-4. **Depth look.** Per-colour absorption, subtle depth-safe refraction, caustics on beds and rocks,
-   underwater sun shafts. Before/after stills (lake from the shore, the shelf, the clearing pond,
-   underwater).
-5. **Foam + wakes.** Lapping shore foam; wakes, rings and splashes for wading, swimming, diving
-   (building on `water_ripple`).
-6. **Spear while diving.** Underwater thrust, fish spooking from a swimmer, species and depths,
-   XP; bench it against the rod and tune.
-7. **Sounds + dog.** Wire your picked sounds; the dog waits at the edge and greets you.
-8. **Polish + checks.** Save/load mid-swim, the map editor's lake depth/shelf, `tools/audit_world.gd`,
-   all tests (`python tools/run_tests.py`), a stills page, TODO.md updated.
+Phases 4–8 were built 2026-10-31 with no game window and no test runs (the user was playing):
+every script compiles (a headless load after the autoloads), but the shaders have never been
+compiled or seen and nothing has been heard. Open items are in docs/TODO.md *Water*.
+
+4. **Depth look.** ✅ (unseen) The water shader takes what's behind it from the screen and dims it
+   per colour by the metres of water the view passes through (`absorb`), the water's own colour
+   filling in (`scatter`); the view bends with the ripples (`refraction`, 2.5% of the screen at a
+   metre of water, never onto anything in front of the surface). The terrain shader: a silt bed
+   (sandy shelves going to mud by 2.5 m) and caustics fading out by 4.5 m. Underwater: sun shafts
+   marched through the first 14 m (`sun_direction` global, set from the scene's sun).
+   Not done: caustics on rocks.
+5. **Foam + wakes.** ✅ (unseen) Shore foam laps in and out on `water_time` (further on the lake)
+   with a thin wash line beyond it. `Wake` (player, dog): rings every 0.55 m moved through deep
+   enough water (they open into a V), a splash (`WaterRipple.splash`: two rings + spray) dropping
+   in, drips climbing out, a ring surfacing. Ripples ride the waves.
+6. **Spear while diving.** ✅ (untested) Head under, the spear comes out: `SpearFishing.update_under`
+   thrusts from the tip along your look, the spear's length + `under_reach` (1 m); "Too far" past
+   it. Rushing (over 2.6 m/s swimming) or plunging in spooks fish (`Wake`); easing up doesn't. Char
+   hug the bed (`FishSpecies.swim_band`). Same XP as the shore spear; not benched.
+7. **Sounds + dog.** ✅ (unheard) `SwimSounds`: strokes loop by speed, the plunge as your head goes
+   under, the underwater loop (on Master, so it isn't muffled twice), a gasp after 4 s under,
+   climbing out; credits in audio/swim/SOURCES.md (one-shots cut by tools/cut_dog_sounds.py). The
+   dog sits at the edge nearest you, watching, while you swim, and greets you (a whine) once out.
+8. **Polish + checks.** Partly: the map editor explains the shelf under a pond's depth; TODO.md has
+   a Water section. Still to do: all tests, test_swim additions (underwater spear, dog at the
+   edge, wakes), the stills, save/load mid-swim, `tools/audit_world.gd`.
 
 ## Open (decide in play)
 
