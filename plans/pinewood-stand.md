@@ -53,8 +53,13 @@ Branch `stand` off `main`, one commit a phase. (Main's working copy has a rewrit
    - Counted headless: 1000 trees, 242 MultiMeshes, 484 surfaces (the old backdrop was ~180
      single-surface MultiMeshes); 1000 trunk boxes. `test_layout` knows stands (and no longer
      trips on the walkway line's missing model).
-   Check still to do: stills of the Pinewood, old against new (needs a game window: ask).
-2. **Wake and sleep.** Every 0.25 s the stand looks at the trees in the cells around the player.
+   Stills taken (`docs/images/graphics/stand_before/`, `stand_after/`); the new look kept
+   (2026-11-01).
+2. **Wake and sleep.** Built 2026-11-01: `ForestStand._process` / `_check` / `_wake` / `_sleep`,
+   trees filed in 16 m squares; a hidden copy is a zero-sized instance and its trunk box is
+   switched off. `ResourceNode.is_busy()`: 6 s after a hit or a crush, 12 s after it breaks (the
+   fall, logs and sinking play out on the node). A headless MultiMesh doesn't keep instance
+   transforms, so the stand keeps its own record of which copies are drawn (`copy_shown`). Every 0.25 s the stand looks at the trees in the cells around the player.
    A tree within `WAKE_RANGE` (14 m) wakes: its copy is hidden (instance transform zeroed) and a
    real `pine_tree.tscn` / `birch_tree.tscn` is placed on the spot with the same yaw, variant and
    theme look, `save_id` = its key. A tree farther than `SLEEP_RANGE` (20 m: the gap stops

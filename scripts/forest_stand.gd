@@ -9,10 +9,24 @@ extends SceneryScatter
 ## a MultiMesh per look per STAND_CELL square, one surface per material.
 ## Each tree's key, `<save_prefix>_<n>`, is its draw number: moving something in the map editor
 ## drops only the trees it now covers, the rest keep theirs.
+## In the game the trees near you wake: a real ResourceNode (saved under `node:<key>`) stands in
+## for the copy, which is hidden. Walk away and it goes back to sleep, a copy again.
 
 ## The copies are filed in squares this size (m): bigger than SceneryScatter.CELL, as each look
 ## is its own MultiMesh in a square.
 const STAND_CELL := 64.0
+## A tree this near the player (m) wakes...
+const WAKE_RANGE := 14.0
+## ... and goes back to sleep past this (the gap stops it flickering at the edge), unless it's busy.
+const SLEEP_RANGE := 20.0
+## How often the stand looks round the player (s).
+const CHECK_EVERY := 0.25
+## Trees made in one frame, at most (a jog into the forest mustn't hitch).
+const WAKE_PER_FRAME := 2
+## A safety net: never more than this many awake.
+const MAX_AWAKE := 40
+## The trees are filed in squares this size (m) to find the ones near the player.
+const NEAR_CELL := 16.0
 ## How far a tree's foot sinks into the ground (NodeSpawner.sink), so it doesn't float on slopes.
 const SINK := 0.15
 const MAX_TRIES_PER_TREE := 20
@@ -34,11 +48,26 @@ const _CUSTOM_FORMATS := (Mesh.ARRAY_FORMAT_CUSTOM_MASK << Mesh.ARRAY_FORMAT_CUS
 @export var kinds := PackedInt32Array()
 @export var looks := PackedInt32Array()
 
+var _copy_of: Array[MultiMesh] = []  # tree -> the MultiMesh its copy is in
+var _copy_at := PackedInt32Array()  # ... which instance it is
+var _copy_centre := PackedVector3Array()  # ... and where that MultiMesh stands
+var _shown := PackedByteArray()  # tree -> 1 while its copy is drawn
+var _trunk_of: Array[CollisionShape3D] = []  # tree -> its trunk box (or null)
+var _near: Dictionary[Vector2i, PackedInt32Array] = {}  # NEAR_CELL square -> its trees
+var _awake: Dictionary[int, ResourceNode] = {}
+var _waking: Array[int] = []  # the trees to wake, nearest first
+var _check_in := 0.0
+var _player: Node3D
+
 
 func _scatter() -> void:
+	add_to_group("forest_stand")
 	if not spots.is_empty():
 		_build_copies()
 		_build_trunks()
+		for i in spots.size():
+			_near.get_or_add(_near_cell(spots[i]), PackedInt32Array()).append(i)
+	set_process(not spots.is_empty())
 	_finish()
 
 
@@ -52,6 +81,100 @@ func key_of(i: int) -> StringName:
 
 func xform_of(i: int) -> Transform3D:
 	return Transform3D(Basis(Vector3.UP, yaws[i]), spots[i])
+
+
+## Tree `i`'s real tree while it's awake, else null.
+func awake_tree(i: int) -> ResourceNode:
+	return _awake.get(i)
+
+
+func awake_count() -> int:
+	return _awake.size()
+
+
+## Whether tree `i`'s copy is drawn (asleep) or hidden (awake).
+## (Its own record: a headless MultiMesh doesn't keep instance transforms to read back.)
+func copy_shown(i: int) -> bool:
+	return _copy_of[i] != null and _shown[i] == 1
+
+
+# --- waking and sleeping ------------------------------------------------------------------------
+
+func _process(delta: float) -> void:
+	_check_in -= delta
+	if _check_in <= 0.0:
+		_check_in = CHECK_EVERY
+		_check()
+	for k in WAKE_PER_FRAME:
+		if _waking.is_empty():
+			break
+		_wake(_waking.pop_front())
+
+
+## Sends the far trees to sleep and lines up the near ones to wake.
+func _check() -> void:
+	if not is_instance_valid(_player):
+		_player = get_tree().get_first_node_in_group("player") as Node3D
+		if _player == null:
+			return
+	var at := _player.global_position
+	for i in _awake.keys():
+		if _flat_distance(i, at) > SLEEP_RANGE and not _awake[i].is_busy():
+			_sleep(i)
+	var want: Array[int] = []
+	var c := _near_cell(at)
+	var reach := ceili(WAKE_RANGE / NEAR_CELL)
+	for y in range(c.y - reach, c.y + reach + 1):
+		for x in range(c.x - reach, c.x + reach + 1):
+			for i in _near.get(Vector2i(x, y), PackedInt32Array()):
+				if not _awake.has(i) and _flat_distance(i, at) < WAKE_RANGE:
+					want.append(i)
+	want.sort_custom(func(a: int, b: int) -> bool: return _flat_distance(a, at) < _flat_distance(b, at))
+	_waking = want.slice(0, maxi(MAX_AWAKE - _awake.size(), 0))
+
+
+## A real tree in place of tree `i`'s copy.
+func _wake(i: int) -> void:
+	if _awake.has(i) or _awake.size() >= MAX_AWAKE:
+		return
+	var e := entries[kinds[i]]
+	var tree := e.scene.instantiate() as ResourceNode
+	tree.save_id = key_of(i)
+	tree.name = String(key_of(i))
+	if looks[i] > 0:
+		tree.model = e.variants[looks[i] - 1]
+	tree.transform = global_transform.affine_inverse() * xform_of(i)
+	add_child(tree)
+	_awake[i] = tree
+	_show_copy(i, false)
+
+
+## Tree `i` back to a copy.
+func _sleep(i: int) -> void:
+	var tree: ResourceNode = _awake[i]
+	_awake.erase(i)
+	tree.queue_free()
+	_show_copy(i, true)
+
+
+## Tree `i`'s copy drawn or hidden (a zero-sized instance), its trunk box with it (an awake tree
+## has its own).
+func _show_copy(i: int, on: bool) -> void:
+	_shown[i] = 1 if on else 0
+	if _copy_of[i]:
+		var t := xform_of(i)
+		_copy_of[i].set_instance_transform(_copy_at[i], Transform3D(t.basis, t.origin - _copy_centre[i])
+			if on else Transform3D(Basis.from_scale(Vector3.ZERO), Vector3.ZERO))
+	if _trunk_of[i]:
+		_trunk_of[i].disabled = not on
+
+
+func _flat_distance(i: int, at: Vector3) -> float:
+	return Vector2(spots[i].x - at.x, spots[i].z - at.z).length()
+
+
+static func _near_cell(p: Vector3) -> Vector2i:
+	return Vector2i(floori(p.x / NEAR_CELL), floori(p.z / NEAR_CELL))
 
 
 # --- placing (the bake) -----------------------------------------------------------------------------
@@ -189,6 +312,11 @@ func model_of(i: int) -> PackedScene:
 
 
 func _build_copies() -> void:
+	_copy_of.resize(spots.size())
+	_copy_at.resize(spots.size())
+	_copy_centre.resize(spots.size())
+	_shown.resize(spots.size())
+	_shown.fill(1)
 	var cells: Dictionary[Vector3i, Array] = {}  # (kind * 1000 + look, cell x, cell z) -> its trees
 	for i in spots.size():
 		var o := spots[i]
@@ -209,6 +337,9 @@ func _build_copies() -> void:
 		for j in trees.size():
 			var t := xform_of(trees[j])
 			mm.set_instance_transform(j, Transform3D(t.basis, t.origin - centre))
+			_copy_of[trees[j]] = mm
+			_copy_at[trees[j]] = j
+			_copy_centre[trees[j]] = centre
 		var mmi := MultiMeshInstance3D.new()
 		mmi.name = "Copies_%d_%d_%d" % [key.x, key.y, key.z]
 		mmi.multimesh = mm
@@ -308,6 +439,7 @@ func _build_trunks() -> void:
 	body.collision_layer = 1
 	body.collision_mask = 0
 	add_child(body)
+	_trunk_of.resize(spots.size())
 	for i in spots.size():
 		var proto := shapes[kinds[i]]
 		if proto == null:
@@ -316,6 +448,7 @@ func _build_trunks() -> void:
 		shape.shape = proto.shape
 		body.add_child(shape)
 		shape.global_transform = xform_of(i) * proto.transform
+		_trunk_of[i] = shape
 	for s in shapes:
 		if s:
 			s.free()
