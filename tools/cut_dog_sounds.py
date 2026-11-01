@@ -24,7 +24,9 @@ MAX_LEN = {"pant": 2.6, "sniff": 2.0, "whine": 2.2, "woof": 0.9, "shake": 1.8,
            "cart": 6.0, "snort": 2.5, "trade": 1.4,  # (the trader too: plans/market.md)
            "murmur": 30.0, "fire": 25.0, "laugh": 4.0, "clink": 1.6, "dice": 2.5,  # (and the tavern: plans/tavern.md)
            "drip": 3.0, "air": 45.0, "stream": 30.0, "rattle": 20.0, "handcar": 2.5, "lift": 10.0,  # (and the mine:
-           "rockfall": 5.0, "pump": 12.0, "crystal": 20.0}  # plans/mine.md)
+           "rockfall": 5.0, "pump": 12.0, "crystal": 20.0,  # plans/mine.md)
+           "dive": 2.6, "gasp": 1.6, "climb_out": 4.0}  # (and swimming: plans/water.md)
+ONE_SHOT = ("woof", "dive", "gasp")  # cut from the loudest peak's onset, not the loudest stretch
 FADE = 0.03
 
 argv = sys.argv[sys.argv.index("--") + 1:]
@@ -94,7 +96,7 @@ meta = json.load(open(META))
 for sid, m in meta.items():
     x = decode(os.path.join(SRC, sid + ".mp3"))
     kind = m["kind"]
-    clip = one_bark(x, MAX_LEN[kind]) if kind == "woof" else loudest(x, MAX_LEN[kind])
+    clip = one_bark(x, MAX_LEN[kind]) if kind in ONE_SHOT else loudest(x, MAX_LEN[kind])
     clip = fade(level(clip.copy()))
     write_wav(os.path.join(OUT, sid + ".wav"), clip)
     print(f"{sid} {kind:6} {len(x) / RATE:6.1f}s -> {len(clip) / RATE:4.2f}s")

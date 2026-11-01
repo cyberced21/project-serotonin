@@ -316,6 +316,10 @@ func _ready() -> void:
 	var wake := Wake.new()
 	wake.name = "Wake"
 	add_child(wake)
+	var swim_sounds := SwimSounds.new()
+	swim_sounds.name = "SwimSounds"
+	swim_sounds.player = self
+	add_child(swim_sounds)
 	for a: Node in [mantle_audio, footsteps]:
 		a.set("bus", &"Movement")
 	_base_fov = Settings.fov()
