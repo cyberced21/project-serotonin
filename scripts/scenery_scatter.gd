@@ -182,6 +182,9 @@ static func keep_out_spots(tree: SceneTree, node_r: float, prop_r: float, margin
 	for n in tree.get_nodes_in_group("gatherable"):
 		var at := (n as Node3D).global_position
 		out.append(Vector3(at.x, at.z, node_r))
+	for s in tree.get_nodes_in_group("forest_stand"):  # (a ForestStand's trees, asleep or not)
+		for at: Vector3 in s.get("spots"):
+			out.append(Vector3(at.x, at.z, node_r))
 	# round an ore wall's block of rock (its middle is OreWall.DEPTH / 2 behind the face; not named:
 	# OreWall needs the autoloads, which a tool script compiling this wouldn't have yet)
 	for w in tree.get_nodes_in_group("ore_wall"):

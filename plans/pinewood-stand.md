@@ -91,6 +91,16 @@ Branch `stand` off `main`, one commit a phase. (Main's working copy has a rewrit
    your level only show on awake trees, which is fine: you're never close to a sleeping one.
    Check: test_forest_stand fells a tree into a sleeping neighbour; `test_dog`, `test_home`, the
    woodcutting talent bench still pass.
+   Built 2026-11-01: with Dominoes, `_break` calls every stand's `wake_along()` before the fall
+   (trees within 2 m of a 14 m line wake at once, past the per-frame limit). The trunk boxes were
+   already the stand's own (phase 1). Readers: the scenery's keep-out list (ferns, grass) and the
+   path lamps' obstacles take the stand's spots; the stand joins `forest_stand` on entering the
+   tree, so scenery that scatters first still sees it. The dog's hints (rare looks, faults), the
+   debug teleports and `nature_spots` only need awake trees. `talent_model.gd --measure` takes
+   the sleeping trees too (1158 trees, was 123). Its level 40 pair is now 16% apart (Old growth
+   +36%, Momentum +16%; 11% at `--human=0.7`); left as is: which trees are old growth is seeded,
+   and 1 in 40 instead of 30 swung it to 30%. The test checks `wake_along` directly (a real fall's
+   direction depends on where you stand), not a whole Dominoes chain.
 5. **Measure.** `perf_census.gd` before and after (node, mesh and emitter counts with the whole
    forest choppable). `perf_probe.gd` frame times standing in the forest and jogging through it.
    It runs in a game window, so ask first. Update `docs/TODO.md` and the README's notes.

@@ -97,6 +97,21 @@ func _measure() -> void:
 			top = maxf(top, box.end.y - n.global_position.y)
 		out.append({"x": snappedf(n.global_position.x, 0.01), "z": snappedf(n.global_position.z, 0.01),
 			"scene": n.scene_file_path, "save_id": String(n.get("save_id")), "height": snappedf(top, 0.01)})
+	for s in get_nodes_in_group("forest_stand"):  # a ForestStand's trees, asleep (plans/pinewood-stand.md)
+		var spots: PackedVector3Array = s.get("spots")
+		var awake := {}
+		for n in out:
+			awake[n["save_id"]] = true
+		var tops := {}  # look -> its height
+		for i in spots.size():
+			if awake.has(String(s.call("key_of", i))):
+				continue
+			var look := int(s.get("kinds")[i]) * 1000 + int(s.get("looks")[i])
+			if not tops.has(look):
+				tops[look] = (s.call("copy_mesh", s.call("model_of", i)) as ArrayMesh).get_aabb().end.y
+			out.append({"x": snappedf(spots[i].x, 0.01), "z": snappedf(spots[i].z, 0.01),
+				"scene": (s.get("entries")[s.get("kinds")[i]]).scene.resource_path,
+				"save_id": String(s.call("key_of", i)), "height": snappedf(tops[look], 0.01)})
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DATA_DIR))
 	var path := DATA_DIR + "woodcutting_seed%d.json" % world_seed
 	var f := FileAccess.open(path, FileAccess.WRITE)

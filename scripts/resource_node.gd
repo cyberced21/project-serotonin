@@ -69,6 +69,8 @@ const FALL_ASIDE := 60.0
 ## takes this share of the max hits off each tree it lands on.
 const DOMINOES_LOGS := 1.25
 const CRUSH_SHARE := 0.6
+## How far a falling trunk can reach (m): past the tallest tree, for waking a stand's trees.
+const DOMINO_REACH := 14.0
 ## Grove keeper: your felled trees regrow this much faster, fine-grained: the first clean cut on
 ## one multiplies its logs by this.
 const GROVE_REGROW := 1.3
@@ -724,6 +726,9 @@ func _break(info: HitInfo) -> void:
 			_make_stump(parts["stump"])
 			_splinter(_stump, hinge, fall, 1.0)
 			log_mesh = parts["log"]
+		if skill == &"woodcutting" and Skills.talents.has(&"dominoes"):  # (a stand's sleeping trees in its way wake)
+			for s in get_tree().get_nodes_in_group("forest_stand"):
+				s.call("wake_along", global_position, fall, DOMINO_REACH)
 		_topple(info, fall, log_mesh, hinge)  # not awaited: the fall plays out while the respawn timer runs
 	else:
 		burst.restart()

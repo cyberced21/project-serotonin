@@ -315,6 +315,9 @@ func _obstacles() -> Array:
 			out.append([_xz((p as Node3D).global_position), (p as Prop).footprint_radius() + 1.5])
 	for n in get_tree().get_nodes_in_group("gatherable"):
 		out.append([_xz((n as Node3D).global_position), NODE_CLEARANCE])
+	for s in get_tree().get_nodes_in_group("forest_stand"):  # (a ForestStand's trees, asleep or not)
+		for at: Vector3 in s.get("spots"):
+			out.append([_xz(at), NODE_CLEARANCE])
 	return out
 
 

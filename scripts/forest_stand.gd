@@ -27,6 +27,9 @@ const WAKE_PER_FRAME := 2
 const MAX_AWAKE := 40
 ## The trees are filed in squares this size (m) to find the ones near the player.
 const NEAR_CELL := 16.0
+## A falling trunk wakes the sleeping trees this near its line (m): the crush takes those within
+## 0.9 m of where it lands (ResourceNode._crush_along), and it may roll a little.
+const ALONG_FALL := 2.0
 ## How far a tree's foot sinks into the ground (NodeSpawner.sink), so it doesn't float on slopes.
 const SINK := 0.15
 const MAX_TRIES_PER_TREE := 20
@@ -65,8 +68,12 @@ var _stumps: Dictionary[int, MeshInstance3D] = {}  # ... and what's drawn for ea
 var _stump_meshes := {}  # kind * 1000 + look -> its Rubble_* mesh (or null)
 
 
-func _scatter() -> void:
+## (In the group from the start: the scenery that scatters before it keeps off its trunks.)
+func _enter_tree() -> void:
 	add_to_group("forest_stand")
+
+
+func _scatter() -> void:
 	if not spots.is_empty():
 		_build_copies()
 		_build_trunks()
@@ -187,6 +194,23 @@ func _sleep(i: int) -> void:
 	else:
 		SaveGame.store(node_key(i), d)  # (half cut: its notch is there when it wakes)
 	_show_copy(i, true)
+
+
+## A trunk falling from `from` toward `dir` (flat), `reach` long, is about to land: the sleeping
+## trees along it wake now, so it can crush them (Dominoes). A felled one stays a stump.
+func wake_along(from: Vector3, dir: Vector3, reach: float) -> void:
+	var a := Vector2(from.x, from.z)
+	var b := a + Vector2(dir.x, dir.z).normalized() * reach
+	var lo := Vector2i(floori(minf(a.x, b.x) / NEAR_CELL) - 1, floori(minf(a.y, b.y) / NEAR_CELL) - 1)
+	var hi := Vector2i(floori(maxf(a.x, b.x) / NEAR_CELL) + 1, floori(maxf(a.y, b.y) / NEAR_CELL) + 1)
+	for y in range(lo.y, hi.y + 1):
+		for x in range(lo.x, hi.x + 1):
+			for i in _near.get(Vector2i(x, y), PackedInt32Array()):
+				if _awake.has(i) or _felled.has(i):
+					continue
+				var p := Vector2(spots[i].x, spots[i].z)
+				if p.distance_to(Geometry2D.get_closest_point_to_segment(p, a, b)) < ALONG_FALL:
+					_wake(i)
 
 
 ## Grown back while asleep: the copy again.

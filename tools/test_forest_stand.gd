@@ -37,6 +37,8 @@ func _run() -> void:
 	_check(stand.call("size") > 500, "the Pinewood is a stand of hundreds of trees (%d)" % stand.call("size"))
 	await _test_walk()
 	await _test_remember()
+	await _test_falling_wakes()
+	_test_keep_clear()
 	_finish()
 
 
@@ -164,6 +166,50 @@ func _test_remember() -> void:
 	await _frames(5)
 	_check(not stand.call("is_felled", felled) and stand.call("copy_shown", felled), "slept through, it grew back")
 	_check(save_game.call("saved_data", stand.call("node_key", felled)).is_empty(), "...and is forgotten by the save")
+
+
+## A trunk falling (Dominoes) toward a sleeping tree, far from you, wakes it so it can be crushed;
+## a tree off the line stays asleep; once nothing's happening they sleep again.
+func _test_falling_wakes() -> void:
+	_place(_spawn)
+	await _frames(30)
+	var spots: PackedVector3Array = stand.get("spots")
+	var from := _middle_tree()
+	var to := _nearest_to(spots[from], from)
+	var dir := spots[to] - spots[from]
+	var off := -1
+	for i in spots.size():
+		var p := Vector2(spots[i].x, spots[i].z)
+		var line := Geometry2D.get_closest_point_to_segment(p, Vector2(spots[from].x, spots[from].z),
+			Vector2(spots[from].x, spots[from].z) + Vector2(dir.x, dir.z).normalized() * 14.0)
+		if p.distance_to(line) > 5.0 and _flat(spots[i], spots[from]) < 10.0:
+			off = i
+			break
+	stand.call("wake_along", spots[from], dir, 14.0)
+	_check(stand.call("awake_tree", to) != null, "a trunk falling its way wakes a sleeping tree")
+	_check(off < 0 or stand.call("awake_tree", off) == null, "...not one off to the side")
+	_check(_both_or_neither() == 0, "...and it's never both a copy and awake")
+	await _frames(30)
+	_check(stand.call("awake_count") == 0, "nothing happened to them: back to sleep (%d awake)" % stand.call("awake_count"))
+
+
+## The scenery (ferns, grass) and the path lamps keep off the trunks of trees that are asleep.
+func _test_keep_clear() -> void:
+	var spots: PackedVector3Array = stand.get("spots")
+	var out: Array = load("res://scripts/scenery_scatter.gd").call("keep_out_spots", self, 1.0, 1.0, 1.0)
+	var mid: Vector3 = spots[_middle_tree()]
+	var found := false
+	for c: Vector3 in out:
+		if absf(c.x - mid.x) < 0.01 and absf(c.y - mid.z) < 0.01:
+			found = true
+	_check(found, "the scenery's keep-out list has the stand's trees in it")
+	var lights := get_nodes_in_group("path_light")
+	var near := 0
+	for light in lights:
+		for p in spots:
+			if _flat(p, (light as Node3D).global_position) < 1.0:
+				near += 1
+	_check(not lights.is_empty() and near == 0, "no lamp post stands in a tree (%d of %d do)" % [near, lights.size()])
 
 
 ## The other tree nearest tree `i`.
