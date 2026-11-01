@@ -12,6 +12,7 @@ extends SceneTree
 ##                    geometry, critters and animals, SSIL, SSAO, volumetric fog, grass)
 ##   --try=a,b        only these experiments
 ##   --seconds=S      how long to measure each (default 3)
+## Then the Pinewood's stand ("stand" for --only): standing in its middle, and jogging through it.
 ## The game is played on a throwaway save. Windowed: ask before running it (the user may be gaming).
 
 ## [name, stand at, look at, time of day]
@@ -82,11 +83,54 @@ func _run() -> void:
 				for u: Callable in undo:
 					u.call()
 				await _wait(0.3)
+	if only.is_empty() or only.has("stand"):
+		await _stand(p, day_night)
 	quit()
 
 
-## Measures `seconds` of frames and prints one line.
-func _measure(spot: String, variant: String) -> void:
+## The Pinewood's stand (plans/pinewood-stand.md): standing in its middle, trees awake round you,
+## then jogging straight through it, trees waking ahead and sleeping behind.
+func _stand(p: Node3D, day_night: Node) -> void:
+	var stand := get_first_node_in_group("forest_stand")
+	if stand == null:
+		return
+	var spots: PackedVector3Array = stand.get("spots")
+	var mid := Vector3.ZERO
+	for s in spots:
+		mid += s
+	mid /= spots.size()
+	day_night.set("time", 0.38)
+	_go(p, mid, mid + Vector3(-10, 0, -10))
+	await _wait(3.0)
+	await _measure("stand_middle", "base")
+	print("PROBE   (%d trees awake)" % stand.call("awake_count"))
+	stand.set_process(false)  # every tree a copy again, none waking
+	for i in (stand.get("_awake") as Dictionary).keys():
+		stand.call("_sleep", i)
+	await _wait(1.0)
+	await _measure("stand_middle", "all_asleep")
+	var copies := stand.find_children("Copies_*", "MultiMeshInstance3D", false, false)
+	for c in copies:
+		(c as Node3D).visible = false
+	await _wait(0.5)
+	await _measure("stand_middle", "no_copies")
+	for c in copies:
+		(c as Node3D).visible = true
+	stand.set_process(true)
+	await _wait(2.0)
+	var from := mid + Vector3(-35, 0, 0)
+	_go(p, from, from + Vector3(10, 0, 0))
+	await _wait(3.0)
+	var jog := 70.0 / 6.0  # (s: 70 m at a jog's 6 m/s)
+	var start := Time.get_ticks_usec()
+	await _measure("stand_jog", "base", jog, func() -> void:
+		var at := from + Vector3(minf((Time.get_ticks_usec() - start) / 1e6, jog) * 6.0, 0, 0)
+		_go(p, at, at + Vector3(10, 0, 0)))
+
+
+## Measures `seconds` of frames (or `secs`) and prints one line; `each_frame` runs every frame.
+func _measure(spot: String, variant: String, secs := 0.0, each_frame := Callable()) -> void:
+	var length := secs if secs > 0.0 else seconds
 	var times := PackedFloat32Array()
 	var gpu := 0.0
 	var cpu := 0.0
@@ -96,7 +140,9 @@ func _measure(spot: String, variant: String) -> void:
 	var vp := root.get_viewport_rid()
 	var start := Time.get_ticks_usec()
 	var last := start
-	while Time.get_ticks_usec() - start < int(seconds * 1e6):
+	while Time.get_ticks_usec() - start < int(length * 1e6):
+		if each_frame.is_valid():
+			each_frame.call()
 		await process_frame
 		var now := Time.get_ticks_usec()
 		times.append((now - last) / 1000.0)

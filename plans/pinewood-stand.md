@@ -109,7 +109,11 @@ Branch `stand` off `main`, one commit a phase. (Main's working copy has a rewrit
    forest trees' three each). The whole forest is choppable and the world is smaller than before.
    Awake, a tree is ~29 nodes; at most 40 awake (typically ~20 standing in the forest) adds
    ~600-1,200. The copies have no draw distance and cast shadows, like the old canopy layers.
-   Frame times (`perf_probe.gd`) still to measure.
+   Frame times (`perf_probe.gd`) still to measure. `perf_probe.gd` now ends with the stand
+   (`--only=stand`): its middle as played, with every tree asleep, with the copies hidden, and a
+   70 m jog through it. Two runs on 2026-11-01 with a game running on the same GPU are unusable
+   (the trail spot went from 44 fps to 0.2 fps between runs, the copies hidden still 2.5 s a
+   frame); measure with nothing else on the GPU.
 
 ## Later (not in this plan)
 
