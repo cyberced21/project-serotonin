@@ -23,6 +23,9 @@ extends Resource
 ## Deep-water fish (char, salmon) come up into the shallows to feed at dawn and dusk, where a
 ## wading spear can reach them: how deep the water is they head for then (m). Negative: never.
 @export var dusk_depth := -1.0
+## Where in the water it swims: a range of how far up from the bed (0) to the surface (1) each
+## fish keeps (char hug the bed of the deep lake, where a diver finds them; plans/water.md).
+@export var swim_band := Vector2(0.3, 0.65)
 
 @export_group("Hunting")
 ## A lurker that hunts: the species id it stalks (e.g. perch). Empty = doesn't hunt.

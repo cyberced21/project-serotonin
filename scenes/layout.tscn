@@ -62,7 +62,7 @@ subdivide_width = 25
 subdivide_depth = 25
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_yek65"]
-size = Vector3(36, 3, 36)
+size = Vector3(52, 3, 52)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_0rh6e"]
 render_priority = 0
@@ -84,9 +84,9 @@ shader_parameter/debug_thickness = null
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_3x4vr"]
 material = SubResource("ShaderMaterial_0rh6e")
-size = Vector2(36, 36)
-subdivide_width = 35
-subdivide_depth = 35
+size = Vector2(52, 52)
+subdivide_width = 51
+subdivide_depth = 51
 
 [node name="Layout" type="Node3D"]
 
@@ -2174,31 +2174,31 @@ save_id = &"grove_2_006"
 [node name="Grove3" type="Node3D" parent="Patches"]
 
 [node name="grove_3_000" type="StaticBody3D" parent="Patches/Grove3" instance=ExtResource("10_k7dwp")]
-transform = Transform3D(-0.90876603, 0, -0.41730607, 0, 1, 0, 0.41730607, 0, -0.90876603, -45.64173, 32.900375, 253.26685)
+transform = Transform3D(-0.90876603, 0, -0.41730607, 0, 1, 0, 0.41730607, 0, -0.90876603, -45.64173, 31.947916, 253.26685)
 save_id = &"grove_3_000"
 
 [node name="grove_3_001" type="StaticBody3D" parent="Patches/Grove3" instance=ExtResource("10_k7dwp")]
-transform = Transform3D(-0.96802634, 0, 0.25084847, 0, 1, 0, -0.25084847, 0, -0.96802634, -39.369495, 31.310934, 247.52594)
+transform = Transform3D(-0.96802634, 0, 0.25084847, 0, 1, 0, -0.25084847, 0, -0.96802634, -39.369495, 30.60634, 247.52594)
 save_id = &"grove_3_001"
 
 [node name="grove_3_002" type="StaticBody3D" parent="Patches/Grove3" instance=ExtResource("10_k7dwp")]
-transform = Transform3D(0.7089008, 0, 0.7053082, 0, 1, 0, -0.7053082, 0, 0.7089008, -46.380013, 32.94414, 264.43036)
+transform = Transform3D(0.7089008, 0, 0.7053082, 0, 1, 0, -0.7053082, 0, 0.7089008, -46.380013, 30.893124, 264.43036)
 save_id = &"grove_3_002"
 
 [node name="grove_3_003" type="StaticBody3D" parent="Patches/Grove3" instance=ExtResource("10_k7dwp")]
-transform = Transform3D(-0.96689, 0, 0.25519365, 0, 1, 0, -0.25519365, 0, -0.96689, -31.049568, 28.538902, 251.8469)
+transform = Transform3D(-0.96689, 0, 0.25519365, 0, 1, 0, -0.25519365, 0, -0.96689, -31.049568, 26.538685, 251.8469)
 save_id = &"grove_3_003"
 
 [node name="grove_3_004" type="StaticBody3D" parent="Patches/Grove3" instance=ExtResource("10_k7dwp")]
-transform = Transform3D(-0.6336945, 0, -0.77358335, 0, 1, 0, 0.77358335, 0, -0.6336945, -41.642174, 32.39476, 259.79593)
+transform = Transform3D(-0.6336945, 0, -0.77358335, 0, 1, 0, 0.77358335, 0, -0.6336945, -41.642174, 30.297312, 259.79593)
 save_id = &"grove_3_004"
 
 [node name="grove_3_005" type="StaticBody3D" parent="Patches/Grove3" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(0.9999233, 0, 0.012383883, 0, 1, 0, -0.012383883, 0, 0.9999233, -50.19367, 33.2157, 255.7494)
+transform = Transform3D(0.9999233, 0, 0.012383883, 0, 1, 0, -0.012383883, 0, 0.9999233, -50.19367, 32.413887, 255.7494)
 save_id = &"grove_3_005"
 
 [node name="grove_3_006" type="StaticBody3D" parent="Patches/Grove3" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.023415798, 0, -0.9997258, 0, 1, 0, 0.9997258, 0, -0.023415798, -33.413254, 29.198147, 248.41171)
+transform = Transform3D(-0.023415798, 0, -0.9997258, 0, 1, 0, 0.9997258, 0, -0.023415798, -33.413254, 27.76727, 248.41171)
 save_id = &"grove_3_006"
 
 [node name="Grove4" type="Node3D" parent="Patches"]
@@ -2360,19 +2360,19 @@ save_id = &"outcrop_3_004"
 [node name="Outcrop4" type="Node3D" parent="Patches"]
 
 [node name="outcrop_4_000" type="StaticBody3D" parent="Patches/Outcrop4" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(0.0037527115, 0, -0.99999297, 0, 1, 0, 0.99999297, 0, 0.0037527115, 155.11365, 10.883328, 290.72113)
+transform = Transform3D(0.0037527115, 0, -0.99999297, 0, 1, 0, 0.99999297, 0, 0.0037527115, 155.11365, 10.84781, 290.72113)
 save_id = &"outcrop_4_000"
 
 [node name="outcrop_4_001" type="StaticBody3D" parent="Patches/Outcrop4" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(0.5211088, 0, -0.85349023, 0, 1, 0, 0.85349023, 0, 0.5211088, 155.23077, 12.84173, 295.0681)
+transform = Transform3D(0.5211088, 0, -0.85349023, 0, 1, 0, 0.85349023, 0, 0.5211088, 155.23077, 12.769565, 295.0681)
 save_id = &"outcrop_4_001"
 
 [node name="outcrop_4_002" type="StaticBody3D" parent="Patches/Outcrop4" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(0.0040405444, 0, 0.99999183, 0, 1, 0, -0.99999183, 0, 0.0040405444, 154.47588, 7.7720613, 281.113)
+transform = Transform3D(0.0040405444, 0, 0.99999183, 0, 1, 0, -0.99999183, 0, 0.0040405444, 154.47588, 7.771675, 281.113)
 save_id = &"outcrop_4_002"
 
 [node name="outcrop_4_003" type="StaticBody3D" parent="Patches/Outcrop4" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(0.72901946, 0, -0.68449295, 0, 1, 0, 0.68449295, 0, 0.72901946, 159.36092, 14.692165, 298.92673)
+transform = Transform3D(0.72901946, 0, -0.68449295, 0, 1, 0, 0.68449295, 0, 0.72901946, 159.36092, 14.622909, 298.92673)
 save_id = &"outcrop_4_003"
 
 [node name="outcrop_4_004" type="StaticBody3D" parent="Patches/Outcrop4" instance=ExtResource("64_kunej")]

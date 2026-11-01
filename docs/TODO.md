@@ -15,7 +15,7 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 ## Fishing
 
 - [x] **Pike as a predator:** every 25–45 s it stalks the nearest perch, lunges (ripple, the school scatters) and catches one half the time, then glides back to cover. Spooking it calls the hunt off (`FishSpecies` *Hunting* group).
-- [ ] **Swimming** — surface swimming in deep water (float, paddle, can't strike well while swimming); maybe diving with a breath meter after that (F2).
+- [x] **Swimming** — floating, paddling and diving with a breath meter; the spear works under the water ([plans/water.md](../plans/water.md)).
 - [ ] **Faster regrouping** — scattered schools drift back together slowly (~1 m spread after 8 s); tune cohesion in `scripts/fish_school.gd`.
 - [ ] **Skittishness tuning** — play-test `scare_radius`, `nerve`, `calm_down` per species in `data/fish/*.tres`.
 - [ ] **Save fish?** — ponds currently start full on every load (deliberate); revisit if it feels exploitable.
@@ -25,12 +25,24 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 - [ ] **Play the rod by hand** — reworked 2026-10-27 to *wait for the take, then pull* (no fight). The bot lands everything (tools/fishing_playtest.gd); tune the strike windows (0.42–0.6 s) and the hook moment's punch by feel: `data/fish/*.tres` *Rod* group, `RodFishing._hook_moment` / `_yank`. A strike up to 0.12 s before the take, after the tap-tap, hooks too (`FishingLure.EARLY_GRACE`, ported from the old `fishing` branch 2026-10-30).
 - [x] **Spear and rod as equal styles** (plans/fishing-parity.md): Q swaps them, fish sizes you can see (Big x2, Huge x3), four forged tiers of each opening the same fish, char and salmon in the shallows at dawn and dusk, one under-level rule, shared hut perks. Tuned with `tools/fishing_bench.gd`.
 - [ ] **Play the spear vs rod balance by hand** — the bench's pond numbers are even on XP (rod 292, spear 259 XP/min) but the spear lands ~3x the fish, because the bot never misses and walks straight to the next one. Fish a pond with each for ten minutes and compare; the levers are `SpearFishing.catch_xp` / `flee_catch` / `multi_xp_bonus`, `RodFishing.catch_xp`, and each species' `notice_rate` / `nibbles`. Schools' regrowth (`FishSchool`, 15–25 s a fish) caps the spear.
-- [ ] **The spear on the lake at midday** catches nothing (the fish swim too deep for its reach); that's meant (it's the rod's water then), but check it reads as fair in play, e.g. a hover hint.
+- [x] **The spear on the lake at midday** catches nothing from the shore (the fish swim too deep); now you dive for them (plans/water.md).
 - [ ] **The fisher's tier 3** asks for pike and char, which now need iron fishing tools (smithy tier 3): check the building order still flows.
 - [ ] **Listen to the rod's sounds** (`tools/synth_fishing.py`): every cue is synthesized and unheard; the cast whip, nibble vs. tap, and the take's `hooked` stinger carry the gameplay, so they have to be told apart by ear. `yank` and `flop` are new too. The old fight's sounds (hiss, bulge, strain, snap, thrash, hoist, reel) are unused now.
 - [ ] **A river in the main world** so grayling and salmon can go into upgrade costs (they're only in generated worlds; the fisher's tier 3 asks for char, the rod-only fish the main world has).
 - [ ] **Bait / lures** (attract certain species: spinner for pike, fly for grayling) and a personal-best log of fish sizes.
 - [ ] **Rod in the Settings screen** — prompt assist lives in the debug menu's Player tab (and settings.cfg `[gameplay]`) until `menus` lands.
+
+## Water ([plans/water.md](../plans/water.md))
+
+Built 2026-10-31 on branch `water`. All 40 tests pass and the stills are in `docs/images/water/`; nothing has been played or heard yet.
+
+- [x] **Tests** pass, with checks added for wakes, the splash, the spear under water (`test_swim`) and the dog at the edge (`test_dog`). The strike click itself can't be tested headless (no mouse capture).
+- [x] **Stills** taken and looked at: fixed slabbed sun shafts, bleaching caustics, too-wide foam. Not seen yet: wakes and splashes in motion.
+- [x] **First swim** (2026-11-01): the creek deepened to swim (a ford at the village path, the dog swims short crossings), the sun shafts made round and coming and going.
+- [ ] **Swim it more**: wave height, swim speed, breath (25 s), the float, how deep the lake reads, refraction strength (`water.gdshader` `refraction`), caustic brightness (`terrain.gdshader` `caustic_strength`).
+- [ ] **Spear while diving vs the rod**: same catches and XP as the shore spear (`SpearFishing.under_reach` 1 m past the spear); bench it (`tools/fishing_bench.gd`) or fish the lake both ways and compare. Char now hug the lake bed (`swim_band`).
+- [ ] **Listen to the swim sounds** (`SwimSounds` levels): strokes, the plunge, the hush under water (on Master, following the Ambience slider by hand), the gasp, climbing out.
+- [ ] **Caustics on rocks** in the water (only the terrain has them).
 
 ## Gathering
 

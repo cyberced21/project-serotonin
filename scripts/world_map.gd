@@ -120,7 +120,7 @@ const CREEK: Array[Vector2] = [
 	Vector2(62, 108), Vector2(46, 138), Vector2(36, 178), Vector2(38, 223), Vector2(42, 268), Vector2(40, 308),
 	Vector2(38, 333),
 ]
-const CREEK_HALF_WIDTH := 1.8
+const CREEK_HALF_WIDTH := 2.4
 ## Deep pools scoured out at bends (salmon lie in them), near these points.
 const CREEK_POOLS: Array[Vector2] = [Vector2(86, 16), Vector2(38, 223)]
 const CREEK_POOL_RADIUS := 3.2

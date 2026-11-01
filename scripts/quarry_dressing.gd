@@ -106,6 +106,7 @@ func _puddle() -> void:
 	disc.material = mat
 	water.mesh = disc
 	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	water.set_instance_shader_parameter(&"waves", 0.0)  # (a puddle: still)
 	water.position = at - global_position + Vector3(0, 0.06, 0)
 	add_child(water)
 	for i in 9:  # stones round its edge

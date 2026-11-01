@@ -49,7 +49,7 @@
 		if (o.type === "raise") return o.height >= 0 ? `hill +${o.height} m` : `hollow ${o.height} m`;
 		if (o.type === "smooth") return `smoothed over ${o.strength ?? 4} m`;
 		if (o.type === "pond") return `pond ${o.depth} m deep`;
-		if (o.type === "river") return `river ${o.width ?? 4} m wide, ${o.depth ?? 0.8} m deep`;
+		if (o.type === "river") return `river ${o.width ?? 4} m wide, ${o.depth ?? 1.6} m deep`;
 		return `${o.type}, ${Math.round(E.polyLength(o.points))} m`;
 	};
 
@@ -177,6 +177,10 @@
 			}
 			if (o.type === "pond") {
 				box.append(E.field("Depth (m)", E.input(o, "depth", "number", { step: 0.05, min: 0.2, refresh: true })));
+				// (tools/generate_test_terrain.gd _bed, plans/water.md: the shelf and where swimming starts)
+				box.append(E.el("p", { class: "muted" }, o.depth > 0.9
+					? `Wadeable ${0.9} m shelf round its shore (up to 5 m wide), then down to ${o.depth} m: swum past ~1.35 m, dived in past ~2 m.`
+					: "Wadeable all over (deeper than 1.35 m is swum)."));
 				if (!isCircle(o)) box.append(E.field("Shelf (m)", E.input(o, "shelf", "number", { step: 0.5, min: 1, default: 6 })));
 				// fish: a list of species (data/fish/), true for perch and trout, false for none
 				const names = Array.isArray(o.fish) ? o.fish.join(", ") : o.fish === false ? "" : "perch, perch, trout";
@@ -222,7 +226,7 @@
 
 	// --- the brush ------------------------------------------------------------------------------------
 
-	const brush = { type: "flat", shape: "polygon", height: 0, depth: 0.9, width: 4, riverDepth: 0.8, strength: 4 };
+	const brush = { type: "flat", shape: "polygon", height: 0, depth: 0.9, width: 4, riverDepth: 1.6, strength: 4 };
 	let corners = [];
 	let pressAt = null;
 	let hover = null;

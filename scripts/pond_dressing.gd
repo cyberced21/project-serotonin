@@ -28,6 +28,7 @@ const SWAY := preload("res://shaders/sway.gdshader")
 var reed_spots: Array[Vector3] = []
 var water: WaterBody
 var _rng := RandomNumberGenerator.new()
+var _pads: Array[Node3D] = []  # (they ride the waves: _process)
 
 
 func _ready() -> void:
@@ -60,7 +61,7 @@ func _dress() -> void:
 		if p == Vector3.INF:
 			continue
 		var model := flower_model if _rng.randf() < flower_chance else pad_model
-		_place(model, Vector3(p.x, water.surface_height + 0.015, p.z), _rng.randf_range(0.7, 1.3), PALETTE_MATERIAL)
+		_pads.append(_place(model, Vector3(p.x, water.surface_height + 0.015, p.z), _rng.randf_range(0.7, 1.3), PALETTE_MATERIAL))
 
 	for i in stones:
 		# dry ground in a ring just beyond the shoreline
@@ -73,6 +74,14 @@ func _dress() -> void:
 
 ## A random point over this water's volume whose depth passes `accept`. With `near_shore`,
 ## only points that have water within 1.5 m (so stones hug the shoreline).
+## The lily pads ride the waves (Waves): a pond's dozen or two, cheap to move every frame.
+func _process(_delta: float) -> void:
+	if water == null or water.wave_scale <= 0.0:
+		return
+	for pad in _pads:
+		pad.global_position.y = water.surface_y(pad.global_position) + 0.015
+
+
 func _find(accept: Callable, near_shore := false) -> Vector3:
 	var box := water.get_node("Volume") as CollisionShape3D
 	var half := (box.shape as BoxShape3D).size / 2.0
