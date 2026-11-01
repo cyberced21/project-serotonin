@@ -154,8 +154,6 @@ Swum once (2026-11-01); wakes and splashes not yet seen in motion.
 
 ## Ideas (not planned yet)
 
-- **Swimming** in deep water (float, paddle, can't strike well while swimming); maybe diving with a breath meter after that.
-- **Draw water in the map editor** (after [plans/map-editor-places.md](../plans/map-editor-places.md)): rivers and streams as lines, lakes and ponds as shapes, the terrain, fish and banks following. A stream feeding the pond would come from this.
 - **Bait / lures** (a spinner for pike, a fly for grayling) and a personal-best log of fish sizes.
 - **More ways to mine:** pry a cracked piece off by pulling the mouse back; keystones (take pieces in the right order or the rest collapses); triple points where three seams meet.
 - **Bucking the fallen trunk into logs** with more swings.
