@@ -45,6 +45,7 @@ func _run() -> void:
 	await _teleport()
 	await _pet()
 	await _water()
+	await _swim_watch()
 	await _carry_lantern()
 	await _hints()
 	await _night_and_kennel()
@@ -130,6 +131,26 @@ func _water() -> void:
 		await physics_frame
 		_shook = _shook or dog.get("state") == 5
 	_check(_shook, "out of the water, he shakes himself dry")
+
+
+## You swim out into the lake (plans/water.md): he sits at the edge nearest you, watching, and
+## when you're back on land he comes to meet you.
+func _swim_watch() -> void:
+	player.global_position = Vector3(38, -0.15 - 1.46, 347)
+	player.set("swimming", true)
+	await _seconds(6.0)
+	var d: float = load("res://scripts/water_body.gd").depth_at(self, dog.global_position)
+	print("swimming: he waits %.1f m off, in %.2f m of water, state %s" % [
+		Vector2(dog.global_position.x - 38, dog.global_position.z - 347).length(), d, dog.get("state")])
+	_check(d <= 0.95, "while you swim he stays out of the deep water (%.2f m)" % d)
+	_check(dog.get("state") == 1, "...sitting at the edge, watching you (state %s)" % dog.get("state"))  # State.SIT
+	player.set("swimming", false)
+	_place(Vector3(38, 0, 366), Vector2(0, -1))
+	var greeted := false
+	for i in 60 * 8:
+		await physics_frame
+		greeted = greeted or (not dog.get("_swam") and not dog.get("_greet") and dog.get("state") == 4)
+	_check(greeted, "back on land, he comes to greet you")
 
 
 ## Night with the lantern lit: he carries it and walks ahead; holding it up takes it back.

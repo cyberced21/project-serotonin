@@ -7,6 +7,8 @@ extends SceneTree
 ##   - dropped in from above the middle you go under, then come back up to float
 ##   - crouch dives (the view under, sounds muffled, breath running down), let go and you drift up;
 ##     out of breath you float up and can't dive till it's back
+##   - swimming leaves a wake of rings, a drop in splashes (phase 5)
+##   - under the water the spear comes out, aims at a fish in front of you and takes it (phase 6)
 ##   godot --headless --path . -s res://tools/test_swim.gd -- --save-root=user://tool_worlds
 ## (No game class names: an -s script compiles before the autoloads exist.)
 
@@ -111,28 +113,36 @@ func _run() -> void:
 	var speed := Vector2(player.velocity.x, player.velocity.z).length()
 	_check(speed > 1.5 and speed < 3.0, "paddling at a calm pace (%.2f m/s)" % speed)
 
-	# across and out the far side
+	# across and out the far side (leaving a wake)
 	var out := false
+	var rings := 0
 	for i in 60 * 40:
 		await physics_frame
+		rings = maxi(rings, _count(body, "WaterRipple"))
 		var d: float = water_script.depth_at(self, player.global_position)
 		if not player.get("swimming") and player.global_position.x < c.x and d < 1.0:
 			out = true
 			break
 	Input.action_release("move_up")
+	print("wake: up to %d rings at once" % rings)
+	_check(rings >= 3, "swimming leaves a wake of rings (%d)" % rings)
 	_check(out, "swam across and walked out up the far shelf (at %.1f, %.1f)" % [player.global_position.x, player.global_position.z])
 
 	# dropped in over the middle: under, then back up to float
 	player.call("teleport", Vector3(c.x, surface + 3.0, c.y))
 	var lowest := INF
+	var spray := 0
 	for i in 60 * 7:
 		await physics_frame
 		lowest = minf(lowest, player.global_position.y)
+		spray = maxi(spray, _count(body, "CPUParticles3D"))
 	var rest := surface - (1.6 - 0.14)
 	print("dropped in: down to %.2f below floating, settled %.2f off it" % [rest - lowest, player.global_position.y - rest])
 	_check(lowest < rest - 0.2, "a drop in goes under first")
+	_check(spray > 0, "a drop in splashes")
 	_check(absf(player.global_position.y - rest) < 0.1 and absf(player.velocity.y) < 0.2, "then floats, settled")
 	await _dive(player, surface)
+	await _spear(player, body, surface)
 	_done()
 
 
@@ -171,6 +181,49 @@ func _dive(player: CharacterBody3D, surface: float) -> void:
 	await _seconds(1.0)
 	_check(player.get("head_under"), "...then crouch dives again")
 	Input.action_release("crouch")
+
+
+## Phase 6: under the water the spear's out, aims at a fish you've swum up to, and a thrust takes it.
+func _spear(player: CharacterBody3D, body: Node, surface: float) -> void:
+	var fish: Node3D = null
+	for school in get_nodes_in_group("fish_school"):
+		if school.get("water") != body:
+			continue
+		for f: Node3D in school.get("fish"):
+			if f.global_position.y < surface - 1.2 and f.call("tool_can_take", &"spear") and not f.call("is_under_levelled"):
+				fish = f
+		if fish:
+			school.set_physics_process(false)  # (hold the school still)
+			break
+	_check(fish != null, "a fish the starting spear can take, deep in the lake")
+	if fish == null:
+		return
+	player.set("swim_drift", 0.0)  # (hang still in the water)
+	var eye := fish.global_position + Vector3(1.0, 0.0, 0.0)
+	player.call("teleport", eye - Vector3.UP * 1.6, fish.global_position)
+	await _seconds(0.5)
+	var spear: Node = player.get_node("SpearFishing")
+	print("spear under: equipped %s, aimed at a fish %s" % [player.get("_equipped"), spear.get("fish_target") == fish])
+	_check(player.get("head_under"), "under the water by the fish")
+	_check(player.get("_equipped") == &"spear", "under the water the spear comes out")
+	_check(spear.get("fish_target") == fish, "...and aims at the fish in front of you")
+	var chance: float = fish.call("catch_chance")
+	# (headless the mouse can't be captured, which the click needs: strike as the click would)
+	_check(spear.call("can_thrust"), "a thrust is ready under the water")
+	spear.call("thrust")
+	await _seconds(1.3)
+	var taken := not is_instance_valid(fish) or not fish.is_inside_tree() or fish.get("school") == null 			or not (fish.get("school").get("fish") as Array).has(fish)
+	print("thrust: taken %s (catch chance %.2f)" % [taken, chance])
+	if chance >= 0.99:
+		_check(taken, "a thrust under the water takes it")
+
+
+func _count(parent: Node, kind: String) -> int:
+	var n := 0
+	for c in parent.get_children():
+		if c.get_class() == kind or (c.get_script() and c.get_script().get_global_name() == kind):
+			n += 1
+	return n
 
 
 func _muffled() -> bool:

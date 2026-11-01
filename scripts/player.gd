@@ -895,6 +895,8 @@ func _update_target() -> void:
 		hover_label.text = ""
 		return
 	if swimming:  # tools put away: nothing to gather, talk to or fish from out here...
+		if _swinging and spearfishing.under:
+			return  # (mid-thrust under the water: SpearFishing keeps its water and re-aims on impact)
 		_clear_targets()
 		rodfishing.clear_target()
 		var water := WaterBody.surface_at(get_tree(), global_position) if head_under else null
