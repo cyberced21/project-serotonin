@@ -104,6 +104,12 @@ Branch `stand` off `main`, one commit a phase. (Main's working copy has a rewrit
 5. **Measure.** `perf_census.gd` before and after (node, mesh and emitter counts with the whole
    forest choppable). `perf_probe.gd` frame times standing in the forest and jogging through it.
    It runs in a game window, so ask first. Update `docs/TODO.md` and the README's notes.
+   Census 2026-11-01 (headless, a fresh Hearthvale, nobody in the forest): 32,313 nodes (was
+   36,055), 14,637 MeshInstance3Ds (was 16,428), 947 particle emitters (was 1,364: the 139 old
+   forest trees' three each). The whole forest is choppable and the world is smaller than before.
+   Awake, a tree is ~29 nodes; at most 40 awake (typically ~20 standing in the forest) adds
+   ~600-1,200. The copies have no draw distance and cast shadows, like the old canopy layers.
+   Frame times (`perf_probe.gd`) still to measure.
 
 ## Later (not in this plan)
 
