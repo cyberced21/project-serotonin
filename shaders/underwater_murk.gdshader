@@ -21,12 +21,27 @@ float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
 
-float vnoise(vec2 p) {
-	vec2 i = floor(p);
-	vec2 f = fract(p);
-	f = f * f * (3.0 - 2.0 * f);
-	return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
-			mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+// Where the waves focus the light, at `q` on the surface (in beam widths): a round patch in each
+// cell of a grid, wandering about its cell and swelling in and out on its own clock, so the
+// beams under it drift, come and go.
+float beams(vec2 q) {
+	vec2 c = floor(q);
+	float best = 0.0;
+	for (int y = -1; y <= 1; y++) {
+		for (int x = -1; x <= 1; x++) {
+			vec2 cell = c + vec2(float(x), float(y));
+			float a = hash(cell);
+			float b = hash(cell + 17.3);
+			float k = hash(cell + 41.7);
+			vec2 centre = cell + 0.5 + 0.3 * vec2(sin(water_time * (0.15 + 0.2 * a) + b * 6.283),
+					cos(water_time * (0.12 + 0.2 * b) + a * 6.283));
+			float life = smoothstep(0.3, 0.85, 0.5 + 0.5 * sin(water_time * (0.2 + 0.3 * k) + a * 6.283));
+			float r = (0.22 + 0.16 * b) * (0.6 + 0.4 * life);
+			float spot = 1.0 - smoothstep(r * 0.3, r, length(q - centre));
+			best = max(best, spot * life);
+		}
+	}
+	return best;
 }
 
 // (12 samples along the view, each pixel's started at its own offset so the steps don't show as
@@ -50,7 +65,7 @@ float shafts(vec3 eye, vec3 dir, float dist, vec2 pixel) {
 		}
 		// where this bit of water's sunlight came in through the surface
 		vec2 q = (p.xz + slant * below) / shaft_size;
-		float beam = smoothstep(0.5, 0.9, vnoise(q + vec2(water_time * 0.07, -water_time * 0.05)));
+		float beam = beams(q + vec2(water_time * 0.04, -water_time * 0.03));
 		total += beam * exp(-below * 0.22) * exp(-s * 0.1);
 	}
 	return total / float(SHAFT_STEPS);

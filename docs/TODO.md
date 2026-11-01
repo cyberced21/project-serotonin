@@ -38,7 +38,8 @@ Built 2026-10-31 on branch `water`. All 40 tests pass and the stills are in `doc
 
 - [x] **Tests** pass, with checks added for wakes, the splash, the spear under water (`test_swim`) and the dog at the edge (`test_dog`). The strike click itself can't be tested headless (no mouse capture).
 - [x] **Stills** taken and looked at: fixed slabbed sun shafts, bleaching caustics, too-wide foam. Not seen yet: wakes and splashes in motion.
-- [ ] **Swim it**: wave height, swim speed, breath (25 s), the float, how deep the lake reads, refraction strength (`water.gdshader` `refraction`), caustic brightness (`terrain.gdshader` `caustic_strength`).
+- [x] **First swim** (2026-11-01): the creek deepened to swim (a ford at the village path, the dog swims short crossings), the sun shafts made round and coming and going.
+- [ ] **Swim it more**: wave height, swim speed, breath (25 s), the float, how deep the lake reads, refraction strength (`water.gdshader` `refraction`), caustic brightness (`terrain.gdshader` `caustic_strength`).
 - [ ] **Spear while diving vs the rod**: same catches and XP as the shore spear (`SpearFishing.under_reach` 1 m past the spear); bench it (`tools/fishing_bench.gd`) or fish the lake both ways and compare. Char now hug the lake bed (`swim_band`).
 - [ ] **Listen to the swim sounds** (`SwimSounds` levels): strokes, the plunge, the hush under water (on Master, following the Ambience slider by hand), the gasp, climbing out.
 - [ ] **Caustics on rocks** in the water (only the terrain has them).

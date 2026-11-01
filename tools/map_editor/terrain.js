@@ -49,7 +49,7 @@
 		if (o.type === "raise") return o.height >= 0 ? `hill +${o.height} m` : `hollow ${o.height} m`;
 		if (o.type === "smooth") return `smoothed over ${o.strength ?? 4} m`;
 		if (o.type === "pond") return `pond ${o.depth} m deep`;
-		if (o.type === "river") return `river ${o.width ?? 4} m wide, ${o.depth ?? 0.8} m deep`;
+		if (o.type === "river") return `river ${o.width ?? 4} m wide, ${o.depth ?? 1.6} m deep`;
 		return `${o.type}, ${Math.round(E.polyLength(o.points))} m`;
 	};
 
@@ -226,7 +226,7 @@
 
 	// --- the brush ------------------------------------------------------------------------------------
 
-	const brush = { type: "flat", shape: "polygon", height: 0, depth: 0.9, width: 4, riverDepth: 0.8, strength: 4 };
+	const brush = { type: "flat", shape: "polygon", height: 0, depth: 0.9, width: 4, riverDepth: 1.6, strength: 4 };
 	let corners = [];
 	let pressAt = null;
 	let hover = null;

@@ -131,6 +131,19 @@ compiled or seen and nothing has been heard. Open items are in docs/TODO.md *Wat
    a Water section. Still to do: all tests, test_swim additions (underwater spear, dog at the
    edge, wakes), the stills, save/load mid-swim, `tools/audit_world.gd`.
 
+## After the first swim (2026-11-01)
+
+Played: "feels great". Changed on what it showed:
+- **The creek's deeper**: 1.9 m down its middle (3 m in the salmon pools), 4.8 m wide (was 0.55 m
+  and 3.6 m), its bed easing in flat at the banks (a cosine, not a parabola: no ledge). Wadeable
+  (0.5 m) where the village path crosses, a ford until its footbridge is built; the roads have
+  their bridges. The map editor's rivers default to 1.6 m. The dog swims across deep water up to
+  `Dog.SWIM_ACROSS` (6 m) wide with land past it, so the creek doesn't cut him off; he still won't
+  swim the lake.
+- **Sun shafts round and alive**: round patches of focused light (`beams()` in
+  underwater_murk.gdshader), each wandering and swelling in and out on its own clock, instead of
+  value noise (whose grid showed as squares).
+
 ## Open (decide in play)
 
 - Wave height, swim speed, breath length, refraction strength: by eye once you've swum it.

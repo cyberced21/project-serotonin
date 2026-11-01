@@ -56,6 +56,8 @@ const SNIFF_AFTER := 14.0
 const SNIFF_RANGE := 3.5
 ## He won't go into water deeper than this (m); he floats, paddling, once it's past his legs.
 const DEEP := 0.9
+## ...except to swim across: deep water no wider than this (m) with land past it (the creek).
+const SWIM_ACROSS := 6.0
 ## Going round deep water to you on the far side, he heads this far (m) along its edge at a time.
 const ROUND_STEP := 4.0
 ## How long a pat makes him wiggle, and how long a shake takes.
@@ -696,16 +698,23 @@ func _shore(from: Vector3, to: Vector3) -> Vector3:
 
 
 ## How far he gets along `way` from `from` before water deeper than DEEP: the last dry spot (the
-## whole way when it's dry).
+## whole way when it's dry). Deep water he can swim across (SWIM_ACROSS, land past it before the
+## way ends) doesn't stop him.
 func _dry_until(from: Vector3, way: Vector3) -> Vector3:
 	var n := maxi(int(way.length() / 0.5), 1)
+	var step := way.length() / n
 	var last := from
+	var deep := 0.0  # (how far he's been in deep water since `last`)
 	for i in range(1, n + 1):
 		var p := from + way * (float(i) / n)
 		if WaterBody.depth_at(get_tree(), p) > DEEP:
-			return last
+			deep += step
+			if deep > SWIM_ACROSS:
+				return last
+			continue
+		deep = 0.0
 		last = p
-	return from + way
+	return last if deep > 0.0 else from + way
 
 
 ## While you swim (plans/water.md) he waits at the water's edge nearest you, sitting and watching

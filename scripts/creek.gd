@@ -151,9 +151,9 @@ func _build_stretches(pts: PackedVector2Array) -> void:
 		body.wave_scale = WAVES
 		var volume := CollisionShape3D.new()
 		volume.name = "Volume"
-		volume.position.y = -1.0
+		volume.position.y = -1.75
 		var box := BoxShape3D.new()
-		box.size = Vector3(half_width * 2.0 + 4.0, 3.0, a.distance_to(b) + 1.0)
+		box.size = Vector3(half_width * 2.0 + 4.0, 4.5, a.distance_to(b) + 1.0)  # (down past the pools' 3 m)
 		volume.shape = box
 		body.add_child(volume)
 		var schools: Array[FishSpecies] = []

@@ -186,33 +186,43 @@ func _dive(player: CharacterBody3D, surface: float) -> void:
 ## Phase 6: under the water the spear's out, aims at a fish you've swum up to, and a thrust takes it.
 func _spear(player: CharacterBody3D, body: Node, surface: float) -> void:
 	var fish: Node3D = null
+	var held: Node = null
 	for school in get_nodes_in_group("fish_school"):
 		if school.get("water") != body:
 			continue
 		for f: Node3D in school.get("fish"):
-			if f.global_position.y < surface - 1.2 and f.call("tool_can_take", &"spear") and not f.call("is_under_levelled"):
+			if f.call("tool_can_take", &"spear") and not f.call("is_under_levelled"):
 				fish = f
-		if fish:
-			school.set_physics_process(false)  # (hold the school still)
-			break
-	_check(fish != null, "a fish the starting spear can take, deep in the lake")
+				held = school
+	_check(fish != null, "a fish the starting spear can take, in the lake")
 	if fish == null:
 		return
-	player.set("swim_drift", 0.0)  # (hang still in the water)
+	held.set_process(false)  # (hold the school still: FishPond swims them in _process)
+	held.set_physics_process(false)
+	# (and this one 2 m down in the middle, open water all round: where they wander is chance)
+	fish.global_position = Vector3(38.0, surface - 2.0, 340.0)
+	player.set("swim_drift", 0.0)  # (hang still in the water, a full breath in you)
+	player.set("breath", 1.0)
+	player.set("winded", false)
 	var eye := fish.global_position + Vector3(1.0, 0.0, 0.0)
 	player.call("teleport", eye - Vector3.UP * 1.6, fish.global_position)
 	await _seconds(0.5)
 	var spear: Node = player.get_node("SpearFishing")
-	print("spear under: equipped %s, aimed at a fish %s" % [player.get("_equipped"), spear.get("fish_target") == fish])
+	var target: Node3D = spear.get("fish_target")  # (it, or one of its school come between)
+	print("spear under: equipped %s, aimed at a fish %s" % [player.get("_equipped"), target != null])
 	_check(player.get("head_under"), "under the water by the fish")
 	_check(player.get("_equipped") == &"spear", "under the water the spear comes out")
-	_check(spear.get("fish_target") == fish, "...and aims at the fish in front of you")
-	var chance: float = fish.call("catch_chance")
+	_check(target != null, "...and aims at the fish in front of you")
+	if target == null:
+		return
+	var chance: float = target.call("catch_chance")
+	target.set("state", 0)  # (calm again after your splash in: a fleeing fish may dodge, Fish.flee_catch)
 	# (headless the mouse can't be captured, which the click needs: strike as the click would)
 	_check(spear.call("can_thrust"), "a thrust is ready under the water")
 	spear.call("thrust")
 	await _seconds(1.3)
-	var taken := not is_instance_valid(fish) or not fish.is_inside_tree() or fish.get("school") == null 			or not (fish.get("school").get("fish") as Array).has(fish)
+	var taken := not is_instance_valid(target) or not target.is_inside_tree() or target.get("school") == null \
+			or not (target.get("school").get("fish") as Array).has(target)
 	print("thrust: taken %s (catch chance %.2f)" % [taken, chance])
 	if chance >= 0.99:
 		_check(taken, "a thrust under the water takes it")

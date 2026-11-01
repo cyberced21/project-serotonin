@@ -70,11 +70,15 @@ const BOWL_HILLS := 0.3
 const BOWL_WANDER := 28.0
 ## The creek (WorldMap.CREEK) runs down a vale of its own: the hills keep this share of their
 ## height along it, easing back over CREEK_VALE. Its channel is CREEK_DEPTH deep under the water
-## (CREEK_POOL_DEPTH in the pools), and its banks ease up over CREEK_BANK.
+## (CREEK_POOL_DEPTH in the pools), and its banks ease up over CREEK_BANK. Deep enough to swim
+## down its middle; where a path crosses (the roads have bridges: Creek) it shallows to a ford,
+## FORD_DEPTH deep, deepening again over FORD_REACH along the creek.
 const CREEK_VALE_FLOOR := 0.05
 const CREEK_VALE := 70.0  # (wide: it cuts through the bowl's rim to the lake)
-const CREEK_DEPTH := 0.55
-const CREEK_POOL_DEPTH := 2.0
+const CREEK_DEPTH := 1.9
+const CREEK_POOL_DEPTH := 3.0
+const FORD_DEPTH := 0.5
+const FORD_REACH := 7.0
 const CREEK_BANK := 12.0
 ## A layout river's banks ease up from its channel over this much (m): plans/terrain-editing.md.
 const RIVER_BANK := 8.0
@@ -884,7 +888,12 @@ func _collect(node: Node, xform: Transform3D, depth: int, out: Array[Vector2]) -
 ## The creek's channel along its vale, and the layout's rivers' (plans/terrain-editing.md).
 func _carve_creek(h: PackedFloat32Array) -> void:
 	_creek_mask.resize(SIZE * SIZE)
-	_carve_channel(h, WorldMap.creek(), WorldMap.CREEK_HALF_WIDTH, CREEK_BANK, func(_w: Vector2) -> float: return CREEK_DEPTH)
+	var fords := _creek_fords()
+	_carve_channel(h, WorldMap.creek(), WorldMap.CREEK_HALF_WIDTH, CREEK_BANK, func(w: Vector2) -> float:
+		var t := 1.0
+		for f in fords:
+			t = minf(t, smoothstep(FORD_REACH * 0.35, FORD_REACH, w.distance_to(f)))
+		return lerpf(FORD_DEPTH, CREEK_DEPTH, t))
 	# the pools: a round bowl wider than the channel, its rim easing in flat so the banks don't
 	# drop away at the water's edge
 	for pool in WorldMap.CREEK_POOLS:
@@ -893,9 +902,30 @@ func _carve_creek(h: PackedFloat32Array) -> void:
 			h[i] = minf(h[i], WATER_LEVEL - CREEK_POOL_DEPTH * (1.0 - u * u) * (1.0 - u * u))
 			_creek_mask[i] = 1)
 	for r in LayoutWater.rivers():
-		var depth := float(r.get("depth", 0.8))
+		var depth := float(r.get("depth", 1.6))
 		_carve_channel(h, r["pts"], r["half"], RIVER_BANK, func(_w: Vector2) -> float: return depth)
 		print("terrain shape %s (river) carved" % r.get("id", "?"))
+
+
+## Where each path (not a road) crosses the creek: its fords.
+func _creek_fords() -> PackedVector2Array:
+	var creek := WorldMap.creek()
+	var fords := PackedVector2Array()
+	for r in WorldMap.roads():
+		if r["kind"] == &"road":
+			continue
+		var best := Vector2.INF
+		var best_d := 4.0  # (within 2 m)
+		for p: Vector2 in r["pts"]:
+			for k in range(0, creek.size(), 2):
+				var d := p.distance_squared_to(creek[k])
+				if d < best_d:
+					best_d = d
+					best = creek[k]
+		if best != Vector2.INF:
+			fords.append(best)
+			print("creek ford for %s at %s" % [r["id"], best])
+	return fords
 
 
 ## A channel along `pts`: a rounded bed under the water (`depth(w)` deep in the middle), soft banks
@@ -915,10 +945,10 @@ func _carve_channel(h: PackedFloat32Array, pts: PackedVector2Array, half: float,
 			_creek_mask[i] = 1
 		if d < half:
 			var u := d / half
-			h[i] = minf(h[i], WATER_LEVEL - float(depth.call(w)) * (1.0 - u * u))
+			h[i] = minf(h[i], WATER_LEVEL - float(depth.call(w)) * (0.5 + 0.5 * cos(PI * u)))  # (easing in flat at its edges: no ledge)
 		else:
 			var t := smoothstep(half, half + bank, d)
-			var top := WATER_LEVEL + 0.1 + (d - half) * 0.15
+			var top := WATER_LEVEL + 0.15 + (d - half) * 0.15
 			h[i] = minf(h[i], lerpf(top, h[i], t))
 
 
