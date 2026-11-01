@@ -90,8 +90,17 @@ you swim across and dive into, where you can spear fish on the bed.
    Stills (`tools/water_shots.gd`, docs/images/water/): first take far too dark and the mirror
    let the hills show through; murk brightened, absorption eased, mirror opaque, night floor 0.16.
    Phase 4 todo seen there: the lake bed is grass/sand blotches (wants a silt/sand bed).
-3. **Waves.** `WaterWaves` (GDScript) + the shader's Gerstner sum on `water_time`, wind-led;
-   subdivided surfaces for lake, ponds, creek; swimmer and float bob with them; creek flow streaks.
+3. **Waves.** ✅ `Waves` autoload (scripts/autoload/waves.gd): four Gerstner waves off the shared
+   wind (7 / 4.3 / 2.9 / 1.9 m, 5 cm down to 1 cm, steepness 0.5, 0.7× deep-water pace), and the
+   `water_time` global it sets; the shader's `gerstner()` is the same sum (displaces the vertices,
+   per-pixel normal). Per body `WaterBody.wave_scale` (auto: 1 for water ≥ 36 m wide, else 0.3;
+   creek 0.06, quarry puddles 0) sent as the instance uniform `waves`; `WaterBody.surface_y(pos)`.
+   The swimmer floats on surface_y (the spring also matches the wave's rise and fall, so you ride
+   it, not trail it), the float and the line ride it, the lily pads ride it, the underwater view
+   switches by it. The creek's strip carries its downstream direction in the vertex colour:
+   ripples drift with the current (`flow_speed`), faint slick streaks run along it. `test_swim`
+   checks the lake's waves (~0.13 m) and that your eye stays within 5 cm of its float height.
+   Stills: lake_waves, creek (docs/images/water/); the riding lily pads not yet seen rendered.
 4. **Depth look.** Per-colour absorption, subtle depth-safe refraction, caustics on beds and rocks,
    underwater sun shafts. Before/after stills (lake from the shore, the shelf, the clearing pond,
    underwater).

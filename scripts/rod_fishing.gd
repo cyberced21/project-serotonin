@@ -699,7 +699,7 @@ func _draw_line() -> void:
 	var sag := (1.0 - _line_tension) * length * (0.02 if state == State.FLIGHT else 0.035)
 	var water_y := -INF
 	if state == State.WAITING and lure.water:
-		water_y = lure.water.surface_height + 0.004
+		water_y = lure.water.surface_y(lure.global_position) + 0.004
 	var cam: Camera3D = player.camera
 	var pts := PackedVector3Array()
 	for i in LINE_POINTS + 1:

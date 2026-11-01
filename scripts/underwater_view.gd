@@ -61,7 +61,7 @@ func _exit_tree() -> void:
 func _process(delta: float) -> void:
 	var eye := global_position
 	var water := WaterBody.surface_at(get_tree(), eye) if player and player.get("swimming") else null
-	under = water != null and eye.y < water.surface_height
+	under = water != null and eye.y < water.surface_y(eye)
 	visible = under
 	RenderingServer.global_shader_parameter_set(&"under_light", lerpf(1.0, 0.16, DayNight.darkness()))
 	if under:

@@ -23,10 +23,16 @@ uniform vec3 foam_color : source_color = vec3(0.95, 0.98, 1.0);
 // Water thinner than this (m) foams up along the shore, in a broken, drifting band.
 uniform float foam_depth = 0.05;
 
-// The big, slow swell (moves the surface) and the small ripples (only bend the light).
-uniform float wave_height = 0.025;
-uniform float wave_speed = 0.8;
-uniform float wave_scale = 0.35;
+// The waves (plans/water.md): a few Gerstner waves running with the wind, the same sum and the
+// same clock (water_time) as the Waves autoload, so what floats rides what you see. Each body of
+// water scales them (WaterBody.wave_scale sets `waves` on its surface: the lake's chop, a pond's
+// calm); the small ripples on top only bend the light.
+instance uniform float waves = 0.35;
+// A river's current (m/s): its ripples and streaks run downstream, the way given by the vertex
+// colour (red, blue: the x, z of the flow, 0..1 for -1..1). 0 for still water.
+instance uniform float flow_speed = 0.0;
+global uniform float water_time;
+global uniform vec2 wind_direction;
 uniform float ripple_strength = 0.22;
 uniform float ripple_scale = 2.2;
 // How mirror-like the surface is at grazing angles (0 = never).
@@ -47,10 +53,30 @@ uniform bool debug_thickness = false;
 
 varying vec3 v_world;
 
-float waves(vec2 p, float t) {
-	return sin(p.x * wave_scale * 2.1 + t) * 0.5
-		+ sin(p.y * wave_scale * 1.7 - t * 1.3) * 0.35
-		+ sin((p.x + p.y) * wave_scale * 3.3 + t * 0.7) * 0.15;
+varying vec2 v_flow;
+
+// Keep in step with Waves.WAVES (scripts/autoload/waves.gd): angle off the wind, wavelength, height.
+const vec3 WAVES[4] = vec3[](vec3(0.0, 7.0, 0.05), vec3(0.5, 4.3, 0.035), vec3(-0.6, 2.9, 0.022), vec3(1.1, 1.9, 0.012));
+const float STEEPNESS = 0.5;
+const float PACE = 0.7;
+
+// The Gerstner sum at `p` (world XZ): where the water there has moved to (xyz offset), and in `n`
+// the surface's normal.
+vec3 gerstner(vec2 p, float scale, out vec3 n) {
+	vec3 offset = vec3(0.0);
+	vec3 slope = vec3(0.0);  // (d/dx, the circling's lift, d/dz)
+	vec2 wind = normalize(wind_direction);
+	for (int i = 0; i < 4; i++) {
+		float a = WAVES[i].x;
+		vec2 dir = vec2(wind.x * cos(a) - wind.y * sin(a), wind.x * sin(a) + wind.y * cos(a));
+		float k = 6.28318 / WAVES[i].y;
+		float h = WAVES[i].z * scale;
+		float f = k * (dot(dir, p) - sqrt(9.8 / k) * PACE * water_time);
+		offset += vec3(dir.x * STEEPNESS * h * cos(f), h * sin(f), dir.y * STEEPNESS * h * cos(f));
+		slope += vec3(dir.x * k * h * cos(f), STEEPNESS * k * h * sin(f), dir.y * k * h * cos(f));
+	}
+	n = normalize(vec3(-slope.x, 1.0 - slope.y, -slope.z));
+	return offset;
 }
 
 // Slope (d/dx, d/dz) of a sum of small sine ripples running in different directions.
@@ -81,17 +107,26 @@ float vnoise(vec2 p) {
 
 void vertex() {
 	v_world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	VERTEX.y += waves(v_world.xz, TIME * wave_speed) * wave_height;
+	v_flow = COLOR.rb * 2.0 - 1.0;
+	vec3 n;
+	VERTEX += gerstner(v_world.xz, waves, n);  // (an offset: a surface is moved, never turned or scaled)
 }
 
 void fragment() {
-	// smooth normal: the swell's slope plus the ripples
-	float t = TIME * wave_speed;
-	float e = 0.1;
-	vec2 swell = vec2(waves(v_world.xz + vec2(e, 0.0), t) - waves(v_world.xz - vec2(e, 0.0), t),
-			waves(v_world.xz + vec2(0.0, e), t) - waves(v_world.xz - vec2(0.0, e), t)) / (2.0 * e) * wave_height;
-	vec2 slope = swell + ripples(v_world.xz, TIME) * ripple_strength * 0.1;
-	vec3 n = normalize(vec3(-slope.x, 1.0, -slope.y));
+	// the waves' normal, per pixel, bent by the ripples (carried downstream on a river)
+	vec3 wave_n;
+	gerstner(v_world.xz, waves, wave_n);
+	vec2 flow = flow_speed > 0.0 ? normalize(v_flow + vec2(0.0001)) : vec2(0.0);
+	vec2 drift = flow * flow_speed * water_time;
+	vec2 rip = ripples(v_world.xz - drift, water_time) * ripple_strength * 0.1;
+	vec3 n = normalize(vec3(wave_n.x / wave_n.y - rip.x, 1.0, wave_n.z / wave_n.y - rip.y));
+	// a river's streaks: long, faint lanes of slicker water running with the current
+	float streak = 0.0;
+	if (flow_speed > 0.0) {
+		vec2 across = vec2(-flow.y, flow.x);
+		vec2 q = vec2(dot(v_world.xz, flow) * 0.35 - flow_speed * water_time * 0.35, dot(v_world.xz, across) * 2.2);
+		streak = smoothstep(0.55, 0.85, vnoise(q)) * 0.6 + smoothstep(0.6, 0.9, vnoise(q * 2.3 + 7.0)) * 0.4;
+	}
 	if (!FRONT_FACING) {
 		// how near straight up you're looking at this bit of surface (bent a little by the ripples)
 		vec3 up_ray = normalize((INV_VIEW_MATRIX * vec4(-VIEW, 0.0)).xyz);
@@ -130,6 +165,7 @@ void fragment() {
 		float fresnel = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 4.0) * reflectivity;
 		alpha = max(mix(alpha, 0.92, fresnel), foam * 0.7);
 
+		color = mix(color, color * 1.3 + vec3(0.03), streak * 0.45);  // (a river's slick lanes)
 		ALBEDO = color;
 		ALPHA = alpha;
 		ROUGHNESS = mix(0.06, 0.6, foam);  // a crisp mirror for the sky, sharp sun glints off the ripples

@@ -39,6 +39,7 @@ Ambience="*res://scripts/autoload/ambience.gd"
 Fireflies="*res://scripts/autoload/fireflies.gd"
 Acoustics="*res://scripts/autoload/acoustics.gd"
 Companion="*res://scripts/autoload/companion.gd"
+Waves="*res://scripts/autoload/waves.gd"
 
 [display]
 
@@ -97,4 +98,8 @@ grass_pusher={
 under_light={
 "type": "float",
 "value": 1.0
+}
+water_time={
+"type": "float",
+"value": 0.0
 }

@@ -40,6 +40,17 @@ func _run() -> void:
 	_eye(Vector3(shore.x, _h(Vector3(shore.x, 0, shore.y)) + EYE, shore.y), Vector3(LAKE.x - 10, SURFACE, LAKE.y), false)
 	await _wait(2.0)
 	await _shot("lake_shore")
+	# low over the lake, the waves running across it, and the creek's current from its bank
+	_eye(Vector3(shore.x - 4, SURFACE + 0.6, shore.y), Vector3(LAKE.x - 6, SURFACE, LAKE.y + 2), false)
+	await _wait(1.0)
+	await _shot("lake_waves")
+	var creek: PackedVector2Array = load("res://scripts/world_map.gd").creek()
+	var k := int(creek.size() * 0.35)
+	var along := (creek[k + 6] - creek[k]).normalized()
+	var bank := creek[k] + Vector2(-along.y, along.x) * 4.0
+	_eye(Vector3(bank.x, _h(Vector3(bank.x, 0, bank.y)) + EYE, bank.y), Vector3(creek[k + 14].x, SURFACE, creek[k + 14].y), false)
+	await _wait(1.5)
+	await _shot("creek")
 	# floating out in the middle
 	_eye(Vector3(LAKE.x + 6, SURFACE + 0.14, LAKE.y), Vector3(LAKE.x - 20, SURFACE + 0.3, LAKE.y + 6), true)
 	await _wait(1.5)

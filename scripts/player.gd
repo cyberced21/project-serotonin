@@ -69,8 +69,6 @@ extends CharacterBody3D
 ## How hard the water lifts you back to floating (a spring, critically damped, so you dip in from a
 ## jump and come back up without bobbing on).
 @export var swim_buoyancy := 14.0
-## The gentle rise and fall of the view while floating (m).
-@export var swim_bob := 0.025
 ## Under the water: how hard it slows you (m/s²), and with nothing pressed, how fast you drift
 ## back up (m/s).
 @export var swim_drag := 12.0
@@ -291,7 +289,7 @@ var swimming := false
 var head_under := false
 var breath := 1.0
 var winded := false
-var _swim_time := 0.0  # (for the float's bob)
+var _float_rest := NAN  # where the feet floated last tick (NAN when not floating)
 # the held tool
 var _grip_rest := Transform3D.IDENTITY  # the grip this frame: rest, or turning to the swing grip
 var _grip_default := Transform3D.IDENTITY  # the Grip node's own placement: everyone's rest pose
@@ -406,9 +404,6 @@ func _process(delta: float) -> void:
 	var run := clampf(inverse_lerp(walk_speed, sprint_speed, speed), 0.0, 1.0)
 	_bob_phase = fmod(_bob_phase + speed / lerpf(footsteps.walk_stride, footsteps.sprint_stride, run) * PI * delta, TAU)
 	var bob := (0.5 - absf(sin(_bob_phase))) * _bob_amp
-	if swimming and not head_under:  # floating: the view rises and falls with the water
-		_swim_time += delta
-		bob += sin(_swim_time * 1.7) * swim_bob
 	# landing dip: a critically damped spring back up, stepped with its exact solution so a long
 	# frame (a load, a shader compile) can't make it overshoot and run away with the camera
 	var w := sqrt(90.0)  # stiffness 90
@@ -534,6 +529,7 @@ func _move(delta: float) -> void:
 	if swimming:
 		_swim(delta, water, input, wish)
 		return
+	_float_rest = NAN
 	var wading := lerpf(1.0, wade_slow, clampf(water_depth / wade_full_depth, 0.0, 1.0))
 
 	# gravity + coyote time
@@ -608,7 +604,8 @@ func _swim(delta: float, water: WaterBody, input: Vector2, wish: Vector2) -> voi
 	var speed := (swim_sprint_speed if fast else swim_speed) * (1.0 + Village.stat(&"run_speed"))
 	var eye := global_position.y + STAND_EYE
 	var dive := Input.is_action_pressed("crouch") and not winded
-	if dive or eye < water.surface_height - DIVE_UNDER:
+	if dive or eye < water.surface_y(global_position) - DIVE_UNDER:
+		_float_rest = NAN
 		var target := camera.global_basis * Vector3(input.x, 0.0, input.y) * speed
 		if winded:
 			target.y = swim_speed
@@ -621,9 +618,12 @@ func _swim(delta: float, water: WaterBody, input: Vector2, wish: Vector2) -> voi
 		velocity = velocity.move_toward(target, rate * delta)
 	else:
 		var horizontal := Vector2(velocity.x, velocity.z).move_toward(wish * speed, swim_accel * delta)
-		var rest := water.surface_height - (STAND_EYE - swim_eye_above)  # where the feet float
+		var rest := water.surface_y(global_position) - (STAND_EYE - swim_eye_above)  # where the feet float (on the waves)
+		# (springing to the wave's own rise and fall as well as its height, so you ride it, not trail it)
+		var rest_speed := 0.0 if is_nan(_float_rest) else (rest - _float_rest) / delta
+		_float_rest = rest
 		var k := swim_buoyancy
-		velocity.y += ((rest - global_position.y) * k - velocity.y * 2.0 * sqrt(k)) * delta
+		velocity.y += ((rest - global_position.y) * k + (rest_speed - velocity.y) * 2.0 * sqrt(k)) * delta
 		velocity.x = horizontal.x
 		velocity.z = horizontal.y
 	move_and_slide()
@@ -633,7 +633,7 @@ func _swim(delta: float, water: WaterBody, input: Vector2, wish: Vector2) -> voi
 ## Breath (plans/water.md): it runs down while your head's under, BREATH_TIME to empty, and comes
 ## back quickly once it's out. Run out and you're winded till it's full again (_swim floats you up).
 func _breathe(delta: float, water: WaterBody) -> void:
-	head_under = water != null and global_position.y + STAND_EYE < water.surface_height
+	head_under = water != null and global_position.y + STAND_EYE < water.surface_y(global_position)
 	if head_under:
 		breath = maxf(breath - delta / breath_time, 0.0)
 		if breath == 0.0:

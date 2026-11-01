@@ -21,6 +21,8 @@ const GRAYLING_EVERY := 3
 const FLOW := 0.45
 ## The surface reaches this far past the channel's edge, under the soft banks.
 const SURFACE_MARGIN := 1.5
+## Its waves (WaterBody.wave_scale): barely any, the current's ripples are what shows.
+const WAVES := 0.06
 
 ## Half the channel's width (m) and whether its stretches hold fish.
 var half_width := WorldMap.CREEK_HALF_WIDTH
@@ -105,15 +107,28 @@ func _build_surface(pts: PackedVector2Array) -> void:
 		var ar := Vector3(a.x + na.x, WATER_LEVEL, a.y + na.y)
 		var bl := Vector3(b.x - nb.x, WATER_LEVEL, b.y - nb.y)
 		var br := Vector3(b.x + nb.x, WATER_LEVEL, b.y + nb.y)
-		for v in [al, bl, ar, ar, bl, br]:
+		# the way downstream at each end, in the vertex colour (the shader runs its ripples and
+		# streaks along it)
+		var down_a := _flow_color(across(pts, k))
+		var down_b := _flow_color(across(pts, k + 1))
+		for v: Array in [[al, down_a], [bl, down_b], [ar, down_a], [ar, down_a], [bl, down_b], [br, down_b]]:
 			st.set_normal(Vector3.UP)
-			st.add_vertex(v)
+			st.set_color(v[1])
+			st.add_vertex(v[0])
 	var surface := MeshInstance3D.new()
 	surface.name = "Surface"
 	surface.mesh = st.commit()
 	surface.material_override = material
 	surface.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	surface.set_instance_shader_parameter(&"waves", WAVES)
+	surface.set_instance_shader_parameter(&"flow_speed", FLOW)
 	add_child(surface)
+
+
+## The way downstream (from the unit vector across, to its right), as the shader reads it.
+static func _flow_color(right: Vector2) -> Color:
+	var down := Vector2(right.y, -right.x)
+	return Color(down.x * 0.5 + 0.5, 0.5, down.y * 0.5 + 0.5)
 
 
 func _build_stretches(pts: PackedVector2Array) -> void:
@@ -133,6 +148,7 @@ func _build_stretches(pts: PackedVector2Array) -> void:
 		body.surface_height = WATER_LEVEL
 		var down := (b - a).normalized()
 		body.flow = Vector3(down.x, 0.0, down.y) * FLOW
+		body.wave_scale = WAVES
 		var volume := CollisionShape3D.new()
 		volume.name = "Volume"
 		volume.position.y = -1.0

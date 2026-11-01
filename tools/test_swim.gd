@@ -92,7 +92,20 @@ func _run() -> void:
 	var bed := surface - float(water_script.depth_at(self, player.global_position))
 	print("floating: eye %.2f m above the water, feet %.2f m above the bed" % [eye - surface, feet - bed])
 	_check(player.get("swimming"), "still swimming out over the lake")
-	_check(absf(eye - surface - 0.14) < 0.12, "the eye rides just above the water (%.2f m)" % (eye - surface))
+	_check(absf(eye - surface - 0.14) < 0.2, "the eye rides just above the water (%.2f m)" % (eye - surface))
+	# phase 3: the lake has waves, and you ride them (your eye keeps its height over the moving surface)
+	var off := 0.0
+	var lo := INF
+	var hi := -INF
+	for i in 60 * 3:
+		await physics_frame
+		var w: float = body.call("surface_y", player.global_position)
+		lo = minf(lo, w)
+		hi = maxf(hi, w)
+		off = maxf(off, absf(player.global_position.y + 1.6 - w - 0.14))
+	print("waves: the surface rose and fell %.2f m; the eye kept within %.3f m of its float height" % [hi - lo, off])
+	_check(hi - lo > 0.08, "the lake has waves (%.2f m)" % (hi - lo))
+	_check(off < 0.05, "you ride the waves (eye within %.3f m)" % off)
 	_check(feet - bed > 1.0, "floating, not walking the bed (%.2f m up)" % (feet - bed))
 	_check(player.get("_equipped") == &"", "tools put away while swimming")
 	var speed := Vector2(player.velocity.x, player.velocity.z).length()
