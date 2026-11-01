@@ -18,17 +18,21 @@ uniform vec3 murk_color : source_color = vec3(0.2, 0.5, 0.52);
 // bright as the light getting in.
 global uniform float under_light;
 
+// The world direction the eye looks along through this pixel.
+vec3 view_ray(vec2 screen_uv, mat4 inv_projection, mat4 inv_view) {
+	vec4 near = inv_projection * vec4(screen_uv * 2.0 - 1.0, 1.0, 1.0);  // (reversed Z: 1 is the near plane)
+	return normalize((inv_view * vec4(near.xyz / near.w, 0.0)).xyz);
+}
+
 float water_between(vec2 screen_uv, mat4 inv_projection, mat4 inv_view) {
 	vec2 ndc = screen_uv * 2.0 - 1.0;
 	float raw = texture(depth_tex, screen_uv).r;
-	vec4 near = inv_projection * vec4(ndc, 1.0, 1.0);  // (reversed Z: 1 is the near plane)
-	vec3 dir_view = normalize(near.xyz / near.w);
 	float dist = max_distance;
 	if (raw > 0.0) {
 		vec4 at = inv_projection * vec4(ndc, raw, 1.0);
 		dist = min(length(at.xyz / at.w), max_distance);
 	}
-	vec3 dir = (inv_view * vec4(dir_view, 0.0)).xyz;
+	vec3 dir = view_ray(screen_uv, inv_projection, inv_view);
 	float eye_y = inv_view[3].y;
 	if (dir.y > 0.0001) {
 		dist = min(dist, max((surface_height - eye_y) / dir.y, 0.0));

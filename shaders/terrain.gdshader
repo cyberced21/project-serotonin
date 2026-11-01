@@ -52,8 +52,13 @@ uniform vec3 dirt_color : source_color = vec3(0.52, 0.42, 0.30);
 uniform vec3 rock_color : source_color = vec3(0.47, 0.46, 0.45);
 uniform vec3 sand_color : source_color = vec3(0.80, 0.74, 0.55);
 uniform vec3 snow_color : source_color = vec3(0.92, 0.94, 0.96);
-// Pond / lake bed below `bed_height` — dark and muddy so fish stand out against it.
+// Pond / lake bed below `bed_height` — dark and muddy so fish stand out against it. Under the water
+// (plans/water.md) it's silt: sandy on the shallow shelves, going to this mud in the deep, whatever
+// the ground above it was painted (a road or a biome that ran there before the lake grew).
 uniform vec3 bed_color : source_color = vec3(0.36, 0.34, 0.24);
+uniform vec3 silt_color : source_color = vec3(0.62, 0.57, 0.42);
+// Below this much water (m) the bed is all mud.
+uniform float silt_depth = 2.5;
 // Dirt paths: cells painted with this texture id (control map base texture; see
 // tools/generate_test_terrain.gd, or Terrain3D's texture paint tool) on walkable slopes.
 uniform vec3 path_color : source_color = vec3(0.63, 0.52, 0.40);
@@ -109,6 +114,15 @@ uniform float edge_jitter = 0.1;
 // Large light/dark patches against visible tiling, 0 = none.
 uniform float macro_variation : hint_range(0.0, 0.5) = 0.14;
 group_uniforms;
+
+// The water's surface height (all of Hearthvale's water: LayoutWater.LEVEL), the waves' clock
+// (Waves), and the caustics on the bed under it: their size (m a cell), brightness, and the depth
+// (m) they've faded out by.
+const float WATER_LEVEL = -0.15;
+global uniform float water_time;
+uniform float caustic_size = 3.2;
+uniform float caustic_strength = 0.55;
+uniform float caustic_depth = 4.5;
 
 global uniform sampler2DArray ground_tex : filter_nearest_mipmap_anisotropic, repeat_enable;
 
@@ -234,6 +248,20 @@ float height_smooth(vec2 uv) {
 			mix(height_at(b + vec2(0.0, 1.0)), height_at(b + vec2(1.0, 1.0)), f.x), f.y);
 }
 
+// Caustics: a few layers of light lines drifting over each other, sharpened (0..~1.5).
+float caustic(vec2 p, float t) {
+	vec2 q = p * 6.28318;
+	vec2 i = q;
+	float c = 0.0;
+	for (int n = 0; n < 4; n++) {
+		float tn = t * 0.45 * (1.0 - 3.0 / float(n + 2));
+		i = q + vec2(cos(tn - i.x) + sin(tn + i.y), sin(tn - i.y) + cos(tn + i.x));
+		c += 1.0 / length(vec2(q.x / (sin(i.x + tn) / 0.006), q.y / (cos(i.y + tn) / 0.006)));
+	}
+	c = 1.2 - pow(c / 4.0, 1.4);
+	return clamp(pow(abs(c), 7.0), 0.0, 1.5);
+}
+
 float ground(vec2 world_xz, float layer) {
 	return texture(ground_tex, vec3(world_xz * ground_scale, layer)).r;
 }
@@ -279,6 +307,12 @@ void surface_at(vec2 cell, float slope, float wy, out vec3 col, out float layer)
 			float band = mod(floor(wy / quarry_band), 2.0);
 			col = level ? quarry_color : mix(quarry_rock, quarry_rock_2, band);
 			layer = level ? LAYER_PATH : LAYER_ROCK;
+		}
+		// under the water: silt over the shelves, mud in the deep (not the quarry's pit)
+		if (h < bed_height && id != quarry_texture && slope >= rock_slope) {
+			float deep = smoothstep(0.6, silt_depth, WATER_LEVEL - h);
+			col = mix(mix(silt_color, bed_color, 0.35 + 0.4 * vnoise(world * 0.31)), bed_color, deep);
+			layer = deep > 0.5 ? LAYER_DIRT : LAYER_SAND;
 		}
 		// Painted colour from Terrain3D's Color tool (white = unpainted).
 		col *= texelFetch(_color_maps, c, 0).rgb;
@@ -336,6 +370,13 @@ void fragment() {
 
 	// Big, slow light and dark patches so the tiling doesn't show from afar.
 	albedo *= 1.0 + (vnoise(w_vertex.xz / 28.0) - 0.5) * macro_variation;
+
+	// caustics: the light the waves focus, dancing on the bed under shallow water (plans/water.md)
+	float under = WATER_LEVEL - w_vertex.y;
+	if (under > 0.0) {
+		float fade = smoothstep(0.03, 0.25, under) * (1.0 - smoothstep(1.2, caustic_depth, under));
+		albedo *= 1.0 + caustic(w_vertex.xz / caustic_size, water_time) * caustic_strength * fade;
+	}
 
 	ALBEDO = albedo;
 	ROUGHNESS = 1.0;

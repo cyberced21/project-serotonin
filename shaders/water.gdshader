@@ -1,23 +1,28 @@
 shader_type spatial;
 render_mode blend_mix, depth_draw_opaque, cull_disabled, diffuse_lambert, specular_schlick_ggx;
 
-// Water (Valheim-style): a smooth surface rippled by layers of small moving waves, nearly clear
-// in the shallows and teal with depth, broken foam where it meets the shore, the sky reflected
-// at grazing angles and the sun glinting off the ripples. Depth is read from the depth buffer,
-// so anything under the surface (the bed, fish, your legs) is tinted by how much water is in
-// front of it. Fish are drawn where they really are (no refraction offset), so what you aim at is
-// what you hit.
+// Water (Valheim-style): a smooth surface rippled by layers of small moving waves, broken foam
+// where it meets the shore, the sky reflected at grazing angles and the sun glinting off the
+// ripples. What's under it (the bed, fish, your legs) is seen through it (the screen behind it),
+// losing its light colour by colour with every metre of water the view passes through (red first,
+// then green: clear in the shallows, green-teal, then deep blue), with the water's own colour
+// filling in (plans/water.md). The view through it bends a little with the ripples, but only a
+// little (a fish within the spear's reach is about where it looks) and never onto something in
+// front of the water.
 // From below (diving, plans/water.md) it's the surface seen from under the water: a bright, rippling
 // window straight up onto the sky (Snell's window: everything above the water squeezed into a cone
 // about 49° round the vertical), and outside it a dark mirror of the water itself.
 // Use on a subdivided PlaneMesh (≈1 m per quad) or strip at the water level.
 
-uniform vec3 shallow_color : source_color = vec3(0.22, 0.52, 0.52);
+// Light lost per metre of water the view passes through, per colour.
+uniform vec3 absorb = vec3(0.42, 0.11, 0.08);
+// The water's own colour (light scattered back out of it), and how quickly it fills in (per m).
 uniform vec3 deep_color : source_color = vec3(0.04, 0.20, 0.26);
-// Metres of water before the colour is fully `deep_color`.
+uniform float scatter = 0.35;
+// How far the ripples bend the view through the water (screen fraction, at a metre of water).
+uniform float refraction = 0.025;
+// Metres of water the debug view shows as white.
 uniform float clarity_depth = 1.1;
-uniform float shallow_alpha : hint_range(0.0, 1.0) = 0.12;
-uniform float deep_alpha : hint_range(0.0, 1.0) = 0.6;
 
 uniform vec3 foam_color : source_color = vec3(0.95, 0.98, 1.0);
 // Water thinner than this (m) foams up along the shore, in a broken, drifting band.
@@ -48,6 +53,7 @@ uniform vec3 mirror_color : source_color = vec3(0.18, 0.46, 0.48);
 global uniform float under_light;
 
 uniform sampler2D depth_tex : hint_depth_texture, filter_nearest;
+uniform sampler2D screen_tex : hint_screen_texture, filter_linear_mipmap;
 // Debug: show water thickness as greyscale (white = clarity_depth or more).
 uniform bool debug_thickness = false;
 
@@ -142,17 +148,29 @@ void fragment() {
 	} else {
 		NORMAL = normalize((VIEW_MATRIX * vec4(n, 0.0)).xyz);
 
-		// how much water is in front of whatever is behind this pixel
+		// how much water is in front of whatever is behind this pixel: straight down (foam), and
+		// along the view (the colour)
 		float raw_depth = texture(depth_tex, SCREEN_UV).r;
 		vec4 behind = INV_PROJECTION_MATRIX * vec4(SCREEN_UV * 2.0 - 1.0, raw_depth, 1.0);
 		behind.xyz /= behind.w;
 		float behind_y = (INV_VIEW_MATRIX * vec4(behind.xyz, 1.0)).y;
 		float surface_y = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).y;
 		float thickness = max(surface_y - behind_y, 0.0);
+		float surface_dist = length(VERTEX);
+		float path = raw_depth > 0.0 ? max(length(behind.xyz) - surface_dist, 0.0) : 60.0;
 
+		// the view through it, nudged by the ripples, unless that would land on something in front
+		vec2 bent = SCREEN_UV + vec2(n.x, n.z) * refraction * clamp(path, 0.0, 1.0);
+		float bent_raw = texture(depth_tex, bent).r;
+		vec4 bent_at = INV_PROJECTION_MATRIX * vec4(bent * 2.0 - 1.0, bent_raw, 1.0);
+		if (bent_raw > 0.0 && length(bent_at.xyz / bent_at.w) < surface_dist) {
+			bent = SCREEN_UV;
+		} else if (bent_raw > 0.0) {
+			path = max(length(bent_at.xyz / bent_at.w) - surface_dist, 0.0);
+		}
+		vec3 through = textureLod(screen_tex, bent, 0.0).rgb * exp(-absorb * path);
+		vec3 color = deep_color * (1.0 - exp(-scatter * path));
 		float k = clamp(thickness / clarity_depth, 0.0, 1.0);
-		vec3 color = mix(shallow_color, deep_color, k);
-		float alpha = mix(shallow_alpha, deep_alpha, k);
 
 		// shore foam: a band that breaks up and drifts
 		float broken = vnoise(v_world.xz * 1.6 + vec2(TIME * 0.15, -TIME * 0.11));
@@ -161,13 +179,13 @@ void fragment() {
 		foam *= step(0.45, vnoise(v_world.xz * 3.0 - TIME * 0.08) + foam * 0.4);
 		color = mix(color, foam_color, foam * 0.85);
 
-		// more of the sky at grazing angles (Fresnel), less see-through there too
+		// more of the sky at grazing angles (Fresnel), less of what's under it
 		float fresnel = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 4.0) * reflectivity;
-		alpha = max(mix(alpha, 0.92, fresnel), foam * 0.7);
 
 		color = mix(color, color * 1.3 + vec3(0.03), streak * 0.45);  // (a river's slick lanes)
 		ALBEDO = color;
-		ALPHA = alpha;
+		EMISSION = through * (1.0 - fresnel) * (1.0 - foam * 0.85);
+		ALPHA = 1.0;
 		ROUGHNESS = mix(0.06, 0.6, foam);  // a crisp mirror for the sky, sharp sun glints off the ripples
 		SPECULAR = 0.5;
 		if (debug_thickness) {

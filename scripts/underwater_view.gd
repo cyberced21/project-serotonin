@@ -20,6 +20,7 @@ var _view: ShaderMaterial
 var _murk: ShaderMaterial
 var _filters: Dictionary[StringName, AudioEffectLowPassFilter] = {}
 var _muffle := 0.0  # 0 open .. 1 fully muffled
+var _sun: DirectionalLight3D  # (the shafts slant toward it)
 
 
 func _ready() -> void:
@@ -67,6 +68,11 @@ func _process(delta: float) -> void:
 	if under:
 		for m in [_view, _murk]:
 			m.set_shader_parameter("surface_height", water.surface_height)
+		if not is_instance_valid(_sun):
+			_sun = get_tree().current_scene.find_children("*", "DirectionalLight3D", true, false).front() \
+					if get_tree().current_scene else null
+		if _sun:  # (towards the sun: the light shines down its -Z)
+			RenderingServer.global_shader_parameter_set(&"sun_direction", _sun.global_basis.z)
 	_muffle = move_toward(_muffle, 1.0 if under else 0.0, delta / MUFFLE_TIME)
 	for bus in _filters:
 		var i := AudioServer.get_bus_index(bus)

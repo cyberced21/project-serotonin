@@ -103,3 +103,7 @@ water_time={
 "type": "float",
 "value": 0.0
 }
+sun_direction={
+"type": "vec3",
+"value": Vector3(0, 1, 0)
+}
