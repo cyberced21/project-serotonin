@@ -179,6 +179,7 @@ func _ready() -> void:
 	wake.spacing = 0.4
 	wake.ring_size = Vector2(0.7, 1.4)
 	wake.full_speed = 4.0
+	wake.rush_speed = 3.4  # (bounding through the shallows, not trotting at your heel)
 	add_child(wake)
 	_side = 1.0 if randf() < 0.5 else -1.0
 	_yaw = rotation.y

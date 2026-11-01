@@ -504,7 +504,8 @@ func _physics_process(delta: float) -> void:
 				and not _swinging and not _panel_just_closed():
 			_talk_target.interact()
 	elif Input.is_action_pressed("gather") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED \
-			and is_on_floor() and not swimming and _state == State.NORMAL and not _swinging and _cooldown <= 0.0:
+			and (is_on_floor() or head_under) and (not swimming or head_under) and _state == State.NORMAL \
+			and not _swinging and _cooldown <= 0.0:
 		if _target and _target.skill == &"woodcutting" and Skills.talents.has(&"power_swing"):
 			_charge = 0.0 if _charge < 0.0 else _charge + delta  # Power swing: hold, then let go
 		elif _target:
@@ -889,14 +890,33 @@ func _update_target() -> void:
 		dot.scale = Vector2.ONE
 		hover_label.text = ""
 		return
-	if swimming:  # tools put away: nothing to gather, talk to or fish from out here
+	if swimming:  # tools put away: nothing to gather, talk to or fish from out here...
 		_clear_targets()
-		spearfishing.clear_target()
 		rodfishing.clear_target()
-		if not _swinging:
-			_equip(&"")
-		dot.scale = Vector2.ONE
-		hover_label.text = ""
+		var water := WaterBody.surface_at(get_tree(), global_position) if head_under else null
+		if water == null:
+			spearfishing.clear_target()
+			if not _swinging:
+				_equip(&"")
+			dot.scale = Vector2.ONE
+			hover_label.text = ""
+			return
+		# ...but under the water the spear comes out, for the fish you swim up to
+		if not _swinging:  # (mid-thrust, SpearFishing re-aims on its own impact frame)
+			spearfishing.update_under(water)
+			_equip(&"spear")
+		var fish := spearfishing.fish_target
+		dot.scale = Vector2.ONE * (1.75 if fish else 1.0)
+		hover_label.modulate = DEFLECT_COLOR
+		if fish and not fish.tool_can_take(&"spear"):
+			hover_label.text = fish.needs_text(&"spear")
+		elif fish and fish.is_under_levelled():
+			hover_label.text = "%s %d" % [Skills.display_name(&"fishing"), fish.species.required_level]
+			hover_label.modulate = UNDER_COLOR
+		elif spearfishing.deep_fish != null:
+			hover_label.text = "Too far"
+		else:
+			hover_label.text = ""
 		return
 	# one ray out to the further reach: villagers can be talked to a bit further than you can swing
 	var hit := _aim(maxf(reach, interact_reach))

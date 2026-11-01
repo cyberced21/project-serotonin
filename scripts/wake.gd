@@ -15,6 +15,10 @@ extends Node
 @export var full_speed := 3.2
 ## Falling into the water faster than this (m/s) splashes.
 @export var splash_speed := 2.2
+## Moving through the water faster than this (m/s: a swimmer's sprint, a running dog) spooks the
+## fish near it, every RUSH_EVERY seconds.
+@export var rush_speed := 2.6
+const RUSH_EVERY := 0.5
 
 var _body: Node3D
 var _last := Vector3.INF
@@ -25,6 +29,7 @@ var _was_under := false  # all of it under the surface
 var _wet_water: WaterBody  # the water it was last in, and where
 var _wet_at := Vector3.ZERO
 var _fall := 0.0  # how fast it was falling last tick (m/s)
+var _rush_left := 0.0
 
 
 func _ready() -> void:
@@ -43,7 +48,9 @@ func _physics_process(delta: float) -> void:
 	var is_in := water != null and into > 0.05
 	var deep := is_in and water.depth_here(p) >= min_depth and into < height
 	if is_in and not _was_in and _fall > splash_speed:
-		WaterRipple.splash(water, p, inverse_lerp(splash_speed, 9.0, _fall))
+		var strength := inverse_lerp(splash_speed, 9.0, _fall)
+		WaterRipple.splash(water, p, strength)
+		FishPond.disturb(get_tree(), p, 1.0 + 2.0 * strength)  # (a plunge scatters the fish)
 	elif _was_deep and not is_in and is_instance_valid(_wet_water):
 		WaterRipple.splash(_wet_water, _wet_at, 0.15)  # (climbed out: drips where you came up)
 	elif _was_under and into < height and is_in:
@@ -55,6 +62,13 @@ func _physics_process(delta: float) -> void:
 		_wet_water = water
 		_wet_at = p
 	_fall = maxf(-moved.y / delta, 0.0)
+	# rushing through the water (over or under it) spooks the fish round you; easing up on them doesn't
+	_rush_left -= delta
+	# (the player only once swimming: wading, the spear's stalk is the footsteps' business)
+	var swims: bool = _body.get("swimming") if "swimming" in _body else true
+	if is_in and swims and moved.length() / delta > rush_speed and _rush_left <= 0.0:
+		_rush_left = RUSH_EVERY
+		FishPond.disturb(get_tree(), p, 1.3)
 	if not deep:
 		_travel = 0.0
 		return
