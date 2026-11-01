@@ -120,8 +120,8 @@ group_uniforms;
 // (m) they've faded out by.
 const float WATER_LEVEL = -0.15;
 global uniform float water_time;
-uniform float caustic_size = 3.2;
-uniform float caustic_strength = 0.55;
+uniform float caustic_size = 1.6;
+uniform float caustic_strength = 0.28;
 uniform float caustic_depth = 4.5;
 
 global uniform sampler2DArray ground_tex : filter_nearest_mipmap_anisotropic, repeat_enable;

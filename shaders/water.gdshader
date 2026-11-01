@@ -177,10 +177,11 @@ void fragment() {
 		// line left a little further out by the last lap, fading as it goes back
 		float broken = vnoise(v_world.xz * 1.6 + vec2(TIME * 0.15, -TIME * 0.11));
 		float lap = 0.5 + 0.5 * sin(water_time * 0.9 + broken * 5.0 + dot(v_world.xz, normalize(wind_direction)) * 0.35);
-		float edge = foam_depth * (0.5 + broken) * (0.7 + 0.8 * lap) * (1.0 + waves);
+		float edge = foam_depth * (0.5 + broken) * (0.8 + 0.4 * lap) * (1.0 + 0.25 * waves);
 		float foam = 1.0 - smoothstep(edge * 0.55, edge, thickness);
-		float wash_at = edge * (1.6 + 0.6 * (1.0 - lap));
-		float wash = (1.0 - smoothstep(0.0, edge * 0.18, abs(thickness - wash_at))) * (0.35 + 0.4 * lap);
+		float wash_at = edge * (1.5 + 0.5 * (1.0 - lap));
+		float wash = (1.0 - smoothstep(0.0, edge * 0.1, abs(thickness - wash_at))) * (0.25 + 0.3 * lap)
+				* smoothstep(0.3, 0.8, waves);  // (only where real waves wash up: the lake)
 		foam = max(foam, wash * step(0.5, vnoise(v_world.xz * 5.0 + TIME * 0.05)));
 		foam *= step(0.45, vnoise(v_world.xz * 3.0 - TIME * 0.08) + foam * 0.4);
 		color = mix(color, foam_color, foam * 0.85);

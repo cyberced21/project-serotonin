@@ -29,15 +29,20 @@ float vnoise(vec2 p) {
 			mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
 }
 
-float shafts(vec3 eye, vec3 dir, float dist) {
+// (12 samples along the view, each pixel's started at its own offset so the steps don't show as
+// flat slabs: the dither reads as a little grain instead)
+const int SHAFT_STEPS = 12;
+
+float shafts(vec3 eye, vec3 dir, float dist, vec2 pixel) {
 	if (sun_direction.y < 0.05) {
 		return 0.0;
 	}
 	vec2 slant = sun_direction.xz / sun_direction.y;
 	float reach = min(dist, SHAFT_REACH);
 	float total = 0.0;
-	for (int i = 0; i < 8; i++) {
-		float s = reach * (float(i) + 0.5) / 8.0;
+	float jitter = hash(pixel);  // (still, not changing every frame: a steady grain, no shimmer)
+	for (int i = 0; i < SHAFT_STEPS; i++) {
+		float s = reach * (float(i) + jitter) / float(SHAFT_STEPS);
 		vec3 p = eye + dir * s;
 		float below = surface_height - p.y;
 		if (below < 0.0) {
@@ -45,10 +50,10 @@ float shafts(vec3 eye, vec3 dir, float dist) {
 		}
 		// where this bit of water's sunlight came in through the surface
 		vec2 q = (p.xz + slant * below) / shaft_size;
-		float beam = smoothstep(0.55, 0.85, vnoise(q + vec2(water_time * 0.07, -water_time * 0.05)));
+		float beam = smoothstep(0.5, 0.9, vnoise(q + vec2(water_time * 0.07, -water_time * 0.05)));
 		total += beam * exp(-below * 0.22) * exp(-s * 0.1);
 	}
-	return total / 8.0;
+	return total / float(SHAFT_STEPS);
 }
 
 void fragment() {
@@ -56,5 +61,5 @@ void fragment() {
 	vec3 dir = view_ray(SCREEN_UV, INV_PROJECTION_MATRIX, INV_VIEW_MATRIX);
 	float sun = clamp(sun_direction.y * 2.0, 0.0, 1.0);
 	ALBEDO = murk_color * under_light * (1.0 - exp(-scatter * d))
-			+ shaft_color * shafts(INV_VIEW_MATRIX[3].xyz, dir, d) * shaft_strength * sun * under_light;
+			+ shaft_color * shafts(INV_VIEW_MATRIX[3].xyz, dir, d, FRAGCOORD.xy) * shaft_strength * sun * under_light;
 }
