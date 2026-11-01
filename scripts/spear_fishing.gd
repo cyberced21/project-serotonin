@@ -10,6 +10,10 @@ extends Node
 ## spear"), and fish you're under-levelled for usually dodge. Caught fish appear
 ## on the held spear, wriggling; the hit escalates with each extra fish (shake, rising pitch,
 ## "Double!"); on the yank they flip off into the inventory. Misses splash and scatter fish.
+##
+## Diving (plans/water.md), the spear comes out under the water: the thrust goes straight out from
+## the tip along your look, `under_reach` further than the spear's own length (no surface in the
+## way), at the fish you've swum up to. Same catches, XP and tiers.
 
 const WORLD_MASK := 1
 const SPEAR_HIT := preload("res://audio/fishing/spear_hit.tres")
@@ -40,6 +44,10 @@ const DEEP_LOOK := 3.0
 ## Every speared fish pays this much of its XP: the spear takes many, the rod (RodFishing.catch_xp)
 ## few but richer, and over an hour they come out even (tools/fishing_bench.gd).
 @export var catch_xp := 0.85
+## Under the water: how much further than the spear's length a thrust reaches (m), and how far in
+## front of the eye its tip starts.
+@export var under_reach := 1.0
+const UNDER_TIP := 0.35
 
 @export_group("Thrust timing")
 @export var windup_time := 0.14
@@ -57,6 +65,8 @@ var water_point := Vector3.INF
 var fish_target: Fish
 ## A fish on your aim line but past the spear's length (the Player shows "Too deep"), or null.
 var deep_fish: Fish
+## Thrusting under the water (update_under), not down through the surface.
+var under := false
 
 var _rest_pos := Vector3.ZERO
 var _rest_rot := Vector3.ZERO
@@ -74,6 +84,7 @@ func can_thrust() -> bool:
 
 func clear_target() -> void:
 	water = null
+	under = false
 	water_point = Vector3.INF
 	deep_fish = null
 	_set_fish_target(null)
@@ -107,6 +118,24 @@ func update_target() -> void:
 		return
 
 
+## Called by the Player each physics frame while its head's under `wb`: the spear points where you
+## look, from its tip.
+func update_under(wb: WaterBody) -> void:
+	clear_target()
+	var cam: Camera3D = player.camera
+	var dir := -cam.global_basis.z
+	water = wb
+	under = true
+	water_point = cam.global_position + dir * UNDER_TIP
+	_set_fish_target(_fish_along(water_point, dir, 0.0, _under_length()))
+	if fish_target == null:
+		deep_fish = _fish_along(water_point, dir, _under_length(), _under_length() + DEEP_LOOK)
+
+
+func _under_length() -> float:
+	return _length() + under_reach
+
+
 func _set_fish_target(f: Fish) -> void:
 	if f == fish_target:
 		return
@@ -137,8 +166,7 @@ func _fish_along(p: Vector3, dir: Vector3, near: float, far: float) -> Fish:
 
 
 ## Every fish inside the thrust capsule, nearest the entry point first.
-func _skewer(entry: Vector3, dir: Vector3) -> Array[Fish]:
-	var length := _length()
+func _skewer(entry: Vector3, dir: Vector3, length: float) -> Array[Fish]:
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = skewer_radius * (1.0 + Village.stat(&"strike_window")) \
 		* (1.0 + Perks.bonus(&"fishing", &"hands"))  # the hut's sharper eyes, the level's quick hands
@@ -179,11 +207,14 @@ func thrust() -> void:
 	await t.finished
 
 	# 3. impact frame — wherever you're aiming *now*
-	update_target()
+	if under and water:
+		update_under(water)
+	else:
+		update_target()
 	if water:
 		var entry := water_point
 		var dir := -(player.camera as Camera3D).global_basis.z
-		var hits := _skewer(entry, dir)
+		var hits := _skewer(entry, dir, _under_length() if under else _length())
 		var caught: Array[Fish] = []
 		var dodgers: Array[Fish] = []
 		var glanced: Array[Fish] = []
@@ -304,6 +335,9 @@ func _fling_to_inventory() -> void:
 
 
 func _splash(at: Vector3, volume: float) -> void:
+	if under:  # (no surface to break: a dull whump through the water, muffled by UnderwaterView)
+		_play_at(SPLASH, at, randf_range(0.7, 0.85), linear_to_db(volume) - 8.0)
+		return
 	_play_at(SPLASH, at, randf_range(1.15, 1.35), linear_to_db(volume) - 2.0)
 	WaterRipple.spawn(water, Vector3(at.x, water.surface_height, at.z), 2.2, 1.1)
 

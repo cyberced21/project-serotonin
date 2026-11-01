@@ -16,6 +16,7 @@ spacing = 0.6
 lurker = false
 min_depth = 0.95
 dusk_depth = 0.35
+swim_band = Vector2(0.06, 0.28)
 cruise_speed = 0.5
 flee_speed = 4.6
 turn_rate = 3.5

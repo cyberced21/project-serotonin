@@ -55,6 +55,28 @@ extends CharacterBody3D
 ## Depth (m) at which wading is at its slowest.
 @export var wade_full_depth := 0.9
 
+@export_group("Swim")
+## Water deeper than this (m, surface to bed) is swum, not waded (plans/water.md). The lake's and
+## the ponds' shelves (0.9 m) stay wading water.
+@export var swim_depth := 1.35
+## A calm paddle, and the steadier crawl Shift gives.
+@export var swim_speed := 2.2
+@export var swim_sprint_speed := 3.2
+## Easing into a stroke and gliding to a stop: water is slower to both than the ground.
+@export var swim_accel := 3.5
+## How far the eye rides above the water while floating (m).
+@export var swim_eye_above := 0.14
+## How hard the water lifts you back to floating (a spring, critically damped, so you dip in from a
+## jump and come back up without bobbing on).
+@export var swim_buoyancy := 14.0
+## Under the water: how hard it slows you (m/s²), and with nothing pressed, how fast you drift
+## back up (m/s).
+@export var swim_drag := 12.0
+@export var swim_drift := 0.8
+## Seconds of breath under water, and to get it all back at the surface.
+@export var breath_time := 25.0
+@export var breath_refill := 4.0
+
 @export_group("Crouch")
 @export var crouch_speed := 2.5
 ## Seconds to go fully down / up.
@@ -186,6 +208,9 @@ const SIT_EYE := 1.12
 const SEAT_REACH := 2.6
 const SEAT_AIM := 0.2
 const CROUCH_EYE := 0.9
+## With your eye this far (m) under the surface you're swimming under it (where you look), not
+## floating at it.
+const DIVE_UNDER := 0.35
 
 enum State { NORMAL, MANTLE }
 
@@ -257,6 +282,14 @@ var _bob_amp := 0.0
 var _dip := 0.0  # landing dip spring (m, + = down)
 var _dip_vel := 0.0
 var _step_lift := 0.0  # how far the eye still trails a step up (m, eased away)
+## True while swimming (deep water, _swim): tools put away, no gathering.
+var swimming := false
+## Your head's under the water (breath runs down), how much breath is left (0..1), and whether you
+## ran out (you float up and can't dive till it's full again).
+var head_under := false
+var breath := 1.0
+var winded := false
+var _float_rest := NAN  # where the feet floated last tick (NAN when not floating)
 # the held tool
 var _grip_rest := Transform3D.IDENTITY  # the grip this frame: rest, or turning to the swing grip
 var _grip_default := Transform3D.IDENTITY  # the Grip node's own placement: everyone's rest pose
@@ -272,6 +305,21 @@ func _ready() -> void:
 	_seat_prompt = SeatPrompt.new()
 	_seat_prompt.name = "SeatPrompt"
 	add_child(_seat_prompt)
+	var ring := BreathRing.new()
+	ring.name = "Breath"
+	ring.player = self
+	$Reticle.add_child(ring)
+	var under := UnderwaterView.new()
+	under.name = "Underwater"
+	under.player = self
+	camera.add_child(under)
+	var wake := Wake.new()
+	wake.name = "Wake"
+	add_child(wake)
+	var swim_sounds := SwimSounds.new()
+	swim_sounds.name = "SwimSounds"
+	swim_sounds.player = self
+	add_child(swim_sounds)
 	for a: Node in [mantle_audio, footsteps]:
 		a.set("bus", &"Movement")
 	_base_fov = Settings.fov()
@@ -460,7 +508,8 @@ func _physics_process(delta: float) -> void:
 				and not _swinging and not _panel_just_closed():
 			_talk_target.interact()
 	elif Input.is_action_pressed("gather") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED \
-			and is_on_floor() and _state == State.NORMAL and not _swinging and _cooldown <= 0.0:
+			and (is_on_floor() or head_under) and (not swimming or head_under) and _state == State.NORMAL \
+			and not _swinging and _cooldown <= 0.0:
 		if _target and _target.skill == &"woodcutting" and Skills.talents.has(&"power_swing"):
 			_charge = 0.0 if _charge < 0.0 else _charge + delta  # Power swing: hold, then let go
 		elif _target:
@@ -477,7 +526,18 @@ func _move(delta: float) -> void:
 	var wish_dir := transform.basis * Vector3(input.x, 0.0, input.y)
 	var wish := Vector2(wish_dir.x, wish_dir.z)
 	var on_bridge := Footbridge.on_bridge(get_tree(), global_position)  # (over a ford, but dry)
-	var water_depth := 0.0 if on_bridge else WaterBody.depth_at(get_tree(), global_position)
+	var water: WaterBody = null if on_bridge else WaterBody.surface_at(get_tree(), global_position)
+	var water_depth := water.depth_here(global_position) if water else 0.0
+	# deep water is swum (a little less deep to stop, so the edge of the drop doesn't flicker). By how
+	# far your feet are under the surface, not the bed's height: that's coarse on a steep drop, and
+	# off a jump you fall in first
+	var under := water.surface_height - global_position.y if water else 0.0
+	swimming = water_depth > 0.0 and under > swim_depth - (0.15 if swimming else 0.0)
+	_breathe(delta, water)
+	if swimming:
+		_swim(delta, water, input, wish)
+		return
+	_float_rest = NAN
 	var wading := lerpf(1.0, wade_slow, clampf(water_depth / wade_full_depth, 0.0, 1.0))
 
 	# gravity + coyote time
@@ -536,6 +596,62 @@ func _move(delta: float) -> void:
 	camera.base_fov = _base_fov  # (+ impact kicks)
 
 
+## Swimming in deep water. At the surface: paddle where you face (yaw only), the water easing you
+## to a float with your eye just above it; jump at a bank while swimming at it to climb out (the
+## mantle). Hold crouch to dive: under, you swim where you look, Space rises, crouch sinks, and
+## left alone you drift gently back up. Out of breath (breath), you float up whatever you press
+## and can't dive again till you've got it back.
+func _swim(delta: float, water: WaterBody, input: Vector2, wish: Vector2) -> void:
+	_coyote = 0.0
+	_jump_buffer -= delta
+	if Input.is_action_just_pressed("jump"):
+		_jump_buffer = jump_buffer
+	if input.y < -0.3 and _jump_buffer > 0.0 and not head_under and _try_mantle():
+		return
+	var fast := Input.is_action_pressed("sprint") and input.y < 0.0
+	var speed := (swim_sprint_speed if fast else swim_speed) * (1.0 + Village.stat(&"run_speed"))
+	var eye := global_position.y + STAND_EYE
+	var dive := Input.is_action_pressed("crouch") and not winded
+	if dive or eye < water.surface_y(global_position) - DIVE_UNDER:
+		_float_rest = NAN
+		var target := camera.global_basis * Vector3(input.x, 0.0, input.y) * speed
+		if winded:
+			target.y = swim_speed
+		elif dive or Input.is_action_pressed("jump"):
+			target.y = swim_speed * (0.8 if Input.is_action_pressed("jump") else -0.8)
+		elif input == Vector2.ZERO:
+			target.y = swim_drift
+		# (the water brakes you harder than you can stroke: a jump in doesn't carry you to the bed)
+		var rate := swim_accel if target.length() > velocity.length() else swim_drag
+		velocity = velocity.move_toward(target, rate * delta)
+	else:
+		var horizontal := Vector2(velocity.x, velocity.z).move_toward(wish * speed, swim_accel * delta)
+		var rest := water.surface_y(global_position) - (STAND_EYE - swim_eye_above)  # where the feet float (on the waves)
+		# (springing to the wave's own rise and fall as well as its height, so you ride it, not trail it)
+		var rest_speed := 0.0 if is_nan(_float_rest) else (rest - _float_rest) / delta
+		_float_rest = rest
+		var k := swim_buoyancy
+		velocity.y += ((rest - global_position.y) * k + (rest_speed - velocity.y) * 2.0 * sqrt(k)) * delta
+		velocity.x = horizontal.x
+		velocity.z = horizontal.y
+	move_and_slide()
+	camera.base_fov = _base_fov
+
+
+## Breath (plans/water.md): it runs down while your head's under, BREATH_TIME to empty, and comes
+## back quickly once it's out. Run out and you're winded till it's full again (_swim floats you up).
+func _breathe(delta: float, water: WaterBody) -> void:
+	head_under = water != null and global_position.y + STAND_EYE < water.surface_y(global_position)
+	if head_under:
+		breath = maxf(breath - delta / breath_time, 0.0)
+		if breath == 0.0:
+			winded = true
+	else:
+		breath = minf(breath + delta / breath_refill, 1.0)
+		if breath == 1.0:
+			winded = false
+
+
 func _on_land(fall_speed: float) -> void:
 	footsteps.land(fall_speed)
 	if fall_speed > 2.0:
@@ -544,7 +660,7 @@ func _on_land(fall_speed: float) -> void:
 
 ## Smoothly lowers the eye and shrinks the capsule while crouching.
 func _update_crouch(delta: float) -> void:
-	var want := 1.0 if (Input.is_action_pressed("crouch") or not _can_stand()) and _state != State.MANTLE else 0.0
+	var want := 1.0 if (Input.is_action_pressed("crouch") or not _can_stand()) and _state != State.MANTLE and not swimming else 0.0
 	_crouch = move_toward(_crouch, want, delta / crouch_transition)
 	var height := lerpf(STAND_HEIGHT, CROUCH_HEIGHT, _crouch)
 	body_shape.height = height
@@ -777,6 +893,36 @@ func _update_target() -> void:
 		_equip(&"rod")
 		dot.scale = Vector2.ONE
 		hover_label.text = ""
+		return
+	if swimming:  # tools put away: nothing to gather, talk to or fish from out here...
+		if _swinging and spearfishing.under:
+			return  # (mid-thrust under the water: SpearFishing keeps its water and re-aims on impact)
+		_clear_targets()
+		rodfishing.clear_target()
+		var water := WaterBody.surface_at(get_tree(), global_position) if head_under else null
+		if water == null:
+			spearfishing.clear_target()
+			if not _swinging:
+				_equip(&"")
+			dot.scale = Vector2.ONE
+			hover_label.text = ""
+			return
+		# ...but under the water the spear comes out, for the fish you swim up to
+		if not _swinging:  # (mid-thrust, SpearFishing re-aims on its own impact frame)
+			spearfishing.update_under(water)
+			_equip(&"spear")
+		var fish := spearfishing.fish_target
+		dot.scale = Vector2.ONE * (1.75 if fish else 1.0)
+		hover_label.modulate = DEFLECT_COLOR
+		if fish and not fish.tool_can_take(&"spear"):
+			hover_label.text = fish.needs_text(&"spear")
+		elif fish and fish.is_under_levelled():
+			hover_label.text = "%s %d" % [Skills.display_name(&"fishing"), fish.species.required_level]
+			hover_label.modulate = UNDER_COLOR
+		elif spearfishing.deep_fish != null:
+			hover_label.text = "Too far"
+		else:
+			hover_label.text = ""
 		return
 	# one ray out to the further reach: villagers can be talked to a bit further than you can swing
 	var hit := _aim(maxf(reach, interact_reach))

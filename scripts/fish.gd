@@ -34,7 +34,7 @@ var _flash_tween: Tween
 func setup(p_species: FishSpecies, p_school: FishSchool) -> void:
 	species = p_species
 	school = p_school
-	depth_pref = randf_range(0.3, 0.65)
+	depth_pref = randf_range(species.swim_band.x, species.swim_band.y)
 	size = FishSize.roll(randf())
 	var model := species.model.instantiate() as Node3D
 	add_child(model)

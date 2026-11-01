@@ -12,7 +12,12 @@ extends Area3D
 ## The current (m/s, world space, downstream): rivers carry a float down it and station-holding
 ## fish face up into it. Zero for ponds and lakes.
 @export var flow := Vector3.ZERO
+## How big its waves are (Waves, plans/water.md): 1 is the lake's chop. Below 0: by its size (a
+## wide water gets the chop, a pond a gentle ripple). Its Surface is told (the shader's `waves`).
+@export var wave_scale := -1.0
 
+## Water this wide (m, its box) or wider gets the full chop.
+const WIDE := 36.0
 ## The morning mist over the water: how high it reaches above the surface.
 const MIST_HEIGHT := 1.6
 
@@ -27,6 +32,12 @@ func _ready() -> void:
 	monitorable = false
 	_add_mist()
 	_add_sound()
+	if wave_scale < 0.0:
+		var size := (_box.shape as BoxShape3D).size
+		wave_scale = 1.0 if maxf(size.x, size.z) >= WIDE else 0.3
+	var surface := get_node_or_null("Surface") as GeometryInstance3D
+	if surface:
+		surface.set_instance_shader_parameter(&"waves", wave_scale)
 
 
 ## The wispy mist every body of water shares; DayNightSky sets its density (thick at dawn, gone
@@ -74,6 +85,11 @@ func _add_sound() -> void:
 	bed.name = "Sound"
 	add_child(bed)
 	bed.position = Vector3(_box.position.x, surface_height - global_position.y, _box.position.z)
+
+
+## The height of the water's surface at `pos` (XZ) right now, its waves and all.
+func surface_y(pos: Vector3) -> float:
+	return surface_height + Waves.height(Vector2(pos.x, pos.z), wave_scale)
 
 
 ## True if `pos` (XZ) is over this water's volume.

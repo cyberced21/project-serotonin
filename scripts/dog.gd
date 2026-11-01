@@ -40,6 +40,8 @@ const AHEAD := 4.5
 const ARRIVE := 0.7
 ## Farther than this behind and he pops in POP_BEHIND behind you, where you aren't looking.
 const CATCH_UP := 50.0
+## Back on land after a swim he greets you once he's this close (m).
+const GREET_NEAR := 2.0
 const POP_BEHIND := 8.0
 ## Speeds (m/s): his slowest walk, and how much faster than you he may go to keep up.
 const WALK := 1.4
@@ -54,6 +56,10 @@ const SNIFF_AFTER := 14.0
 const SNIFF_RANGE := 3.5
 ## He won't go into water deeper than this (m); he floats, paddling, once it's past his legs.
 const DEEP := 0.9
+## ...except to swim across: deep water no wider than this (m) with land past it (the creek).
+const SWIM_ACROSS := 6.0
+## Going round deep water to you on the far side, he heads this far (m) along its edge at a time.
+const ROUND_STEP := 4.0
 ## How long a pat makes him wiggle, and how long a shake takes.
 const PET_TIME := 1.8
 const SHAKE_TIME := 1.3
@@ -124,6 +130,8 @@ var _yaw := 0.0
 var _goal := Vector3.ZERO
 var _still := 0.0    # how long you've stood still
 var _busy := 0.0     # seconds left of "you're gathering" after your last swing
+var _swam := false   # you've been swimming (he waits on the bank), and he's yet to greet you back
+var _greet := false
 var _gathering := 0.0  # how long you've been at it
 var _side := 1.0     # which side of you he keeps to
 var _sniff_at := Vector3.INF
@@ -132,6 +140,7 @@ var _next_sniff := SNIFF_AFTER
 var _pet_left := 0.0
 var _shake_left := 0.0
 var _wet := 0.0      # how long he's been in the water
+var _round_side := 1.0  # which way round deep water he last went (keeps to it)
 var _paddling := false
 var _watch := Vector3.INF  # the float, while you fish
 var _lantern: Node3D       # in his mouth (built with the model)
@@ -170,6 +179,14 @@ func _ready() -> void:
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
 	sync_to_physics = false
 	_build_model()
+	var wake := Wake.new()  # (a little one: the dog paddling through the shallows)
+	wake.height = 0.6
+	wake.min_depth = 0.22
+	wake.spacing = 0.4
+	wake.ring_size = Vector2(0.7, 1.4)
+	wake.full_speed = 4.0
+	wake.rush_speed = 3.4  # (bounding through the shallows, not trotting at your heel)
+	add_child(wake)
 	_side = 1.0 if randf() < 0.5 else -1.0
 	_yaw = rotation.y
 	get_tree().node_added.connect(_on_node_added)
@@ -407,6 +424,8 @@ func _think(delta: float) -> void:
 	_face = INF
 	_sleeping = false
 	if _kennel(pp):
+		return
+	if _swim_watch(delta, pp):
 		return
 	var rod: Node = _player.get("rodfishing")
 	var lure: Node3D = rod.get("lure") if rod else null
@@ -657,21 +676,71 @@ func _spray() -> void:
 			RodFishing.splash(get_parent(), global_position + Vector3.UP * (_leg + 0.15), 0.35))
 
 
-## `to`, unless the way there runs into water deeper than DEEP: then the last spot before it (he
-## waits on the bank). From deep water (popped in, or the water rose) he may always head out.
+## `to`, unless the way there runs into water deeper than DEEP: then round its edge if `to` is on
+## the far side (a deep pond between you), or the last spot before it (he waits on the bank while
+## you swim). From deep water (popped in, or the water rose) he may always head out.
 func _shore(from: Vector3, to: Vector3) -> Vector3:
 	var tree := get_tree()
 	if WaterBody.depth_at(tree, from) > DEEP:
 		return to
 	var flat := Vector3(to.x - from.x, 0.0, to.z - from.z)
-	var n := int(flat.length() / 0.5)
+	var last := _dry_until(from, flat)
+	if last == from + flat:
+		return to
+	if WaterBody.depth_at(tree, to) <= DEEP:
+		for turn: float in [0.5, 0.9, 1.3, 1.7]:  # (his side first, so he doesn't dither between them)
+			for side: float in [_round_side, -_round_side]:
+				var way := flat.normalized().rotated(Vector3.UP, turn * side) * ROUND_STEP
+				if _dry_until(from, way) == from + way:
+					_round_side = side
+					return from + way
+	return last
+
+
+## How far he gets along `way` from `from` before water deeper than DEEP: the last dry spot (the
+## whole way when it's dry). Deep water he can swim across (SWIM_ACROSS, land past it before the
+## way ends) doesn't stop him.
+func _dry_until(from: Vector3, way: Vector3) -> Vector3:
+	var n := maxi(int(way.length() / 0.5), 1)
+	var step := way.length() / n
 	var last := from
+	var deep := 0.0  # (how far he's been in deep water since `last`)
 	for i in range(1, n + 1):
-		var p := from + flat * (float(i) / n)
-		if WaterBody.depth_at(tree, p) > DEEP:
-			return last
+		var p := from + way * (float(i) / n)
+		if WaterBody.depth_at(get_tree(), p) > DEEP:
+			deep += step
+			if deep > SWIM_ACROSS:
+				return last
+			continue
+		deep = 0.0
 		last = p
-	return to
+	return last if deep > 0.0 else from + way
+
+
+## While you swim (plans/water.md) he waits at the water's edge nearest you, sitting and watching
+## you, trotting along the bank as you go; when you come out he runs to meet you with a happy
+## whine. True while he's waiting (the rest of _think is skipped).
+func _swim_watch(_delta: float, pp: Vector3) -> bool:
+	if _player.get("swimming"):
+		_swam = true
+		_sniff_at = Vector3.INF
+		_hint_at = Vector3.INF
+		_chase = null
+		_goal = _shore(global_position, pp)
+		if _flat(_goal - global_position) > ARRIVE * 2.2:
+			state = State.FOLLOW
+		else:
+			_goal = global_position
+			state = State.SIT  # (_move turns him to face you)
+		return true
+	if _swam:
+		_swam = false
+		_greet = true
+	if _greet and _flat(pp - global_position) < GREET_NEAR:
+		_greet = false
+		say(&"whine")
+		_pet_left = maxf(_pet_left, 0.8)  # (a moment at your side, tail going, as when petted)
+	return false
 
 
 ## Standing about a while: now and then off a few metres to sniff, then back.

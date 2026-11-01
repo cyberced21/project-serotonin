@@ -50,8 +50,7 @@ func _spawn_strays() -> void:
 		d.stray = true
 		d.setup(b, Companion.COATS[b][0], "")
 		add_child(d)
-		var spot := STRAY_SPOTS[i]
-		d.global_position = _on_ground(Vector3(spot.x, 0.0, spot.y))
+		d.global_position = _on_ground(_dry(STRAY_SPOTS[i]))
 		d.rotation.y = randf() * TAU
 		d.reset_physics_interpolation()
 		strays.append(d)
@@ -87,6 +86,23 @@ func _send_off_strays(keep: Dog) -> void:
 			var away := s.global_position - (player.global_position if player else s.global_position + Vector3.BACK)
 			s.leave(away if away.length() > 0.1 else Vector3.FORWARD)
 	strays.clear()
+
+
+## `spot`, or out from the pond's middle till it's well up on the bank (a wetter shore than the
+## spots were picked for).
+func _dry(spot: Vector2) -> Vector3:
+	var middle := spot
+	for p in LayoutWater.ponds():
+		if p["id"] == "pond":
+			middle = p["centre"]
+	var out := (spot - middle).normalized()
+	for step in 20:
+		var at := spot + out * (step * 0.5)
+		var shoreward := at - out * 1.5  # (a metre and a half of dry bank between him and the water)
+		if WaterBody.depth_at(get_tree(), Vector3(at.x, 0.0, at.y)) == 0.0 \
+				and WaterBody.depth_at(get_tree(), Vector3(shoreward.x, 0.0, shoreward.y)) == 0.0:
+			return Vector3(at.x, 0.0, at.y)
+	return Vector3(spot.x, 0.0, spot.y)
 
 
 func _on_ground(at: Vector3) -> Vector3:

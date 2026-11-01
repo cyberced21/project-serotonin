@@ -159,6 +159,8 @@ func _process(delta: float) -> void:
 	if not _model:
 		return
 	_bob += delta * 2.3
+	if is_instance_valid(water):  # riding the waves
+		global_position.y = water.surface_y(global_position)
 	_twitch = move_toward(_twitch, 0.0, delta * 0.25)
 	var under := 0.0
 	if bite == Bite.TAKE:  # dragged right under, jittering as the fish pulls
