@@ -313,6 +313,9 @@ func _ready() -> void:
 	under.name = "Underwater"
 	under.player = self
 	camera.add_child(under)
+	var wake := Wake.new()
+	wake.name = "Wake"
+	add_child(wake)
 	for a: Node in [mantle_audio, footsteps]:
 		a.set("bus", &"Movement")
 	_base_fov = Settings.fov()

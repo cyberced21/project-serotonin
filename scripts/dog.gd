@@ -173,6 +173,13 @@ func _ready() -> void:
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
 	sync_to_physics = false
 	_build_model()
+	var wake := Wake.new()  # (a little one: the dog paddling through the shallows)
+	wake.height = 0.6
+	wake.min_depth = 0.22
+	wake.spacing = 0.4
+	wake.ring_size = Vector2(0.7, 1.4)
+	wake.full_speed = 4.0
+	add_child(wake)
 	_side = 1.0 if randf() < 0.5 else -1.0
 	_yaw = rotation.y
 	get_tree().node_added.connect(_on_node_added)

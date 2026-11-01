@@ -172,10 +172,16 @@ void fragment() {
 		vec3 color = deep_color * (1.0 - exp(-scatter * path));
 		float k = clamp(thickness / clarity_depth, 0.0, 1.0);
 
-		// shore foam: a band that breaks up and drifts
+		// shore foam: a band that breaks up and drifts, lapping in and out (and further on the lake,
+		// with its bigger waves: the crests' own lift is already in the thickness), and a thin wash
+		// line left a little further out by the last lap, fading as it goes back
 		float broken = vnoise(v_world.xz * 1.6 + vec2(TIME * 0.15, -TIME * 0.11));
-		float edge = foam_depth * (0.5 + broken);
+		float lap = 0.5 + 0.5 * sin(water_time * 0.9 + broken * 5.0 + dot(v_world.xz, normalize(wind_direction)) * 0.35);
+		float edge = foam_depth * (0.5 + broken) * (0.7 + 0.8 * lap) * (1.0 + waves);
 		float foam = 1.0 - smoothstep(edge * 0.55, edge, thickness);
+		float wash_at = edge * (1.6 + 0.6 * (1.0 - lap));
+		float wash = (1.0 - smoothstep(0.0, edge * 0.18, abs(thickness - wash_at))) * (0.35 + 0.4 * lap);
+		foam = max(foam, wash * step(0.5, vnoise(v_world.xz * 5.0 + TIME * 0.05)));
 		foam *= step(0.45, vnoise(v_world.xz * 3.0 - TIME * 0.08) + foam * 0.4);
 		color = mix(color, foam_color, foam * 0.85);
 
