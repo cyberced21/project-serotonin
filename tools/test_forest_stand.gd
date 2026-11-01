@@ -36,6 +36,7 @@ func _run() -> void:
 	await _frames(10)
 	_check(stand.call("size") > 500, "the Pinewood is a stand of hundreds of trees (%d)" % stand.call("size"))
 	await _test_walk()
+	await _test_remember()
 	_finish()
 
 
@@ -83,6 +84,107 @@ func _test_walk() -> void:
 	await _frames(30)
 	_check(_both_or_neither() == 0, "back at the spawn, still no tree both or neither")
 	_check(stand.call("awake_count") == 0, "out of the forest, every tree is asleep (%d awake)" % stand.call("awake_count"))
+
+
+## Fell one tree and half-cut its neighbour, walk away (a stump; the cut saved), save and reload,
+## walk back (both as they were), then sleep through to regrowth.
+func _test_remember() -> void:
+	var felled := _middle_tree()
+	var spots: PackedVector3Array = stand.get("spots")
+	var cut := _nearest_to(spots[felled], felled)
+	var save_game := root.get_node("SaveGame")
+	_place(spots[felled] + Vector3(-3, 0, 0))
+	await _frames(40)
+	var a: Node3D = stand.call("awake_tree", felled)
+	var b: Node3D = stand.call("awake_tree", cut)
+	_check(a != null and b != null, "both trees woke beside you")
+	if a == null or b == null:
+		return
+	for k in 80:
+		if not a.call("is_available"):
+			break
+		_swing(a)
+		await _frames(2)
+	_check(not a.call("is_available"), "the tree came down")
+	a.call("fast_forward", -600.0)  # (kept felled through the test: a birch regrows in 20 s)
+	for k in 3:
+		_swing(b)
+		await _frames(2)
+	var cut_hits: int = b.get("hits_left")
+	_check(cut_hits < int(b.get("max_hits")), "the neighbour is half cut (%d hits left)" % cut_hits)
+	for k in 1200:  # (the fall plays out)
+		if not a.call("is_busy") and not b.call("is_busy"):
+			break
+		await _frames(1)
+
+	_place(_spawn)
+	await _frames(30)
+	_check(stand.call("awake_tree", felled) == null and stand.call("is_felled", felled), "walked away, the felled tree sleeps as felled")
+	_check(not stand.call("copy_shown", felled), "...its copy not drawn")
+	print("  (stump drawn: %s)" % stand.call("has_stump", felled))
+	var saved: Dictionary = save_game.call("saved_data", stand.call("node_key", felled))
+	_check(saved.has("respawn_left"), "...and saved as felled")
+	saved = save_game.call("saved_data", stand.call("node_key", cut))
+	_check(int(saved.get("hits_left", -1)) == cut_hits and saved.has("notch"), "the half-cut one saved with its notch")
+	var untouched := 0
+	for i in stand.call("size"):
+		if i != felled and i != cut and save_game.call("has", stand.call("node_key", i)):
+			untouched += 1
+	_check(untouched == 0, "trees that woke and slept untouched aren't saved (%d are)" % untouched)
+
+	# save, leave the world, come back to it
+	save_game.call("save")
+	var worlds := root.get_node("Worlds")
+	var id: String = worlds.get("current")
+	save_game.call("use_file", "")
+	worlds.call("play", id)
+	await process_frame
+	while get_first_node_in_group("player") == null or get_first_node_in_group("forest_stand") == null \
+			or not get_first_node_in_group("forest_stand").get("done"):
+		await process_frame
+	player = get_first_node_in_group("player") as Node3D
+	terrain = get_first_node_in_group("terrain")
+	stand = get_first_node_in_group("forest_stand") as Node3D
+	await _frames(10)
+	_check(stand.call("is_felled", felled) and not stand.call("copy_shown", felled), "reloaded, the felled tree is still down")
+	_check(stand.call("copy_shown", cut), "...the half-cut one a copy till you come near")
+
+	_place(spots[felled] + Vector3(-3, 0, 0))
+	await _frames(40)
+	a = stand.call("awake_tree", felled)
+	b = stand.call("awake_tree", cut)
+	_check(a != null and not a.call("is_available"), "back again, the felled tree wakes felled")
+	_check(b != null and int(b.get("hits_left")) == cut_hits and (b.get("_carve") as RefCounted).call("is_started"),
+		"...the half-cut one with its notch")
+	_check(not stand.call("is_felled", felled) and not stand.call("has_stump", felled), "...and no stump copy left behind")
+
+	_place(_spawn)
+	await _frames(30)
+	stand.call("fast_forward", 100000.0)  # (a long sleep)
+	await _frames(5)
+	_check(not stand.call("is_felled", felled) and stand.call("copy_shown", felled), "slept through, it grew back")
+	_check(save_game.call("saved_data", stand.call("node_key", felled)).is_empty(), "...and is forgotten by the save")
+
+
+## The other tree nearest tree `i`.
+func _nearest_to(at: Vector3, i: int) -> int:
+	var spots: PackedVector3Array = stand.get("spots")
+	var best := -1
+	for j in spots.size():
+		if j != i and (best < 0 or _flat(spots[j], at) < _flat(spots[best], at)):
+			best = j
+	return best
+
+
+## A swing at a tree with an axe of its tier (as test_logging_world).
+func _swing(tree: Node3D) -> void:
+	(root.get_node("Tools").get("tiers") as Dictionary)[&"axe"] = tree.get("tool_tier")
+	var dir := (tree.global_position - player.global_position)
+	dir.y = 0.0
+	dir = -dir.normalized()
+	var carve: RefCounted = tree.get("_carve")
+	var at := tree.global_position + Vector3.UP * (1.3 if carve.call("is_started") else 1.0) + dir * 0.3
+	tree.call("hit", load("res://scripts/hit_info.gd").new(at, dir, tree, at + dir * 1.4))
 
 
 ## The tree nearest the middle of the stand.

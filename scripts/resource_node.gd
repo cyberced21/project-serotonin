@@ -317,7 +317,7 @@ var _crack_step := 0  # ... and how far along it is (each step a little higher)
 var _cut := 0.0  # the fraction of a hit (under-levelled) carried over to the next one
 var _streak := 0  # biting hits in a row on this node (the Crystal Forge's streak_double)
 var _last_hit_msec := -100000
-var _busy_until_msec := 0
+var _busy_until_frame := 0
 var _surfaces: Array[GeometryInstance3D] = []
 ## The place's dressing (NodeTheme.look()): set by the spawner before the node enters the tree.
 var look: Array[Vector4] = []
@@ -747,12 +747,13 @@ func _show_depleted() -> void:
 
 ## Something is still playing out on it (a shake, a fall and its logs landing): a ForestStand
 ## leaves it awake till it's done.
+## (Counted in physics frames: the fall it waits for runs on them.)
 func is_busy() -> bool:
-	return Time.get_ticks_msec() < _busy_until_msec
+	return Engine.get_physics_frames() < _busy_until_frame
 
 
 func _hold_busy(seconds: float) -> void:
-	_busy_until_msec = maxi(_busy_until_msec, Time.get_ticks_msec() + int(seconds * 1000.0))
+	_busy_until_frame = maxi(_busy_until_frame, Engine.get_physics_frames() + int(seconds * Engine.physics_ticks_per_second))
 
 
 ## Debug: if depleted, grow back now.

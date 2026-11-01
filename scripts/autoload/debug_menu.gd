@@ -178,6 +178,8 @@ func _set_time_scale(s: float) -> void:
 func _regrow_all() -> void:
 	for n in get_tree().get_nodes_in_group("gatherable"):
 		(n as ResourceNode).respawn_now()
+	for s in get_tree().get_nodes_in_group("forest_stand"):
+		s.call("respawn_now")
 
 
 func _restock_all() -> void:

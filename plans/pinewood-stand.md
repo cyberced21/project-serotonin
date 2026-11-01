@@ -78,6 +78,10 @@ Branch `stand` off `main`, one commit a phase. (Main's working copy has a rewrit
    read without making any trees.
    Check: in the test, fell one, walk away, save, reload, walk back (stump, then regrown after
    its time); sleep through the night; half-cut one and come back.
+   Built 2026-11-01: `SaveGame.store()` / `saved_data()` / `forget()` and a `saving` signal (the
+   stand writes its felled trees' time left just before a save). A tree that slept untouched is
+   forgotten, so the save doesn't grow with every tree you walk past. Home's fast-forward and the
+   debug menu's regrow-all reach the stand through the `forest_stand` group.
 4. **What reaches past the wake range.** A falling trunk wakes every tree it could land on (within
    its height, toward its fall) the moment it starts to tip, so Dominoes and the crush still
    work. The backdrop's trunk boxes become the stand's own, so the old `SceneryScatter` collision

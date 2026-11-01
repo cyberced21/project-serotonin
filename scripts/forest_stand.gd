@@ -58,6 +58,11 @@ var _awake: Dictionary[int, ResourceNode] = {}
 var _waking: Array[int] = []  # the trees to wake, nearest first
 var _check_in := 0.0
 var _player: Node3D
+## Felled trees that are asleep -> their saved state (ResourceNode.to_dict()), its respawn_left
+## counted down here.
+var _felled: Dictionary[int, Dictionary] = {}
+var _stumps: Dictionary[int, MeshInstance3D] = {}  # ... and what's drawn for each
+var _stump_meshes := {}  # kind * 1000 + look -> its Rubble_* mesh (or null)
 
 
 func _scatter() -> void:
@@ -67,6 +72,8 @@ func _scatter() -> void:
 		_build_trunks()
 		for i in spots.size():
 			_near.get_or_add(_near_cell(spots[i]), PackedInt32Array()).append(i)
+		_load_felled()
+		SaveGame.saving.connect(_store_felled)
 	set_process(not spots.is_empty())
 	_finish()
 
@@ -77,6 +84,11 @@ func size() -> int:
 
 func key_of(i: int) -> StringName:
 	return StringName("%s_%04d" % [save_prefix, ids[i]])
+
+
+## Where tree `i`'s state is saved (as a ResourceNode saves itself).
+func node_key(i: int) -> StringName:
+	return StringName("node:" + key_of(i))
 
 
 func xform_of(i: int) -> Transform3D:
@@ -101,6 +113,10 @@ func copy_shown(i: int) -> bool:
 # --- waking and sleeping ------------------------------------------------------------------------
 
 func _process(delta: float) -> void:
+	for i in _felled.keys():
+		_felled[i]["respawn_left"] = float(_felled[i]["respawn_left"]) - delta
+		if _felled[i]["respawn_left"] <= 0.0:
+			_regrow(i)
 	_check_in -= delta
 	if _check_in <= 0.0:
 		_check_in = CHECK_EVERY
@@ -137,6 +153,10 @@ func _check() -> void:
 func _wake(i: int) -> void:
 	if _awake.has(i) or _awake.size() >= MAX_AWAKE:
 		return
+	if _felled.has(i):  # (it takes up its stump and the time left as it registers)
+		SaveGame.store(node_key(i), _felled[i])
+		_felled.erase(i)
+		_drop_stump(i)
 	var e := entries[kinds[i]]
 	var tree := e.scene.instantiate() as ResourceNode
 	tree.save_id = key_of(i)
@@ -149,12 +169,95 @@ func _wake(i: int) -> void:
 	_show_copy(i, false)
 
 
-## Tree `i` back to a copy.
+## Tree `i` back to a copy, or to a stump if it's felled; what's been done to it is saved now (a
+## freed node only keeps what was saved last time).
 func _sleep(i: int) -> void:
 	var tree: ResourceNode = _awake[i]
 	_awake.erase(i)
+	var d := tree.to_dict()
 	tree.queue_free()
+	if d.has("respawn_left"):
+		_felled[i] = d
+		SaveGame.store(node_key(i), d)
+		_show_copy(i, false)
+		_add_stump(i)
+		return
+	if d.size() == 1 and int(d.get("hits_left", -1)) == tree.max_hits:
+		SaveGame.forget(node_key(i))  # (untouched: no need to keep it)
+	else:
+		SaveGame.store(node_key(i), d)  # (half cut: its notch is there when it wakes)
 	_show_copy(i, true)
+
+
+## Grown back while asleep: the copy again.
+func _regrow(i: int) -> void:
+	var fine: bool = _felled[i].get("fine", false)
+	_felled.erase(i)
+	_drop_stump(i)
+	if fine:  # (Grove keeper: it grows back fine-grained)
+		SaveGame.store(node_key(i), {"fine": true})
+	else:
+		SaveGame.forget(node_key(i))
+	_show_copy(i, true)
+
+
+## Time passes while you sleep (Home.skip_to_morning): the felled trees `seconds` nearer growing
+## back. (Awake ones count their own: ResourceNode.fast_forward.)
+func fast_forward(seconds: float) -> void:
+	for d in _felled.values():
+		d["respawn_left"] = maxf(float(d["respawn_left"]) - seconds, 0.01)
+
+
+## Debug: every felled tree grows back now.
+func respawn_now() -> void:
+	fast_forward(INF)
+
+
+## The felled trees from the save, without making any trees.
+func _load_felled() -> void:
+	for i in spots.size():
+		var d := SaveGame.saved_data(node_key(i))
+		if d.has("respawn_left"):
+			_felled[i] = d.duplicate(true)
+			_show_copy(i, false)
+			_add_stump(i)
+
+
+## Before a save: the felled trees' time left as it is now.
+func _store_felled() -> void:
+	for i in _felled:
+		SaveGame.store(node_key(i), _felled[i])
+
+
+func _add_stump(i: int) -> void:
+	var look := kinds[i] * 1000 + looks[i]
+	if not _stump_meshes.has(look):
+		_stump_meshes[look] = copy_mesh(model_of(i), "rubble_")
+	var mesh: ArrayMesh = _stump_meshes[look]
+	if mesh == null or mesh.get_surface_count() == 0:
+		return
+	var stump := MeshInstance3D.new()
+	stump.name = "Stump_%d" % i
+	stump.mesh = mesh
+	stump.set_instance_shader_parameter("foot", ResourceNode.TRUNK_FOOT)
+	add_child(stump)
+	stump.global_transform = xform_of(i)
+	_stumps[i] = stump
+
+
+func _drop_stump(i: int) -> void:
+	if _stumps.has(i):
+		_stumps[i].queue_free()
+		_stumps.erase(i)
+
+
+## Whether a stump is drawn for tree `i` (asleep and felled).
+func has_stump(i: int) -> bool:
+	return _stumps.has(i)
+
+
+func is_felled(i: int) -> bool:
+	return _felled.has(i)
 
 
 ## Tree `i`'s copy drawn or hidden (a zero-sized instance), its trunk box with it (an awake tree
@@ -349,14 +452,14 @@ func _build_copies() -> void:
 
 
 ## One mesh of a tree model's Body_* parts as they stand (no stump), a surface per material: what
-## ResourceNode._apply_model would build, merged.
-static func copy_mesh(model: PackedScene) -> ArrayMesh:
+## ResourceNode._apply_model would build, merged. (`prefix` "rubble_": its stump instead.)
+static func copy_mesh(model: PackedScene, prefix := "body_") -> ArrayMesh:
 	if model == null:
 		return null
 	var inst := model.instantiate()
 	var groups := {}  # [material, format] -> [arrays...]
 	for m in inst.find_children("*", "MeshInstance3D", true, false):
-		if not m.name.to_lower().begins_with("body_"):
+		if not m.name.to_lower().begins_with(prefix):
 			continue
 		var xform := Transform3D.IDENTITY  # relative to the model root (it isn't in the tree)
 		var n: Node = m

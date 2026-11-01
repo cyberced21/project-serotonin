@@ -382,12 +382,12 @@ func sleep() -> void:
 
 
 ## The night passes: the clock jumps to first light, and whatever regrows on a timer moves on by
-## the same time (ResourceNode.fast_forward).
+## the same time (ResourceNode.fast_forward; a ForestStand's sleeping trees too).
 func skip_to_morning() -> void:
 	var morning := VillagerDay.time_at(WAKE_HOUR)
 	var seconds := fposmod(morning - DayNight.time, 1.0) * DayNight.DAY_LENGTH
 	DayNight.time = morning
-	for n in get_tree().get_nodes_in_group("gatherable"):
+	for n in get_tree().get_nodes_in_group("gatherable") + get_tree().get_nodes_in_group("forest_stand"):
 		if n.has_method("fast_forward"):
 			n.call("fast_forward", seconds)
 
