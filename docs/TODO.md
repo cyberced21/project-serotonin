@@ -34,10 +34,10 @@ Design background for most of these is in [3d-research-notes.md](3d-research-not
 
 ## Water ([plans/water.md](../plans/water.md))
 
-Built 2026-10-31 on branch `water` with no game window: phases 4–8 are **unseen, unheard and their tests not run**.
+Built 2026-10-31 on branch `water`. All 40 tests pass and the stills are in `docs/images/water/`; nothing has been played or heard yet.
 
-- [ ] **Run the tests** (`python tools/run_tests.py`) and fix what phases 4–7 broke; add checks to `tools/test_swim.gd` for the underwater spear, the dog waiting at the edge, and wakes/splashes.
-- [ ] **Take the stills** (`tools/water_shots.gd`) and look: the silt bed, caustics, the colour by the water looked through, refraction, sun shafts, lapping foam and its wash line, wakes, splashes, the lily pads riding the waves. The last stills run hung before its first shot: find out why.
+- [x] **Tests** pass, with checks added for wakes, the splash, the spear under water (`test_swim`) and the dog at the edge (`test_dog`). The strike click itself can't be tested headless (no mouse capture).
+- [x] **Stills** taken and looked at: fixed slabbed sun shafts, bleaching caustics, too-wide foam. Not seen yet: wakes and splashes in motion.
 - [ ] **Swim it**: wave height, swim speed, breath (25 s), the float, how deep the lake reads, refraction strength (`water.gdshader` `refraction`), caustic brightness (`terrain.gdshader` `caustic_strength`).
 - [ ] **Spear while diving vs the rod**: same catches and XP as the shore spear (`SpearFishing.under_reach` 1 m past the spear); bench it (`tools/fishing_bench.gd`) or fish the lake both ways and compare. Char now hug the lake bed (`swim_band`).
 - [ ] **Listen to the swim sounds** (`SwimSounds` levels): strokes, the plunge, the hush under water (on Master, following the Ambience slider by hand), the gasp, climbing out.

@@ -124,7 +124,10 @@ compiled or seen and nothing has been heard. Open items are in docs/TODO.md *Wat
    under, the underwater loop (on Master, so it isn't muffled twice), a gasp after 4 s under,
    climbing out; credits in audio/swim/SOURCES.md (one-shots cut by tools/cut_dog_sounds.py). The
    dog sits at the edge nearest you, watching, while you swim, and greets you (a whine) once out.
-8. **Polish + checks.** Partly: the map editor explains the shelf under a pond's depth; TODO.md has
+8. **Polish + checks.** ✅ except play. 2026-10-31 evening: all 40 tests pass; test_swim checks wakes,
+   the splash and the spear under water (it found the swim branch clearing the spear's target
+   mid-thrust: fixed), test_dog the wait and the greeting. Stills taken and fixed (slabbed shafts
+   dithered, caustics halved, foam narrowed, the wash line lake-only). Earlier, partly: the map editor explains the shelf under a pond's depth; TODO.md has
    a Water section. Still to do: all tests, test_swim additions (underwater spear, dog at the
    edge, wakes), the stills, save/load mid-swim, `tools/audit_world.gd`.
 
