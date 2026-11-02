@@ -107,6 +107,15 @@ Branch `street` off `main`, one commit a phase.
 4. **Plots and gardens.** Hedges, fences and low walls round each back plot, with gates; your home's
    garden (woodshed, kennel, room to grow); a little clutter in each (barrels, a cart, veg beds,
    washing). The empty cottages get gardens too, so they look lived-in, or nearly.
+   **Done 2026-11-01:** every street house has a plot about 18 m deep behind it (layout lines
+   `plot_*`): field fences for the craft end (smithy, woodcutter, fisher, prospector, ore store),
+   hedges for the market and the cottages, a low stone wall round your home's (30 m deep: the
+   woodshed, two veg beds, flowers, a bench). Each back side has a gate gap in the middle (the
+   woodcutter's where the path from the clearing comes in; narrow plots have none: the field fence
+   comes in 5 m lengths). The sides start 3.5 m behind the house. The smithy's plot is shorter (11 m)
+   and stops short of the creek. Two or three things in each plot (`plot_*` points: barrels,
+   crates, a bale, veg beds, cabbages, pumpkins, flowers). The washhouse moved south of the
+   fisher's plot, down by the creek; the timber yard to the middle of the woodcutter's.
 5. **Work yards.** Each worker's stations as markers in their building's frame (so they move
    with it), each with the motion to do there. `_pick_spot()` by day: their own stations and now
    and then their door, never the green. The fisher's jetty and the prospector's sorting table out
