@@ -51,7 +51,26 @@
 		"pumpkin":        {"label": "Pumpkins",       "model": "res://models/country/pumpkin.glb", "collide": false},
 		"turnip":         {"label": "Turnips",        "model": "res://models/country/turnip.glb", "scale": [0.6, 0.6, 0.6], "collide": false},
 		"veg_bed":        {"label": "Vegetable bed",  "model": "res://models/country/crops.glb", "collide": false},
-		"garden_wheat":   {"label": "Wheat (a garden row)", "model": "res://models/country/wheat.glb", "collide": false}
+		"garden_wheat":   {"label": "Wheat (a garden row)", "model": "res://models/country/wheat.glb", "collide": false},
+		"forge":          {"label": "Forge",          "model": "res://models/village/yard/forge.glb", "collide": true, "own_materials": false},
+		"anvil_log":      {"label": "Anvil (on a log)", "model": "res://models/village/yard/anvil_log.glb", "collide": true},
+		"quench_bucket":  {"label": "Quench bucket",  "model": "res://models/village/yard/quench_bucket.glb", "collide": false},
+		"whetstone":      {"label": "Grindstone",     "model": "res://models/village/yard/whetstone.glb", "collide": true},
+		"metal_crate":    {"label": "Iron-bound crate", "model": "res://models/village/yard/metal_crate.glb", "collide": true},
+		"chopping_log":   {"label": "Chopping log",   "model": "res://models/village/yard/chopping_log.glb", "collide": true},
+		"woodpile":       {"label": "Woodpile",       "model": "res://models/village/yard/woodpile.glb", "collide": true},
+		"workbench":      {"label": "Workbench",      "model": "res://models/village/yard/workbench.glb", "collide": true},
+		"axe":            {"label": "Axe (lying)",    "model": "res://models/village/yard/axe.glb", "collide": false},
+		"jetty_deck":     {"label": "Jetty (a 2 m section)", "model": "res://models/village/yard/jetty_deck.glb", "collide": true},
+		"fish_rack":      {"label": "Fish-drying rack", "model": "res://models/village/yard/fish_rack.glb", "collide": true},
+		"gutting_table":  {"label": "Gutting table",  "model": "res://models/village/yard/gutting_table.glb", "collide": true},
+		"fish":           {"label": "Fish (one)",     "model": "res://models/village/yard/fish.glb", "collide": false},
+		"table_large":    {"label": "Long table",     "model": "res://models/village/yard/table_large.glb", "collide": true},
+		"flour_sack":     {"label": "Flour sack",     "model": "res://models/village/yard/flour_sack.glb", "collide": false},
+		"firewood":       {"label": "Firewood (a few logs)", "model": "res://models/village/yard/firewood.glb", "collide": false},
+		"stone_heap":     {"label": "Ore heap",       "model": "res://models/village/yard/stone_heap.glb", "collide": true},
+		"tub":            {"label": "Wooden tub",     "model": "res://models/village/yard/tub.glb", "collide": false},
+		"scroll":         {"label": "Scroll",         "model": "res://models/village/yard/scroll.glb", "collide": false}
 	},
 	"fixtures": {
 		"ruined_farmstead": {"label": "Ruined farmstead", "model": "res://models/village/fx_ruined_cottage.gltf", "radius": 8}

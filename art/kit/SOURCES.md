@@ -26,3 +26,19 @@ wherever they were unzipped and writes the picked pieces to `models/mine/`, one 
   https://opengameart.org/content/free-mine-assets-pack (`free_mine_assets.zip`, unzipped as
   `duck/`, downloaded 2026-10-29). Timber frames, hanging lamps, rocks, stalactites; painted from
   our palette.
+
+## The work yards' packs (plans/village-street.md)
+
+Not copied here either: `tools/blender/yard_kit.py` reads them from where they were unzipped
+(`E:\Godot\downloads\street-props\`, downloaded 2026-11-01) and writes the picked pieces to
+`models/village/yard/`, one .glb each, in their own painted materials (textures 512 px JPEGs).
+
+- **Survival Kit** by Kenney, CC0 1.0: https://www.kenney.nl/assets/survival-kit
+  (`kenney_survival-kit.zip`, unzipped as `kenney/`). The firewood. A third of real size.
+- **Resource Bits** (free) by Kay Lousberg, CC0 1.0: https://kaylousberg.itch.io/resource-bits
+  (`KayKit_ResourceBits_1.0_FREE.zip`, unzipped as `kaykit/`). The chopping log, woodpile, ore heap.
+- **Modular Wooden Docks** by loafbrr, CC0 1.0: https://loafbrr.itch.io/wooden-docks
+  (`WoodenDock_blend_glb_Fbx.zip`, unzipped as `docks/`; read from `WoodenDockSet_Final.blend`,
+  whose glb has no textures). The jetty deck, fish-drying rack, gutting table, a fish.
+
+The rest of the yards' pieces are Fantasy Props (`props/` above); the forge is ours.

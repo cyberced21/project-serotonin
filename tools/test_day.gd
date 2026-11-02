@@ -40,8 +40,8 @@ func _run() -> void:
 
 	await _run_until(19.6, 18.0)
 	_check(_lit() == _windowless(), "19:36: everyone's out, the windows are dark")
-	await _run_until(21.5)
-	_check(_all(func(v: Node) -> bool: return v.get("_inside")), "21:30, no tavern: everyone's home")
+	await _run_until(21.8)  # (the street is long: from a market bench to the west end is ~90 m)
+	_check(_all(func(v: Node) -> bool: return v.get("_inside")), "21:48, no tavern: everyone's home")
 	_check(_lit() == _houses(), "...with the lamps lit (%d of %d)" % [_lit(), _houses()])
 	await _run_until(22.4)
 	var early := _lit()
@@ -83,8 +83,8 @@ func _run() -> void:
 	print("  19:48: %d sitting; the mayor's going to %s" % [seated, mayor.get("_target").name])
 	_check(seated >= 3, "19:48: three or more on the benches")
 	_check(mayor.get("_target").name == "Stroll", "...and the mayor on his round of the square")
-	await _run_until(21.5)
-	_check(_all(func(v: Node) -> bool: return v.get("_inside")), "21:30: home again")
+	await _run_until(21.8)
+	_check(_all(func(v: Node) -> bool: return v.get("_inside")), "21:48: home again")
 	await _tavern_night(village)
 	_finish()
 

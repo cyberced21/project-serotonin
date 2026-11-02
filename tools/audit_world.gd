@@ -259,51 +259,59 @@ func _piece_at(b: Node, _origin: Vector3, at: Vector3) -> String:
 
 # --- villagers ------------------------------------------------------------------------------
 
-## Everyone at their work spot for the tier on show: is what they work at in front of them?
+## Everyone at their work spot for the tier on show, or each station of their work yard
+## (WorkYards): is what they work at in front of them?
 func _audit_villagers(space: PhysicsDirectSpaceState3D, label: String) -> void:
 	var water: GDScript = load("res://scripts/water_body.gd")
 	for b in get_nodes_in_group("building"):
 		var v := b.get_node_or_null("Villager")
 		if v == null or b.get("tier_shown") == 0:
 			continue
-		var spot := b.call("work_spot") as Marker3D
-		if spot == null:
-			continue
-		var f := spot.global_basis.z
-		f.y = 0.0
-		f = f.normalized()
-		var at := spot.global_position
-		var work := int(v.get("work"))  # Villager.Work: CHOP, HAMMER, FISH, ORATE, TEND, WIPE
-		var who: String = v.call("display_name")
-		var ahead := _probe(space, at, f)
-		var behind := _probe(space, at, -f)
-		var line := "%s [%s] at %s (%s) faces %s: ahead %s; behind %s" % [who, label, _v(at), spot.name,
-				_v(f), ahead, behind]
-		var bad := false
-		match work:
-			2:  # fishing: water out in front
-				var wet := false
-				for r in [1.0, 2.0, 3.0]:
-					if float(water.call("depth_at", self, at + f * r)) > 0.05:
-						wet = true
-				bad = not wet
-				if bad:
-					var dirs := PackedStringArray()
-					for i in 16:
-						var d := Vector3(sin(i * TAU / 16.0), 0.0, cos(i * TAU / 16.0))
-						for r in [1.0, 2.0, 3.0, 4.0, 6.0]:
-							if float(water.call("depth_at", self, at + d * r)) > 0.05:
-								dirs.append("%s at %.0f m" % [_v(d), r])
-								break
-					line += " (no water ahead; water: %s)" % (", ".join(dirs) if dirs else "none within 6 m")
-			3:
-				bad = ahead.begins_with("wall")  # orating at a wall
-			_:
-				bad = ahead == "nothing" or ahead.begins_with("wall")
-		if bad:
-			_add("FACE", line)
-		else:
-			print("face ok  " + line)
+		var spots: Array = b.call("stations")
+		if spots.is_empty() and b.call("work_spot") != null:
+			spots = [b.call("work_spot")]
+		for spot in spots:
+			_audit_spot(space, water, v, spot as Marker3D, label)
+
+
+func _audit_spot(space: PhysicsDirectSpaceState3D, water: GDScript, v: Node, spot: Marker3D, label: String) -> void:
+	var f := spot.global_basis.z
+	f.y = 0.0
+	f = f.normalized()
+	var at := spot.global_position
+	# what they do there: the station's motion, else their trade's (Villager.Work, by name)
+	var trades: Array[String] = ["CHOP", "HAMMER", "FISH", "ORATE", "TEND", "WIPE"]
+	var work: String = String(spot.get_meta(&"motion")) if spot.has_meta(&"motion") else trades[int(v.get("work"))]
+	var who: String = v.call("display_name")
+	var ahead := _probe(space, at, f)
+	var behind := _probe(space, at, -f)
+	var line := "%s [%s] at %s (%s) faces %s: ahead %s; behind %s" % [who, label, _v(at), spot.name,
+			_v(f), ahead, behind]
+	var bad := false
+	match work:
+		"FISH":  # water out in front
+			var wet := false
+			for r in [1.0, 2.0, 3.0]:
+				if float(water.call("depth_at", self, at + f * r)) > 0.05:
+					wet = true
+			bad = not wet
+			if bad:
+				var dirs := PackedStringArray()
+				for i in 16:
+					var d := Vector3(sin(i * TAU / 16.0), 0.0, cos(i * TAU / 16.0))
+					for r in [1.0, 2.0, 3.0, 4.0, 6.0]:
+						if float(water.call("depth_at", self, at + d * r)) > 0.05:
+							dirs.append("%s at %.0f m" % [_v(d), r])
+							break
+				line += " (no water ahead; water: %s)" % (", ".join(dirs) if dirs else "none within 6 m")
+		"ORATE", "SWEEP":
+			bad = ahead.begins_with("wall")  # orating (or sweeping) at a wall
+		_:
+			bad = ahead == "nothing" or ahead.begins_with("wall")
+	if bad:
+		_add("FACE", line)
+	else:
+		print("face ok  " + line)
 
 
 ## Every seat on show (chairs, benches, stools): something to sit on under it, and its back (if it

@@ -21,18 +21,27 @@
 [ext_resource type="Script" path="res://scripts/fixture.gd" id="20_2kw4o"]
 [ext_resource type="PackedScene" path="res://models/village/fx_ruined_cottage.gltf" id="21_vqbv3"]
 [ext_resource type="PackedScene" path="res://models/village/props/signpost.glb" id="56_t2o6s"]
+[ext_resource type="PackedScene" path="res://models/village/props/crates.glb" id="57_78tkf"]
+[ext_resource type="PackedScene" path="res://models/country/crops.glb" id="58_dnro2"]
 [ext_resource type="PackedScene" path="res://scenes/wheat_sheaf.tscn" id="59_0pqgu"]
+[ext_resource type="PackedScene" path="res://models/country/flowers_2.glb" id="59_8k0me"]
 [ext_resource type="Script" path="res://scripts/forest_stand.gd" id="60_4venx"]
+[ext_resource type="PackedScene" path="res://models/village/props/barrel.glb" id="60_o65t2"]
 [ext_resource type="Script" path="res://scripts/spawn_entry.gd" id="61_8j3kd"]
+[ext_resource type="PackedScene" path="res://models/country/cabbage.glb" id="61_ndny5"]
 [ext_resource type="PackedScene" path="res://models/variants/birch_v1.glb" id="62_idu3f"]
+[ext_resource type="PackedScene" path="res://models/country/turnip.glb" id="62_pd87x"]
 [ext_resource type="PackedScene" path="res://scenes/barley_sheaf.tscn" id="62_vt6j2"]
+[ext_resource type="PackedScene" path="res://models/country/pumpkin.glb" id="63_aon3e"]
 [ext_resource type="PackedScene" path="res://models/variants/birch_v2.glb" id="63_fsxrg"]
 [ext_resource type="PackedScene" path="res://models/variants/birch_v3.glb" id="64_dugbs"]
+[ext_resource type="PackedScene" path="res://models/field/hay_round.glb" id="64_evxat"]
 [ext_resource type="PackedScene" path="res://scenes/iron_rock.tscn" id="64_kunej"]
 [ext_resource type="PackedScene" path="res://models/variants/birch_v4.glb" id="65_n6au1"]
 [ext_resource type="PackedScene" path="res://models/variants/birch_v5.glb" id="66_n2xuq"]
 [ext_resource type="PackedScene" path="res://models/variants/birch_v6.glb" id="67_fy8kd"]
 [ext_resource type="PackedScene" path="res://models/variants/birch_v7.glb" id="68_dj5w1"]
+[ext_resource type="PackedScene" path="res://models/field/fence.glb" id="68_qb4b3"]
 [ext_resource type="PackedScene" path="res://models/variants/birch_v8.glb" id="69_78tkf"]
 [ext_resource type="PackedScene" path="res://models/variants/pine_v1.glb" id="70_dnro2"]
 [ext_resource type="Script" path="res://scripts/water_body.gd" id="70_pdurs"]
@@ -52,22 +61,22 @@
 [ext_resource type="PackedScene" path="res://models/variants/pine_v8.glb" id="77_qb4b3"]
 [ext_resource type="Resource" path="res://data/fish/char.tres" id="78_mwqsg"]
 
-[sub_resource type="Resource" id="Resource_4ugvj"]
+[sub_resource type="Resource" id="Resource_evxat"]
 script = ExtResource("61_8j3kd")
 scene = ExtResource("12_a6dxe")
 weight = 0.6
 variants = Array[PackedScene]([ExtResource("62_idu3f"), ExtResource("63_fsxrg"), ExtResource("64_dugbs"), ExtResource("65_n6au1"), ExtResource("66_n2xuq"), ExtResource("67_fy8kd"), ExtResource("68_dj5w1"), ExtResource("69_78tkf")])
 
-[sub_resource type="Resource" id="Resource_3bioh"]
+[sub_resource type="Resource" id="Resource_qb4b3"]
 script = ExtResource("61_8j3kd")
 scene = ExtResource("13_n067m")
 weight = 2.4
 variants = Array[PackedScene]([ExtResource("70_dnro2"), ExtResource("71_8k0me"), ExtResource("72_o65t2"), ExtResource("73_ndny5"), ExtResource("74_pd87x"), ExtResource("75_aon3e"), ExtResource("76_evxat"), ExtResource("77_qb4b3")])
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_acnrr"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_qnuq6"]
 size = Vector3(26, 3, 26)
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_fpdad"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_oi7mw"]
 render_priority = 0
 shader = ExtResource("77_jk5no")
 shader_parameter/absorb = null
@@ -85,16 +94,16 @@ shader_parameter/window_tint = null
 shader_parameter/mirror_color = null
 shader_parameter/debug_thickness = null
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_3pg6e"]
-material = SubResource("ShaderMaterial_fpdad")
+[sub_resource type="PlaneMesh" id="PlaneMesh_itjeq"]
+material = SubResource("ShaderMaterial_oi7mw")
 size = Vector2(26, 26)
 subdivide_width = 25
 subdivide_depth = 25
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_pws38"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_oueuu"]
 size = Vector3(52, 3, 52)
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_2k3nw"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ilk1k"]
 render_priority = 0
 shader = ExtResource("77_jk5no")
 shader_parameter/absorb = null
@@ -112,8 +121,8 @@ shader_parameter/window_tint = null
 shader_parameter/mirror_color = null
 shader_parameter/debug_thickness = null
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_0qb74"]
-material = SubResource("ShaderMaterial_2k3nw")
+[sub_resource type="PlaneMesh" id="PlaneMesh_f3moc"]
+material = SubResource("ShaderMaterial_ilk1k")
 size = Vector2(52, 52)
 subdivide_width = 51
 subdivide_depth = 51
@@ -123,7 +132,7 @@ subdivide_depth = 51
 [node name="Points" type="Node3D" parent="."]
 
 [node name="LoneOak1" type="StaticBody3D" parent="Points" instance=ExtResource("1_1n5bp")]
-transform = Transform3D(-0.518027, 0, -0.85536426, 0, 1, 0, 0.85536426, 0, -0.518027, -44.1, 25.483313, 73)
+transform = Transform3D(-0.518027, 0, -0.85536426, 0, 1, 0, 0.85536426, 0, -0.518027, -44.1, 25.513552, 73)
 save_id = &"country_lone_oak_1"
 
 [node name="BankPlant1" type="StaticBody3D" parent="Points"]
@@ -305,7 +314,7 @@ transform = Transform3D(-0.9874138, 0, -0.15815811, 0, 1, 0, 0.15815811, 0, -0.9
 save_id = &"birch_3"
 
 [node name="Birch4" type="StaticBody3D" parent="Points" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(0.28401518, 0, -0.9588198, 0, 1, 0, 0.9588198, 0, 0.28401518, 6, -0.14999868, 58)
+transform = Transform3D(0.28401518, 0, -0.9588198, 0, 1, 0, 0.9588198, 0, 0.28401518, 6, -0.14999862, 58)
 save_id = &"birch_4"
 
 [node name="Birch5" type="StaticBody3D" parent="Points" instance=ExtResource("12_a6dxe")]
@@ -313,23 +322,23 @@ transform = Transform3D(0.45399052, 0, 0.8910065, 0, 1, 0, -0.8910065, 0, 0.4539
 save_id = &"birch_5"
 
 [node name="Pine1" type="StaticBody3D" parent="Points" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.95527834, 0, 0.29570803, 0, 1, 0, -0.29570803, 0, 0.95527834, 36, -0.09249602, 20)
+transform = Transform3D(0.95527834, 0, 0.29570803, 0, 1, 0, -0.29570803, 0, 0.95527834, 36, -0.08782904, 20)
 save_id = &"pine_1"
 
 [node name="Pine2" type="StaticBody3D" parent="Points" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.1287956, 0, 0.99167114, 0, 1, 0, -0.99167114, 0, -0.1287956, 51, -0.055695392, 15)
+transform = Transform3D(-0.1287956, 0, 0.99167114, 0, 1, 0, -0.99167114, 0, -0.1287956, 51, -0.0471723, 15)
 save_id = &"pine_2"
 
 [node name="Pine3" type="StaticBody3D" parent="Points" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.9711343, 0, 0.23853339, 0, 1, 0, -0.23853339, 0, -0.9711343, 64, -0.13251385, 22)
+transform = Transform3D(-0.9711343, 0, 0.23853339, 0, 1, 0, -0.23853339, 0, -0.9711343, 64, -0.13141838, 22)
 save_id = &"pine_3"
 
 [node name="Pine4" type="StaticBody3D" parent="Points" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.4909038, 0, -0.8712138, 0, 1, 0, 0.8712138, 0, -0.4909038, 24, 3.2216632, 12)
+transform = Transform3D(-0.4909038, 0, -0.8712138, 0, 1, 0, 0.8712138, 0, -0.4909038, 24, 3.5137608, 12)
 save_id = &"pine_4"
 
 [node name="Pine5" type="StaticBody3D" parent="Points" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.77604634, 0, -0.6306759, 0, 1, 0, 0.6306759, 0, 0.77604634, 42, 1.1595362, 8)
+transform = Transform3D(0.77604634, 0, -0.6306759, 0, 1, 0, 0.6306759, 0, 0.77604634, 42, 1.2763041, 8)
 save_id = &"pine_5"
 
 [node name="CoalRock1" type="StaticBody3D" parent="Points" instance=ExtResource("14_ft0cb")]
@@ -337,15 +346,15 @@ transform = Transform3D(0.6971651, 0, 0.7169106, 0, 1, 0, -0.7169106, 0, 0.69716
 save_id = &"coal_rock_1"
 
 [node name="GoldRock1" type="StaticBody3D" parent="Points" instance=ExtResource("15_dtu00")]
-transform = Transform3D(0.5402403, 0, 0.8415108, 0, 1, 0, -0.8415108, 0, 0.5402403, -68, 39.491688, -22)
+transform = Transform3D(0.5402403, 0, 0.8415108, 0, 1, 0, -0.8415108, 0, 0.5402403, -68, 39.53502, -22)
 save_id = &"gold_rock_1"
 
 [node name="GoldRock2" type="StaticBody3D" parent="Points" instance=ExtResource("15_dtu00")]
-transform = Transform3D(-0.9366722, 0, -0.35020736, 0, 1, 0, 0.35020736, 0, -0.9366722, -76, 34.702625, -10)
+transform = Transform3D(-0.9366722, 0, -0.35020736, 0, 1, 0, 0.35020736, 0, -0.9366722, -76, 34.769253, -10)
 save_id = &"gold_rock_2"
 
 [node name="GoldRock3" type="StaticBody3D" parent="Points" instance=ExtResource("15_dtu00")]
-transform = Transform3D(0.55484426, 0, -0.83195424, 0, 1, 0, 0.83195424, 0, 0.55484426, -62, 46.77614, -34)
+transform = Transform3D(0.55484426, 0, -0.83195424, 0, 1, 0, 0.83195424, 0, 0.55484426, -62, 46.85732, -34)
 save_id = &"gold_rock_3"
 
 [node name="LakeSignpost" type="StaticBody3D" parent="Points"]
@@ -358,6 +367,247 @@ snap_to_ground = true
 transform = Transform3D(0.69666445, 0, -0.71739715, 0, 1, 0, 0.71739715, 0, 0.69666445, 102, 0, 107)
 script = ExtResource("2_ll70m")
 model = ExtResource("56_t2o6s")
+snap_to_ground = true
+
+[node name="PlotSmithy0" type="StaticBody3D" parent="Points"]
+transform = Transform3D(0.7890841, 0, -0.6142852, 0, 1, 0, 0.6142852, 0, 0.7890841, 69.3, 0, 106.4)
+script = ExtResource("2_ll70m")
+model = ExtResource("57_78tkf")
+snap_to_ground = true
+
+[node name="PlotSmithy1" type="StaticBody3D" parent="Points"]
+transform = Transform3D(-0.9542403, 0, -0.29904076, 0, 1, 0, 0.29904076, 0, -0.9542403, 72.6, 0, 106)
+script = ExtResource("2_ll70m")
+model = ExtResource("57_78tkf")
+snap_to_ground = true
+
+[node name="PlotHome0" type="StaticBody3D" parent="Points"]
+transform = Transform3D(0.8677655, 0, 0.49697396, 0, 1, 0, -0.49697396, 0, 0.8677655, 116.3, 0, 79.5)
+script = ExtResource("2_ll70m")
+model = ExtResource("58_dnro2")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="PlotHome1" type="StaticBody3D" parent="Points"]
+transform = Transform3D(-0.8433914, 0, 0.53729963, 0, 1, 0, -0.53729963, 0, -0.8433914, 120.7, 0, 79.5)
+script = ExtResource("2_ll70m")
+model = ExtResource("58_dnro2")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="PlotHome2" type="StaticBody3D" parent="Points"]
+transform = Transform3D(-0.21984623, 0, -0.97553456, 0, 1, 0, 0.97553456, 0, -0.21984623, 114.5, 0, 87.5)
+script = ExtResource("2_ll70m")
+model = ExtResource("59_8k0me")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="PlotTownHall0" type="StaticBody3D" parent="Points"]
+transform = Transform3D(0.87035567, 0, -0.49242356, 0, 1, 0, 0.49242356, 0, 0.87035567, 133.9, 0, 77.5)
+script = ExtResource("2_ll70m")
+model = ExtResource("58_dnro2")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="PlotTownHall1" type="StaticBody3D" parent="Points"]
+transform = Transform3D(-0.059306417, 0, -0.9982398, 0, 1, 0, 0.9982398, 0, -0.059306417, 139.3, 0, 79.6)
+script = ExtResource("2_ll70m")
+model = ExtResource("59_8k0me")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="PlotTavern0" type="StaticBody3D" parent="Points"]
+transform = Transform3D(-0.46484214, 0, 0.88539356, 0, 1, 0, -0.88539356, 0, -0.46484214, 150.1, 0, 81.5)
+script = ExtResource("2_ll70m")
+model = ExtResource("59_8k0me")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="PlotTavern1" type="StaticBody3D" parent="Points"]
+transform = Transform3D(-0.71202606, 0, -0.702153, 0, 1, 0, 0.702153, 0, -0.71202606, 156.2, 0, 83.6)
+script = ExtResource("2_ll70m")
+model = ExtResource("60_o65t2")
+snap_to_ground = true
+
+[node name="PlotEmptyCottage30" type="StaticBody3D" parent="Points"]
+transform = Transform3D(0.6959128, 0, 0.7181263, 0, 1, 0, -0.7181263, 0, 0.6959128, 165.4, 0, 97.7)
+script = ExtResource("2_ll70m")
+model = ExtResource("61_ndny5")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="PlotEmptyCottage31" type="StaticBody3D" parent="Points"]
+transform = Transform3D(-0.9466493, 0, 0.32226563, 0, 1, 0, -0.32226563, 0, -0.9466493, 169.3, 0, 99.8)
+script = ExtResource("2_ll70m")
+model = ExtResource("62_pd87x")
+collide = false
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(0.6, 0.6, 0.6)
+
+[node name="PlotStorehouse0" type="StaticBody3D" parent="Points"]
+transform = Transform3D(-0.9890159, 0, 0.14780943, 0, 1, 0, -0.14780943, 0, -0.9890159, 177.1, 0, 94.3)
+script = ExtResource("2_ll70m")
+model = ExtResource("59_8k0me")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="PlotStorehouse1" type="StaticBody3D" parent="Points"]
+transform = Transform3D(-0.95731944, 0, -0.2890319, 0, 1, 0, 0.2890319, 0, -0.95731944, 181.6, 0, 96.5)
+script = ExtResource("2_ll70m")
+model = ExtResource("60_o65t2")
+snap_to_ground = true
+
+[node name="PlotEmptyCottage40" type="StaticBody3D" parent="Points"]
+transform = Transform3D(0.8737722, 0, -0.4863354, 0, 1, 0, 0.4863354, 0, 0.8737722, 189.4, 0, 98.7)
+script = ExtResource("2_ll70m")
+model = ExtResource("61_ndny5")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="PlotEmptyCottage41" type="StaticBody3D" parent="Points"]
+transform = Transform3D(0.9677092, 0, 0.25206935, 0, 1, 0, -0.25206935, 0, 0.9677092, 193.3, 0, 100.8)
+script = ExtResource("2_ll70m")
+model = ExtResource("59_8k0me")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="PlotEmptyCottage20" type="StaticBody3D" parent="Points"]
+transform = Transform3D(-0.40354532, 0, 0.91495967, 0, 1, 0, -0.91495967, 0, -0.40354532, 200.4, 0, 98.2)
+script = ExtResource("2_ll70m")
+model = ExtResource("63_aon3e")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="PlotEmptyCottage21" type="StaticBody3D" parent="Points"]
+transform = Transform3D(-0.42103577, 0, -0.90704405, 0, 1, 0, 0.90704405, 0, -0.42103577, 204.3, 0, 100.4)
+script = ExtResource("2_ll70m")
+model = ExtResource("62_pd87x")
+collide = false
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(0.6, 0.6, 0.6)
+
+[node name="PlotFisher0" type="StaticBody3D" parent="Points"]
+transform = Transform3D(-0.81814975, 0, -0.5750052, 0, 1, 0, 0.5750052, 0, -0.81814975, 65.4, 0, 163.7)
+script = ExtResource("2_ll70m")
+model = ExtResource("60_o65t2")
+snap_to_ground = true
+
+[node name="PlotFisher1" type="StaticBody3D" parent="Points"]
+transform = Transform3D(0.23514207, 0, 0.971961, 0, 1, 0, -0.971961, 0, 0.23514207, 70.6, 0, 164.4)
+script = ExtResource("2_ll70m")
+model = ExtResource("60_o65t2")
+snap_to_ground = true
+
+[node name="PlotProspector0" type="StaticBody3D" parent="Points"]
+transform = Transform3D(-0.27395922, 0, -0.9617413, 0, 1, 0, 0.9617413, 0, -0.27395922, 77.6, 0, 161.9)
+script = ExtResource("2_ll70m")
+model = ExtResource("60_o65t2")
+snap_to_ground = true
+
+[node name="PlotProspector1" type="StaticBody3D" parent="Points"]
+transform = Transform3D(0.42419943, 0, 0.9055688, 0, 1, 0, -0.9055688, 0, 0.42419943, 84, 0, 162.7)
+script = ExtResource("2_ll70m")
+model = ExtResource("64_evxat")
+snap_to_ground = true
+
+[node name="PlotOreStore0" type="StaticBody3D" parent="Points"]
+transform = Transform3D(0.9766723, 0, -0.21473533, 0, 1, 0, 0.21473533, 0, 0.9766723, 100.9, 0, 151.8)
+script = ExtResource("2_ll70m")
+model = ExtResource("57_78tkf")
+snap_to_ground = true
+
+[node name="PlotOreStore1" type="StaticBody3D" parent="Points"]
+transform = Transform3D(-0.8862036, 0, 0.463296, 0, 1, 0, -0.463296, 0, -0.8862036, 105.2, 0, 152.5)
+script = ExtResource("2_ll70m")
+model = ExtResource("60_o65t2")
+snap_to_ground = true
+
+[node name="PlotEmptyCottage50" type="StaticBody3D" parent="Points"]
+transform = Transform3D(-0.010471792, 0, -0.99994516, 0, 1, 0, 0.99994516, 0, -0.010471792, 116.4, 0, 159.6)
+script = ExtResource("2_ll70m")
+model = ExtResource("63_aon3e")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="PlotEmptyCottage51" type="StaticBody3D" parent="Points"]
+transform = Transform3D(-0.42735785, 0, -0.90408254, 0, 1, 0, 0.90408254, 0, -0.42735785, 120.3, 0, 157.5)
+script = ExtResource("2_ll70m")
+model = ExtResource("59_8k0me")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="PlotBaker0" type="StaticBody3D" parent="Points"]
+transform = Transform3D(0.8925858, 0, 0.45087752, 0, 1, 0, -0.45087752, 0, 0.8925858, 129, 0, 167)
+script = ExtResource("2_ll70m")
+model = ExtResource("61_ndny5")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="PlotBaker1" type="StaticBody3D" parent="Points"]
+transform = Transform3D(0.9874138, 0, 0.15815806, 0, 1, 0, -0.15815806, 0, 0.9874138, 133.5, 0, 164.8)
+script = ExtResource("2_ll70m")
+model = ExtResource("60_o65t2")
+snap_to_ground = true
+
+[node name="PlotChapel0" type="StaticBody3D" parent="Points"]
+transform = Transform3D(0.948876, 0, -0.31564903, 0, 1, 0, 0.31564903, 0, 0.948876, 151.2, 0, 166)
+script = ExtResource("2_ll70m")
+model = ExtResource("63_aon3e")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="PlotChapel1" type="StaticBody3D" parent="Points"]
+transform = Transform3D(0.7749445, 0, 0.6320293, 0, 1, 0, -0.6320293, 0, 0.7749445, 155.1, 0, 163.9)
+script = ExtResource("2_ll70m")
+model = ExtResource("62_pd87x")
+collide = false
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(0.6, 0.6, 0.6)
+
+[node name="PlotEmptyCottage0" type="StaticBody3D" parent="Points"]
+transform = Transform3D(0.9971851, 0, 0.074978724, 0, 1, 0, -0.074978724, 0, 0.9971851, 169.4, 0, 152.8)
+script = ExtResource("2_ll70m")
+model = ExtResource("58_dnro2")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="PlotEmptyCottage1" type="StaticBody3D" parent="Points"]
+transform = Transform3D(-0.5090413, 0, -0.8607421, 0, 1, 0, 0.8607421, 0, -0.5090413, 173.3, 0, 150.6)
+script = ExtResource("2_ll70m")
+model = ExtResource("60_o65t2")
+snap_to_ground = true
+
+[node name="PlotEmptyCottage60" type="StaticBody3D" parent="Points"]
+transform = Transform3D(-0.9135455, 0, 0.40673658, 0, 1, 0, -0.40673658, 0, -0.9135455, 180.4, 0, 153.4)
+script = ExtResource("2_ll70m")
+model = ExtResource("63_aon3e")
+collide = false
+snap_to_ground = true
+own_materials = true
+
+[node name="PlotEmptyCottage61" type="StaticBody3D" parent="Points"]
+transform = Transform3D(0.8813034, 0, -0.47255078, 0, 1, 0, 0.47255078, 0, 0.8813034, 184.3, 0, 151.2)
+script = ExtResource("2_ll70m")
+model = ExtResource("60_o65t2")
 snap_to_ground = true
 
 [node name="Lines" type="Node3D" parent="."]
@@ -422,16 +672,6 @@ script = ExtResource("16_4fdlt")
 model = ExtResource("17_8p7lc")
 points = PackedVector2Array(73, 235, 66.5, 241.6, 65.1, 244, 64.1, 247.5, 64.600006, 255.29999, 64.8, 256.9, 63.3, 261.5)
 
-[node name="Hedge13_1" type="Node3D" parent="Lines"]
-script = ExtResource("16_4fdlt")
-model = ExtResource("17_8p7lc")
-points = PackedVector2Array(198, 172.7, 207.8, 172.5)
-
-[node name="Hedge14_1" type="Node3D" parent="Lines"]
-script = ExtResource("16_4fdlt")
-model = ExtResource("17_8p7lc")
-points = PackedVector2Array(217.4, 173.4, 227.5, 176.9)
-
 [node name="Hedge15_1" type="Node3D" parent="Lines"]
 script = ExtResource("16_4fdlt")
 model = ExtResource("17_8p7lc")
@@ -461,11 +701,6 @@ points = PackedVector2Array(247.9, 126, 263.2, 128.5)
 script = ExtResource("16_4fdlt")
 model = ExtResource("17_8p7lc")
 points = PackedVector2Array(71.6, 198.9, 66.14286, 198.22856, 61, 198.4)
-
-[node name="Hedge21_1" type="Node3D" parent="Lines"]
-script = ExtResource("16_4fdlt")
-model = ExtResource("17_8p7lc")
-points = PackedVector2Array(73.9, 190.4, 65.97, 189.40999, 56.266666, 189.36667, 55.6, 189.3)
 
 [node name="Wall1_1" type="Node3D" parent="Lines"]
 script = ExtResource("16_4fdlt")
@@ -669,154 +904,420 @@ points = PackedVector2Array(226, 113.4, 229.7, 112, 232.4, 109.1, 233.6, 105.4, 
 model_scale = Vector3(1, 0.4, 1)
 spacing = 2.1
 
+[node name="PlotSmithyBack_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("68_qb4b3")
+points = PackedVector2Array(67.5, 104.5, 74.8, 104.5)
+spacing = 5.1
+
+[node name="PlotSmithyW_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("68_qb4b3")
+points = PackedVector2Array(67.5, 112, 67.5, 104.5)
+spacing = 5.1
+
+[node name="PlotSmithyE_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("68_qb4b3")
+points = PackedVector2Array(74.8, 112, 74.8, 104.5)
+spacing = 5.1
+
+[node name="PlotWoodcutterBackW_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("68_qb4b3")
+points = PackedVector2Array(83.5, 95.8, 92.5, 95.8)
+spacing = 5.1
+
+[node name="PlotWoodcutterW_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("68_qb4b3")
+points = PackedVector2Array(83.5, 110.3, 83.5, 95.8)
+spacing = 5.1
+
+[node name="PlotWoodcutterE_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("68_qb4b3")
+points = PackedVector2Array(97.4, 110.3, 97.4, 101.600006)
+spacing = 5.1
+
+[node name="PlotHomeBackW_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("18_e6c8o")
+points = PackedVector2Array(111, 67.6, 118.6, 67.6)
+model_scale = Vector3(1, 0.4, 1)
+spacing = 2.1
+
+[node name="PlotHomeBackE_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("18_e6c8o")
+points = PackedVector2Array(121, 67.6, 128.6, 67.6)
+model_scale = Vector3(1, 0.4, 1)
+spacing = 2.1
+
+[node name="PlotHomeW_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("18_e6c8o")
+points = PackedVector2Array(111, 94.1, 111, 67.6)
+model_scale = Vector3(1, 0.4, 1)
+spacing = 2.1
+
+[node name="PlotTownHallBackW_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(128.5, 73.1, 135.1, 73.1)
+
+[node name="PlotTownHallBackE_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(137.4, 73.1, 144, 73.1)
+
+[node name="PlotTownHallW_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(128.5, 87.6, 128.5, 73.1)
+
+[node name="PlotTavernBackW_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(144, 77.1, 151.5, 77.1)
+
+[node name="PlotTavernBackE_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(153.9, 77.1, 161.4, 77.1)
+
+[node name="PlotTavernW_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(144, 91.6, 144, 77.1)
+
+[node name="PlotEmptyCottage3Back_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(161.5, 93.3, 172.7, 93.3)
+
+[node name="PlotEmptyCottage3W_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(161.5, 107.8, 161.5, 93.3)
+
+[node name="PlotStorehouseBackW_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(172.5, 90, 177.8, 90)
+
+[node name="PlotStorehouseBackE_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(180.2, 90, 185.5, 90)
+
+[node name="PlotStorehouseW_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(172.5, 104.5, 172.5, 90)
+
+[node name="PlotEmptyCottage4Back_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(185.5, 94.3, 196.7, 94.3)
+
+[node name="PlotEmptyCottage4W_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(185.5, 108.8, 185.5, 94.3)
+
+[node name="PlotEmptyCottage2Back_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(196.5, 93.9, 207.7, 93.9)
+
+[node name="PlotEmptyCottage2W_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(196.5, 108.4, 196.5, 93.9)
+
+[node name="PlotEmptyCottage2E_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(207.7, 108.4, 207.7, 93.9)
+
+[node name="PlotFisherBack_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("68_qb4b3")
+points = PackedVector2Array(62.5, 167.3, 74.1, 167.3)
+spacing = 5.1
+
+[node name="PlotFisherW_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("68_qb4b3")
+points = PackedVector2Array(62.5, 152.8, 62.5, 167.3)
+spacing = 5.1
+
+[node name="PlotProspectorBackW_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("68_qb4b3")
+points = PackedVector2Array(74.1, 165.6, 79.9, 165.6)
+spacing = 5.1
+
+[node name="PlotProspectorBackE_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("68_qb4b3")
+points = PackedVector2Array(82.3, 165.6, 88.2, 165.6)
+spacing = 5.1
+
+[node name="PlotProspectorW_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("68_qb4b3")
+points = PackedVector2Array(74.1, 151.1, 74.1, 165.6)
+spacing = 5.1
+
+[node name="PlotProspectorE_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("68_qb4b3")
+points = PackedVector2Array(88.2, 151.1, 88.2, 165.6)
+spacing = 5.1
+
+[node name="PlotOreStoreBack_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("68_qb4b3")
+points = PackedVector2Array(98.5, 155.4, 108.1, 155.4)
+spacing = 5.1
+
+[node name="PlotOreStoreW_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("68_qb4b3")
+points = PackedVector2Array(98.5, 140.9, 98.5, 155.4)
+spacing = 5.1
+
+[node name="PlotOreStoreE_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("68_qb4b3")
+points = PackedVector2Array(108.1, 140.9, 108.1, 155.4)
+spacing = 5.1
+
+[node name="PlotEmptyCottage5Back_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(112.5, 164, 123.7, 164)
+
+[node name="PlotEmptyCottage5W_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(112.5, 149.5, 112.5, 164)
+
+[node name="PlotEmptyCottage5E_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(123.7, 149.5, 123.7, 164)
+
+[node name="PlotBakerBackW_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(124.5, 171.3, 129.7, 171.3)
+
+[node name="PlotBakerBackE_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(132.1, 171.3, 137.3, 171.3)
+
+[node name="PlotBakerW_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(124.5, 156.8, 124.5, 171.3)
+
+[node name="PlotBakerE_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(137.3, 156.8, 137.3, 171.3)
+
+[node name="PlotChapelBack_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(147.3, 170.4, 158.5, 170.4)
+
+[node name="PlotChapelW_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(147.3, 155.9, 147.3, 170.4)
+
+[node name="PlotChapelE_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(158.5, 155.9, 158.5, 170.4)
+
+[node name="PlotEmptyCottageBack_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(165.5, 157.2, 176.7, 157.2)
+
+[node name="PlotEmptyCottageW_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(165.5, 142.7, 165.5, 157.2)
+
+[node name="PlotEmptyCottage6Back_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(176.5, 157.7, 187.7, 157.7)
+
+[node name="PlotEmptyCottage6W_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(176.5, 143.2, 176.5, 157.7)
+
+[node name="PlotEmptyCottage6E_1" type="Node3D" parent="Lines"]
+script = ExtResource("16_4fdlt")
+model = ExtResource("17_8p7lc")
+points = PackedVector2Array(187.7, 143.2, 187.7, 157.7)
+
 [node name="Patches" type="Node3D" parent="."]
 
 [node name="ForestSpot1" type="Node3D" parent="Patches"]
 
 [node name="forest_spot1_000" type="StaticBody3D" parent="Patches/ForestSpot1" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(0.14093995, 0, 0.9900181, 0, 1, 0, -0.9900181, 0, 0.14093995, 44.578438, 28.962137, -75.66096)
+transform = Transform3D(0.14093995, 0, 0.9900181, 0, 1, 0, -0.9900181, 0, 0.14093995, 44.578438, 29.05916, -75.66096)
 save_id = &"forest_spot1_000"
 
 [node name="forest_spot1_001" type="StaticBody3D" parent="Patches/ForestSpot1" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.09471448, 0, 0.9955045, 0, 1, 0, -0.9955045, 0, -0.09471448, 76.40767, 7.6323824, -50.82309)
+transform = Transform3D(-0.09471448, 0, 0.9955045, 0, 1, 0, -0.9955045, 0, -0.09471448, 76.40767, 7.6577086, -50.82309)
 save_id = &"forest_spot1_001"
 
 [node name="forest_spot1_002" type="StaticBody3D" parent="Patches/ForestSpot1" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.8790529, 0, 0.4767243, 0, 1, 0, -0.4767243, 0, 0.8790529, 39.904175, 25.058266, -55.13041)
+transform = Transform3D(0.8790529, 0, 0.4767243, 0, 1, 0, -0.4767243, 0, 0.8790529, 39.904175, 25.306656, -55.13041)
 save_id = &"forest_spot1_002"
 
 [node name="forest_spot1_003" type="StaticBody3D" parent="Patches/ForestSpot1" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.54056364, 0, -0.8413031, 0, 1, 0, 0.8413031, 0, 0.54056364, 52.895195, 22.72863, -70.61206)
+transform = Transform3D(0.54056364, 0, -0.8413031, 0, 1, 0, 0.8413031, 0, 0.54056364, 52.895195, 22.824333, -70.61206)
 save_id = &"forest_spot1_003"
 
 [node name="forest_spot1_004" type="StaticBody3D" parent="Patches/ForestSpot1" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.7129695, 0, -0.70119506, 0, 1, 0, 0.70119506, 0, 0.7129695, 54.823483, 26.240973, -80.44697)
+transform = Transform3D(0.7129695, 0, -0.70119506, 0, 1, 0, 0.70119506, 0, 0.7129695, 54.823483, 26.328238, -80.44697)
 save_id = &"forest_spot1_004"
 
 [node name="forest_spot1_005" type="StaticBody3D" parent="Patches/ForestSpot1" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.9999396, 0, -0.010990486, 0, 1, 0, 0.010990486, 0, -0.9999396, 40.21912, 25.677437, -61.99688)
+transform = Transform3D(-0.9999396, 0, -0.010990486, 0, 1, 0, 0.010990486, 0, -0.9999396, 40.21912, 25.863058, -61.99688)
 save_id = &"forest_spot1_005"
 
 [node name="forest_spot1_006" type="StaticBody3D" parent="Patches/ForestSpot1" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.9117751, 0, -0.4106898, 0, 1, 0, 0.4106898, 0, -0.9117751, 52.756336, 19.151386, -57.828957)
+transform = Transform3D(-0.9117751, 0, -0.4106898, 0, 1, 0, 0.4106898, 0, -0.9117751, 52.756336, 19.328423, -57.828957)
 save_id = &"forest_spot1_006"
 
 [node name="forest_spot1_007" type="StaticBody3D" parent="Patches/ForestSpot1" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.732169, 0, 0.681123, 0, 1, 0, -0.681123, 0, -0.732169, 78.34552, 17.438038, -73.03929)
+transform = Transform3D(-0.732169, 0, 0.681123, 0, 1, 0, -0.681123, 0, -0.732169, 78.34552, 17.399305, -73.03929)
 save_id = &"forest_spot1_007"
 
 [node name="forest_spot1_008" type="StaticBody3D" parent="Patches/ForestSpot1" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.094991304, 0, -0.9954781, 0, 1, 0, 0.9954781, 0, 0.094991304, 68.60158, 12.30433, -53.269455)
+transform = Transform3D(0.094991304, 0, -0.9954781, 0, 1, 0, 0.9954781, 0, 0.094991304, 68.60158, 12.348232, -53.269455)
 save_id = &"forest_spot1_008"
 
 [node name="forest_spot1_009" type="StaticBody3D" parent="Patches/ForestSpot1" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.3563009, 0, -0.9343713, 0, 1, 0, 0.9343713, 0, -0.3563009, 63.892857, 17.569809, -67.64213)
+transform = Transform3D(-0.3563009, 0, -0.9343713, 0, 1, 0, 0.9343713, 0, -0.3563009, 63.892857, 17.635195, -67.64213)
 save_id = &"forest_spot1_009"
 
 [node name="forest_spot1_010" type="StaticBody3D" parent="Patches/ForestSpot1" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.9990225, 0, 0.044204284, 0, 1, 0, -0.044204284, 0, -0.9990225, 79.04916, 11.525363, -61.528458)
+transform = Transform3D(-0.9990225, 0, 0.044204284, 0, 1, 0, -0.044204284, 0, -0.9990225, 79.04916, 11.510855, -61.528458)
 save_id = &"forest_spot1_010"
 
 [node name="forest_spot1_011" type="StaticBody3D" parent="Patches/ForestSpot1" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.16815154, 0, 0.98576117, 0, 1, 0, -0.98576117, 0, 0.16815154, 67.20499, 18.752874, -71.54863)
+transform = Transform3D(0.16815154, 0, 0.98576117, 0, 1, 0, -0.98576117, 0, 0.16815154, 67.20499, 18.825941, -71.54863)
 save_id = &"forest_spot1_011"
 
 [node name="forest_spot1_012" type="StaticBody3D" parent="Patches/ForestSpot1" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.1342735, 0, -0.9909443, 0, 1, 0, 0.9909443, 0, 0.1342735, 54.822357, 17.672018, -53.087242)
+transform = Transform3D(0.1342735, 0, -0.9909443, 0, 1, 0, 0.9909443, 0, 0.1342735, 54.822357, 17.91923, -53.087242)
 save_id = &"forest_spot1_012"
 
 [node name="forest_spot1_013" type="StaticBody3D" parent="Patches/ForestSpot1" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.17477363, 0, -0.98460865, 0, 1, 0, 0.98460865, 0, -0.17477363, 63.91101, 23.223604, -84.393845)
+transform = Transform3D(-0.17477363, 0, -0.98460865, 0, 1, 0, 0.98460865, 0, -0.17477363, 63.91101, 23.300447, -84.393845)
 save_id = &"forest_spot1_013"
 
 [node name="forest_spot1_014" type="StaticBody3D" parent="Patches/ForestSpot1" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.93957686, 0, -0.34233806, 0, 1, 0, 0.34233806, 0, -0.93957686, 65.34422, 21.394012, -79.60329)
+transform = Transform3D(-0.93957686, 0, -0.34233806, 0, 1, 0, 0.34233806, 0, -0.93957686, 65.34422, 21.476362, -79.60329)
 save_id = &"forest_spot1_014"
 
 [node name="forest_spot1_015" type="StaticBody3D" parent="Patches/ForestSpot1" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.66126394, 0, 0.7501533, 0, 1, 0, -0.7501533, 0, 0.66126394, 71.87402, 6.278281, -43.401558)
+transform = Transform3D(0.66126394, 0, 0.7501533, 0, 1, 0, -0.7501533, 0, 0.66126394, 71.87402, 6.3390512, -43.401558)
 save_id = &"forest_spot1_015"
 
 [node name="forest_spot1_016" type="StaticBody3D" parent="Patches/ForestSpot1" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.9843041, 0, -0.1764808, 0, 1, 0, 0.1764808, 0, -0.9843041, 68.01796, 9.545125, -46.704304)
+transform = Transform3D(-0.9843041, 0, -0.1764808, 0, 1, 0, 0.1764808, 0, -0.9843041, 68.01796, 9.61594, -46.704304)
 save_id = &"forest_spot1_016"
 
 [node name="forest_spot1_017" type="StaticBody3D" parent="Patches/ForestSpot1" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.9988285, 0, -0.048391357, 0, 1, 0, 0.048391357, 0, -0.9988285, 61.19897, 14.945221, -51.72831)
+transform = Transform3D(-0.9988285, 0, -0.048391357, 0, 1, 0, 0.048391357, 0, -0.9988285, 61.19897, 15.024079, -51.72831)
 save_id = &"forest_spot1_017"
 
 [node name="ForestSpot2" type="Node3D" parent="Patches"]
 
 [node name="forest_spot2_000" type="StaticBody3D" parent="Patches/ForestSpot2" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(0.9458149, 0, -0.3247063, 0, 1, 0, 0.3247063, 0, 0.9458149, 142.65701, 28.428305, -92.670044)
+transform = Transform3D(0.9458149, 0, -0.3247063, 0, 1, 0, 0.3247063, 0, 0.9458149, 142.65701, 28.352854, -92.670044)
 save_id = &"forest_spot2_000"
 
 [node name="forest_spot2_001" type="StaticBody3D" parent="Patches/ForestSpot2" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.98974466, 0, 0.14284803, 0, 1, 0, -0.14284803, 0, -0.98974466, 124.84387, 27.939535, -108.399315)
+transform = Transform3D(-0.98974466, 0, 0.14284803, 0, 1, 0, -0.14284803, 0, -0.98974466, 124.84387, 28.067427, -108.399315)
 save_id = &"forest_spot2_001"
 
 [node name="forest_spot2_002" type="StaticBody3D" parent="Patches/ForestSpot2" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.1161745, 0, -0.9932288, 0, 1, 0, 0.9932288, 0, -0.1161745, 146.95035, 28.323694, -85.09514)
+transform = Transform3D(-0.1161745, 0, -0.9932288, 0, 1, 0, 0.9932288, 0, -0.1161745, 146.95035, 27.08837, -85.09514)
 save_id = &"forest_spot2_002"
 
 [node name="forest_spot2_003" type="StaticBody3D" parent="Patches/ForestSpot2" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.6974084, 0, 0.716674, 0, 1, 0, -0.716674, 0, 0.6974084, 129.0458, 24.182709, -77.82926)
+transform = Transform3D(0.6974084, 0, 0.716674, 0, 1, 0, -0.716674, 0, 0.6974084, 129.0458, 23.264072, -77.82926)
 save_id = &"forest_spot2_003"
 
 [node name="forest_spot2_004" type="StaticBody3D" parent="Patches/ForestSpot2" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.5024121, 0, -0.8646283, 0, 1, 0, 0.8646283, 0, -0.5024121, 126.7684, 29.274385, -94.831184)
+transform = Transform3D(-0.5024121, 0, -0.8646283, 0, 1, 0, 0.8646283, 0, -0.5024121, 126.7684, 28.358053, -94.831184)
 save_id = &"forest_spot2_004"
 
 [node name="forest_spot2_005" type="StaticBody3D" parent="Patches/ForestSpot2" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.28983706, 0, 0.957076, 0, 1, 0, -0.957076, 0, -0.28983706, 114.24588, 24.336983, -86.64751)
+transform = Transform3D(-0.28983706, 0, 0.957076, 0, 1, 0, -0.957076, 0, -0.28983706, 114.24588, 23.601461, -86.64751)
 save_id = &"forest_spot2_005"
 
 [node name="forest_spot2_006" type="StaticBody3D" parent="Patches/ForestSpot2" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.8593006, 0, 0.5114709, 0, 1, 0, -0.5114709, 0, -0.8593006, 132.9276, 21.641901, -71.836136)
+transform = Transform3D(-0.8593006, 0, 0.5114709, 0, 1, 0, -0.5114709, 0, -0.8593006, 132.9276, 20.66078, -71.836136)
 save_id = &"forest_spot2_006"
 
 [node name="forest_spot2_007" type="StaticBody3D" parent="Patches/ForestSpot2" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.51094204, 0, 0.85961515, 0, 1, 0, -0.85961515, 0, -0.51094204, 131.8271, 25.908434, -107.85992)
+transform = Transform3D(-0.51094204, 0, 0.85961515, 0, 1, 0, -0.85961515, 0, -0.51094204, 131.8271, 26.662785, -107.85992)
 save_id = &"forest_spot2_007"
 
 [node name="forest_spot2_008" type="StaticBody3D" parent="Patches/ForestSpot2" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(0.9648293, 0, -0.26287708, 0, 1, 0, 0.26287708, 0, 0.9648293, 136.07925, 26.262466, -80.92283)
+transform = Transform3D(0.9648293, 0, -0.26287708, 0, 1, 0, 0.26287708, 0, 0.9648293, 136.07925, 25.234932, -80.92283)
 save_id = &"forest_spot2_008"
 
 [node name="forest_spot2_009" type="StaticBody3D" parent="Patches/ForestSpot2" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.7604728, 0, -0.64936984, 0, 1, 0, 0.64936984, 0, -0.7604728, 119.28669, 22.77243, -79.92442)
+transform = Transform3D(-0.7604728, 0, -0.64936984, 0, 1, 0, 0.64936984, 0, -0.7604728, 119.28669, 22.009277, -79.92442)
 save_id = &"forest_spot2_009"
 
 [node name="forest_spot2_010" type="StaticBody3D" parent="Patches/ForestSpot2" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.96180415, 0, -0.2737384, 0, 1, 0, 0.2737384, 0, 0.96180415, 145.2886, 22.363571, -104.61071)
+transform = Transform3D(0.96180415, 0, -0.2737384, 0, 1, 0, 0.2737384, 0, 0.96180415, 145.2886, 23.63344, -104.61071)
 save_id = &"forest_spot2_010"
 
 [node name="forest_spot2_011" type="StaticBody3D" parent="Patches/ForestSpot2" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.23004074, 0, -0.973181, 0, 1, 0, 0.973181, 0, -0.23004074, 126.86119, 26.987139, -84.14641)
+transform = Transform3D(-0.23004074, 0, -0.973181, 0, 1, 0, 0.973181, 0, -0.23004074, 126.86119, 26.097769, -84.14641)
 save_id = &"forest_spot2_011"
 
 [node name="forest_spot2_012" type="StaticBody3D" parent="Patches/ForestSpot2" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.8482613, 0, -0.5295779, 0, 1, 0, 0.5295779, 0, 0.8482613, 135.95813, 29.25561, -94.35902)
+transform = Transform3D(0.8482613, 0, -0.5295779, 0, 1, 0, 0.5295779, 0, 0.8482613, 135.95813, 28.358053, -94.35902)
 save_id = &"forest_spot2_012"
 
 [node name="forest_spot2_013" type="StaticBody3D" parent="Patches/ForestSpot2" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.20384485, 0, -0.9790032, 0, 1, 0, 0.9790032, 0, -0.20384485, 148.76021, 27.347378, -92.98399)
+transform = Transform3D(-0.20384485, 0, -0.9790032, 0, 1, 0, 0.9790032, 0, -0.20384485, 148.76021, 29.367863, -92.98399)
 save_id = &"forest_spot2_013"
 
 [node name="forest_spot2_014" type="StaticBody3D" parent="Patches/ForestSpot2" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.2500642, 0, -0.96822923, 0, 1, 0, 0.96822923, 0, -0.2500642, 108.91548, 22.85594, -87.17483)
+transform = Transform3D(-0.2500642, 0, -0.96822923, 0, 1, 0, 0.96822923, 0, -0.2500642, 108.91548, 22.318865, -87.17483)
 save_id = &"forest_spot2_014"
 
 [node name="forest_spot2_015" type="StaticBody3D" parent="Patches/ForestSpot2" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.74488026, 0, 0.6671982, 0, 1, 0, -0.6671982, 0, -0.74488026, 138.2409, 28.324959, -85.54208)
+transform = Transform3D(-0.74488026, 0, 0.6671982, 0, 1, 0, -0.6671982, 0, -0.74488026, 138.2409, 27.266872, -85.54208)
 save_id = &"forest_spot2_015"
 
 [node name="forest_spot2_016" type="StaticBody3D" parent="Patches/ForestSpot2" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.30260625, 0, 0.95311564, 0, 1, 0, -0.95311564, 0, 0.30260625, 138.65091, 23.83993, -106.119125)
+transform = Transform3D(0.30260625, 0, 0.95311564, 0, 1, 0, -0.95311564, 0, 0.30260625, 138.65091, 24.193815, -106.119125)
 save_id = &"forest_spot2_016"
 
 [node name="forest_spot2_017" type="StaticBody3D" parent="Patches/ForestSpot2" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.29224408, 0, 0.95634377, 0, 1, 0, -0.95634377, 0, 0.29224408, 142.25745, 24.318398, -77.61542)
+transform = Transform3D(0.29224408, 0, 0.95634377, 0, 1, 0, -0.95634377, 0, 0.29224408, 142.25745, 23.165937, -77.61542)
 save_id = &"forest_spot2_017"
 
 [node name="ForestSpot3" type="Node3D" parent="Patches"]
@@ -830,19 +1331,19 @@ transform = Transform3D(-0.6823497, 0, -0.73102593, 0, 1, 0, 0.73102593, 0, -0.6
 save_id = &"forest_spot3_001"
 
 [node name="forest_spot3_002" type="StaticBody3D" parent="Patches/ForestSpot3" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.27447918, 0, -0.96159303, 0, 1, 0, 0.96159303, 0, 0.27447918, 81.03013, 29.799597, -118.75051)
+transform = Transform3D(0.27447918, 0, -0.96159303, 0, 1, 0, 0.96159303, 0, 0.27447918, 81.03013, 29.899593, -118.75051)
 save_id = &"forest_spot3_002"
 
 [node name="forest_spot3_003" type="StaticBody3D" parent="Patches/ForestSpot3" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.9874375, 0, -0.15801027, 0, 1, 0, 0.15801027, 0, -0.9874375, 62.910732, 29.42761, -124.933495)
+transform = Transform3D(-0.9874375, 0, -0.15801027, 0, 1, 0, 0.15801027, 0, -0.9874375, 62.910732, 29.550209, -124.933495)
 save_id = &"forest_spot3_003"
 
 [node name="forest_spot3_004" type="StaticBody3D" parent="Patches/ForestSpot3" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.9971314, 0, 0.07568949, 0, 1, 0, -0.07568949, 0, -0.9971314, 67.279335, 31.113071, -137.48888)
+transform = Transform3D(-0.9971314, 0, 0.07568949, 0, 1, 0, -0.07568949, 0, -0.9971314, 67.279335, 31.131166, -137.48888)
 save_id = &"forest_spot3_004"
 
 [node name="forest_spot3_005" type="StaticBody3D" parent="Patches/ForestSpot3" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.9972692, 0, 0.07385215, 0, 1, 0, -0.07385215, 0, -0.9972692, 78.8734, 28.970507, -126.4221)
+transform = Transform3D(-0.9972692, 0, 0.07385215, 0, 1, 0, -0.07385215, 0, -0.9972692, 78.8734, 28.930424, -126.4221)
 save_id = &"forest_spot3_005"
 
 [node name="forest_spot3_006" type="StaticBody3D" parent="Patches/ForestSpot3" instance=ExtResource("13_n067m")]
@@ -850,7 +1351,7 @@ transform = Transform3D(0.0015008007, 0, 0.99999887, 0, 1, 0, -0.99999887, 0, 0.
 save_id = &"forest_spot3_006"
 
 [node name="forest_spot3_007" type="StaticBody3D" parent="Patches/ForestSpot3" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(0.537993, 0, 0.8429493, 0, 1, 0, -0.8429493, 0, 0.537993, 75.05789, 27.469109, -114.3905)
+transform = Transform3D(0.537993, 0, 0.8429493, 0, 1, 0, -0.8429493, 0, 0.537993, 75.05789, 27.537998, -114.3905)
 save_id = &"forest_spot3_007"
 
 [node name="forest_spot3_008" type="StaticBody3D" parent="Patches/ForestSpot3" instance=ExtResource("12_a6dxe")]
@@ -862,19 +1363,19 @@ transform = Transform3D(-0.80986506, 0, -0.5866162, 0, 1, 0, 0.5866162, 0, -0.80
 save_id = &"forest_spot3_009"
 
 [node name="forest_spot3_010" type="StaticBody3D" parent="Patches/ForestSpot3" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.83285916, 0, 0.5534849, 0, 1, 0, -0.5534849, 0, -0.83285916, 91.047386, 32.290703, -120.764336)
+transform = Transform3D(-0.83285916, 0, 0.5534849, 0, 1, 0, -0.5534849, 0, -0.83285916, 91.047386, 32.29027, -120.764336)
 save_id = &"forest_spot3_010"
 
 [node name="forest_spot3_011" type="StaticBody3D" parent="Patches/ForestSpot3" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.6352632, 0, -0.7722957, 0, 1, 0, 0.7722957, 0, 0.6352632, 67.04962, 29.095245, -130.117)
+transform = Transform3D(0.6352632, 0, -0.7722957, 0, 1, 0, 0.7722957, 0, 0.6352632, 67.04962, 29.328445, -130.117)
 save_id = &"forest_spot3_011"
 
 [node name="forest_spot3_012" type="StaticBody3D" parent="Patches/ForestSpot3" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.8640764, 0, -0.50336075, 0, 1, 0, 0.50336075, 0, -0.8640764, 87.41344, 30.156517, -135.07997)
+transform = Transform3D(-0.8640764, 0, -0.50336075, 0, 1, 0, 0.50336075, 0, -0.8640764, 87.41344, 30.498774, -135.07997)
 save_id = &"forest_spot3_012"
 
 [node name="forest_spot3_013" type="StaticBody3D" parent="Patches/ForestSpot3" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.73399055, 0, -0.67915964, 0, 1, 0, 0.67915964, 0, 0.73399055, 73.85925, 29.871202, -137.66177)
+transform = Transform3D(0.73399055, 0, -0.67915964, 0, 1, 0, 0.67915964, 0, 0.73399055, 73.85925, 29.965235, -137.66177)
 save_id = &"forest_spot3_013"
 
 [node name="forest_spot3_014" type="StaticBody3D" parent="Patches/ForestSpot3" instance=ExtResource("12_a6dxe")]
@@ -890,101 +1391,101 @@ transform = Transform3D(-0.3881107, 0, 0.92161274, 0, 1, 0, -0.92161274, 0, -0.3
 save_id = &"forest_spot3_016"
 
 [node name="forest_spot3_017" type="StaticBody3D" parent="Patches/ForestSpot3" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.85075504, 0, -0.5255624, 0, 1, 0, 0.5255624, 0, -0.85075504, 74.28081, 27.68884, -132.67068)
+transform = Transform3D(-0.85075504, 0, -0.5255624, 0, 1, 0, 0.5255624, 0, -0.85075504, 74.28081, 27.779028, -132.67068)
 save_id = &"forest_spot3_017"
 
 [node name="ForestSpot4" type="Node3D" parent="Patches"]
 
 [node name="forest_spot4_000" type="StaticBody3D" parent="Patches/ForestSpot4" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(0.7571766, 0, 0.6532102, 0, 1, 0, -0.6532102, 0, 0.7571766, 64.62936, 8.959989, -42.012722)
+transform = Transform3D(0.7571766, 0, 0.6532102, 0, 1, 0, -0.6532102, 0, 0.7571766, 64.62936, 9.075456, -42.012722)
 save_id = &"forest_spot4_000"
 
 [node name="forest_spot4_001" type="StaticBody3D" parent="Patches/ForestSpot4" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.80229694, 0, -0.59692514, 0, 1, 0, 0.59692514, 0, 0.80229694, 70.05766, 3.7966592, -36.04299)
+transform = Transform3D(0.80229694, 0, -0.59692514, 0, 1, 0, 0.59692514, 0, 0.80229694, 70.05766, 3.928915, -36.04299)
 save_id = &"forest_spot4_001"
 
 [node name="forest_spot4_002" type="StaticBody3D" parent="Patches/ForestSpot4" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.9683831, 0, -0.24946797, 0, 1, 0, 0.24946797, 0, 0.9683831, 60.807247, 12.310351, -45.56716)
+transform = Transform3D(0.9683831, 0, -0.24946797, 0, 1, 0, 0.24946797, 0, 0.9683831, 60.807247, 12.444465, -45.56716)
 save_id = &"forest_spot4_002"
 
 [node name="forest_spot4_003" type="StaticBody3D" parent="Patches/ForestSpot4" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.9881938, 0, -0.15320882, 0, 1, 0, 0.15320882, 0, 0.9881938, 79.72081, 4.0221725, -46.244083)
+transform = Transform3D(0.9881938, 0, -0.15320882, 0, 1, 0, 0.15320882, 0, 0.9881938, 79.72081, 4.050431, -46.244083)
 save_id = &"forest_spot4_003"
 
 [node name="forest_spot4_004" type="StaticBody3D" parent="Patches/ForestSpot4" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.81505203, 0, 0.5793877, 0, 1, 0, -0.5793877, 0, -0.81505203, 77.68132, 2.1864672, -40.173428)
+transform = Transform3D(-0.81505203, 0, 0.5793877, 0, 1, 0, -0.5793877, 0, -0.81505203, 77.68132, 2.23036, -40.173428)
 save_id = &"forest_spot4_004"
 
 [node name="forest_spot4_005" type="StaticBody3D" parent="Patches/ForestSpot4" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.99999756, 0, 0.0021981301, 0, 1, 0, -0.0021981301, 0, -0.99999756, 63.856995, 6.935597, -36.672546)
+transform = Transform3D(-0.99999756, 0, 0.0021981301, 0, 1, 0, -0.0021981301, 0, -0.99999756, 63.856995, 7.0894885, -36.672546)
 save_id = &"forest_spot4_005"
 
 [node name="ForestSpot5" type="Node3D" parent="Patches"]
 
 [node name="forest_spot5_000" type="StaticBody3D" parent="Patches/ForestSpot5" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.9722844, 0, -0.23380136, 0, 1, 0, 0.23380136, 0, 0.9722844, 89.74191, 16.444418, -76.26723)
+transform = Transform3D(0.9722844, 0, -0.23380136, 0, 1, 0, 0.23380136, 0, 0.9722844, 89.74191, 16.254562, -76.26723)
 save_id = &"forest_spot5_000"
 
 [node name="forest_spot5_001" type="StaticBody3D" parent="Patches/ForestSpot5" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.9265133, 0, 0.37626192, 0, 1, 0, -0.37626192, 0, 0.9265133, 99.44685, 17.750376, -78.71295)
+transform = Transform3D(0.9265133, 0, 0.37626192, 0, 1, 0, -0.37626192, 0, 0.9265133, 99.44685, 17.421991, -78.71295)
 save_id = &"forest_spot5_001"
 
 [node name="forest_spot5_002" type="StaticBody3D" parent="Patches/ForestSpot5" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.7422974, 0, 0.6700706, 0, 1, 0, -0.6700706, 0, -0.7422974, 88.77973, 19.543617, -81.320206)
+transform = Transform3D(-0.7422974, 0, 0.6700706, 0, 1, 0, -0.6700706, 0, -0.7422974, 88.77973, 19.353584, -81.320206)
 save_id = &"forest_spot5_002"
 
 [node name="forest_spot5_003" type="StaticBody3D" parent="Patches/ForestSpot5" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.53726065, 0, 0.8434163, 0, 1, 0, -0.8434163, 0, -0.53726065, 99.39759, 22.300987, -86.452156)
+transform = Transform3D(-0.53726065, 0, 0.8434163, 0, 1, 0, -0.8434163, 0, -0.53726065, 99.39759, 21.952711, -86.452156)
 save_id = &"forest_spot5_003"
 
 [node name="forest_spot5_004" type="StaticBody3D" parent="Patches/ForestSpot5" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(0.599238, 0, 0.80057096, 0, 1, 0, -0.80057096, 0, 0.599238, 92.913315, 22.92866, -87.12127)
+transform = Transform3D(0.599238, 0, 0.80057096, 0, 1, 0, -0.80057096, 0, 0.599238, 92.913315, 22.686768, -87.12127)
 save_id = &"forest_spot5_004"
 
 [node name="forest_spot5_005" type="StaticBody3D" parent="Patches/ForestSpot5" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.5970458, 0, -0.8022072, 0, 1, 0, 0.8022072, 0, -0.5970458, 97.59615, 14.468529, -73.1422)
+transform = Transform3D(-0.5970458, 0, -0.8022072, 0, 1, 0, 0.8022072, 0, -0.5970458, 97.59615, 14.192369, -73.1422)
 save_id = &"forest_spot5_005"
 
 [node name="forest_spot5_006" type="StaticBody3D" parent="Patches/ForestSpot5" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.9904914, 0, -0.13757455, 0, 1, 0, 0.13757455, 0, -0.9904914, 94.33198, 18.33426, -79.545975)
+transform = Transform3D(-0.9904914, 0, -0.13757455, 0, 1, 0, 0.13757455, 0, -0.9904914, 94.33198, 18.08555, -79.545975)
 save_id = &"forest_spot5_006"
 
 [node name="forest_spot5_007" type="StaticBody3D" parent="Patches/ForestSpot5" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.8928044, 0, 0.4504446, 0, 1, 0, -0.4504446, 0, 0.8928044, 104.38938, 20.484682, -83.303375)
+transform = Transform3D(0.8928044, 0, 0.4504446, 0, 1, 0, -0.4504446, 0, 0.8928044, 104.38938, 20.046812, -83.303375)
 save_id = &"forest_spot5_007"
 
 [node name="ForestSpot6" type="Node3D" parent="Patches"]
 
 [node name="forest_spot6_000" type="StaticBody3D" parent="Patches/ForestSpot6" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.8081388, 0, -0.5889921, 0, 1, 0, 0.5889921, 0, 0.8081388, 116.08575, 27.480343, -122.11988)
+transform = Transform3D(-0.97341585, 0, 0.22904493, 0, 1, 0, -0.22904493, 0, -0.97341585, 114.64987, 27.098185, -123.38106)
 save_id = &"forest_spot6_000"
 
-[node name="forest_spot6_001" type="StaticBody3D" parent="Patches/ForestSpot6" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.9954922, 0, -0.09484349, 0, 1, 0, 0.09484349, 0, 0.9954922, 101.59756, 30.634493, -117.40125)
+[node name="forest_spot6_001" type="StaticBody3D" parent="Patches/ForestSpot6" instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.734722, 0, -0.6783683, 0, 1, 0, 0.6783683, 0, 0.734722, 115.6631, 27.433403, -113.64909)
 save_id = &"forest_spot6_001"
 
-[node name="forest_spot6_002" type="StaticBody3D" parent="Patches/ForestSpot6" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(0.8531433, 0, -0.52167666, 0, 1, 0, 0.52167666, 0, 0.8531433, 105.14211, 31.208525, -110.168495)
+[node name="forest_spot6_002" type="StaticBody3D" parent="Patches/ForestSpot6" instance=ExtResource("13_n067m")]
+transform = Transform3D(0.9954922, 0, -0.09484349, 0, 1, 0, 0.09484349, 0, 0.9954922, 101.59756, 30.703268, -117.40125)
 save_id = &"forest_spot6_002"
 
-[node name="forest_spot6_003" type="StaticBody3D" parent="Patches/ForestSpot6" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.1408953, 0, 0.9900245, 0, 1, 0, -0.9900245, 0, -0.1408953, 113.32863, 28.464306, -110.397095)
+[node name="forest_spot6_003" type="StaticBody3D" parent="Patches/ForestSpot6" instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.8531433, 0, -0.52167666, 0, 1, 0, 0.52167666, 0, 0.8531433, 105.14211, 31.85855, -110.168495)
 save_id = &"forest_spot6_003"
 
 [node name="forest_spot6_004" type="StaticBody3D" parent="Patches/ForestSpot6" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(0.65073794, 0, 0.7593024, 0, 1, 0, -0.7593024, 0, 0.65073794, 105.15438, 28.345308, -121.183914)
+transform = Transform3D(0.65073794, 0, 0.7593024, 0, 1, 0, -0.7593024, 0, 0.65073794, 105.15438, 27.92111, -121.183914)
 save_id = &"forest_spot6_004"
 
 [node name="forest_spot6_005" type="StaticBody3D" parent="Patches/ForestSpot6" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(0.5638901, 0, -0.82584983, 0, 1, 0, 0.82584983, 0, 0.5638901, 99.69558, 32.78479, -111.731285)
+transform = Transform3D(0.5638901, 0, -0.82584983, 0, 1, 0, 0.82584983, 0, 0.5638901, 99.69558, 32.939804, -111.731285)
 save_id = &"forest_spot6_005"
 
-[node name="forest_spot6_006" type="StaticBody3D" parent="Patches/ForestSpot6" instance=ExtResource("13_n067m")]
-transform = Transform3D(0.8451687, 0, -0.5344996, 0, 1, 0, 0.5344996, 0, 0.8451687, 109.40744, 27.004822, -118.02501)
+[node name="forest_spot6_006" type="StaticBody3D" parent="Patches/ForestSpot6" instance=ExtResource("12_a6dxe")]
+transform = Transform3D(0.99593586, 0, -0.09006517, 0, 1, 0, 0.09006517, 0, 0.99593586, 110.57896, 27.026972, -118.33648)
 save_id = &"forest_spot6_006"
 
 [node name="forest_spot6_007" type="StaticBody3D" parent="Patches/ForestSpot6" instance=ExtResource("13_n067m")]
-transform = Transform3D(-0.9337078, 0, 0.35803604, 0, 1, 0, -0.35803604, 0, -0.9337078, 117.4218, 26.520102, -113.38916)
+transform = Transform3D(-0.929711, 0, -0.36828992, 0, 1, 0, 0.36828992, 0, -0.929711, 112.24433, 30.76295, -107.08465)
 save_id = &"forest_spot6_007"
 
 [node name="ForestSpot7" type="Node3D" parent="Patches"]
@@ -1023,13 +1524,13 @@ save_id = &"forest_spot7_007"
 
 [node name="Forest" type="Node3D" parent="Patches"]
 script = ExtResource("60_4venx")
-entries = Array[ExtResource("61_8j3kd")]([SubResource("Resource_4ugvj"), SubResource("Resource_3bioh")])
+entries = Array[ExtResource("61_8j3kd")]([SubResource("Resource_evxat"), SubResource("Resource_qb4b3")])
 save_prefix = "forest"
-ids = PackedInt32Array(1, 5, 6, 10, 14, 15, 16, 17, 20, 23, 27, 28, 29, 31, 33, 36, 44, 46, 48, 52, 53, 56, 57, 60, 61, 62, 63, 64, 66, 67, 68, 69, 70, 71, 75, 77, 78, 81, 82, 85, 87, 88, 89, 92, 93, 96, 97, 99, 105, 106, 107, 109, 111, 112, 113, 114, 115, 117, 120, 121, 123, 126, 127, 129, 132, 133, 134, 135, 138, 142, 143, 146, 148, 149, 152, 156, 157, 158, 163, 164, 167, 171, 172, 173, 175, 177, 178, 179, 182, 187, 188, 189, 190, 191, 193, 194, 195, 196, 202, 206, 208, 209, 210, 211, 214, 217, 218, 219, 220, 221, 223, 224, 225, 226, 228, 229, 232, 233, 235, 236, 239, 243, 244, 245, 246, 248, 249, 251, 252, 253, 255, 257, 258, 259, 260, 261, 264, 265, 267, 271, 275, 276, 277, 280, 281, 282, 284, 285, 287, 288, 289, 290, 293, 294, 295, 296, 297, 299, 300, 301, 302, 303, 304, 306, 311, 316, 317, 318, 321, 322, 324, 325, 327, 328, 330, 331, 334, 335, 337, 343, 349, 350, 354, 355, 356, 357, 361, 364, 365, 368, 370, 371, 372, 374, 376, 377, 378, 379, 381, 383, 385, 387, 388, 389, 396, 397, 399, 402, 403, 404, 408, 409, 411, 412, 413, 417, 419, 421, 424, 425, 426, 427, 429, 432, 434, 438, 448, 449, 451, 456, 458, 459, 466, 467, 473, 475, 477, 480, 482, 483, 488, 490, 491, 492, 493, 494, 499, 504, 505, 506, 508, 512, 520, 524, 525, 526, 532, 536, 540, 543, 544, 546, 549, 556, 557, 563, 565, 566, 568, 569, 570, 573, 574, 576, 585, 589, 590, 593, 595, 597, 598, 601, 606, 607, 608, 612, 615, 616, 617, 619, 620, 621, 623, 624, 626, 631, 638, 640, 641, 643, 645, 649, 650, 652, 653, 655, 658, 661, 662, 664, 666, 671, 672, 674, 675, 678, 682, 683, 685, 686, 692, 695, 697, 700, 705, 707, 708, 709, 710, 711, 723, 724, 725, 726, 727, 729, 732, 734, 735, 737, 741, 743, 755, 758, 759, 760, 761, 767, 768, 769, 770, 771, 775, 777, 778, 780, 782, 783, 785, 786, 787, 793, 796, 798, 799, 801, 802, 803, 807, 809, 815, 816, 824, 825, 828, 829, 831, 833, 836, 837, 842, 845, 847, 848, 855, 857, 863, 865, 866, 867, 868, 879, 883, 887, 890, 896, 897, 900, 902, 904, 905, 906, 908, 912, 916, 919, 921, 929, 936, 937, 938, 942, 944, 946, 948, 951, 953, 955, 958, 960, 966, 970, 971, 972, 973, 979, 980, 981, 983, 984, 987, 988, 990, 996, 1001, 1002, 1010, 1012, 1014, 1016, 1021, 1022, 1027, 1028, 1031, 1035, 1037, 1038, 1040, 1044, 1046, 1048, 1050, 1052, 1053, 1057, 1059, 1060, 1062, 1063, 1068, 1074, 1076, 1081, 1083, 1090, 1093, 1096, 1099, 1100, 1104, 1106, 1107, 1108, 1109, 1111, 1116, 1117, 1119, 1120, 1127, 1133, 1135, 1136, 1141, 1142, 1143, 1145, 1147, 1148, 1149, 1151, 1153, 1156, 1158, 1165, 1166, 1169, 1172, 1175, 1183, 1187, 1192, 1193, 1194, 1205, 1208, 1217, 1220, 1225, 1226, 1228, 1230, 1232, 1234, 1236, 1237, 1246, 1247, 1249, 1257, 1258, 1259, 1261, 1264, 1265, 1271, 1272, 1273, 1274, 1277, 1278, 1279, 1285, 1287, 1289, 1291, 1293, 1294, 1295, 1297, 1301, 1303, 1305, 1309, 1316, 1317, 1318, 1323, 1327, 1328, 1329, 1331, 1332, 1347, 1349, 1352, 1365, 1371, 1373, 1376, 1381, 1382, 1384, 1398, 1404, 1406, 1410, 1411, 1417, 1418, 1427, 1428, 1429, 1430, 1431, 1434, 1437, 1441, 1444, 1448, 1450, 1451, 1454, 1459, 1460, 1465, 1468, 1469, 1470, 1472, 1473, 1478, 1480, 1481, 1482, 1484, 1487, 1490, 1495, 1501, 1503, 1506, 1507, 1510, 1521, 1525, 1527, 1528, 1529, 1535, 1538, 1542, 1549, 1551, 1555, 1556, 1557, 1560, 1564, 1566, 1568, 1579, 1587, 1588, 1589, 1590, 1591, 1592, 1603, 1606, 1614, 1615, 1616, 1624, 1629, 1630, 1635, 1644, 1648, 1649, 1653, 1654, 1655, 1676, 1682, 1684, 1690, 1697, 1698, 1701, 1705, 1706, 1708, 1709, 1719, 1723, 1725, 1727, 1729, 1733, 1738, 1740, 1743, 1745, 1746, 1747, 1750, 1754, 1764, 1771, 1772, 1774, 1777, 1784, 1790, 1794, 1795, 1797, 1798, 1799, 1810, 1813, 1820, 1833, 1842, 1844, 1850, 1859, 1860, 1861, 1864, 1866, 1867, 1870, 1872, 1876, 1890, 1892, 1896, 1906, 1911, 1913, 1920, 1925, 1929, 1930, 1935, 1943, 1945, 1946, 1947, 1955, 1961, 1966, 1969, 1977, 1990, 1994, 1995, 2002, 2005, 2009, 2011, 2015, 2018, 2020, 2025, 2038, 2042, 2045, 2048, 2049, 2059, 2060, 2061, 2068, 2070, 2076, 2082, 2087, 2096, 2104, 2108, 2109, 2112, 2124, 2136, 2138, 2144, 2154, 2157, 2162, 2166, 2169, 2175, 2181, 2186, 2187, 2193, 2195, 2199, 2200, 2207, 2213, 2214, 2221, 2222, 2226, 2241, 2251, 2253, 2254, 2268, 2274, 2275, 2276, 2277, 2278, 2282, 2284, 2287, 2288, 2290, 2295, 2304, 2309, 2319, 2338, 2340, 2343, 2346, 2357, 2362, 2369, 2372, 2377, 2387, 2391, 2393, 2396, 2398, 2399, 2402, 2407, 2412, 2422, 2432, 2434, 2437, 2440, 2448, 2449, 2450, 2452, 2465, 2466, 2470, 2472, 2483, 2484, 2494, 2495, 2499, 2506, 2509, 2513, 2521, 2524, 2525, 2535, 2541, 2542, 2547, 2551, 2564, 2577, 2585, 2597, 2624, 2627, 2628, 2640, 2642, 2653, 2655, 2656, 2657, 2664, 2667, 2674, 2680, 2684, 2706, 2707, 2708, 2711, 2713, 2715, 2717, 2718, 2719, 2721, 2724, 2736, 2746, 2748, 2750, 2756, 2769, 2778, 2781, 2792, 2801, 2811, 2814, 2815, 2823, 2825, 2828, 2831, 2832, 2840, 2850, 2854, 2857, 2859, 2862, 2863, 2868, 2873, 2884, 2890, 2899, 2901, 2910, 2925, 2928, 2930, 2931, 2934, 2945, 2950, 2953, 2955, 2956, 2964, 2974, 2976, 2981, 2989, 3003, 3005, 3008, 3012, 3020, 3021, 3029, 3039, 3053, 3065, 3069, 3070, 3087, 3103, 3113, 3115, 3121, 3129, 3139, 3158, 3163, 3166, 3187, 3188, 3189, 3195, 3216, 3227, 3231, 3248, 3260, 3272, 3274, 3276, 3277, 3280, 3289, 3290, 3302, 3311, 3329, 3342, 3361, 3367, 3368, 3373, 3381, 3402, 3405, 3406, 3408, 3414, 3415, 3416, 3419, 3420, 3430, 3436, 3437, 3438, 3442, 3444, 3447, 3454, 3461, 3462, 3483, 3484, 3495, 3496, 3497, 3504, 3534, 3535, 3542, 3546, 3551, 3553, 3555, 3560, 3570, 3596, 3607, 3609, 3611, 3613, 3616, 3618, 3628)
-spots = PackedVector3Array(148.45392, 30.982454, -164.64613, 62.32232, 25.155897, -102.38287, 89.658585, 31.829802, -103.22488, 197.13866, 21.988688, -70.57976, 206.57654, 32.606236, -95.07906, 147.98433, 34.374123, -195.94748, 8.413124, 32.034546, -61.83696, 267.9165, 31.310522, -92.33, 154.90314, 26.329603, -78.334335, 14.012016, 31.628977, -58.713867, 34.622086, 25.297712, -47.559998, 119.613785, 29.28317, -101.18666, -3.6329575, 32.664867, -77.42061, 29.149818, 29.192566, -145.74802, 224.57361, 34.90547, -96.1896, 66.293304, 31.070446, -143.87003, 223.59824, 29.776638, -76.10637, 110.42111, 3.5089326, -45.25406, 22.73787, 25.655138, -165.40085, 266.15503, 32.93408, -112.84568, 124.37497, 31.959787, -136.05203, 142.53156, 22.490858, -105.90265, 23.205887, 32.436985, -105.773, 42.220016, 25.417198, -64.79265, 67.42523, 28.86964, -169.16522, 26.019356, 30.712582, -136.12636, 47.101692, 15.488573, -37.822144, 71.3422, 29.410795, -171.25058, 70.70852, 27.186838, -128.69812, 58.742577, 30.031288, -131.88092, 138.74345, 33.884502, -190.51459, 177.91461, 28.263575, -108.856384, 193.9789, 22.4573, -46.569733, 200.49835, 31.504877, -96.37285, 142.78899, 27.536041, -84.28607, 44.34163, 20.819918, -47.912872, 36.798866, 32.264633, -106.800705, 93.85324, 32.843758, -105.448395, 101.22391, 7.5498586, -60.108566, 203.55582, 19.298624, -32.03804, 80.21744, 30.410957, -190.47197, 109.68109, 31.319185, -138.37482, 47.92852, 30.864372, -115.90826, 97.54289, 0.026564628, -16.766327, 43.620934, 31.917982, -81.32149, 79.35231, 29.091633, -103.901344, 172.40286, 19.63029, -96.17532, 224.36267, 33.421093, -170.00134, 78.78525, 23.093473, -85.129944, 73.129295, 17.333584, -68.604675, 121.66629, 17.171629, -67.79431, 25.89457, 34.252113, -97.528046, 127.44879, 18.415121, -67.50412, 195.2522, 19.693773, -63.60182, 212.8183, 33.487404, -106.08739, 197.10349, 21.074574, -60.356094, 99.46277, 33.043533, -107.70318, 53.1856, 28.027166, -185.17815, 199.0584, 27.998114, -136.741, 5.033985, 31.045544, -59.013535, 96.5813, 31.6965, -142.44736, 216.83316, 34.536186, -99.76049, 198.81355, 22.548162, -40.541183, -5.599243, 30.301746, -146.77449, 183.3649, 29.60781, -113.0867, 203.35272, 22.168493, -38.37961, 108.23001, 31.75408, -183.36467, 64.954865, 28.362406, -184.83578, 96.97476, 31.485651, -138.56679, 41.29644, 30.92095, -76.5542, 127.07463, 9.123426, -48.12198, 22.719124, 31.03448, -127.263855, 55.089615, 29.91226, -119.57911, 187.53668, 28.864332, -125.59917, 69.60345, 28.627642, -176.20694, 127.57254, 32.222645, -148.5825, 138.86145, 32.072376, -174.68378, 134.79015, 6.5535283, -34.961533, 125.441666, 32.024326, -184.07074, 161.51839, 24.129412, -87.945465, 30.24504, 26.60673, -45.497635, 78.78854, 29.177145, -114.54055, 148.70222, 25.104149, -114.759605, 181.68428, 28.917686, -129.61066, 80.70442, 14.884995, -69.66478, 94.956436, 28.410383, -96.80789, 169.6119, 33.15445, -183.63203, -37.224316, 31.472477, -91.69519, 22.567085, 31.534637, -110.77994, 50.900803, 29.82875, -124.77972, 205.6719, 29.463879, -149.9932, 193.54924, 28.748842, -166.56848, 110.66237, 17.487165, -76.20607, 76.01471, 1.4954098, -22.443909, -13.83374, 29.452835, -105.764175, -19.202682, 29.740444, -93.993515, 45.500664, 29.866465, -194.02934, 199.2778, 29.177265, -179.06831, 75.98784, 14.319456, -64.70213, 107.10237, 28.44665, -98.15564, 26.514137, 27.701317, -184.82033, 200.02165, 29.499224, -86.80676, 181.05165, 16.336409, -39.857285, 67.096016, 28.347395, -181.4275, 39.885628, 30.794165, -122.55765, 105.7569, 2.2021472, -43.89479, 186.42941, 26.638079, -97.550186, 31.973206, 30.745821, -128.57285, 114.686874, 32.06584, -196.9017, 156.97685, 30.69389, -161.92056, 95.75102, 5.377055, -56.520798, 49.64711, 30.920681, -198.91785, 238.79172, 32.991116, -141.5223, 137.12311, 9.632844, -44.70146, 217.04672, 26.840384, -57.703598, 35.079094, 30.761497, -131.46658, 73.57628, 21.229841, -83.6183, 248.7337, 33.851795, -123.913185, 97.74466, 0.10792217, -20.974365, 156.95308, 25.838263, -113.83163, 28.66764, 30.79732, -132.69919, 130.26335, 34.477207, -195.93707, 245.24353, 34.04178, -93.76645, 5.490383, 31.260218, -128.01022, 13.885056, 27.06494, -158.63496, 211.35577, 26.048824, -56.435333, 213.22513, 31.429155, -169.69594, 112.78908, 29.882051, -99.781334, 183.65541, 29.704329, -160.63727, 222.40216, 30.708359, -82.61444, 228.54599, 33.921623, -112.03452, -6.7516174, 32.403606, -82.44832, 28.135353, 33.263214, -101.14994, 28.340675, 31.363077, -60.04477, 75.86902, 5.140354, -44.884354, 120.073715, 9.219344, -52.471527, 201.80014, 28.80678, -146.34235, 83.40509, 31.791288, -206.05019, 208.48618, 29.884651, -143.91087, 72.165085, 31.133318, -142.2276, 254.2425, 33.715954, -126.86362, 53.352936, 19.144518, -61.98346, 227.42758, 33.8032, -159.88188, -22.169868, 29.502098, -107.52763, 260.52438, 32.794823, -147.42249, 234.2587, 32.587933, -132.85638, 10.943489, 26.640917, -163.504, 219.91638, 32.352455, -131.18347, 217.80072, 32.656456, -152.23752, 131.50206, 23.929745, -113.11101, 219.46735, 32.624752, -161.479, 73.06115, 21.8404, -91.20155, 141.24939, 13.73449, -55.78926, 90.07652, 0.062139332, -17.600616, 129.40149, 32.31865, -178.14764, 140.05325, 32.206963, -133.0838, 46.215843, 26.602146, -158.31775, 234.14545, 29.738203, -74.79385, 134.89255, 36.30296, -201.67783, 128.21252, 5.2103467, -34.358887, 10.479111, 31.947153, -116.503204, 51.57543, 29.545107, -84.993576, 138.37703, 22.729914, -110.438416, 45.442276, 34.114326, -89.71449, 28.825699, 31.037832, -115.85932, 114.216, 13.53911, -65.84929, 16.898148, 31.40338, -126.154884, 178.12804, 30.467703, -170.06203, 129.43678, 32.551735, -184.91988, 12.054024, 31.827099, -119.80416, 100.54808, 9.389291, -63.798737, 243.24442, 33.727215, -151.04706, 62.317947, 26.042885, -90.92413, 35.984306, 31.164549, -116.49102, 261.35632, 33.30027, -132.21234, -32.713516, 29.963762, -94.39766, 202.99933, 25.451777, -70.841095, 155.09431, 22.007399, -69.25008, 136.86786, 31.29387, -163.58026, 261.0113, 33.205242, -139.8092, -32.984573, 30.151533, -113.701385, 211.75903, 30.964022, -147.397, 142.77686, 31.441648, -149.34332, 85.158966, 30.437199, -125.58799, 136.96886, 32.55522, -136.12762, 214.87479, 31.10129, -139.1495, -14.151978, 31.13341, -138.22865, 76.367645, 23.026268, -88.849686, 151.66762, 20.812819, -67.417404, 171.1388, 12.3891945, -35.234695, 171.08444, 13.743748, -58.96103, 10.663773, 31.241583, -134.57529, -6.292797, 29.91374, -106.266846, 149.16962, 6.4588203, -29.17215, 131.43759, 31.271112, -158.59857, -26.330204, 31.370369, -78.01816, 268.88736, 32.759254, -132.59232, 191.7669, 29.297342, -152.62659, 137.13815, 20.684235, -69.84654, 62.14943, 25.03416, -107.74514, 79.23915, 31.136385, -144.55258, 154.89854, 31.88558, -130.00096, 61.63926, 29.478903, -156.7635, 210.34378, 30.721582, -126.018456, 139.21141, 35.024124, -195.74028, 73.601135, 31.038343, -153.3613, 193.50041, 28.93455, -158.2491, 12, 35.249195, -85.345856, -4.4760895, 30.425138, -142.48706, 164.73671, 9.087469, -38.559784, 217.03876, 34.280346, -103.89666, 142.59581, 25.146875, -99.97838, 17.012886, 33.40659, -65.739975, 176.04135, 12.32215, -59.22336, 27.907036, 32.372704, -104.8991, 6.70253, 34.131653, -92.55881, 105.453186, 12.561676, -68.77205, 103.11899, 31.165016, -193.6475, 146.71794, 31.647488, -144.83203, 186.7279, 29.950686, -118.39376, 136.72472, 14.888861, -57.88832, 85.733154, 1.0865642, -45.376923, 145.93578, 34.181496, -192.21037, 143.92809, 9.212416, -37.386337, 37.612892, 32.356, -75.86398, 129.07043, 35.83612, -201.96152, -11.259617, 29.834259, -119.954834, 199.24721, 24.248837, -46.25763, 89.78317, 30.710123, -192.37186, 122.695404, 19.908314, -72.46678, 122.121124, 22.113522, -76.93428, 57.802124, 27.521124, -88.1945, 192.4871, 28.793112, -170.57733, 95.81314, 1.0854573, -45.992172, 236.53476, 33.870613, -147.66943, -1.5291519, 29.278187, -159.00827, 151.8068, 5.2593036, -25.29361, -10.656799, 30.946192, -141.89929, 56.12381, 17.681273, -59.131866, 99.09569, 30.908707, -122.269485, -29.584402, 29.771173, -102.53296, 61.488556, 26.280954, -113.583084, 84.30846, 30.19505, -101.234955, 84.85037, 20.200964, -81.75583, -2.61195, 32.717304, -85.984024, 239.17648, 32.62941, -90.833664, 191.99582, 30.439844, -118.72289, 140.36896, 31.297941, -154.16177, 146.00426, 31.788628, -140.09514, 86.55229, 0.27159643, -20.60849, 162.93047, 30.072361, -121.37342, 100.48732, 0.36212876, -28.805527, 20.481552, 31.334402, -116.58551, 83.130585, 30.361618, -177.66905, 236.04138, 28.01084, -68.03705, 234.22568, 33.638515, -115.39555, 147.45651, 17.176462, -61.26216, 253.79681, 32.836178, -152.91422, 234.31607, 26.973696, -51.684326, 88.55202, 31.335033, -122.574646, 151.29439, 30.499294, -124.43234, 252.83002, 29.269972, -75.35971, -21.001366, 29.742702, -115.93939, 56.129402, 29.327394, -141.5704, 149.65906, 31.968767, -135.62206, 143.30196, 32.81311, -180.30359, 63.54972, 28.706985, -164.6081, 88.2496, 31.942759, -154.62386, 135.171, 11.0499525, -49.434036, 190.26854, 17.378405, -59.37137, 43.00918, 31.03253, -118.50088, -10.244698, 31.225443, -67.265335, 257.5753, 32.6249, -162.8425, 29.796661, 34.765457, -77.447235, 139.74722, 6.705063, -31.920837, 196.93396, 25.889616, -81.27716, 106.538605, 31.846186, -187.54639, 153.66977, 10.90094, -46.511703, 220.73096, 32.997997, -168.93077, 96.57048, 0.4357563, -37.332443, -21.25145, 30.220404, -121.83932, 99.55261, 31.80933, -147.32837, -16.780998, 29.61294, -98.39242, 19.17614, 35.410515, -76.241196, 185.00626, 29.52633, -170.64009, 45.56241, 29.471449, -140.00127, 42.76317, 33.695343, -97.42413, 171.3638, 31.018238, -167.40935, 261.50958, 32.944096, -107.60359, 43.837257, 26.184093, -175.63954, 260.47888, 33.57199, -128.4057, 139.74644, 5.064238, -26.460617, 142.83185, 27.732214, -122.75339, 57.06961, 27.642326, -110.86756, 30.49823, 25.591309, -163.82962, 71.5021, 30.798647, -199.38976, 208.63016, 31.068691, -82.399475, 19.882172, 31.948957, -58.540222, 100.73033, 32.58789, -208.7898, 186.77231, 29.698465, -155.18433, 77.48663, 32.14499, -205.52518, 166.38751, 23.345121, -107.24103, 159.81218, 33.140553, -186.48526, 3.2116203, 31.041882, -132.77985, 60.888153, 27.343622, -171.37607, 234.59067, 32.92124, -121.14931, 164.28276, 25.378754, -111.89067, 60.752792, 29.707148, -152.42477, 43.482666, 30.291399, -131.93748, 32.16147, 34.983337, -89.53764, 206.26886, 31.521532, -87.89273, 72.66847, 28.901686, -179.98627, 36.181313, 27.09249, -56.404114, 17.589745, 27.495943, -181.7332, 202.88535, 28.422081, -133.60016, 11.489449, 32.50251, -111.60719, 168.49135, 31.712782, -170.51724, 49.192375, 29.301992, -191.41086, 66.167206, 20.306568, -75.75357, 20.8014, 26.58783, -159.22873, 51.50609, 12.324852, -35.034103, 217.14832, 32.27623, -158.77905, 21.460434, 26.698315, -177.23589, 124.62544, 1.9442228, -23.961502, 145.31801, 35.67663, -202.30336, 184.09987, 29.94327, -176.00638, 218.62653, 24.073153, -46.860077, 246.03445, 34.931458, -112.65265, 266.5619, 33.15956, -121.036964, 46.66635, 30.37826, -124.15005, 24.444916, 34.12977, -69.939835, 121.47708, 3.9978805, -35.378647, 165.09026, 20.653059, -67.72385, 136.28886, 23.027014, -74.41553, 176.41196, 14.21615, -35.90419, -10.488777, 30.896528, -137.28448, 188.11528, 19.511332, -39.664383, 36.60367, 30.716022, -126.41621, -12.90464, 29.583387, -116.63271, 106.24263, 15.23503, -73.56671, 5.6690636, 31.261812, -122.8533, 107.4151, 9.791247, -62.675766, 4.3920593, 32.20163, -64.1501, 108.91472, 20.532328, -82.81612, 35.98855, 25.586931, -164.20331, 228.53226, 34.540943, -148.99554, 183.8681, 29.981153, -149.81808, -6.229004, 30.640303, -61.979187, 213.66187, 28.400354, -65.50003, 31.1818, 28.46784, -187.7952, 72.295364, 24.794727, -101.429695, 251.35898, 33.47183, -142.95685, -25.340525, 29.827295, -114.96446, 9.581688, 32.727898, -108.02108, 206.94672, 32.738346, -105.55168, 151.49059, 30.829624, -159.7887, 204.86496, 25.057825, -62.754135, 87.85426, 0.16877314, -26.11998, 152.27135, 31.592701, -170.2938, 73.37053, 2.1793737, -29.63736, 154.54466, 31.795012, -138.5326, 85.81862, 22.73136, -86.291, 177.75172, 29.773273, -112.71445, 142.61243, 19.179392, -67.154724, 32.869225, 30.239756, -141.2557, -21.956638, 30.702278, -66.280594, 59.21473, 29.927303, -148.77252, 259.76303, 32.87495, -104.49524, 160.00583, 31.029024, -146.16527, 81.1936, 18.885971, -77.7883, 241.29922, 33.529232, -145.69214, 222.63297, 31.864054, -86.28502, 41.39245, 28.510366, -146.44138, 127.914474, 15.060199, -60.81656, 193.12643, 28.196438, -140.5727, 235.61362, 33.069935, -92.620415, 160.80658, 30.914244, -137.27264, 233.12457, 33.529198, -142.24036, 96.048096, 30.963926, -190.49919, 13.644798, 33.624947, -105.34191, 75.658264, 31.134367, -157.00308, 77.43367, 31.048529, -164.41072, 24.268631, 30.949875, -123.88208, 188.68114, 18.586613, -51.871155, 32.554497, 33.310204, -72.52931, 8.948322, 34.59712, -75.00166, 221.3739, 29.356222, -70.09079, 135.41568, 26.261086, -121.65302, 13.878304, 29.387568, -144.6005, 65.76884, 30.74005, -147.46193, 1.682766, 33.430153, -78.69684, 184.96426, 18.62613, -80.34839, 21.46798, 30.3491, -139.27097, 96.04666, 33.094616, -115.76097, 8.900757, 33.75005, -69.63748, 234.58176, 34.850445, -100.71953, 52.187607, 27.634459, -159.36963, 135.21342, 31.241972, -154.22583, 239.07733, 32.595875, -129.56622, 47.884514, 33.602676, -94.017334, 28.07058, 26.135702, -173.42163, 175.06459, 19.288675, -76.55513, 198.65793, 30.28726, -91.29828, 207.97363, 33.313545, -100.71556, 168.21654, 30.15718, -152.66223, 212.07278, 29.965027, -134.10072, 237.21738, 34.79948, -106.25002, 154.59474, 27.900888, -87.33885, 60.670242, 23.756096, -80.9523, 20.240135, 34.795555, -97.04971, 177.21104, 29.305866, -121.31449, 14.857849, 30.299433, -52.0571, 20.571701, 29.08761, -188.54774, -17.450771, 31.71033, -80.382324, 92.63893, 31.272724, -203.70767, -20.612007, 29.519861, -98.536255, 56.628494, 28.19162, -186.53386, -25.266848, 30.605968, -84.701324, 157.11592, 11.7220745, -49.088898, 182.02136, 30.794844, -181.19142, 193.53197, 23.304504, -79.752365, 203.25397, 23.484232, -43.069046, 120.7433, 27.316156, -124.68495, -13.677483, 31.363405, -85.46678, 29.001617, 29.564705, -52.233047, 108.84776, 1.0749899, -31.624985, 29.624123, 25.654448, -167.31621, -15.6967125, 31.777283, -156.7409, 60.809196, 27.134445, -176.82959, 182.12247, 16.349277, -46.825134, 152.63419, 33.230766, -186.54578, 253.39554, 34.63736, -117.94791, -20.705574, 31.093906, -83.36861, 189.68686, 29.29289, -183.54338, 221.39517, 28.113459, -60.138092, 80.54306, 30.79378, -139.45595, 134.18626, 32.29497, -142.81956, 189.82143, 29.725866, -108.654945, 31.415413, 31.985178, -68.05377, 91.80255, 4.917877, -55.69536, 51.36486, 26.78873, -178.63966, 200.50629, 28.51893, -142.05405, 6.2527046, 32.45555, -105.066444, 251.80893, 33.814022, -96.93574, 67.20826, 22.81084, -88.14598, 192.67703, 14.287991, -25.191376, 71.20781, 14.669424, -60.927704, 50.137993, 20.040686, -54.509888, 166.57452, 30.431425, -124.51735, 63.630928, 30.310305, -129.08237, 58.312477, 12.573175, -43.636307, 146.9582, 31.165575, -155.93887, 142.06557, 4.5245895, -23.253967, 52.593384, 29.098917, -141.39667, -14.021816, 31.27191, -149.2554, 172.11752, 29.5312, -136.35214, 108.097244, 0.723371, -27.518753, -11.722393, 30.612558, -132.3381, 155.33682, 21.648733, -100.85192, 101.9259, 11.45689, -67.43373, 115.80014, 31.886946, -189.83115, 249.22415, 33.068237, -160.63824, 253.117, 32.778637, -91.65608, 57.864647, 8.6238785, -32.242096, 100.63823, 1.2875214, -43.4628, 125.84503, 25.927649, -112.19776, 90.68425, 6.936582, -59.61418, 116.265884, 29.217962, -107.67201, 178.65056, 17.545534, -75.45868, 206.65369, 23.61943, -41.672882, 150.2212, 13.005906, -50.509857, 246.03659, 28.787802, -67.876434, 239.71826, 34.273712, -96.1475, 215.91922, 29.942358, -73.950455, 172.28546, 32.22957, -175.55261, 12.700638, 28.36858, -149.42395, 125.547485, 28.941618, -88.83078, 148.39424, 33.47325, -187.78914, 219.51508, 33.498264, -179.8225, 264.49774, 33.36307, -117.15398, 246.8964, 34.984062, -102.35146, 253.20782, 29.780542, -80.65796, 101.71167, 0.1114192, -15.214157, 13.332535, 27.725641, -153.74956, 201.94464, 29.389484, -176.04063, 188.48442, 28.875792, -141.46643, 245.40805, 33.62893, -158.07643, 111.84604, 9.0196905, -58.470016, 34.087784, 30.65795, -136.65622, 165.97398, 17.775856, -63.21045, 108.35715, 1.4550387, -35.740692, 23.51043, 28.372469, -147.85117, 44.771828, 32.000393, -106.86136, 242.02695, 34.974247, -100.23132, 259.91162, 31.203768, -89.57097, 249.01553, 33.32993, -134.61493, 189.25674, 20.04436, -77.91765, 193.52179, 21.947237, -41.45961, 211.62143, 33.01443, -113.18797, 64.00811, 31.038443, -140.59079, 170.20906, 29.650822, -128.50931, 215.55728, 32.046013, -162.44849, 218.41391, 32.25493, -124.75426, 134.84354, 29.18704, -87.22658, 161.24512, 30.735361, -151.7708, 115.11708, 9.646767, -57.072083, 201.94992, 23.851068, -59.308945, 6.496849, 29.003574, -49.738434, 75.696, 19.70325, -76.05722, 158.13725, 31.549372, -126.710144, 81.97926, 7.1816206, -55.185913, 104.96292, 30.995625, -136.11967, 185.68271, 17.737528, -49.237427, 196.42511, 28.463203, -128.88388, 182.18585, 12.614834, -64.58804, 65.08672, 30.140223, -197.23407, 3.6991196, 31.509142, -110.09814, 169.47983, 27.261797, -113.05566, 162.60626, 25.05038, -82.90802, 1.6067505, 30.414454, -139.35968, -5.1370506, 32.09352, -88.82181, -36.18975, 30.101221, -108.45678, -27.90152, 31.680239, -129.18942, 72.89995, 29.292795, -184.1348, 173.30109, 19.488148, -72.413086, 76.29648, 1.5913509, -35.18112, 129.01027, 32.570923, -138.60483, 117.0748, 13.394113, -63.368637, 230.31833, 32.77748, -122.00255, 180.68306, 30.095728, -151.93857, 221.10013, 34.531475, -105.64107, -17.984566, 30.502014, -128.24109, 174.35529, 12.723139, -42.755615, 227.23474, 33.707508, -91.62024, 3.1664848, 33.562805, -73.867615, 228.70602, 28.159445, -66.26245, 138.1044, 32.261196, -139.69011, 133.79361, 32.514557, -178.94753, 40.034225, 33.30459, -100.06295, 226.40976, 27.438482, -56.998184, 25.714142, 31.219658, -112.3356, 108.59091, 32.58708, -207.50545, 169.50497, 20.596087, -86.01785, 100.88248, 30.587461, -101.87283, 264.77325, 30.704727, -88.10921, 94.06441, 33.736595, -112.01522, 115.73512, 31.597382, -142.87857, 169.66107, 30.739563, -164.04846, 80.0753, 27.799887, -100.04186, 92.12456, 1.1520478, -47.101074, 158.1793, 31.472254, -131.29916, 253.36816, 32.651306, -160.01797, 50.09072, 17.20584, -45.69844, 244.23749, 30.469105, -82.13458, 256.14157, 33.404007, -135.7576, 42.10177, 30.126137, -136.39682, 201.12152, 29.312195, -170.17346, 101.17406, 5.1013494, -55.131683, 92.123764, 31.580961, -166.04962, 160.92781, 31.99296, -172.144, 119.88205, 7.642634, -48.8096, 88.18964, 31.215393, -168.94379, 90.38699, 27.218708, -94.4761, 207.23663, 25.975775, -53.270935, 231.53458, 34.013763, -160.39073, 223.3765, 33.252953, -160.59125, 145.03043, 33.436016, -186.25339, 129.0977, 12.752407, -55.57515, 155.7545, 28.337187, -82.792725, 46.966385, 24.44599, -68.09042, 98.71773, 31.4406, -182.61435, 249.5451, 32.69987, -89.53133, 67.05609, 30.292967, -155.96024, 262.2099, 33.451458, -112.5065, 139.68886, 2.2233033, -15.209717, 148.91235, 4.759023, -20.312775, 143.91873, 24.76637, -116.20943, 216.00763, 33.285355, -92.7028, 234.74164, 34.12014, -96.14265, -1.5046616, 30.752562, -126.12628, 189.84462, 21.948177, -81.69516, 207.66998, 28.983809, -74.40985, 46.728127, 26.6238, -178.33714, 7.7969856, 27.244356, -171.42007, 19.666237, 35.744247, -89.646484, 157.1722, 22.901276, -96.13364, 232.29504, 34.346874, -155.8502, 165.40523, 33.131508, -183.92935, 177.44325, 30.092674, -157.64746, 28.985405, 26.533907, -177.14844, 14.24913, 31.42136, -131.34406, 42.002007, 31.626963, -111.24857, 130.58073, 22.499945, -74.150314, 153.3445, 15.563187, -56.20465, 35.96705, 33.147793, -100.92672, 0.6513672, 30.291485, -56.871597, 206.35126, 30.227646, -165.86806, 86.700195, 17.130245, -76.98453, 83.83307, 31.534384, -164.38762, 210.84912, 31.132936, -158.88596, 245.48956, 33.2611, -127.11482, 130.60329, 32.3857, -144.6908, 130.51291, 29.274385, -89.77362, 16.914917, 32.938103, -107.8979, 113.8257, 28.805552, -96.176544, 167.62764, 19.471638, -92.47562, 24.184479, 25.82887, -169.14075, 0.75953674, 31.937899, -99.94363, 50.969604, 28.749214, -148.30577, 90.85646, 30.851074, -197.7344, 120.532486, 29.274385, -97.56147, 46.1243, 28.823298, -189.3334, 50.008186, 31.56865, -99.172966, 229.96854, 33.691715, -166.26636, 76.00693, 27.732573, -123.140564, 143.53761, 31.63245, -171.15901, -23.567978, 31.65404, -133.14369, 219.39886, 30.20807, -80.07721, 34.63594, 34.59951, -92.11721, 134.21487, 32.975586, -184.78247, 135.89116, 4.799821, -27.868423, 32.32525, 27.427467, -182.92644, 189.6668, 28.35149, -128.47661, 204.54718, 29.310484, -128.50397, 150.5855, 23.881575, -74.29657, 129.79674, 33.044968, -190.03336, -32.53393, 29.923246, -105.07107, 90.17784, 0.097748026, -39.917526, 193.40446, 25.318573, -84.90222, 73.0167, 4.29321, -40.16803, 152.48497, 31.246714, -152.23111, 183.48257, 14.046988, -57.73781, 113.80356, 27.024946, -92.419235, 7.9303055, 27.39623, -161.49268, 73.773895, 10.19848, -53.781662, 131.22589, 26.46272, -81.79097, 85.182205, 13.202264, -69.498, 195.4677, 21.199463, -55.464294, 16.800568, 29.94031, -48.045944, 16.891342, 35.757736, -82.34654, 156.24104, 31.135656, -151.3367, 86.38133, 31.179989, -141.60254, 30.512558, 34.82576, -92.635925, 96.54028, 31.133297, -186.88264, -11.733158, 30.139608, -96.72591, 115.44849, 22.952124, -83.010315, 49.35044, 28.26531, -186.5444, 91.38405, 31.137272, -173.84644, 13.521408, 35.016434, -95.41828, -16.413029, 30.041851, -63.006912, 223.13022, 35.226543, -100.00714, 236.4299, 27.491705, -60.688538, 139.27419, 16.192305, -60.961212, 213.9671, 30.736113, -84.57193, 72.48442, 26.520721, -112.42781, 166.67729, 32.448326, -175.30585, 60.34484, 18.832626, -69.51517, 114.82707, 2.4086301, -35.294342, 70.83318, 9.235473, -48.820496, 82.61461, 31.021961, -168.96306, 59.752846, 25.266108, -84.49298, 79.745575, 30.45319, -171.38481, -2.030075, 30.723143, -60.845673, 24.360046, 34.98651, -74.95708, 227.3703, 26.355719, -50.847107, 6.1927795, 30.035624, -142.00966, 110.78294, 31.886553, -196.98044, 229.47824, 34.9196, -104.99442, 91.462555, 30.741898, -188.80289, -10.641239, 29.488604, -111.90448, 242.18521, 34.092525, -115.72742, 101.09517, 31.046415, -197.17001, 152.8577, 24.243486, -111.23328, 106.06236, 26.47657, -94.267715, 33.427742, 26.002703, -173.0411, 239.33408, 34.08165, -153.18997, 162.4599, 31.063272, -166.03308, 222.81775, 32.63762, -126.461395, 60.65634, 27.740662, -167.36215, 95.920074, 30.806936, -196.97882, 177.27386, 12.69516, -51.155914, 39.832855, 31.242945, -116.042435, 103.930405, 28.29114, -124.58632, 112.09914, 2.990619, -41.267242, 85.31526, 30.145182, -184.59528, 107.160324, 0.4104052, -22.657074, 119.85498, 28.703447, -91.471985, 27.86615, 27.00343, -154.29404, 55.74247, 29.145199, -114.50982, 164.05284, 30.531715, -148.36331, 156.30344, 31.679167, -135.21942, 101.15286, 30.57057, -136.06693, 83.01753, 0.64483106, -38.705933, 96.11952, 0.14075392, -29.034668, 12.877731, 34.290253, -70.299515, 165.96387, 30.140278, -138.5824, 147.69325, 31.990068, -174.47656, 46.73771, 32.26224, -102.96911, 68.951, 2.981656, -25.41034, 234.85013, 34.071705, -161.9208, 48.89669, 27.677984, -153.50456, 242.64758, 35.163536, -105.16531, 22.56662, 30.880835, -133.10675, 116.08484, 6.0829086, -47.819504, -14.925461, 31.281738, -143.5387, 215.30548, 24.91721, -51.334824, 63.01744, 25.885235, -95.75826, 170.03282, 29.772741, -140.9445, 35.023994, 28.213486, -186.05798, 126.863174, 3.7503657, -29.952759, 182.66318, 25.681181, -99.249794, 224.19202, 29.477633, -72.44745, 177.69351, 31.388441, -176.2076, 163.57512, 30.522648, -144.5544, -24.394833, 29.62361, -93.20956, 221.95053, 33.181877, -140.3699, 166.63416, 23.297157, -80.448944, 251.54428, 29.131021, -69.38429, 1.2318344, 32.67279, -68.68584, 56.505615, 29.440653, -192.18898, 34.06877, 34.074768, -76.12309, 116.393814, 31.335354, -138.0157, 195.02727, 28.404385, -144.19287, 169.17969, 22.391188, -103.90316, 236.78146, 31.211987, -85.86264, 124.8815, 29.238333, -129.6871, 221.82947, 33.63099, -91.52501, 228.88403, 33.939884, -141.46823, 50.788742, 14.6599865, -40.25186, 175.79129, 29.96486, -149.71838, 33.39795, 34.66413, -83.2486, 148.45241, 24.916155, -98.193275, 151.50365, 34.24694, -199.68463, 188.81715, 29.171034, -145.14505, 178.16872, 24.317457, -100.673775, 142.2688, 21.077446, -71.04817, 9.227539, 30.535654, -139.52869, -6.4974365, 30.400845, -155.547, 204.66553, 29.724726, -157.03276, 58.663284, 28.52748, -116.55749, 175.50606, 32.37754, -180.02689, 228.75748, 33.100986, -118.177055, 180.6364, 29.327654, -122.11421, 128.32602, 26.112738, -122.477554, 3.4812813, 30.891308, -118.70816, 226.17554, 32.645798, -123.27103, -12.889477, 31.966722, -77.68147, 175.24722, 16.699541, -68.081635, 152.48503, 31.66876, -146.31293, 219.54092, 28.98593, -65.6481, 36.417107, 25.831873, -159.20982, -28.257597, 30.92475, -124.27489, 230.54294, 24.607553, -43.44684, -8.756912, 32.229935, -77.48877, 86.74242, 30.777884, -174.19202, 252.36008, 34.72179, -111.26425, 137.25449, 33.316944, -187.04024, 136.64348, 31.697506, -147.13477, 143.87523, 26.387825, -96.43611, 38.207726, 25.82812, -172.2625, 194.69226, 29.976995, -96.93224, 45.572823, 18.202269, -42.777527, 12.690346, 26.601954, -172.42668, 0.6488724, 28.79347, -154.41415, 22.59069, 33.248665, -65.107315, 8.793617, 27.911594, -154.04391, 26.543724, 35.52185, -88.78212, 120.18161, 28.922302, -107.59534, 117.31503, 31.187836, -130.7248, 162.43663, 21.901495, -92.56158, 130.78809, 29.274385, -94.16818, 98.00375, 27.070517, -94.73717, 260.29358, 33.960716, -119.06874, 49.687035, 28.183836, -79.38257, 146.91553, 22.476835, -72.69182, 190.97882, 28.05861, -95.9242, 182.4577, 28.917624, -134.67957, 209.32071, 30.598097, -179.07574, 138.58507, 30.42714, -129.66391, 220.45221, 33.334, -174.16605, 197.73056, 28.55738, -148.23431, 43.06584, 26.488054, -156.62914, 44.432243, 23.416079, -60.899094, 171.69211, 33.029976, -192.26952, 121.053635, 6.2962737, -43.725204, 192.75761, 29.172335, -125.19786, 21.7585, 27.829681, -151.59262, 7.064171, 28.408766, -150.20697, 131.80804, 37.649395, -213.23674, 85.60498, 29.038506, -97.9361, 244.81412, 29.43125, -72.32378, 7.6035767, 28.505018, -179.86954, 47.781227, 22.498266, -64.469345, 53.452477, 29.022635, -108.39921, 231.20605, 34.855892, -98.88985, 242.3312, 32.927055, -139.17673, 59.128014, 21.586672, -74.474304, 62.22905, 31.04858, -136.05951, 247.43845, 33.540707, -147.52866, 83.773224, 32.005974, -106.70881, 232.05515, 34.61598, -107.3728, 169.2147, 30.225231, -157.73256, 94.1543, 20.52743, -83.1573, 262.207, 33.165863, -136.1405, 66.58798, 4.594807, -32.238922, 117.06738, 16.461626, -69.42386, 212.31686, 31.458315, -166.09636, 209.64899, 27.370512, -63.45764, 150.72055, 7.4806933, -36.770462, 239.76843, 33.936676, -173.00612, 113.52414, 31.694605, -182.93085, 201.22148, 30.925926, -121.412, 185.84322, 18.449339, -45.605118, 31.917252, 31.944937, -107.77889, 52.841118, 29.080677, -137.8506, 210.78967, 29.453161, -71.33092, 165.25912, 27.619991, -115.81132, 13.550789, 34.237514, -101.51136, 122.05545, 31.823511, -181.93544, 203.57947, 24.61461, -66.05827, 89.45853, 13.552036, -71.40289, 172.76706, 26.254395, -108.880005, 198.21584, 29.827345, -125.008446, 222.70447, 32.558834, -121.07495, 188.4475, 29.2292, -174.39629, 73.4524, 30.670473, -160.10278, 133.95764, 27.242792, -102.734795, 35.794945, 26.84546, -179.45296, 13.715294, 31.659533, -123.53667, 51.649628, 26.24026, -172.9896, 255.98007, 33.56363, -105.85141, 100.03958, 31.715923, -143.19476, -27.288439, 30.977983, -81.828125, -21.47327, 30.698528, -126.45362, 193.59203, 21.229147, -74.4373, 150.0547, 33.085262, -183.3953, 134.47545, 3.4083343, -23.861603, 264.75732, 32.71314, -145.28824, -23.907957, 31.124006, -70.89145, 203.97635, 32.42073, -102.51706, 133.06035, 4.762508, -30.073334, 104.836655, 29.987314, -114.102264, 61.7601, 6.492998, -30.770416, 17.590492, 28.992163, -145.78424, 229.31717, 30.332964, -78.1199, 179.64339, 15.116981, -68.30904, 130.51291, 32.043285, -173.83246, 28.869835, 31.43875, -110.37748, 165.81013, 30.208132, -133.50735, 97.212906, 31.465744, -179.37703, 15.536942, 35.420456, -77.13229, 65.398026, 29.470362, -192.41826, 158.48746, 31.27143, -141.33438, 68.743996, 29.900818, -195.16614, 82.46428, 16.022345, -73.07947, 79.541275, 29.27455, -122.5612, 182.95894, 19.503914, -85.08426, 111.02138, 27.65855, -113.4032, 249.63397, 33.491005, -128.11401, 64.49886, 27.738783, -178.94281, 35.341385, 27.667604, -150.31105, 200.10974, 29.123758, -165.85448, 85.08444, 8.703311, -60.96559, 176.95287, 29.274717, -125.02259, 97.582855, 2.248299, -49.71988, 72.134056, 31.162771, -147.42564, -21.119026, 29.558985, -111.54809, 40.335, 34.39758, -85.78641, 0.16122818, 29.849829, -143.85011, 249.01309, 34.76741, -115.934204, 238.01978, 33.637547, -116.106255, 140.64783, 28.19887, -94.68234, -24.577782, 29.566313, -103.45568, 64.980606, 24.360138, -110.06916, 70.41906, 2.357595, -21.684952, 80.526764, 0.87399745, -31.899399, 93.80855, 25.758936, -91.9836, 144.60178, 29.99374, -126.697876, 124.66164, 29.274385, -102.25184, 77.22711, 1.386378, -27.35794, 145.92963, 14.000102, -55.038864, 134.55699, 29.091269, -127.81395, 83.86928, 3.3116846, -48.749146, 194.74962, 29.825129, -106.4139, 249.02069, 33.88879, -93.80359, 158.5848, 32.34116, -174.90471, 248.01865, 33.266987, -155.64471, 153.15495, 25.134285, -95.245316, 39.621666, 34.16217, -94.131805, 169.43105, 21.03283, -72.1176, 207.49176, 24.33142, -46.694107, 154.19798, 7.414161, -39.15741, 43.43139, 27.015497, -180.53885, 192.00287, 29.05602, -147.8368, 216.05865, 23.284475, -42.87079, 210.38528, 23.709766, -41.058075, 180.68512, 21.107038, -91.38966, 202.7966, 31.52284, -115.36195, 112.1288, 31.078125, -132.20908, 177.71902, 14.1597395, -45.420486, 159.12012, 24.826525, -73.74158, -42.995747, 32.8758, -96.743904, 111.21446, 4.842418, -48.948456, 174.16736, 18.519068, -85.18164, 200.70702, 25.979084, -76.08833, 134.32419, 33.603233, -190.82233, 71.57663, 30.102339, -165.77213, 144.22348, 31.942911, -131.02103, 270.98416, 31.864695, -149.46701, 83.371, 30.88841, -121.02436, 106.0813, 31.44151, -196.84264, 184.73566, 16.091228, -53.041107, 23.615402, 31.657658, -56.166473, 255.93362, 33.271317, -101.69045, 67.933266, 15.015493, -58.49997, 205.7445, 25.710672, -59.14978, 2.5424042, 33.654533, -82.841064, 145.27077, 32.081264, -134.37172, 134.53484, 37.221222, -206.55295, 47.33465, 28.714296, -145.3686, 17.316826, 26.216997, -172.28085, -7.379013, 30.630728, -133.3695, 132.43745, 17.246616, -63.336258, 233.26785, 32.894024, -137.39703, 165.09499, 14.812158, -57.401672, 223.39462, 33.75277, -111.066696, 249.9267, 29.677937, -77.77551, 149.003, 27.254765, -118.96745, 90.86821, 33.63571, -114.688774, 47.52395, 25.947226, -171.46393, 222.15265, 26.113525, -53.108643, 23.009598, 32.742947, -61.086426, 217.60638, 31.298769, -86.35805, 40.61946, 20.384974, -42.16719, 135.21355, 8.19567, -40.324875, 168.07523, 30.147552, -148.99475, 124.70462, 34.02333, -197.69516, 242.69843, 35.020157, -108.78569, 187.25879, 17.390598, -35.254715, 74.445526, 29.133251, -176.75615, 61.942284, 28.750269, -189.15157, 101.51849, 0.7305479, -35.643143, 226.18045, 31.335476, -83.507095, 111.43634, 30.751707, -103.49531, 174.70041, 29.815702, -114.76298, 107.81024, 31.76201, -190.81361, 188.683, 29.172934, -162.49393, 123.34329, 29.399479, -105.732834, 157.93846, 16.229511, -57.791565, 6.7454033, 34.353436, -85.81099, 257.33328, 33.231308, -143.04813, 202.15149, 29.789825, -184.61191, 9.295689, 34.352097, -96.06034, 11.148521, 32.828983, -64.410706, -25.9304, 29.99406, -88.69145, -17.126308, 31.005474, -134.8411, 93.85286, 12.802324, -70.29399, 80.43756, 30.812937, -194.75183, 54.88427, 29.443848, -98.18865, 55.322487, 29.966438, -92.53768, 83.49646, 31.772955, -158.60849, 80.97543, 29.832882, -180.97226, 224.5758, 33.219112, -164.36122, 19.28138, 28.70053, -42.16754, 86.16794, 30.520071, -180.32098, 109.6624, 29.65758, -109.92263, -6.283615, 30.294786, -122.971344, 229.45523, 32.272686, -86.71019, 242.66238, 31.775755, -87.64105, 254.91733, 33.42705, -139.12012, 174.0381, 22.379322, -100.46975, 88.561005, 24.666409, -89.890335, 185.11491, 29.447496, -165.49753, 50.676453, 30.367725, -104.223816, 205.56433, 28.939524, -136.64856, 55.52619, 28.266981, -102.78435, -34.841354, 32.457474, -83.629105, 110.50981, 31.921957, -202.84563, -13.277119, 30.781954, -90.368195, 213.8274, 31.633574, -173.67496, 240.20132, 27.553703, -60.03134, 185.77934, 29.5549, -107.83361, 22.991531, 30.043127, -47.654938, 51.349716, 30.579287, -113.74045, 225.56558, 23.708956, -42.00963, 3.863739, 31.065619, -114.91642, 74.086716, 30.290874, -195.26227, -3.9723396, 30.488598, -101.3635, 15.446228, 26.034245, -168.21036, 41.729507, 28.663364, -187.98607, 239.92853, 33.060715, -122.784325, 148.04498, 7.4795947, -32.564377, 234.65189, 32.58689, -126.32428, 237.8086, 29.53812, -74.601654, 149.80356, 32.135693, -130.70801, 10.92746, 35.06438, -88.70738, 119.83391, 4.693932, -40.175385, 143.6424, 7.3684278, -32.19133, 188.6175, 29.712423, -121.46045, -16.173626, 30.83994, -67.588974)
-yaws = PackedFloat32Array(3.8629665, 3.0543349, 1.5988361, 1.7021198, 0.5792433, 3.1824682, 0.8931192, 4.778776, 0.59882295, 0.3070861, 5.8873158, 6.2378974, 1.9222963, 2.9826353, 5.7020407, 3.5008905, 0.8971946, 1.2106847, 1.7986704, 0.8092377, 3.0941467, 2.0965161, 0.39267093, 2.2510052, 3.5962813, 4.042588, 3.1061153, 0.75359875, 4.4248056, 1.5734075, 0.10206013, 2.9687824, 3.9660194, 3.614937, 3.537842, 5.9284062, 2.2845917, 4.349194, 4.6523952, 6.134197, 2.0849776, 4.4362216, 1.8446509, 5.2829776, 4.382282, 6.146379, 5.348966, 2.4200623, 5.002341, 2.362584, 5.6280475, 4.5671577, 2.218929, 3.8317487, 5.3007345, 0.030142702, 2.7719662, 4.2165394, 2.0956059, 5.1174088, 4.0743775, 5.7306314, 1.6541593, 1.887354, 5.7387877, 4.461357, 1.4707862, 6.24984, 4.9662304, 2.1738076, 1.6691462, 4.5816646, 1.5104297, 1.9884464, 2.50453, 1.1784897, 4.311695, 1.608625, 4.023323, 2.9448273, 6.1545115, 3.1350749, 6.150649, 5.8343177, 0.7783699, 5.9952683, 5.214402, 1.6308899, 3.4999278, 2.2927387, 4.959385, 5.419318, 1.4245187, 4.0822845, 6.049879, 5.662309, 0.5294422, 4.7961416, 1.9945331, 3.2792678, 1.8644166, 4.2625494, 1.4096133, 2.1433141, 5.5133266, 3.7063875, 4.3701224, 3.4205222, 2.8650613, 5.489058, 1.120558, 4.364163, 3.0074873, 5.503062, 4.786893, 4.3319983, 2.3386905, 1.5913252, 0.7178393, 0.87973845, 5.55162, 0.8564802, 1.7620646, 5.59517, 1.6566843, 0.67065006, 2.9649336, 4.5469666, 0.64751035, 0.90183926, 0.33206847, 2.7416825, 2.7537105, 0.15593313, 0.9684688, 2.590341, 3.683975, 1.178902, 3.9060168, 3.4058886, 1.0496951, 0.10695847, 0.88072443, 0.97292525, 1.8087877, 1.524431, 0.4216372, 4.7308445, 4.7517962, 0.24963641, 1.2212868, 0.72479594, 0.7736066, 0.7420086, 0.48266575, 5.7422566, 3.220177, 5.283688, 0.90652835, 4.519702, 2.3015864, 5.65092, 3.9081755, 1.0734732, 4.5480995, 4.0609636, 5.406315, 3.5379264, 0.5329912, 4.1170774, 3.7340138, 0.7415114, 3.4826589, 5.812997, 1.891163, 5.386988, 3.9163313, 4.331091, 2.5499587, 2.5191188, 1.4064, 5.038066, 3.0901413, 2.6315362, 0.0091180485, 5.6684957, 2.1265295, 4.6425753, 1.8073316, 0.4450686, 4.840976, 2.7649534, 5.2237163, 3.9072409, 3.605312, 3.061337, 2.9916148, 4.72558, 4.5060277, 6.153116, 2.998639, 6.0123096, 5.2420335, 2.7682686, 6.0038614, 0.5450249, 3.0826368, 4.049783, 6.2498484, 2.9201949, 4.952418, 2.9806488, 5.7534966, 0.4180333, 0.897568, 4.555423, 1.6855807, 0.6918958, 0.2887629, 1.6414835, 1.987181, 1.3861974, 2.350857, 4.333684, 0.9379777, 3.456532, 4.622269, 4.9871993, 0.07227845, 5.2143908, 0.21575747, 3.493443, 2.8584113, 2.2002504, 0.3466854, 4.112691, 6.0886064, 4.2168145, 5.3043594, 3.1189728, 5.208334, 0.5955083, 5.1754465, 2.8037286, 2.9755723, 3.2368114, 3.162876, 0.3449002, 0.3291632, 4.304873, 4.6412477, 5.8325934, 4.5491195, 1.0100323, 4.843791, 2.903152, 4.3196316, 2.5040698, 1.8539877, 4.7961907, 3.4804833, 2.3972585, 0.54896253, 5.259377, 4.501817, 1.4703068, 3.136679, 3.9544916, 5.6443715, 1.8119125, 1.9315917, 3.9160016, 4.7677426, 0.009611812, 0.3633645, 1.1804129, 2.3342118, 0.14636979, 2.4599957, 5.9315686, 5.7045913, 6.1598973, 4.740127, 1.8934281, 3.707856, 1.9727465, 4.454652, 1.6851239, 5.611265, 3.0263357, 4.272252, 2.4899116, 2.998208, 2.314438, 1.2059397, 5.458992, 4.342516, 2.5316052, 4.6727304, 4.3303714, 6.1903915, 2.8306546, 3.122284, 4.2034316, 1.5000345, 4.039626, 4.488658, 3.546483, 2.258001, 0.9429086, 3.60804, 3.3740242, 0.35467976, 0.28379852, 2.1891193, 0.6390214, 3.9005308, 1.4984498, 1.0044663, 5.779869, 0.12278151, 4.8236356, 0.4181755, 5.244745, 2.1947958, 5.78325, 1.8651384, 5.5952334, 1.6357976, 2.910818, 2.19346, 3.3554149, 3.480447, 5.5717916, 6.124517, 2.7384887, 0.9784512, 4.037325, 0.4925009, 0.08854981, 3.20763, 0.37099534, 1.4041287, 3.6680386, 1.6472324, 4.7438364, 5.6387033, 1.7603647, 1.414361, 3.4843235, 6.2529397, 3.85384, 0.63323367, 3.2100983, 1.4979596, 3.6010249, 5.95158, 3.0797062, 5.3351536, 5.4906974, 0.29648644, 4.602624, 4.4888897, 4.2442465, 5.7261815, 3.7398481, 0.27793303, 4.7525454, 5.865041, 5.600674, 5.0147314, 4.3156724, 5.214479, 1.8662919, 5.3672037, 2.1411574, 1.7501734, 6.168495, 6.095364, 5.369509, 5.2329903, 0.78655016, 0.06708693, 3.4739017, 6.018303, 1.0225136, 4.8888474, 5.923413, 0.022882154, 5.893408, 4.695352, 5.526686, 0.21567042, 4.2895274, 3.368597, 0.018943008, 4.0284543, 0.8201011, 3.1959987, 1.4758404, 6.2639074, 5.0143466, 3.655405, 2.4612203, 1.8880501, 5.044996, 5.332745, 4.5119467, 4.915254, 1.2522944, 3.0147805, 1.774928, 6.1362147, 4.6076612, 3.762292, 5.7884116, 4.741452, 2.36462, 3.4196715, 1.1840183, 0.4119429, 1.5692297, 6.0063114, 5.7018623, 5.956715, 4.9617577, 4.5893664, 0.30137157, 1.6243701, 1.5985113, 4.299892, 1.3120319, 0.4314348, 0.18558928, 4.0873947, 1.8340272, 3.6234167, 1.4716786, 5.771909, 1.631042, 2.063579, 4.284027, 0.60098815, 1.2281511, 3.581114, 4.72719, 1.1945382, 5.549336, 1.8616691, 2.6463492, 6.003121, 1.2346869, 2.0080168, 1.7276859, 0.74803543, 4.256378, 4.8890853, 3.815975, 1.8691138, 2.9207592, 2.3823524, 2.3546999, 2.3319411, 1.0047526, 3.7341988, 4.9046974, 2.4604063, 1.2681438, 6.144943, 3.3460188, 0.6769646, 3.3323402, 6.225456, 1.8484541, 3.5939994, 0.27311492, 0.7593993, 2.9656308, 2.1415968, 2.5293486, 5.559979, 6.2638183, 1.2116923, 1.338501, 0.21781315, 4.803446, 4.704694, 2.4783242, 5.4901204, 1.0183964, 2.5156934, 0.775931, 2.1414566, 5.863844, 4.840774, 1.6306405, 2.3667188, 3.7564287, 5.5541964, 3.6012874, 4.0421414, 3.7989008, 5.9295564, 0.435276, 5.108518, 3.3691723, 5.057864, 0.7011704, 4.5868554, 1.7839067, 0.1143933, 0.52571005, 1.287634, 2.0223472, 1.8727977, 1.7090673, 5.609313, 6.038537, 4.973691, 4.706149, 1.5313686, 0.28679425, 4.595744, 1.6175389, 6.049928, 0.30190107, 0.3004694, 5.054041, 4.750493, 5.941234, 1.1259092, 3.9217653, 3.028341, 0.013925296, 4.6211147, 3.3884463, 5.5165854, 2.428848, 1.5869986, 4.4912925, 0.7967088, 0.03322973, 1.8790587, 3.832183, 5.4387465, 1.6671184, 2.3183057, 5.4137344, 1.2951299, 3.1436117, 3.8165529, 2.347389, 4.396685, 1.0424626, 2.1242871, 0.3485386, 1.4805495, 4.5614266, 1.8622072, 4.754825, 0.9006773, 5.686249, 1.7228509, 5.0132427, 0.18162715, 4.5357933, 4.4413037, 5.0721974, 5.2830815, 6.0967097, 5.0989933, 0.90221685, 3.4103217, 0.2752788, 0.8482842, 6.2342463, 1.2708485, 1.8041785, 4.8536663, 4.9491906, 1.5537571, 5.806514, 1.1042542, 0.873325, 3.1382992, 4.6418185, 5.6434555, 1.7896237, 1.7536827, 3.1280575, 1.8460373, 4.337956, 4.6306725, 5.137063, 5.706463, 5.8401356, 1.9775705, 3.6903744, 1.1343998, 4.92529, 4.287562, 0.22807586, 3.9655302, 1.3625363, 5.4767046, 4.179968, 4.147126, 5.9869385, 4.079686, 3.642362, 4.339699, 1.6195132, 3.243948, 5.9983325, 1.5899773, 1.5722055, 5.364737, 2.584143, 0.6460841, 0.46296415, 5.9985585, 0.539552, 4.0006566, 2.123116, 2.737157, 5.8189764, 1.1915829, 2.7769954, 5.166182, 0.19092704, 3.7999768, 3.3757622, 3.1884394, 5.726989, 3.0798137, 4.342249, 2.327695, 5.3917356, 1.0745298, 6.0207424, 5.4677596, 1.4058497, 1.6888502, 3.8326578, 1.4401664, 2.0631177, 4.6057696, 0.28715917, 5.037671, 3.4122324, 3.730446, 3.557824, 0.5461921, 0.11510573, 1.6024444, 4.7474666, 1.2359029, 2.3752186, 0.4485575, 0.84765315, 4.9883885, 1.883437, 6.101759, 2.3524404, 2.0752249, 2.7545414, 4.004172, 0.39506513, 6.0240345, 4.9296665, 1.2092603, 4.9040565, 0.15348944, 0.39443305, 5.307434, 6.1297317, 1.0494751, 4.319084, 1.8836722, 5.868554, 4.0624676, 4.6509695, 0.2000322, 5.9718814, 4.300419, 1.6997777, 5.090731, 2.8814707, 3.5752318, 1.8053858, 3.0430982, 2.0711613, 5.706334, 5.188131, 1.8352174, 6.1283154, 6.098677, 5.597952, 1.4652848, 2.5526419, 1.3234392, 4.1549253, 1.2028382, 1.0194935, 3.9852986, 0.048140846, 4.887562, 1.7837731, 4.338362, 2.7639544, 0.85440856, 4.9280505, 0.20212917, 3.7307222, 2.1722443, 1.609597, 2.7455726, 2.538565, 1.8276626, 2.7552025, 3.838854, 3.7936292, 3.4153464, 6.1861973, 0.79595643, 0.81971014, 1.8236254, 0.14460841, 5.4406266, 0.7082412, 5.819548, 2.7280343, 3.8297021, 4.4195433, 3.5510364, 2.3891492, 1.7083982, 2.1029046, 2.6936517, 0.7955581, 2.7637064, 4.1195745, 5.8218164, 0.009513182, 4.527613, 4.87666, 3.4132597, 5.072793, 4.993264, 4.6624923, 3.607241, 1.472425, 0.22069049, 4.854336, 2.311395, 4.656628, 5.5981064, 1.0991777, 1.2338638, 4.188717, 1.0872245, 3.0672803, 1.6024398, 2.6408625, 1.8579, 3.206331, 0.19987161, 4.6166477, 4.257373, 2.0589626, 1.8904332, 3.4984524, 0.3743112, 2.4937744, 1.6436139, 1.0941749, 1.34456, 5.857879, 1.1362083, 5.2139716, 3.2956445, 2.912266, 6.2377806, 2.6090422, 1.0531639, 3.3679128, 0.010845158, 2.877964, 5.3398733, 1.9092872, 0.4918002, 4.0366416, 5.1801066, 4.428219, 1.1647621, 1.9808061, 4.480712, 0.82521826, 4.1594987, 1.5310687, 3.36578, 5.452443, 3.1183987, 2.8342538, 2.038999, 4.363936, 2.54951, 0.7478077, 5.596824, 4.858068, 4.591112, 2.4857104, 3.307406, 4.024977, 0.24778298, 2.231414, 0.478694, 3.209993, 0.7931796, 4.5517426, 4.8298635, 2.8928668, 2.356917, 3.5406456, 1.038304, 5.420722, 2.8888805, 1.6204927, 5.408361, 2.3341732, 1.8099301, 0.6869346, 0.1182711, 6.2191987, 2.221025, 0.12221944, 0.31868356, 4.025233, 3.6519947, 6.0480213, 0.60266834, 5.927823, 3.326271, 2.3971748, 0.7428431, 3.3132885, 0.56879437, 5.9425354, 4.7620096, 3.9838417, 5.5804696, 4.4702706, 0.505372, 1.8835754, 2.3339686, 0.77492076, 0.3403811, 0.28882918, 0.6735036, 3.7088606, 2.2836761, 3.5540257, 0.37379572, 3.2121284, 3.2621014, 3.2535388, 6.1880217, 3.3059382, 4.2563686, 4.4287586, 4.0406184, 4.0773315, 1.9908187, 4.4428806, 4.681565, 4.500908, 1.1369233, 5.7461624, 5.668435, 2.5369372, 3.640552, 3.995317, 0.83734864, 2.292014, 2.0471978, 4.916752, 0.11994824, 3.3252404, 2.1536663, 4.1580462, 1.0089787, 2.285901, 3.466188, 0.96545666, 5.9663763, 2.282622, 0.45309198, 3.0395353, 1.1714735, 3.9101467, 0.18655527, 3.117712, 5.834545, 4.296418, 5.426009, 1.0430576, 0.3591515, 5.042383, 5.269181, 3.9082055, 5.4366856, 5.1326423, 6.076416, 5.9927144, 2.6433058, 5.144233, 5.592039, 0.16199479, 5.744035, 0.70172924, 6.04206, 0.45632815, 3.8602746, 0.88677233, 0.29036963, 2.9699109, 2.8480704, 0.03197025, 2.6924567, 3.954613, 0.0036968668, 5.586622, 1.2401054, 3.6919932, 5.9382887, 1.5955054, 3.13018, 3.954792, 4.7701817, 1.1107413, 5.109566, 1.6897229, 0.7639241, 6.2553973, 4.3478184, 1.8233806, 6.024556, 6.077322, 4.690313, 4.2002454, 5.057692, 2.126633, 1.6158566, 5.9881635, 5.521698, 2.0768619, 4.6677585, 5.976562, 5.166611, 3.8905673, 2.6464245, 2.7015898, 4.0486016, 1.1800442, 3.3465154, 5.4657116, 3.5476391, 0.45760924, 5.864321, 0.8094974, 3.8331237, 6.080002, 4.290396, 2.2471545, 1.8455737, 5.778415, 6.1612315, 0.7203764, 1.494199, 3.5350523, 0.05833452, 1.0742481, 0.9479647, 2.1980045, 3.8498752, 1.0441074, 0.6975364, 2.8698752, 2.751997, 1.7844833, 1.2470752, 1.9006971, 5.14356, 0.00081783824, 2.4888673, 1.544623, 5.4294214, 0.32453212, 1.0020099, 4.0064135)
-kinds = PackedInt32Array(1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1)
-looks = PackedInt32Array(3, 3, 6, 2, 8, 0, 1, 7, 6, 1, 1, 0, 1, 8, 5, 1, 5, 6, 5, 1, 6, 4, 7, 6, 2, 5, 1, 8, 7, 3, 0, 1, 3, 8, 6, 8, 3, 2, 6, 1, 3, 6, 3, 1, 7, 1, 8, 7, 7, 2, 8, 4, 8, 0, 1, 7, 1, 1, 3, 5, 6, 1, 5, 4, 7, 1, 6, 2, 0, 1, 6, 1, 3, 7, 6, 5, 1, 0, 4, 3, 5, 8, 7, 1, 2, 3, 7, 4, 3, 7, 2, 5, 4, 3, 2, 7, 1, 4, 6, 5, 0, 4, 4, 6, 8, 6, 2, 5, 7, 1, 4, 8, 1, 6, 5, 1, 0, 7, 5, 3, 5, 4, 5, 1, 7, 5, 1, 8, 1, 5, 0, 5, 3, 7, 7, 1, 6, 2, 2, 7, 5, 2, 7, 4, 8, 0, 7, 3, 3, 7, 3, 3, 7, 1, 5, 4, 5, 5, 1, 8, 3, 6, 3, 2, 8, 4, 1, 0, 8, 3, 2, 5, 5, 0, 5, 8, 6, 0, 3, 5, 4, 7, 6, 0, 7, 3, 8, 3, 0, 0, 7, 1, 6, 8, 7, 1, 6, 2, 8, 7, 7, 6, 0, 7, 4, 3, 1, 0, 4, 6, 5, 4, 5, 3, 7, 8, 6, 2, 6, 3, 4, 2, 4, 0, 1, 1, 5, 3, 8, 2, 2, 5, 4, 2, 6, 5, 7, 4, 6, 2, 6, 4, 6, 1, 5, 1, 7, 3, 6, 1, 3, 5, 3, 8, 0, 4, 0, 4, 4, 4, 3, 3, 5, 5, 8, 6, 0, 3, 2, 4, 7, 4, 5, 5, 0, 6, 6, 3, 1, 1, 5, 2, 4, 2, 0, 3, 6, 3, 7, 7, 5, 1, 3, 7, 7, 6, 2, 5, 3, 1, 2, 1, 4, 1, 6, 0, 1, 1, 5, 8, 4, 8, 3, 1, 7, 3, 0, 1, 2, 5, 1, 7, 5, 3, 7, 8, 3, 7, 5, 3, 5, 1, 0, 1, 8, 6, 7, 5, 1, 8, 7, 6, 1, 0, 3, 2, 6, 8, 1, 6, 5, 1, 1, 3, 7, 3, 3, 5, 6, 4, 6, 3, 5, 0, 4, 3, 5, 3, 3, 4, 5, 3, 8, 0, 6, 1, 6, 6, 4, 7, 5, 1, 3, 7, 5, 8, 1, 3, 6, 1, 0, 5, 1, 8, 1, 1, 5, 3, 3, 2, 6, 3, 0, 7, 4, 3, 5, 7, 6, 8, 5, 1, 8, 1, 2, 8, 2, 3, 6, 4, 1, 7, 3, 5, 1, 1, 3, 6, 6, 3, 8, 1, 5, 5, 5, 3, 5, 0, 7, 6, 7, 2, 7, 1, 1, 1, 2, 0, 3, 3, 3, 3, 7, 7, 2, 1, 4, 2, 1, 6, 0, 6, 6, 7, 6, 7, 4, 4, 3, 5, 7, 5, 1, 5, 4, 6, 1, 8, 5, 5, 8, 7, 0, 2, 8, 6, 2, 2, 1, 0, 1, 8, 5, 4, 2, 3, 5, 3, 0, 5, 1, 3, 0, 7, 3, 0, 3, 2, 4, 6, 3, 2, 7, 7, 8, 5, 3, 1, 6, 5, 1, 6, 4, 7, 3, 0, 3, 0, 4, 8, 1, 0, 2, 5, 8, 4, 3, 1, 7, 0, 3, 3, 4, 1, 2, 4, 8, 3, 1, 2, 6, 1, 8, 3, 1, 1, 0, 2, 7, 4, 1, 1, 7, 7, 3, 3, 4, 6, 2, 2, 6, 5, 0, 5, 5, 3, 7, 3, 5, 2, 1, 6, 3, 6, 4, 3, 7, 0, 7, 6, 5, 1, 5, 4, 7, 1, 8, 5, 5, 3, 3, 1, 7, 3, 1, 3, 1, 3, 7, 2, 5, 1, 5, 3, 8, 6, 4, 5, 4, 8, 5, 6, 5, 3, 6, 4, 2, 5, 2, 4, 2, 8, 1, 7, 3, 5, 4, 3, 1, 2, 7, 2, 8, 0, 5, 2, 1, 5, 8, 7, 1, 0, 4, 7, 4, 4, 2, 1, 3, 4, 5, 0, 4, 2, 0, 6, 3, 1, 8, 6, 7, 3, 8, 6, 6, 1, 1, 7, 8, 2, 6, 4, 2, 1, 4, 0, 1, 5, 3, 3, 6, 2, 4, 5, 4, 6, 6, 5, 7, 7, 7, 8, 5, 5, 2, 3, 1, 0, 2, 0, 4, 1, 0, 3, 7, 3, 6, 1, 1, 6, 5, 2, 2, 5, 5, 2, 7, 2, 1, 0, 1, 0, 3, 6, 5, 2, 5, 1, 4, 0, 8, 4, 1, 3, 7, 0, 1, 7, 6, 1, 7, 8, 0, 1, 5, 3, 8, 1, 6, 2, 2, 4, 6, 3, 5, 3, 8, 0, 6, 3, 7, 6, 1, 7, 2, 6, 1, 8, 3, 5, 6, 1, 6, 3, 5, 3, 4, 2, 7, 3, 7, 2, 2, 1, 5, 7, 2, 7, 1, 1, 5, 7, 1, 5, 3, 0, 7, 3, 8, 6, 4, 5, 3, 3, 1, 1, 7, 3, 3, 3, 5, 1, 5, 4, 4, 5, 3, 6, 3, 7, 3, 6, 1, 8, 1, 8, 1, 0, 1, 7, 8, 6, 7, 0, 5, 7, 1, 7, 6, 1, 2, 6, 7, 2, 8, 0, 2, 2, 3, 2, 0, 4, 8, 1, 6, 3, 0, 4, 6, 7, 7, 6, 0, 3, 7, 8, 7, 4, 0, 7, 7, 3, 7, 4, 1, 8, 6, 6, 4, 7, 7, 6, 3, 6, 7, 4, 0, 1, 6, 2, 6, 5, 6, 4, 2, 4, 1, 8, 7, 8, 7, 7, 5, 3, 6, 3, 8, 4, 1, 3, 5, 6, 4, 8, 4, 5, 7, 3, 4, 7, 3, 1, 7, 1, 0, 4, 7, 4, 7, 8, 2, 1, 5, 5, 5, 2, 1, 4, 4, 0, 8, 1, 0, 1, 3, 0, 5, 3, 1, 6, 1, 0, 7, 1, 5, 1, 1, 5, 5, 1, 5, 3, 1, 5, 7, 5, 3, 7, 1, 1, 5, 8, 5, 3, 0, 7, 7, 6, 5, 6, 7, 4, 4, 5, 4, 8, 1, 4, 7, 3)
+ids = PackedInt32Array(1, 5, 6, 10, 13, 14, 15, 16, 17, 20, 23, 27, 28, 29, 31, 33, 36, 44, 46, 48, 52, 53, 56, 57, 60, 61, 62, 63, 64, 66, 67, 68, 69, 70, 71, 74, 75, 77, 78, 81, 82, 85, 87, 88, 89, 92, 93, 96, 99, 105, 106, 107, 109, 110, 111, 112, 113, 114, 115, 117, 120, 121, 123, 126, 127, 129, 132, 133, 134, 135, 138, 142, 143, 146, 148, 149, 152, 156, 157, 158, 163, 164, 167, 171, 172, 173, 175, 177, 178, 179, 182, 187, 188, 189, 190, 191, 193, 194, 195, 196, 202, 206, 208, 209, 210, 211, 214, 217, 218, 219, 220, 221, 223, 224, 225, 226, 228, 229, 232, 233, 235, 236, 239, 243, 244, 245, 246, 248, 249, 251, 252, 253, 255, 257, 258, 259, 260, 261, 264, 265, 267, 271, 275, 276, 277, 280, 281, 282, 284, 285, 287, 288, 289, 290, 293, 294, 295, 296, 297, 299, 300, 301, 302, 303, 304, 306, 311, 316, 317, 318, 321, 322, 324, 325, 327, 328, 330, 331, 334, 335, 337, 343, 349, 350, 354, 355, 356, 357, 361, 364, 365, 368, 370, 371, 372, 374, 376, 377, 378, 379, 381, 383, 385, 387, 388, 389, 396, 397, 399, 402, 403, 404, 408, 409, 411, 412, 413, 417, 419, 421, 424, 425, 426, 427, 429, 432, 434, 438, 448, 449, 451, 456, 458, 459, 466, 467, 473, 475, 477, 480, 482, 483, 488, 490, 491, 492, 493, 494, 499, 504, 505, 506, 508, 512, 520, 524, 525, 526, 532, 536, 540, 543, 544, 546, 549, 556, 557, 563, 565, 566, 568, 569, 570, 573, 574, 576, 585, 589, 590, 593, 595, 597, 598, 601, 606, 607, 608, 612, 615, 616, 617, 619, 620, 621, 623, 624, 626, 631, 638, 640, 641, 643, 645, 649, 650, 652, 653, 655, 658, 661, 662, 664, 666, 671, 672, 674, 675, 678, 682, 683, 685, 686, 692, 695, 697, 700, 705, 707, 708, 709, 710, 711, 723, 724, 725, 726, 727, 729, 732, 734, 735, 737, 741, 743, 755, 758, 759, 760, 761, 762, 767, 768, 769, 770, 771, 775, 777, 778, 780, 782, 783, 785, 786, 787, 793, 796, 798, 799, 801, 802, 803, 807, 809, 815, 816, 824, 825, 828, 829, 831, 833, 836, 837, 842, 845, 847, 848, 855, 857, 863, 865, 866, 867, 868, 883, 887, 890, 896, 897, 900, 902, 904, 905, 906, 908, 912, 916, 919, 921, 929, 936, 937, 938, 942, 944, 946, 948, 951, 953, 955, 958, 960, 966, 970, 971, 972, 973, 979, 980, 981, 983, 984, 987, 988, 990, 996, 1001, 1002, 1010, 1012, 1014, 1016, 1021, 1022, 1027, 1028, 1031, 1035, 1037, 1038, 1040, 1044, 1046, 1048, 1050, 1052, 1053, 1057, 1059, 1060, 1062, 1063, 1068, 1074, 1076, 1081, 1083, 1090, 1093, 1096, 1099, 1100, 1104, 1106, 1107, 1108, 1109, 1111, 1116, 1117, 1119, 1120, 1127, 1133, 1135, 1136, 1141, 1142, 1143, 1145, 1147, 1148, 1149, 1151, 1153, 1156, 1158, 1165, 1166, 1169, 1172, 1175, 1183, 1187, 1192, 1193, 1194, 1205, 1208, 1217, 1220, 1225, 1226, 1228, 1230, 1232, 1236, 1237, 1246, 1247, 1249, 1257, 1258, 1259, 1261, 1264, 1265, 1271, 1272, 1273, 1274, 1277, 1278, 1279, 1285, 1287, 1289, 1291, 1293, 1294, 1295, 1297, 1301, 1303, 1305, 1309, 1316, 1317, 1318, 1323, 1327, 1328, 1329, 1331, 1332, 1347, 1349, 1352, 1358, 1365, 1371, 1373, 1376, 1381, 1382, 1384, 1398, 1404, 1406, 1410, 1411, 1417, 1418, 1427, 1428, 1429, 1430, 1431, 1434, 1437, 1441, 1444, 1448, 1450, 1451, 1454, 1459, 1460, 1465, 1468, 1469, 1470, 1472, 1473, 1478, 1480, 1481, 1482, 1484, 1487, 1490, 1495, 1501, 1503, 1506, 1507, 1510, 1521, 1522, 1525, 1527, 1528, 1529, 1535, 1538, 1542, 1549, 1551, 1555, 1556, 1557, 1560, 1564, 1566, 1568, 1579, 1587, 1588, 1589, 1590, 1591, 1592, 1603, 1606, 1611, 1614, 1615, 1616, 1624, 1629, 1630, 1635, 1644, 1648, 1649, 1653, 1654, 1655, 1676, 1682, 1684, 1690, 1697, 1698, 1701, 1705, 1706, 1708, 1709, 1719, 1723, 1725, 1727, 1729, 1733, 1738, 1740, 1743, 1745, 1746, 1747, 1750, 1754, 1764, 1771, 1772, 1777, 1784, 1790, 1794, 1795, 1797, 1798, 1799, 1810, 1820, 1833, 1842, 1844, 1850, 1859, 1860, 1861, 1864, 1866, 1867, 1870, 1872, 1876, 1890, 1892, 1896, 1906, 1911, 1913, 1920, 1925, 1929, 1930, 1935, 1943, 1945, 1946, 1947, 1955, 1961, 1966, 1969, 1977, 1990, 1994, 1995, 2002, 2005, 2009, 2011, 2015, 2018, 2020, 2025, 2038, 2042, 2045, 2048, 2049, 2059, 2060, 2061, 2068, 2070, 2076, 2082, 2087, 2096, 2104, 2108, 2109, 2112, 2124, 2136, 2138, 2144, 2154, 2157, 2162, 2166, 2169, 2175, 2181, 2186, 2187, 2193, 2195, 2199, 2200, 2207, 2213, 2214, 2221, 2222, 2226, 2241, 2247, 2251, 2253, 2254, 2268, 2274, 2275, 2276, 2277, 2278, 2282, 2284, 2287, 2288, 2290, 2295, 2304, 2309, 2319, 2338, 2340, 2343, 2346, 2357, 2362, 2369, 2372, 2377, 2387, 2391, 2393, 2396, 2398, 2399, 2402, 2407, 2412, 2422, 2432, 2434, 2437, 2440, 2448, 2449, 2450, 2452, 2461, 2465, 2466, 2470, 2472, 2483, 2484, 2494, 2495, 2499, 2506, 2509, 2513, 2521, 2524, 2525, 2535, 2541, 2542, 2547, 2551, 2564, 2577, 2585, 2597, 2624, 2627, 2628, 2640, 2642, 2653, 2656, 2657, 2664, 2667, 2674, 2680, 2684, 2706, 2707, 2708, 2711, 2713, 2715, 2717, 2718, 2719, 2721, 2724, 2736, 2746, 2748, 2750, 2756, 2769, 2776, 2778, 2781, 2792, 2801, 2811, 2814, 2815, 2823, 2825, 2828, 2831, 2832, 2840, 2850, 2854, 2857, 2859, 2862, 2863, 2868, 2873, 2884, 2890, 2899, 2901, 2910, 2925, 2928, 2930, 2931, 2934, 2945, 2950, 2953, 2955, 2956, 2964, 2974, 2976, 2981, 2989, 3003, 3005, 3008, 3012, 3020, 3021, 3029, 3039, 3053, 3065, 3069, 3070, 3087, 3103, 3113, 3115, 3121, 3129, 3139, 3158, 3163, 3166, 3187, 3188, 3189, 3195, 3216, 3227, 3231, 3248, 3260, 3272, 3274, 3276, 3277, 3280, 3289, 3290, 3302, 3311, 3329, 3342, 3361, 3367, 3368, 3373, 3381, 3402, 3405, 3406, 3408, 3414, 3415, 3416, 3419, 3420, 3430, 3436, 3437, 3438, 3442, 3444, 3447, 3454, 3461, 3462, 3483, 3484, 3495, 3496, 3497, 3504, 3534, 3535, 3542, 3546, 3551, 3553, 3555, 3560, 3570, 3596, 3607, 3609, 3611)
+spots = PackedVector3Array(148.45392, 30.982454, -164.64613, 62.32232, 25.19918, -102.38287, 89.658585, 31.635168, -103.22488, 197.13866, 20.852444, -70.57976, 167.05263, 19.850212, -96.2325, 206.57654, 31.826359, -95.07906, 147.98433, 34.374123, -195.94748, 8.413124, 32.410473, -61.83696, 267.9165, 31.310522, -92.33, 154.90314, 24.991657, -78.334335, 14.012016, 32.02402, -58.713867, 34.622086, 25.713808, -47.559998, 119.613785, 28.369436, -101.18666, -3.6329575, 32.747257, -77.42061, 29.149818, 29.192566, -145.74802, 224.57361, 34.67593, -96.1896, 66.293304, 31.070446, -143.87003, 223.59824, 28.467743, -76.10637, 110.42111, 3.327449, -45.25406, 22.73787, 25.655138, -165.40085, 266.15503, 32.93408, -112.84568, 124.37497, 31.959787, -136.05203, 142.53156, 23.165152, -105.90265, 23.205887, 32.436985, -105.773, 42.220016, 25.55992, -64.79265, 67.42523, 28.86964, -169.16522, 26.019356, 30.712582, -136.12636, 47.101692, 15.862972, -37.822144, 71.3422, 29.410795, -171.25058, 70.70852, 27.340473, -128.69812, 58.742577, 30.031288, -131.88092, 138.74345, 33.884502, -190.51459, 177.91461, 26.299437, -108.856384, 193.9789, 20.717333, -46.569733, 200.49835, 30.615168, -96.37285, 162.23843, 21.020077, -99.68218, 142.78899, 26.397076, -84.28607, 44.34163, 21.188826, -47.912872, 36.798866, 32.264633, -106.800705, 93.85324, 32.602974, -105.448395, 101.22391, 7.2793975, -60.108566, 203.55582, 16.925678, -32.03804, 80.21744, 30.410957, -190.47197, 109.68109, 31.319185, -138.37482, 47.92852, 30.864372, -115.90826, 97.54289, 0.023147762, -16.766327, 43.620934, 32.005672, -81.32149, 79.35231, 29.07218, -103.901344, 224.36267, 33.421093, -170.00134, 78.78525, 23.049757, -85.129944, 73.129295, 17.342407, -68.604675, 121.66629, 16.428822, -67.79431, 25.89457, 34.257103, -97.528046, 150.8671, 24.136263, -104.480576, 127.44879, 17.555735, -67.50412, 195.2522, 19.205784, -63.60182, 212.8183, 33.05919, -106.08739, 197.10349, 20.422617, -60.356094, 99.46277, 32.868168, -107.70318, 53.1856, 28.027166, -185.17815, 199.0584, 27.998114, -136.741, 5.033985, 31.469553, -59.013535, 96.5813, 31.6965, -142.44736, 216.83316, 34.09608, -99.76049, 198.81355, 20.230875, -40.541183, -5.599243, 30.301746, -146.77449, 183.3649, 29.40854, -113.0867, 203.35272, 19.783056, -38.37961, 108.23001, 31.75408, -183.36467, 64.954865, 28.362406, -184.83578, 96.97476, 31.495508, -138.56679, 41.29644, 31.018463, -76.5542, 127.07463, 8.500244, -48.12198, 22.719124, 31.03448, -127.263855, 55.089615, 29.912695, -119.57911, 187.53668, 28.863794, -125.59917, 69.60345, 28.627642, -176.20694, 127.57254, 32.222645, -148.5825, 138.86145, 32.072376, -174.68378, 134.79015, 5.917391, -34.961533, 125.441666, 32.024326, -184.07074, 161.51839, 24.965258, -87.945465, 30.24504, 27.062592, -45.497635, 78.78854, 29.246202, -114.54055, 148.70222, 24.308596, -114.759605, 181.68428, 28.917686, -129.61066, 80.70442, 14.838106, -69.66478, 94.956436, 28.14278, -96.80789, 169.6119, 33.15445, -183.63203, -37.224316, 31.472477, -91.69519, 22.567085, 31.534637, -110.77994, 50.900803, 29.82875, -124.77972, 205.6719, 29.463879, -149.9932, 193.54924, 28.748842, -166.56848, 110.66237, 16.88409, -76.20607, 76.01471, 1.5159582, -22.443909, -13.83374, 29.452835, -105.764175, -19.202682, 29.740444, -93.993515, 45.500664, 29.866465, -194.02934, 199.2778, 29.177265, -179.06831, 75.98784, 14.314717, -64.70213, 107.10237, 27.94236, -98.15564, 26.514137, 27.701317, -184.82033, 200.02165, 27.885954, -86.80676, 181.05165, 15.111156, -39.857285, 67.096016, 28.347395, -181.4275, 39.885628, 30.794165, -122.55765, 105.7569, 2.0971444, -43.89479, 186.42941, 25.006731, -97.550186, 31.973206, 30.745821, -128.57285, 114.686874, 32.06584, -196.9017, 156.97685, 30.69389, -161.92056, 95.75102, 5.1963444, -56.520798, 49.64711, 30.920681, -198.91785, 238.79172, 32.991116, -141.5223, 137.12311, 8.746269, -44.70146, 217.04672, 24.89396, -57.703598, 35.079094, 30.761497, -131.46658, 73.57628, 21.307775, -83.6183, 248.7337, 33.851795, -123.913185, 97.74466, 0.101808935, -20.974365, 156.95308, 22.68878, -113.83163, 28.66764, 30.79732, -132.69919, 130.26335, 34.477207, -195.93707, 245.24353, 33.950897, -93.76645, 5.490383, 31.260218, -128.01022, 13.885056, 27.06494, -158.63496, 211.35577, 24.012623, -56.435333, 213.22513, 31.429155, -169.69594, 112.78908, 29.269249, -99.781334, 183.65541, 29.704329, -160.63727, 222.40216, 29.609562, -82.61444, 228.54599, 33.921623, -112.03452, -6.7516174, 32.41417, -82.44832, 28.135353, 33.264046, -101.14994, 28.340675, 31.590738, -60.04477, 75.86902, 5.1811094, -44.884354, 120.073715, 8.597377, -52.471527, 201.80014, 28.80678, -146.34235, 83.40509, 31.791288, -206.05019, 208.48618, 29.884651, -143.91087, 72.165085, 31.133318, -142.2276, 254.2425, 33.715954, -126.86362, 53.352936, 19.29449, -61.98346, 227.42758, 33.8032, -159.88188, -22.169868, 29.502098, -107.52763, 260.52438, 32.794823, -147.42249, 234.2587, 32.587933, -132.85638, 10.943489, 26.640917, -163.504, 219.91638, 32.352455, -131.18347, 217.80072, 32.656456, -152.23752, 131.50206, 24.96713, -113.11101, 219.46735, 32.624752, -161.479, 73.06115, 21.91867, -91.20155, 141.24939, 12.561693, -55.78926, 90.07652, 0.062003627, -17.600616, 129.40149, 32.31865, -178.14764, 140.05325, 31.322233, -133.0838, 46.215843, 26.602146, -158.31775, 234.14545, 28.526518, -74.79385, 134.89255, 36.30296, -201.67783, 128.21252, 4.769048, -34.358887, 10.479111, 31.947153, -116.503204, 51.57543, 29.618996, -84.993576, 138.37703, 22.940203, -110.438416, 45.442276, 34.14117, -89.71449, 28.825699, 31.037832, -115.85932, 114.216, 12.942273, -65.84929, 16.898148, 31.40338, -126.154884, 178.12804, 30.467703, -170.06203, 129.43678, 32.551735, -184.91988, 12.054024, 31.827099, -119.80416, 100.54808, 9.111787, -63.798737, 243.24442, 33.727215, -151.04706, 62.317947, 26.095789, -90.92413, 35.984306, 31.164549, -116.49102, 261.35632, 33.30027, -132.21234, -32.713516, 29.963762, -94.39766, 202.99933, 24.159351, -70.841095, 155.09431, 20.730196, -69.25008, 136.86786, 31.29387, -163.58026, 261.0113, 33.205242, -139.8092, -32.984573, 30.151533, -113.701385, 211.75903, 30.964022, -147.397, 142.77686, 31.441648, -149.34332, 85.158966, 30.113548, -125.58799, 136.96886, 32.26008, -136.12762, 214.87479, 31.10129, -139.1495, -14.151978, 31.13341, -138.22865, 76.367645, 23.098064, -88.849686, 151.66762, 19.455435, -67.417404, 171.1388, 10.647112, -35.234695, 171.08444, 12.947689, -58.96103, 10.663773, 31.241583, -134.57529, -6.292797, 29.91374, -106.266846, 149.16962, 5.818761, -29.17215, 131.43759, 31.271112, -158.59857, -26.330204, 31.370369, -78.01816, 268.88736, 32.759254, -132.59232, 191.7669, 29.297342, -152.62659, 137.13815, 19.617653, -69.84654, 62.14943, 25.079012, -107.74514, 79.23915, 31.136385, -144.55258, 154.89854, 30.958632, -130.00096, 61.63926, 29.478903, -156.7635, 210.34378, 30.721582, -126.018456, 139.21141, 35.024124, -195.74028, 73.601135, 31.038343, -153.3613, 193.50041, 28.93455, -158.2491, 12, 35.28534, -85.345856, -4.4760895, 30.425138, -142.48706, 164.73671, 8.840494, -38.559784, 217.03876, 33.97745, -103.89666, 142.59581, 25.824528, -99.97838, 17.012886, 33.709663, -65.739975, 176.04135, 11.485556, -59.22336, 27.907036, 32.372704, -104.8991, 6.70253, 34.13172, -92.55881, 105.453186, 12.166954, -68.77205, 103.11899, 31.165016, -193.6475, 146.71794, 31.647488, -144.83203, 186.7279, 29.835485, -118.39376, 136.72472, 13.824309, -57.88832, 85.733154, 1.0773681, -45.376923, 145.93578, 34.181496, -192.21037, 143.92809, 8.205547, -37.386337, 37.612892, 32.45741, -75.86398, 129.07043, 35.83612, -201.96152, -11.259617, 29.834259, -119.954834, 199.24721, 22.053617, -46.25763, 89.78317, 30.710123, -192.37186, 122.695404, 19.120285, -72.46678, 122.121124, 21.315815, -76.93428, 57.802124, 27.580694, -88.1945, 192.4871, 28.793112, -170.57733, 95.81314, 1.0460639, -45.992172, 236.53476, 33.870613, -147.66943, -1.5291519, 29.278187, -159.00827, 151.8068, 4.8401856, -25.29361, -10.656799, 30.946192, -141.89929, 56.12381, 17.84858, -59.131866, 99.09569, 30.238636, -122.269485, -29.584402, 29.771173, -102.53296, 61.488556, 26.370863, -113.583084, 84.30846, 30.162922, -101.234955, 84.85037, 20.087915, -81.75583, -2.61195, 32.72028, -85.984024, 239.17648, 32.38183, -90.833664, 191.99582, 30.32806, -118.72289, 140.36896, 31.297941, -154.16177, 146.00426, 31.788628, -140.09514, 86.55229, 0.26899025, -20.60849, 162.93047, 26.94432, -121.37342, 100.48732, 0.3429076, -28.805527, 20.481552, 31.334402, -116.58551, 83.130585, 30.361618, -177.66905, 236.04138, 26.46392, -68.03705, 234.22568, 33.638515, -115.39555, 147.45651, 15.854338, -61.26216, 253.79681, 32.836178, -152.91422, 234.31607, 24.959484, -51.684326, 88.55202, 31.32906, -122.574646, 151.29439, 28.693666, -124.43234, 252.83002, 28.792645, -75.35971, -21.001366, 29.742702, -115.93939, 56.129402, 29.327394, -141.5704, 149.65906, 31.968767, -135.62206, 143.30196, 32.81311, -180.30359, 63.54972, 28.706985, -164.6081, 88.2496, 31.942759, -154.62386, 135.171, 10.136946, -49.434036, 190.26854, 16.886023, -59.37137, 43.00918, 31.03253, -118.50088, -10.244698, 31.466162, -67.265335, 257.5753, 32.6249, -162.8425, 29.796661, 34.89045, -77.447235, 139.74722, 5.9681945, -31.920837, 196.93396, 24.12846, -81.27716, 106.538605, 31.846186, -187.54639, 153.66977, 10.353196, -46.511703, 220.73096, 32.997997, -168.93077, 96.57048, 0.41660187, -37.332443, -21.25145, 30.220404, -121.83932, 99.55261, 31.80933, -147.32837, -16.780998, 29.61294, -98.39242, 19.17614, 35.524887, -76.241196, 185.00626, 29.52633, -170.64009, 45.56241, 29.471449, -140.00127, 42.76317, 33.695377, -97.42413, 171.3638, 31.018238, -167.40935, 261.50958, 32.944096, -107.60359, 43.837257, 26.184093, -175.63954, 260.47888, 33.57199, -128.4057, 139.74644, 4.46337, -26.460617, 142.83185, 27.026829, -122.75339, 57.06961, 27.714087, -110.86756, 30.49823, 25.591309, -163.82962, 71.5021, 30.798647, -199.38976, 208.63016, 29.974463, -82.399475, 19.882172, 32.29397, -58.540222, 100.73033, 32.58789, -208.7898, 186.77231, 29.698465, -155.18433, 77.48663, 32.14499, -205.52518, 166.38751, 20.73789, -107.24103, 159.81218, 33.140553, -186.48526, 3.2116203, 31.041882, -132.77985, 60.888153, 27.343622, -171.37607, 234.59067, 32.92124, -121.14931, 164.28276, 22.433466, -111.89067, 60.752792, 29.707148, -152.42477, 43.482666, 30.291399, -131.93748, 32.16147, 35.02516, -89.53764, 206.26886, 30.555185, -87.89273, 72.66847, 28.901686, -179.98627, 36.181313, 27.332361, -56.404114, 17.589745, 27.495943, -181.7332, 202.88535, 28.422081, -133.60016, 11.489449, 32.50251, -111.60719, 168.49135, 31.712782, -170.51724, 49.192375, 29.301992, -191.41086, 66.167206, 20.367195, -75.75357, 20.8014, 26.58783, -159.22873, 51.50609, 12.716597, -35.034103, 217.14832, 32.27623, -158.77905, 21.460434, 26.698315, -177.23589, 124.62544, 1.7596227, -23.961502, 145.31801, 35.67663, -202.30336, 184.09987, 29.94327, -176.00638, 218.62653, 21.884655, -46.860077, 246.03445, 34.931458, -112.65265, 266.5619, 33.15956, -121.036964, 46.66635, 30.37826, -124.15005, 24.444916, 34.317596, -69.939835, 121.47708, 3.7031605, -35.378647, 165.09026, 19.762985, -67.72385, 136.28886, 21.984053, -74.41553, 176.41196, 12.256464, -35.90419, -10.488777, 30.896528, -137.28448, 188.11528, 17.33929, -39.664383, 36.60367, 30.716022, -126.41621, -12.90464, 29.583387, -116.63271, 106.24263, 14.798086, -73.56671, 5.6690636, 31.261812, -122.8533, 107.4151, 9.386749, -62.675766, 4.3920593, 32.536087, -64.1501, 108.91472, 20.004225, -82.81612, 35.98855, 25.586931, -164.20331, 228.53226, 34.540943, -148.99554, 183.8681, 29.981153, -149.81808, 103.39699, 29.002224, -130.5379, -6.229004, 31.020306, -61.979187, 213.66187, 26.59511, -65.50003, 31.1818, 28.46784, -187.7952, 72.295364, 24.794422, -101.429695, 251.35898, 33.47183, -142.95685, -25.340525, 29.827295, -114.96446, 9.581688, 32.727898, -108.02108, 206.94672, 32.16674, -105.55168, 151.49059, 30.829624, -159.7887, 204.86496, 24.162832, -62.754135, 87.85426, 0.16835007, -26.11998, 152.27135, 31.592701, -170.2938, 73.37053, 2.2054772, -29.63736, 154.54466, 31.795012, -138.5326, 85.81862, 22.59351, -86.291, 177.75172, 28.048042, -112.71445, 142.61243, 17.98613, -67.154724, 32.869225, 30.239756, -141.2557, -21.956638, 30.83602, -66.280594, 59.21473, 29.927303, -148.77252, 259.76303, 32.87495, -104.49524, 160.00583, 31.029024, -146.16527, 81.1936, 18.820124, -77.7883, 241.29922, 33.529232, -145.69214, 222.63297, 30.978062, -86.28502, 41.39245, 28.510366, -146.44138, 127.914474, 14.213884, -60.81656, 193.12643, 28.196438, -140.5727, 235.61362, 32.88581, -92.620415, 160.80658, 30.914244, -137.27264, 233.12457, 33.529198, -142.24036, 96.048096, 30.963926, -190.49919, 13.644798, 33.624947, -105.34191, 75.658264, 31.134367, -157.00308, 77.43367, 31.048529, -164.41072, 24.268631, 30.949875, -123.88208, 188.68114, 17.421734, -51.871155, 32.554497, 33.4286, -72.52931, 8.948322, 34.741016, -75.00166, 221.3739, 27.809828, -70.09079, 135.41568, 25.354448, -121.65302, 13.878304, 29.387568, -144.6005, 65.76884, 30.74005, -147.46193, 1.682766, 33.495605, -78.69684, 21.46798, 30.3491, -139.27097, 96.04666, 33.03972, -115.76097, 8.900757, 34.022636, -69.63748, 234.58176, 34.82415, -100.71953, 52.187607, 27.634459, -159.36963, 135.21342, 31.241972, -154.22583, 239.07733, 32.595875, -129.56622, 47.884514, 33.626785, -94.017334, 28.07058, 26.135702, -173.42163, 175.06459, 19.05941, -76.55513, 198.65793, 28.882898, -91.29828, 207.97363, 32.67596, -100.71556, 168.21654, 30.15718, -152.66223, 212.07278, 29.965027, -134.10072, 237.21738, 34.79948, -106.25002, 154.59474, 28.582613, -87.33885, 60.670242, 23.838299, -80.9523, 20.240135, 34.799335, -97.04971, 177.21104, 29.280748, -121.31449, 14.857849, 30.757689, -52.0571, 20.571701, 29.08761, -188.54774, -17.450771, 31.716324, -80.382324, 92.63893, 31.272724, -203.70767, -20.612007, 29.519861, -98.536255, 56.628494, 28.19162, -186.53386, -25.266848, 30.605968, -84.701324, 157.11592, 11.0494, -49.088898, 182.02136, 30.794844, -181.19142, 193.53197, 21.554594, -79.752365, 203.25397, 21.179155, -43.069046, 120.7433, 27.575197, -124.68495, -13.677483, 31.363405, -85.46678, 29.001617, 29.90895, -52.233047, 108.84776, 1.0062796, -31.624985, 29.624123, 25.654448, -167.31621, -15.6967125, 31.777283, -156.7409, 60.809196, 27.134445, -176.82959, 182.12247, 14.988037, -46.825134, 152.63419, 33.230766, -186.54578, 253.39554, 34.63736, -117.94791, -20.705574, 31.093906, -83.36861, 189.68686, 29.29289, -183.54338, 221.39517, 26.392885, -60.138092, 80.54306, 30.881214, -139.45595, 134.18626, 32.29497, -142.81956, 189.82143, 29.337755, -108.654945, 31.415413, 32.134026, -68.05377, 91.80255, 4.7734833, -55.69536, 51.36486, 26.78873, -178.63966, 200.50629, 28.51893, -142.05405, 6.2527046, 32.45555, -105.066444, 251.80893, 33.792324, -96.93574, 67.20826, 22.874367, -88.14598, 192.67703, 12.166091, -25.191376, 71.20781, 14.688592, -60.927704, 50.137993, 20.26822, -54.509888, 166.57452, 29.3667, -124.51735, 63.630928, 30.490618, -129.08237, 58.312477, 12.765708, -43.636307, 146.9582, 31.165575, -155.93887, 142.06557, 3.937182, -23.253967, 52.593384, 29.098917, -141.39667, -14.021816, 31.27191, -149.2554, 172.11752, 29.5312, -136.35214, 108.097244, 0.67621803, -27.518753, -11.722393, 30.612558, -132.3381, 155.33682, 23.796778, -100.85192, 101.9259, 11.13831, -67.43373, 115.80014, 31.886946, -189.83115, 249.22415, 33.068237, -160.63824, 253.117, 32.669025, -91.65608, 57.864647, 8.9760475, -32.242096, 100.63823, 1.2322911, -43.4628, 125.84503, 26.331879, -112.19776, 90.68425, 6.7892733, -59.61418, 116.265884, 29.966322, -107.67201, 178.65056, 17.366102, -75.45868, 206.65369, 21.308489, -41.672882, 150.2212, 11.71242, -50.509857, 246.03659, 27.612066, -67.876434, 239.71826, 34.226242, -96.1475, 215.91922, 28.386736, -73.950455, 172.28546, 32.22957, -175.55261, 12.700638, 28.36858, -149.42395, 125.547485, 28.064846, -88.83078, 148.39424, 33.47325, -187.78914, 219.51508, 33.498264, -179.8225, 264.49774, 33.36307, -117.15398, 246.8964, 34.98406, -102.35146, 253.20782, 29.374166, -80.65796, 101.71167, 0.10325676, -15.214157, 13.332535, 27.725641, -153.74956, 201.94464, 29.389484, -176.04063, 188.48442, 28.875792, -141.46643, 245.40805, 33.62893, -158.07643, 111.84604, 8.510843, -58.470016, 34.087784, 30.65795, -136.65622, 165.97398, 16.91547, -63.21045, 108.35715, 1.3689541, -35.740692, 23.51043, 28.372469, -147.85117, 44.771828, 32.000393, -106.86136, 242.02695, 34.97079, -100.23132, 259.91162, 31.158709, -89.57097, 249.01553, 33.32993, -134.61493, 189.25674, 18.387281, -77.91765, 193.52179, 19.833052, -41.45961, 211.62143, 32.797356, -113.18797, 64.00811, 31.038443, -140.59079, 170.20906, 29.650822, -128.50931, 215.55728, 32.046013, -162.44849, 218.41391, 32.25493, -124.75426, 134.84354, 28.204525, -87.22658, 161.24512, 30.735361, -151.7708, 115.11708, 9.091593, -57.072083, 201.94992, 22.927328, -59.308945, 6.496849, 29.590565, -49.738434, 75.696, 19.68691, -76.05722, 158.13725, 29.208576, -126.710144, 81.97926, 7.180435, -55.185913, 104.96292, 31.294632, -136.11967, 185.68271, 16.433434, -49.237427, 196.42511, 28.463203, -128.88388, 65.08672, 30.140223, -197.23407, 3.6991196, 31.509142, -110.09814, 169.47983, 24.72679, -113.05566, 162.60626, 24.805603, -82.90802, 1.6067505, 30.414454, -139.35968, -5.1370506, 32.09352, -88.82181, -36.18975, 30.101221, -108.45678, -27.90152, 31.680239, -129.18942, 72.89995, 29.292795, -184.1348, 173.30109, 18.692265, -72.413086, 76.29648, 1.5973842, -35.18112, 129.01027, 32.570923, -138.60483, 117.0748, 12.765963, -63.368637, 230.31833, 32.77748, -122.00255, 180.68306, 30.095728, -151.93857, 221.10013, 34.436108, -105.64107, -17.984566, 30.502014, -128.24109, 174.35529, 11.895096, -42.755615, 227.23474, 33.344902, -91.62024, 3.1664848, 33.720757, -73.867615, 228.70602, 26.546572, -66.26245, 138.1044, 32.261196, -139.69011, 133.79361, 32.514557, -178.94753, 40.034225, 33.30459, -100.06295, 226.40976, 25.616087, -56.998184, 25.714142, 31.219658, -112.3356, 108.59091, 32.58708, -207.50545, 169.50497, 20.892965, -86.01785, 100.88248, 30.215742, -101.87283, 264.77325, 30.691185, -88.10921, 94.06441, 33.698463, -112.01522, 115.73512, 31.597382, -142.87857, 169.66107, 30.739563, -164.04846, 80.0753, 27.78434, -100.04186, 92.12456, 1.1186838, -47.101074, 158.1793, 31.332827, -131.29916, 253.36816, 32.651306, -160.01797, 50.09072, 17.54309, -45.69844, 244.23749, 29.820879, -82.13458, 256.14157, 33.404007, -135.7576, 42.10177, 30.126137, -136.39682, 201.12152, 29.312195, -170.17346, 97.40459, 29.467545, -132.8879, 101.17406, 4.854338, -55.131683, 92.123764, 31.580961, -166.04962, 160.92781, 31.99296, -172.144, 119.88205, 7.2087703, -48.8096, 88.18964, 31.215393, -168.94379, 90.38699, 27.006517, -94.4761, 207.23663, 23.928185, -53.270935, 231.53458, 34.013763, -160.39073, 223.3765, 33.252953, -160.59125, 145.03043, 33.436016, -186.25339, 129.0977, 11.897323, -55.57515, 155.7545, 27.143045, -82.792725, 46.966385, 24.55451, -68.09042, 98.71773, 31.4406, -182.61435, 249.5451, 32.467354, -89.53133, 67.05609, 30.292967, -155.96024, 262.2099, 33.451458, -112.5065, 139.68886, 1.9117862, -15.209717, 148.91235, 4.1605477, -20.312775, 143.91873, 24.196512, -116.20943, 216.00763, 32.54779, -92.7028, 234.74164, 34.02002, -96.14265, -1.5046616, 30.752562, -126.12628, 189.84462, 20.241253, -81.69516, 207.66998, 27.305717, -74.40985, 46.728127, 26.6238, -178.33714, 7.7969856, 27.244356, -171.42007, 19.666237, 35.77472, -89.646484, 157.1722, 24.784939, -96.13364, 232.29504, 34.346874, -155.8502, 165.40523, 33.131508, -183.92935, 177.44325, 30.092674, -157.64746, 28.985405, 26.533907, -177.14844, 14.24913, 31.42136, -131.34406, 42.002007, 31.626963, -111.24857, 130.58073, 21.560205, -74.150314, 153.3445, 14.481449, -56.20465, 35.96705, 33.14788, -100.92672, 0.6513672, 30.761063, -56.871597, 206.35126, 30.227646, -165.86806, 86.700195, 16.989016, -76.98453, 83.83307, 31.534384, -164.38762, 210.84912, 31.132936, -158.88596, 245.48956, 33.2611, -127.11482, 130.60329, 32.3857, -144.6908, 130.51291, 28.358053, -89.77362, 16.914917, 32.938103, -107.8979, 113.8257, 28.049223, -96.176544, 167.62764, 20.637423, -92.47562, 157.9678, 20.75591, -105.2988, 24.184479, 25.82887, -169.14075, 0.75953674, 31.937899, -99.94363, 50.969604, 28.749214, -148.30577, 90.85646, 30.851074, -197.7344, 120.532486, 28.358053, -97.56147, 46.1243, 28.823298, -189.3334, 50.008186, 31.598364, -99.172966, 229.96854, 33.691715, -166.26636, 76.00693, 27.781542, -123.140564, 143.53761, 31.63245, -171.15901, -23.567978, 31.65404, -133.14369, 219.39886, 28.951523, -80.07721, 34.63594, 34.6215, -92.11721, 134.21487, 32.975586, -184.78247, 135.89116, 4.280432, -27.868423, 32.32525, 27.427467, -182.92644, 189.6668, 28.35149, -128.47661, 204.54718, 29.310484, -128.50397, 150.5855, 22.554754, -74.29657, 129.79674, 33.044968, -190.03336, -32.53393, 29.923246, -105.07107, 90.17784, 0.097147316, -39.917526, 193.40446, 23.60456, -84.90222, 73.0167, 4.355507, -40.16803, 152.48497, 31.246714, -152.23111, 182.1971, 12.950107, -68.0553, 183.48257, 13.545536, -57.73781, 113.80356, 26.278059, -92.419235, 7.9303055, 27.39623, -161.49268, 73.773895, 10.225203, -53.781662, 131.22589, 25.507242, -81.79097, 85.182205, 13.11804, -69.498, 195.4677, 20.099, -55.464294, 16.800568, 30.467493, -48.045944, 16.891342, 35.811417, -82.34654, 156.24104, 31.135656, -151.3367, 86.38133, 31.179989, -141.60254, 30.512558, 34.849598, -92.635925, 96.54028, 31.133297, -186.88264, -11.733158, 30.139608, -96.72591, 115.44849, 22.21995, -83.010315, 49.35044, 28.26531, -186.5444, 91.38405, 31.137272, -173.84644, 13.521408, 35.016453, -95.41828, -16.413029, 30.362043, -63.006912, 223.13022, 35.07354, -100.00714, 236.4299, 25.824697, -60.688538, 139.27419, 15.070176, -60.961212, 213.9671, 29.5758, -84.57193, 72.48442, 26.567307, -112.42781, 166.67729, 32.448326, -175.30585, 60.34484, 18.913055, -69.51517, 114.82707, 2.2446702, -35.294342, 70.83318, 9.284835, -48.820496, 82.61461, 31.021961, -168.96306, 59.752846, 25.342388, -84.49298, 79.745575, 30.45319, -171.38481, -2.030075, 31.138977, -60.845673, 24.360046, 35.120697, -74.95708, 227.3703, 24.306398, -50.847107, 6.1927795, 30.035624, -142.00966, 110.78294, 31.886553, -196.98044, 229.47824, 34.912685, -104.99442, 91.462555, 30.741898, -188.80289, -10.641239, 29.488604, -111.90448, 242.18521, 34.092525, -115.72742, 101.09517, 31.046415, -197.17001, 106.06236, 25.987955, -94.267715, 33.427742, 26.002703, -173.0411, 239.33408, 34.08165, -153.18997, 162.4599, 31.063272, -166.03308, 222.81775, 32.63762, -126.461395, 60.65634, 27.740662, -167.36215, 95.920074, 30.806936, -196.97882, 177.27386, 11.821035, -51.155914, 39.832855, 31.242945, -116.042435, 112.09914, 2.817788, -41.267242, 85.31526, 30.145182, -184.59528, 107.160324, 0.3835478, -22.657074, 119.85498, 27.89213, -91.471985, 27.86615, 27.00343, -154.29404, 55.74247, 29.235796, -114.50982, 164.05284, 30.531715, -148.36331, 156.30344, 31.679167, -135.21942, 101.15286, 31.137815, -136.06693, 83.01753, 0.64196455, -38.705933, 96.11952, 0.13865998, -29.034668, 12.877731, 34.53368, -70.299515, 165.96387, 30.140278, -138.5824, 147.69325, 31.990068, -174.47656, 46.73771, 32.284668, -102.96911, 68.951, 3.0495272, -25.41034, 234.85013, 34.071705, -161.9208, 48.89669, 27.677984, -153.50456, 242.64758, 35.163536, -105.16531, 22.56662, 30.880835, -133.10675, 116.08484, 5.7573256, -47.819504, -14.925461, 31.281738, -143.5387, 215.30548, 22.799105, -51.334824, 63.01744, 25.931112, -95.75826, 170.03282, 29.772741, -140.9445, 35.023994, 28.213486, -186.05798, 126.863174, 3.41829, -29.952759, 182.66318, 23.978157, -99.249794, 224.19202, 28.07575, -72.44745, 177.69351, 31.388441, -176.2076, 163.57512, 30.522648, -144.5544, -24.394833, 29.62361, -93.20956, 221.95053, 33.181877, -140.3699, 166.63416, 22.92687, -80.448944, 251.54428, 28.27245, -69.38429, 1.2318344, 32.914207, -68.68584, 56.505615, 29.440653, -192.18898, 34.06877, 34.180794, -76.12309, 116.393814, 31.335354, -138.0157, 195.02727, 28.404385, -144.19287, 169.17969, 20.09912, -103.90316, 236.78146, 30.717518, -85.86264, 124.8815, 29.326546, -129.6871, 221.82947, 33.064247, -91.52501, 228.88403, 33.939884, -141.46823, 50.788742, 14.973738, -40.25186, 175.79129, 29.96486, -149.71838, 33.39795, 34.75966, -83.2486, 148.45241, 26.920675, -98.193275, 151.50365, 34.24694, -199.68463, 188.81715, 29.171034, -145.14505, 178.16872, 22.521606, -100.673775, 142.2688, 19.902517, -71.04817, 9.227539, 30.535654, -139.52869, -6.4974365, 30.400845, -155.547, 204.66553, 29.724726, -157.03276, 58.663284, 28.620735, -116.55749, 175.50606, 32.37754, -180.02689, 228.75748, 33.100986, -118.177055, 180.6364, 29.315165, -122.11421, 128.32602, 25.781654, -122.477554, 3.4812813, 30.891308, -118.70816, 226.17554, 32.645798, -123.27103, -12.889477, 32.001965, -77.68147, 175.24722, 15.865171, -68.081635, 152.48503, 31.66876, -146.31293, 219.54092, 27.358519, -65.6481, 36.417107, 25.831873, -159.20982, -28.257597, 30.92475, -124.27489, 230.54294, 22.213234, -43.44684, -8.756912, 32.27079, -77.48877, 86.74242, 30.777884, -174.19202, 252.36008, 34.72179, -111.26425, 137.25449, 33.316944, -187.04024, 136.64348, 31.697506, -147.13477, 143.87523, 27.317263, -96.43611, 38.207726, 25.82812, -172.2625, 194.69226, 28.653612, -96.93224, 45.572823, 18.578882, -42.777527, 12.690346, 26.601954, -172.42668, 0.6488724, 28.79347, -154.41415, 22.59069, 33.51987, -65.107315, 8.793617, 27.911594, -154.04391, 26.543724, 35.575478, -88.78212, 120.18161, 29.035976, -107.59534, 117.31503, 30.425892, -130.7248, 162.43663, 23.344774, -92.56158, 154.59665, 21.576694, -106.89226, 130.78809, 28.358053, -94.16818, 98.00375, 26.743998, -94.73717, 260.29358, 33.960716, -119.06874, 49.687035, 28.273693, -79.38257, 146.91553, 21.195745, -72.69182, 190.97882, 26.593023, -95.9242, 182.4577, 28.917624, -134.67957, 209.32071, 30.598097, -179.07574, 138.58507, 29.47044, -129.66391, 220.45221, 33.334, -174.16605, 197.73056, 28.55738, -148.23431, 43.06584, 26.488054, -156.62914, 44.432243, 23.594786, -60.899094, 171.69211, 33.029976, -192.26952, 121.053635, 5.901568, -43.725204, 192.75761, 29.172134, -125.19786, 21.7585, 27.829681, -151.59262, 7.064171, 28.408766, -150.20697, 131.80804, 37.649395, -213.23674, 85.60498, 28.945602, -97.9361, 244.81412, 28.420218, -72.32378, 7.6035767, 28.505018, -179.86954, 47.781227, 22.625303, -64.469345, 53.452477, 29.067844, -108.39921, 231.20605, 34.77636, -98.88985, 242.3312, 32.927055, -139.17673, 59.128014, 21.676594, -74.474304, 62.22905, 31.04858, -136.05951, 247.43845, 33.540707, -147.52866, 83.773224, 32.009743, -106.70881, 232.05515, 34.61575, -107.3728, 169.2147, 30.225231, -157.73256, 94.1543, 20.273846, -83.1573, 262.207, 33.165863, -136.1405, 66.58798, 4.878653, -32.238922, 117.06738, 15.795322, -69.42386, 212.31686, 31.458315, -166.09636, 209.64899, 25.925722, -63.45764, 150.72055, 7.021338, -36.770462, 239.76843, 33.936676, -173.00612, 113.52414, 31.694605, -182.93085, 201.22148, 30.901205, -121.412, 185.84322, 16.921762, -45.605118, 31.917252, 31.944937, -107.77889, 52.841118, 29.080677, -137.8506, 187.53813, 14.962053, -64.981995, 210.78967, 27.916775, -71.33092, 165.25912, 24.661549, -115.81132, 13.550789, 34.237514, -101.51136, 122.05545, 31.823511, -181.93544, 203.57947, 23.708736, -66.05827, 89.45853, 13.377574, -71.40289, 172.76706, 24.031225, -108.880005, 198.21584, 29.827017, -125.008446, 222.70447, 32.558834, -121.07495, 188.4475, 29.2292, -174.39629, 73.4524, 30.670473, -160.10278, 133.95764, 27.356516, -102.734795, 35.794945, 26.84546, -179.45296, 13.715294, 31.659533, -123.53667, 51.649628, 26.24026, -172.9896, 255.98007, 33.56363, -105.85141, 100.03958, 31.715923, -143.19476, -27.288439, 30.977983, -81.828125, -21.47327, 30.698528, -126.45362, 193.59203, 19.581682, -74.4373, 150.0547, 33.085262, -183.3953, 134.47545, 3.0233123, -23.861603, 264.75732, 32.71314, -145.28824, -23.907957, 31.146814, -70.89145, 203.97635, 31.71172, -102.51706, 133.06035, 4.2823977, -30.073334, 104.836655, 30.734735, -114.102264, 61.7601, 6.8303246, -30.770416, 17.590492, 28.992163, -145.78424, 229.31717, 29.257307, -78.1199, 130.51291, 32.043285, -173.83246, 28.869835, 31.43875, -110.37748, 165.81013, 30.208132, -133.50735, 97.212906, 31.465744, -179.37703, 15.536942, 35.528698, -77.13229, 65.398026, 29.470362, -192.41826, 158.48746, 31.27143, -141.33438, 68.743996, 29.900818, -195.16614, 82.46428, 15.951023, -73.07947, 79.541275, 29.349533, -122.5612, 182.95894, 17.932642, -85.08426, 111.02138, 28.885414, -113.4032, 249.63397, 33.491005, -128.11401, 64.49886, 27.738783, -178.94281, 35.341385, 27.667604, -150.31105, 200.10974, 29.123758, -165.85448, 85.08444, 8.662257, -60.96559, 176.95287, 29.27465, -125.02259, 97.582855, 2.073383, -49.71988, 72.134056, 31.162771, -147.42564, -21.119026, 29.558985, -111.54809, 40.335, 34.453648, -85.78641, 0.16122818, 29.849829, -143.85011, 249.01309, 34.76741, -115.934204, 180.83228, 16.037823, -78.86124, 238.01978, 33.637547, -116.106255, 140.64783, 28.20246, -94.68234, -24.577782, 29.566313, -103.45568, 64.980606, 24.440157, -110.06916, 70.41906, 2.4161797, -21.684952, 80.526764, 0.8726448, -31.899399, 93.80855, 25.504452, -91.9836, 144.60178, 29.387808, -126.697876, 124.66164, 28.358053, -102.25184, 77.22711, 1.3967743, -27.35794, 145.92963, 12.708579, -55.038864, 134.55699, 28.191519, -127.81395, 83.86928, 3.3267908, -48.749146, 194.74962, 29.267422, -106.4139, 249.02069, 33.811993, -93.80359, 158.5848, 32.34116, -174.90471, 248.01865, 33.266987, -155.64471, 153.15495, 27.116335, -95.245316, 39.621666, 34.168266, -94.131805, 169.43105, 20.211224, -72.1176, 207.49176, 22.0826, -46.694107, 154.19798, 6.9273424, -39.15741, 43.43139, 27.015497, -180.53885, 192.00287, 29.05602, -147.8368, 216.05865, 21.041983, -42.87079, 210.38528, 21.437002, -41.058075, 180.68512, 19.511595, -91.38966, 202.7966, 31.290703, -115.36195, 112.1288, 31.03273, -132.20908, 177.71902, 13.005729, -45.420486, 159.12012, 23.433414, -73.74158, -42.995747, 32.8758, -96.743904, 111.21446, 4.6071568, -48.948456, 174.16736, 18.561956, -85.18164, 200.70702, 24.237001, -76.08833, 134.32419, 33.603233, -190.82233, 71.57663, 30.102339, -165.77213, 144.22348, 31.32622, -131.02103, 270.98416, 31.864695, -149.46701, 83.371, 30.926432, -121.02436, 106.0813, 31.44151, -196.84264, 184.73566, 15.151282, -53.041107, 23.615402, 32.02224, -56.166473, 255.93362, 33.271095, -101.69045, 67.933266, 15.051213, -58.49997, 205.7445, 24.643518, -59.14978, 2.5424042, 33.678444, -82.841064, 145.27077, 32.081264, -134.37172, 134.53484, 37.221222, -206.55295, 47.33465, 28.714296, -145.3686, 17.316826, 26.216997, -172.28085, -7.379013, 30.630728, -133.3695, 132.43745, 16.293648, -63.336258, 233.26785, 32.894024, -137.39703, 165.09499, 14.005053, -57.401672, 223.39462, 33.750664, -111.066696, 249.9267, 29.168734, -77.77551, 149.003, 26.352808, -118.96745, 90.86821, 33.620636, -114.688774, 47.52395, 25.947226, -171.46393, 222.15265, 24.088812, -53.108643, 23.009598, 33.03467, -61.086426, 217.60638, 30.248068, -86.35805, 40.61946, 20.813484, -42.16719, 135.21355, 7.4423985, -40.324875, 168.07523, 30.147552, -148.99475, 124.70462, 34.02333, -197.69516, 242.69843, 35.020157, -108.78569, 187.25879, 15.318435, -35.254715, 74.445526, 29.133251, -176.75615, 61.942284, 28.750269, -189.15157, 101.51849, 0.6943443, -35.643143, 226.18045, 30.40426, -83.507095, 111.43634, 30.338114, -103.49531, 174.70041, 27.721966, -114.76298, 107.81024, 31.76201, -190.81361, 188.683, 29.172934, -162.49393, 123.34329, 28.853395, -105.732834, 157.93846, 15.276988, -57.791565, 6.7454033, 34.367325, -85.81099, 257.33328, 33.231308, -143.04813, 202.15149, 29.789825, -184.61191, 9.295689, 34.352097, -96.06034, 11.148521, 33.190933, -64.410706, -25.9304, 29.99406, -88.69145, -17.126308, 31.005474, -134.8411, 93.85286, 12.588501, -70.29399, 80.43756, 30.812937, -194.75183, 54.88427, 29.47907, -98.18865, 55.322487, 30.004938, -92.53768, 83.49646, 31.772955, -158.60849, 80.97543, 29.832882, -180.97226, 224.5758, 33.219112, -164.36122, 19.28138, 29.373274, -42.16754, 86.16794, 30.520071, -180.32098, 109.6624, 30.869703, -109.92263, -6.283615, 30.294786, -122.971344, 229.45523, 31.694778, -86.71019, 242.66238, 31.39675, -87.64105, 254.91733, 33.42705, -139.12012, 174.0381, 20.520208, -100.46975, 88.561005, 24.472607, -89.890335, 185.11491, 29.447496, -165.49753, 50.676453, 30.4004, -104.223816, 205.56433, 28.939524, -136.64856, 55.52619, 28.304394, -102.78435, -34.841354, 32.457474, -83.629105, 110.50981, 31.921957, -202.84563, -13.277119, 30.781954, -90.368195, 213.8274, 31.633574, -173.67496, 240.20132, 25.960026, -60.03134, 185.77934, 29.148056, -107.83361, 22.991531, 30.575878, -47.654938, 51.349716, 30.608463, -113.74045, 225.56558, 21.365828, -42.00963, 3.863739, 31.065619, -114.91642, 74.086716, 30.290874, -195.26227, -3.9723396, 30.488598, -101.3635, 15.446228, 26.034245, -168.21036, 41.729507, 28.663364, -187.98607, 239.92853, 33.060715, -122.784325, 148.04498, 6.645615, -32.564377, 234.65189, 32.58689, -126.32428, 237.8086, 28.30023, -74.601654, 149.80356, 31.976503, -130.70801, 10.92746, 35.078587, -88.70738)
+yaws = PackedFloat32Array(3.8629665, 3.0543349, 1.5988361, 1.7021198, 3.12301, 0.5792433, 3.1824682, 0.8931192, 4.778776, 0.59882295, 0.3070861, 5.8873158, 6.2378974, 1.9222963, 2.9826353, 5.7020407, 3.5008905, 0.8971946, 1.2106847, 1.7986704, 0.8092377, 3.0941467, 2.0965161, 0.39267093, 2.2510052, 3.5962813, 4.042588, 3.1061153, 0.75359875, 4.4248056, 1.5734075, 0.10206013, 2.9687824, 3.9660194, 3.614937, 4.7876053, 3.537842, 5.9284062, 2.2845917, 4.349194, 4.6523952, 6.134197, 2.0849776, 4.4362216, 1.8446509, 5.2829776, 4.382282, 6.146379, 2.4200623, 5.002341, 2.362584, 5.6280475, 4.5671577, 0.65727156, 2.218929, 3.8317487, 5.3007345, 0.030142702, 2.7719662, 4.2165394, 2.0956059, 5.1174088, 4.0743775, 5.7306314, 1.6541593, 1.887354, 5.7387877, 4.461357, 1.4707862, 6.24984, 4.9662304, 2.1738076, 1.6691462, 4.5816646, 1.5104297, 1.9884464, 2.50453, 1.1784897, 4.311695, 1.608625, 4.023323, 2.9448273, 6.1545115, 3.1350749, 6.150649, 5.8343177, 0.7783699, 5.9952683, 5.214402, 1.6308899, 3.4999278, 2.2927387, 4.959385, 5.419318, 1.4245187, 4.0822845, 6.049879, 5.662309, 0.5294422, 4.7961416, 1.9945331, 3.2792678, 1.8644166, 4.2625494, 1.4096133, 2.1433141, 5.5133266, 3.7063875, 4.3701224, 3.4205222, 2.8650613, 5.489058, 1.120558, 4.364163, 3.0074873, 5.503062, 4.786893, 4.3319983, 2.3386905, 1.5913252, 0.7178393, 0.87973845, 5.55162, 0.8564802, 1.7620646, 5.59517, 1.6566843, 0.67065006, 2.9649336, 4.5469666, 0.64751035, 0.90183926, 0.33206847, 2.7416825, 2.7537105, 0.15593313, 0.9684688, 2.590341, 3.683975, 1.178902, 3.9060168, 3.4058886, 1.0496951, 0.10695847, 0.88072443, 0.97292525, 1.8087877, 1.524431, 0.4216372, 4.7308445, 4.7517962, 0.24963641, 1.2212868, 0.72479594, 0.7736066, 0.7420086, 0.48266575, 5.7422566, 3.220177, 5.283688, 0.90652835, 4.519702, 2.3015864, 5.65092, 3.9081755, 1.0734732, 4.5480995, 4.0609636, 5.406315, 3.5379264, 0.5329912, 4.1170774, 3.7340138, 0.7415114, 3.4826589, 5.812997, 1.891163, 5.386988, 3.9163313, 4.331091, 2.5499587, 2.5191188, 1.4064, 5.038066, 3.0901413, 2.6315362, 0.0091180485, 5.6684957, 2.1265295, 4.6425753, 1.8073316, 0.4450686, 4.840976, 2.7649534, 5.2237163, 3.9072409, 3.605312, 3.061337, 2.9916148, 4.72558, 4.5060277, 6.153116, 2.998639, 6.0123096, 5.2420335, 2.7682686, 6.0038614, 0.5450249, 3.0826368, 4.049783, 6.2498484, 2.9201949, 4.952418, 2.9806488, 5.7534966, 0.4180333, 0.897568, 4.555423, 1.6855807, 0.6918958, 0.2887629, 1.6414835, 1.987181, 1.3861974, 2.350857, 4.333684, 0.9379777, 3.456532, 4.622269, 4.9871993, 0.07227845, 5.2143908, 0.21575747, 3.493443, 2.8584113, 2.2002504, 0.3466854, 4.112691, 6.0886064, 4.2168145, 5.3043594, 3.1189728, 5.208334, 0.5955083, 5.1754465, 2.8037286, 2.9755723, 3.2368114, 3.162876, 0.3449002, 0.3291632, 4.304873, 4.6412477, 5.8325934, 4.5491195, 1.0100323, 4.843791, 2.903152, 4.3196316, 2.5040698, 1.8539877, 4.7961907, 3.4804833, 2.3972585, 0.54896253, 5.259377, 4.501817, 1.4703068, 3.136679, 3.9544916, 5.6443715, 1.8119125, 1.9315917, 3.9160016, 4.7677426, 0.009611812, 0.3633645, 1.1804129, 2.3342118, 0.14636979, 2.4599957, 5.9315686, 5.7045913, 6.1598973, 4.740127, 1.8934281, 3.707856, 1.9727465, 4.454652, 1.6851239, 5.611265, 3.0263357, 4.272252, 2.4899116, 2.998208, 2.314438, 1.2059397, 5.458992, 4.342516, 2.5316052, 4.6727304, 4.3303714, 6.1903915, 2.8306546, 3.122284, 4.2034316, 1.5000345, 4.039626, 4.488658, 3.546483, 2.258001, 0.9429086, 3.60804, 3.3740242, 0.35467976, 0.28379852, 2.1891193, 0.6390214, 3.9005308, 1.4984498, 1.0044663, 5.779869, 0.12278151, 4.8236356, 0.4181755, 5.244745, 2.1947958, 5.78325, 1.8651384, 5.5952334, 1.6357976, 2.910818, 2.19346, 3.3554149, 3.480447, 5.5717916, 6.124517, 2.7384887, 0.9784512, 4.037325, 0.4925009, 0.08854981, 3.20763, 0.37099534, 1.4041287, 3.6680386, 1.6472324, 4.7438364, 5.6387033, 0.43961185, 1.7603647, 1.414361, 3.4843235, 6.2529397, 3.85384, 0.63323367, 3.2100983, 1.4979596, 3.6010249, 5.95158, 3.0797062, 5.3351536, 5.4906974, 0.29648644, 4.602624, 4.4888897, 4.2442465, 5.7261815, 3.7398481, 0.27793303, 4.7525454, 5.865041, 5.600674, 5.0147314, 4.3156724, 5.214479, 1.8662919, 5.3672037, 2.1411574, 1.7501734, 6.168495, 6.095364, 5.369509, 5.2329903, 0.78655016, 0.06708693, 3.4739017, 6.018303, 1.0225136, 4.8888474, 5.923413, 0.022882154, 5.893408, 4.695352, 0.21567042, 4.2895274, 3.368597, 0.018943008, 4.0284543, 0.8201011, 3.1959987, 1.4758404, 6.2639074, 5.0143466, 3.655405, 2.4612203, 1.8880501, 5.044996, 5.332745, 4.5119467, 4.915254, 1.2522944, 3.0147805, 1.774928, 6.1362147, 4.6076612, 3.762292, 5.7884116, 4.741452, 2.36462, 3.4196715, 1.1840183, 0.4119429, 1.5692297, 6.0063114, 5.7018623, 5.956715, 4.9617577, 4.5893664, 0.30137157, 1.6243701, 1.5985113, 4.299892, 1.3120319, 0.4314348, 0.18558928, 4.0873947, 1.8340272, 3.6234167, 1.4716786, 5.771909, 1.631042, 2.063579, 4.284027, 0.60098815, 1.2281511, 3.581114, 4.72719, 1.1945382, 5.549336, 1.8616691, 2.6463492, 6.003121, 1.2346869, 2.0080168, 1.7276859, 0.74803543, 4.256378, 4.8890853, 3.815975, 1.8691138, 2.9207592, 2.3823524, 2.3546999, 2.3319411, 1.0047526, 3.7341988, 4.9046974, 2.4604063, 1.2681438, 6.144943, 3.3460188, 0.6769646, 3.3323402, 6.225456, 1.8484541, 3.5939994, 0.27311492, 0.7593993, 2.9656308, 2.1415968, 2.5293486, 5.559979, 6.2638183, 1.2116923, 1.338501, 0.21781315, 4.803446, 4.704694, 2.4783242, 5.4901204, 1.0183964, 2.5156934, 0.775931, 2.1414566, 5.863844, 4.840774, 1.6306405, 2.3667188, 3.7564287, 5.5541964, 3.6012874, 4.0421414, 3.7989008, 5.9295564, 0.435276, 5.108518, 3.3691723, 5.057864, 0.7011704, 4.5868554, 1.7839067, 0.1143933, 0.52571005, 1.287634, 2.0223472, 1.7090673, 5.609313, 6.038537, 4.973691, 4.706149, 1.5313686, 0.28679425, 4.595744, 1.6175389, 6.049928, 0.30190107, 0.3004694, 5.054041, 4.750493, 5.941234, 1.1259092, 3.9217653, 3.028341, 0.013925296, 4.6211147, 3.3884463, 5.5165854, 2.428848, 1.5869986, 4.4912925, 0.7967088, 0.03322973, 1.8790587, 3.832183, 5.4387465, 1.6671184, 2.3183057, 5.4137344, 1.2951299, 3.1436117, 3.8165529, 2.347389, 4.396685, 1.0424626, 2.1242871, 0.3485386, 1.4805495, 2.196022, 4.5614266, 1.8622072, 4.754825, 0.9006773, 5.686249, 1.7228509, 5.0132427, 0.18162715, 4.5357933, 4.4413037, 5.0721974, 5.2830815, 6.0967097, 5.0989933, 0.90221685, 3.4103217, 0.2752788, 0.8482842, 6.2342463, 1.2708485, 1.8041785, 4.8536663, 4.9491906, 1.5537571, 5.806514, 1.1042542, 0.873325, 3.1382992, 4.6418185, 5.6434555, 1.7896237, 1.7536827, 3.1280575, 1.8460373, 4.337956, 4.6306725, 5.137063, 5.706463, 5.8401356, 1.9775705, 3.6903744, 1.1343998, 4.92529, 4.287562, 0.22807586, 3.9655302, 1.3625363, 5.4767046, 4.179968, 2.0507863, 4.147126, 5.9869385, 4.079686, 3.642362, 4.339699, 1.6195132, 3.243948, 5.9983325, 1.5899773, 1.5722055, 5.364737, 2.584143, 0.6460841, 0.46296415, 5.9985585, 0.539552, 4.0006566, 2.123116, 2.737157, 5.8189764, 1.1915829, 2.7769954, 5.166182, 0.19092704, 3.7999768, 2.388806, 3.3757622, 3.1884394, 5.726989, 3.0798137, 4.342249, 2.327695, 5.3917356, 1.0745298, 6.0207424, 5.4677596, 1.4058497, 1.6888502, 3.8326578, 1.4401664, 2.0631177, 4.6057696, 0.28715917, 5.037671, 3.4122324, 3.730446, 3.557824, 0.5461921, 0.11510573, 1.6024444, 4.7474666, 1.2359029, 2.3752186, 0.4485575, 0.84765315, 4.9883885, 1.883437, 6.101759, 2.3524404, 2.0752249, 2.7545414, 4.004172, 0.39506513, 6.0240345, 4.9296665, 1.2092603, 4.9040565, 0.39443305, 5.307434, 6.1297317, 1.0494751, 4.319084, 1.8836722, 5.868554, 4.0624676, 4.6509695, 5.9718814, 4.300419, 1.6997777, 5.090731, 2.8814707, 3.5752318, 1.8053858, 3.0430982, 2.0711613, 5.706334, 5.188131, 1.8352174, 6.1283154, 6.098677, 5.597952, 1.4652848, 2.5526419, 1.3234392, 4.1549253, 1.2028382, 1.0194935, 3.9852986, 0.048140846, 4.887562, 1.7837731, 4.338362, 2.7639544, 0.85440856, 4.9280505, 0.20212917, 3.7307222, 2.1722443, 1.609597, 2.7455726, 2.538565, 1.8276626, 2.7552025, 3.838854, 3.7936292, 3.4153464, 6.1861973, 0.79595643, 0.81971014, 1.8236254, 0.14460841, 5.4406266, 0.7082412, 5.819548, 2.7280343, 3.8297021, 4.4195433, 3.5510364, 2.3891492, 1.7083982, 2.1029046, 2.6936517, 0.7955581, 2.7637064, 4.1195745, 5.8218164, 0.009513182, 4.527613, 4.87666, 3.4132597, 5.072793, 4.993264, 4.6624923, 3.607241, 1.472425, 0.22069049, 4.854336, 2.311395, 4.656628, 5.5981064, 1.0991777, 1.2338638, 4.188717, 1.0872245, 3.0672803, 1.6024398, 2.6408625, 1.8579, 3.206331, 0.19987161, 4.6166477, 4.257373, 2.0589626, 5.5289083, 1.8904332, 3.4984524, 0.3743112, 2.4937744, 1.6436139, 1.0941749, 1.34456, 5.857879, 1.1362083, 5.2139716, 3.2956445, 2.912266, 6.2377806, 2.6090422, 1.0531639, 3.3679128, 0.010845158, 2.877964, 5.3398733, 1.9092872, 0.4918002, 4.0366416, 5.1801066, 4.428219, 1.1647621, 1.9808061, 4.480712, 0.82521826, 4.1594987, 1.5310687, 3.36578, 5.452443, 3.1183987, 2.8342538, 2.038999, 4.363936, 2.54951, 0.7478077, 5.596824, 4.858068, 4.591112, 2.4857104, 3.307406, 4.024977, 0.24778298, 6.147081, 2.231414, 0.478694, 3.209993, 0.7931796, 4.5517426, 4.8298635, 2.8928668, 2.356917, 3.5406456, 1.038304, 5.420722, 2.8888805, 1.6204927, 5.408361, 2.3341732, 1.8099301, 0.6869346, 0.1182711, 6.2191987, 2.221025, 0.12221944, 0.31868356, 4.025233, 3.6519947, 6.0480213, 0.60266834, 5.927823, 3.326271, 2.3971748, 0.7428431, 0.56879437, 5.9425354, 4.7620096, 3.9838417, 5.5804696, 4.4702706, 0.505372, 1.8835754, 2.3339686, 0.77492076, 0.3403811, 0.28882918, 0.6735036, 3.7088606, 2.2836761, 3.5540257, 0.37379572, 3.2121284, 3.2621014, 3.2535388, 6.1880217, 3.3059382, 4.2563686, 4.4287586, 0.7589506, 4.0406184, 4.0773315, 1.9908187, 4.4428806, 4.681565, 4.500908, 1.1369233, 5.7461624, 5.668435, 2.5369372, 3.640552, 3.995317, 0.83734864, 2.292014, 2.0471978, 4.916752, 0.11994824, 3.3252404, 2.1536663, 4.1580462, 1.0089787, 2.285901, 3.466188, 0.96545666, 5.9663763, 2.282622, 0.45309198, 3.0395353, 1.1714735, 3.9101467, 0.18655527, 3.117712, 5.834545, 4.296418, 5.426009, 1.0430576, 0.3591515, 5.042383, 5.269181, 3.9082055, 5.4366856, 5.1326423, 6.076416, 5.9927144, 2.6433058, 5.144233, 5.592039, 0.16199479, 5.744035, 0.70172924, 6.04206, 0.45632815, 3.8602746, 0.88677233, 0.29036963, 2.9699109, 2.8480704, 0.03197025, 2.6924567, 3.954613, 0.0036968668, 5.586622, 1.2401054, 3.6919932, 5.9382887, 1.5955054, 3.13018, 3.954792, 4.7701817, 1.1107413, 5.109566, 1.6897229, 0.7639241, 6.2553973, 4.3478184, 1.8233806, 6.024556, 6.077322, 4.690313, 4.2002454, 5.057692, 2.126633, 1.6158566, 5.9881635, 5.521698, 2.0768619, 4.6677585, 5.976562, 5.166611, 3.8905673, 2.6464245, 2.7015898, 4.0486016, 1.1800442, 3.3465154, 5.4657116, 3.5476391, 0.45760924, 5.864321, 0.8094974, 3.8331237, 6.080002, 4.290396, 2.2471545, 1.8455737, 5.778415, 6.1612315, 0.7203764, 1.494199, 3.5350523, 0.05833452, 1.0742481, 0.9479647, 2.1980045, 3.8498752, 1.0441074, 0.6975364, 2.8698752, 2.751997, 1.7844833, 1.2470752, 1.9006971, 5.14356, 0.00081783824, 2.4888673, 1.544623)
+kinds = PackedInt32Array(1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0)
+looks = PackedInt32Array(3, 3, 6, 2, 7, 8, 0, 1, 7, 6, 1, 1, 0, 1, 8, 5, 1, 5, 6, 5, 1, 6, 4, 7, 6, 2, 5, 1, 8, 7, 3, 0, 1, 3, 8, 1, 6, 8, 3, 2, 6, 1, 3, 6, 3, 1, 7, 1, 7, 7, 2, 8, 4, 4, 8, 0, 1, 7, 1, 1, 3, 5, 6, 1, 5, 4, 7, 1, 6, 2, 0, 1, 6, 1, 3, 7, 6, 5, 1, 0, 4, 3, 5, 8, 7, 1, 2, 3, 7, 4, 3, 7, 2, 5, 4, 3, 2, 7, 1, 4, 6, 5, 0, 4, 4, 6, 8, 6, 2, 5, 7, 1, 4, 8, 1, 6, 5, 1, 0, 7, 5, 3, 5, 4, 5, 1, 7, 5, 1, 8, 1, 5, 0, 5, 3, 7, 7, 1, 6, 2, 2, 7, 5, 2, 7, 4, 8, 0, 7, 3, 3, 7, 3, 3, 7, 1, 5, 4, 5, 5, 1, 8, 3, 6, 3, 2, 8, 4, 1, 0, 8, 3, 2, 5, 5, 0, 5, 8, 6, 0, 3, 5, 4, 7, 6, 0, 7, 3, 8, 3, 0, 0, 7, 1, 6, 8, 7, 1, 6, 2, 8, 7, 7, 6, 0, 7, 4, 3, 1, 0, 4, 6, 5, 4, 5, 3, 7, 8, 6, 2, 6, 3, 4, 2, 4, 0, 1, 1, 5, 3, 8, 2, 2, 5, 4, 2, 6, 5, 7, 4, 6, 2, 6, 4, 6, 1, 5, 1, 7, 3, 6, 1, 3, 5, 3, 8, 0, 4, 0, 4, 4, 4, 3, 3, 5, 5, 8, 6, 0, 3, 2, 4, 7, 4, 5, 5, 0, 6, 6, 3, 1, 1, 5, 2, 4, 2, 0, 3, 6, 3, 7, 7, 5, 1, 3, 7, 7, 6, 2, 5, 3, 1, 2, 1, 4, 1, 6, 0, 1, 1, 5, 8, 4, 8, 3, 1, 7, 3, 0, 1, 2, 5, 1, 7, 5, 3, 7, 8, 3, 7, 5, 3, 5, 1, 0, 1, 8, 6, 7, 5, 1, 8, 7, 6, 1, 0, 3, 2, 6, 2, 8, 1, 6, 5, 1, 1, 3, 7, 3, 3, 5, 6, 4, 6, 3, 5, 0, 4, 3, 5, 3, 3, 4, 5, 3, 8, 0, 6, 1, 6, 6, 4, 7, 5, 1, 3, 7, 5, 8, 1, 3, 6, 1, 0, 1, 8, 1, 1, 5, 3, 3, 2, 6, 3, 0, 7, 4, 3, 5, 7, 6, 8, 5, 1, 8, 1, 2, 8, 2, 3, 6, 4, 1, 7, 3, 5, 1, 1, 3, 6, 6, 3, 8, 1, 5, 5, 5, 3, 5, 0, 7, 6, 7, 2, 7, 1, 1, 1, 2, 0, 3, 3, 3, 3, 7, 7, 2, 1, 4, 2, 1, 6, 0, 6, 6, 7, 6, 7, 4, 4, 3, 5, 7, 5, 1, 5, 4, 6, 1, 8, 5, 5, 8, 7, 0, 2, 8, 6, 2, 2, 1, 0, 1, 8, 5, 4, 2, 3, 5, 3, 0, 5, 1, 3, 0, 7, 3, 0, 3, 2, 4, 6, 3, 2, 7, 7, 5, 3, 1, 6, 5, 1, 6, 4, 7, 3, 0, 3, 0, 4, 8, 1, 0, 2, 5, 8, 4, 3, 1, 7, 0, 3, 3, 4, 1, 2, 4, 8, 3, 1, 2, 6, 1, 8, 3, 1, 1, 0, 0, 2, 7, 4, 1, 1, 7, 7, 3, 3, 4, 6, 2, 2, 6, 5, 0, 5, 5, 3, 7, 3, 5, 2, 1, 6, 3, 6, 4, 3, 7, 0, 7, 6, 5, 1, 5, 4, 7, 1, 8, 5, 5, 3, 3, 1, 7, 3, 1, 3, 5, 1, 3, 7, 2, 5, 1, 5, 3, 8, 6, 4, 5, 4, 8, 5, 6, 5, 3, 6, 4, 2, 5, 2, 4, 2, 8, 8, 1, 7, 3, 5, 4, 3, 1, 2, 7, 2, 8, 0, 5, 2, 1, 5, 8, 7, 1, 0, 4, 7, 4, 4, 2, 1, 3, 4, 5, 0, 4, 2, 0, 6, 3, 1, 8, 6, 7, 3, 6, 6, 1, 1, 7, 8, 2, 6, 4, 1, 4, 0, 1, 5, 3, 3, 6, 2, 4, 5, 4, 6, 6, 5, 7, 7, 7, 8, 5, 5, 2, 3, 1, 0, 2, 0, 4, 1, 0, 3, 7, 3, 6, 1, 1, 6, 5, 2, 2, 5, 5, 2, 7, 2, 1, 0, 1, 0, 3, 6, 5, 2, 5, 1, 4, 0, 8, 4, 1, 3, 7, 0, 1, 7, 6, 1, 7, 8, 0, 1, 5, 3, 8, 1, 6, 2, 2, 4, 6, 3, 5, 3, 8, 0, 6, 3, 1, 7, 6, 1, 7, 2, 6, 1, 8, 3, 5, 6, 1, 6, 3, 5, 3, 4, 2, 7, 3, 7, 2, 2, 1, 5, 7, 2, 7, 1, 1, 5, 7, 1, 5, 3, 0, 7, 3, 8, 6, 4, 5, 3, 3, 1, 8, 1, 7, 3, 3, 3, 5, 1, 5, 4, 4, 5, 3, 6, 3, 7, 3, 6, 1, 8, 1, 8, 1, 0, 1, 7, 8, 6, 7, 0, 5, 1, 7, 6, 1, 2, 6, 7, 2, 8, 0, 2, 2, 3, 2, 0, 4, 8, 1, 6, 3, 0, 4, 6, 7, 7, 7, 6, 0, 3, 7, 8, 7, 4, 0, 7, 7, 3, 7, 4, 1, 8, 6, 6, 4, 7, 7, 6, 3, 6, 7, 4, 0, 1, 6, 2, 6, 5, 6, 4, 2, 4, 1, 8, 7, 8, 7, 7, 5, 3, 6, 3, 8, 4, 1, 3, 5, 6, 4, 8, 4, 5, 7, 3, 4, 7, 3, 1, 7, 1, 0, 4, 7, 4, 7, 8, 2, 1, 5, 5, 5, 2, 1, 4, 4, 0, 8, 1, 0, 1, 3, 0, 5, 3, 1, 6, 1, 0, 7, 1, 5, 1, 1, 5, 5, 1, 5, 3, 1, 5, 7, 5, 3, 7, 1, 1, 5, 8, 5, 3, 0, 7, 7, 6, 5, 6, 7, 4, 4, 5, 4, 8)
 clear_spots = PackedVector3Array()
 
 [node name="FieldWheat" type="Node3D" parent="Patches"]
@@ -1403,11 +1904,11 @@ transform = Transform3D(-0.4299496, 0, 0.9028529, 0, 1, 0, -0.9028529, 0, -0.429
 save_id = &"field_oak_000"
 
 [node name="field_oak_001" type="StaticBody3D" parent="Patches/FieldOak" instance=ExtResource("1_1n5bp")]
-transform = Transform3D(0.9930564, 0, 0.11763921, 0, 1, 0, -0.11763921, 0, 0.9930564, 276.396, 20.239077, 245.50462)
+transform = Transform3D(0.9930564, 0, 0.11763921, 0, 1, 0, -0.11763921, 0, 0.9930564, 276.396, 20.24741, 245.50462)
 save_id = &"field_oak_001"
 
 [node name="field_oak_002" type="StaticBody3D" parent="Patches/FieldOak" instance=ExtResource("1_1n5bp")]
-transform = Transform3D(-0.61561644, 0, -0.78804594, 0, 1, 0, 0.78804594, 0, -0.61561644, 255.29263, 20.508654, 266.1312)
+transform = Transform3D(-0.61561644, 0, -0.78804594, 0, 1, 0, 0.78804594, 0, -0.61561644, 255.29263, 20.479052, 266.1312)
 save_id = &"field_oak_002"
 
 [node name="field_oak_003" type="StaticBody3D" parent="Patches/FieldOak" instance=ExtResource("1_1n5bp")]
@@ -1597,291 +2098,291 @@ save_id = &"quarry_floor_rocks_003"
 [node name="Grove1" type="Node3D" parent="Patches"]
 
 [node name="grove_1_000" type="StaticBody3D" parent="Patches/Grove1" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(0.76271284, 0, -0.6467373, 0, 1, 0, 0.6467373, 0, 0.76271284, -32.196587, 17.01761, 199.63286)
+transform = Transform3D(0.76271284, 0, -0.6467373, 0, 1, 0, 0.6467373, 0, 0.76271284, -32.196587, 19.488226, 199.63286)
 save_id = &"grove_1_000"
 
 [node name="grove_1_001" type="StaticBody3D" parent="Patches/Grove1" instance=ExtResource("1_1n5bp")]
-transform = Transform3D(-0.5447683, 0, -0.8385866, 0, 1, 0, 0.8385866, 0, -0.5447683, -39.77629, 19.28346, 191.82578)
+transform = Transform3D(-0.5447683, 0, -0.8385866, 0, 1, 0, 0.8385866, 0, -0.5447683, -39.77629, 21.22372, 191.82578)
 save_id = &"grove_1_001"
 
 [node name="grove_1_002" type="StaticBody3D" parent="Patches/Grove1" instance=ExtResource("1_1n5bp")]
-transform = Transform3D(-0.35431653, 0, -0.9351255, 0, 1, 0, 0.9351255, 0, -0.35431653, -37.724457, 18.30933, 202.98372)
+transform = Transform3D(-0.35431653, 0, -0.9351255, 0, 1, 0, 0.9351255, 0, -0.35431653, -37.724457, 20.831656, 202.98372)
 save_id = &"grove_1_002"
 
 [node name="grove_1_003" type="StaticBody3D" parent="Patches/Grove1" instance=ExtResource("1_1n5bp")]
-transform = Transform3D(-0.68111175, 0, -0.73217946, 0, 1, 0, 0.73217946, 0, -0.68111175, -44.292706, 20.27086, 193.28925)
+transform = Transform3D(-0.68111175, 0, -0.73217946, 0, 1, 0, 0.73217946, 0, -0.68111175, -44.292706, 21.99753, 193.28925)
 save_id = &"grove_1_003"
 
 [node name="grove_1_004" type="StaticBody3D" parent="Patches/Grove1" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.21650358, 0, -0.9762818, 0, 1, 0, 0.9762818, 0, -0.21650358, -25.584162, 14.073513, 202.82236)
+transform = Transform3D(-0.21650358, 0, -0.9762818, 0, 1, 0, 0.9762818, 0, -0.21650358, -25.584162, 16.657001, 202.82236)
 save_id = &"grove_1_004"
 
 [node name="grove_1_005" type="StaticBody3D" parent="Patches/Grove1" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.9366389, 0, -0.35029647, 0, 1, 0, 0.35029647, 0, -0.9366389, -44.189335, 19.384233, 198.30334)
+transform = Transform3D(-0.9366389, 0, -0.35029647, 0, 1, 0, 0.35029647, 0, -0.9366389, -44.189335, 21.41411, 198.30334)
 save_id = &"grove_1_005"
 
 [node name="grove_1_006" type="StaticBody3D" parent="Patches/Grove1" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(0.72416157, 0, -0.6896304, 0, 1, 0, 0.6896304, 0, 0.72416157, -33.63373, 17.306236, 194.02051)
+transform = Transform3D(0.72416157, 0, -0.6896304, 0, 1, 0, 0.6896304, 0, 0.72416157, -33.63373, 19.6369, 194.02051)
 save_id = &"grove_1_006"
 
 [node name="Grove2" type="Node3D" parent="Patches"]
 
 [node name="grove_2_000" type="StaticBody3D" parent="Patches/Grove2" instance=ExtResource("10_k7dwp")]
-transform = Transform3D(0.38038427, 0, 0.9248285, 0, 1, 0, -0.9248285, 0, 0.38038427, -41.869408, 23.831957, 8.710313)
+transform = Transform3D(0.38038427, 0, 0.9248285, 0, 1, 0, -0.9248285, 0, 0.38038427, -41.869408, 24.77599, 8.710313)
 save_id = &"grove_2_000"
 
 [node name="grove_2_001" type="StaticBody3D" parent="Patches/Grove2" instance=ExtResource("10_k7dwp")]
-transform = Transform3D(-0.89055264, 0, 0.45488024, 0, 1, 0, -0.45488024, 0, -0.89055264, -22.918816, 18.820007, 24.860466)
+transform = Transform3D(-0.89055264, 0, 0.45488024, 0, 1, 0, -0.45488024, 0, -0.89055264, -22.918816, 19.657572, 24.860466)
 save_id = &"grove_2_001"
 
 [node name="grove_2_002" type="StaticBody3D" parent="Patches/Grove2" instance=ExtResource("10_k7dwp")]
-transform = Transform3D(0.19482243, 0, -0.98083854, 0, 1, 0, 0.98083854, 0, 0.19482243, -27.352192, 20.43616, 23.435686)
+transform = Transform3D(0.19482243, 0, -0.98083854, 0, 1, 0, 0.98083854, 0, 0.19482243, -27.352192, 21.430548, 23.435686)
 save_id = &"grove_2_002"
 
 [node name="grove_2_003" type="StaticBody3D" parent="Patches/Grove2" instance=ExtResource("10_k7dwp")]
-transform = Transform3D(-0.51820153, 0, 0.8552585, 0, 1, 0, -0.8552585, 0, -0.51820153, -26.760784, 21.111158, 14.489523)
+transform = Transform3D(-0.51820153, 0, 0.8552585, 0, 1, 0, -0.8552585, 0, -0.51820153, -26.760784, 22.201187, 14.489523)
 save_id = &"grove_2_003"
 
 [node name="grove_2_004" type="StaticBody3D" parent="Patches/Grove2" instance=ExtResource("1_1n5bp")]
-transform = Transform3D(0.9917769, 0, 0.12797904, 0, 1, 0, -0.12797904, 0, 0.9917769, -30.725859, 21.54017, 11.908843)
+transform = Transform3D(0.9917769, 0, 0.12797904, 0, 1, 0, -0.12797904, 0, 0.9917769, -30.725859, 22.631617, 11.908843)
 save_id = &"grove_2_004"
 
 [node name="grove_2_005" type="StaticBody3D" parent="Patches/Grove2" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.29311055, 0, -0.9560785, 0, 1, 0, 0.9560785, 0, -0.29311055, -42.952305, 23.937822, 18.516405)
+transform = Transform3D(-0.29311055, 0, -0.9560785, 0, 1, 0, 0.9560785, 0, -0.29311055, -42.952305, 24.663546, 18.516405)
 save_id = &"grove_2_005"
 
 [node name="grove_2_006" type="StaticBody3D" parent="Patches/Grove2" instance=ExtResource("10_k7dwp")]
-transform = Transform3D(-0.9975702, 0, -0.06966817, 0, 1, 0, 0.06966817, 0, -0.9975702, -34.401592, 22.06778, 14.122979)
+transform = Transform3D(-0.9975702, 0, -0.06966817, 0, 1, 0, 0.06966817, 0, -0.9975702, -34.401592, 23.094688, 14.122979)
 save_id = &"grove_2_006"
 
 [node name="Grove3" type="Node3D" parent="Patches"]
 
 [node name="grove_3_000" type="StaticBody3D" parent="Patches/Grove3" instance=ExtResource("10_k7dwp")]
-transform = Transform3D(-0.90876603, 0, -0.41730607, 0, 1, 0, 0.41730607, 0, -0.90876603, -45.64173, 31.947916, 253.26685)
+transform = Transform3D(-0.90876603, 0, -0.41730607, 0, 1, 0, 0.41730607, 0, -0.90876603, -45.64173, 33.11303, 253.26685)
 save_id = &"grove_3_000"
 
 [node name="grove_3_001" type="StaticBody3D" parent="Patches/Grove3" instance=ExtResource("10_k7dwp")]
-transform = Transform3D(-0.96802634, 0, 0.25084847, 0, 1, 0, -0.25084847, 0, -0.96802634, -39.369495, 30.5967, 247.52594)
+transform = Transform3D(-0.96802634, 0, 0.25084847, 0, 1, 0, -0.25084847, 0, -0.96802634, -39.369495, 32.73311, 247.52594)
 save_id = &"grove_3_001"
 
 [node name="grove_3_002" type="StaticBody3D" parent="Patches/Grove3" instance=ExtResource("10_k7dwp")]
-transform = Transform3D(0.7089008, 0, 0.7053082, 0, 1, 0, -0.7053082, 0, 0.7089008, -46.380013, 30.893124, 264.43036)
+transform = Transform3D(0.7089008, 0, 0.7053082, 0, 1, 0, -0.7053082, 0, 0.7089008, -46.380013, 31.623041, 264.43036)
 save_id = &"grove_3_002"
 
 [node name="grove_3_003" type="StaticBody3D" parent="Patches/Grove3" instance=ExtResource("10_k7dwp")]
-transform = Transform3D(-0.96689, 0, 0.25519365, 0, 1, 0, -0.25519365, 0, -0.96689, -31.049568, 26.52218, 251.8469)
+transform = Transform3D(-0.96689, 0, 0.25519365, 0, 1, 0, -0.25519365, 0, -0.96689, -31.049568, 28.752817, 251.8469)
 save_id = &"grove_3_003"
 
 [node name="grove_3_004" type="StaticBody3D" parent="Patches/Grove3" instance=ExtResource("10_k7dwp")]
-transform = Transform3D(-0.6336945, 0, -0.77358335, 0, 1, 0, 0.77358335, 0, -0.6336945, -41.642174, 30.297312, 259.79593)
+transform = Transform3D(-0.6336945, 0, -0.77358335, 0, 1, 0, 0.77358335, 0, -0.6336945, -41.642174, 31.334757, 259.79593)
 save_id = &"grove_3_004"
 
 [node name="grove_3_005" type="StaticBody3D" parent="Patches/Grove3" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(0.9999233, 0, 0.012383883, 0, 1, 0, -0.012383883, 0, 0.9999233, -50.19367, 32.413887, 255.7494)
+transform = Transform3D(0.9999233, 0, 0.012383883, 0, 1, 0, -0.012383883, 0, 0.9999233, -50.19367, 33.23458, 255.7494)
 save_id = &"grove_3_005"
 
 [node name="grove_3_006" type="StaticBody3D" parent="Patches/Grove3" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.023415798, 0, -0.9997258, 0, 1, 0, 0.9997258, 0, -0.023415798, -33.413254, 27.752392, 248.41171)
+transform = Transform3D(-0.023415798, 0, -0.9997258, 0, 1, 0, 0.9997258, 0, -0.023415798, -33.413254, 30.227806, 248.41171)
 save_id = &"grove_3_006"
 
 [node name="Grove4" type="Node3D" parent="Patches"]
 
 [node name="grove_4_000" type="StaticBody3D" parent="Patches/Grove4" instance=ExtResource("10_k7dwp")]
-transform = Transform3D(0.0037527115, 0, -0.99999297, 0, 1, 0, 0.99999297, 0, 0.0037527115, 186.25768, 12.637238, 297.95032)
+transform = Transform3D(0.0037527115, 0, -0.99999297, 0, 1, 0, 0.99999297, 0, 0.0037527115, 186.25768, 12.721414, 297.95032)
 save_id = &"grove_4_000"
 
 [node name="grove_4_001" type="StaticBody3D" parent="Patches/Grove4" instance=ExtResource("10_k7dwp")]
-transform = Transform3D(0.5211088, 0, -0.85349023, 0, 1, 0, 0.85349023, 0, 0.5211088, 186.442, 15.721371, 304.7945)
+transform = Transform3D(0.5211088, 0, -0.85349023, 0, 1, 0, 0.85349023, 0, 0.5211088, 186.442, 15.801396, 304.7945)
 save_id = &"grove_4_001"
 
 [node name="grove_4_002" type="StaticBody3D" parent="Patches/Grove4" instance=ExtResource("1_1n5bp")]
-transform = Transform3D(0.0040405444, 0, 0.99999183, 0, 1, 0, -0.99999183, 0, 0.0040405444, 185.2536, 7.9988284, 282.8226)
+transform = Transform3D(0.0040405444, 0, 0.99999183, 0, 1, 0, -0.99999183, 0, 0.0040405444, 185.2536, 7.9885335, 282.8226)
 save_id = &"grove_4_002"
 
 [node name="grove_4_003" type="StaticBody3D" parent="Patches/Grove4" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(0.72901946, 0, -0.68449295, 0, 1, 0, 0.68449295, 0, 0.72901946, 192.94482, 18.624393, 310.86975)
+transform = Transform3D(0.72901946, 0, -0.68449295, 0, 1, 0, 0.68449295, 0, 0.72901946, 192.94482, 18.641592, 310.86975)
 save_id = &"grove_4_003"
 
 [node name="grove_4_004" type="StaticBody3D" parent="Patches/Grove4" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(0.46804124, 0, -0.8837066, 0, 1, 0, 0.8837066, 0, 0.46804124, 193.05284, 13.082897, 293.38492)
+transform = Transform3D(0.46804124, 0, -0.8837066, 0, 1, 0, 0.8837066, 0, 0.46804124, 193.05284, 13.007317, 293.38492)
 save_id = &"grove_4_004"
 
 [node name="grove_4_005" type="StaticBody3D" parent="Patches/Grove4" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(0.24573481, 0, -0.9693371, 0, 1, 0, 0.9693371, 0, 0.24573481, 194.60706, 16.588217, 304.53162)
+transform = Transform3D(0.24573481, 0, -0.9693371, 0, 1, 0, 0.9693371, 0, 0.24573481, 194.60706, 16.549337, 304.53162)
 save_id = &"grove_4_005"
 
 [node name="grove_4_006" type="StaticBody3D" parent="Patches/Grove4" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.4865852, 0, 0.87363315, 0, 1, 0, -0.87363315, 0, -0.4865852, 183.78738, 10.168415, 292.07364)
+transform = Transform3D(-0.4865852, 0, 0.87363315, 0, 1, 0, -0.87363315, 0, -0.4865852, 183.78738, 10.252131, 292.07364)
 save_id = &"grove_4_006"
 
 [node name="Grove5" type="Node3D" parent="Patches"]
 
 [node name="grove_5_000" type="StaticBody3D" parent="Patches/Grove5" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.17546287, 0, 0.98448604, 0, 1, 0, -0.98448604, 0, -0.17546287, 308.38556, 20.529245, 211.13354)
+transform = Transform3D(-0.17546287, 0, 0.98448604, 0, 1, 0, -0.98448604, 0, -0.17546287, 308.38556, 20.082201, 211.13354)
 save_id = &"grove_5_000"
 
 [node name="grove_5_001" type="StaticBody3D" parent="Patches/Grove5" instance=ExtResource("10_k7dwp")]
-transform = Transform3D(0.6984955, 0, 0.71561444, 0, 1, 0, -0.71561444, 0, 0.6984955, 297.60144, 18.685703, 202.27374)
+transform = Transform3D(0.6984955, 0, 0.71561444, 0, 1, 0, -0.71561444, 0, 0.6984955, 297.60144, 17.21558, 202.27374)
 save_id = &"grove_5_001"
 
 [node name="grove_5_002" type="StaticBody3D" parent="Patches/Grove5" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.9970952, 0, -0.07616465, 0, 1, 0, 0.07616465, 0, -0.9970952, 301.6335, 18.22119, 193.7666)
+transform = Transform3D(-0.9970952, 0, -0.07616465, 0, 1, 0, 0.07616465, 0, -0.9970952, 301.6335, 16.044064, 193.7666)
 save_id = &"grove_5_002"
 
 [node name="grove_5_003" type="StaticBody3D" parent="Patches/Grove5" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.5724915, 0, -0.81991065, 0, 1, 0, 0.81991065, 0, -0.5724915, 304.6873, 20.342264, 204.29568)
+transform = Transform3D(-0.5724915, 0, -0.81991065, 0, 1, 0, 0.81991065, 0, -0.5724915, 304.6873, 19.28869, 204.29568)
 save_id = &"grove_5_003"
 
 [node name="grove_5_004" type="StaticBody3D" parent="Patches/Grove5" instance=ExtResource("10_k7dwp")]
-transform = Transform3D(-0.70605487, 0, 0.7081571, 0, 1, 0, -0.7081571, 0, -0.70605487, 290.53287, 16.687931, 201.40894)
+transform = Transform3D(-0.70605487, 0, 0.7081571, 0, 1, 0, -0.7081571, 0, -0.70605487, 290.53287, 15.109495, 201.40894)
 save_id = &"grove_5_004"
 
 [node name="grove_5_005" type="StaticBody3D" parent="Patches/Grove5" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(0.90694636, 0, 0.42124614, 0, 1, 0, -0.42124614, 0, 0.90694636, 307.0918, 20.293112, 192.55754)
+transform = Transform3D(0.90694636, 0, 0.42124614, 0, 1, 0, -0.42124614, 0, 0.90694636, 307.0918, 18.142874, 192.55754)
 save_id = &"grove_5_005"
 
 [node name="grove_5_006" type="StaticBody3D" parent="Patches/Grove5" instance=ExtResource("1_1n5bp")]
-transform = Transform3D(0.49255714, 0, -0.8702801, 0, 1, 0, 0.8702801, 0, 0.49255714, 311.9646, 20.914103, 208.23552)
+transform = Transform3D(0.49255714, 0, -0.8702801, 0, 1, 0, 0.8702801, 0, 0.49255714, 311.9646, 20.32945, 208.23552)
 save_id = &"grove_5_006"
 
 [node name="Grove6" type="Node3D" parent="Patches"]
 
 [node name="grove_6_000" type="StaticBody3D" parent="Patches/Grove6" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.49321696, 0, 0.8699063, 0, 1, 0, -0.8699063, 0, -0.49321696, 284.53604, 30.84178, -25.269058)
+transform = Transform3D(-0.49321696, 0, 0.8699063, 0, 1, 0, -0.8699063, 0, -0.49321696, 284.53604, 29.377678, -25.269058)
 save_id = &"grove_6_000"
 
 [node name="grove_6_001" type="StaticBody3D" parent="Patches/Grove6" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.0022682368, 0, 0.99999744, 0, 1, 0, -0.99999744, 0, -0.0022682368, 282.27115, 29.63588, -14.837422)
+transform = Transform3D(-0.0022682368, 0, 0.99999744, 0, 1, 0, -0.99999744, 0, -0.0022682368, 282.27115, 27.812412, -14.837422)
 save_id = &"grove_6_001"
 
 [node name="grove_6_002" type="StaticBody3D" parent="Patches/Grove6" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.93542445, 0, 0.35352665, 0, 1, 0, -0.35352665, 0, -0.93542445, 271.61877, 28.253511, -16.893078)
+transform = Transform3D(-0.93542445, 0, 0.35352665, 0, 1, 0, -0.35352665, 0, -0.93542445, 271.61877, 26.084007, -16.893078)
 save_id = &"grove_6_002"
 
 [node name="grove_6_003" type="StaticBody3D" parent="Patches/Grove6" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(0.9123312, 0, -0.40945292, 0, 1, 0, 0.40945292, 0, 0.9123312, 282.49527, 30.275728, -20.479376)
+transform = Transform3D(0.9123312, 0, -0.40945292, 0, 1, 0, 0.40945292, 0, 0.9123312, 282.49527, 28.633707, -20.479376)
 save_id = &"grove_6_003"
 
 [node name="grove_6_004" type="StaticBody3D" parent="Patches/Grove6" instance=ExtResource("1_1n5bp")]
-transform = Transform3D(0.40438607, 0, -0.9145884, 0, 1, 0, 0.9145884, 0, 0.40438607, 277.97568, 29.472239, -25.202644)
+transform = Transform3D(0.40438607, 0, -0.9145884, 0, 1, 0, 0.9145884, 0, 0.40438607, 277.97568, 27.45801, -25.202644)
 save_id = &"grove_6_004"
 
 [node name="grove_6_005" type="StaticBody3D" parent="Patches/Grove6" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.57706714, 0, 0.8166967, 0, 1, 0, -0.8166967, 0, -0.57706714, 275.34872, 28.374237, -12.027197)
+transform = Transform3D(-0.57706714, 0, 0.8166967, 0, 1, 0, -0.8166967, 0, -0.57706714, 275.34872, 26.258795, -12.027197)
 save_id = &"grove_6_005"
 
 [node name="grove_6_006" type="StaticBody3D" parent="Patches/Grove6" instance=ExtResource("12_a6dxe")]
-transform = Transform3D(-0.11837477, 0, 0.992969, 0, 1, 0, -0.992969, 0, -0.11837477, 267.1414, 26.708143, -14.446401)
+transform = Transform3D(-0.11837477, 0, 0.992969, 0, 1, 0, -0.992969, 0, -0.11837477, 267.1414, 24.258722, -14.446401)
 save_id = &"grove_6_006"
 
 [node name="Outcrop1" type="Node3D" parent="Patches"]
 
 [node name="outcrop_1_000" type="StaticBody3D" parent="Patches/Outcrop1" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(0.76271284, 0, -0.6467373, 0, 1, 0, 0.6467373, 0, 0.76271284, 214.98587, 14.919333, 276.60107)
+transform = Transform3D(0.76271284, 0, -0.6467373, 0, 1, 0, 0.6467373, 0, 0.76271284, 214.98587, 14.561034, 276.60107)
 save_id = &"outcrop_1_000"
 
 [node name="outcrop_1_001" type="StaticBody3D" parent="Patches/Outcrop1" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(-0.5447683, 0, -0.8385866, 0, 1, 0, 0.8385866, 0, -0.5447683, 210.56015, 13.699819, 272.04257)
+transform = Transform3D(-0.5447683, 0, -0.8385866, 0, 1, 0, 0.8385866, 0, -0.5447683, 210.56015, 13.361362, 272.04257)
 save_id = &"outcrop_1_001"
 
 [node name="outcrop_1_002" type="StaticBody3D" parent="Patches/Outcrop1" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(-0.35431653, 0, -0.9351255, 0, 1, 0, 0.9351255, 0, -0.35431653, 211.7582, 14.845199, 278.55762)
+transform = Transform3D(-0.35431653, 0, -0.9351255, 0, 1, 0, 0.9351255, 0, -0.35431653, 211.7582, 14.526485, 278.55762)
 save_id = &"outcrop_1_002"
 
 [node name="outcrop_1_003" type="StaticBody3D" parent="Patches/Outcrop1" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(-0.68111175, 0, -0.73217946, 0, 1, 0, 0.73217946, 0, -0.68111175, 207.92307, 12.831987, 272.89706)
+transform = Transform3D(-0.68111175, 0, -0.73217946, 0, 1, 0, 0.73217946, 0, -0.68111175, 207.92307, 12.50682, 272.89706)
 save_id = &"outcrop_1_003"
 
 [node name="outcrop_1_004" type="StaticBody3D" parent="Patches/Outcrop1" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(-0.21650358, 0, -0.9762818, 0, 1, 0, 0.9762818, 0, -0.21650358, 218.84682, 16.701164, 278.46338)
+transform = Transform3D(-0.21650358, 0, -0.9762818, 0, 1, 0, 0.9762818, 0, -0.21650358, 218.84682, 16.391085, 278.46338)
 save_id = &"outcrop_1_004"
 
 [node name="Outcrop2" type="Node3D" parent="Patches"]
 
 [node name="outcrop_2_000" type="StaticBody3D" parent="Patches/Outcrop2" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(0.38038427, 0, 0.9248285, 0, 1, 0, -0.9248285, 0, 0.38038427, 5.4026895, 22.529312, -21.179502)
+transform = Transform3D(0.38038427, 0, 0.9248285, 0, 1, 0, -0.9248285, 0, 0.38038427, 5.4026895, 23.74705, -21.179502)
 save_id = &"outcrop_2_000"
 
 [node name="outcrop_2_001" type="StaticBody3D" parent="Patches/Outcrop2" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(-0.89055264, 0, 0.45488024, 0, 1, 0, -0.45488024, 0, -0.89055264, 16.145384, 16.188261, -12.024323)
+transform = Transform3D(-0.89055264, 0, 0.45488024, 0, 1, 0, -0.45488024, 0, -0.89055264, 16.145384, 17.267904, -12.024323)
 save_id = &"outcrop_2_001"
 
 [node name="outcrop_2_002" type="StaticBody3D" parent="Patches/Outcrop2" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(0.19482243, 0, -0.98083854, 0, 1, 0, 0.98083854, 0, 0.19482243, 13.632198, 17.469069, -12.832001)
+transform = Transform3D(0.19482243, 0, -0.98083854, 0, 1, 0, 0.98083854, 0, 0.19482243, 13.632198, 18.585041, -12.832001)
 save_id = &"outcrop_2_002"
 
 [node name="outcrop_2_003" type="StaticBody3D" parent="Patches/Outcrop2" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(-0.51820153, 0, 0.8552585, 0, 1, 0, -0.8552585, 0, -0.51820153, 13.967451, 19.620113, -17.903397)
+transform = Transform3D(-0.51820153, 0, 0.8552585, 0, 1, 0, -0.8552585, 0, -0.51820153, 13.967451, 20.771582, -17.903397)
 save_id = &"outcrop_2_003"
 
 [node name="outcrop_2_004" type="StaticBody3D" parent="Patches/Outcrop2" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(0.9917769, 0, 0.12797904, 0, 1, 0, -0.12797904, 0, 0.9917769, 11.719734, 20.746748, -19.366327)
+transform = Transform3D(0.9917769, 0, 0.12797904, 0, 1, 0, -0.12797904, 0, 0.9917769, 11.719734, 22.002745, -19.366327)
 save_id = &"outcrop_2_004"
 
 [node name="Outcrop3" type="Node3D" parent="Patches"]
 
 [node name="outcrop_3_000" type="StaticBody3D" parent="Patches/Outcrop3" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(-0.90876603, 0, -0.41730607, 0, 1, 0, 0.41730607, 0, -0.90876603, 338.08453, 27.90846, 61.319717)
+transform = Transform3D(-0.90876603, 0, -0.41730607, 0, 1, 0, 0.41730607, 0, -0.90876603, 338.08453, 25.341667, 61.319717)
 save_id = &"outcrop_3_000"
 
 [node name="outcrop_3_001" type="StaticBody3D" parent="Patches/Outcrop3" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(-0.96802634, 0, 0.25084847, 0, 1, 0, -0.25084847, 0, -0.96802634, 342.65112, 29.55253, 57.139927)
+transform = Transform3D(-0.96802634, 0, 0.25084847, 0, 1, 0, -0.25084847, 0, -0.96802634, 342.65112, 27.73823, 57.139927)
 save_id = &"outcrop_3_001"
 
 [node name="outcrop_3_002" type="StaticBody3D" parent="Patches/Outcrop3" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(0.7089008, 0, 0.7053082, 0, 1, 0, -0.7053082, 0, 0.7089008, 337.547, 26.676691, 69.447525)
+transform = Transform3D(0.7089008, 0, 0.7053082, 0, 1, 0, -0.7053082, 0, 0.7089008, 337.547, 23.832472, 69.447525)
 save_id = &"outcrop_3_002"
 
 [node name="outcrop_3_003" type="StaticBody3D" parent="Patches/Outcrop3" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(-0.96689, 0, 0.25519365, 0, 1, 0, -0.25519365, 0, -0.96689, 348.70865, 29.270552, 60.28589)
+transform = Transform3D(-0.96689, 0, 0.25519365, 0, 1, 0, -0.25519365, 0, -0.96689, 348.70865, 27.423794, 60.28589)
 save_id = &"outcrop_3_003"
 
 [node name="outcrop_3_004" type="StaticBody3D" parent="Patches/Outcrop3" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(-0.6336945, 0, -0.77358335, 0, 1, 0, 0.77358335, 0, -0.6336945, 340.9965, 27.949553, 66.07336)
+transform = Transform3D(-0.6336945, 0, -0.77358335, 0, 1, 0, 0.77358335, 0, -0.6336945, 340.9965, 25.536154, 66.07336)
 save_id = &"outcrop_3_004"
 
 [node name="Outcrop4" type="Node3D" parent="Patches"]
 
 [node name="outcrop_4_000" type="StaticBody3D" parent="Patches/Outcrop4" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(0.0037527115, 0, -0.99999297, 0, 1, 0, 0.99999297, 0, 0.0037527115, 155.11365, 10.84781, 290.72113)
+transform = Transform3D(0.0037527115, 0, -0.99999297, 0, 1, 0, 0.99999297, 0, 0.0037527115, 155.11365, 11.475234, 290.72113)
 save_id = &"outcrop_4_000"
 
 [node name="outcrop_4_001" type="StaticBody3D" parent="Patches/Outcrop4" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(0.5211088, 0, -0.85349023, 0, 1, 0, 0.85349023, 0, 0.5211088, 155.23077, 12.769565, 295.0681)
+transform = Transform3D(0.5211088, 0, -0.85349023, 0, 1, 0, 0.85349023, 0, 0.5211088, 155.23077, 13.432289, 295.0681)
 save_id = &"outcrop_4_001"
 
 [node name="outcrop_4_002" type="StaticBody3D" parent="Patches/Outcrop4" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(0.0040405444, 0, 0.99999183, 0, 1, 0, -0.99999183, 0, 0.0040405444, 154.47588, 7.771675, 281.113)
+transform = Transform3D(0.0040405444, 0, 0.99999183, 0, 1, 0, -0.99999183, 0, 0.0040405444, 154.47588, 8.285843, 281.113)
 save_id = &"outcrop_4_002"
 
 [node name="outcrop_4_003" type="StaticBody3D" parent="Patches/Outcrop4" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(0.72901946, 0, -0.68449295, 0, 1, 0, 0.68449295, 0, 0.72901946, 159.36092, 14.622909, 298.92673)
+transform = Transform3D(0.72901946, 0, -0.68449295, 0, 1, 0, 0.68449295, 0, 0.72901946, 159.36092, 15.24565, 298.92673)
 save_id = &"outcrop_4_003"
 
 [node name="outcrop_4_004" type="StaticBody3D" parent="Patches/Outcrop4" instance=ExtResource("64_kunej")]
-transform = Transform3D(0.46804124, 0, -0.8837066, 0, 1, 0, 0.8837066, 0, 0.46804124, 159.42952, 9.912412, 287.82147)
+transform = Transform3D(0.46804124, 0, -0.8837066, 0, 1, 0, 0.8837066, 0, 0.46804124, 159.42952, 10.435012, 287.82147)
 save_id = &"outcrop_4_004"
 
 [node name="Outcrop5" type="Node3D" parent="Patches"]
 
 [node name="outcrop_5_000" type="StaticBody3D" parent="Patches/Outcrop5" instance=ExtResource("14_ft0cb")]
-transform = Transform3D(-0.17546287, 0, 0.98448604, 0, 1, 0, -0.98448604, 0, -0.17546287, 232.52783, 22.985134, 346.10306)
+transform = Transform3D(-0.17546287, 0, 0.98448604, 0, 1, 0, -0.98448604, 0, -0.17546287, 232.52783, 22.98325, 346.10306)
 save_id = &"outcrop_5_000"
 
 [node name="outcrop_5_001" type="StaticBody3D" parent="Patches/Outcrop5" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(0.6984955, 0, 0.71561444, 0, 1, 0, -0.71561444, 0, 0.6984955, 227.54482, 24.1943, 342.00925)
+transform = Transform3D(0.6984955, 0, 0.71561444, 0, 1, 0, -0.71561444, 0, 0.6984955, 227.54482, 24.18381, 342.00925)
 save_id = &"outcrop_5_001"
 
 [node name="outcrop_5_002" type="StaticBody3D" parent="Patches/Outcrop5" instance=ExtResource("14_ft0cb")]
-transform = Transform3D(-0.9970952, 0, -0.07616465, 0, 1, 0, 0.07616465, 0, -0.9970952, 229.4079, 23.31051, 338.07837)
+transform = Transform3D(-0.9970952, 0, -0.07616465, 0, 1, 0, 0.07616465, 0, -0.9970952, 229.4079, 23.293163, 338.07837)
 save_id = &"outcrop_5_002"
 
 [node name="outcrop_5_003" type="StaticBody3D" parent="Patches/Outcrop5" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(-0.5724915, 0, -0.81991065, 0, 1, 0, 0.81991065, 0, -0.5724915, 230.81897, 23.46106, 342.9435)
+transform = Transform3D(-0.5724915, 0, -0.81991065, 0, 1, 0, 0.81991065, 0, -0.5724915, 230.81897, 23.454714, 342.9435)
 save_id = &"outcrop_5_003"
 
 [node name="outcrop_5_004" type="StaticBody3D" parent="Patches/Outcrop5" instance=ExtResource("11_8uhmp")]
-transform = Transform3D(-0.70605487, 0, 0.7081571, 0, 1, 0, -0.7081571, 0, -0.70605487, 224.27863, 25.024467, 341.60968)
+transform = Transform3D(-0.70605487, 0, 0.7081571, 0, 1, 0, -0.7081571, 0, -0.70605487, 224.27863, 25.005972, 341.60968)
 save_id = &"outcrop_5_004"
 
 [node name="Water" type="Node3D" parent="."]
@@ -1894,7 +2395,7 @@ script = ExtResource("70_pdurs")
 
 [node name="Volume" type="CollisionShape3D" parent="Water/Pond"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
-shape = SubResource("BoxShape3D_acnrr")
+shape = SubResource("BoxShape3D_qnuq6")
 
 [node name="Dressing" type="Node3D" parent="Water/Pond"]
 script = ExtResource("71_7pl6r")
@@ -1906,7 +2407,7 @@ schools = Array[ExtResource("73_yek65")]([ExtResource("74_0rh6e"), ExtResource("
 [node name="Surface" type="MeshInstance3D" parent="Water/Pond"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.15, 0)
 cast_shadow = 0
-mesh = SubResource("PlaneMesh_3pg6e")
+mesh = SubResource("PlaneMesh_itjeq")
 
 [node name="Lake" type="Area3D" parent="Water"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 0, 340)
@@ -1916,7 +2417,7 @@ script = ExtResource("70_pdurs")
 
 [node name="Volume" type="CollisionShape3D" parent="Water/Lake"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
-shape = SubResource("BoxShape3D_pws38")
+shape = SubResource("BoxShape3D_oueuu")
 
 [node name="Dressing" type="Node3D" parent="Water/Lake"]
 script = ExtResource("71_7pl6r")
@@ -1932,4 +2433,4 @@ schools = Array[ExtResource("73_yek65")]([ExtResource("75_3x4vr"), ExtResource("
 [node name="Surface" type="MeshInstance3D" parent="Water/Lake"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.15, 0)
 cast_shadow = 0
-mesh = SubResource("PlaneMesh_0qb74")
+mesh = SubResource("PlaneMesh_f3moc")

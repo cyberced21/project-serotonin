@@ -13,10 +13,10 @@ const SET_OFF := 0.24
 const PARKED := 0.31
 const PACK_UP := 0.80
 const GONE := 0.87
-## Where she parks: behind the market stall, off the green's ring, and how she gets there from
-## the end of the road east (world XZ).
-const PARK := Vector2(157, 143)
-const TOWN_WAY: Array[Vector2] = [Vector2(178, 127), Vector2(163, 136)]
+## Where she parks: at the market place's east end, by the market stall, and how she gets there
+## from the end of the road east, along the village street (world XZ).
+const PARK := Vector2(160, 127.5)
+const TOWN_WAY: Array[Vector2] = [Vector2(186, 126), Vector2(170, 125.5)]
 const CART := preload("res://models/village/props/trader_cart.glb")
 ## Sounds (audio/trader/SOURCES.md): hooves and wheels while she drives (looped from the cart), the
 ## horse snorting now and then while parked.

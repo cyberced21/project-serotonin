@@ -25,6 +25,11 @@ const WORLD_SIZE := 768.0
 ## The village's flat (the green, the lanes, the yards round them) and the bowl round it: flat
 ## floor out to BOWL_FLOOR, rising to BOWL_RIM_HEIGHT by BOWL_RIM.
 const VILLAGE_RADIUS := 72.0
+## The market place (plans/village-street.md): where the village street widens round the green's
+## anchor, along the green's X. MARKET_LENGTH end to end, MARKET_HALF_WIDTH either side at the
+## middle (market_half_width(), in_market()).
+const MARKET_LENGTH := 52.0
+const MARKET_HALF_WIDTH := 14.0
 const BOWL_FLOOR := 115.0
 const BOWL_RIM := 250.0
 const BOWL_RIM_HEIGHT := 22.0
@@ -73,6 +78,7 @@ const ROAD_HALF_WIDTH := 2.5
 const PATH_HALF_WIDTH := 1.6
 const QUARRY_RIM_POINT := Vector2(-65, 61)  # on the apron where the haul road leaves the rim (QUARRY_ROAD_ANGLE)
 const ROADS: Array[Dictionary] = [
+	{"id": &"main_street", "title": "The village street", "kind": &"road", "ctrl": MAIN_STREET},
 	{"id": &"village_path", "title": "The path from the clearing", "kind": &"path", "village": true, "reverse": true,
 		"ctrl": VILLAGE_PATH},
 	{"id": &"village_road", "title": "The road to the Pinewood", "kind": &"road", "village": true,
@@ -100,6 +106,11 @@ const ROADS: Array[Dictionary] = [
 	{"id": &"shepherd_path", "title": "The path up the shepherd's hill", "kind": &"path", "from": Vector2(330, 120), "join": &"east_road",
 		"place": &"shepherds_hill", "to": Vector2(-6, 14), "drawn_at": Vector2(360, 18)},
 ]
+## The village street (plans/village-street.md): from the end of the road to the quarry, through
+## the market place, to the start of the road east. The houses line it; the north, lake and fields
+## roads come in to it.
+const MAIN_STREET: Array[Vector2] = [Vector2(58, 134), Vector2(84, 131), Vector2(108, 127), Vector2(137, 125),
+	Vector2(166, 125), Vector2(186, 126), Vector2(200, 126)]
 ## The road east (plans/market.md): from the green's east edge up through a pass in the eastern
 ## rim hills to the world's edge, the way traders come. The terrain generator cuts the pass along it.
 const EAST_ROAD: Array[Vector2] = [Vector2(200, 126), Vector2(238, 120), Vector2(278, 126), Vector2(318, 134),
@@ -155,6 +166,21 @@ static func in_frame(id: StringName, local: Vector2) -> Vector2:
 ## The middle of the village green (its anchor; the bowl and the village's flat are round it).
 static func village_center() -> Vector2:
 	return LayoutAnchors.at(&"green", Vector2(128, 128))
+
+
+## Half the market place's width (m) `along` metres from its middle, in the green's frame (0 past
+## its ends): a lens, widest in the middle.
+static func market_half_width(along: float) -> float:
+	if absf(along) >= MARKET_LENGTH / 2.0:
+		return 0.0
+	return MARKET_HALF_WIDTH * sin(PI * (along + MARKET_LENGTH / 2.0) / MARKET_LENGTH)
+
+
+## Whether `p` (world XZ) is on the market place's paving.
+static func in_market(p: Vector2) -> bool:
+	var d := p - village_center()
+	var l := Vector3(d.x, 0.0, d.y).rotated(Vector3.UP, -LayoutAnchors.yaw(&"green"))
+	return absf(l.z) < market_half_width(l.x)
 
 
 static func haven_center() -> Vector2:

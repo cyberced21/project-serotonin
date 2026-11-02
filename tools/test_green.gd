@@ -83,13 +83,13 @@ func _turned(center: Vector2, o: Vector2) -> Vector2:
 
 func _green(decor: Node3D, green: Node3D) -> void:
 	var c := _flat(green.global_position)
-	_check(_flat(green.global_position).distance_to(Vector2(128, 128)) < EPS, "the green stays where it is (only turned)")
+	_check(_flat(green.global_position).distance_to(Vector2(137, 125)) < EPS, "the green stays where it is (only turned)")
 	_check(absf(wrapf(green.global_rotation.y - PI / 2.0, -PI, PI)) < 0.01, "...turned a quarter")
 	var board := decor.get("board") as Node3D
 	var want: Vector2 = _turned(c, _k["NOTICEBOARD"][0])
 	_check(board and _flat(board.global_position).distance_to(want) < EPS, "the noticeboard turned round the green (%s, wants %s)" % [_flat(board.global_position) if board else null, want])
 	var bench_a := green.get_node_or_null("BenchA") as Node3D
-	_check(bench_a and _flat(bench_a.global_position).distance_to(_turned(c, Vector2(108, 134) - Vector2(128, 128))) < EPS, "the green's bench turned with it")
+	_check(bench_a and _flat(bench_a.global_position).distance_to(_turned(c, Vector2(-12.5, 7))) < EPS, "the green's bench turned with it")
 	var benches: Array = decor.call("props_of", &"benches")
 	_check(benches.size() == 2 and _flat((benches[0] as Node3D).global_position).distance_to(_turned(c, _k["PROPS"][&"benches"][0][1])) < EPS,
 			"the benches project's benches turned round it")
@@ -125,7 +125,7 @@ func _spots(green: Node3D) -> void:
 	_check(square != null and square.get_parent() == green, "Rosa's Square spot is the green's")
 	var c := _flat(green.global_position)
 	if square:
-		var was := Vector2(136.85, 144.82) - Vector2(128, 128)
+		var was := Vector2(8, 4)  # (her Square spot on the market place, in the green's frame)
 		_check(_flat(square.global_position).distance_to(_turned(c, was)) < EPS, "...on the green (turned with it), not 20 m off with her bakery")
 	var wc := _building(&"woodcutter")
 	var bench := wc.call("spot", "Bench") as Node3D

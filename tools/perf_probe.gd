@@ -17,9 +17,9 @@ extends SceneTree
 
 ## [name, stand at, look at, time of day]
 const SPOTS := [
-	["village", Vector3(128, 0, 140), Vector3(141, 0, 128), 0.45],
-	["village_dusk", Vector3(98, 0, 82), Vector3(126, 0, 104), 0.86],
-	["square", Vector3(114, 0, 124), Vector3(70, 0, 94), 0.45],
+	["village", Vector3(137, 0, 139), Vector3(137, 0, 110), 0.45],  # (the market place from its south side)
+	["village_dusk", Vector3(62, 0, 134), Vector3(150, 0, 125), 0.86],  # (down the street from its west end)
+	["square", Vector3(128, 0, 125), Vector3(70, 0, 132), 0.45],  # (from the market, west down the street)
 	["clearing", Vector3(50, 0, 80), Vector3(46, 0, 50), 0.42],
 	["quarry", Vector3(-65, 0, 62), Vector3(-118, 0, 88), 0.45],
 	["pinewood", Vector3(140.5, 0, -80.5), Vector3(115, 0, -110.5), 0.38],

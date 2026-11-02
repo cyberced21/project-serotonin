@@ -14,7 +14,9 @@ extends AnimatableBody3D
 ## standstill and slows into each stop.
 
 enum State { IDLE, WALK, WORK, TALK, CHEER }
-enum Work { CHOP, HAMMER, FISH, ORATE, TEND, WIPE }
+## (New ones go on the end: the building scenes store `work` as a number.) STOKE to SORT are the
+## work yards' (WorkYards: a station says which it is).
+enum Work { CHOP, HAMMER, FISH, ORATE, TEND, WIPE, STOKE, DUNK, GRIND, SAW, KNEAD, SWEEP, SORT }
 
 const PALETTE := preload("res://materials/node_palette.tres")
 const CHOP_SFX := preload("res://audio/wood_hit.tres")
@@ -25,6 +27,8 @@ const CLINK_SFX := preload("res://audio/tavern/clink.wav")
 ## Physics layer 7: the player bumps into villagers and aims at them, but they're not "world"
 ## (no mantling onto heads, debris and pickups pass through). (Layer 6 is the fish hit volumes.)
 const NPC_LAYER := 1 << 6
+## In work hours at a work yard: the chance the next spot is their own door instead of a station.
+const DOOR_CHANCE := 0.15
 ## A point on the way somewhere counts as passed this close (so they round corners smoothly).
 const WAYPOINT_REACH := 0.6
 ## A walk longer than this (m, along the paths) is taken briskly, this much faster.
@@ -238,13 +242,13 @@ func _apply_poses(delta: float) -> void:
 func _start() -> void:
 	_terrain = get_tree().get_first_node_in_group("terrain") as Terrain3D
 	_part = _day_part()
-	var m := building.work_spot()
+	var m := _work_place()
 	if m:
 		global_position = _ground(m.global_position)
 		_face_marker(m)
 		_target = m
 	reset_physics_interpolation()
-	_enter(State.WORK if m and m.name.begins_with("Work") else State.IDLE)
+	_enter(State.WORK if _works_at(m) else State.IDLE)
 	var door := building.spot("Door")
 	if _part == VillagerDay.Part.SLEEP and door:  # a world loaded at night: already in bed
 		global_position = _ground(door.global_position)
@@ -601,15 +605,44 @@ func _next_spot() -> Marker3D:
 	return _pick_spot()
 
 
-## Next place to go by day: mostly back to work, sometimes the door or the bench. Never where it
-## is, and not a seat someone else has.
+## Next place to go by day. In work hours with a work yard (WorkYards): another of its stations,
+## now and then their own door, never off to the green. Otherwise mostly back to work, sometimes
+## the door or the bench. Never where it is, and not a seat someone else has.
 func _pick_spot() -> Marker3D:
+	var stations := building.stations()
+	if _part == VillagerDay.Part.WORK and not stations.is_empty():
+		var door := building.spot("Door")
+		if door and door != _target and randf() < DOOR_CHANCE:
+			return door
+		var free: Array[Marker3D] = []
+		for m in stations:
+			if m != _target and not _taken(m):
+				free.append(m)
+		return free.pick_random() if not free.is_empty() else (stations[0] if _target == null else _target)
 	var options: Array[Marker3D] = []
 	var work_m := building.work_spot()
 	for m in [work_m, work_m, work_m, building.spot("Door"), building.spot("Bench"), building.spot("Square")]:
 		if m and m != _target and not _taken(m):
 			options.append(m)
 	return options.pick_random() if not options.is_empty() else _target
+
+
+## Where the day's work starts: the first station in their yard, else their work spot.
+func _work_place() -> Marker3D:
+	var stations := building.stations()
+	return stations[0] if not stations.is_empty() else building.work_spot()
+
+
+## Whether `m` is somewhere they work (a work spot or a yard station), not just stand.
+func _works_at(m: Marker3D) -> bool:
+	return m != null and (m.name.begins_with("Work") or m.is_in_group("station"))
+
+
+## What they do where they are: the station's motion, else their trade's.
+func _motion() -> Work:
+	if _target and _target.has_meta(&"motion"):
+		return Work.get(String(_target.get_meta(&"motion")), work)
+	return work
 
 
 ## Busy with their own day (sitting somewhere, out for the evening, asleep, visiting you): not
@@ -854,7 +887,7 @@ func _walk(delta: float) -> void:
 	if dist < 0.08:
 		global_position = _ground(goal)
 		_route.clear()
-		_enter(State.WORK if _target.name.begins_with("Work") else State.IDLE)
+		_enter(State.WORK if _works_at(_target) else State.IDLE)
 		return
 	# speed up from a standstill, slow into the stop (not at the points on the way)
 	var cruise := walk_speed * _hurry * (clampf(dist / 0.7, 0.3, 1.0) if last else 1.0)
@@ -1087,7 +1120,7 @@ func _animate_cheer() -> void:
 func _animate_work() -> void:
 	_pose(&"LegL", 0.0)
 	_pose(&"LegR", 0.0)
-	match work:
+	match _motion():
 		Work.CHOP:
 			# raise the axe overhead slowly, bring it down hard, hold, repeat
 			var t := fmod(_phase, 1.6) / 1.6
@@ -1149,6 +1182,50 @@ func _animate_work() -> void:
 			_pose(&"ArmR", lerpf(0.35, -1.9, g), lerpf(0.1, 0.5, g))
 			_pose(&"ArmL", 0.35, -0.1)
 			_pose(&"Body", -0.05 * g, 0.0, 0.0, Vector3(0, sin(_phase * 2.0) * 0.008, 0))
+		Work.STOKE:
+			# at the forge: pushing the coals about with the poker, leaning into the heat
+			var a := sin(_phase * 2.0)
+			_pose(&"ArmR", -1.3 + a * 0.25, 0.1)
+			_pose(&"ArmL", -1.2 + a * 0.25, -0.1)
+			_pose(&"Body", -0.18 + a * 0.04, 0.0)
+		Work.DUNK:
+			# bend, dip into the bucket or tub, hold, lift out and look
+			var t := fmod(_phase, 2.6) / 2.6
+			var dip := smoothstep(0.0, 0.25, t) * (1.0 - smoothstep(0.55, 0.8, t))
+			_pose(&"ArmR", -0.5 - dip * 0.6, 0.08)
+			_pose(&"ArmL", -0.5 - dip * 0.6, -0.08)
+			_pose(&"Body", -0.1 - dip * 0.4, 0.0, 0.0, Vector3(0, -dip * 0.05, 0))
+		Work.GRIND:
+			# a blade held to the wheel, worked side to side, a foot on the treadle
+			var w := sin(_phase * 6.0) * 0.08
+			_pose(&"ArmR", -1.2, 0.05 + w)
+			_pose(&"ArmL", -1.15, -0.05 + w)
+			_pose(&"LegL", -maxf(sin(_phase * 3.0), 0.0) * 0.3)
+			_pose(&"Body", -0.2, 0.0)
+		Work.SAW:
+			# one hand on the plank, the other sawing back and forth
+			_pose(&"ArmR", -1.0 + sin(_phase * 5.0) * 0.35, 0.1)
+			_pose(&"ArmL", -0.95, -0.2)
+			_pose(&"Body", -0.22, 0.0, 0.0, Vector3(0, sin(_phase * 10.0) * 0.004, 0))
+		Work.KNEAD:
+			# both hands pushing the dough down and away, again and again
+			var k := maxf(sin(_phase * 3.2), 0.0)
+			_pose(&"ArmR", -1.25 + k * 0.3, 0.12)
+			_pose(&"ArmL", -1.25 + k * 0.3, -0.12)
+			_pose(&"Body", -0.3 - k * 0.08, 0.0, 0.0, Vector3(0, -k * 0.02, 0))
+		Work.SWEEP:
+			# the broom low in front, swept side to side
+			var b := sin(_phase * 2.2)
+			_pose(&"ArmR", -0.7, 0.3 * b)
+			_pose(&"ArmL", -0.6, 0.3 * b)
+			_pose(&"Body", -0.15, 0.0, 0.08 * b)
+		Work.SORT:
+			# pick one up, turn it over, toss it to one side; again
+			var t := fmod(_phase, 1.4) / 1.4
+			var toss := smoothstep(0.6, 0.75, t) * (1.0 - smoothstep(0.85, 1.0, t))
+			_pose(&"ArmR", lerpf(-1.05, -1.4, sin(t * PI)), 0.1 + toss * 0.6)
+			_pose(&"ArmL", -1.0, -0.12)
+			_pose(&"Body", -0.25, 0.0)
 
 
 func _play(stream: AudioStream, pitch: float) -> void:
