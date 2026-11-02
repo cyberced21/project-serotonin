@@ -40,7 +40,7 @@ Swum once (2026-11-01); wakes and splashes not yet seen in motion.
 - [ ] **Playtest the chop feel** (bot-verified only: gallery stills, not seen in motion or played).
 - [ ] **Tune the synthesized wood sounds by ear** in play (`tools/synth_wood_sounds.py`, each sound is one function; the stacks' levels are in `audio/woodcutting/*.tres`).
 - [ ] **The Pinewood stand, play it** ([plans/pinewood-stand.md](../plans/pinewood-stand.md)): headless-checked only. Watch for the swap at 14 m (a copy becoming a real tree: an old-growth tree's shimmer pops in), stumps of felled trees seen from afar, and whether a forest gated at Woodcutting 25 (pines) feels like a wall of ghost outlines early on.
-- [ ] **The stand's frame cost** (plans/pinewood-stand.md phase 5): `perf_census.gd` before/after and `perf_probe.gd` standing in and jogging through the forest. Needs a game window.
+- [ ] **The stand's jog hitch** (plans/pinewood-stand.md phase 5): measured 2026-11-01, the forest runs ~108 fps standing in it and ~94 jogging, but the jog's 95th-percentile frame is 22 ms (trees waking, 2 a frame). If it's felt in play: wake 1 a frame, or pool the trees. The copies are ~2 ms of GPU (no draw distance, shadows).
 - [ ] **Talent model at level 40 with the whole forest:** Old growth +36% vs Momentum +16% (gap 16%, want 15%; 11% at `--human=0.7`). Seeded old-growth picks make it jumpy; look again after a playtest.
 - [ ] **The notch on birch** shows less (pale cut wood on white bark); a darker cut colour for it if it reads poorly.
 

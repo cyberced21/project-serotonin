@@ -109,11 +109,23 @@ Branch `stand` off `main`, one commit a phase. (Main's working copy has a rewrit
    forest trees' three each). The whole forest is choppable and the world is smaller than before.
    Awake, a tree is ~29 nodes; at most 40 awake (typically ~20 standing in the forest) adds
    ~600-1,200. The copies have no draw distance and cast shadows, like the old canopy layers.
-   Frame times (`perf_probe.gd`) still to measure. `perf_probe.gd` now ends with the stand
-   (`--only=stand`): its middle as played, with every tree asleep, with the copies hidden, and a
-   70 m jog through it. Two runs on 2026-11-01 with a game running on the same GPU are unusable
-   (the trail spot went from 44 fps to 0.2 fps between runs, the copies hidden still 2.5 s a
-   frame); measure with nothing else on the GPU.
+   `perf_probe.gd` now ends with the stand (`--only=stand`): its middle as played, with every
+   tree asleep, with the copies hidden, and a 70 m jog through it. (Two earlier runs with a game
+   on the same GPU were unusable.) Frame times 2026-11-01, 1920x1080, nothing else on the GPU:
+
+   | spot | fps | ms | p95 | GPU ms | draws | prims |
+   |---|---|---|---|---|---|---|
+   | village (reference) | 92.8 | 10.8 | 13.4 | 9.2 | 1825 | 3.95 M |
+   | Pinewood trail | 87.0 | 11.5 | 15.8 | 10.6 | 1416 | 6.22 M |
+   | stand middle, 13 awake | 108.2 | 9.2 | 12.4 | 7.7 | 1631 | 5.91 M |
+   | stand middle, all asleep | 108.4 | 9.2 | 12.4 | 7.9 | 1583 | 5.97 M |
+   | stand middle, copies hidden | 138.6 | 7.2 | 9.8 | 5.7 | 894 | 1.32 M |
+   | jogging through (6 m/s) | 93.8 | 10.7 | 22.4 | 7.7 | 1138 | 5.61 M |
+
+   The forest costs about what the village does. Awake trees cost nothing measurable over
+   copies; the copies themselves are ~2 ms of GPU (4.6 M of the triangles: no draw distance,
+   shadows). The jog's p95 of 22 ms is the waking (2 trees a frame); no long hitch. Left as is;
+   if needed later: a draw distance or shadow cut-off on the copies, or a lower-poly far look.
 
 ## Later (not in this plan)
 
