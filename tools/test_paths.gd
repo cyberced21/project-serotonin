@@ -43,7 +43,7 @@ func _links(paths: Node3D) -> void:
 	var bad := 0
 	for l in g["links"]:
 		if not paths.call("is_clear", paths.call("named", StringName(l[0])), paths.call("named", StringName(l[1]))):
-			print("  blocked link %s - %s" % l)
+			print("  blocked link %s - %s (%s - %s)" % [l[0], l[1], paths.call("named", StringName(l[0])), paths.call("named", StringName(l[1]))])
 			bad += 1
 	_check(bad == 0, "all %d links clear" % g["links"].size())
 

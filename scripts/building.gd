@@ -84,6 +84,7 @@ func _ready() -> void:
 		bench.set_meta(&"home", self)
 	_build_tiers()
 	_build_effects()
+	WorkYards.build(self, def.id)
 	if not _rooms.is_empty():
 		add_to_group("interior")  # (Acoustics: indoors while has_player())
 	_show_tier(Village.tier(def.id) if is_unlocked() else 0)
@@ -204,6 +205,16 @@ func spot(spot_name: String) -> Marker3D:
 	# Village/Green/<id>_<spot>, so it stays put when the building moves (plans/map-editor-places.md)
 	var green := get_parent().get_node_or_null("Green") if get_parent() else null
 	return green.get_node_or_null("%s_%s" % [def.id, spot_name]) as Marker3D if green and def else null
+
+
+## The work yard's stations open at the shown tier (WorkYards), or none.
+func stations() -> Array[Marker3D]:
+	var out: Array[Marker3D] = []
+	var yard := get_node_or_null("Yard")
+	for c in (yard.get_children() if yard else []):
+		if c is Marker3D and int(c.get_meta(&"tier", 1)) <= maxi(tier_shown, 1):
+			out.append(c)
+	return out
 
 
 ## The work spot for the current tier (Work3 at tier 3 if there is one, else the highest below).

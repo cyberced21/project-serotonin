@@ -67,7 +67,7 @@ func _check_board(world: String, projects: Node) -> void:
 	var center: Vector2 = decor.get("center")
 	var off := Vector2(board.global_position.x, board.global_position.z).distance_to(center)
 	print("%s: the board stands %.1f m from the middle of the green, prompt: %s" % [world, off, board.call("prompt")])
-	_check(off > 22.0 and off < 34.0, "%s: by the green, not on it" % world)
+	_check(off > 8.0 and off < 20.0, "%s: on the market place, off its middle (plans/village-street.md)" % world)
 	var player := get_first_node_in_group("player") as Node3D
 	player.global_position = board.global_position + board.global_basis.z * 2.0 + Vector3.UP
 	await _frames(3)

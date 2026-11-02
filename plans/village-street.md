@@ -124,6 +124,30 @@ Branch `street` off `main`, one commit a phase.
    or all the stations are there from the start; default: a tier adds one.
 6. **New motions.** Where today's six (chop, hammer, fish, orate, tend, wipe) don't fit: dunking at
    the quench barrel, kneading, carrying, sorting, sweeping. Reuse first, add only what's missing.
+   **Phases 5 and 6 done 2026-11-01:**
+   - `scripts/work_yards.gd` (`WorkYards.YARDS`): each worker's props and stations in the building's
+     frame; `Building._ready` builds them under a `Yard` node, `Building.stations()` lists the ones
+     open at the shown tier (a tier adds one, as `Work1..3` did). The smith: forge, anvil, quench
+     bucket, grindstone (4 stations). The woodcutter: chopping log, woodpile, saw bench. Ollie: a
+     jetty on the creek 20 m west of his hut (its own footpath from the street), a gutting table and
+     the drying rack. Edda: the sorting table, the ore heap, a tub. Rosa: the dough table, the flour,
+     the oven's wood. The mayor: the hall's steps, the noticeboard, the market. Maud: a table out
+     front and the step (the bar is still hers in the evening: `work_spot()`).
+   - `Villager`: in work hours with a yard, `_pick_spot()` picks another station (a 15% chance of
+     their own door instead), never the bench or the green; the motion is the station's.
+   - Seven new motions, on the end of `Villager.Work`: STOKE (the forge), DUNK (quench bucket, tub),
+     GRIND (the grindstone, a foot on the treadle), SAW, KNEAD, SWEEP, SORT. TEND, CHOP, HAMMER,
+     FISH, ORATE and WIPE reused for the rest.
+   - Paths: the market's furniture moved off the stroll and the crossings (lamps, stall, crates,
+     benches, noticeboard, planters, well), the fields lane past the cottages' back hedges. New game:
+     you start at your home's door, facing the market.
+   - Tests: all 41 pass. `test_paths` prints a blocked link's points; `test_projects` wants the
+     noticeboard on the market (8–20 m from its middle); `test_dog` stands you across the market
+     in the morning; `test_day` checks everyone's home at 21:48 (was 21:30: from a market bench to
+     the west end is ~90 m now). `audit_world.gd` checks each yard station's facing too.
+   - Audit: no CLIP, nothing new floating or buried. Three FACE findings are the probe, not the
+     stations: Rosa's firewood (19 cm high), Edda's tub (hollow) and Ollie's fish rack (an A-frame,
+     open at chest height).
 7. **Check.** The tests that touch it (`test_green`, `test_walkways`, `test_anchors`, the terrain
    follows test), `audit_world.gd`, the map before and after, headless screenshots down the street
    and of each yard at work, frame times walking the street. Then it's yours to play.

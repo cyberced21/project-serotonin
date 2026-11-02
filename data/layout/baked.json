@@ -1,5 +1,5 @@
 {
-	"baked": "2026-11-01T22:37:43",
+	"baked": "2026-11-01T23:34:35",
 	"nodes": [
 		[
 			-44.1,
@@ -6635,86 +6635,6 @@
 			],
 			"msg": "patch forest_spot4 found room for 6 of 8",
 			"ref": "forest_spot4"
-		},
-		{
-			"at": [
-				149.5,
-				116.9
-			],
-			"msg": "walkway walk_market is blocked near (150, 117): something stands in it",
-			"ref": "walk_market"
-		},
-		{
-			"at": [
-				154.5,
-				129.8
-			],
-			"msg": "walkway walk_market is blocked near (155, 130): something stands in it",
-			"ref": "walk_market"
-		},
-		{
-			"at": [
-				149.5,
-				133.1
-			],
-			"msg": "walkway walk_market is blocked near (150, 133): something stands in it",
-			"ref": "walk_market"
-		},
-		{
-			"at": [
-				144.5,
-				135.4
-			],
-			"msg": "walkway walk_market is blocked near (145, 135): something stands in it",
-			"ref": "walk_market"
-		},
-		{
-			"at": [
-				119.5,
-				131.0
-			],
-			"msg": "walkway walk_market is blocked near (120, 131): something stands in it",
-			"ref": "walk_market"
-		},
-		{
-			"at": [
-				117.0,
-				126.4
-			],
-			"msg": "walkway walk_market is blocked near (117, 126): something stands in it",
-			"ref": "walk_market"
-		},
-		{
-			"at": [
-				137.0,
-				119.0
-			],
-			"msg": "walkway walk_market_n is blocked near (137, 119): something stands in it",
-			"ref": "walk_market_n"
-		},
-		{
-			"at": [
-				137.0,
-				131.0
-			],
-			"msg": "walkway walk_market_s is blocked near (137, 131): something stands in it",
-			"ref": "walk_market_s"
-		},
-		{
-			"at": [
-				147.1,
-				115.6
-			],
-			"msg": "walkway walk_market is blocked near (147, 116): something stands in it",
-			"ref": "walk_market"
-		},
-		{
-			"at": [
-				125.7,
-				117.0
-			],
-			"msg": "walkway walk_market is blocked near (126, 117): something stands in it",
-			"ref": "walk_market"
 		}
 	]
 }

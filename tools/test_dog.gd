@@ -247,7 +247,7 @@ func _night_and_kennel() -> void:
 	gap = Vector2(dog.global_position.x - door.origin.x, dog.global_position.z - door.origin.z).length()
 	_check(gap < 1.0 and dog.get("state") == 2 and dog.get("_sleeping"), "night in the village: asleep in the kennel's doorway (%.1f m off)" % gap)
 	day_night.set("time", 0.3)
-	_place(Vector3(128, 0, 113), Vector2(0, -1))
+	_place(Vector3(165, 0, 128), Vector2(0, -1))  # (across the market, well away from your home)
 	await _seconds(3.0)
 	gap = Vector2(dog.global_position.x - door.origin.x, dog.global_position.z - door.origin.z).length()
 	_check(gap < 1.0 and dog.get("state") == 1, "in the morning he waits there (%.1f m off)" % gap)
