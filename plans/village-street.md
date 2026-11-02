@@ -66,6 +66,14 @@ Branch `street` off `main`, one commit a phase.
    tool rack, chopping block, woodpile, sawhorse, fish-drying rack, jetty, gutting table, bread
    oven, dough table, ore-sorting table, ore heap. CC0 packs first, then what we already have
    (crates, barrels, cart, hay). You pick, then they go in the catalog as props.
+   **Done 2026-11-01:** 67 candidates from four CC0 packs on a pick page, 21 stations picked.
+   `tools/blender/yard_kit.py` writes the 19 pieces to `models/village/yard/` (3.2 MB), all in the
+   catalog as props: forge (ours, palette-painted, its embers a `LampEmbers` mesh that glows after
+   dark), anvil on a log, quench bucket, grindstone, iron-bound crate, chopping log, woodpile,
+   workbench (sorting table and saw bench both), axe, jetty deck (2 × 4 m sections), fish-drying
+   rack, gutting table, fish, long table (Rosa's dough table and Maud's), flour sack, firewood, ore
+   heap, wooden tub, scroll. KayKit's and Kenney's wood is a warmer orange than the village's:
+   recolour if it stands out once placed. `test_layout` loads them all.
 2. **The street and the market place.** The main street in `ROADS` and the other roads' village ends
    moved to meet it. The green reshaped into the lens: its benches, lamps, crates, pond and spots,
    and `VillageDecor`'s offsets, re-spotted inside it, with the pump and the market stall on it.
