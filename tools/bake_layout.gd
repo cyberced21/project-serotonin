@@ -6,7 +6,8 @@ extends SceneTree
 ## Options: --layout=<json> --out=<tscn> --report=<json> (tests bake elsewhere).
 ## Order: points, then lines, then patches (each patch keeps clear of everything before it, so a
 ## patch never smothers a point you placed). Patches scatter with NodeSpawner's rules: spacing, off
-## paths, roads, water, steep ground, buildings, props.
+## paths, roads, water, steep ground, buildings, props. A patch with "stand" ticked becomes a
+## ForestStand instead (plans/pinewood-stand.md): its trees' spots baked in, drawn as copies.
 ## Also writes data/layout/baked.json for the editor: where every gatherable ended up and the
 ## warnings (a patch that found room for fewer than it wanted, a line cut by a road...).
 ## (No game class names: an -s script compiles before the autoloads exist.)
@@ -44,6 +45,7 @@ var SPAWNER: GDScript
 var HEDGE_ROW: GDScript
 var PROP: GDScript
 var FIXTURE: GDScript
+var STAND: GDScript
 var warnings: Array = []
 var baked: Array = []  # [x, z, gatherable id]
 var scene_ids := {}  # scene path -> gatherable id
@@ -76,6 +78,7 @@ func _run() -> void:
 	HEDGE_ROW = load("res://scripts/hedge_row.gd")
 	PROP = load("res://scripts/prop.gd")
 	FIXTURE = load("res://scripts/fixture.gd")
+	STAND = load("res://scripts/forest_stand.gd")
 	root.get_node("Worlds").call("play_fresh")
 	while get_first_node_in_group("player") == null:
 		await process_frame
@@ -492,6 +495,9 @@ func _patch(p: Dictionary, parent: Node3D) -> void:
 	if count <= 0 or sp.entries.is_empty():
 		sp.free()
 		return
+	if p.get("stand", false):
+		await _stand(p, sp, parent, centre)
+		return
 	world.add_child(sp)  # (it stays: the next patches keep clear of its nodes)
 	if not sp.get("done"):
 		await sp.finished
@@ -512,6 +518,40 @@ func _patch(p: Dictionary, parent: Node3D) -> void:
 		baked.append([snappedf(g.x, 0.01), snappedf(g.z, 0.01), scene_ids.get(n.scene_file_path, "?")])
 	if placed < count:
 		_warn("patch %s found room for %d of %d" % [id, placed, count], centre, id)
+
+
+## A patch with "stand" ticked (plans/pinewood-stand.md): a ForestStand, its trees' spots picked
+## now and written into it; the game draws them and wakes the ones you come near. `sp` is the
+## NodeSpawner set up for the patch, read for its shape and mix, then freed.
+func _stand(p: Dictionary, sp: Node3D, parent: Node3D, centre: Vector2) -> void:
+	var id: String = p.get("id", "patch")
+	var count := int(p.get("count", 0))
+	var stand := Node3D.new()
+	stand.set_script(STAND)
+	stand.name = "_" + id
+	var entries: Array = stand.get("entries")
+	for e in sp.get("entries"):
+		e.variants = STAND.variants_of(e.scene)
+		entries.append(e)
+	stand.set("save_prefix", id)
+	world.add_child(stand)
+	await stand.place(sp.get("polygon"), sp.get("ring"), count, float(p.get("spacing", 3.5)),
+		int(p.get("seed", hash(id))), sp.get("allowed_ids"), float(p.get("fringe", 0.0)))
+	sp.free()
+	var copy := Node3D.new()
+	copy.set_script(STAND)
+	copy.name = id.to_pascal_case()
+	for prop in ["entries", "save_prefix", "ids", "spots", "yaws", "kinds", "looks"]:
+		copy.set(prop, stand.get(prop))
+	parent.add_child(copy)
+	var spots: PackedVector3Array = stand.get("spots")
+	var kinds: PackedInt32Array = stand.get("kinds")
+	for i in spots.size():
+		var item: String = scene_ids.get(entries[kinds[i]].scene.resource_path, "?")
+		baked.append([snappedf(spots[i].x, 0.01), snappedf(spots[i].z, 0.01), item])
+		_keep_clear(Vector2(spots[i].x, spots[i].z), 1.5)  # (the next patches keep off its trunks)
+	if spots.size() < count:
+		_warn("stand %s found room for %d of %d" % [id, spots.size(), count], centre, id)
 
 
 # --- ponds and rivers ---------------------------------------------------------------------------------------------

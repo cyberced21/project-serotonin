@@ -69,6 +69,8 @@ const FALL_ASIDE := 60.0
 ## takes this share of the max hits off each tree it lands on.
 const DOMINOES_LOGS := 1.25
 const CRUSH_SHARE := 0.6
+## How far a falling trunk can reach (m): past the tallest tree, for waking a stand's trees.
+const DOMINO_REACH := 14.0
 ## Grove keeper: your felled trees regrow this much faster, fine-grained: the first clean cut on
 ## one multiplies its logs by this.
 const GROVE_REGROW := 1.3
@@ -118,6 +120,10 @@ const GROAN_MS := 2500
 enum { CRACK_NONE, CRACK_CREAK, CRACK_TIP }
 ## Render layer 11: a piece being cracked, with seam_crack_on_piece_only (its decals draw only there).
 const CRACKING_LAYER := 1 << 10
+## How long a node counts as busy (is_busy) after a hit, and after it breaks (a tree's fall,
+## landing, logs and sinking away all play out on it: about 9 s).
+const BUSY_AFTER_HIT := 6.0
+const BUSY_AFTER_BREAK := 12.0
 
 @export_group("Gathering")
 @export var item: StringName = &"wood"
@@ -313,6 +319,7 @@ var _crack_step := 0  # ... and how far along it is (each step a little higher)
 var _cut := 0.0  # the fraction of a hit (under-levelled) carried over to the next one
 var _streak := 0  # biting hits in a row on this node (the Crystal Forge's streak_double)
 var _last_hit_msec := -100000
+var _busy_until_frame := 0
 var _surfaces: Array[GeometryInstance3D] = []
 ## The place's dressing (NodeTheme.look()): set by the spawner before the node enters the tree.
 var look: Array[Vector4] = []
@@ -544,6 +551,7 @@ func hit(info: HitInfo) -> bool:
 		_streak = 0
 	_streak += 1 if cuts > 0 else 0
 	_last_hit_msec = now
+	_hold_busy(BUSY_AFTER_HIT)
 	var every := int(Village.stat(&"streak_double"))
 	var streak_hit := every > 0 and _streak > 0 and _streak % every == 0
 	var double := cuts > 0 and (streak_hit or randf() < Village.stat(&"double_hit_chance"))
@@ -677,6 +685,7 @@ func _popup_pos() -> Vector3:
 
 
 func _break(info: HitInfo) -> void:
+	_hold_busy(BUSY_AFTER_BREAK)
 	_clear_fault()
 	_award_xp(roundi(xp_on_break * (1.0 + (Skills.UNDER_XP_BONUS if is_under_levelled() else 0.0))), true)
 	if rare:
@@ -717,6 +726,9 @@ func _break(info: HitInfo) -> void:
 			_make_stump(parts["stump"])
 			_splinter(_stump, hinge, fall, 1.0)
 			log_mesh = parts["log"]
+		if skill == &"woodcutting" and Skills.talents.has(&"dominoes"):  # (a stand's sleeping trees in its way wake)
+			for s in get_tree().get_nodes_in_group("forest_stand"):
+				s.call("wake_along", global_position, fall, DOMINO_REACH)
 		_topple(info, fall, log_mesh, hinge)  # not awaited: the fall plays out while the respawn timer runs
 	else:
 		burst.restart()
@@ -736,6 +748,17 @@ func _show_depleted() -> void:
 	visual.visible = false
 	rubble.visible = true
 	collision.set_deferred("disabled", true)
+
+
+## Something is still playing out on it (a shake, a fall and its logs landing): a ForestStand
+## leaves it awake till it's done.
+## (Counted in physics frames: the fall it waits for runs on them.)
+func is_busy() -> bool:
+	return Engine.get_physics_frames() < _busy_until_frame
+
+
+func _hold_busy(seconds: float) -> void:
+	_busy_until_frame = maxi(_busy_until_frame, Engine.get_physics_frames() + int(seconds * Engine.physics_ticks_per_second))
 
 
 ## Debug: if depleted, grow back now.
@@ -3233,6 +3256,7 @@ func crush(fall: Vector3, at: Vector3) -> void:
 	if hits_left <= 0 or not can_gather():
 		return
 	hits_left = maxi(hits_left - ceili(max_hits * CRUSH_SHARE), 0)
+	_hold_busy(BUSY_AFTER_HIT)
 	_nudge(fall * 2.0)
 	_tree_reacts(HitInfo.new(at, -fall, self, at - fall * 2.0), 1.0 - float(hits_left) / max_hits)
 	PopupText.spawn(get_parent(), _popup_pos(), "Dominoes!", TALENT_COLOR, 9)

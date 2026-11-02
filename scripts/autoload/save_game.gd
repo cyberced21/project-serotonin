@@ -8,6 +8,8 @@ extends Node
 ## game starts fresh (tool progression changed what a save means: plans/tool-progression.md T10).
 
 signal saved
+## Just before a save collects the systems' data: a moment to store() what isn't a system.
+signal saving
 
 const VERSION := 2
 ## Saves older than this are set aside instead of loaded (version 2: tool progression).
@@ -57,6 +59,24 @@ func has(key: StringName) -> bool:
 	return _data.has(String(key))
 
 
+## The data saved for `key` ({} if none), as a system registering under it would get it.
+func saved_data(key: StringName) -> Dictionary:
+	return _data.get(String(key), {})
+
+
+## Keeps `d` as `key`'s data now, for a system that's about to go (a ForestStand's tree going back
+## to sleep: a freed system only keeps what was saved last time). It registers again to get it back.
+func store(key: StringName, d: Dictionary) -> void:
+	_data[String(key)] = d
+	_dirty = true
+
+
+## Drops `key`'s data: it starts fresh next time it registers.
+func forget(key: StringName) -> void:
+	if _data.erase(String(key)):
+		_dirty = true
+
+
 ## Saves to the current file, then switches to `new_path` ("" for none): the systems that live on
 ## (autoloads) take that file's data, or their defaults if it has none. Systems in the current scene
 ## are let go: call this just before changing scenes.
@@ -85,6 +105,7 @@ func mark_dirty() -> void:
 func save() -> void:
 	if path.is_empty():
 		return
+	saving.emit()
 	for key in _systems:
 		var system := _systems[key]
 		if is_instance_valid(system):
