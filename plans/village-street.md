@@ -148,6 +148,11 @@ Branch `street` off `main`, one commit a phase.
    - Audit: no CLIP, nothing new floating or buried. Three FACE findings are the probe, not the
      stations: Rosa's firewood (19 cm high), Edda's tub (hollow) and Ollie's fish rack (an A-frame,
      open at chest height).
+   **Phase 7 done 2026-11-01:** all 41 tests pass; the audit as above; the map before and after
+   below. Not done: screenshots down the street and frame times walking it. Both need a game window,
+   and those wait for you to say when. Unplayed.
+
+![Before and after](village-street-before-after.png)
 7. **Check.** The tests that touch it (`test_green`, `test_walkways`, `test_anchors`, the terrain
    follows test), `audit_world.gd`, the map before and after, headless screenshots down the street
    and of each yard at work, frame times walking the street. Then it's yours to play.
