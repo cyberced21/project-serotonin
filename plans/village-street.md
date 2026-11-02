@@ -149,8 +149,18 @@ Branch `street` off `main`, one commit a phase.
      stations: Rosa's firewood (19 cm high), Edda's tub (hollow) and Ollie's fish rack (an A-frame,
      open at chest height).
    **Phase 7 done 2026-11-01:** all 41 tests pass; the audit as above; the map before and after
-   below. Not done: screenshots down the street and frame times walking it. Both need a game window,
-   and those wait for you to say when. Unplayed.
+   below. Then, with a game window (2026-11-01): `tools/street_shots.gd` (18 views: the street end
+   to end, the market both ways, the air, each yard at work, the jetty, the plots, your garden, the
+   farmyard) in `docs/images/street/`; `perf_probe.gd`'s three village spots moved onto the street.
+   1920x1080, nothing else on the GPU (the old green's reference was 92.8 fps, 10.8 ms, p95 13.4):
+
+   | spot | fps | ms | p95 | GPU ms | draws | prims |
+   |---|---|---|---|---|---|---|
+   | village: the market from its south side | 91.0 | 10.99 | 14.26 | 9.46 | 2392 | 4.07 M |
+   | village at dusk: down the street from the west end | 90.2 | 11.09 | 15.78 | 8.24 | 2992 | 3.31 M |
+   | square: from the market, west down the street | 113.3 | 8.83 | 11.19 | 6.88 | 1734 | 1.97 M |
+
+   Unplayed.
 
 ![Before and after](village-street-before-after.png)
 7. **Check.** The tests that touch it (`test_green`, `test_walkways`, `test_anchors`, the terrain
