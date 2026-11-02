@@ -125,7 +125,7 @@ const SHORE_SHELF := 5.0
 const VILLAGE_POND := 1
 const PONDS := [
 	{"id": "pond", "center": Vector2(66, 86), "radius": 9.0, "depth": 2.5},   # the clearing's pond
-	{"id": "village_pond", "center": Vector2(120, 132), "radius": 9.0, "depth": 0.75},  # on the green
+	{"id": "village_pond", "center": Vector2(131, 131), "radius": 3.5, "depth": 0.75},  # on the market place
 	{"id": "lake", "center": Vector2(38, 340), "radius": 22.0, "depth": 5.0},  # the lake
 ]
 ## The lake's flat basin beyond the south rim (hills ease up beyond radius over the ramp).
@@ -140,18 +140,15 @@ const FIELD_BASE := WorldMap.BOWL_RIM_HEIGHT * 0.85
 const PATH_TEXTURE := WorldMap.TEX_PATH
 ## The path from the clearing over the pass to the green's ring.
 const PATH := WorldMap.VILLAGE_PATH
-## The ring round the village green (plans/world-pass.md, the pond green) and the lanes from it out
-## to where each road starts (drawn with the green at GREEN_HOME: they turn and move with it). The
+## The market place is paved (WorldMap.in_market, plans/village-street.md); the village street
+## (WorldMap.MAIN_STREET) is a road like the others. The lanes from it out to where the north, lake
+## and fields roads start are drawn with the green at GREEN_HOME: they turn and move with it. The
 ## lanes in to the doors are the villagers' walkways (the layout's, as VillagePaths links them).
-const RING_RADIUS := 25.5
-const RING_HALF_WIDTH := 1.3
-const GREEN_HOME := Vector2(128, 128)
+const GREEN_HOME := Vector2(137, 125)
 const ROAD_LANES := [
-	[Vector2(138, 104), Vector2(134, 80), Vector2(128, 58)],   # north, the road to the Pinewood
-	[Vector2(153, 127), Vector2(176, 127), Vector2(200, 126)], # east, the road east
-	[Vector2(146, 146), Vector2(162, 162), Vector2(178, 178)], # south-east, the road to Goldmeadow
-	[Vector2(127, 153), Vector2(122, 176), Vector2(118, 198)], # south, the road to the lake
-	[Vector2(103, 131), Vector2(80, 132), Vector2(58, 132)],   # west, the road to the quarry
+	[Vector2(108, 124), Vector2(108, 100), Vector2(118, 80), Vector2(128, 58)],  # north, the road to the Pinewood
+	[Vector2(163, 128), Vector2(165, 160), Vector2(178, 178)],  # the fields road, to Goldmeadow
+	[Vector2(110, 128), Vector2(110, 172), Vector2(118, 198)],  # south, the road to the lake
 ]
 ## A pad's level ground eases into the land over this much past its radius (m).
 const PAD_SOFT := 6.0
@@ -160,6 +157,7 @@ const WHEEL_REACH := 1.5
 const PATH_HALF_WIDTH := 1.6
 const LANE_HALF_WIDTH := 1.0
 
+var _green_angle := 0.0  # the green's turn (radians): the market place lies along its X
 var _layout_path := LAYOUT
 var _dry := false
 var _report := {"pads": {}, "roads": {}, "warnings": []}
@@ -234,6 +232,7 @@ func _run() -> void:
 		elif arg == "--dry-run":
 			_dry = true
 	VILLAGE_CENTER = WorldMap.village_center()
+	_green_angle = LayoutAnchors.yaw(&"green")
 	var terrain := Terrain3D.new()
 	root.add_child(terrain)
 	await process_frame
@@ -1220,7 +1219,8 @@ func _sample(h: PackedFloat32Array, w: Vector2) -> float:
 
 
 func _on_path(w: Vector2) -> bool:
-	if absf(w.distance_to(VILLAGE_CENTER) - RING_RADIUS) < RING_HALF_WIDTH:
+	var d := (w - VILLAGE_CENTER).rotated(_green_angle)  # (in the green's frame, as WorldMap.in_market)
+	if absf(d.y) < WorldMap.market_half_width(d.x):
 		return true
 	for lane in _lanes:
 		if _polyline_distance(w, lane) < LANE_HALF_WIDTH:

@@ -16,42 +16,44 @@ signal built(id: StringName, props: Array[Node3D])
 ## A bucket going down the well (for its sound): where.
 signal water_drawn(at: Vector3)
 
-## The noticeboard: [offset, facing]. Just off the ring west of the town hall's door, facing in.
-const NOTICEBOARD := [Vector2(-6.0, -27.5), 0.215]
+## The noticeboard: [offset, facing]. On the market place's north side, west of the town hall's
+## door, facing the street.
+const NOTICEBOARD := [Vector2(-13.0, -8.0), 0.0]
 ## Each decoration's props: [model (models/village/props/<name>.glb), offset, facing, and the
-## building whose frame they're in (else the green's)]. On the green round its pond
-## (plans/world-pass.md), each facing its middle.
+## building whose frame they're in (else the green's)]. On the market place (plans/village-street.md:
+## the green is a lens 52 m long round the street, WorldMap.market_half_width), each facing its middle
+## and off the way down the street.
 const PROPS := {
-	&"benches": [[&"bench", Vector2(14.0, -12.0), -0.86], [&"bench", Vector2(13.0, 14.0), -2.39]],
-	&"flower_boxes": [[&"planter", Vector2(-16.0, -12.0), 0.93], [&"planter", Vector2(20.0, -6.0), -1.28],
-		[&"planter", Vector2(19.0, 12.0), -2.13], [&"planter", Vector2(6.0, 21.0), -2.86]],
-	&"well": [[&"well", Vector2(2.0, -13.0), 0.9]],
-	&"fountain": [[&"fountain", Vector2(11.0, 3.0), 0.0]],
+	&"benches": [[&"bench", Vector2(14.0, -6.5), -1.136], [&"bench", Vector2(6.0, 10.5), -2.62]],
+	&"flower_boxes": [[&"planter", Vector2(-20.0, -3.5), 1.398], [&"planter", Vector2(-20.0, 3.5), 1.744],
+		[&"planter", Vector2(4.0, -13.0), -0.298], [&"planter", Vector2(-2.0, 13.0), 2.989]],
+	&"well": [[&"well", Vector2(-1.0, -9.5), 0.105]],
+	&"fountain": [[&"fountain", Vector2(7.0, -5.0), 0.0]],
 	# the doghouse (plans/dog.md), beside your home's door facing out: plain, then painted (it
 	# takes the plain one's place, his name on the sign), then a porch, a bowl and a blanket
 	&"kennel": [[&"doghouse", Vector2(-4.0, 7.5), 0.0, &"home"]],
 	&"kennel_paint": [[&"doghouse_painted", Vector2(-4.0, 7.5), 0.0, &"home"]],
 	# the trader's decorations (plans/market.md): baskets on the green's lamp posts, a
 	# weathervane, a painted cart by the market stall
-	&"deco_baskets": [[&"flower_basket", Vector2(-4.0, -18.0), 0.7], [&"flower_basket", Vector2(18.0, -8.5), -0.8],
-		[&"flower_basket", Vector2(17.0, 16.0), 3.0], [&"flower_basket", Vector2(-3.0, 20.0), 2.2]],
-	&"deco_weathervane": [[&"weathervane", Vector2(-10.0, -16.0), 0.0]],
-	&"deco_cart": [[&"painted_cart", Vector2(19.0, -2.0), -1.47]],
+	&"deco_baskets": [[&"flower_basket", Vector2(-17.0, -6.0), 1.231], [&"flower_basket", Vector2(17.0, -6.0), -1.231],
+		[&"flower_basket", Vector2(17.0, 6.0), -1.911], [&"flower_basket", Vector2(-17.0, 6.0), 1.911]],
+	&"deco_weathervane": [[&"weathervane", Vector2(-4.0, -11.5), 0.0]],
+	&"deco_cart": [[&"painted_cart", Vector2(19.0, -3.0), -1.47]],
 	# Rosa's terrace (plans/tavern.md), against her bakery's side, facing the lane
 	&"terrace": [[&"terrace", Vector2(-5.61, 0.78), 4.707, &"baker_cottage"]],
 	&"kennel_porch": [[&"doghouse_porch", Vector2(-3.95, 8.55), 0.0, &"home"], [&"dog_bowl", Vector2(-5.27, 9.11), -3.064, &"home"],
 		[&"dog_blanket", Vector2(-2.99, 8.82), -0.464, &"home"]],
 }
-## The market stall (plans/market.md): on the green's east edge by the road east, its counter
-## facing the middle.
-const MARKET := [Vector2(20.0, 9.0), -1.99]
+## The market stall (plans/market.md): on the market place's south side toward the road east,
+## its counter facing the middle.
+const MARKET := [Vector2(13.0, 7.5), -2.094]
 ## Where your dog sleeps at night (Dog asks kennel_door()): in the doghouse's doorway, facing out
 ## (your home's frame).
 const KENNEL_DOOR := [Vector2(-3.99, 7.95), 0.0, &"home"]
 ## Bunting: strings between the green's lamp posts (their offsets, as the village has them), hung
-## from just under the lamps, round its east side.
-const BUNTING := [[Vector2(-4.0, -18.0), Vector2(18.0, -8.5)], [Vector2(18.0, -8.5), Vector2(17.0, 16.0)],
-	[Vector2(17.0, 16.0), Vector2(-3.0, 20.0)]]
+## from just under the lamps, along both sides and across the east end.
+const BUNTING := [[Vector2(-17.0, -6.0), Vector2(17.0, -6.0)], [Vector2(17.0, -6.0), Vector2(17.0, 6.0)],
+	[Vector2(17.0, 6.0), Vector2(-17.0, 6.0)]]
 const BUNTING_HEIGHT := 2.3
 const TOK := preload("res://audio/ui/tok.wav")
 ## Sounds (audio/projects/SOURCES.md): a hammer on each blow, the well's crank and bucket, the

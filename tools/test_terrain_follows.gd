@@ -87,7 +87,7 @@ func _pond(report: Dictionary) -> void:
 	var ponds: Array = report.get("ponds", [])
 	_check(ponds.size() >= 2, "the ponds are reported")
 	if ponds.size() >= 2:
-		var want := WorldMapC.in_frame(&"green", Vector2(-8, 4))  # (the pond's place on the green)
+		var want := WorldMapC.in_frame(&"green", Vector2(-6, 6))  # (the pond's place on the market place)
 		var at := Vector2(ponds[1][0], ponds[1][1])
 		_check(at.distance_to(want) < 0.1, "the village pond is dug where the turned green has it (%s, wants %s)" % [at, want])
 

@@ -197,8 +197,9 @@ const PET_MASK := 1 << 8
 ## Farming's wide blade (Perks): how far off the crosshair's line the sickle still catches a sheaf,
 ## in m per unit of the perk's bonus (so about 0.36 m at level 50).
 const WIDE_BLADE_PER_BONUS := 1.0
-## The world's layout a saved position belongs to: 2 since the world pass (the bowl).
-const WORLD_VERSION := 2
+## The world's layout a saved position belongs to: 2 since the world pass (the bowl), 3 since the
+## village street (plans/village-street.md: every building moved).
+const WORLD_VERSION := 3
 const STAND_HEIGHT := 1.8
 const CROUCH_HEIGHT := 1.0
 const STAND_EYE := 1.6

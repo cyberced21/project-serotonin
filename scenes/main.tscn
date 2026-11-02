@@ -116,12 +116,12 @@ shader = ExtResource("8_water_shader")
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_village_water"]
 material = SubResource("ShaderMaterial_water")
-size = Vector2(22, 22)
-subdivide_width = 21
-subdivide_depth = 21
+size = Vector2(9, 9)
+subdivide_width = 8
+subdivide_depth = 8
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_village_pond"]
-size = Vector3(22, 3, 22)
+size = Vector3(9, 3, 9)
 
 [sub_resource type="Terrain3DMaterial" id="Terrain3DMaterial_lowpoly"]
 shader_override_enabled = true
@@ -427,45 +427,45 @@ own_materials = true
 collide = false
 
 [node name="Green" type="Node3D" parent="Village"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 128, 0, 128)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 137, 0, 125)
 
 [node name="BenchA" type="StaticBody3D" parent="Village/Green"]
-transform = Transform3D(0.1649, 0, -0.9863, 0, 1, 0, 0.9863, 0, 0.1649, -20, 0, 6)
+transform = Transform3D(-0.1521, 0, -0.9884, 0, 1, 0, 0.9884, 0, -0.1521, -12.5, 0, 7)
 script = ExtResource("18_prop")
 model = ExtResource("19_bench")
 
 [node name="BenchB" type="StaticBody3D" parent="Village/Green"]
-transform = Transform3D(0.7896, 0, 0.6136, 0, 1, 0, -0.6136, 0, 0.7896, -1, 0, 13)
+transform = Transform3D(-0.4741, 0, 0.8805, 0, 1, 0, -0.8805, 0, -0.4741, 0.5, 0, 9.5)
 script = ExtResource("18_prop")
 model = ExtResource("19_bench")
 
 [node name="Lamp1" type="StaticBody3D" parent="Village/Green"]
-transform = Transform3D(-0.7374, 0, 0.6755, 0, 1, 0, -0.6755, 0, -0.7374, -4, 0, -18)
+transform = Transform3D(0.3328, 0, -0.9430, 0, 1, 0, 0.9430, 0, 0.3328, -17, 0, -6)
 script = ExtResource("18_prop")
 model = ExtResource("20_lamp")
 
 [node name="Lamp2" type="StaticBody3D" parent="Village/Green"]
-transform = Transform3D(0.6967, 0, 0.7174, 0, 1, 0, -0.7174, 0, 0.6967, 18, 0, -8.5)
+transform = Transform3D(0.3328, 0, 0.9430, 0, 1, 0, -0.9430, 0, 0.3328, 17, 0, -6)
 script = ExtResource("18_prop")
 model = ExtResource("20_lamp")
 
 [node name="Lamp3" type="StaticBody3D" parent="Village/Green"]
-transform = Transform3D(-0.0292, 0, -0.9996, 0, 1, 0, 0.9996, 0, -0.0292, 17, 0, 16)
+transform = Transform3D(-0.3328, 0, 0.9430, 0, 1, 0, -0.9430, 0, -0.3328, 17, 0, 6)
 script = ExtResource("18_prop")
 model = ExtResource("20_lamp")
 
 [node name="Lamp4" type="StaticBody3D" parent="Village/Green"]
-transform = Transform3D(0.9211, 0, 0.3894, 0, 1, 0, -0.3894, 0, 0.9211, -3, 0, 20)
+transform = Transform3D(-0.3328, 0, -0.9430, 0, 1, 0, 0.9430, 0, -0.3328, -17, 0, 6)
 script = ExtResource("18_prop")
 model = ExtResource("20_lamp")
 
 [node name="Crates1" type="StaticBody3D" parent="Village/Green"]
-transform = Transform3D(0.8776, 0, 0.4794, 0, 1, 0, -0.4794, 0, 0.8776, -11.5, 0, -10.5)
+transform = Transform3D(0.6536, 0, 0.7568, 0, 1, 0, -0.7568, 0, 0.6536, 11, 0, -9.5)
 script = ExtResource("18_prop")
 model = ExtResource("22_crates")
 
 [node name="VillagePond" type="Area3D" parent="Village/Green"]
-position = Vector3(-8, 0, 4)
+position = Vector3(-6, 0, 6)
 collision_layer = 0
 collision_mask = 0
 script = ExtResource("7_water")
@@ -477,9 +477,9 @@ shape = SubResource("BoxShape3D_village_pond")
 [node name="Dressing" type="Node3D" parent="Village/Green/VillagePond"]
 script = ExtResource("13_dressing")
 seed = 23
-reed_clumps = 6
-lily_pads = 9
-stones = 9
+reed_clumps = 3
+lily_pads = 4
+stones = 6
 
 [node name="Fish" type="Node3D" parent="Village/Green/VillagePond"]
 script = ExtResource("9_fish_pond")
@@ -491,16 +491,16 @@ cast_shadow = 0
 mesh = SubResource("PlaneMesh_village_water")
 
 [node name="baker_cottage_Square" type="Marker3D" parent="Village/Green"]
-transform = Transform3D(-0.8849, 0, -0.4658, 0, 1, 0, 0.4658, 0, -0.8849, 8.85, 0, 16.82)
+transform = Transform3D(-0.4472, 0, 0.8944, 0, 1, 0, -0.8944, 0, -0.4472, 8, 0, 4)
 
 [node name="prospector_cottage_Square" type="Marker3D" parent="Village/Green"]
-transform = Transform3D(-0.8321, 0, 0.5547, 0, 1, 0, -0.5547, 0, -0.8321, -10.54, 0, 15.81)
+transform = Transform3D(0.7474, 0, -0.6644, 0, 1, 0, 0.6644, 0, 0.7474, -8, 0, -9)
 
 [node name="fisher_Bench" type="Marker3D" parent="Village/Green"]
-transform = Transform3D(0.7893, 0, 0.614, 0, 1, 0, -0.614, 0, 0.7893, -1, 0, 13)
+transform = Transform3D(-0.4741, 0, 0.8805, 0, 1, 0, -0.8805, 0, -0.4741, 0.5, 0, 9.5)
 
 [node name="woodcutter_Bench" type="Marker3D" parent="Village/Green"]
-transform = Transform3D(0.165, 0, -0.9863, 0, 1, 0, 0.9863, 0, 0.165, -20, 0, 6)
+transform = Transform3D(-0.1521, 0, -0.9884, 0, 1, 0, 0.9884, 0, -0.1521, -12.5, 0, 7)
 
 [node name="Props" type="Node3D" parent="Village"]
 
@@ -824,6 +824,130 @@ own_materials = true
 model_scale = Vector3(0.7, 0.7, 0.7)
 
 [node name="Empty2GardenF" type="StaticBody3D" parent="Village/Fixtures/EmptyCottage2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6001, 0, 4.602)
+script = ExtResource("18_prop")
+model = ExtResource("yd_flowers_2")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+
+[node name="EmptyCottage3" type="Node3D" parent="Village/Fixtures"]
+transform = Transform3D(-0.0995, 0, -0.9950, 0, 1, 0, 0.9950, 0, -0.0995, 192, 0, 165)
+script = ExtResource("fx_script")
+model = ExtResource("fx_empty_cottage")
+doors_open = false
+
+[node name="Empty3GardenL" type="StaticBody3D" parent="Village/Fixtures/EmptyCottage3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.3036, 0, 3.8985)
+script = ExtResource("18_prop")
+model = ExtResource("yd_flower_group")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Empty3GardenR" type="StaticBody3D" parent="Village/Fixtures/EmptyCottage3"]
+transform = Transform3D(0.7648, 0, 0.6442, 0, 1, 0, -0.6442, 0, 0.7648, -2.4, 0, 3.8001)
+script = ExtResource("18_prop")
+model = ExtResource("yd_bush_with_flowers")
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(0.7, 0.7, 0.7)
+
+[node name="Empty3GardenF" type="StaticBody3D" parent="Village/Fixtures/EmptyCottage3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6001, 0, 4.602)
+script = ExtResource("18_prop")
+model = ExtResource("yd_flowers_2")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+
+[node name="EmptyCottage4" type="Node3D" parent="Village/Fixtures"]
+transform = Transform3D(-0.0995, 0, -0.9950, 0, 1, 0, 0.9950, 0, -0.0995, 192, 0, 165)
+script = ExtResource("fx_script")
+model = ExtResource("fx_empty_cottage")
+doors_open = false
+
+[node name="Empty4GardenL" type="StaticBody3D" parent="Village/Fixtures/EmptyCottage4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.3036, 0, 3.8985)
+script = ExtResource("18_prop")
+model = ExtResource("yd_flower_group")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Empty4GardenR" type="StaticBody3D" parent="Village/Fixtures/EmptyCottage4"]
+transform = Transform3D(0.7648, 0, 0.6442, 0, 1, 0, -0.6442, 0, 0.7648, 2.4, 0, 3.8001)
+script = ExtResource("18_prop")
+model = ExtResource("yd_bush_with_flowers")
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(0.7, 0.7, 0.7)
+
+[node name="Empty4GardenF" type="StaticBody3D" parent="Village/Fixtures/EmptyCottage4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6001, 0, 4.602)
+script = ExtResource("18_prop")
+model = ExtResource("yd_flowers_2")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+
+[node name="EmptyCottage5" type="Node3D" parent="Village/Fixtures"]
+transform = Transform3D(-0.0995, 0, -0.9950, 0, 1, 0, 0.9950, 0, -0.0995, 192, 0, 165)
+script = ExtResource("fx_script")
+model = ExtResource("fx_empty_cottage")
+doors_open = false
+
+[node name="Empty5GardenL" type="StaticBody3D" parent="Village/Fixtures/EmptyCottage5"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.3036, 0, 3.8985)
+script = ExtResource("18_prop")
+model = ExtResource("yd_flower_group")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Empty5GardenR" type="StaticBody3D" parent="Village/Fixtures/EmptyCottage5"]
+transform = Transform3D(0.7648, 0, 0.6442, 0, 1, 0, -0.6442, 0, 0.7648, -2.4, 0, 3.8001)
+script = ExtResource("18_prop")
+model = ExtResource("yd_bush_with_flowers")
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(0.7, 0.7, 0.7)
+
+[node name="Empty5GardenF" type="StaticBody3D" parent="Village/Fixtures/EmptyCottage5"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6001, 0, 4.602)
+script = ExtResource("18_prop")
+model = ExtResource("yd_flowers_2")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+
+[node name="EmptyCottage6" type="Node3D" parent="Village/Fixtures"]
+transform = Transform3D(-0.0995, 0, -0.9950, 0, 1, 0, 0.9950, 0, -0.0995, 192, 0, 165)
+script = ExtResource("fx_script")
+model = ExtResource("fx_empty_cottage")
+doors_open = false
+
+[node name="Empty6GardenL" type="StaticBody3D" parent="Village/Fixtures/EmptyCottage6"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.3036, 0, 3.8985)
+script = ExtResource("18_prop")
+model = ExtResource("yd_flower_group")
+snap_to_ground = true
+own_materials = true
+collide = false
+
+[node name="Empty6GardenR" type="StaticBody3D" parent="Village/Fixtures/EmptyCottage6"]
+transform = Transform3D(0.7648, 0, 0.6442, 0, 1, 0, -0.6442, 0, 0.7648, 2.4, 0, 3.8001)
+script = ExtResource("18_prop")
+model = ExtResource("yd_bush_with_flowers")
+snap_to_ground = true
+own_materials = true
+model_scale = Vector3(0.7, 0.7, 0.7)
+
+[node name="Empty6GardenF" type="StaticBody3D" parent="Village/Fixtures/EmptyCottage6"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6001, 0, 4.602)
 script = ExtResource("18_prop")
 model = ExtResource("yd_flowers_2")

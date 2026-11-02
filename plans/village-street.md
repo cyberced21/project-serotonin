@@ -84,6 +84,26 @@ Branch `street` off `main`, one commit a phase.
    `audit_world.gd` clean (nothing overlapping, floating, in the creek or on a slope). Before that,
    check the save: anything stored by position (built decorations, dropped items, the dog's spot)
    that would end up in the wrong place.
+   **Phases 2 and 3 done together 2026-11-01** (the green and the buildings had to move at once):
+   - `WorldMap.MAIN_STREET` is the first road in `ROADS` (a fixed line, quarry road to road east);
+     `MARKET_LENGTH` 52 m, `MARKET_HALF_WIDTH` 14 m, `market_half_width()`, `in_market()`. The
+     generator paves the market instead of the ring; its road lanes are now the north, lake and
+     fields roads' ends in to the street (`GREEN_HOME` (137, 125), where the green stands).
+   - The green at (137, 125), unturned: its benches, lamps, crates, Rosa's and Edda's Square spots
+     and the benches' seats inside the lens; the pond 3.5 m (was 9) at (-6, 6), its water, volume
+     and dressing to match. `VillageDecor`: the noticeboard on the north side, the market stall
+     south-east, well, fountain, planters, baskets, bunting and cart re-spotted. The trader parks
+     at the market's east end, coming down the street.
+   - Every building and fixture re-anchored along the street (positions worked out in a sketch
+     script, from footprints, so each front is on the street's or the market's edge); four more
+     empty cottages (`Village/Fixtures/EmptyCottage3..6`, the second's garden, mirrored on two).
+     The washhouse went behind the fisher, by the creek; the farmyard round (206, 158).
+   - Walkways: the street, a stroll round the market (2 m inside its edge), two across it, and the
+     north, lake and fields lanes. Three old hedges the barn and ruined cottage now stood on, gone.
+   - Terrain regenerated: no warnings, every pad within 2 cm of level. `test_green` and
+     `test_terrain_follows` updated for the green's new place and spots.
+   - The save: only the player's position is stored by place. `Player.WORLD_VERSION` 3, so an older
+     save starts by your home instead of perhaps inside a building that moved.
 4. **Plots and gardens.** Hedges, fences and low walls round each back plot, with gates; your home's
    garden (woodshed, kennel, room to grow); a little clutter in each (barrels, a cart, veg beds,
    washing). The empty cottages get gardens too, so they look lived-in, or nearly.

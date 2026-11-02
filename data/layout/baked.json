@@ -1,5 +1,5 @@
 {
-	"baked": "2026-11-01T13:18:46",
+	"baked": "2026-11-01T22:24:22",
 	"nodes": [
 		[
 			-44.1,
@@ -492,9 +492,14 @@
 			"pine"
 		],
 		[
-			116.09,
-			-122.12,
+			114.65,
+			-123.38,
 			"pine"
+		],
+		[
+			115.66,
+			-113.65,
+			"birch"
 		],
 		[
 			101.6,
@@ -507,11 +512,6 @@
 			"birch"
 		],
 		[
-			113.33,
-			-110.4,
-			"pine"
-		],
-		[
 			105.15,
 			-121.18,
 			"birch"
@@ -522,13 +522,13 @@
 			"birch"
 		],
 		[
-			109.41,
-			-118.03,
-			"pine"
+			110.58,
+			-118.34,
+			"birch"
 		],
 		[
-			117.42,
-			-113.39,
+			112.24,
+			-107.08,
 			"pine"
 		],
 		[
@@ -590,6 +590,11 @@
 			197.14,
 			-70.58,
 			"pine"
+		],
+		[
+			167.05,
+			-96.23,
+			"birch"
 		],
 		[
 			206.58,
@@ -742,6 +747,11 @@
 			"birch"
 		],
 		[
+			162.24,
+			-99.68,
+			"pine"
+		],
+		[
 			142.79,
 			-84.29,
 			"birch"
@@ -802,11 +812,6 @@
 			"pine"
 		],
 		[
-			172.4,
-			-96.18,
-			"pine"
-		],
-		[
 			224.36,
 			-170.0,
 			"pine"
@@ -830,6 +835,11 @@
 			25.89,
 			-97.53,
 			"pine"
+		],
+		[
+			150.87,
+			-104.48,
+			"birch"
 		],
 		[
 			127.45,
@@ -2307,6 +2317,11 @@
 			"pine"
 		],
 		[
+			103.4,
+			-130.54,
+			"pine"
+		],
+		[
 			-6.23,
 			-61.98,
 			"pine"
@@ -2524,11 +2539,6 @@
 		[
 			1.68,
 			-78.7,
-			"pine"
-		],
-		[
-			184.96,
-			-80.35,
 			"pine"
 		],
 		[
@@ -3142,11 +3152,6 @@
 			"birch"
 		],
 		[
-			182.19,
-			-64.59,
-			"pine"
-		],
-		[
 			65.09,
 			-197.23,
 			"pine"
@@ -3354,6 +3359,11 @@
 		[
 			201.12,
 			-170.17,
+			"pine"
+		],
+		[
+			97.4,
+			-132.89,
 			"pine"
 		],
 		[
@@ -3602,6 +3612,11 @@
 			"pine"
 		],
 		[
+			157.97,
+			-105.3,
+			"pine"
+		],
+		[
 			24.18,
 			-169.14,
 			"pine"
@@ -3724,6 +3739,11 @@
 		[
 			152.48,
 			-152.23,
+			"pine"
+		],
+		[
+			182.2,
+			-68.06,
 			"pine"
 		],
 		[
@@ -3932,11 +3952,6 @@
 			"pine"
 		],
 		[
-			152.86,
-			-111.23,
-			"pine"
-		],
-		[
 			106.06,
 			-94.27,
 			"pine"
@@ -3979,11 +3994,6 @@
 		[
 			39.83,
 			-116.04,
-			"pine"
-		],
-		[
-			103.93,
-			-124.59,
 			"pine"
 		],
 		[
@@ -4422,6 +4432,11 @@
 			"birch"
 		],
 		[
+			154.6,
+			-106.89,
+			"pine"
+		],
+		[
 			130.79,
 			-94.17,
 			"pine"
@@ -4647,6 +4662,11 @@
 			"pine"
 		],
 		[
+			187.54,
+			-64.98,
+			"pine"
+		],
+		[
 			210.79,
 			-71.33,
 			"pine"
@@ -4797,11 +4817,6 @@
 			"pine"
 		],
 		[
-			179.64,
-			-68.31,
-			"pine"
-		],
-		[
 			130.51,
 			-173.83,
 			"pine"
@@ -4920,6 +4935,11 @@
 			249.01,
 			-115.93,
 			"pine"
+		],
+		[
+			180.83,
+			-78.86,
+			"birch"
 		],
 		[
 			238.02,
@@ -5550,26 +5570,6 @@
 			10.93,
 			-88.71,
 			"birch"
-		],
-		[
-			119.83,
-			-40.18,
-			"birch"
-		],
-		[
-			143.64,
-			-32.19,
-			"birch"
-		],
-		[
-			188.62,
-			-121.46,
-			"pine"
-		],
-		[
-			-16.17,
-			-67.59,
-			"pine"
 		],
 		[
 			352.05,
@@ -6619,6 +6619,86 @@
 			],
 			"msg": "patch forest_spot4 found room for 6 of 8",
 			"ref": "forest_spot4"
+		},
+		{
+			"at": [
+				149.5,
+				116.9
+			],
+			"msg": "walkway walk_market is blocked near (150, 117): something stands in it",
+			"ref": "walk_market"
+		},
+		{
+			"at": [
+				154.5,
+				129.8
+			],
+			"msg": "walkway walk_market is blocked near (155, 130): something stands in it",
+			"ref": "walk_market"
+		},
+		{
+			"at": [
+				149.5,
+				133.1
+			],
+			"msg": "walkway walk_market is blocked near (150, 133): something stands in it",
+			"ref": "walk_market"
+		},
+		{
+			"at": [
+				144.5,
+				135.4
+			],
+			"msg": "walkway walk_market is blocked near (145, 135): something stands in it",
+			"ref": "walk_market"
+		},
+		{
+			"at": [
+				119.5,
+				131.0
+			],
+			"msg": "walkway walk_market is blocked near (120, 131): something stands in it",
+			"ref": "walk_market"
+		},
+		{
+			"at": [
+				117.0,
+				126.4
+			],
+			"msg": "walkway walk_market is blocked near (117, 126): something stands in it",
+			"ref": "walk_market"
+		},
+		{
+			"at": [
+				137.0,
+				119.0
+			],
+			"msg": "walkway walk_market_n is blocked near (137, 119): something stands in it",
+			"ref": "walk_market_n"
+		},
+		{
+			"at": [
+				137.0,
+				131.0
+			],
+			"msg": "walkway walk_market_s is blocked near (137, 131): something stands in it",
+			"ref": "walk_market_s"
+		},
+		{
+			"at": [
+				147.1,
+				115.6
+			],
+			"msg": "walkway walk_market is blocked near (147, 116): something stands in it",
+			"ref": "walk_market"
+		},
+		{
+			"at": [
+				125.7,
+				117.0
+			],
+			"msg": "walkway walk_market is blocked near (126, 117): something stands in it",
+			"ref": "walk_market"
 		}
 	]
 }
