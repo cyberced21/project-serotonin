@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hearthvale map editor</title>
+<title>Map editor</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header>
-	<strong>Hearthvale</strong>
+	<button id="maps" class="mapname" title="Open another map, make a new one, pick the one the game plays"><strong id="mapname">…</strong> ▾</button>
 	<div class="tools" id="tools"></div>
 	<div class="spacer"></div>
 	<button id="undo" title="Undo (Ctrl+Z)">Undo</button>
@@ -45,6 +45,17 @@
 		</section>
 	</aside>
 </main>
+<dialog id="mapsdlg">
+	<h3>Maps</h3>
+	<div id="maplist"></div>
+	<h3>New map</h3>
+	<div class="field"><label>Name</label><input id="newname" type="text" placeholder="Brackenmoor"></div>
+	<div class="field"><label>Width (m)</label><select id="newwidth"></select></div>
+	<div class="field"><label>Depth (m)</label><select id="newdepth"></select></div>
+	<p class="muted">A blank map: open rolling hills rising at its edges. Place the areas, draw the roads,
+	then Save &amp; bake to make its land (bigger maps take longer: about a minute per 600 m square).</p>
+	<div class="row"><button id="newmap" class="primary">Make it</button><span class="spacer"></span><button id="closemaps">Close</button></div>
+</dialog>
 <footer>
 	<span id="cursor"></span>
 	<span class="spacer"></span>

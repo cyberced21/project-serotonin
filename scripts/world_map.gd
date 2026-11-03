@@ -230,12 +230,15 @@ static func spline(ctrl: Array, loop: bool) -> PackedVector2Array:
 	return out
 
 
-## The roads as laid (scripts/world_roads.gd, written by the terrain generator): each ROADS entry
-## with its line, `pts` (about 1 m apart, from the village end for lamp stretches), and its
-## `half_width`.
+## The roads as laid (the map's roads file, Maps.path("roads"): scripts/world_roads.gd for
+## Hearthvale, written by the terrain generator): each ROADS entry with its line, `pts` (about 1 m
+## apart, from the village end for lamp stretches), and its `half_width`.
 static func roads() -> Array[Dictionary]:
 	if _roads.is_empty():
-		var written: GDScript = load("res://scripts/world_roads.gd")
+		var file := Maps.path("roads")
+		if not ResourceLoader.exists(file):
+			return _roads  # (a map whose land isn't made yet: no roads)
+		var written: GDScript = load(file)
 		var laid: Dictionary = written.LINES
 		var specs: Array = ROADS.duplicate()
 		specs.append_array(written.get_script_constant_map().get("EXTRA", []))  # (the map editor's)

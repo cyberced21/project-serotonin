@@ -1,24 +1,51 @@
 class_name LayoutAnchors
 extends Node
 ## Stands the village's buildings, its fixtures and the places where the map editor put them
-## (plans/map-editor-places.md): data/layout/hearthvale.json's "anchors", one per thing, each
+## (plans/map-editor-places.md): the map's layout's "anchors" (Maps.layout()), one per thing, each
 ## {id, node, at: [x, z], yaw} (`node` a path from Main, `yaw` in degrees). The first child of Main:
 ## it moves them in _enter_tree, before anything under them is ready, so every script sees where
 ## they stand. Height is left alone (things settle onto the ground themselves). Scripts that build
 ## main.tscn without adding it to the tree (the terrain generator) call apply() themselves.
 ## Anchored nodes' parents (Village, Village/Fixtures, Places) stand unturned at the origin, so
 ## `at` is both their place in the parent and on the map.
+## Main's scene is Hearthvale's: playing another map (plans/map-maker.md), this first points the
+## terrain at that map's land and swaps the baked layout for that map's (use_map()).
 
-const LAYOUT := "res://data/layout/hearthvale.json"
-
-## The layout file read (tools can point it at another: use_file()).
-static var layout_path := LAYOUT
+## The layout file read: the map's, unless a tool points it at another (use_file()).
+static var layout_path := Maps.layout()
 static var _anchors: Array = []
 static var _loaded := false
 
 
 func _enter_tree() -> void:
+	use_map(get_parent())
 	apply(get_parent())
+
+
+## Puts the current map (Maps.current()) under `main` in place of Hearthvale: its terrain and its
+## baked layout (main's Layout node keeps its name, its children the map's). Nothing for Hearthvale.
+## (Main is still entering the tree: its children aren't, so they can be changed.)
+static func use_map(main: Node) -> void:
+	if Maps.current() == Maps.DEFAULT:
+		return
+	var terrain := main.get_node_or_null("Terrain3D")
+	if terrain != null:
+		terrain.set("data_directory", Maps.path("terrain"))
+	var holder := main.get_node_or_null("Layout")
+	if holder == null:
+		return
+	for child in holder.get_children():
+		holder.remove_child(child)
+		child.free()
+	var scene_path := Maps.path("scene")
+	if not ResourceLoader.exists(scene_path):
+		push_warning("LayoutAnchors: map %s isn't baked yet (no %s)" % [Maps.current(), scene_path])
+		return
+	var baked := (load(scene_path) as PackedScene).instantiate()
+	for child in baked.get_children():
+		baked.remove_child(child)
+		holder.add_child(child)
+	baked.free()
 
 
 ## Reads the anchors from `path` instead (the terrain generator's --layout, for a test).

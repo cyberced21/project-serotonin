@@ -13,6 +13,8 @@ extends Node
 ##   --save-root=<dir>          keep every world under <dir> instead (tests: never the real saves)
 ## A `-s` tool script without --save-root gets TOOLS_ROOT, so it can never touch (or migrate) the
 ## player's worlds by accident.
+## Playing another map than Hearthvale (Maps, plans/map-maker.md), its worlds are kept apart, under
+## <root>/map_<id>/: a save is only ever loaded into the map it was made on.
 
 signal list_changed
 
@@ -43,8 +45,11 @@ func _ready() -> void:
 	for arg in args:
 		if arg.begins_with("--save-root="):
 			root = arg.trim_prefix("--save-root=")
+	var own_map := Maps.current() == Maps.DEFAULT
+	if not own_map:
+		root = root.path_join("map_%s" % Maps.current())
 	DirAccess.make_dir_recursive_absolute(_abs(root))
-	if root == DEFAULT_ROOT:
+	if root == DEFAULT_ROOT and own_map:
 		migrate(OLD_SAVES)
 	_ensure_classic()
 	_remove_generated()
@@ -238,8 +243,16 @@ func _ensure_classic() -> void:
 		return
 	DirAccess.make_dir_recursive_absolute(_abs(folder(CLASSIC)))
 	var now := Time.get_unix_time_from_system()
-	_write_meta(CLASSIC, {"version": META_VERSION, "name": "Hearthvale", "kind": "classic",
+	_write_meta(CLASSIC, {"version": META_VERSION, "name": _map_name(), "kind": "classic",
 			"created": now, "last_played": 0.0, "playtime": 0.0})
+
+
+## The name of the map being played (data/maps.json).
+static func _map_name() -> String:
+	for m in Maps.registry().get("maps", []):
+		if StringName(m["id"]) == Maps.current():
+			return m.get("name", m["id"])
+	return "Hearthvale"
 
 
 ## Deletes the worlds made by the old generator: only Hearthvale is played now.

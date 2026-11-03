@@ -40,6 +40,7 @@ extends SceneTree
 ##   -- --dry-run         write nothing (terrain, roads, main.tscn, the applied terrain)
 ##   -- --report=<file>   write what it did as JSON: each pad's flatness, each road's ends, the ponds,
 ##                        warnings ({msg, at, ref}: a road across a pad, the mill's wheel out of the creek)
+##   -- --hash            print a fingerprint of the heights, ground ids and roads laid
 
 const WorldMap := preload("res://scripts/world_map.gd")
 
@@ -111,7 +112,7 @@ const PEAK_CREST := 5.0  # how rounded the crests are (m)
 const MAX_SLOPE := 0.45
 const PEAK_SLOPE := 1.2
 const RELAX_PASSES := 80
-const DATA_DIR := "res://terrain_data"
+var DATA_DIR := Maps.path("terrain")  # (the map's: Hearthvale's is res://terrain_data)
 const WATER_LEVEL := -0.15     # keep in sync with the ponds' WaterBody nodes in main.tscn
 ## Water deeper than SHELF_DEPTH (swimming water, plans/water.md) keeps a wadeable shelf this deep
 ## and up to SHORE_SHELF m wide round its shore before it drops away (_bed).
@@ -158,7 +159,7 @@ const PATH_HALF_WIDTH := 1.6
 const LANE_HALF_WIDTH := 1.0
 
 var _green_angle := 0.0  # the green's turn (radians): the market place lies along its X
-var _layout_path := LAYOUT
+var _layout_path := Maps.layout()
 var _dry := false
 var _report := {"pads": {}, "roads": {}, "warnings": []}
 var _ponds: Array = PONDS.duplicate(true)
@@ -188,10 +189,11 @@ const ROUTE_SLOPE_COST := 160.0
 const ROUTE_WATER_COST := 300.0
 const ROUTE_CREEK_COST := 25.0
 const ROUTE_BANK_COST := 8.0  # (on its banks: a road there leaves a ledge above the water)
-## The lines the roads were laid on, for the game (WorldMap.roads()).
-const ROADS_OUT := "res://scripts/world_roads.gd"
-const LAYOUT := "res://data/layout/hearthvale.json"
-const TERRAIN_APPLIED := "res://data/layout/terrain_applied.json"
+## The lines the roads were laid on, for the game (WorldMap.roads()), the layout read and the record
+## of what the land was made from: the map's (Maps, plans/map-maker.md; `-- --map=<id>` picks one).
+var ROADS_OUT := Maps.path("roads")
+var LAYOUT := Maps.layout()
+var TERRAIN_APPLIED := Maps.path("applied")
 ## A flat's or a hill's edge eases into the land over this much (m), unless it says otherwise.
 const SHAPE_SOFT := 10.0
 
@@ -294,8 +296,10 @@ func _run() -> void:
 	for pond in _ponds:
 		_report["ponds"].append([pond["center"].x, pond["center"].y])
 	if not _dry:
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(ROADS_OUT.get_base_dir()))
 		_write_roads(laid)
-		_rebake_nodes(h)
+		if Maps.current() == Maps.DEFAULT:  # (main.tscn's own resource nodes are Hearthvale's)
+			_rebake_nodes(h)
 		var applied := FileAccess.open(TERRAIN_APPLIED, FileAccess.WRITE)  # (the editor re-runs this when either changes)
 		applied.store_string(JSON.stringify({"terrain": _layout_terrain, "anchors": LayoutAnchors.anchors(),
 				"walkways": VillagePaths.walkways(_layout_path)}))
@@ -312,6 +316,9 @@ func _run() -> void:
 			var f := FileAccess.open(arg.trim_prefix("--report="), FileAccess.WRITE)
 			f.store_string(JSON.stringify(_report, "\t"))
 			f.close()
+		elif arg == "--hash":  # (a fingerprint of the land: the same map should always come out the same)
+			print("terrain hash: heights %s ids %s roads %s" % [h.to_byte_array().hex_encode().md5_text(),
+					ids.hex_encode().md5_text(), JSON.stringify(laid).md5_text()])
 	quit()
 
 

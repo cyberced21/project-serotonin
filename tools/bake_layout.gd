@@ -1,6 +1,7 @@
 extends SceneTree
-## Bakes the map editor's layout (data/layout/hearthvale.json, plans/map-editor.md) into
-## res://scenes/layout.tscn, which main.tscn instances: the gatherables, hedges and walls, props and
+## Bakes the map editor's layout (the map's: Maps, plans/map-maker.md; Hearthvale's is
+## data/layout/hearthvale.json, plans/map-editor.md) into its layout scene (Hearthvale's
+## res://scenes/layout.tscn, which main.tscn instances; another map's main takes in its place): the gatherables, hedges and walls, props and
 ## the odd fixture, stood on the land, the same every run.
 ##   godot --headless --path . -s res://tools/bake_layout.gd -- --save-root=user://tool_worlds
 ## Options: --layout=<json> --out=<tscn> --report=<json> (tests bake elsewhere).
@@ -8,14 +9,15 @@ extends SceneTree
 ## patch never smothers a point you placed). Patches scatter with NodeSpawner's rules: spacing, off
 ## paths, roads, water, steep ground, buildings, props. A patch with "stand" ticked becomes a
 ## ForestStand instead (plans/pinewood-stand.md): its trees' spots baked in, drawn as copies.
-## Also writes data/layout/baked.json for the editor: where every gatherable ended up and the
+## Also writes the map's baked.json for the editor (Hearthvale's data/layout/baked.json): where every gatherable ended up and the
 ## warnings (a patch that found room for fewer than it wanted, a line cut by a road...).
 ## (No game class names: an -s script compiles before the autoloads exist.)
 
-const LAYOUT := "res://data/layout/hearthvale.json"
+const MapsC := preload("res://scripts/maps.gd")
+var LAYOUT := MapsC.layout()
 const CATALOG := "res://data/layout/catalog.json"
-const OUT := "res://scenes/layout.tscn"
-const REPORT := "res://data/layout/baked.json"
+var OUT := MapsC.path("scene")
+var REPORT := MapsC.path("baked")
 const WorldMapC := preload("res://scripts/world_map.gd")
 ## Lines are cut where they'd stand in water, on ground this steep (rise per metre), or this close
 ## to a road's edge (m).
@@ -31,8 +33,8 @@ const SINK := 0.15
 
 var layout: Dictionary
 var catalog: Dictionary
-var out_path := OUT
-var report_path := REPORT
+var out_path := MapsC.path("scene")
+var report_path := MapsC.path("baked")
 var terrain: Node
 var roads: Array = []
 ## The scene being written: built fresh, out of the tree, so nothing a node makes for itself once
@@ -134,6 +136,8 @@ func _run() -> void:
 	_own(out_root)
 	var scene := PackedScene.new()
 	scene.pack(out_root)
+	for file in [out_path, report_path]:  # (a new map's folder)
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(file.get_base_dir()))
 	var err := ResourceSaver.save(scene, out_path)
 	if err == OK:
 		_trim(out_path)

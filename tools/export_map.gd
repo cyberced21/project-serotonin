@@ -10,7 +10,9 @@ extends SceneTree
 
 const WorldMapC := preload("res://scripts/world_map.gd")
 const AnchorsC := preload("res://scripts/layout_anchors.gd")
-const OUT_DIR := "res://tools/map_editor/"
+## The map's pictures for the editor (Hearthvale's in tools/map_editor/, another's in
+## tools/map_editor/maps/<id>/: Maps, plans/map-maker.md).
+var OUT_DIR := preload("res://scripts/maps.gd").path("editor")
 const WATER_LEVEL := -0.15
 ## The heights the editor reads back (under the cursor, for slopes) are on a grid this coarse (m).
 const HEIGHT_STEP := 4
@@ -70,6 +72,7 @@ func _run() -> void:
 					or floori(h[i] / CONTOUR) != floori(h[mini(i + size, h.size() - 1)] / CONTOUR):
 				c = c.darkened(0.18)  # a contour line every CONTOUR m of height
 			img.set_pixel(x, y, c * light)
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
 	img.save_png(OUT_DIR + "map.png")
 
 	var heights := []

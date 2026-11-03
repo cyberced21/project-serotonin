@@ -16,6 +16,18 @@ const Editor = (() => {
 		show: { map: true, overlays: true, labels: true, terrain: true, patches: true, anchors: true, lines: true, points: true, baked: true, warnings: true },
 		dirty: false,
 		bakedStale: false,
+		// the map open (plans/map-maker.md: ?map=<id>; Hearthvale without it) and the list of them
+		mapId: new URLSearchParams(location.search).get("map") || "hearthvale",
+		maps: { active: "hearthvale", maps: [] },
+	};
+	/** `url` asking for the open map's file. */
+	E.q = (url) => url + (url.includes("?") ? "&" : "?") + "map=" + encodeURIComponent(E.mapId);
+	E.mapInfo = () => E.maps.maps.find((m) => m.id === E.mapId) || { id: E.mapId, name: E.mapId, size: [768, 768], origin: [-256, -256], made: true };
+	/** The map's edges: [x0, z0, width, depth] (m). */
+	E.bounds = () => {
+		const w = (E.layout && E.layout.world) || {};
+		const size = w.size || E.mapInfo().size || [768, 768], origin = w.origin || E.mapInfo().origin || [-256, -256];
+		return [origin[0], origin[1], size[0], size[1]];
 	};
 	const undo = [];
 	const redo = [];
@@ -59,11 +71,11 @@ const Editor = (() => {
 	E.heightAt = (x, z) => {
 		const w = E.world;
 		if (!w || !w.heights) return 0;
-		const step = w.height_step, n = Math.ceil(w.size / step);
+		const step = w.height_step, nx = Math.ceil((w.width || w.size) / step), nz = Math.ceil((w.depth || w.size) / step);
 		const gx = (x - w.origin[0]) / step, gz = (z - w.origin[1]) / step;
-		const ix = Math.max(0, Math.min(n - 2, Math.floor(gx))), iz = Math.max(0, Math.min(n - 2, Math.floor(gz)));
+		const ix = Math.max(0, Math.min(nx - 2, Math.floor(gx))), iz = Math.max(0, Math.min(nz - 2, Math.floor(gz)));
 		const fx = Math.max(0, Math.min(1, gx - ix)), fz = Math.max(0, Math.min(1, gz - iz));
-		const h = (i, k) => w.heights[k * n + i];
+		const h = (i, k) => w.heights[k * nx + i];
 		return (h(ix, iz) * (1 - fx) + h(ix + 1, iz) * fx) * (1 - fz) + (h(ix, iz + 1) * (1 - fx) + h(ix + 1, iz + 1) * fx) * fz;
 	};
 	/** Rise per metre at (x, z). */
@@ -201,10 +213,26 @@ const Editor = (() => {
 		ctx.fillStyle = "#14160f";
 		ctx.fillRect(0, 0, W, H);
 		const w = E.world;
-		if (w && mapImg && E.show.map) {
+		const [bx, bz, bw, bd] = E.bounds();
+		if (w && mapImg && mapImg.naturalWidth && E.show.map) {
 			const [sx, sy] = E.toScreen(w.origin[0], w.origin[1]);
 			ctx.imageSmoothingEnabled = E.view.s < 2;
-			ctx.drawImage(mapImg, sx, sy, w.size * E.view.s, w.size * E.view.s);
+			ctx.drawImage(mapImg, sx, sy, (w.width || w.size) * E.view.s, (w.depth || w.size) * E.view.s);
+		} else {  // (a map whose land isn't made yet: its ground, plain)
+			const [sx, sy] = E.toScreen(bx, bz);
+			ctx.fillStyle = "#3d4f31";
+			ctx.fillRect(sx, sy, bw * E.view.s, bd * E.view.s);
+		}
+		{  // the map's edges, and a grid of its 256 m tiles
+			const [sx, sy] = E.toScreen(bx, bz);
+			ctx.lineWidth = 1;
+			ctx.strokeStyle = "rgba(255, 255, 255, 0.10)";
+			ctx.beginPath();
+			for (let x = 256; x < bw; x += 256) { const [gx] = E.toScreen(bx + x, bz); ctx.moveTo(gx, sy); ctx.lineTo(gx, sy + bd * E.view.s); }
+			for (let z = 256; z < bd; z += 256) { const [, gz] = E.toScreen(bx, bz + z); ctx.moveTo(sx, gz); ctx.lineTo(sx + bw * E.view.s, gz); }
+			ctx.stroke();
+			ctx.strokeStyle = "rgba(243, 234, 210, 0.55)";
+			ctx.strokeRect(sx, sy, bw * E.view.s, bd * E.view.s);
 		}
 		if (w && E.show.overlays) drawOverlays();
 		for (const kind of ["terrain", "patches", "anchors", "lines", "points"]) {
@@ -649,14 +677,14 @@ const Editor = (() => {
 
 	// --- the server --------------------------------------------------------------------------------
 
-	const get = async (url) => (await fetch(url, { cache: "no-store" })).json();
+	const get = async (url) => (await fetch(E.q(url), { cache: "no-store" })).json();
 
 	/** The layout as saved: no editor-only fields (those starting with "_"). */
 	const clean = () => JSON.parse(JSON.stringify(E.layout, (k, v) => (k.startsWith("_") ? undefined : v)));
 
 	E.save = async () => {
 		E.status("Saving…");
-		const r = await fetch("/api/layout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(clean()) });
+		const r = await fetch(E.q("/api/layout"), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(clean()) });
 		if (!r.ok) { E.status("Couldn't save: " + (await r.text()), "bad"); return false; }
 		E.dirty = false;
 		updateButtons();
@@ -671,7 +699,7 @@ const Editor = (() => {
 		const tick = setInterval(() => E.status(`${what}… ${Math.round((Date.now() - t0) / 1000)} s`), 500);
 		let r;
 		try {
-			r = await (await fetch(url, { method: "POST" })).json();
+			r = await (await fetch(E.q(url), { method: "POST" })).json();
 		} catch (e) {
 			r = { ok: false, errors: [String(e)] };
 		}
@@ -688,6 +716,7 @@ const Editor = (() => {
 	 * stand (their pads), or the walkways (the lanes painted along them) differ from what it was last
 	 * made from. (An old record has no anchors or walkways: then only the shapes count.) */
 	const terrainChanged = async () => {
+		if (!E.mapInfo().made) return true;  // (a new map: its land isn't made yet)
 		const applied = await get("/api/terrain_applied");
 		const shapes = Array.isArray(applied) ? applied : (applied && applied.terrain) || [];
 		if (JSON.stringify(canon(shapes)) !== JSON.stringify(canon(clean().terrain || []))) return true;
@@ -704,8 +733,11 @@ const Editor = (() => {
 		if (!(await E.save())) return;
 		let r;
 		if (await terrainChanged()) {
-			if (!confirm("The terrain shapes or the buildings moved: regenerate the land (about a minute), redraw the map, then bake?")) { E.status("Saved; not baked."); return; }
-			r = await E.runGodot("/api/terrain", "Regenerating the land, then baking");
+			const first = !E.mapInfo().made;
+			if (!confirm(first ? "Make this map's land (a minute or more, longer for a big map), draw it, then bake?"
+				: "The terrain shapes or the buildings moved: regenerate the land (about a minute), redraw the map, then bake?")) { E.status("Saved; not baked."); return; }
+			r = await E.runGodot("/api/terrain", first ? "Making the land, then baking" : "Regenerating the land, then baking");
+			E.maps = await get("/api/maps");
 			await E.reloadWorld();
 			E.terrainReport = await get("/api/terrain_report");
 		} else {
@@ -720,13 +752,64 @@ const Editor = (() => {
 	};
 
 	E.reloadWorld = async () => {
-		E.world = await get("world.json");
+		const [x0, z0, w, d] = E.bounds();
+		// (a map not drawn yet has none: flat ground at 0, nothing on it)
+		E.world = { origin: [x0, z0], width: w, depth: d, things: [], labels: [], roads: [], anchors: {}, water_level: -0.15, ...(await get("world.json")) };
 		await new Promise((done) => {
 			mapImg = new Image();
 			mapImg.onload = done;
 			mapImg.onerror = done;
-			mapImg.src = "map.png?" + Date.now();
+			mapImg.src = E.q("map.png?" + Date.now());
 		});
+	};
+
+	// --- maps (plans/map-maker.md) -------------------------------------------------------------------
+
+	/** Opens map `id` (the page reloads on it, asking first if there's unsaved work). */
+	E.openMap = (id) => {
+		if (id === E.mapId) return;
+		if (E.dirty && !confirm("Leave without saving?")) return;
+		E.dirty = false;
+		location.search = "?map=" + encodeURIComponent(id);
+	};
+	const refreshMaps = () => {
+		const box = document.getElementById("maplist");
+		box.textContent = "";
+		for (const m of E.maps.maps) {
+			const open = m.id === E.mapId, plays = m.id === E.maps.active;
+			box.append(el("div", { class: "m" + (open ? " open" : "") },
+				el("span", { class: "name" }, m.name, el("span", { class: "muted" }, `  ${m.size[0]} × ${m.size[1]} m${m.made ? "" : ", land not made yet"}`)),
+				plays ? el("span", { class: "tag", title: "The map the game plays" }, "played") : el("button", {
+					title: "The game plays this map from now on",
+					onclick: async () => {
+						if (!confirm(`Play ${m.name} in the game from now on? (Its worlds are kept apart from the other maps'.)`)) return;
+						await fetch("/api/maps/play", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: m.id }) });
+						E.maps = await get("/api/maps");
+						refreshMaps();
+					},
+				}, "Play this one"),
+				open ? el("span", { class: "muted" }, "open") : el("button", { onclick: () => E.openMap(m.id) }, "Open")));
+		}
+	};
+	const setupMaps = () => {
+		const dlg = document.getElementById("mapsdlg");
+		document.getElementById("mapname").textContent = E.mapInfo().name;
+		document.title = `${E.mapInfo().name}: map editor`;
+		document.getElementById("maps").onclick = () => { refreshMaps(); dlg.showModal(); };
+		document.getElementById("closemaps").onclick = () => dlg.close();
+		for (const id of ["newwidth", "newdepth"]) {
+			const s = document.getElementById(id);
+			for (let v = 256; v <= 2048; v += 256) s.append(el("option", { value: v }, `${v}`));
+			s.value = "768";
+		}
+		document.getElementById("newmap").onclick = async () => {
+			const name = document.getElementById("newname").value.trim();
+			if (!name) { document.getElementById("newname").focus(); return; }
+			const r = await (await fetch("/api/maps/new", { method: "POST", headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ name, width: Number(document.getElementById("newwidth").value), depth: Number(document.getElementById("newdepth").value) }) })).json();
+			if (!r.ok) { alert(r.error || "Couldn't make it."); return; }
+			E.openMap(r.id);
+		};
 	};
 
 	E.start = async () => {
@@ -734,9 +817,15 @@ const Editor = (() => {
 		ctx = canvas.getContext("2d");
 		canvas.tabIndex = 0;
 		E.status("Loading…");
-		[E.layout, E.catalog, E.baked, E.terrainReport] = await Promise.all([get("/api/layout"), get("/api/catalog"), get("/api/baked"), get("/api/terrain_report")]);
+		[E.maps, E.layout, E.catalog, E.baked, E.terrainReport] = await Promise.all([get("/api/maps"), get("/api/layout"), get("/api/catalog"), get("/api/baked"), get("/api/terrain_report")]);
 		for (const k of ["terrain", "patches", "lines", "points", "anchors"]) E.layout[k] = E.layout[k] || [];
 		await E.reloadWorld();
+		setupMaps();
+		{  // start on the map's middle, all of it in view
+			const [x0, z0, w, d] = E.bounds();
+			const r = canvas.parentElement.getBoundingClientRect();
+			E.view = { cx: x0 + w / 2, cz: z0 + d / 2, s: Math.max(0.3, Math.min(r.width / w, r.height / d) * 0.95) };
+		}
 		buildToolbar();
 		E.setTool(SELECT);
 		refreshLayers();
