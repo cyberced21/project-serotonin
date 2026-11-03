@@ -14,6 +14,8 @@ const SOUNDS := {
 	&"snow": preload("res://audio/footsteps/snow.tres"),
 	&"water": preload("res://audio/footsteps/water.tres"),
 	&"wood": preload("res://audio/footsteps/wood.tres"),  # the footbridge's planks
+	&"packed": preload("res://audio/footsteps/packed.tres"),  # a better road (plans/road-travel.md)
+	&"cobble": preload("res://audio/footsteps/cobble.tres"),
 }
 const SPLASH := preload("res://audio/movement/splash.tres")
 ## Water shallower than this (m) still sounds like the ground under it.
@@ -25,6 +27,7 @@ const WET_DEPTH := 0.06
 const TEXTURE_SOUNDS := {
 	WorldMap.TEX_PATH: &"dirt", WorldMap.TEX_ROAD: &"rock", WorldMap.TEX_QUARRY: &"rock",
 	WorldMap.TEX_FOREST: &"grass", WorldMap.TEX_FIELD: &"grass", WorldMap.TEX_CROP: &"grass",
+	WorldMap.TEX_PACKED: &"packed", WorldMap.TEX_COBBLE: &"cobble",
 }
 const SHADER_DEFAULTS := {
 	&"dirt_slope": 0.86, &"rock_slope": 0.68, &"sand_height": -2.0, &"snow_height": 40.0,
@@ -92,7 +95,7 @@ func _ripple(size: float) -> void:
 		WaterRipple.spawn(water, Vector3(p.x, water.surface_height, p.z), size)
 
 
-## Which surface the feet are on: water, grass, dirt, rock, sand or snow.
+## Which surface the feet are on: water, grass, dirt, rock, sand or snow, or a better road's.
 func surface() -> StringName:
 	var feet := global_position
 	if Footbridge.on_bridge(get_tree(), feet):
@@ -111,7 +114,7 @@ func surface() -> StringName:
 			var id: int = terrain.data.get_control_base_id(feet)
 			if id == WorldMap.TEX_QUARRY:
 				return &"rock"
-			if slope < _param(terrain, &"dirt_slope") and id != WorldMap.TEX_ROAD:
+			if slope < _param(terrain, &"dirt_slope") and id not in [WorldMap.TEX_ROAD, WorldMap.TEX_PACKED, WorldMap.TEX_COBBLE]:
 				return &"dirt"
 			if TEXTURE_SOUNDS.has(id):
 				return TEXTURE_SOUNDS[id]

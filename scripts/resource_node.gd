@@ -136,6 +136,8 @@ const BUSY_AFTER_BREAK := 12.0
 @export_range(1, 20) var max_hits := 5
 @export_range(0, 10) var drops_min := 2
 @export_range(0, 10) var drops_max := 4
+## A broken rock's plain stones besides its ore (plans/road-travel.md), fewest to most.
+const STONE_DROPS := Vector2i(1, 3)
 @export var respawn_time := 15.0
 ## Rocks: the collision is fitted to the model (a convex hull of the body and the chunks still
 ## on, refitted as they break off), so swings and cracks land on the rock itself rather than on
@@ -931,6 +933,11 @@ func _spawn_drops(info: HitInfo) -> void:
 		var spread := Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)) * 1.2
 		var vel := toward_player * randf_range(1.0, 2.0) + spread + Vector3.UP * randf_range(3.0, 4.5)
 		_launch_drop(global_position + Vector3(0, popup_height * 0.5, 0) + toward_player * 0.4, vel, i * 0.04)
+	if skill == &"mining":  # plain stone too, whatever the rock (plans/road-travel.md: the roads' stuff)
+		for i in randi_range(STONE_DROPS.x, STONE_DROPS.y):
+			var spread := Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)) * 1.2
+			var vel := toward_player * randf_range(1.0, 2.0) + spread + Vector3.UP * randf_range(3.0, 4.5)
+			_launch_drop(global_position + Vector3(0, popup_height * 0.5, 0) + toward_player * 0.4, vel, (count + i) * 0.04, &"stone")
 
 
 func _launch_drop(from: Vector3, velocity: Vector3, delay: float, what: StringName = &"") -> void:

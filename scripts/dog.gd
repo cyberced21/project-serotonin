@@ -826,7 +826,7 @@ func _on_road(p: Vector3) -> bool:
 	if _terrain == null or _terrain.data == null:
 		return false
 	var id: int = _terrain.data.get_control_base_id(p)
-	return id == WorldMap.TEX_ROAD or id == WorldMap.TEX_PATH
+	return id in [WorldMap.TEX_ROAD, WorldMap.TEX_PATH, WorldMap.TEX_PACKED, WorldMap.TEX_COBBLE]
 
 
 func _ground(p: Vector3) -> float:

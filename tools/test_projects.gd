@@ -31,7 +31,8 @@ func _run() -> void:
 	print("%d projects, %d of them road lamps" % [all.size(), roads.size()])
 	for p in all:
 		print("  %-48s hall %d  %s" % [p["title"], p["hall"], p["cost"]])
-	_check(all.size() == 14 + roads.size() and roads.size() >= 5, "six decorations, the market stall, the bakery terrace, the mine's shoring, five fixtures and new places' projects, and a road project per unlit stretch")
+	var better := all.filter(func(p: Dictionary) -> bool: return p.get("better", &"") != &"")
+	_check(all.size() == 14 + roads.size() + better.size() and roads.size() >= 5, "six decorations, the market stall, the bakery terrace, the mine's shoring, five fixtures and new places' projects, a road project per unlit stretch, and a better road per road (%d)" % better.size())
 	_check(not projects.call("can_pay", &"benches"), "no goods, no benches")
 	inventory.call("add", &"wood", 40)
 	_check(projects.call("pay", &"benches") and projects.call("is_done", &"benches"), "paid for, the benches are done")

@@ -13,7 +13,8 @@ extends Node3D
 
 signal finished
 
-const BARE_TEXTURES: Array[int] = [WorldMap.TEX_PATH, WorldMap.TEX_ROAD, WorldMap.TEX_QUARRY, WorldMap.TEX_CROP]
+const BARE_TEXTURES: Array[int] = [WorldMap.TEX_PATH, WorldMap.TEX_ROAD, WorldMap.TEX_QUARRY, WorldMap.TEX_CROP,
+	WorldMap.TEX_PACKED, WorldMap.TEX_COBBLE]
 const SAND_HEIGHT := -0.04
 const MAX_TRIES_PER_NODE := 40
 ## Nodes in the same square this size (m) are one cluster (see cluster_at).

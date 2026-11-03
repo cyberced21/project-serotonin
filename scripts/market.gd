@@ -8,13 +8,13 @@ extends RefCounted
 ## What one of each good is worth.
 const VALUES := {
 	&"wood": 1.0, &"birch": 1.5, &"pine": 2.0, &"oak": 2.5,
-	&"ore": 1.0, &"coal": 1.5, &"iron": 2.5, &"gold": 5.0, &"crystal": 8.0,
+	&"stone": 0.5, &"ore": 1.0, &"coal": 1.5, &"iron": 2.5, &"gold": 5.0, &"crystal": 8.0,
 	&"wheat": 1.0, &"barley": 1.5,
 	&"perch": 1.0, &"trout": 1.5, &"pike": 2.5, &"char": 3.0, &"grayling": 3.0, &"salmon": 4.0,
 }
 const FAMILIES := {
 	&"logs": [&"wood", &"birch", &"pine", &"oak"],
-	&"ore": [&"ore", &"coal", &"iron", &"gold", &"crystal"],
+	&"ore": [&"stone", &"ore", &"coal", &"iron", &"gold", &"crystal"],
 	&"crops": [&"wheat", &"barley"],
 	&"fish": [&"perch", &"trout", &"pike", &"char", &"grayling", &"salmon"],
 }

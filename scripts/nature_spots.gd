@@ -6,7 +6,7 @@ extends RefCounted
 ## world has the same spots every time it loads (and the same as long as its trees stand).
 
 ## Ground that's no place for them: paths, roads, quarry stone.
-const BARE: Array[int] = [WorldMap.TEX_PATH, WorldMap.TEX_ROAD, WorldMap.TEX_QUARRY]
+const BARE: Array[int] = [WorldMap.TEX_PATH, WorldMap.TEX_ROAD, WorldMap.TEX_QUARRY, WorldMap.TEX_PACKED, WorldMap.TEX_COBBLE]
 ## Nor up the snowy peak or down the quarry.
 const SKIP_BIOMES: Array[StringName] = [&"frostpeak", &"quarry"]
 ## Steeper ground than this (height change over a metre) is skipped.

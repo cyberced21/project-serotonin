@@ -7,7 +7,8 @@ Writes, into art/textures/:
   detail.png   one 128 px slice per palette row (stone, ore, wood, leaves, terrain, metal, accent,
                neutral), stacked vertically: a Texture2DArray read by node_surface.gdshader and the
                sway shaders (the row a face's UV sits in picks its slice)
-  ground.png   terrain slices (grass, dirt, rock, sand, snow, forest floor, path, field) for
+  ground.png   terrain slices (grass, dirt, rock, sand, snow, forest floor, path, field, packed
+               road, cobbled road) for
                terrain.gdshader
   leaves.png   leaf-card slices (broadleaf cluster, pine needles), greyscale with alpha cut-outs,
                for the tree canopies (node_foliage.gdshader)
@@ -193,6 +194,32 @@ def path(rng):
     return centre(posterize(norm(a), 6), 0.75)
 
 
+def packed(rng):
+    # A packed road (plans/road-travel.md): firm, fine earth, smoother than a path, flecked with grit.
+    a = 0.55 * spectral(rng, beta=2.4) + 0.2 * spectral(rng, beta=0.9, lo=20)
+    a += 0.35 * speckle(rng, 0.018) - 0.25 * speckle(rng, 0.012)
+    return centre(posterize(norm(a), 6), 0.6)
+
+
+def setts(rng):
+    # A cobbled road: square stone setts in rows, each row half a sett along from the last, dark
+    # joints between them, every sett its own shade and slightly domed.
+    n, size = 16, SIZE
+    cell = size // n
+    ys, xs = np.mgrid[0:size, 0:size]
+    row = ys // cell
+    xo = (xs + (row % 2) * (cell // 2)) % size
+    col = xo // cell
+    shade = rng.random((n, n))[row % n, col % n]
+    u = (xo % cell) / (cell - 1) * 2 - 1
+    v = (ys % cell) / (cell - 1) * 2 - 1
+    dome = 1.0 - 0.35 * np.maximum(np.abs(u), np.abs(v)) ** 3
+    joint = (np.abs(u) > 0.78) | (np.abs(v) > 0.78)
+    a = (0.5 + 0.22 * shade) * dome + 0.12 * spectral(rng, beta=1.0, lo=24)
+    a = np.where(joint, 0.12, a)
+    return centre(posterize(norm(a), 7), 1.0)
+
+
 def field(rng):
     rows = spectral(rng, beta=1.8, sx=8.0, sy=1.0, lo=2)
     a = 0.5 * rows + 0.5 * spectral(rng, beta=0.7, lo=16)
@@ -296,7 +323,7 @@ def kit_plaster(_rng):
 
 
 DETAIL = [kit_stone, ore, kit_wood, leaves, terrain_generic, metal, cloth, kit_plaster]
-GROUND = [grass, dirt, stone, sand, snow, forest_floor, path, field]
+GROUND = [grass, dirt, stone, sand, snow, forest_floor, path, field, packed, setts]
 
 
 def stack(fns, seed):

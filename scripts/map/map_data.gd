@@ -113,7 +113,7 @@ func _sample_row(y: int) -> void:
 		if bi < 0 and biome != &"":
 			biomes.append(biome)
 			bi = biomes.size() - 1
-		var road := 1.0 if tex == WorldMap.TEX_ROAD else 0.5 if tex == WorldMap.TEX_PATH else 0.0
+		var road := 1.0 if tex in [WorldMap.TEX_ROAD, WorldMap.TEX_PACKED, WorldMap.TEX_COBBLE] else 0.5 if tex == WorldMap.TEX_PATH else 0.0
 		var forest := 1.0 if tex == WorldMap.TEX_FOREST or biome == &"pinewood" else 0.0
 		heights.set_pixel(x, y, Color(h, depth, 0.0))
 		kinds.set_pixel(x, y, Color(tex / 255.0, (bi + 1) / 255.0, road, forest))

@@ -84,6 +84,8 @@
 [ext_resource type="PackedScene" path="res://models/country/turnip.glb" id="yd_turnip"]
 [ext_resource type="PackedScene" path="res://models/country/wheat.glb" id="yd_wheat"]
 [ext_resource type="PackedScene" path="res://scenes/layout.tscn" id="layout_scene"]
+[ext_resource type="Script" path="res://scripts/cart_line.gd" id="cart_line"]
+[ext_resource type="Script" path="res://scripts/road_look.gd" id="road_look"]
 [ext_resource type="Script" path="res://scripts/animal.gd" id="lf_animal"]
 [ext_resource type="Script" path="res://scripts/critters.gd" id="lf_critters"]
 [ext_resource type="Script" path="res://scripts/sound_spot.gd" id="lf_sound"]
@@ -2534,3 +2536,9 @@ script = ExtResource("24_panel")
 
 [node name="GrassField" type="Node3D" parent="."]
 script = ExtResource("90_grass_field")
+
+[node name="CartLine" type="Node3D" parent="."]
+script = ExtResource("cart_line")
+
+[node name="RoadLook" type="Node3D" parent="."]
+script = ExtResource("road_look")

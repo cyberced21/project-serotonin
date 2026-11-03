@@ -9,7 +9,8 @@ extends Node3D
 ## player's spawn.
 
 ## Painted surfaces nothing grows on (see WorldMap.TEX_*).
-const BARE_TEXTURES: Array[int] = [WorldMap.TEX_PATH, WorldMap.TEX_ROAD, WorldMap.TEX_QUARRY, WorldMap.TEX_CROP]
+const BARE_TEXTURES: Array[int] = [WorldMap.TEX_PATH, WorldMap.TEX_ROAD, WorldMap.TEX_QUARRY, WorldMap.TEX_CROP,
+	WorldMap.TEX_PACKED, WorldMap.TEX_COBBLE]  # (and the better roads: plans/road-travel.md)
 const PALETTE := preload("res://materials/node_palette.tres")
 const SWAY := preload("res://shaders/sway_instanced.gdshader")
 const CELL := 32.0
