@@ -263,6 +263,7 @@ var _swinging := false
 var _cooldown := 0.0
 var _charge := -1.0  # Power swing: seconds held on a tree, -1 when not charging
 var _momentum := 0  # Momentum: trees felled in a quick run (each makes the axe faster)
+var _sat_for := 0.0  # seconds since you sat down
 var _road_bonus := 1.0  # the better road's speed-up, eased toward what's underfoot (Roads)
 ## How fast the road's speed-up eases in and out (per second: cobbles' +30% in half a second).
 const ROAD_EASE := 0.6
@@ -1089,6 +1090,7 @@ func sit(on: Marker3D) -> void:
 		return
 	_clear_targets()
 	seat = on
+	_sat_for = 0.0
 	on.set_meta(&"taken_by", self)
 	_stand_at = global_position
 	velocity = Vector3.ZERO
@@ -1102,12 +1104,18 @@ func sit(on: Marker3D) -> void:
 	Sfx.play_ui(&"open")
 
 
-## Up off the seat, back where you stood before sitting.
+## Up off the seat, back where you stood before sitting (off a moving one, the carter's cart's
+## (plans/road-travel.md): down beside it, on the ground).
 func stand() -> void:
 	if seat == null:
 		return
 	if seat.has_meta(&"taken_by") and seat.get_meta(&"taken_by") == self:
 		seat.remove_meta(&"taken_by")
+	if seat.has_meta(&"cart"):
+		_stand_at = seat.global_transform * Vector3(0, 0, -2.4)
+		var terrain := get_tree().get_first_node_in_group("terrain") as Terrain3D
+		var ground: float = terrain.data.get_height(_stand_at) if terrain and terrain.data else NAN
+		_stand_at.y = (ground if not is_nan(ground) else _stand_at.y) + 0.1
 	seat = null
 	global_position = _stand_at
 	reset_physics_interpolation()
@@ -1118,12 +1126,15 @@ func stand() -> void:
 
 ## Sitting: still, the eye low; looking about and talking still work. Any movement stands you up.
 func _sit_tick(delta: float) -> void:
+	_sat_for += delta
 	velocity = Vector3.ZERO
 	_move_input = Vector2.ZERO
 	_eye = lerpf(_eye, SIT_EYE, 1.0 - exp(-6.0 * delta))
 	if not is_instance_valid(seat) or not seat.is_visible_in_tree():
 		stand()
 		return
+	if seat.has_meta(&"cart") and not _sitting_down():  # (riding: carried along with it)
+		global_position = seat.global_position
 	var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if input.length() > 0.3 or Input.is_action_just_pressed("jump"):
 		stand()
@@ -1131,6 +1142,11 @@ func _sit_tick(delta: float) -> void:
 	_update_target()
 	if _talk_target and Input.is_action_just_pressed("interact") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED 			and not _panel_just_closed():
 		_talk_target.interact()
+
+
+## Still easing down onto the seat (sit's tween).
+func _sitting_down() -> bool:
+	return global_position.distance_to(seat.global_position) > 0.05 and _sat_for < 0.45
 
 
 ## Turns the view to look at `point` over `duration` seconds (a cutscene's camera move).
