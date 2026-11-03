@@ -66,6 +66,11 @@ Branch `roads` (worktree `../project-serotonin-roads`), 2026-11-03.
   the `carter` project (needs a packed road); Roads remembers the road ends reached. The seat
   carries the player (`player.gd`: a seat with meta `cart`), standing up off it puts you beside it.
   Stand-ins: the hay cart, no pony, a UI click for the bell. `tools/test_cart.gd`.
-- **Phase 3 (waiting):** the packed and cobbled looks (the terrain shader's palette and pattern
-  for new ground ids), their footsteps, the stone's icon and model, the cart, pony and carter, the
-  bell, hooves: candidates on a page first.
+- **Phase 3:** picked on the road travel page (an artifact; picks kept in its db): packed = packed
+  earth + timber edging boards, cobbled = square setts + kerb stones (ground ids 7 and 8, two new
+  `ground.png` slices from tools/make_textures.py; `RoadLook` repaints a better road's cells and
+  lays its edging as MultiMesh boxes, gaps where roads meet); footsteps packed_/cobble_01-04;
+  the cart = the village kit's wagon (models/cart/wagon.glb), the donkey (Walk / Gallop by pace),
+  the keeper's villager look as the carter, hooves + rattle loops and a handbell (audio/cart);
+  stone = KayKit's Stone_Brick (models/items/stone.glb, icon rendered with its own material).
+  Not yet seen in a game window.
