@@ -50,3 +50,22 @@ jogging); across a 2048 m map would be ~6 min.
 
 - Whether the map editor can place extra cart stops by hand (beyond road ends).
 - What the cart does on a road that's only partly upgraded (it won't run it yet).
+
+## As built
+
+Branch `roads` (worktree `../project-serotonin-roads`), 2026-11-03.
+
+- **Phases 1 + 2:** `stone` (Items, Market: worth half a copper ore), 1-3 from every broken rock
+  (`ResourceNode.STONE_DROPS`). The Roads autoload: each road's level, pending till the morning
+  (`DayNight.day_broke`), saved; `bonus_at()` from a grid of the laid segments. Cards
+  `road:<id>:<level>` (Projects `BETTER_PREFIX`), priced 0.4 / 0.8 stones a metre and a log every
+  10 m (less than the 1-2 a metre first planned: the road east would have been 300+ stones),
+  minimum 12 stones. The player's speed eases toward the bonus (`ROAD_EASE`). `tools/test_roads.gd`
+  (4.94 vs 3.79 m/s on and beside the cobbled street).
+- **Phase 4 (before 3: it waits on no art):** `CartLine` (in main.tscn), `CartStop`, `CartPanel`;
+  the `carter` project (needs a packed road); Roads remembers the road ends reached. The seat
+  carries the player (`player.gd`: a seat with meta `cart`), standing up off it puts you beside it.
+  Stand-ins: the hay cart, no pony, a UI click for the bell. `tools/test_cart.gd`.
+- **Phase 3 (waiting):** the packed and cobbled looks (the terrain shader's palette and pattern
+  for new ground ids), their footsteps, the stone's icon and model, the cart, pony and carter, the
+  bell, hooves: candidates on a page first.
