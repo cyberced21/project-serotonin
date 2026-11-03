@@ -10,6 +10,9 @@ extends Node
 ## each bettered as one, and quicker on any of its cells (patch_cells).
 
 signal changed
+## Morning: what was paid for is laid (just before changed). `was`: road id -> the level it was,
+## for RoadLook to build each along from (plans/roads-everywhere.md).
+signal laid(was: Dictionary)
 
 ## How much quicker each level is underfoot (a share of your speed), and what's done to get it.
 const BONUS := [0.0, 0.15, 0.30]
@@ -139,10 +142,13 @@ func set_level(id: StringName, lvl: int, overnight := false) -> void:
 func _lay_pending() -> void:
 	if pending.is_empty():
 		return
+	var was := {}
 	for id in pending:
+		was[id] = level_of(id)
 		level[id] = pending[id]
 	pending.clear()
 	SaveGame.mark_dirty()
+	laid.emit(was)
 	changed.emit()
 
 

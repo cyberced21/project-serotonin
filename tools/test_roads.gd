@@ -9,6 +9,8 @@ extends SceneTree
 ##   - the patches (plans/roads-everywhere.md): the village lanes, the market place, the haul road
 ##     and the field tracks each have a card too ("Pack ..."), and packed, are quicker on their
 ##     cells and painted packed earth, and a road's edging leaves a lane's mouth open
+##   - laid overnight, a road keeps its old look while you're away, and builds itself along when you
+##     come near: spreading from where you are (part painted, part not), edging and all
 ##   godot --headless --path . -s res://tools/test_roads.gd -- --save-root=user://tool_worlds
 
 var _fails := 0
@@ -54,10 +56,13 @@ func _run() -> void:
 	inventory.call("add", &"wood", 100)
 	_check(projects.call("pay", pack), "paid for")
 	_check(projects.call("is_done", pack) and is_equal_approx(roads.call("bonus_at", on_street), 1.0), "...it's laid tonight: done on the board, no quicker yet")
+	var player := get_first_node_in_group("player") as Node3D
+	player.call("teleport", _away_from(&"main_street") + Vector3.UP * 0.5)
+	await _frames(10)
 	root.get_node("DayNight").emit_signal("day_broke")
 	_check(is_equal_approx(roads.call("bonus_at", on_street), 1.15), "next morning, +15%% on it (%.2f)" % roads.call("bonus_at", on_street))
 	_check(is_equal_approx(roads.call("bonus_at", off), 1.0), "...and nothing off it")
-	await _frames(3)
+	await _built_along(on_street, WorldMap.TEX_PACKED)
 	await _looks(on_street, WorldMap.TEX_PACKED, &"packed", "packed earth")
 	var cobble := StringName("road:main_street:2")
 	_check(not projects.call("get_project", cobble).is_empty() and projects.call("is_locked", cobble), "cobbles are next, waiting for the town hall")
@@ -65,7 +70,7 @@ func _run() -> void:
 	_check(projects.call("pay", cobble), "with the hall at tier 2, cobbles")
 	root.get_node("DayNight").emit_signal("day_broke")
 	_check(is_equal_approx(roads.call("bonus_at", on_street), 1.30), "cobbled, +30%% (%.2f)" % roads.call("bonus_at", on_street))
-	await _frames(3)
+	await _until_built()
 	await _looks(on_street, WorldMap.TEX_COBBLE, &"cobble", "stone setts")
 
 	var saved: Dictionary = roads.call("to_dict")
@@ -110,10 +115,69 @@ func _patches(roads: Node, projects: Node) -> void:
 	_check(projects.call("pay", &"road:market:1"), "packing it paid for")
 	root.get_node("DayNight").emit_signal("day_broke")
 	_check(is_equal_approx(roads.call("bonus_at", p), 1.15), "next morning, +15%% on it (%.2f)" % roads.call("bonus_at", p))
-	await _frames(3)
+	get_first_node_in_group("player").call("teleport", p + Vector3.UP * 0.5)
+	await _until_built()
 	_check(terrain.data.get_control_base_id(p) == WorldMap.TEX_PACKED, "...and it's packed earth (id %d)" % terrain.data.get_control_base_id(p))
 	var lane: Vector2i = cells.keys().filter(func(c: Vector2i) -> bool: return cells[c] == &"lanes")[0]
 	_check(terrain.data.get_control_base_id(Vector3(lane.x + 0.5, 0, lane.y + 0.5)) == WorldMap.TEX_PATH, "...the lanes not (they're their own card)")
+
+
+## Away from the street (paid for, laid at dawn), it keeps its old look; back by it, it builds
+## itself along from where you are, then it's all `id`.
+func _built_along(on: Vector3, id: int) -> void:
+	var look := get_first_node_in_group("road_look")
+	var terrain := get_first_node_in_group("terrain") as Terrain3D
+	await _frames(60)
+	_check(look.call("building") and not look.call("laying") and terrain.data.get_control_base_id(on) != id,
+			"away from it, the street keeps its old look (id %d)" % terrain.data.get_control_base_id(on))
+	get_first_node_in_group("player").call("teleport", on + Vector3.UP * 0.5)
+	var started := await _until(func() -> bool: return look.call("laying"), 120)
+	_check(started, "back by it, it builds itself along")
+	await _until(func() -> bool: return terrain.data.get_control_base_id(on) == id, 600)
+	await _frames(45)  # (spreading both ways from you at about 25 m/s)
+	var pts: PackedVector2Array = WorldMap.road(&"main_street")["pts"]
+	var done := 0
+	for q in pts:
+		if terrain.data.get_control_base_id(Vector3(q.x, 0, q.y)) == id:
+			done += 1
+	_check(done > 10 and done < pts.size(), "...from where you stand: part of it laid, part not yet (%d of %d)" % [done, pts.size()])
+	await _until_built()
+
+
+## Till nothing's being built along (and checks it finished).
+func _until_built() -> void:
+	var look := get_first_node_in_group("road_look")
+	_check(await _until(func() -> bool: return not look.call("building"), 1500), "...till it's all laid")
+
+
+## A spot on the ground well away from road `id` (past RoadLook.REVEAL).
+func _away_from(id: StringName) -> Vector3:
+	var terrain := get_first_node_in_group("terrain") as Terrain3D
+	var pts: PackedVector2Array = WorldMap.road(id)["pts"]
+	var mid := pts[pts.size() / 2]
+	for off in [Vector2(0, 160), Vector2(0, -160), Vector2(160, 0), Vector2(-160, 0), Vector2(0, 220), Vector2(0, -220)]:
+		var w: Vector2 = mid + off
+		var nearest := INF
+		for q in pts:
+			nearest = minf(nearest, q.distance_to(w))
+		var h := terrain.data.get_height(Vector3(w.x, 0, w.y))
+		if nearest > float(_look_const("REVEAL")) + 20.0 and not is_nan(h) and h > 0.0:
+			return Vector3(w.x, h, w.y)
+	_check(false, "a spot away from the street")
+	return Vector3.ZERO
+
+
+## A RoadLook constant (loaded, not named: it needs the autoloads).
+func _look_const(c: String) -> Variant:
+	return (load("res://scripts/road_look.gd") as GDScript).get_script_constant_map()[c]
+
+
+func _until(done: Callable, limit: int) -> bool:
+	for i in limit:
+		if done.call():
+			return true
+		await process_frame
+	return false
 
 
 ## Built, the street's cells are painted `id`, its edging's laid, and standing on it sounds `surface`.

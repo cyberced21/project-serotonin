@@ -32,11 +32,12 @@ and leaves a road's edging open where a patch meets it.
 2. The cart on gravel roads only (CartLine, the `carter` project's need). test_cart: a packed path
    gets no stops.
 
+3. Build along: a road laid overnight builds itself along when you come to it.
+
 ## Noted for later
 
 - **Build along** (the user, 2026-11-03): the buildings' piece-by-piece build-along is loved; do
-  the same for a better road: in the morning the new surface and edging spread along the road from
-  one end instead of appearing at once. Not built yet.
+  the same for a better road. Built as phase 3.
 
 ## As built
 
@@ -50,3 +51,9 @@ a game window.
   road 820 m² (99), field tracks 7000 m², priced at a fifth the rate (167; cobbles twice that).
 - **Phase 2:** `Roads.carts_on(r)` (kind `road`): CartLine's network and the `carter` project's
   need. test_cart: a packed footpath neither wakes the cart shed nor gets stops.
+- **Phase 3 (build along):** `Roads.laid(was)` at dawn; RoadLook keeps a laid road's old look till
+  you're within `REVEAL` (80 m), then paints its cells outward from the point nearest you (both
+  ways along a road, out in rings on a patch) at about 25 m/s (2.5-10 s), its edging springing up
+  with a little overshoot as the front passes, the packed / cobble footstep sounds knocking at the
+  front, dust following it, and at the end the upgrade cue and "<road>, packed!". Loaded worlds and
+  the debug menu's levels are just shown. test_roads: away, the old look; back, part laid, then all.
