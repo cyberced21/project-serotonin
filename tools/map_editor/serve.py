@@ -202,6 +202,10 @@ class Handler(SimpleHTTPRequestHandler):
             return self._json({"error": "no such thing"}, 404)
         if path.endswith(".py"):
             return self._json({"error": "no"}, 404)
+        if path == "/favicon.ico":  # (none: say so quietly)
+            self.send_response(204)
+            self.end_headers()
+            return
         if path in ("/map.png", "/world.json") and m != DEFAULT_MAP:  # (another map's pictures)
             return self._file(os.path.join(map_path("editor", m), path[1:]), "image/png" if path.endswith(".png") else "application/json")
         return super().do_GET()

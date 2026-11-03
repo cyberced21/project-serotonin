@@ -55,4 +55,41 @@ land must come out the same after each phase (its heights and ground ids hashed 
 
 ## As built
 
-(filled in as the phases land)
+Branch `mapmaker`, worktree `../project-serotonin-mapmaker`, 2026-11-03. Hearthvale's land checked
+byte for byte after every phase (`generate_test_terrain.gd --dry-run --hash`: heights `ecbc3436…`,
+ids `673724f2…`, roads `a188e3c9…`, the same as before the branch).
+
+- **Phase 1:** `data/maps.json` + `Maps` (`scripts/maps.gd`): each map's files (Hearthvale's where they
+  were; another's under `data/maps/<id>/`, its editor pictures under `tools/map_editor/maps/<id>/`).
+  `-- --map=<id>` points any tool at a map. Playing another map, `LayoutAnchors.use_map` points
+  Main's terrain at its land and swaps its baked layout in before anything's ready; its worlds live
+  under `<root>/map_<id>/`. The editor's map menu: open, New map (name, width, depth), Play this one.
+  `tools/test_maps.gd`.
+- **Phase 2:** the generator and the map export take `Maps.size()` / `origin()` (the layout's
+  `world`); the world's edge rises round any rectangle.
+- **Phase 3:** the roads are the layout's terrain lines (`WorldMap.road_spec`): Hearthvale's twelve
+  moved out of `WorldMap.ROADS` in laying order. `route` (find its way between stops) or a fixed
+  line; `join` / `join_end`; `valley`, `pass` and `spoke` do what the generator did by hand for the
+  clearing path, the road east and the four roads out of the bowl. The roads file's `EXTRA` has
+  every spec. Editor: the Road tool (routed or exact; starting or ending on a road joins it) and
+  the road panel. (The generator reads the previous run's roads for the creek's fords: after
+  changing road data, generate twice.)
+- **Phases 4 + 5:** the layout's `areas` (village, clearing, lake, frostpeak, quarry, goldmeadow,
+  pinewood: `WorldMap.AREAS` has their names, biomes, homes and sizes). WorldMap's place constants
+  became `quarry_center()`, `glades()`, `landmarks()`...; without an area its centre is `NOWHERE`.
+  The creek is the layout's `creek` line. The Biome autoload, the mine, home, the map export and the
+  in-game map follow. The editor's Areas tool places the missing ones and names (`labels`); areas
+  drag, turn and size. An area's own `name` shows on both maps and its card.
+- **Phase 6:** Hearthvale's layout tags what belongs to an area (`area`); moving one carries it,
+  placing one copies Hearthvale's in, removing one can take it too (`carry.js`). A new map has every
+  building and place `placed: false`; the village area puts its 29 down, the Areas tool the four
+  places. `LayoutAnchors.apply_areas` moves main.tscn's area things (the ruins, the quarry's props,
+  Goldmeadow's), Life's by the nearest area, the first spawn by the village; keeps out the rest.
+- **Phase 7:** the full suite passes; a 768 x 512 map made from scratch in the editor (six areas,
+  four routed roads, a name) generated, drew and baked (1240 gatherables), and a fresh world on it
+  starts by its green ([map-maker-example.png](map-maker-example.png)). Not yet played in a window.
+
+Open: the quarry and Frostpeak don't scale; Goldmeadow's plain sits at the bowl's rim height (a
+plateau on a map without the village); the clearing's trees and a few other points are tagged by
+distance, not by hand; the watermill wants a creek (a new map has none: draw a river and the mill
+still warns).
