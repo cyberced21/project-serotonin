@@ -5,7 +5,8 @@ extends Node3D
 ## packed earth and stone setts, the footsteps' packed and cobble), and its edging laid along both
 ## sides: timber boards along a packed road, kerb stones along a cobbled one. Done when the world
 ## loads and again each time a road's level changes (Roads.changed: the morning after it's paid
-## for). The edging leaves a gap where another road comes in, and stops over water.
+## for). The edging leaves a gap where another road comes in or the market place opens off it,
+## and stops over water.
 
 ## Edging: [length, width, height, gap between pieces (m), colour] for each level.
 const EDGING := {
@@ -99,8 +100,8 @@ func _edge(r: Dictionary, lvl: int) -> void:
 			var across := Vector2(-along.y, along.x)
 			for s in [-1.0, 1.0]:
 				var q: Vector2 = p + across * side * s
-				if _near_other_road(q, others):
-					continue  # (a road comes in here: leave it open)
+				if _near_other_road(q, others) or WorldMap.in_market(q + across * s * 1.5):
+					continue  # (a road comes in here, or the market place opens off it: leave it open)
 				var h := _terrain.data.get_height(Vector3(q.x, 0, q.y))
 				if is_nan(h) or h < WATER:
 					continue

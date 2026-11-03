@@ -22,7 +22,7 @@ const BELL := preload("res://audio/cart/bell.wav")
 const WAGON_AT := Vector3(0, 0, -2.3)
 const DONKEY_AT := Vector3(0, 0, -3.0)
 const DONKEY_SCALE := 0.33  # (Animal's: the models are made big)
-const CARTER_AT := Vector3(0.25, 0.78, -0.95)
+const CARTER_AT := Vector3(0.45, 0.72, -1.25)
 const SEAT_AT := Vector3(-0.3, 0.82, 1.5)
 ## Loud at full tilt, quiet at a walk (dB), heard this far (m).
 const SOUND_DB := 0.0
@@ -249,6 +249,7 @@ func _make_cart() -> void:
 	_anim = players[0] as AnimationPlayer if not players.is_empty() else null
 	var carter := CARTER.instantiate() as Node3D
 	carter.position = CARTER_AT
+	carter.rotation.y = PI  # (the villagers face +Z too: he looks ahead, the reins in hand)
 	for m in carter.find_children("*", "MeshInstance3D", true, false):
 		(m as MeshInstance3D).material_override = PaletteMaterial.for_mesh((m as MeshInstance3D).mesh)
 	_cart.add_child(carter)
