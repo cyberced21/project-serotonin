@@ -15,12 +15,24 @@ const TEX_FIELD := 4     # meadow
 const TEX_QUARRY := 5    # quarry stone
 const TEX_CROP := 6      # crop squares in the field
 
-## The places (plans/world-pass.md, map C): Hearthvale low in the middle of a wide bowl, the
-## others on the hills round its rim, each up its own road. The world spans -256..512 on both axes
-## (3 x 3 Terrain3D regions of 256 m), so the middle is (128, 128). Keep in sync with
-## tools/generate_test_terrain.gd; the Biome autoload tells them apart.
-const WORLD_MIN := -256.0
-const WORLD_SIZE := 768.0
+## The places (plans/world-pass.md, map C; plans/map-maker.md): the map's areas, each placed in
+## the map editor (its layout's "areas": {id, type, at: [x, z], yaw (degrees), name?, and its
+## sizes}), one of each type at most. In Hearthvale: the village low in the middle of a wide bowl,
+## the others on the hills round its rim, each up its own road. AREAS has each type's name, its
+## biome (the Biome autoload's mood) and its sizes unless the area says, and where it stands in
+## Hearthvale (`home`: what's built for it there, like the Frostpeak's ridges and the Pinewood's
+## glades, moves and turns from there with it). A map without an area has none of it: area_at()
+## is NOWHERE, far off the map, so nothing measured from it is ever near.
+const AREAS := {
+	&"village": {"name": "Hearthvale", "biome": &"hearthvale", "home": Vector2(137, 125)},
+	&"clearing": {"name": "The Clearing", "biome": &"clearing", "home": Vector2(46, 66), "radius": 28.0},
+	&"lake": {"name": "Stillwater", "biome": &"stillwater", "home": Vector2(38, 338), "radius": 34.0},
+	&"frostpeak": {"name": "Frostpeak", "biome": &"frostpeak", "home": Vector2(-98, -54), "radius": 76.0},
+	&"quarry": {"name": "Greystone Quarry", "biome": &"quarry", "home": Vector2(-118, 88)},
+	&"goldmeadow": {"name": "Goldmeadow", "biome": &"goldmeadow", "home": Vector2(338, 318), "radius": 97.0},
+	&"pinewood": {"name": "The Pinewood", "biome": &"pinewood", "home": Vector2(118, -112), "radii": Vector2(172, 108)},
+}
+const NOWHERE := Vector2(1e7, 1e7)
 ## The middle of the village green is the map editor's (its anchor, "green": village_center()).
 ## The village's flat (the green, the lanes, the yards round them) and the bowl round it: flat
 ## floor out to BOWL_FLOOR, rising to BOWL_RIM_HEIGHT by BOWL_RIM.
@@ -33,29 +45,24 @@ const MARKET_HALF_WIDTH := 14.0
 const BOWL_FLOOR := 115.0
 const BOWL_RIM := 250.0
 const BOWL_RIM_HEIGHT := 22.0
-const CLEARING_CENTER := Vector2(46, 66)
-const LAKE_CENTER := Vector2(38, 338)
-const PEAK_CENTER := Vector2(-98, -54)
 
-## Greystone Quarry: a stepped pit on the west rim, past the peak's foot.
-const QUARRY_CENTER := Vector2(-118, 88)
+## Greystone Quarry: a stepped pit on the west rim, past the peak's foot (quarry_center()).
 const QUARRY_RIM_HEIGHT := 26.0
 const QUARRY_LEVEL_DROP := 5.0
 ## Radii of the walls between levels, outermost first: rim | 1 | 2 | 3 | 4 | floor.
 const QUARRY_WALLS: Array[float] = [55.0, 45.0, 35.0, 25.0, 15.0]
 const QUARRY_APRON := 10.0  # flat ground round the rim
 const QUARRY_SLOPE := 120.0  # then the hillside falls away over about this (gently: the road climbs it)
-## Direction (radians, from the centre) of the haul road's top, where the road from the village arrives.
+## Direction (radians, from the centre) of the haul road's top, where the road from the village
+## arrives (the quarry turned: plus its yaw, quarry_road_angle()).
 const QUARRY_ROAD_ANGLE := -0.4636
 
-## Goldmeadow: a broad plain of gentle swells, crop squares and dirt tracks, on the south-east rim.
-const FIELD_CENTER := Vector2(338, 318)
-const FIELD_RADIUS := 97.0
+## Goldmeadow: a broad plain of gentle swells, crop squares and dirt tracks, on the south-east rim
+## (field_center(), field_radius()).
 const FIELD_RAMP := 45.0
 
-## The Pinewood: an ellipse over the northern rim hills, with flattened glades along the trail.
-const FOREST_CENTER := Vector2(118, -112)
-const FOREST_RADII := Vector2(172, 108)
+## The Pinewood: an ellipse over the northern rim hills (forest_center(), forest_radii()), with
+## flattened glades along the trail (glades(): Hearthvale's at GLADES).
 const GLADES: Array[Vector2] = [Vector2(61, -62.5), Vector2(130, -92.5), Vector2(76, -131.5)]
 const GLADE_RADIUS := 13.5
 ## The new places (plans/world-pass.md, phase 7): the watermill on the creek below the village, the
@@ -67,89 +74,242 @@ const HAVEN_RADIUS := 16.0
 ## The haven's spring pool, in the haven's frame (it turns with the haven).
 const HAVEN_POOL := {"offset": Vector2(3, 2), "radius": 3.5, "depth": 0.5}
 
-## The roads and paths (plans/world.md): the terrain generator lays each one along the land (a
-## least-cost route over the slopes from `from` through any `via` points to `to`, unless `ctrl`
-## fixes its line), and
-## writes the lines it laid to scripts/world_roads.gd; roads() reads them back. `join` starts a
-## road on another one, at its point nearest `from`. `lamps`: a stretch the Lamps can light, its
-## points running out from the village end. Order matters: a road can only join one laid before it.
-## In the bowl every road is a spoke out from the green's edge to its place on the rim.
+## The roads and paths (plans/world.md, plans/map-maker.md): the layout's terrain lines of type
+## "road" and "path", drawn in the map editor. The terrain generator lays each one along the land,
+## in the layout's order, and writes the lines it laid to the map's roads file (Hearthvale's
+## scripts/world_roads.gd); roads() reads them back. Each line is (road_spec turns it into the
+## generator's spec):
+##   {id, type: road | path, name, points: [[x, z]...]}  its line, fixed (Catmull-Rom through them)
+##   route: true      the points are stops instead: a least-cost route over the slopes from the first
+##                    through the others to the last
+##   join / join_end  start (end) on that road, at its point nearest the first (last) point; a road
+##                    can only join one laid before it
+##   place, place_to, drawn_at  the path ends in that place's own frame (place_to), wherever the place
+##                    stands; moved away from drawn_at, it leaves the road nearest it instead
+##   village          a stretch the Lamps can light, its points running out from the village end
+##   reverse          its laid line runs last point to first (for the lamps)
+##   valley           the land is eased down along it (a valley through the hills)
+##   pass             the world's edge dips to a saddle where it climbs out (the way traders come)
+##   spoke            a notch through the village's bowl, along the line from the village to its end
 const ROAD_HALF_WIDTH := 2.5
 const PATH_HALF_WIDTH := 1.6
 const QUARRY_RIM_POINT := Vector2(-65, 61)  # on the apron where the haul road leaves the rim (QUARRY_ROAD_ANGLE)
-const ROADS: Array[Dictionary] = [
-	{"id": &"main_street", "title": "The village street", "kind": &"road", "ctrl": MAIN_STREET},
-	{"id": &"village_path", "title": "The path from the clearing", "kind": &"path", "village": true, "reverse": true,
-		"ctrl": VILLAGE_PATH},
-	{"id": &"village_road", "title": "The road to the Pinewood", "kind": &"road", "village": true,
-		"from": Vector2(128, 58), "to": Vector2(124, -6)},
-	{"id": &"forest_trail", "title": "The forest trail", "kind": &"path",
-		"from": Vector2(124, -6), "via": [Vector2(76, -131.5)],  # (on from the road's end, up past the spring)
-		"to": Vector2(61, -62.5)},
-	{"id": &"quarry_road", "title": "The road to the quarry", "kind": &"road",
-		"from": Vector2(58, 132), "to": QUARRY_RIM_POINT},  # (over the creek: the router keeps off its banks)
-	{"id": &"lake_road", "title": "The road to the lake", "kind": &"road",
-		"from": Vector2(118, 198), "to": Vector2(66, 316)},
-	{"id": &"peak_path", "title": "The path up Frostpeak", "kind": &"path",
-		"from": Vector2(-20, 80), "join": &"quarry_road", "to": Vector2(-76, -14)},
-	{"id": &"field_road", "title": "The road to Goldmeadow", "kind": &"road",
-		"from": Vector2(178, 178), "to": Vector2(268, 252)},
-	{"id": &"east_road", "title": "The road east", "kind": &"road", "village": true, "ctrl": EAST_ROAD},
-	# the new places' footpaths (plans/world-pass.md, phase 7), each off a road laid before it
-	# (`to` in the place's own frame: the path ends where the place is, moved or turned; `drawn_at`
-	# is where the place stood when `from` and `join` were drawn: moved away, the path leaves the
-	# road nearest it instead)
-	{"id": &"mill_path", "title": "The path to the mill", "kind": &"path", "from": Vector2(100, 206), "join": &"lake_road",
-		"place": &"watermill", "to": Vector2(5, -8), "drawn_at": Vector2(42, 200)},
-	{"id": &"orchard_path", "title": "The path to the orchard", "kind": &"path", "from": Vector2(150, 50), "join": &"village_road",
-		"place": &"orchard", "to": Vector2(-14, 8), "drawn_at": Vector2(200, 62)},
-	{"id": &"shepherd_path", "title": "The path up the shepherd's hill", "kind": &"path", "from": Vector2(330, 120), "join": &"east_road",
-		"place": &"shepherds_hill", "to": Vector2(-6, 14), "drawn_at": Vector2(360, 18)},
-]
-## The village street (plans/village-street.md): from the end of the road to the quarry, through
-## the market place, to the start of the road east. The houses line it; the north, lake and fields
-## roads come in to it.
-const MAIN_STREET: Array[Vector2] = [Vector2(58, 134), Vector2(84, 131), Vector2(108, 127), Vector2(137, 125),
-	Vector2(166, 125), Vector2(186, 126), Vector2(200, 126)]
-## The road east (plans/market.md): from the green's east edge up through a pass in the eastern
-## rim hills to the world's edge, the way traders come. The terrain generator cuts the pass along it.
-const EAST_ROAD: Array[Vector2] = [Vector2(200, 126), Vector2(238, 120), Vector2(278, 126), Vector2(318, 134),
-	Vector2(358, 132), Vector2(398, 124), Vector2(438, 122), Vector2(478, 128), Vector2(512, 130)]
+const _ROAD_FLAGS := ["village", "reverse", "valley", "pass", "spoke"]
 
-## The dirt path from the clearing to the green, as the terrain generator's valley follows it
-## (ROADS has the line it was laid on). It crosses the creek just below the clearing's pond (the
-## footbridge project).
-const VILLAGE_PATH: Array[Vector2] = [Vector2(56, 62), Vector2(72, 70), Vector2(86, 82), Vector2(96, 95),
-	Vector2(104, 104)]
 
-## The creek (plans/world.md): from a spring under the north rim, through the clearing's pond, down
-## the bowl's west side past the village and out through a gap in the rim into the lake. Its water
-## is level the whole way (at the ponds' height), built by scripts/creek.gd; the terrain generator
-## carves its bed along the same spline.
-const CREEK: Array[Vector2] = [
-	Vector2(90, -36), Vector2(94, -12), Vector2(86, 16), Vector2(72, 44), Vector2(66, 70), Vector2(66, 86),
-	Vector2(62, 108), Vector2(46, 138), Vector2(36, 178), Vector2(38, 223), Vector2(42, 268), Vector2(40, 308),
-	Vector2(38, 333),
-]
+## Layout line `s` (a road or path) as the terrain generator lays it: {id, kind, title, points,
+## and ctrl (a fixed line) or from, via, to (a route), with join, join_end, place, drawn_at and the
+## flags it has}.
+static func road_spec(s: Dictionary) -> Dictionary:
+	var pts: Array[Vector2] = []
+	for q in s.get("points", []):
+		pts.append(Vector2(float(q[0]), float(q[1])))
+	var spec := {"id": StringName(s["id"]), "kind": StringName(s.get("type", "road")), "title": s.get("name", s["id"]), "points": pts}
+	if s.get("route", false):
+		spec["from"] = pts[0]
+		spec["to"] = pts[-1]
+		if pts.size() > 2:
+			spec["via"] = pts.slice(1, -1)
+	else:
+		spec["ctrl"] = pts
+	for k in ["join", "join_end"]:
+		if s.get(k, "") != "":
+			spec[k] = StringName(s[k])
+	if s.get("place", "") != "":
+		spec["place"] = StringName(s["place"])
+		var local: Array = s.get("place_to", [0, 0])
+		spec["to"] = Vector2(float(local[0]), float(local[1]))
+		var drawn: Array = s.get("drawn_at", [])
+		if drawn.size() == 2:
+			spec["drawn_at"] = Vector2(float(drawn[0]), float(drawn[1]))
+	for k in _ROAD_FLAGS:
+		if s.get(k, false):
+			spec[k] = true
+	return spec
+
+
+## The creek (plans/world.md): Hearthvale's runs from a spring under the north rim, through the
+## clearing's pond, down the bowl's west side past the village and out through a gap in the rim
+## into the lake. The layout's terrain line of type "creek" (one at most: {points, pools: [[x, z]...]}
+## where deep pools are scoured out at bends, salmon lying in them): creek_points(), creek_pools().
+## Its water is level the whole way (at the ponds' height), built by scripts/creek.gd; the terrain
+## generator carves its bed along the same spline.
 const CREEK_HALF_WIDTH := 2.4
-## Deep pools scoured out at bends (salmon lie in them), near these points.
-const CREEK_POOLS: Array[Vector2] = [Vector2(86, 16), Vector2(38, 223)]
 const CREEK_POOL_RADIUS := 3.2
 
-const QUARRY_CENTER_3 := Vector3(-118, 0, 88)
-## Debug-menu teleports: name -> [where, look at].
-const LANDMARKS := {
-	"Hearthvale": [Vector3(128, 0, 150), Vector3(128, 0, 128)],
-	"The clearing": [Vector3(56, 0, 76), Vector3(46, 0, 66)],
-	"The Pinewood": [Vector3(118, 0, -83.5), Vector3(130, 0, -92.5)],
-	"Quarry rim": [Vector3(-65, 0, 62), QUARRY_CENTER_3],
-	"Quarry floor": [Vector3(-118, 0, 95), QUARRY_CENTER_3],
-	"Goldmeadow": [Vector3(315.5, 0, 288), Vector3(338, 0, 318)],
-	"Stillwater": [Vector3(66, 0, 316), Vector3(38, 0, 338)],
-	"The spring": [Vector3(96, 0, -44), Vector3(90, 0, -36)],
-	"The footbridge": [Vector3(60, 0, 72), Vector3(66, 0, 64)],
-	"Frostpeak": [Vector3(-86, 0, -42), Vector3(-98, 0, -54)],
+## Debug-menu teleports in Hearthvale: name -> [area, where, look at], each in that area's frame
+## from its home (landmarks()).
+const _LANDMARKS := {
+	"Hearthvale": [&"village", Vector3(128, 0, 150), Vector3(128, 0, 128)],
+	"The clearing": [&"clearing", Vector3(56, 0, 76), Vector3(46, 0, 66)],
+	"The Pinewood": [&"pinewood", Vector3(118, 0, -83.5), Vector3(130, 0, -92.5)],
+	"Quarry rim": [&"quarry", Vector3(-65, 0, 62), Vector3(-118, 0, 88)],
+	"Quarry floor": [&"quarry", Vector3(-118, 0, 95), Vector3(-118, 0, 88)],
+	"Goldmeadow": [&"goldmeadow", Vector3(315.5, 0, 288), Vector3(338, 0, 318)],
+	"Stillwater": [&"lake", Vector3(66, 0, 316), Vector3(38, 0, 338)],
+	"The spring": [&"", Vector3(96, 0, -44), Vector3(90, 0, -36)],
+	"The footbridge": [&"", Vector3(60, 0, 72), Vector3(66, 0, 64)],
+	"Frostpeak": [&"frostpeak", Vector3(-86, 0, -42), Vector3(-98, 0, -54)],
 }
+
+
+## The map's areas (its layout's "areas", read once a map; the file LayoutAnchors reads).
+static func areas() -> Array:
+	if _areas_of != LayoutAnchors.layout_path:
+		_areas_of = LayoutAnchors.layout_path
+		var layout := Maps.read_layout(_areas_of)
+		_areas = layout.get("areas", [])
+		_labels = []
+		for l in layout.get("labels", []):
+			_labels.append({"id": StringName(l["id"]), "name": l.get("name", ""), "at": Vector2(float(l["at"][0]), float(l["at"][1]))})
+		_creek_line = {}
+		for s in layout.get("terrain", []):
+			if s.get("type", "") == "creek" and s.get("points", []).size() >= 2:
+				_creek_line = s
+		_creek = PackedVector2Array()
+		_roads = []
+	return _areas
+
+
+## The map's area of `type`, or {} if it has none.
+static func area(type: StringName) -> Dictionary:
+	for a in areas():
+		if StringName(a.get("type", "")) == type:
+			return a
+	return {}
+
+
+static func has_area(type: StringName) -> bool:
+	return not area(type).is_empty()
+
+
+## Where the area of `type` stands (NOWHERE without one).
+static func area_at(type: StringName) -> Vector2:
+	var a := area(type)
+	if a.is_empty():
+		return NOWHERE
+	return Vector2(float(a["at"][0]), float(a["at"][1]))
+
+
+## The area's turn about the vertical (radians), as anchors turn (Godot's: +Y).
+static func area_yaw(type: StringName) -> float:
+	return deg_to_rad(float(area(type).get("yaw", 0.0)))
+
+
+## The area's size `key` (its own, else its type's).
+static func area_size(type: StringName, key: String) -> Variant:
+	var a := area(type)
+	if a.has(key):
+		var v: Variant = a[key]
+		return Vector2(float(v[0]), float(v[1])) if v is Array else float(v)
+	return AREAS[type].get(key)
+
+
+## Point `p`, placed for the area's Hearthvale home, where it is now: moved and turned with the
+## area (as an anchor turns its things: plans/map-editor-places.md).
+static func from_home(type: StringName, p: Vector2) -> Vector2:
+	var d := p - (AREAS[type]["home"] as Vector2)
+	var yaw := area_yaw(type)
+	if yaw != 0.0:
+		var w := Vector3(d.x, 0.0, d.y).rotated(Vector3.UP, yaw)
+		d = Vector2(w.x, w.z)
+	return area_at(type) + d
+
+
+static func clearing_center() -> Vector2:
+	return area_at(&"clearing")
+
+
+static func lake_center() -> Vector2:
+	return area_at(&"lake")
+
+
+static func peak_center() -> Vector2:
+	return area_at(&"frostpeak")
+
+
+static func quarry_center() -> Vector2:
+	return area_at(&"quarry")
+
+
+static func quarry_center_3() -> Vector3:
+	var c := quarry_center()
+	return Vector3(c.x, 0.0, c.y)
+
+
+## Where the haul road's top is, from the pit's middle (radians): the quarry turned turns it.
+## (A turn about +Y by `yaw` takes the map angle a to a - yaw.)
+static func quarry_road_angle() -> float:
+	return QUARRY_ROAD_ANGLE - area_yaw(&"quarry")
+
+
+static func field_center() -> Vector2:
+	return area_at(&"goldmeadow")
+
+
+static func field_radius() -> float:
+	return area_size(&"goldmeadow", "radius")
+
+
+static func forest_center() -> Vector2:
+	return area_at(&"pinewood")
+
+
+static func forest_radii() -> Vector2:
+	return area_size(&"pinewood", "radii")
+
+
+## The Pinewood's glades, where it stands (none without it).
+static func glades() -> Array[Vector2]:
+	var out: Array[Vector2] = []
+	if has_area(&"pinewood"):
+		for g in GLADES:
+			out.append(from_home(&"pinewood", g))
+	return out
+
+
+## The creek's line as drawn (its control points: none on a map without one).
+static func creek_points() -> Array[Vector2]:
+	areas()
+	var out: Array[Vector2] = []
+	for q in _creek_line.get("points", []):
+		out.append(Vector2(float(q[0]), float(q[1])))
+	return out
+
+
+## Where the creek's deep pools are.
+static func creek_pools() -> Array[Vector2]:
+	areas()
+	var out: Array[Vector2] = []
+	for q in _creek_line.get("pools", []):
+		out.append(Vector2(float(q[0]), float(q[1])))
+	return out
+
+
+## The names written on the map where nothing else is (the layout's "labels", placed in the map
+## editor: {id, name, at}): [{id, name, at: Vector2}].
+static func labels() -> Array:
+	areas()
+	return _labels
+
+
+## Debug-menu teleports: name -> [where, look at], for the areas the map has.
+static func landmarks() -> Dictionary:
+	var out := {}
+	for name in _LANDMARKS:
+		var l: Array = _LANDMARKS[name]
+		var type: StringName = l[0]
+		if type == &"":
+			if Maps.current() != Maps.DEFAULT:
+				continue
+			out[name] = [l[1], l[2]]
+			continue
+		if not has_area(type):
+			continue
+		var at := from_home(type, Vector2(l[1].x, l[1].z))
+		var look := from_home(type, Vector2(l[2].x, l[2].z))
+		out[name] = [Vector3(at.x, 0, at.y), Vector3(look.x, 0, look.y)]
+	return out
 
 
 ## Where anchored place `id` stands (LayoutAnchors; the origin if the layout has no such anchor).
@@ -194,6 +354,10 @@ static func haven_pool_center() -> Vector2:
 
 static var _roads: Array[Dictionary] = []
 static var _creek: PackedVector2Array
+static var _areas: Array = []
+static var _areas_of := ""
+static var _creek_line: Dictionary = {}
+static var _labels: Array = []
 static var _warp: Array[FastNoiseLite] = []
 
 
@@ -230,16 +394,17 @@ static func spline(ctrl: Array, loop: bool) -> PackedVector2Array:
 	return out
 
 
-## The roads as laid (scripts/world_roads.gd, written by the terrain generator): each ROADS entry
-## with its line, `pts` (about 1 m apart, from the village end for lamp stretches), and its
-## `half_width`.
+## The roads as laid (the map's roads file, Maps.path("roads"): scripts/world_roads.gd for
+## Hearthvale, written by the terrain generator): each road's spec (road_spec) with its laid line,
+## `pts` (about 1 m apart, from the village end for lamp stretches), and its `half_width`.
 static func roads() -> Array[Dictionary]:
 	if _roads.is_empty():
-		var written: GDScript = load("res://scripts/world_roads.gd")
+		var file := Maps.path("roads")
+		if not ResourceLoader.exists(file):
+			return _roads  # (a map whose land isn't made yet: no roads)
+		var written: GDScript = load(file)
 		var laid: Dictionary = written.LINES
-		var specs: Array = ROADS.duplicate()
-		specs.append_array(written.get_script_constant_map().get("EXTRA", []))  # (the map editor's)
-		for spec in specs:
+		for spec in written.get_script_constant_map().get("EXTRA", []):
 			var r: Dictionary = spec.duplicate()
 			r["pts"] = PackedVector2Array(laid.get(spec["id"], []))
 			r["half_width"] = ROAD_HALF_WIDTH if spec["kind"] == &"road" else PATH_HALF_WIDTH
@@ -247,8 +412,17 @@ static func roads() -> Array[Dictionary]:
 	return _roads
 
 
+## Road `id` as roads() has it, or {} if the map has none such.
+static func road(id: StringName) -> Dictionary:
+	for r in roads():
+		if r["id"] == id:
+			return r
+	return {}
+
+
 ## The creek's centre line (cached), source to mouth, about 1 m a sample.
 static func creek() -> PackedVector2Array:
-	if _creek.is_empty():
-		_creek = spline(CREEK, false)
+	var ctrl := creek_points()
+	if _creek.is_empty() and ctrl.size() >= 2:
+		_creek = spline(ctrl, false)
 	return _creek

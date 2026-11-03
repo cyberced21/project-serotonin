@@ -65,3 +65,11 @@ h3 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing
 .chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .chips label { display: inline-flex; gap: 3px; align-items: center; background: var(--panel-2); padding: 1px 6px; border-radius: 4px; }
 #props p.bad { color: var(--warn); }
+button.mapname { background: transparent; border-color: transparent; font-size: 14px; }
+dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; width: min(440px, calc(100vw - 32px)); }
+dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+dialog h3 { margin-top: 10px; }
+#maplist .m { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 5px; }
+#maplist .m.open { background: var(--panel-2); }
+#maplist .m .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#maplist .tag { font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--accent); color: var(--accent-text); }

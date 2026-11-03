@@ -109,7 +109,7 @@ func _ford(pts: PackedVector2Array) -> Vector2:
 
 func _in_pool(p: Vector2) -> bool:
 	var world_map := load("res://scripts/world_map.gd")
-	for pool: Vector2 in world_map.CREEK_POOLS:
+	for pool: Vector2 in world_map.creek_pools():
 		if p.distance_to(pool) < float(world_map.CREEK_POOL_RADIUS):
 			return true
 	return false

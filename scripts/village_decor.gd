@@ -474,11 +474,15 @@ func _name_sign(prop: Node3D) -> void:
 	mark.add_child(label)
 
 
-## Where the village path crosses the creek: [from, to], reaching past its banks each side.
+## Where the village path (the layout's village_path, as drawn) crosses the creek: [from, to],
+## reaching past its banks each side; [] on a map with no such path or creek, or where they don't meet.
 func _creek_crossing() -> Array:
 	const REACH := 3.6  # past the channel's middle, each side
-	var path := WorldMap.spline(WorldMap.VILLAGE_PATH, false)
+	var drawn: Array = WorldMap.road(&"village_path").get("points", [])
 	var creek := WorldMap.creek()
+	if drawn.size() < 2 or creek.is_empty():
+		return []
+	var path := WorldMap.spline(drawn, false)
 	var best := [0, 0]
 	var best_d := INF
 	for i in path.size():
@@ -487,6 +491,8 @@ func _creek_crossing() -> Array:
 			if d < best_d:
 				best_d = d
 				best = [i, k]
+	if best_d > 9.0:
+		return []  # (they don't cross)
 	var along := (path[mini(best[0] + 1, path.size() - 1)] - path[maxi(best[0] - 1, 0)]).normalized()
 	var mid: Vector2 = creek[best[1]]
 	return [mid - along * REACH, mid + along * REACH]

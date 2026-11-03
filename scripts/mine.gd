@@ -68,7 +68,7 @@ func _ready() -> void:
 		level.n = i
 		level.mine = self
 		var size := MineLayout.size(i)
-		var c := WorldMap.QUARRY_CENTER
+		var c := WorldMap.quarry_center()
 		level.position = Vector3(c.x - size.x * MineLayout.CELL / 2, LEVEL_Y[i], c.y - size.y * MineLayout.CELL / 2)
 		level.visible = false
 		add_child(level)

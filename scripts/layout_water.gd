@@ -1,13 +1,12 @@
 class_name LayoutWater
 extends RefCounted
-## The map editor's water (plans/terrain-editing.md): data/layout/hearthvale.json's "terrain" ponds
+## The map editor's water (plans/terrain-editing.md): the map's layout's "terrain" ponds
 ## and rivers, read once for everything that needs them: the terrain generator digs them, the
 ## layout bake gives them their water, the creek leaves its surface out where it runs into one.
 ## Every water sits at LEVEL, like the creek's.
 ##   pond   {id, shape: "circle", center, radius | shape: "polygon", points; depth, shelf?, fish?}
 ##   river  {id, points (a line, smoothed: WorldMap.spline), width, depth, vale?, fish?}
 
-const LAYOUT := "res://data/layout/hearthvale.json"
 ## Keep in sync with tools/generate_test_terrain.gd's WATER_LEVEL and Creek.WATER_LEVEL.
 const LEVEL := -0.15
 ## How far (m) in from a polygon pond's shore it reaches its full depth, unless it says.
@@ -15,8 +14,8 @@ const SHELF := 6.0
 ## A river's land eases down to its banks over this much (m) each side, unless it says.
 const VALE := 30.0
 
-## The layout file read (tools can point it at another: use_file()).
-static var layout_path := LAYOUT
+## The layout file read: the map's (Maps.layout()), unless a tool points it at another (use_file()).
+static var layout_path := Maps.layout()
 static var _ponds: Array[Dictionary] = []
 static var _rivers: Array[Dictionary] = []
 static var _loaded := false

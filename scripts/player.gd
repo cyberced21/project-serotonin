@@ -325,6 +325,7 @@ func _ready() -> void:
 		a.set("bus", &"Movement")
 	_base_fov = Settings.fov()
 	Settings.changed.connect(func() -> void: _base_fov = Settings.fov())
+	_onto_ground.call_deferred()
 	_tool_rest = tool_pivot.position
 	_stand_probe.radius = body_shape.radius - 0.01
 	_stand_probe.height = STAND_HEIGHT
@@ -371,6 +372,16 @@ func from_dict(d: Dictionary) -> void:
 	rotation.y = float(d.get("yaw", 0.0))
 	_pitch = float(d.get("pitch", 0.0))
 	reset_physics_interpolation()  # a teleport, not a move
+
+
+## Never start under the ground (a fresh world on a map whose land is higher where you start:
+## plans/map-maker.md). Above it, you just land.
+func _onto_ground() -> void:
+	var terrain := get_tree().get_first_node_in_group("terrain") as Terrain3D
+	var ground: float = terrain.data.get_height(global_position) if terrain and terrain.data else NAN
+	if not is_nan(ground) and global_position.y < ground - 0.2:
+		global_position.y = ground + 0.1
+		reset_physics_interpolation()
 
 
 ## Debug: jump to `to` (feet), facing `look_at_point` if given.

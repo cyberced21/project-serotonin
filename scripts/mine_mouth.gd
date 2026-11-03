@@ -38,9 +38,9 @@ func _ready() -> void:
 ## it back into the rock (`_depth`), so the frame isn't half sunk in the wall.
 func _settle() -> void:
 	var terrain := get_tree().get_first_node_in_group("terrain") as Terrain3D
-	var a := deg_to_rad(angle)
+	var a := deg_to_rad(angle) - WorldMap.area_yaw(&"quarry")  # (round with the pit, turned)
 	var dir := Vector3(cos(a), 0.0, sin(a))
-	var c := Vector3(WorldMap.QUARRY_CENTER.x, 0.0, WorldMap.QUARRY_CENTER.y)
+	var c := Vector3(WorldMap.quarry_center().x, 0.0, WorldMap.quarry_center().y)
 	var floor_y := WorldMap.QUARRY_RIM_HEIGHT - WorldMap.QUARRY_LEVEL_DROP * WorldMap.QUARRY_WALLS.size()
 	var r := WorldMap.QUARRY_WALLS[-1] - 4.0
 	var foot := r

@@ -27,7 +27,7 @@ extends SceneTree
 ## The map editor's layout (scenes/layout.tscn) isn't moved: rebake it after (tools/bake_layout.gd).
 ## Its terrain shapes (data/layout/hearthvale.json, "terrain": flats, hills and hollows, ponds,
 ## roads and paths drawn in the editor) go on top of all that, before the relax pass; the roads are
-## laid after WorldMap.ROADS and written with them (WorldMap.roads() reads them back). The terrain
+## laid in the layout's order and written to the map's roads file (WorldMap.roads() reads them back). The terrain
 ## it applied is written to data/layout/terrain_applied.json, so the editor knows when it's stale.
 ## Its rivers (plans/terrain-editing.md, LayoutWater) get a vale with the other shapes and a channel
 ## carved with the creek's; the layout bake gives them, and its ponds, their water.
@@ -40,13 +40,20 @@ extends SceneTree
 ##   -- --dry-run         write nothing (terrain, roads, main.tscn, the applied terrain)
 ##   -- --report=<file>   write what it did as JSON: each pad's flatness, each road's ends, the ponds,
 ##                        warnings ({msg, at, ref}: a road across a pad, the mill's wheel out of the creek)
+##   -- --hash            print a fingerprint of the heights, ground ids and roads laid
 
 const WorldMap := preload("res://scripts/world_map.gd")
 
-const SIZE := 768                       # heightmap pixels = metres (vertex spacing 1); 3x3 regions
-const ORIGIN := Vector3(-256, 0, -256)  # world position of pixel (0, 0) — must sit on the region grid
-const CLEARING_CENTER := WorldMap.CLEARING_CENTER
-const CLEARING_RADIUS := 28.0
+## The map's width (SX, along x) and depth (SZ, along z) in heightmap pixels = metres (vertex
+## spacing 1), and the world position of pixel (0, 0), on the region grid (Maps.size(), origin():
+## Hearthvale's 768 x 768 from (-256, -256), 3 x 3 regions).
+var SX := Maps.size().x
+var SZ := Maps.size().y
+var ORIGIN := Vector3(Maps.origin().x, 0, Maps.origin().y)
+## Where the map's areas are and how big (WorldMap's: _read_areas(), after the command line's read:
+## NOWHERE, far off the map, for one it hasn't), cached for the run.
+var CLEARING_CENTER := WorldMap.NOWHERE
+var CLEARING_RADIUS := 28.0
 const HILL_RAMP := 55.0                 # metres over which the hills rise out of the clearing
 ## The flats' edges wander outward by up to this much (never inward: what's placed on them stays
 ## on flat ground).
@@ -68,7 +75,7 @@ const SPOKE_FLOOR := 0.5
 ## wanders in and out (m).
 const BOWL_HILLS := 0.3
 const BOWL_WANDER := 28.0
-## The creek (WorldMap.CREEK) runs down a vale of its own: the hills keep this share of their
+## The creek (WorldMap.creek_points()) runs down a vale of its own: the hills keep this share of their
 ## height along it, easing back over CREEK_VALE. Its channel is CREEK_DEPTH deep under the water
 ## (CREEK_POOL_DEPTH in the pools), and its banks ease up over CREEK_BANK. Deep enough to swim
 ## down its middle; where a path crosses (the roads have bridges: Creek) it shallows to a ford,
@@ -92,10 +99,11 @@ const RIM_HEIGHT := 24.0
 ## Frostpeak: a summit with spurs running down from it and a high shoulder to the west, each a
 ## ridge with a rounded crest and steep flanks (rock where steeper than ~47°, snow on the gentler
 ## high ground: shaders/terrain.gdshader), gullies cut down its sides.
-const PEAK_CENTER := WorldMap.PEAK_CENTER
-const PEAK_RADIUS := 76.0
+var PEAK_CENTER := WorldMap.NOWHERE
+var PEAK_RADIUS := 76.0
 const PEAK_HEIGHT := 66.0
-## [from, to, crest height at each end, flank steepness at each end (rise per metre)]
+## [from, to, crest height at each end, flank steepness at each end (rise per metre)], in
+## Hearthvale (the peak's home): _ridges has them where the peak stands, turned and sized with it.
 const PEAK_RIDGES := [
 	[Vector2(-98, -54), Vector2(-98, -54), 66.0, 66.0, 1.0, 1.0],     # the summit
 	[Vector2(-98, -54), Vector2(-56, -26), 64.0, 10.0, 1.3, 0.55],    # the north-east spur
@@ -111,7 +119,7 @@ const PEAK_CREST := 5.0  # how rounded the crests are (m)
 const MAX_SLOPE := 0.45
 const PEAK_SLOPE := 1.2
 const RELAX_PASSES := 80
-const DATA_DIR := "res://terrain_data"
+var DATA_DIR := Maps.path("terrain")  # (the map's: Hearthvale's is res://terrain_data)
 const WATER_LEVEL := -0.15     # keep in sync with the ponds' WaterBody nodes in main.tscn
 ## Water deeper than SHELF_DEPTH (swimming water, plans/water.md) keeps a wadeable shelf this deep
 ## and up to SHORE_SHELF m wide round its shore before it drops away (_bed).
@@ -129,7 +137,20 @@ const PONDS := [
 	{"id": "lake", "center": Vector2(38, 340), "radius": 22.0, "depth": 5.0},  # the lake
 ]
 ## The lake's flat basin beyond the south rim (hills ease up beyond radius over the ramp).
-const LAKE_BASIN := {"center": WorldMap.LAKE_CENTER, "radius": 34.0, "ramp": 85.0}
+var LAKE_BASIN := {"center": WorldMap.NOWHERE, "radius": 34.0, "ramp": 85.0}
+## Which area each built-in pond comes with (none without it, unless the layout has that pond).
+const POND_AREA := {"pond": &"clearing", "village_pond": &"village", "lake": &"lake"}
+var _has_village := false
+var _quarry_c := WorldMap.NOWHERE
+var _field_c := WorldMap.NOWHERE
+var _field_r := 97.0
+var _field_yaw := 0.0
+var _forest_c := WorldMap.NOWHERE
+var _forest_r := Vector2(172, 108)
+var _forest_yaw := 0.0
+var _haven_c := WorldMap.NOWHERE
+var _creek_pts: Array[Vector2] = []
+var _ridges: Array = []
 
 var VILLAGE_CENTER := WorldMap.village_center()  # the middle of the village green (its anchor)
 const VILLAGE_RADIUS := WorldMap.VILLAGE_RADIUS
@@ -138,10 +159,15 @@ const VILLAGE_RAMP := 50.0
 const FIELD_BASE := WorldMap.BOWL_RIM_HEIGHT * 0.85
 ## Control-map texture id that marks the path (see shaders/terrain.gdshader, footsteps.gd).
 const PATH_TEXTURE := WorldMap.TEX_PATH
-## The path from the clearing over the pass to the green's ring.
-const PATH := WorldMap.VILLAGE_PATH
+## The roads the land is eased down along (their `valley`: the path from the clearing over the pass
+## to the green, the road east), the ones the world's edge dips to a pass for (`pass`: the road
+## east), and where the roads out of the village's bowl end (`spoke`: a notch along the line from
+## the village to each), all as drawn (WorldMap.road_spec).
+var _valleys: Array = []
+var _passes: Array = []
+var _spokes: Array[Vector2] = []
 ## The market place is paved (WorldMap.in_market, plans/village-street.md); the village street
-## (WorldMap.MAIN_STREET) is a road like the others. The lanes from it out to where the north, lake
+## (the layout's main_street) is a road like the others. The lanes from it out to where the north, lake
 ## and fields roads start are drawn with the green at GREEN_HOME: they turn and move with it. The
 ## lanes in to the doors are the villagers' walkways (the layout's, as VillagePaths links them).
 const GREEN_HOME := Vector2(137, 125)
@@ -158,7 +184,7 @@ const PATH_HALF_WIDTH := 1.6
 const LANE_HALF_WIDTH := 1.0
 
 var _green_angle := 0.0  # the green's turn (radians): the market place lies along its X
-var _layout_path := LAYOUT
+var _layout_path := Maps.layout()
 var _dry := false
 var _report := {"pads": {}, "roads": {}, "warnings": []}
 var _ponds: Array = PONDS.duplicate(true)
@@ -188,10 +214,11 @@ const ROUTE_SLOPE_COST := 160.0
 const ROUTE_WATER_COST := 300.0
 const ROUTE_CREEK_COST := 25.0
 const ROUTE_BANK_COST := 8.0  # (on its banks: a road there leaves a ledge above the water)
-## The lines the roads were laid on, for the game (WorldMap.roads()).
-const ROADS_OUT := "res://scripts/world_roads.gd"
-const LAYOUT := "res://data/layout/hearthvale.json"
-const TERRAIN_APPLIED := "res://data/layout/terrain_applied.json"
+## The lines the roads were laid on, for the game (WorldMap.roads()), the layout read and the record
+## of what the land was made from: the map's (Maps, plans/map-maker.md; `-- --map=<id>` picks one).
+var ROADS_OUT := Maps.path("roads")
+var LAYOUT := Maps.layout()
+var TERRAIN_APPLIED := Maps.path("applied")
 ## A flat's or a hill's edge eases into the land over this much (m), unless it says otherwise.
 const SHAPE_SOFT := 10.0
 
@@ -216,7 +243,7 @@ var _pond_mask := PackedByteArray()  # 1 in the layout's ponds (dug again after 
 var _ramp_top: Array[float] = []   # per quarry wall: angle of its ramp's top end
 var _ramp_span: Array[float] = []  # per quarry wall: angle its ramp covers
 var _layout_terrain: Array = []  # the map editor's terrain shapes
-var _layout_roads: Array = []    # ...its roads and paths, as specs like WorldMap.ROADS
+var _layout_roads: Array = []    # ...its roads and paths, as WorldMap.road_spec makes them
 
 
 func _initialize() -> void:
@@ -231,7 +258,7 @@ func _run() -> void:
 			LayoutWater.use_file(_layout_path)
 		elif arg == "--dry-run":
 			_dry = true
-	VILLAGE_CENTER = WorldMap.village_center()
+	_read_areas()
 	_green_angle = LayoutAnchors.yaw(&"green")
 	var terrain := Terrain3D.new()
 	root.add_child(terrain)
@@ -240,23 +267,23 @@ func _run() -> void:
 	_read_scene()
 
 	var base := PackedFloat32Array()
-	base.resize(SIZE * SIZE)
+	base.resize(SX * SZ)
 	var h := PackedFloat32Array()
-	h.resize(SIZE * SIZE)
+	h.resize(SX * SZ)
 	var ids := PackedByteArray()
-	ids.resize(SIZE * SIZE)
-	for y in SIZE:
-		for x in SIZE:
+	ids.resize(SX * SZ)
+	for y in SZ:
+		for x in SX:
 			var w := _world(x, y)
-			var i := y * SIZE + x
+			var i := y * SX + x
 			base[i] = _height(w)
 			ids[i] = _biome_id(w + Vector2(0.5, 0.5))  # the cell's centre
 			if _on_path(w + Vector2(0.5, 0.5)):
 				ids[i] = PATH_TEXTURE
-	for y in SIZE:
-		for x in SIZE:
+	for y in SZ:
+		for x in SX:
 			var w := _world(x, y)
-			h[y * SIZE + x] = _biomes(w, base[y * SIZE + x]) + (_peak(w) + _rim(w)) * _off_quarry(w)
+			h[y * SX + x] = _biomes(w, base[y * SX + x]) + (_peak(w) + _rim(w)) * _off_quarry(w)
 	_glades(h)
 	_layout_shapes(h)
 	_level_pads(h)
@@ -269,19 +296,19 @@ func _run() -> void:
 	_relax(h)  # again: smooths any seam where two roads' banks (or a hairpin's legs) meet
 	_report_water(h)
 
-	var img := Image.create_empty(SIZE, SIZE, false, Image.FORMAT_RF)
-	for y in SIZE:
-		for x in SIZE:
-			img.set_pixel(x, y, Color(h[y * SIZE + x], 0, 0))
+	var img := Image.create_empty(SX, SZ, false, Image.FORMAT_RF)
+	for y in SZ:
+		for x in SX:
+			img.set_pixel(x, y, Color(h[y * SX + x], 0, 0))
 	var images: Array[Image] = []
 	images.resize(Terrain3DRegion.TYPE_MAX)
 	images[Terrain3DRegion.TYPE_HEIGHT] = img
 	terrain.data.import_images(images, ORIGIN, 0.0, 1.0)
 
 	var painted := 0
-	for y in SIZE:
-		for x in SIZE:
-			var id := ids[y * SIZE + x]
+	for y in SZ:
+		for x in SX:
+			var id := ids[y * SX + x]
 			if id != WorldMap.TEX_DEFAULT:
 				var w := _world(x, y)
 				terrain.data.set_control_base_id(Vector3(w.x, 0, w.y), id)
@@ -294,10 +321,12 @@ func _run() -> void:
 	for pond in _ponds:
 		_report["ponds"].append([pond["center"].x, pond["center"].y])
 	if not _dry:
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(ROADS_OUT.get_base_dir()))
 		_write_roads(laid)
-		_rebake_nodes(h)
+		if Maps.current() == Maps.DEFAULT:  # (main.tscn's own resource nodes are Hearthvale's)
+			_rebake_nodes(h)
 		var applied := FileAccess.open(TERRAIN_APPLIED, FileAccess.WRITE)  # (the editor re-runs this when either changes)
-		applied.store_string(JSON.stringify({"terrain": _layout_terrain, "anchors": LayoutAnchors.anchors(),
+		applied.store_string(JSON.stringify({"terrain": _layout_terrain, "anchors": LayoutAnchors.anchors(), "areas": WorldMap.areas(),
 				"walkways": VillagePaths.walkways(_layout_path)}))
 		applied.close()
 		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DATA_DIR))
@@ -312,7 +341,48 @@ func _run() -> void:
 			var f := FileAccess.open(arg.trim_prefix("--report="), FileAccess.WRITE)
 			f.store_string(JSON.stringify(_report, "\t"))
 			f.close()
+		elif arg.begins_with("--dump="):  # (the heights and ground ids as they are, to compare two runs)
+			var f := FileAccess.open(arg.trim_prefix("--dump="), FileAccess.WRITE)
+			f.store_32(SX)
+			f.store_32(SZ)
+			f.store_buffer(h.to_byte_array())
+			f.store_buffer(ids)
+			f.close()
+		elif arg == "--hash":  # (a fingerprint of the land: the same map should always come out the same)
+			print("terrain hash: heights %s ids %s roads %s" % [h.to_byte_array().hex_encode().md5_text(),
+					ids.hex_encode().md5_text(), JSON.stringify(laid).md5_text()])
 	quit()
+
+
+## The map's areas (WorldMap's), for the run.
+func _read_areas() -> void:
+	_has_village = WorldMap.has_area(&"village")
+	VILLAGE_CENTER = WorldMap.village_center() if _has_village else WorldMap.NOWHERE
+	CLEARING_CENTER = WorldMap.clearing_center()
+	CLEARING_RADIUS = WorldMap.area_size(&"clearing", "radius")
+	PEAK_CENTER = WorldMap.peak_center()
+	PEAK_RADIUS = WorldMap.area_size(&"frostpeak", "radius")
+	LAKE_BASIN["center"] = WorldMap.lake_center()
+	LAKE_BASIN["radius"] = WorldMap.area_size(&"lake", "radius")
+	_quarry_c = WorldMap.quarry_center()
+	_field_c = WorldMap.field_center()
+	_field_r = WorldMap.field_radius()
+	_field_yaw = WorldMap.area_yaw(&"goldmeadow")
+	_forest_c = WorldMap.forest_center()
+	_forest_r = WorldMap.forest_radii()
+	_forest_yaw = WorldMap.area_yaw(&"pinewood")
+	_haven_c = WorldMap.haven_center() if LayoutAnchors.find(&"haven").get("placed", true) else WorldMap.NOWHERE
+	_creek_pts = WorldMap.creek_points()
+	var scale := PEAK_RADIUS / 76.0  # (its ridges grow with it)
+	_ridges = []
+	if WorldMap.has_area(&"frostpeak"):
+		for r in PEAK_RIDGES:
+			var a: Vector2 = WorldMap.from_home(&"frostpeak", r[0])
+			var b: Vector2 = WorldMap.from_home(&"frostpeak", r[1])
+			if scale != 1.0:
+				a = PEAK_CENTER + (a - PEAK_CENTER) * scale
+				b = PEAK_CENTER + (b - PEAK_CENTER) * scale
+			_ridges.append([a, b, r[2], r[3], r[4], r[5]])
 
 
 func _setup() -> void:
@@ -324,9 +394,18 @@ func _setup() -> void:
 				if _ponds[k]["id"] == p.get("id"):
 					_ponds[k] = {"id": p["id"], "center": p["centre"], "radius": p.get("radius", p["reach"]),
 							"depth": float(p.get("depth", 1.0)), "outline": p["outline"], "shelf": p.get("shelf", LayoutWater.SHELF)}
+		_ponds = _ponds.filter(func(p: Dictionary) -> bool:  # (a built-in pond goes with its area)
+			return p.has("outline") or WorldMap.has_area(POND_AREA[p["id"]]))
 		for s in _layout_terrain:
 			if s.get("type", "") in ["road", "path"] and s.get("points", []).size() >= 2:
-				_layout_roads.append({"id": StringName(s["id"]), "kind": StringName(s["type"]), "title": s.get("name", s["id"]), "ctrl": _v2s(s["points"])})
+				var spec := WorldMap.road_spec(s)
+				_layout_roads.append(spec)
+				if spec.get("valley", false):
+					_valleys.append(_v2s(s["points"]))
+				if spec.get("pass", false):
+					_passes.append(_v2s(s["points"]))
+				if spec.get("spoke", false):
+					_spokes.append(_v2s(s["points"])[-1])
 	_noise.seed = 7
 	_noise.frequency = 0.0065
 	_noise.fractal_octaves = 3
@@ -348,7 +427,7 @@ func _setup() -> void:
 	_edge.seed = 17
 	_edge.frequency = 0.03
 	# the haul road spirals down: each ramp's top starts just past where the one above ended
-	var top := WorldMap.QUARRY_ROAD_ANGLE
+	var top := WorldMap.quarry_road_angle()
 	for b in WorldMap.QUARRY_WALLS:
 		var r := b - RAMP_WIDTH * 0.5
 		var span := RAMP_LENGTH / r
@@ -367,23 +446,19 @@ func _world(x: int, y: int) -> Vector2:
 func _height(w: Vector2) -> float:
 	# a product, not a min: where two places' rims meet there's no crease
 	var outside := _rise(w, CLEARING_CENTER, CLEARING_RADIUS, HILL_RAMP) 			* _rise(w, VILLAGE_CENTER, VILLAGE_RADIUS, VILLAGE_RAMP) 			* _rise(w, LAKE_BASIN["center"], LAKE_BASIN["radius"], LAKE_BASIN["ramp"])
-	for path in [PATH, WorldMap.EAST_ROAD]:
+	for path in _valleys:
 		var v := smoothstep(VALLEY_HALF, VALLEY_HALF + VALLEY_RAMP, _polyline_distance(w, path))
 		outside *= lerpf(VALLEY_FLOOR, 1.0, v)
-	for to in SPOKES:
+	for to in _spokes:
 		var v := smoothstep(VALLEY_HALF, VALLEY_HALF + VALLEY_RAMP, _polyline_distance(w, [VILLAGE_CENTER, to]))
 		outside *= lerpf(SPOKE_FLOOR, 1.0, v)
-	var c := smoothstep(WorldMap.CREEK_HALF_WIDTH, CREEK_VALE, _polyline_distance(w, WorldMap.CREEK))
+	var c := smoothstep(WorldMap.CREEK_HALF_WIDTH, CREEK_VALE, _polyline_distance(w, _creek_pts))
 	outside *= lerpf(CREEK_VALE_FLOOR, 1.0, c)
-	var rim := _bowl(w)
-	var h := outside * (rim * WorldMap.BOWL_RIM_HEIGHT + _hills(w) * lerpf(BOWL_HILLS, 1.0, rim))
+	var rim := _bowl(w)  # (no village, no bowl: open rolling hills)
+	var h := outside * ((rim * WorldMap.BOWL_RIM_HEIGHT if _has_village else 0.0) + _hills(w) * lerpf(BOWL_HILLS, 1.0, rim))
 	for pond in _ponds:
 		h = _pond(w, h, pond, _shore)
 	return h
-
-
-## Where the roads climb out of the bowl: a notch along the line from the village to each.
-const SPOKES: Array[Vector2] = [WorldMap.QUARRY_RIM_POINT, Vector2(124, -6), Vector2(66, 316), Vector2(268, 252)]
 
 
 ## The bowl: 0 on its floor out to WorldMap.BOWL_FLOOR, rising smoothly to 1 on its rim by
@@ -414,7 +489,7 @@ func _hills(w: Vector2) -> float:
 ## don't tilt the pit.
 func _off_quarry(w: Vector2) -> float:
 	var outer: float = WorldMap.QUARRY_WALLS[0] + WorldMap.QUARRY_APRON
-	return smoothstep(outer, outer + WorldMap.QUARRY_SLOPE, w.distance_to(WorldMap.QUARRY_CENTER))
+	return smoothstep(outer, outer + WorldMap.QUARRY_SLOPE, w.distance_to(_quarry_c))
 
 
 ## Frostpeak: its ridges (PEAK_RIDGES) melted together, over a broad base so the valleys between
@@ -424,7 +499,7 @@ func _peak(w: Vector2) -> float:
 	if d0 > PEAK_RADIUS * 1.3:
 		return 0.0
 	var h := 26.0 * (1.0 - smoothstep(0.0, PEAK_RADIUS, d0))  # the massif under it all
-	for r in PEAK_RIDGES:
+	for r in _ridges:
 		var a: Vector2 = r[0]
 		var b: Vector2 = r[1]
 		var ab := b - a
@@ -443,14 +518,17 @@ func _peak(w: Vector2) -> float:
 
 ## The edge of the world rising into high hills (wandering, so it isn't a straight wall).
 func _rim(w: Vector2) -> float:
-	var half := SIZE * 0.5
-	var inner := half - RIM_WIDTH
-	var c := (w - Vector2(ORIGIN.x + half, ORIGIN.z + half)).abs()
-	var past := Vector2(maxf(c.x - inner, 0.0), maxf(c.y - inner, 0.0)).length()  # rounded corners
+	var half := Vector2(SX, SZ) * 0.5
+	var inner := half - Vector2(RIM_WIDTH, RIM_WIDTH)
+	var c := (w - Vector2(ORIGIN.x, ORIGIN.z) - half).abs()
+	var past := Vector2(maxf(c.x - inner.x, 0.0), maxf(c.y - inner.y, 0.0)).length()  # rounded corners
 	past += _warp_x.get_noise_2dv(w * 1.3) * 18.0
 	var t := clampf(past / RIM_WIDTH, 0.0, 1.0)
-	# the pass the road east climbs through: the rim dips to a saddle along it
-	var saddle := 1.0 - smoothstep(6.0, 45.0, _polyline_distance(w, WorldMap.EAST_ROAD))
+	# the passes the roads out (the road east) climb through: the rim dips to a saddle along them
+	var near := INF
+	for p in _passes:
+		near = minf(near, _polyline_distance(w, p))
+	var saddle := 1.0 - smoothstep(6.0, 45.0, near)
 	return RIM_HEIGHT * t * t * (1.0 - 0.6 * saddle)
 
 
@@ -458,22 +536,22 @@ func _rim(w: Vector2) -> float:
 ## the hills keep their shape but lose their ledges. The flats stay put: nothing there is steep.
 func _relax(h: PackedFloat32Array) -> void:
 	var limit := PackedFloat32Array()  # per cell; 0 = leave it alone
-	limit.resize(SIZE * SIZE)
-	for y in SIZE:
-		for x in SIZE:
+	limit.resize(SX * SZ)
+	for y in SZ:
+		for x in SX:
 			var w := _world(x, y)
 			var crags := 1.0 - smoothstep(PEAK_RADIUS * 0.6, PEAK_RADIUS * 1.0, w.distance_to(PEAK_CENTER))
-			var i := y * SIZE + x
+			var i := y * SX + x
 			var keep := _in_pit(w) or (not _creek_mask.is_empty() and _creek_mask[i] == 1) or (not _pond_mask.is_empty() and _pond_mask[i] == 1)
-			limit[y * SIZE + x] = 0.0 if keep else MAX_SLOPE + crags * PEAK_SLOPE
+			limit[y * SX + x] = 0.0 if keep else MAX_SLOPE + crags * PEAK_SLOPE
 	for pass_i in RELAX_PASSES:
 		var changed := 0
-		for y in SIZE - 1:
-			for x in SIZE - 1:
-				var i := y * SIZE + x
+		for y in SZ - 1:
+			for x in SX - 1:
+				var i := y * SX + x
 				if limit[i] == 0.0:
 					continue
-				for j in [i + 1, i + SIZE]:
+				for j in [i + 1, i + SX]:
 					var d: float = h[j] - h[i]
 					var excess := absf(d) - limit[i]
 					if excess > 0.0:
@@ -532,7 +610,7 @@ static func _pond_centre(pond: Dictionary) -> Vector2:
 ## The layout's ponds dug again after the relax pass (which fills a bowl dug into a hillside), and
 ## kept from the next one (_pond_mask).
 func _redig_ponds(h: PackedFloat32Array) -> void:
-	_pond_mask.resize(SIZE * SIZE)
+	_pond_mask.resize(SX * SZ)
 	for pond in LayoutWater.ponds():
 		_for_pixels_near(pond["centre"], float(pond["reach"]) + 4.0, func(i: int, w: Vector2) -> void:
 			var bed := _bed(pond, _shore_edge(pond, w, _shore))
@@ -545,7 +623,7 @@ func _redig_ponds(h: PackedFloat32Array) -> void:
 
 ## The quarry's mountain shoulder and pit, and the field's swells, on top of the base height.
 func _biomes(w: Vector2, h: float) -> float:
-	var q := WorldMap.QUARRY_CENTER
+	var q := _quarry_c
 	h += _bump(w, q, 120.0) * 8.0  # the shoulder the quarry is cut into
 	var outer: float = WorldMap.QUARRY_WALLS[0] + WorldMap.QUARRY_APRON
 	var d := w.distance_to(q)
@@ -557,8 +635,8 @@ func _biomes(w: Vector2, h: float) -> float:
 		var lifted := lerpf(WorldMap.QUARRY_RIM_HEIGHT, h, smoothstep(outer, outer + WorldMap.QUARRY_SLOPE, dw))
 		# (its long hillside never lifts the flats: the clearing's ruins and the village stay at 0)
 		h += (lifted - h) * _rise(w, CLEARING_CENTER, CLEARING_RADIUS, HILL_RAMP) * _rise(w, VILLAGE_CENTER, VILLAGE_RADIUS, VILLAGE_RAMP)
-	var fd := _biome_warp(w).distance_to(WorldMap.FIELD_CENTER)
-	var inside := 1.0 - smoothstep(WorldMap.FIELD_RADIUS - 10.0, WorldMap.FIELD_RADIUS + FIELD_RAMP, fd)
+	var fd := _biome_warp(w).distance_to(_field_c)
+	var inside := 1.0 - smoothstep(_field_r - 10.0, _field_r + FIELD_RAMP, fd)
 	inside *= smoothstep(VILLAGE_RADIUS + FLAT_GROW, VILLAGE_RADIUS + FLAT_GROW + 25.0, w.distance_to(VILLAGE_CENTER))  # (not on the village's flat)
 	if inside > 0.0:
 		h = lerpf(h, FIELD_BASE + 0.8 + (_swell.get_noise_2dv(w) * 0.5 + 0.5) * 3.5, inside)
@@ -568,7 +646,7 @@ func _biomes(w: Vector2, h: float) -> float:
 ## Rim height, minus one level for every wall this spot is inside.
 func _quarry_height(w: Vector2, d: float) -> float:
 	var dn := d + _rings.get_noise_2dv(w) * 1.5
-	var theta := (w - WorldMap.QUARRY_CENTER).angle()
+	var theta := (w - _quarry_c).angle()
 	var walls := WorldMap.QUARRY_WALLS
 	var above := 0.0  # how many walls this spot is on the outer (higher) side of
 	for i in walls.size():
@@ -599,8 +677,8 @@ func _ramp_t(i: int, theta: float) -> float:
 
 
 func _on_haul_road(w: Vector2) -> bool:
-	var d := w.distance_to(WorldMap.QUARRY_CENTER) + _rings.get_noise_2dv(w) * 1.5
-	var theta := (w - WorldMap.QUARRY_CENTER).angle()
+	var d := w.distance_to(_quarry_c) + _rings.get_noise_2dv(w) * 1.5
+	var theta := (w - _quarry_c).angle()
 	for i in WorldMap.QUARRY_WALLS.size():
 		var b: float = WorldMap.QUARRY_WALLS[i]
 		if d > b - RAMP_WIDTH and d <= b and _ramp_t(i, theta) >= 0.0:
@@ -612,22 +690,22 @@ func _on_haul_road(w: Vector2) -> bool:
 func _biome_id(w: Vector2) -> int:
 	var q := _biome_warp(w)
 	var pit: float = WorldMap.QUARRY_WALLS[0]
-	var qd := q.distance_to(WorldMap.QUARRY_CENTER)
+	var qd := q.distance_to(_quarry_c)
 	var apron := pit + WorldMap.QUARRY_APRON
-	if w.distance_to(WorldMap.QUARRY_CENTER) < pit + 1.0:
+	if w.distance_to(_quarry_c) < pit + 1.0:
 		return PATH_TEXTURE if _on_haul_road(w) else WorldMap.TEX_QUARRY
 	if _dither(w, qd, apron, apron + BORDER_BELT):
 		return WorldMap.TEX_QUARRY
-	var fd := q.distance_to(WorldMap.FIELD_CENTER)
-	if fd < WorldMap.FIELD_RADIUS - 6.0:
+	var fd := q.distance_to(_field_c)
+	if fd < _field_r - 6.0:
 		return _crop_id(w, q)
-	if _dither(w, fd, WorldMap.FIELD_RADIUS + 6.0, WorldMap.FIELD_RADIUS + 6.0 + BORDER_BELT):
+	if _dither(w, fd, _field_r + 6.0, _field_r + 6.0 + BORDER_BELT):
 		return WorldMap.TEX_FIELD
-	var hd := w.distance_to(WorldMap.haven_center())  # the hidden haven: open grass in the forest
+	var hd := w.distance_to(_haven_c)  # the hidden haven: open grass in the forest
 	if hd < WorldMap.HAVEN_RADIUS - 3.0 or _dither(w, hd, WorldMap.HAVEN_RADIUS - 3.0, WorldMap.HAVEN_RADIUS + 1.0):
 		return WorldMap.TEX_DEFAULT
-	var f := ((q - WorldMap.FOREST_CENTER) / WorldMap.FOREST_RADII).length() * WorldMap.FOREST_RADII.y
-	var r := WorldMap.FOREST_RADII.y
+	var f := ((q - _forest_c).rotated(_forest_yaw) / _forest_r).length() * _forest_r.y
+	var r := _forest_r.y
 	if _dither(w, f, r - BORDER_BELT * 0.6, r + BORDER_BELT * 0.4) and qd > apron + WorldMap.QUARRY_SLOPE \
 			and w.distance_to(PEAK_CENTER) > 35.0:
 		return WorldMap.TEX_FOREST
@@ -657,14 +735,14 @@ func _dither(w: Vector2, d: float, inner: float, outer: float) -> bool:
 func _crop_id(w: Vector2, q: Vector2) -> int:
 	const CELL := 22.0
 	const TRACK := 3.0
-	var local := (w - WorldMap.FIELD_CENTER).rotated(0.35)
+	var local := (w - _field_c).rotated(0.35 + _field_yaw)
 	local += Vector2(_swell.get_noise_2dv(w * 0.4), _swell.get_noise_2dv(w * 0.4 + Vector2(40, 0))) * 7.0
 	var fu := fposmod(local.x, CELL)
 	var fv := fposmod(local.y, CELL)
 	if fu < TRACK or fv < TRACK:
 		return PATH_TEXTURE
 	var square := Vector2(floorf(local.x / CELL), floorf(local.y / CELL))
-	var edge := smoothstep(WorldMap.FIELD_RADIUS - 30.0, WorldMap.FIELD_RADIUS - 6.0, q.distance_to(WorldMap.FIELD_CENTER))
+	var edge := smoothstep(_field_r - 30.0, _field_r - 6.0, q.distance_to(_field_c))
 	return WorldMap.TEX_CROP if _hash(square) < 0.75 - edge * 0.5 else WorldMap.TEX_FIELD
 
 
@@ -675,9 +753,10 @@ func _hash(p: Vector2) -> float:
 ## Flattens each forest glade to the height of its middle.
 func _glades(h: PackedFloat32Array) -> void:
 	var glades: Array = []
-	for g in WorldMap.GLADES:
+	for g in WorldMap.glades():
 		glades.append([g, WorldMap.GLADE_RADIUS])
-	glades.append([WorldMap.haven_center(), WorldMap.HAVEN_RADIUS])  # (the hidden haven, plans/world-pass.md)
+	if _haven_c != WorldMap.NOWHERE:
+		glades.append([_haven_c, WorldMap.HAVEN_RADIUS])  # (the hidden haven, plans/world-pass.md)
 	for gr in glades:
 		var g: Vector2 = gr[0]
 		var r: float = gr[1]
@@ -690,6 +769,8 @@ func _glades(h: PackedFloat32Array) -> void:
 ## The hidden haven's spring pool, dug into its glade at the glade's own height (up in the forest:
 ## not a pond at the bowl's water level). Haven lifts its water to match.
 func _haven_pool(h: PackedFloat32Array) -> void:
+	if _haven_c == WorldMap.NOWHERE:
+		return
 	var pool: Dictionary = WorldMap.HAVEN_POOL
 	var c := WorldMap.haven_pool_center()
 	var r: float = pool["radius"]
@@ -830,7 +911,7 @@ func _apply_route(r: Dictionary, h: PackedFloat32Array, ids: PackedByteArray, te
 		var s := int(v.y)
 		var hw := half[s]
 		var road := heights[s] + bank[s] * clampf(v.z / hw, -1.0, 1.0)
-		var w := _world(i % SIZE, i / SIZE)
+		var w := _world(i % SX, i / SX)
 		if _in_pit(w) or _creek_mask[i] == 1:
 			continue  # the quarry keeps its walls; the creek runs on under a path (a ford)
 		if v.x <= hw:
@@ -847,7 +928,7 @@ func _apply_route(r: Dictionary, h: PackedFloat32Array, ids: PackedByteArray, te
 
 
 func _in_pit(w: Vector2) -> bool:
-	return w.distance_to(WorldMap.QUARRY_CENTER) < WorldMap.QUARRY_WALLS[0] + 2.0
+	return w.distance_to(_quarry_c) < WorldMap.QUARRY_WALLS[0] + 2.0
 
 
 func _nearest_sample(r: Dictionary, to: Vector2) -> int:
@@ -886,7 +967,7 @@ func _collect(node: Node, xform: Transform3D, depth: int, out: Array[Vector2]) -
 
 ## The creek's channel along its vale, and the layout's rivers' (plans/terrain-editing.md).
 func _carve_creek(h: PackedFloat32Array) -> void:
-	_creek_mask.resize(SIZE * SIZE)
+	_creek_mask.resize(SX * SZ)
 	var fords := _creek_fords()
 	_carve_channel(h, WorldMap.creek(), WorldMap.CREEK_HALF_WIDTH, CREEK_BANK, func(w: Vector2) -> float:
 		var t := 1.0
@@ -895,7 +976,7 @@ func _carve_creek(h: PackedFloat32Array) -> void:
 		return lerpf(FORD_DEPTH, CREEK_DEPTH, t))
 	# the pools: a round bowl wider than the channel, its rim easing in flat so the banks don't
 	# drop away at the water's edge
-	for pool in WorldMap.CREEK_POOLS:
+	for pool in WorldMap.creek_pools():
 		_for_pixels_near(pool, WorldMap.CREEK_POOL_RADIUS, func(i: int, w: Vector2) -> void:
 			var u := minf(w.distance_to(pool) / WorldMap.CREEK_POOL_RADIUS, 1.0)
 			h[i] = minf(h[i], WATER_LEVEL - CREEK_POOL_DEPTH * (1.0 - u * u) * (1.0 - u * u))
@@ -939,7 +1020,7 @@ func _carve_channel(h: PackedFloat32Array, pts: PackedVector2Array, half: float,
 				nearest[i] = d)
 	for i in nearest:
 		var d: float = nearest[i]
-		var w := _world(i % SIZE, i / SIZE)
+		var w := _world(i % SX, i / SX)
 		if d < half + 2.5:
 			_creek_mask[i] = 1
 		if d < half:
@@ -1001,12 +1082,13 @@ func _report_water(h: PackedFloat32Array) -> void:
 	_report["layout_ponds"] = ponds
 
 
-## Lays WorldMap.ROADS in order: each along its fixed line or a least-cost route over the land,
-## graded, then pressed into the ground with sloped shoulders. Returns {id: laid route}.
+## Lays the layout's roads and paths in order (WorldMap.road_spec): each along its fixed line or a
+## least-cost route over the land, graded, then pressed into the ground with sloped shoulders.
+## Returns {id: laid route}.
 func _lay_roads(h: PackedFloat32Array, ids: PackedByteArray, baked: Array[Vector2]) -> Dictionary:
 	var grid := _road_grid(h, baked)
 	var laid := {}
-	for spec in WorldMap.ROADS + _layout_roads:
+	for spec in _layout_roads:
 		var ctrl: Array = spec.get("ctrl", [])
 		if ctrl.is_empty():
 			var from: Vector2 = spec["from"]
@@ -1024,9 +1106,9 @@ func _lay_roads(h: PackedFloat32Array, ids: PackedByteArray, baked: Array[Vector
 					if near.distance_to(to) < best:
 						best = near.distance_to(to)
 						from = near
-			elif spec.has("join"):
+			elif spec.has("join") and laid.has(spec["join"]):
 				from = _nearest_on(laid[spec["join"]], from)
-			if spec.has("join_end"):
+			if spec.has("join_end") and laid.has(spec["join_end"]):
 				to = _nearest_on(laid[spec["join_end"]], to)
 			var stops: Array = [from] + spec.get("via", []) + [to]
 			var own: Array = _pad_cells.get(String(spec.get("place", "")), [])  # (a path may come onto its own place's ground)
@@ -1042,7 +1124,7 @@ func _lay_roads(h: PackedFloat32Array, ids: PackedByteArray, baked: Array[Vector
 		var half := WorldMap.ROAD_HALF_WIDTH if road else WorldMap.PATH_HALF_WIDTH
 		var before := h.duplicate()
 		if _road_mask.is_empty():
-			_road_mask.resize(SIZE * SIZE)
+			_road_mask.resize(SX * SZ)
 		var r := _make_route(ctrl, false, half, ROAD_GRADE if road else PATH_GRADE, 24.0 if road else 10.0, h)
 		_apply_route(r, h, ids, WorldMap.TEX_ROAD if road else PATH_TEXTURE,
 				ROAD_SHOULDER if road else PATH_SHOULDER, 99.0, 10.0 if road else 6.0, true)
@@ -1059,13 +1141,14 @@ func _lay_roads(h: PackedFloat32Array, ids: PackedByteArray, baked: Array[Vector
 
 ## The router's grid: one cell per ROUTE_CELL m, weighted by how hard the ground is to build on.
 func _road_grid(h: PackedFloat32Array, baked: Array[Vector2]) -> AStarGrid2D:
-	var n := SIZE / ROUTE_CELL
+	var nx := SX / ROUTE_CELL
+	var nz := SZ / ROUTE_CELL
 	var grid := AStarGrid2D.new()
-	grid.region = Rect2i(0, 0, n, n)
+	grid.region = Rect2i(0, 0, nx, nz)
 	grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
 	grid.update()
-	for cy in n:
-		for cx in n:
+	for cy in nz:
+		for cx in nx:
 			var w := _cell_world(Vector2i(cx, cy))
 			var r := ROUTE_CELL * 0.5
 			var g := Vector2(_sample(h, w + Vector2(r, 0)) - _sample(h, w - Vector2(r, 0)),
@@ -1076,9 +1159,9 @@ func _road_grid(h: PackedFloat32Array, baked: Array[Vector2]) -> AStarGrid2D:
 				cost += ROUTE_WATER_COST
 			elif _creek_mask[_pixel(w)] == 1:
 				cost += ROUTE_CREEK_COST  # (crossing it is fine: a bridge or a ford; running along it isn't)
-			elif _polyline_distance(w, WorldMap.CREEK) < WorldMap.CREEK_HALF_WIDTH + CREEK_BANK or _near_river(w):
+			elif _polyline_distance(w, _creek_pts) < WorldMap.CREEK_HALF_WIDTH + CREEK_BANK or _near_river(w):
 				cost += ROUTE_BANK_COST
-			if w.distance_to(WorldMap.QUARRY_CENTER) < WorldMap.QUARRY_WALLS[0] + 1.0:
+			if w.distance_to(_quarry_c) < WorldMap.QUARRY_WALLS[0] + 1.0:
 				cost += ROUTE_WATER_COST
 			cost += _rim(w) * 4.0
 			grid.set_point_weight_scale(Vector2i(cx, cy), cost)
@@ -1122,7 +1205,7 @@ func _world_cell(w: Vector2) -> Vector2i:
 
 
 func _pixel(w: Vector2) -> int:
-	return clampi(int(w.y - ORIGIN.z), 0, SIZE - 1) * SIZE + clampi(int(w.x - ORIGIN.x), 0, SIZE - 1)
+	return clampi(int(w.y - ORIGIN.z), 0, SZ - 1) * SX + clampi(int(w.x - ORIGIN.x), 0, SX - 1)
 
 
 func _nearest_on(r: Dictionary, to: Vector2) -> Vector2:
@@ -1135,10 +1218,10 @@ func _write_roads(laid: Dictionary) -> void:
 	var lines := PackedStringArray()
 	lines.append("extends RefCounted")
 	lines.append("## Written by tools/generate_test_terrain.gd: the lines the roads were laid on (WorldMap.roads()).")
-	lines.append("## Don't edit by hand; change WorldMap.ROADS and regenerate.")
+	lines.append("## Don't edit by hand; draw them in the map editor and regenerate.")
 	lines.append("")
 	lines.append("const LINES := {")
-	for spec in WorldMap.ROADS:
+	for spec in _layout_roads:
 		var pts: PackedVector2Array = laid[spec["id"]]["pts"].duplicate()
 		if spec.get("reverse", false):
 			pts.reverse()
@@ -1146,17 +1229,19 @@ func _write_roads(laid: Dictionary) -> void:
 		for p in pts:
 			nums.append("Vector2(%.2f, %.2f)" % [p.x, p.y])
 		lines.append("\t&\"%s\": [%s]," % [spec["id"], ", ".join(nums)])
-	for spec in _layout_roads:  # the map editor's
-		var nums := PackedStringArray()
-		for p in laid[spec["id"]]["pts"]:
-			nums.append("Vector2(%.2f, %.2f)" % [p.x, p.y])
-		lines.append("\t&\"%s\": [%s]," % [spec["id"], ", ".join(nums)])
 	lines.append("}")
 	lines.append("")
-	lines.append("## The map editor's roads and paths (data/layout/hearthvale.json), after WorldMap.ROADS.")
+	lines.append("## The roads and paths as drawn (the layout's, WorldMap.road_spec), in the order they were laid.")
 	lines.append("const EXTRA := [")
 	for spec in _layout_roads:
-		lines.append("\t{\"id\": &\"%s\", \"kind\": &\"%s\", \"title\": %s}," % [spec["id"], spec["kind"], JSON.stringify(spec["title"])])
+		var plain := {}  # (typed arrays don't write as constants: plain ones do)
+		for k in spec:
+			if spec[k] is Array:
+				plain[k] = []
+				plain[k].assign(spec[k])
+			else:
+				plain[k] = spec[k]
+		lines.append("\t%s," % var_to_str(plain).replace("\n", " "))
 	lines.append("]")
 	lines.append("")
 	var f := FileAccess.open(ROADS_OUT, FileAccess.WRITE)
@@ -1198,23 +1283,23 @@ func _rebake_nodes(h: PackedFloat32Array) -> void:
 func _for_pixels_near(at: Vector2, radius: float, fn: Callable) -> void:
 	var cx := at.x - ORIGIN.x
 	var cy := at.y - ORIGIN.z
-	for y in range(maxi(0, floori(cy - radius)), mini(SIZE, ceili(cy + radius) + 1)):
-		for x in range(maxi(0, floori(cx - radius)), mini(SIZE, ceili(cx + radius) + 1)):
+	for y in range(maxi(0, floori(cy - radius)), mini(SZ, ceili(cy + radius) + 1)):
+		for x in range(maxi(0, floori(cx - radius)), mini(SX, ceili(cx + radius) + 1)):
 			var w := _world(x, y)
 			if w.distance_to(at) <= radius:
-				fn.call(y * SIZE + x, w)
+				fn.call(y * SX + x, w)
 
 
 ## Bilinear height from the buffer at a world position.
 func _sample(h: PackedFloat32Array, w: Vector2) -> float:
-	var fx := clampf(w.x - ORIGIN.x, 0.0, SIZE - 1.001)
-	var fy := clampf(w.y - ORIGIN.z, 0.0, SIZE - 1.001)
+	var fx := clampf(w.x - ORIGIN.x, 0.0, SX - 1.001)
+	var fy := clampf(w.y - ORIGIN.z, 0.0, SZ - 1.001)
 	var x := int(fx)
 	var y := int(fy)
 	var tx := fx - x
 	var ty := fy - y
-	var top := lerpf(h[y * SIZE + x], h[y * SIZE + x + 1], tx)
-	var bottom := lerpf(h[(y + 1) * SIZE + x], h[(y + 1) * SIZE + x + 1], tx)
+	var top := lerpf(h[y * SX + x], h[y * SX + x + 1], tx)
+	var bottom := lerpf(h[(y + 1) * SX + x], h[(y + 1) * SX + x + 1], tx)
 	return lerpf(top, bottom, ty)
 
 
@@ -1287,13 +1372,13 @@ func _report_slopes(h: PackedFloat32Array, ids: PackedByteArray) -> void:
 	var counts := [0, 0, 0, 0]  # < 15°, < 30°, < 45°, steeper
 	var sheer := 0
 	var total := 0
-	for y in SIZE - 1:
-		for x in SIZE - 1:
+	for y in SZ - 1:
+		for x in SX - 1:
 			var w := _world(x, y)
 			if w.distance_to(PEAK_CENTER) < PEAK_RADIUS or _rim(w) > 2.0:
 				continue
-			var i := y * SIZE + x
-			var g := Vector2(h[i + 1] - h[i], h[i + SIZE] - h[i]).length()
+			var i := y * SX + x
+			var g := Vector2(h[i + 1] - h[i], h[i + SX] - h[i]).length()
 			counts[0 if g < 0.268 else 1 if g < 0.577 else 2 if g < 1.0 else 3] += 1
 			total += 1
 			if g > 2.0 and ids[i] != WorldMap.TEX_ROAD and not _in_pit(w):
@@ -1311,13 +1396,13 @@ func _write_preview(path: String, h: PackedFloat32Array, ids: PackedByteArray) -
 		WorldMap.TEX_FIELD: Color(0.60, 0.70, 0.32), WorldMap.TEX_QUARRY: Color(0.70, 0.66, 0.60),
 		WorldMap.TEX_CROP: Color(0.88, 0.74, 0.36),
 	}
-	var img := Image.create_empty(SIZE, SIZE, false, Image.FORMAT_RGB8)
-	for y in SIZE:
-		for x in SIZE:
-			var i := y * SIZE + x
+	var img := Image.create_empty(SX, SZ, false, Image.FORMAT_RGB8)
+	for y in SZ:
+		for x in SX:
+			var i := y * SX + x
 			var c: Color = colors.get(ids[i], Color.MAGENTA)
 			var hx := h[mini(i + 1, h.size() - 1)] - h[i]
-			var hy := h[mini(i + SIZE, h.size() - 1)] - h[i]
+			var hy := h[mini(i + SX, h.size() - 1)] - h[i]
 			var light := clampf(1.0 - (hx + hy) * 0.35, 0.35, 1.4)
 			if h[i] < WATER_LEVEL:
 				c = Color(0.25, 0.45, 0.65)
@@ -1366,7 +1451,7 @@ func _shape_cells(s: Dictionary, soft: float) -> Rect2i:
 	box = box.grow(soft + 1.0)
 	var a := Vector2i((box.position - Vector2(ORIGIN.x, ORIGIN.z)).floor())
 	var b := Vector2i((box.end - Vector2(ORIGIN.x, ORIGIN.z)).ceil())
-	return Rect2i(a.clamp(Vector2i.ZERO, Vector2i(SIZE, SIZE)), Vector2i.ZERO).expand(b.clamp(Vector2i.ZERO, Vector2i(SIZE, SIZE)))
+	return Rect2i(a.clamp(Vector2i.ZERO, Vector2i(SX, SZ)), Vector2i.ZERO).expand(b.clamp(Vector2i.ZERO, Vector2i(SX, SZ)))
 
 
 ## Flats (the land eased to a height), hills and hollows (raised or lowered: a dome in a circle, a
@@ -1403,7 +1488,7 @@ func _layout_shapes(h: PackedFloat32Array) -> void:
 		for y in range(cells.position.y, cells.end.y):
 			for x in range(cells.position.x, cells.end.x):
 				var w := _world(x, y)
-				var i := y * SIZE + x
+				var i := y * SX + x
 				match type:
 					"flat":
 						h[i] = lerpf(h[i], float(s.get("height", 0.0)), _shape_weight(s, w, soft))
@@ -1431,13 +1516,13 @@ func _layout_shapes(h: PackedFloat32Array) -> void:
 ## The heights over `cells` blurred over about `r` m (a box blur, twice each way: near a Gaussian),
 ## from the land round them too. One value a cell, row by row.
 func _blurred(h: PackedFloat32Array, cells: Rect2i, r: int) -> PackedFloat32Array:
-	var big := cells.grow(r * 2).intersection(Rect2i(0, 0, SIZE, SIZE))
+	var big := cells.grow(r * 2).intersection(Rect2i(0, 0, SX, SZ))
 	var w := big.size.x
 	var buf := PackedFloat32Array()
 	buf.resize(w * big.size.y)
 	for y in big.size.y:
 		for x in w:
-			buf[y * w + x] = h[(big.position.y + y) * SIZE + big.position.x + x]
+			buf[y * w + x] = h[(big.position.y + y) * SX + big.position.x + x]
 	for pass_i in 4:  # x, y, x, y
 		var along_x := pass_i % 2 == 0
 		var out := buf.duplicate()
@@ -1469,12 +1554,12 @@ func _roughness(h: PackedFloat32Array, s: Dictionary) -> float:
 	var cells := _shape_cells(s, 0.0)
 	var sum := 0.0
 	var n := 0
-	for y in range(maxi(cells.position.y, 1), mini(cells.end.y, SIZE - 1)):
-		for x in range(maxi(cells.position.x, 1), mini(cells.end.x, SIZE - 1)):
+	for y in range(maxi(cells.position.y, 1), mini(cells.end.y, SZ - 1)):
+		for x in range(maxi(cells.position.x, 1), mini(cells.end.x, SX - 1)):
 			if _shape_weight(s, _world(x, y), 0.0) < 1.0:
 				continue
-			var i := y * SIZE + x
-			sum += absf(h[i] - (h[i - 1] + h[i + 1] + h[i - SIZE] + h[i + SIZE]) * 0.25)
+			var i := y * SX + x
+			sum += absf(h[i] - (h[i - 1] + h[i + 1] + h[i - SX] + h[i + SX]) * 0.25)
 			n += 1
 	return sum / maxi(n, 1)
 
@@ -1503,13 +1588,15 @@ func _read_scene() -> void:
 	var pond := main.get_node_or_null("Village/Green/VillagePond") as Node3D
 	if pond:
 		var p := _global(pond)
-		_ponds[VILLAGE_POND]["center"] = Vector2(p.x, p.z)
+		for b in _ponds:  # (the village's, if the map has the village)
+			if b["id"] == "village_pond":
+				b["center"] = Vector2(p.x, p.z)
 	var wheel := main.get_node_or_null("Places/Watermill/MillWheel") as Node3D
 	if wheel:
 		var p := _global(wheel)
 		_report["mill_wheel"] = [p.x, p.z]
 	main.free()
-	for lane in ROAD_LANES:
+	for lane in (ROAD_LANES if _has_village else []):  # (the village's own)
 		var pts: Array = []
 		for p in lane:
 			pts.append(_on_green(p))
