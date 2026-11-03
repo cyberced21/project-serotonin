@@ -57,3 +57,8 @@ a game window.
   with a little overshoot as the front passes, the packed / cobble footstep sounds knocking at the
   front, dust following it, and at the end the upgrade cue and "<road>, packed!". Loaded worlds and
   the debug menu's levels are just shown. test_roads: away, the old look; back, part laid, then all.
+- **Screenshots** (tools/roads_everywhere_shots.gd, docs/images/roads/everywhere_*, 2026-11-03): the
+  street builds along from the camera outward, gravel turning to packed earth; the market place
+  cobbled reads well. What they showed: packed earth is close in colour to the plain dirt paths, so
+  the packed lanes, field tracks and haul road hardly look different; and the build-along's dust
+  reads as grey pebbles strewn behind the front rather than dust.
