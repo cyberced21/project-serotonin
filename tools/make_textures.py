@@ -8,8 +8,9 @@ Writes, into art/textures/:
                neutral), stacked vertically: a Texture2DArray read by node_surface.gdshader and the
                sway shaders (the row a face's UV sits in picks its slice)
   ground.png   terrain slices (grass, dirt, rock, sand, snow, forest floor, path, field, packed
-               road, cobbled road) for
-               terrain.gdshader
+               road, cobbled road) for terrain.gdshader: RGBA = tone, height, crevice shade, and a
+               mask for the surface's second material (plans/ground-depth.md)
+  ground_normal.png  the same slices' per-texel normals (R, G = the normal's X and Z)
   leaves.png   leaf-card slices (broadleaf cluster, pine needles), greyscale with alpha cut-outs,
                for the tree canopies (node_foliage.gdshader)
 Greyscale, mean about 0.5: shaders scale colour by 1 + (d - 0.5) * strength.
@@ -152,58 +153,95 @@ def neutral(rng):
 
 
 # --- ground (terrain) ----------------------------------------------------------------------------
+# Each ground slice is (tone, height, mask) (plans/ground-depth.md): tone lightens and darkens the
+# surface colour as before; height is what pokes up (tufts, clods, pebbles, setts) and drives the
+# height blending, the per-texel normals and the crevice shade; mask picks the surface's second
+# material (sunlit blade tips, pebbles, lichen, moss, mud in the joints).
 
 def grass(rng):
-    # Tufts of blades: short vertical dashes on a mottled base.
-    base = 0.6 * spectral(rng, beta=2.2) + 0.4 * spectral(rng, beta=1.0, lo=10)
+    # Tufts of blades: short upright dashes standing out of a mottled, darker turf.
+    turf = 0.6 * spectral(rng, beta=2.2) + 0.4 * spectral(rng, beta=1.0, lo=10)
     blades = spectral(rng, beta=1.0, sx=1.0, sy=3.0, lo=10, hi=40)
-    a = 0.6 * base + 0.4 * (blades > 0.6)
-    return centre(posterize(blur(norm(a)), 6), 0.8)
+    clumps = spectral(rng, beta=2.0, lo=3)
+    tuft = (blades > 0.58 - 0.12 * clumps).astype(float)
+    height = norm(0.35 * turf + 0.65 * tuft * (0.6 + 0.4 * blades))
+    tone = centre(posterize(blur(norm(0.55 * turf + 0.45 * height)), 6), 0.8)
+    tips = (blades > 0.70) & (np.roll(blades, 1, 0) < blades)   # the tips of the tallest blades
+    clover = spectral(rng, beta=2.4, lo=4) > 0.78
+    return tone, height, (tips | clover).astype(float)
 
 
 def dirt(rng):
-    clods = worley(rng, 70)[0]
-    a = 0.4 * spectral(rng, beta=2.3) + 0.35 * (1.0 - np.clip(clods, 0, 1)) + 0.25 * spectral(rng, beta=0.8, lo=16)
-    a += 0.3 * speckle(rng, 0.01) - 0.3 * speckle(rng, 0.02)
-    return centre(posterize(norm(a), 6), 0.85)
+    f1, f2, _ = worley(rng, 70)
+    clods = np.clip(1.0 - f1, 0, 1) * np.clip((f2 - f1) * 5.0, 0, 1)   # domed clods, cracks between
+    pebbles = speckle(rng, 0.012)
+    pebbles = np.maximum(pebbles, np.roll(pebbles, 1, 1) * speckle(rng, 0.5))
+    height = norm(0.55 * clods + 0.25 * spectral(rng, beta=2.3) + 0.45 * pebbles)
+    a = 0.4 * spectral(rng, beta=2.3) + 0.35 * clods + 0.25 * spectral(rng, beta=0.8, lo=16)
+    a += 0.3 * pebbles - 0.3 * speckle(rng, 0.02)
+    return centre(posterize(norm(a), 6), 0.85), height, pebbles
+
+
+def rock(rng):
+    # Plates split by deep cracks, each its own tone and tilt, lichen on the tops.
+    f1, f2, ids = worley(rng, 34)
+    cracks = np.clip((f2 - f1) * 6.0, 0, 1)
+    plates = (ids * 0.6180339 % 1.0)
+    blot = spectral(rng, beta=2.2)
+    a = 0.45 * plates + 0.35 * blot + 0.2 * spectral(rng, beta=1.0, lo=12)
+    a = a * (0.55 + 0.45 * cracks)
+    height = norm((0.5 + 0.5 * plates) * cracks ** 0.5 + 0.2 * blot)
+    lichen = (spectral(rng, beta=2.0, lo=3) * cracks) > 0.62
+    return centre(posterize(blur(norm(a)), 7), 0.9), height, lichen.astype(float)
 
 
 def sand(rng):
     ripples = spectral(rng, beta=2.0, sx=1.0, sy=5.0, lo=3)
     a = 0.5 * ripples + 0.5 * spectral(rng, beta=0.5, lo=24)
-    return centre(posterize(norm(a), 6), 0.5)
+    grains = speckle(rng, 0.008)
+    return centre(posterize(norm(a), 6), 0.5), norm(ripples + 0.3 * grains), grains
 
 
 def snow(rng):
-    a = 0.7 * spectral(rng, beta=2.6) + 0.3 * spectral(rng, beta=1.0, lo=16)
-    a += 0.25 * speckle(rng, 0.006)
-    return centre(posterize(norm(a), 5), 0.35)
+    # Soft wind-blown drifts with crusty sparkles.
+    drift = spectral(rng, beta=2.6, sx=1.0, sy=2.0)
+    a = 0.7 * drift + 0.3 * spectral(rng, beta=1.0, lo=16)
+    sparkle = speckle(rng, 0.006)
+    a += 0.25 * sparkle
+    return centre(posterize(norm(a), 5), 0.35), norm(drift), sparkle
 
 
 def forest_floor(rng):
+    # Needles and leaf litter in clumps, moss cushions between.
     f1, f2, ids = worley(rng, 90)
     needles = spectral(rng, beta=0.5, sx=2.0, sy=0.5, lo=18)
-    a = 0.35 * spectral(rng, beta=2.2) + 0.35 * (ids * 0.618 % 1.0) * np.clip(1 - f1, 0, 1) + 0.3 * needles
-    return centre(posterize(norm(a), 6), 0.9)
+    clump = (ids * 0.618 % 1.0) * np.clip(1 - f1, 0, 1)
+    a = 0.35 * spectral(rng, beta=2.2) + 0.35 * clump + 0.3 * needles
+    moss = spectral(rng, beta=2.2, lo=3)
+    height = norm(0.45 * clump + 0.35 * needles + 0.3 * moss)
+    return centre(posterize(norm(a), 6), 0.9), height, (moss > 0.66).astype(float)
 
 
 def path(rng):
     f1, f2, _ = worley(rng, 40)
     pebbles = np.clip(1.0 - f1 * 1.8, 0, 1)
     a = 0.5 * spectral(rng, beta=2.0) + 0.35 * pebbles + 0.15 * spectral(rng, beta=0.7, lo=20)
-    return centre(posterize(norm(a), 6), 0.75)
+    height = norm(0.7 * pebbles + 0.3 * spectral(rng, beta=2.0))
+    return centre(posterize(norm(a), 6), 0.75), height, (pebbles > 0.75).astype(float)
 
 
 def packed(rng):
     # A packed road (plans/road-travel.md): firm, fine earth, smoother than a path, flecked with grit.
-    a = 0.55 * spectral(rng, beta=2.4) + 0.2 * spectral(rng, beta=0.9, lo=20)
-    a += 0.35 * speckle(rng, 0.018) - 0.25 * speckle(rng, 0.012)
-    return centre(posterize(norm(a), 6), 0.6)
+    base = spectral(rng, beta=2.4)
+    grit = speckle(rng, 0.018)
+    a = 0.55 * base + 0.2 * spectral(rng, beta=0.9, lo=20)
+    a += 0.35 * grit - 0.25 * speckle(rng, 0.012)
+    return centre(posterize(norm(a), 6), 0.6), norm(0.4 * base + 0.6 * grit), grit
 
 
 def setts(rng):
     # A cobbled road: square stone setts in rows, each row half a sett along from the last, dark
-    # joints between them, every sett its own shade and slightly domed.
+    # joints between them, every sett its own shade and slightly domed (and tilted).
     n, size = 16, SIZE
     cell = size // n
     ys, xs = np.mgrid[0:size, 0:size]
@@ -211,19 +249,38 @@ def setts(rng):
     xo = (xs + (row % 2) * (cell // 2)) % size
     col = xo // cell
     shade = rng.random((n, n))[row % n, col % n]
+    tilt = rng.random((n, n))[row % n, col % n]
     u = (xo % cell) / (cell - 1) * 2 - 1
     v = (ys % cell) / (cell - 1) * 2 - 1
     dome = 1.0 - 0.35 * np.maximum(np.abs(u), np.abs(v)) ** 3
     joint = (np.abs(u) > 0.78) | (np.abs(v) > 0.78)
     a = (0.5 + 0.22 * shade) * dome + 0.12 * spectral(rng, beta=1.0, lo=24)
     a = np.where(joint, 0.12, a)
-    return centre(posterize(norm(a), 7), 1.0)
+    height = np.where(joint, 0.0, 0.6 * dome + 0.25 * tilt + 0.1 * u * (tilt - 0.5))
+    return centre(posterize(norm(a), 7), 1.0), norm(height), joint.astype(float)
 
 
 def field(rng):
     rows = spectral(rng, beta=1.8, sx=8.0, sy=1.0, lo=2)
     a = 0.5 * rows + 0.5 * spectral(rng, beta=0.7, lo=16)
-    return centre(posterize(norm(a), 6), 0.7)
+    straw = spectral(rng, beta=0.8, sx=1.0, sy=4.0, lo=12) > 0.68
+    return centre(posterize(norm(a), 6), 0.7), norm(rows + 0.3 * straw), straw.astype(float)
+
+
+def crevices(height):
+    """Crevice shade: 1 on tops, darker where a texel sits below its neighbourhood, and lower down."""
+    cavity = np.clip((height - blur(height, 2)) * 3.0 + 0.5, 0, 1)
+    return posterize(np.clip(0.35 + 0.4 * cavity + 0.35 * height, 0, 1), 6)
+
+
+def normals(height, strength=2.5):
+    """Per-texel normals from the height (wrapped central differences): R, G = the normal's X and Z
+    (world X along a slice's columns, Z down its rows), 0.5 = flat. One facet per texel: chunky."""
+    dx = (np.roll(height, -1, 1) - np.roll(height, 1, 1)) * 0.5 * strength
+    dz = (np.roll(height, -1, 0) - np.roll(height, 1, 0)) * 0.5 * strength
+    n = np.dstack([-dx, np.ones_like(dx), -dz])
+    n /= np.linalg.norm(n, axis=2, keepdims=True)
+    return np.dstack([n[..., 0] * 0.5 + 0.5, n[..., 2] * 0.5 + 0.5, np.full_like(dx, 0.5)])
 
 
 # --- leaf cards ----------------------------------------------------------------------------------
@@ -323,7 +380,7 @@ def kit_plaster(_rng):
 
 
 DETAIL = [kit_stone, ore, kit_wood, leaves, terrain_generic, metal, cloth, kit_plaster]
-GROUND = [grass, dirt, stone, sand, snow, forest_floor, path, field, packed, setts]
+GROUND = [grass, dirt, rock, sand, snow, forest_floor, path, field, packed, setts]
 
 
 def stack(fns, seed):
@@ -345,6 +402,23 @@ def save_rgba(slices, name):
     print("wrote", os.path.normpath(path_), img.size)
 
 
+def save_ground(seed):
+    """ground.png (RGBA: tone, height, crevice shade, mask) and ground_normal.png (RGB normals)."""
+    rgba, nrm = [], []
+    for i, fn in enumerate(GROUND):
+        tone, height, mask = fn(np.random.default_rng(seed * 100 + i))
+        height = posterize(norm(height), 8)
+        shade = crevices(height)
+        if fn is setts:
+            shade = 0.5 + 0.5 * shade   # (the joints are already dark in the tone)
+        rgba.append(np.dstack([tone, height, shade, mask]))
+        nrm.append(normals(height))
+    for a, name, mode in [(np.vstack(rgba), "ground.png", "RGBA"), (np.vstack(nrm), "ground_normal.png", "RGB")]:
+        img = Image.fromarray((np.clip(a, 0, 1) * 255).astype(np.uint8), mode)
+        img.save(os.path.join(OUT, name))
+        print("wrote", os.path.normpath(os.path.join(OUT, name)), img.size)
+
+
 def save(a, name):
     img = Image.fromarray((np.clip(a, 0, 1) * 255).astype(np.uint8), "L")
     path_ = os.path.join(OUT, name)
@@ -355,7 +429,7 @@ def save(a, name):
 def main():
     os.makedirs(OUT, exist_ok=True)
     save(stack(DETAIL, 1), "detail.png")
-    save(stack(GROUND, 2), "ground.png")
+    save_ground(2)
     save_rgba([broadleaf(np.random.default_rng(301)), needles(np.random.default_rng(302))], "leaves.png")
 
 

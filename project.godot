@@ -80,6 +80,10 @@ ground_tex={
 "type": "sampler2DArray",
 "value": "res://art/textures/ground.png"
 }
+ground_normal={
+"type": "sampler2DArray",
+"value": "res://art/textures/ground_normal.png"
+}
 leaf_tex={
 "type": "sampler2DArray",
 "value": "res://art/textures/leaves.png"
