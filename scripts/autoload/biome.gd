@@ -81,25 +81,27 @@ func _process(delta: float) -> void:
 	_blend(delta, player.global_position)
 
 
-## Which biome a world position is in, by WorldMap's shapes (first match wins).
+## Which biome a world position is in, by the map's areas (WorldMap's shapes; first match wins:
+## none there for an area the map hasn't).
 func biome_at(p: Vector3) -> StringName:
 	if p.y < MINE_BELOW:
 		return &"mine"
 	var w := Vector2(p.x, p.z)
-	if w.distance_to(WorldMap.QUARRY_CENTER) < WorldMap.QUARRY_WALLS[0] + WorldMap.QUARRY_APRON + 8.0:
+	if w.distance_to(WorldMap.quarry_center()) < WorldMap.QUARRY_WALLS[0] + WorldMap.QUARRY_APRON + 8.0:
 		return &"quarry"
-	if w.distance_to(WorldMap.PEAK_CENTER) < 55.0:  # (not by height: the rim hills climb as high)
+	# (not by height: the rim hills climb as high)
+	if w.distance_to(WorldMap.peak_center()) < 55.0 * WorldMap.area_size(&"frostpeak", "radius") / 76.0:
 		return &"frostpeak"
 	var q := WorldMap.biome_warp(w)  # (the shapes the ground is painted by)
-	if q.distance_to(WorldMap.FIELD_CENTER) < WorldMap.FIELD_RADIUS + 12.0:
+	if q.distance_to(WorldMap.field_center()) < WorldMap.field_radius() + 12.0:
 		return &"goldmeadow"
-	if ((q - WorldMap.FOREST_CENTER) / WorldMap.FOREST_RADII).length() < 1.0:
+	if ((q - WorldMap.forest_center()).rotated(WorldMap.area_yaw(&"pinewood")) / WorldMap.forest_radii()).length() < 1.0:
 		return &"pinewood"
-	if w.distance_to(WorldMap.village_center()) < WorldMap.VILLAGE_RADIUS + 10.0:
+	if WorldMap.has_area(&"village") and w.distance_to(WorldMap.village_center()) < WorldMap.VILLAGE_RADIUS + 10.0:
 		return &"hearthvale"
-	if w.distance_to(WorldMap.LAKE_CENTER) < 55.0:
+	if w.distance_to(WorldMap.lake_center()) < 55.0 * WorldMap.area_size(&"lake", "radius") / 34.0:
 		return &"stillwater"
-	if w.distance_to(WorldMap.CLEARING_CENTER) < 40.0:
+	if w.distance_to(WorldMap.clearing_center()) < 40.0 * WorldMap.area_size(&"clearing", "radius") / 28.0:
 		return &"clearing"
 	return &""
 
@@ -193,6 +195,9 @@ func hide_card() -> void:
 
 func _show_card(mood: BiomeMood, first: bool) -> void:
 	_title.text = mood.display_name
+	for type in WorldMap.AREAS:  # (the map editor's name for it, if it gave one: plans/map-maker.md)
+		if WorldMap.AREAS[type]["biome"] == current and WorldMap.area(type).get("name", "") != "":
+			_title.text = WorldMap.area(type)["name"]
 	_title.add_theme_font_size_override("font_size", 46 if first else 34)
 	_subtitle.text = "Discovered" if first else mood.subtitle
 	_subtitle.add_theme_font_size_override("font_size", 24 if first else 18)

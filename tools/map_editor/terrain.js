@@ -24,12 +24,13 @@
 		smooth: { label: "Smooth", color: "#9fb87a" },
 		pond: { label: "Pond", color: "#4f8fc0" },
 		river: { label: "River", color: "#3f7fb5" },
+		creek: { label: "Creek", color: "#4a8fc8" },  // (Hearthvale's: one at most, its water one level surface)
 		road: { label: "Road", color: "#e2ded2" },
 		path: { label: "Path", color: "#b0875e" },
 	};
 	const HALF = { road: 2.5, path: 1.6 };  // (WorldMap.ROAD_HALF_WIDTH, PATH_HALF_WIDTH)
-	const half = (o) => (o.type === "river" ? (o.width ?? 4) / 2 : HALF[o.type]);
-	const isLine = (o) => o.type === "road" || o.type === "path" || o.type === "river";
+	const half = (o) => (o.type === "river" ? (o.width ?? 4) / 2 : o.type === "creek" ? 2.4 : HALF[o.type]);
+	const isLine = (o) => o.type === "road" || o.type === "path" || o.type === "river" || o.type === "creek";
 	const isRoad = (o) => o.type === "road" || o.type === "path";
 	/** Where a road was last laid (the map export's line), or null before its first bake. */
 	const laid = (o) => ((E.world && E.world.roads) || []).find((r) => r.id === o.id) || null;
@@ -57,6 +58,7 @@
 		if (o.type === "smooth") return `smoothed over ${o.strength ?? 4} m`;
 		if (o.type === "pond") return `pond ${o.depth} m deep`;
 		if (o.type === "river") return `river ${o.width ?? 4} m wide, ${o.depth ?? 1.6} m deep`;
+		if (o.type === "creek") return `the creek, ${(o.pools || []).length} pools`;
 		const was = laid(o);
 		if (o.route) return `${o.type}, finds its way${was ? `, ${Math.round(E.polyLength(was.pts))} m` : ""}`;
 		return `${o.type}, ${Math.round(E.polyLength(was ? was.pts : o.points))} m`;
@@ -100,12 +102,12 @@
 				return;
 			}
 			if (isLine(o)) {
-				const river = o.type === "river";
+				const river = o.type === "river" || o.type === "creek";
 				ctx.lineCap = "round";
 				ctx.lineJoin = "round";
 				if (river) {  // its vale, faintly: where the land is eased down to it
 					E.path(spline(o.points), false);
-					ctx.lineWidth = (half(o) + (o.vale ?? 30)) * 2 * E.view.s;
+					ctx.lineWidth = (half(o) + (o.vale ?? (o.type === "creek" ? 70 : 30))) * 2 * E.view.s;
 					ctx.strokeStyle = "rgba(63, 127, 181, 0.08)";
 					ctx.stroke();
 				}
@@ -264,6 +266,7 @@
 				box.append(E.field("Fish", E.input(o, "fish", "check", { default: true })));
 				box.append(E.el("p", { class: "muted" }, "Its water sits at the ponds' level (-0.15 m): where it runs through higher ground the land is eased down to it over the vale, each side. Up to about 1.4 m deep: you wade it. Roads that cross it get a bridge."));
 			} else if (isRoad(o)) roadPanel(o, box);
+			else if (o.type === "creek") box.append(E.el("p", { class: "muted" }, "Its water is one level surface the whole way (the ponds' level); the land is eased down to it over a wide vale, deep pools scoured out at its bends, fords where paths cross it. Drag its points to move it."));
 			box.append(E.el("p", { class: "muted" }, "Terrain changes regenerate the land on the next bake (about a minute)."));
 		},
 	});
@@ -335,7 +338,7 @@
 			const el = E.el;
 			const types = el("span", { class: "row" });
 			const rebuild = () => { E.setTool(E.tool); };
-			for (const t in TYPES) if (!isRoad({ type: t })) types.append(el("button", { class: t === brush.type ? "on" : "", onclick: () => { brush.type = t; corners = []; rebuild(); } }, TYPES[t].label));
+			for (const t in TYPES) if (!isRoad({ type: t }) && t !== "creek") types.append(el("button", { class: t === brush.type ? "on" : "", onclick: () => { brush.type = t; corners = []; rebuild(); } }, TYPES[t].label));
 			box.append(types);
 			if (brush.type === "flat" || brush.type === "raise") {
 				const shapes = el("span", { class: "row" });

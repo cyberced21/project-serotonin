@@ -81,7 +81,7 @@ func _shapes_whole(layout: Dictionary, catalog: Dictionary) -> void:
 		var t: String = pt["type"]
 		_check(catalog["gatherables"].has(t) or catalog["props"].has(t) or catalog["fixtures"].has(t), "point %s's %s is in the catalog" % [pt["id"], t])
 	for s in layout.get("terrain", []):
-		_check(s.get("type", "") in ["flat", "raise", "smooth", "pond", "river", "road", "path"], "terrain %s's type is known" % s["id"])
+		_check(s.get("type", "") in ["flat", "raise", "smooth", "pond", "river", "creek", "road", "path"], "terrain %s's type is known" % s["id"])
 
 
 ## How many gatherables a baked patch holds: its nodes, or a stand's trees.

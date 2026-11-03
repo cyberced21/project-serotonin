@@ -333,8 +333,8 @@ func _rebuild_teleports() -> void:
 
 	_teleport_box.add_child(_heading("Biomes"))
 	grid = _grid(3)
-	for place in WorldMap.LANDMARKS:
-		var spot: Array = WorldMap.LANDMARKS[place]
+	for place in WorldMap.landmarks():
+		var spot: Array = WorldMap.landmarks()[place]
 		grid.add_child(_button(place, _teleport.bind(spot[0], spot[1])))
 	_teleport_box.add_child(grid)
 

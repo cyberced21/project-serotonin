@@ -13,7 +13,7 @@ const Editor = (() => {
 		tool: null,
 		sel: [],              // [{kind, obj}]
 		view: { cx: 128, cz: 128, s: 1.2 },
-		show: { map: true, overlays: true, labels: true, terrain: true, patches: true, anchors: true, lines: true, points: true, baked: true, warnings: true },
+		show: { map: true, overlays: true, labels: true, areas: true, terrain: true, patches: true, anchors: true, lines: true, points: true, baked: true, warnings: true },
 		dirty: false,
 		bakedStale: false,
 		// the map open (plans/map-maker.md: ?map=<id>; Hearthvale without it) and the list of them
@@ -179,13 +179,14 @@ const Editor = (() => {
 		E.centerOn(x / hs.length, z / hs.length);
 	};
 
-	/** The topmost shape under world (x, z): points over lines over terrain over patches, smaller patches first. */
+	/** The topmost shape under world (x, z): names, points, lines, buildings, terrain, patches, then the
+	 * areas under them all; smaller ones first. */
 	const pick = (x, z) => {
 		const tol = 7 / E.view.s;
-		const order = ["points", "lines", "anchors", "terrain", "patches"];
+		const order = ["labels", "points", "lines", "anchors", "terrain", "patches", "areas"];
 		for (const kind of order) {
 			const spec = E.kinds[kind];
-			if (!spec || !E.show[kind]) continue;
+			if (!spec || !E.show[kind === "labels" ? "labels" : kind]) continue;
 			let best = null, bestScore = Infinity;
 			for (const o of E.layout[kind] || []) {
 				const score = spec.hit(o, x, z, tol);
@@ -235,7 +236,7 @@ const Editor = (() => {
 			ctx.strokeRect(sx, sy, bw * E.view.s, bd * E.view.s);
 		}
 		if (w && E.show.overlays) drawOverlays();
-		for (const kind of ["terrain", "patches", "anchors", "lines", "points"]) {
+		for (const kind of ["areas", "terrain", "patches", "anchors", "lines", "points", "labels"]) {
 			const spec = E.kinds[kind];
 			if (!spec || !E.show[kind]) continue;
 			for (const o of E.layout[kind] || []) spec.draw(ctx, o, E.isSelected(o));
@@ -264,7 +265,10 @@ const Editor = (() => {
 	const drawLabels = () => {
 		ctx.font = "600 13px system-ui, sans-serif";
 		ctx.textAlign = "center";
+		// (the areas and the names draw their own, where they are now: these are the places')
+		const own = new Set([...(E.layout.areas || []).map((a) => a.name || (E.areaTypes[a.type] || {}).label), ...(E.layout.labels || []).map((l) => l.name)]);
 		for (const [x, z, name] of E.world.labels) {
+			if (own.has(name) || [...own].some((n) => n && n.startsWith(name))) continue;
 			const [sx, sy] = E.toScreen(x, z);
 			ctx.lineWidth = 3;
 			ctx.strokeStyle = "rgba(20, 20, 15, 0.8)";
@@ -422,7 +426,7 @@ const Editor = (() => {
 		const box = document.getElementById("list");
 		const q = document.getElementById("filter").value.trim().toLowerCase();
 		box.textContent = "";
-		for (const kind of ["anchors", "terrain", "patches", "lines", "points"]) {
+		for (const kind of ["areas", "labels", "anchors", "terrain", "patches", "lines", "points"]) {
 			const spec = E.kinds[kind];
 			if (!spec) continue;
 			const items = (E.layout[kind] || []).filter((o) => !q || spec.title(o).toLowerCase().includes(q) || (o.id || "").includes(q));
@@ -441,7 +445,7 @@ const Editor = (() => {
 	const refreshLayers = () => {
 		const box = document.getElementById("layers");
 		box.textContent = "";
-		const names = { map: "Land", anchors: "Buildings", overlays: "Other things", labels: "Names", terrain: "Terrain", patches: "Patches", lines: "Lines", points: "Points", baked: "Baked nodes", warnings: "Warnings" };
+		const names = { map: "Land", areas: "Areas", anchors: "Buildings", overlays: "Other things", labels: "Names", terrain: "Terrain", patches: "Patches", lines: "Lines", points: "Points", baked: "Baked nodes", warnings: "Warnings" };
 		for (const k in names) {
 			const c = el("input", { type: "checkbox", onchange: () => { E.show[k] = c.checked; E.draw(); } });
 			c.checked = E.show[k];
@@ -721,7 +725,8 @@ const Editor = (() => {
 		const shapes = Array.isArray(applied) ? applied : (applied && applied.terrain) || [];
 		if (JSON.stringify(canon(shapes)) !== JSON.stringify(canon(clean().terrain || []))) return true;
 		if (!applied || Array.isArray(applied) || !applied.anchors) return false;
-		const stand = (list) => JSON.stringify(canon((list || []).map((a) => ({ id: a.id, at: a.at, yaw: a.yaw }))));
+		const stand = (list) => JSON.stringify(canon((list || []).map((a) => ({ id: a.id, at: a.at, yaw: a.yaw, placed: a.placed }))));
+		if (applied.areas && JSON.stringify(canon(applied.areas)) !== JSON.stringify(canon(clean().areas || []))) return true;
 		if (stand(applied.anchors) !== stand(clean().anchors)) return true;
 		if (!applied.walkways) return false;  // (the lanes are painted along the walkways: redrawn ones need the land redone)
 		const walks = (list) => JSON.stringify(canon((list || []).map((l) => ({ id: l.id, points: l.points }))));
@@ -818,7 +823,7 @@ const Editor = (() => {
 		canvas.tabIndex = 0;
 		E.status("Loading…");
 		[E.maps, E.layout, E.catalog, E.baked, E.terrainReport] = await Promise.all([get("/api/maps"), get("/api/layout"), get("/api/catalog"), get("/api/baked"), get("/api/terrain_report")]);
-		for (const k of ["terrain", "patches", "lines", "points", "anchors"]) E.layout[k] = E.layout[k] || [];
+		for (const k of ["areas", "labels", "terrain", "patches", "lines", "points", "anchors"]) E.layout[k] = E.layout[k] || [];
 		await E.reloadWorld();
 		setupMaps();
 		{  // start on the map's middle, all of it in view

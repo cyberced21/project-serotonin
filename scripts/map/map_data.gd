@@ -170,10 +170,16 @@ func _place_labels() -> void:
 			var id := biomes[b - 1]
 			labels.append({"text": biome_name(id), "id": id,
 				"pos": rect.position + (Vector2(best) + Vector2(0.5, 0.5)) * step})
+	for l in WorldMap.labels():  # (the names the map editor wrote on the map: plans/map-maker.md)
+		if l["name"] != "":
+			labels.append({"text": l["name"], "id": l["id"], "pos": l["at"]})
 
 
-## A biome's name on the map.
+## A biome's name on the map: its area's, if the map editor named it (plans/map-maker.md), else its mood's.
 static func biome_name(id: StringName) -> String:
+	for type in WorldMap.AREAS:
+		if WorldMap.AREAS[type]["biome"] == id and WorldMap.area(type).get("name", "") != "":
+			return WorldMap.area(type)["name"]
 	var mood: BiomeMood = Biome.MOODS.get(id)
 	return mood.display_name if mood and mood.display_name != "" else String(id).capitalize()
 

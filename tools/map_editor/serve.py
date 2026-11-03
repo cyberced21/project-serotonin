@@ -88,7 +88,7 @@ def write_layout(data, path):
     parts = ['{\n\t"version": %d,' % data.get("version", 1)]
     if "world" in data:  # (the map's size and where it starts: plans/map-maker.md)
         parts.append('\t"world": %s,' % json.dumps(data["world"], separators=(",", ":"), sort_keys=True))
-    keys = (["areas"] if "areas" in data else []) + ["terrain", "patches", "lines", "points", "anchors"]
+    keys = [k for k in ["areas", "labels"] if k in data] + ["terrain", "patches", "lines", "points", "anchors"]
     for i, key in enumerate(keys):
         rows = ["\t\t" + json.dumps(item, separators=(",", ":"), sort_keys=True) for item in data.get(key, [])]
         body = ("\n" + ",\n".join(rows) + "\n\t") if rows else ""
@@ -110,7 +110,7 @@ def new_map(name, width, depth):
     while map_id in taken:
         map_id, n = "%s_%d" % (base, n), n + 1
     layout = {"version": 1, "world": {"size": [width, depth], "origin": [0, 0]},
-              "areas": [], "terrain": [], "patches": [], "lines": [], "points": [], "anchors": []}
+              "areas": [], "labels": [], "terrain": [], "patches": [], "lines": [], "points": [], "anchors": []}
     write_layout(layout, map_path("layout", map_id))
     reg["maps"].append({"id": map_id, "name": name})
     write_registry(reg)

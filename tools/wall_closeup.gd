@@ -73,7 +73,7 @@ func _run() -> void:
 	root.get_node("Skills").call("set_level", &"mining", 50)
 	root.get_node("Tools").call("set_tier", &"pickaxe", tier)
 	var p := get_first_node_in_group("player") as Node3D
-	var spot := WorldMap.QUARRY_CENTER_3 + Vector3(0, 0, -11.0)  # (the pit floor, facing its middle)
+	var spot := WorldMap.quarry_center_3() + Vector3(0, 0, -11.0)  # (the pit floor, facing its middle)
 	var ground := _cast(spot + Vector3.UP * 50.0, spot + Vector3.DOWN * 50.0)
 	spot.y = ground["position"].y - 0.1 if not ground.is_empty() else 0.0
 	# a run of three panels (bent round a circle of --curve metres, if given): the middle one's dug

@@ -5,7 +5,7 @@ extends Node3D
 ## metres along it, its box turned along the creek, so wading, splashes and footsteps work in it
 ## like in a pond. Each stretch carries the current (WaterBody.flow, downstream) and some hold
 ## fish: grayling every few stretches, holding station in the current, and a salmon in each deep
-## pool (WorldMap.CREEK_POOLS). Where it runs through the clearing's pond and into the lake their
+## pool (WorldMap.creek_pools()). Where it runs through the clearing's pond and into the lake their
 ## own water takes over. The terrain generator carves its bed along the same line.
 ## The map editor's rivers (River, plans/terrain-editing.md) are built the same way.
 
@@ -31,7 +31,8 @@ var fish := true
 
 func _ready() -> void:
 	add_to_group("creek")
-	_build(WorldMap.creek())
+	if WorldMap.creek().size() >= 2:  # (a map without a creek: no water)
+		_build(WorldMap.creek())
 
 
 func _build(pts: PackedVector2Array) -> void:
@@ -42,7 +43,7 @@ func _build(pts: PackedVector2Array) -> void:
 
 ## The deep pools along it, where a salmon holds (none on a river).
 func _pools() -> Array[Vector2]:
-	return WorldMap.CREEK_POOLS
+	return WorldMap.creek_pools()
 
 
 ## Whether the water at `p` is some other water's (where this one's surface is left out).

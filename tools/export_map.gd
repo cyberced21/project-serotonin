@@ -23,12 +23,6 @@ const COLORS := {
 	3: Color(0.24, 0.42, 0.24), 4: Color(0.60, 0.70, 0.32), 5: Color(0.70, 0.66, 0.60),
 	6: Color(0.88, 0.74, 0.36),
 }
-const PLACES := [
-	["The Clearing", WorldMapC.CLEARING_CENTER],
-	["Stillwater", WorldMapC.LAKE_CENTER], ["Frostpeak", WorldMapC.PEAK_CENTER],
-	["Greystone Quarry", WorldMapC.QUARRY_CENTER], ["Goldmeadow", WorldMapC.FIELD_CENTER],
-	["The Pinewood", WorldMapC.FOREST_CENTER],
-]
 ## The places the map editor moves (their anchors): name, anchor id.
 const ANCHORED_PLACES := [["Hearthvale", &"green"], ["The watermill", &"watermill"], ["The orchard", &"orchard"],
 	["Shepherd's hill", &"shepherds_hill"], ["The haven", &"haven"]]
@@ -109,11 +103,17 @@ func _run() -> void:
 			var r := float(n.call("footprint_radius")) if n.has_method("footprint_radius") else 1.0
 			things.append([snappedf(p.x, 0.1), snappedf(p.z, 0.1), snappedf(r, 0.1), g, String(n.name)])
 	var labels := []
-	for p in PLACES:
-		labels.append([p[1].x, p[1].y, p[0]])
+	for a in WorldMapC.areas():  # (the map's areas, by their names: plans/map-maker.md)
+		var type := StringName(a["type"])
+		if type != &"village" and WorldMapC.AREAS.has(type):
+			var at: Vector2 = WorldMapC.area_at(type)
+			labels.append([at.x, at.y, a.get("name", WorldMapC.AREAS[type]["name"])])
 	for p in ANCHORED_PLACES:
-		var at: Vector2 = WorldMapC.site(p[1])
-		labels.append([at.x, at.y, p[0]])
+		if AnchorsC.find(p[1]).get("placed", true) and (p[1] != &"green" or WorldMapC.has_area(&"village")):
+			var at: Vector2 = WorldMapC.site(p[1])
+			labels.append([at.x, at.y, p[0]])
+	for l in WorldMapC.labels():  # (names written on the map: the editor's labels)
+		labels.append([l["at"].x, l["at"].y, l["name"]])
 	var world := {
 		"origin": [origin.x, origin.y], "size": maxi(sx, sz), "width": sx, "depth": sz, "water_level": WATER_LEVEL,
 		"height_step": HEIGHT_STEP, "heights": heights, "roads": roads, "creek": creek,

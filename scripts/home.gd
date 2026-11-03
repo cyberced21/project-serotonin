@@ -491,11 +491,13 @@ func _find_spot(kind: StringName) -> Vector3:
 	var data: Object = terrain.get("data")
 	var a := randf() * TAU
 	var dir := Vector2(cos(a), sin(a))
+	if not WorldMap.has_area(&"frostpeak" if kind == &"feather" else &"lake"):
+		return Vector3.INF  # (a map without it)
 	if kind == &"feather":
-		var p := WorldMap.PEAK_CENTER + dir * randf_range(8.0, 30.0)
+		var p := WorldMap.peak_center() + dir * randf_range(8.0, 30.0)
 		return Vector3(p.x, data.call("get_height", Vector3(p.x, 0, p.y)), p.y)
 	for step in range(4, 120):  # out from the middle of the lake till the water's gone: the shore
-		var p := WorldMap.LAKE_CENTER + dir * float(step)
+		var p := WorldMap.lake_center() + dir * float(step)
 		var at := Vector3(p.x, data.call("get_height", Vector3(p.x, 0, p.y)), p.y)
 		if WaterBody.depth_at(get_tree(), at + Vector3.UP * 0.05) <= 0.0:
 			return at + Vector3(dir.x, 0.0, dir.y) * 0.6

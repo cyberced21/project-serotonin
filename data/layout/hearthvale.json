@@ -1,6 +1,17 @@
 {
 	"version": 1,
+	"world": {"origin":[-256,-256],"size":[768,768]},
+	"areas": [
+		{"at":[137,125],"id":"village","type":"village"},
+		{"at":[46,66],"id":"clearing","type":"clearing"},
+		{"at":[38,338],"id":"lake","type":"lake"},
+		{"at":[-98,-54],"id":"frostpeak","type":"frostpeak"},
+		{"at":[-118,88],"id":"quarry","type":"quarry"},
+		{"at":[338,318],"id":"goldmeadow","type":"goldmeadow"},
+		{"at":[118,-112],"id":"pinewood","type":"pinewood"}
+	],
 	"terrain": [
+		{"id":"creek","name":"The creek","points":[[90,-36],[94,-12],[86,16],[72,44],[66,70],[66,86],[62,108],[46,138],[36,178],[38,223],[42,268],[40,308],[38,333]],"pools":[[86,16],[38,223]],"type":"creek"},
 		{"id":"main_street","name":"The village street","points":[[58,134],[84,131],[108,127],[137,125],[166,125],[186,126],[200,126]],"type":"road"},
 		{"id":"village_path","name":"The path from the clearing","points":[[56,62],[72,70],[86,82],[96,95],[104,104]],"reverse":true,"type":"path","valley":true,"village":true},
 		{"id":"village_road","name":"The road to the Pinewood","points":[[128,58],[124,-6]],"route":true,"spoke":true,"type":"road","village":true},
