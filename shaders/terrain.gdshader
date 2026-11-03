@@ -69,8 +69,9 @@ group_uniforms biomes;
 uniform vec3 road_color : source_color = vec3(0.66, 0.63, 0.57);
 uniform int road_texture = 2;
 // Better roads (plans/road-travel.md: the Roads autoload paints them over a road's cells): packed
-// earth, then cobbles (stone setts).
-uniform vec3 packed_color : source_color = vec3(0.62, 0.54, 0.43);
+// earth, then cobbles (stone setts). Packed earth is paler and sandier than a dirt path, so a
+// packed lane reads as bettered (plans/roads-everywhere.md).
+uniform vec3 packed_color : source_color = vec3(0.76, 0.65, 0.47);
 uniform int packed_texture = 7;
 uniform vec3 cobble_color : source_color = vec3(0.60, 0.60, 0.58);
 uniform int cobble_texture = 8;

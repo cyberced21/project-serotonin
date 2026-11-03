@@ -62,3 +62,7 @@ a game window.
   cobbled reads well. What they showed: packed earth is close in colour to the plain dirt paths, so
   the packed lanes, field tracks and haul road hardly look different; and the build-along's dust
   reads as grey pebbles strewn behind the front rather than dust.
+- **Fixed after the screenshots:** packed earth is paler and sandier (the terrain shader's
+  `packed_color` 0.62/0.54/0.43 -> 0.76/0.65/0.47), so packed lanes and tracks stand out from the
+  reddish dirt paths; the build-along's dust is soft see-through puffs that swell and fade (as the
+  chimney smoke), not little stones. Screenshots retaken.

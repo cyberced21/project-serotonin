@@ -404,31 +404,42 @@ func _title(id: StringName) -> String:
 	return String(id)
 
 
+## The dust the front kicks up: soft see-through puffs (as the chimneys' smoke) the earth's colour,
+## swelling and fading where they were left.
 func _make_dust() -> CPUParticles3D:
 	var p := CPUParticles3D.new()
 	p.emitting = false
-	p.amount = 40
-	p.lifetime = 0.9
-	var mesh := SphereMesh.new()  # (a little faceted diamond, as the buildings' dust)
-	mesh.radial_segments = 4
-	mesh.rings = 2
-	mesh.radius = 0.12
-	mesh.height = 0.2
+	p.amount = 70
+	p.lifetime = 1.6
+	p.local_coords = false
+	var mesh := SphereMesh.new()
+	mesh.radial_segments = 6
+	mesh.rings = 3
+	mesh.radius = 0.35
+	mesh.height = 0.5
 	var mat := StandardMaterial3D.new()
 	mat.vertex_color_use_as_albedo = true
-	mat.roughness = 1.0
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mesh.material = mat
 	p.mesh = mesh
-	p.color = Color("8f7759")
 	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
-	p.emission_box_extents = Vector3(1.5, 0.1, 1.5)
+	p.emission_box_extents = Vector3(1.6, 0.05, 1.6)
 	p.direction = Vector3.UP
-	p.spread = 70.0
-	p.initial_velocity_min = 0.8
-	p.initial_velocity_max = 2.2
-	p.gravity = Vector3(0, -2.0, 0)
-	p.damping_min = 1.5
-	p.damping_max = 2.5
-	p.scale_amount_min = 0.6
-	p.scale_amount_max = 1.4
+	p.spread = 35.0
+	p.initial_velocity_min = 0.4
+	p.initial_velocity_max = 1.1
+	p.gravity = Vector3(0.2, 0.1, 0.1)  # (hanging in the air, drifting a little)
+	p.damping_min = 0.8
+	p.damping_max = 1.4
+	var grow := Curve.new()
+	grow.add_point(Vector2(0, 0.5))
+	grow.add_point(Vector2(1, 1.8))
+	p.scale_amount_curve = grow
+	p.scale_amount_min = 0.8
+	p.scale_amount_max = 1.5
+	var fade := Gradient.new()
+	fade.offsets = PackedFloat32Array([0.0, 0.12, 1.0])
+	fade.colors = PackedColorArray([Color(0.78, 0.68, 0.54, 0.0), Color(0.76, 0.66, 0.52, 0.45), Color(0.82, 0.74, 0.62, 0.0)])
+	p.color_ramp = fade
 	return p
