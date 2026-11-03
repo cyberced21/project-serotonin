@@ -27,7 +27,7 @@ extends SceneTree
 ## The map editor's layout (scenes/layout.tscn) isn't moved: rebake it after (tools/bake_layout.gd).
 ## Its terrain shapes (data/layout/hearthvale.json, "terrain": flats, hills and hollows, ponds,
 ## roads and paths drawn in the editor) go on top of all that, before the relax pass; the roads are
-## laid after WorldMap.ROADS and written with them (WorldMap.roads() reads them back). The terrain
+## laid in the layout's order and written to the map's roads file (WorldMap.roads() reads them back). The terrain
 ## it applied is written to data/layout/terrain_applied.json, so the editor knows when it's stale.
 ## Its rivers (plans/terrain-editing.md, LayoutWater) get a vale with the other shapes and a channel
 ## carved with the creek's; the layout bake gives them, and its ponds, their water.
@@ -143,10 +143,15 @@ const VILLAGE_RAMP := 50.0
 const FIELD_BASE := WorldMap.BOWL_RIM_HEIGHT * 0.85
 ## Control-map texture id that marks the path (see shaders/terrain.gdshader, footsteps.gd).
 const PATH_TEXTURE := WorldMap.TEX_PATH
-## The path from the clearing over the pass to the green's ring.
-const PATH := WorldMap.VILLAGE_PATH
+## The roads the land is eased down along (their `valley`: the path from the clearing over the pass
+## to the green, the road east), the ones the world's edge dips to a pass for (`pass`: the road
+## east), and where the roads out of the village's bowl end (`spoke`: a notch along the line from
+## the village to each), all as drawn (WorldMap.road_spec).
+var _valleys: Array = []
+var _passes: Array = []
+var _spokes: Array[Vector2] = []
 ## The market place is paved (WorldMap.in_market, plans/village-street.md); the village street
-## (WorldMap.MAIN_STREET) is a road like the others. The lanes from it out to where the north, lake
+## (the layout's main_street) is a road like the others. The lanes from it out to where the north, lake
 ## and fields roads start are drawn with the green at GREEN_HOME: they turn and move with it. The
 ## lanes in to the doors are the villagers' walkways (the layout's, as VillagePaths links them).
 const GREEN_HOME := Vector2(137, 125)
@@ -222,7 +227,7 @@ var _pond_mask := PackedByteArray()  # 1 in the layout's ponds (dug again after 
 var _ramp_top: Array[float] = []   # per quarry wall: angle of its ramp's top end
 var _ramp_span: Array[float] = []  # per quarry wall: angle its ramp covers
 var _layout_terrain: Array = []  # the map editor's terrain shapes
-var _layout_roads: Array = []    # ...its roads and paths, as specs like WorldMap.ROADS
+var _layout_roads: Array = []    # ...its roads and paths, as WorldMap.road_spec makes them
 
 
 func _initialize() -> void:
@@ -320,6 +325,13 @@ func _run() -> void:
 			var f := FileAccess.open(arg.trim_prefix("--report="), FileAccess.WRITE)
 			f.store_string(JSON.stringify(_report, "\t"))
 			f.close()
+		elif arg.begins_with("--dump="):  # (the heights and ground ids as they are, to compare two runs)
+			var f := FileAccess.open(arg.trim_prefix("--dump="), FileAccess.WRITE)
+			f.store_32(SX)
+			f.store_32(SZ)
+			f.store_buffer(h.to_byte_array())
+			f.store_buffer(ids)
+			f.close()
 		elif arg == "--hash":  # (a fingerprint of the land: the same map should always come out the same)
 			print("terrain hash: heights %s ids %s roads %s" % [h.to_byte_array().hex_encode().md5_text(),
 					ids.hex_encode().md5_text(), JSON.stringify(laid).md5_text()])
@@ -337,7 +349,14 @@ func _setup() -> void:
 							"depth": float(p.get("depth", 1.0)), "outline": p["outline"], "shelf": p.get("shelf", LayoutWater.SHELF)}
 		for s in _layout_terrain:
 			if s.get("type", "") in ["road", "path"] and s.get("points", []).size() >= 2:
-				_layout_roads.append({"id": StringName(s["id"]), "kind": StringName(s["type"]), "title": s.get("name", s["id"]), "ctrl": _v2s(s["points"])})
+				var spec := WorldMap.road_spec(s)
+				_layout_roads.append(spec)
+				if spec.get("valley", false):
+					_valleys.append(_v2s(s["points"]))
+				if spec.get("pass", false):
+					_passes.append(_v2s(s["points"]))
+				if spec.get("spoke", false):
+					_spokes.append(_v2s(s["points"])[-1])
 	_noise.seed = 7
 	_noise.frequency = 0.0065
 	_noise.fractal_octaves = 3
@@ -378,10 +397,10 @@ func _world(x: int, y: int) -> Vector2:
 func _height(w: Vector2) -> float:
 	# a product, not a min: where two places' rims meet there's no crease
 	var outside := _rise(w, CLEARING_CENTER, CLEARING_RADIUS, HILL_RAMP) 			* _rise(w, VILLAGE_CENTER, VILLAGE_RADIUS, VILLAGE_RAMP) 			* _rise(w, LAKE_BASIN["center"], LAKE_BASIN["radius"], LAKE_BASIN["ramp"])
-	for path in [PATH, WorldMap.EAST_ROAD]:
+	for path in _valleys:
 		var v := smoothstep(VALLEY_HALF, VALLEY_HALF + VALLEY_RAMP, _polyline_distance(w, path))
 		outside *= lerpf(VALLEY_FLOOR, 1.0, v)
-	for to in SPOKES:
+	for to in _spokes:
 		var v := smoothstep(VALLEY_HALF, VALLEY_HALF + VALLEY_RAMP, _polyline_distance(w, [VILLAGE_CENTER, to]))
 		outside *= lerpf(SPOKE_FLOOR, 1.0, v)
 	var c := smoothstep(WorldMap.CREEK_HALF_WIDTH, CREEK_VALE, _polyline_distance(w, WorldMap.CREEK))
@@ -391,10 +410,6 @@ func _height(w: Vector2) -> float:
 	for pond in _ponds:
 		h = _pond(w, h, pond, _shore)
 	return h
-
-
-## Where the roads climb out of the bowl: a notch along the line from the village to each.
-const SPOKES: Array[Vector2] = [WorldMap.QUARRY_RIM_POINT, Vector2(124, -6), Vector2(66, 316), Vector2(268, 252)]
 
 
 ## The bowl: 0 on its floor out to WorldMap.BOWL_FLOOR, rising smoothly to 1 on its rim by
@@ -460,8 +475,11 @@ func _rim(w: Vector2) -> float:
 	var past := Vector2(maxf(c.x - inner.x, 0.0), maxf(c.y - inner.y, 0.0)).length()  # rounded corners
 	past += _warp_x.get_noise_2dv(w * 1.3) * 18.0
 	var t := clampf(past / RIM_WIDTH, 0.0, 1.0)
-	# the pass the road east climbs through: the rim dips to a saddle along it
-	var saddle := 1.0 - smoothstep(6.0, 45.0, _polyline_distance(w, WorldMap.EAST_ROAD))
+	# the passes the roads out (the road east) climb through: the rim dips to a saddle along them
+	var near := INF
+	for p in _passes:
+		near = minf(near, _polyline_distance(w, p))
+	var saddle := 1.0 - smoothstep(6.0, 45.0, near)
 	return RIM_HEIGHT * t * t * (1.0 - 0.6 * saddle)
 
 
@@ -1012,12 +1030,13 @@ func _report_water(h: PackedFloat32Array) -> void:
 	_report["layout_ponds"] = ponds
 
 
-## Lays WorldMap.ROADS in order: each along its fixed line or a least-cost route over the land,
-## graded, then pressed into the ground with sloped shoulders. Returns {id: laid route}.
+## Lays the layout's roads and paths in order (WorldMap.road_spec): each along its fixed line or a
+## least-cost route over the land, graded, then pressed into the ground with sloped shoulders.
+## Returns {id: laid route}.
 func _lay_roads(h: PackedFloat32Array, ids: PackedByteArray, baked: Array[Vector2]) -> Dictionary:
 	var grid := _road_grid(h, baked)
 	var laid := {}
-	for spec in WorldMap.ROADS + _layout_roads:
+	for spec in _layout_roads:
 		var ctrl: Array = spec.get("ctrl", [])
 		if ctrl.is_empty():
 			var from: Vector2 = spec["from"]
@@ -1035,9 +1054,9 @@ func _lay_roads(h: PackedFloat32Array, ids: PackedByteArray, baked: Array[Vector
 					if near.distance_to(to) < best:
 						best = near.distance_to(to)
 						from = near
-			elif spec.has("join"):
+			elif spec.has("join") and laid.has(spec["join"]):
 				from = _nearest_on(laid[spec["join"]], from)
-			if spec.has("join_end"):
+			if spec.has("join_end") and laid.has(spec["join_end"]):
 				to = _nearest_on(laid[spec["join_end"]], to)
 			var stops: Array = [from] + spec.get("via", []) + [to]
 			var own: Array = _pad_cells.get(String(spec.get("place", "")), [])  # (a path may come onto its own place's ground)
@@ -1147,10 +1166,10 @@ func _write_roads(laid: Dictionary) -> void:
 	var lines := PackedStringArray()
 	lines.append("extends RefCounted")
 	lines.append("## Written by tools/generate_test_terrain.gd: the lines the roads were laid on (WorldMap.roads()).")
-	lines.append("## Don't edit by hand; change WorldMap.ROADS and regenerate.")
+	lines.append("## Don't edit by hand; draw them in the map editor and regenerate.")
 	lines.append("")
 	lines.append("const LINES := {")
-	for spec in WorldMap.ROADS:
+	for spec in _layout_roads:
 		var pts: PackedVector2Array = laid[spec["id"]]["pts"].duplicate()
 		if spec.get("reverse", false):
 			pts.reverse()
@@ -1158,17 +1177,19 @@ func _write_roads(laid: Dictionary) -> void:
 		for p in pts:
 			nums.append("Vector2(%.2f, %.2f)" % [p.x, p.y])
 		lines.append("\t&\"%s\": [%s]," % [spec["id"], ", ".join(nums)])
-	for spec in _layout_roads:  # the map editor's
-		var nums := PackedStringArray()
-		for p in laid[spec["id"]]["pts"]:
-			nums.append("Vector2(%.2f, %.2f)" % [p.x, p.y])
-		lines.append("\t&\"%s\": [%s]," % [spec["id"], ", ".join(nums)])
 	lines.append("}")
 	lines.append("")
-	lines.append("## The map editor's roads and paths (data/layout/hearthvale.json), after WorldMap.ROADS.")
+	lines.append("## The roads and paths as drawn (the layout's, WorldMap.road_spec), in the order they were laid.")
 	lines.append("const EXTRA := [")
 	for spec in _layout_roads:
-		lines.append("\t{\"id\": &\"%s\", \"kind\": &\"%s\", \"title\": %s}," % [spec["id"], spec["kind"], JSON.stringify(spec["title"])])
+		var plain := {}  # (typed arrays don't write as constants: plain ones do)
+		for k in spec:
+			if spec[k] is Array:
+				plain[k] = []
+				plain[k].assign(spec[k])
+			else:
+				plain[k] = spec[k]
+		lines.append("\t%s," % var_to_str(plain).replace("\n", " "))
 	lines.append("]")
 	lines.append("")
 	var f := FileAccess.open(ROADS_OUT, FileAccess.WRITE)

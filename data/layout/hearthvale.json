@@ -1,6 +1,18 @@
 {
 	"version": 1,
 	"terrain": [
+		{"id":"main_street","name":"The village street","points":[[58,134],[84,131],[108,127],[137,125],[166,125],[186,126],[200,126]],"type":"road"},
+		{"id":"village_path","name":"The path from the clearing","points":[[56,62],[72,70],[86,82],[96,95],[104,104]],"reverse":true,"type":"path","valley":true,"village":true},
+		{"id":"village_road","name":"The road to the Pinewood","points":[[128,58],[124,-6]],"route":true,"spoke":true,"type":"road","village":true},
+		{"id":"forest_trail","name":"The forest trail","points":[[124,-6],[76,-131.5],[61,-62.5]],"route":true,"type":"path"},
+		{"id":"quarry_road","name":"The road to the quarry","points":[[58,132],[-65,61]],"route":true,"spoke":true,"type":"road"},
+		{"id":"lake_road","name":"The road to the lake","points":[[118,198],[66,316]],"route":true,"spoke":true,"type":"road"},
+		{"id":"peak_path","join":"quarry_road","name":"The path up Frostpeak","points":[[-20,80],[-76,-14]],"route":true,"type":"path"},
+		{"id":"field_road","name":"The road to Goldmeadow","points":[[178,178],[268,252]],"route":true,"spoke":true,"type":"road"},
+		{"id":"east_road","name":"The road east","pass":true,"points":[[200,126],[238,120],[278,126],[318,134],[358,132],[398,124],[438,122],[478,128],[512,130]],"type":"road","valley":true,"village":true},
+		{"drawn_at":[42,200],"id":"mill_path","join":"lake_road","name":"The path to the mill","place":"watermill","place_to":[5,-8],"points":[[100,206],[47,192]],"route":true,"type":"path"},
+		{"drawn_at":[200,62],"id":"orchard_path","join":"village_road","name":"The path to the orchard","place":"orchard","place_to":[-14,8],"points":[[150,50],[186,70]],"route":true,"type":"path"},
+		{"drawn_at":[360,18],"id":"shepherd_path","join":"east_road","name":"The path up the shepherd's hill","place":"shepherds_hill","place_to":[-6,14],"points":[[330,120],[354,32]],"route":true,"type":"path"},
 		{"center":[66,86],"depth":2.5,"fish":["perch","perch","trout","pike"],"id":"pond","lilies":14,"name":"Clearing pond","radius":9.0,"reeds":9,"seed":7,"shape":"circle","stones":12,"type":"pond"},
 		{"center":[38,340],"depth":5.0,"fish":["trout","trout","perch","char","char"],"id":"lake","lilies":20,"name":"Stillwater (the lake)","radius":22.0,"reeds":14,"seed":31,"shape":"circle","stones":18,"type":"pond"}
 	],

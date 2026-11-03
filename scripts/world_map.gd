@@ -67,60 +67,59 @@ const HAVEN_RADIUS := 16.0
 ## The haven's spring pool, in the haven's frame (it turns with the haven).
 const HAVEN_POOL := {"offset": Vector2(3, 2), "radius": 3.5, "depth": 0.5}
 
-## The roads and paths (plans/world.md): the terrain generator lays each one along the land (a
-## least-cost route over the slopes from `from` through any `via` points to `to`, unless `ctrl`
-## fixes its line), and
-## writes the lines it laid to scripts/world_roads.gd; roads() reads them back. `join` starts a
-## road on another one, at its point nearest `from`. `lamps`: a stretch the Lamps can light, its
-## points running out from the village end. Order matters: a road can only join one laid before it.
-## In the bowl every road is a spoke out from the green's edge to its place on the rim.
+## The roads and paths (plans/world.md, plans/map-maker.md): the layout's terrain lines of type
+## "road" and "path", drawn in the map editor. The terrain generator lays each one along the land,
+## in the layout's order, and writes the lines it laid to the map's roads file (Hearthvale's
+## scripts/world_roads.gd); roads() reads them back. Each line is (road_spec turns it into the
+## generator's spec):
+##   {id, type: road | path, name, points: [[x, z]...]}  its line, fixed (Catmull-Rom through them)
+##   route: true      the points are stops instead: a least-cost route over the slopes from the first
+##                    through the others to the last
+##   join / join_end  start (end) on that road, at its point nearest the first (last) point; a road
+##                    can only join one laid before it
+##   place, place_to, drawn_at  the path ends in that place's own frame (place_to), wherever the place
+##                    stands; moved away from drawn_at, it leaves the road nearest it instead
+##   village          a stretch the Lamps can light, its points running out from the village end
+##   reverse          its laid line runs last point to first (for the lamps)
+##   valley           the land is eased down along it (a valley through the hills)
+##   pass             the world's edge dips to a saddle where it climbs out (the way traders come)
+##   spoke            a notch through the village's bowl, along the line from the village to its end
 const ROAD_HALF_WIDTH := 2.5
 const PATH_HALF_WIDTH := 1.6
 const QUARRY_RIM_POINT := Vector2(-65, 61)  # on the apron where the haul road leaves the rim (QUARRY_ROAD_ANGLE)
-const ROADS: Array[Dictionary] = [
-	{"id": &"main_street", "title": "The village street", "kind": &"road", "ctrl": MAIN_STREET},
-	{"id": &"village_path", "title": "The path from the clearing", "kind": &"path", "village": true, "reverse": true,
-		"ctrl": VILLAGE_PATH},
-	{"id": &"village_road", "title": "The road to the Pinewood", "kind": &"road", "village": true,
-		"from": Vector2(128, 58), "to": Vector2(124, -6)},
-	{"id": &"forest_trail", "title": "The forest trail", "kind": &"path",
-		"from": Vector2(124, -6), "via": [Vector2(76, -131.5)],  # (on from the road's end, up past the spring)
-		"to": Vector2(61, -62.5)},
-	{"id": &"quarry_road", "title": "The road to the quarry", "kind": &"road",
-		"from": Vector2(58, 132), "to": QUARRY_RIM_POINT},  # (over the creek: the router keeps off its banks)
-	{"id": &"lake_road", "title": "The road to the lake", "kind": &"road",
-		"from": Vector2(118, 198), "to": Vector2(66, 316)},
-	{"id": &"peak_path", "title": "The path up Frostpeak", "kind": &"path",
-		"from": Vector2(-20, 80), "join": &"quarry_road", "to": Vector2(-76, -14)},
-	{"id": &"field_road", "title": "The road to Goldmeadow", "kind": &"road",
-		"from": Vector2(178, 178), "to": Vector2(268, 252)},
-	{"id": &"east_road", "title": "The road east", "kind": &"road", "village": true, "ctrl": EAST_ROAD},
-	# the new places' footpaths (plans/world-pass.md, phase 7), each off a road laid before it
-	# (`to` in the place's own frame: the path ends where the place is, moved or turned; `drawn_at`
-	# is where the place stood when `from` and `join` were drawn: moved away, the path leaves the
-	# road nearest it instead)
-	{"id": &"mill_path", "title": "The path to the mill", "kind": &"path", "from": Vector2(100, 206), "join": &"lake_road",
-		"place": &"watermill", "to": Vector2(5, -8), "drawn_at": Vector2(42, 200)},
-	{"id": &"orchard_path", "title": "The path to the orchard", "kind": &"path", "from": Vector2(150, 50), "join": &"village_road",
-		"place": &"orchard", "to": Vector2(-14, 8), "drawn_at": Vector2(200, 62)},
-	{"id": &"shepherd_path", "title": "The path up the shepherd's hill", "kind": &"path", "from": Vector2(330, 120), "join": &"east_road",
-		"place": &"shepherds_hill", "to": Vector2(-6, 14), "drawn_at": Vector2(360, 18)},
-]
-## The village street (plans/village-street.md): from the end of the road to the quarry, through
-## the market place, to the start of the road east. The houses line it; the north, lake and fields
-## roads come in to it.
-const MAIN_STREET: Array[Vector2] = [Vector2(58, 134), Vector2(84, 131), Vector2(108, 127), Vector2(137, 125),
-	Vector2(166, 125), Vector2(186, 126), Vector2(200, 126)]
-## The road east (plans/market.md): from the green's east edge up through a pass in the eastern
-## rim hills to the world's edge, the way traders come. The terrain generator cuts the pass along it.
-const EAST_ROAD: Array[Vector2] = [Vector2(200, 126), Vector2(238, 120), Vector2(278, 126), Vector2(318, 134),
-	Vector2(358, 132), Vector2(398, 124), Vector2(438, 122), Vector2(478, 128), Vector2(512, 130)]
+const _ROAD_FLAGS := ["village", "reverse", "valley", "pass", "spoke"]
 
-## The dirt path from the clearing to the green, as the terrain generator's valley follows it
-## (ROADS has the line it was laid on). It crosses the creek just below the clearing's pond (the
-## footbridge project).
-const VILLAGE_PATH: Array[Vector2] = [Vector2(56, 62), Vector2(72, 70), Vector2(86, 82), Vector2(96, 95),
-	Vector2(104, 104)]
+
+## Layout line `s` (a road or path) as the terrain generator lays it: {id, kind, title, points,
+## and ctrl (a fixed line) or from, via, to (a route), with join, join_end, place, drawn_at and the
+## flags it has}.
+static func road_spec(s: Dictionary) -> Dictionary:
+	var pts: Array[Vector2] = []
+	for q in s.get("points", []):
+		pts.append(Vector2(float(q[0]), float(q[1])))
+	var spec := {"id": StringName(s["id"]), "kind": StringName(s.get("type", "road")), "title": s.get("name", s["id"]), "points": pts}
+	if s.get("route", false):
+		spec["from"] = pts[0]
+		spec["to"] = pts[-1]
+		if pts.size() > 2:
+			spec["via"] = pts.slice(1, -1)
+	else:
+		spec["ctrl"] = pts
+	for k in ["join", "join_end"]:
+		if s.get(k, "") != "":
+			spec[k] = StringName(s[k])
+	if s.get("place", "") != "":
+		spec["place"] = StringName(s["place"])
+		var local: Array = s.get("place_to", [0, 0])
+		spec["to"] = Vector2(float(local[0]), float(local[1]))
+		var drawn: Array = s.get("drawn_at", [])
+		if drawn.size() == 2:
+			spec["drawn_at"] = Vector2(float(drawn[0]), float(drawn[1]))
+	for k in _ROAD_FLAGS:
+		if s.get(k, false):
+			spec[k] = true
+	return spec
+
 
 ## The creek (plans/world.md): from a spring under the north rim, through the clearing's pond, down
 ## the bowl's west side past the village and out through a gap in the rim into the lake. Its water
@@ -231,8 +230,8 @@ static func spline(ctrl: Array, loop: bool) -> PackedVector2Array:
 
 
 ## The roads as laid (the map's roads file, Maps.path("roads"): scripts/world_roads.gd for
-## Hearthvale, written by the terrain generator): each ROADS entry with its line, `pts` (about 1 m
-## apart, from the village end for lamp stretches), and its `half_width`.
+## Hearthvale, written by the terrain generator): each road's spec (road_spec) with its laid line,
+## `pts` (about 1 m apart, from the village end for lamp stretches), and its `half_width`.
 static func roads() -> Array[Dictionary]:
 	if _roads.is_empty():
 		var file := Maps.path("roads")
@@ -240,14 +239,20 @@ static func roads() -> Array[Dictionary]:
 			return _roads  # (a map whose land isn't made yet: no roads)
 		var written: GDScript = load(file)
 		var laid: Dictionary = written.LINES
-		var specs: Array = ROADS.duplicate()
-		specs.append_array(written.get_script_constant_map().get("EXTRA", []))  # (the map editor's)
-		for spec in specs:
+		for spec in written.get_script_constant_map().get("EXTRA", []):
 			var r: Dictionary = spec.duplicate()
 			r["pts"] = PackedVector2Array(laid.get(spec["id"], []))
 			r["half_width"] = ROAD_HALF_WIDTH if spec["kind"] == &"road" else PATH_HALF_WIDTH
 			_roads.append(r)
 	return _roads
+
+
+## Road `id` as roads() has it, or {} if the map has none such.
+static func road(id: StringName) -> Dictionary:
+	for r in roads():
+		if r["id"] == id:
+			return r
+	return {}
 
 
 ## The creek's centre line (cached), source to mouth, about 1 m a sample.

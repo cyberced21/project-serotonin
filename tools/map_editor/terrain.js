@@ -8,7 +8,11 @@
 //          the lake (ids pond, lake) are ponds here too: deepen, move or reshape them.
 //   river  a line: a channel `width` m wide and `depth` m deep under the water, through a vale
 //          eased down over `vale` m each side; the bake adds its water (plans/terrain-editing.md)
-//   road / path   a line the generator lays a gravel road or a dirt path along
+//   road / path   a gravel road or a dirt path (plans/map-maker.md, WorldMap.road_spec): along its
+//          line as drawn, or, `route`d, the generator finds a gentle way between its points (its
+//          stops); it can start or end on another road (`join`, `join_end`), cut a valley through
+//          the hills (`valley`), a pass through the world's edge (`pass`), a notch out of the
+//          village's bowl (`spoke`), and light up with the Lamps (`village`). The Road tool draws them.
 // Baking with terrain changed regenerates the land (about a minute), redraws the map, then bakes.
 "use strict";
 
@@ -26,6 +30,9 @@
 	const HALF = { road: 2.5, path: 1.6 };  // (WorldMap.ROAD_HALF_WIDTH, PATH_HALF_WIDTH)
 	const half = (o) => (o.type === "river" ? (o.width ?? 4) / 2 : HALF[o.type]);
 	const isLine = (o) => o.type === "road" || o.type === "path" || o.type === "river";
+	const isRoad = (o) => o.type === "road" || o.type === "path";
+	/** Where a road was last laid (the map export's line), or null before its first bake. */
+	const laid = (o) => ((E.world && E.world.roads) || []).find((r) => r.id === o.id) || null;
 	// A river runs smoothed through its points, as the game smooths it (WorldMap.spline: Catmull-Rom).
 	const spline = (ctrl) => {
 		if (ctrl.length < 3) return ctrl;
@@ -50,7 +57,9 @@
 		if (o.type === "smooth") return `smoothed over ${o.strength ?? 4} m`;
 		if (o.type === "pond") return `pond ${o.depth} m deep`;
 		if (o.type === "river") return `river ${o.width ?? 4} m wide, ${o.depth ?? 1.6} m deep`;
-		return `${o.type}, ${Math.round(E.polyLength(o.points))} m`;
+		const was = laid(o);
+		if (o.route) return `${o.type}, finds its way${was ? `, ${Math.round(E.polyLength(was.pts))} m` : ""}`;
+		return `${o.type}, ${Math.round(E.polyLength(was ? was.pts : o.points))} m`;
 	};
 
 	E.registerKind("terrain", {
@@ -59,6 +68,37 @@
 		color: (o) => TYPES[o.type].color,
 		draw(ctx, o, selected) {
 			const col = TYPES[o.type].color;
+			if (isRoad(o) && o.route) {  // its stops, joined faintly; where it was laid, when selected
+				ctx.lineCap = "round";
+				ctx.lineJoin = "round";
+				const was = laid(o);
+				if (was && selected) {
+					E.path(was.pts, false);
+					ctx.lineWidth = Math.max(3, half(o) * 2 * E.view.s) + 4;
+					ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
+					ctx.stroke();
+					ctx.lineWidth = Math.max(2, half(o) * 2 * E.view.s);
+					ctx.strokeStyle = col;
+					ctx.stroke();
+				}
+				E.path(o.points, false);
+				ctx.setLineDash([6, 5]);
+				ctx.lineWidth = selected ? 2.5 : 1.5;
+				ctx.strokeStyle = selected ? "#fff" : col;
+				ctx.stroke();
+				ctx.setLineDash([]);
+				for (const [x, z] of o.points) {
+					const [sx, sy] = E.toScreen(x, z);
+					ctx.beginPath();
+					ctx.arc(sx, sy, 4, 0, Math.PI * 2);
+					ctx.fillStyle = col;
+					ctx.fill();
+					ctx.lineWidth = 1;
+					ctx.strokeStyle = "rgba(20, 20, 15, 0.8)";
+					ctx.stroke();
+				}
+				return;
+			}
 			if (isLine(o)) {
 				const river = o.type === "river";
 				ctx.lineCap = "round";
@@ -69,7 +109,7 @@
 					ctx.strokeStyle = "rgba(63, 127, 181, 0.08)";
 					ctx.stroke();
 				}
-				E.path(river ? spline(o.points) : o.points, false);
+				E.path(spline(o.points), false);  // (a road's fixed line is smoothed through its points too)
 				ctx.lineWidth = Math.max(3, half(o) * 2 * E.view.s) + (selected ? 4 : 2);
 				ctx.strokeStyle = selected ? "#fff" : "rgba(20, 20, 15, 0.7)";
 				ctx.stroke();
@@ -121,9 +161,13 @@
 		hit(o, x, z, tol) {
 			if (isLine(o)) {
 				let best = Infinity;
-				for (let i = 1; i < o.points.length; i++) {
-					const a = o.points[i - 1], b = o.points[i];
-					best = Math.min(best, E.segDist(x, z, a[0], a[1], b[0], b[1]));
+				const lines = [o.points];
+				if (isRoad(o) && o.route && laid(o)) lines.push(laid(o).pts);  // (where it was laid, too)
+				for (const pts of lines) {
+					for (let i = 1; i < pts.length; i++) {
+						const a = pts[i - 1], b = pts[i];
+						best = Math.min(best, E.segDist(x, z, a[0], a[1], b[0], b[1]));
+					}
 				}
 				return best < tol + half(o) ? best : false;
 			}
@@ -219,10 +263,37 @@
 				box.append(E.field("Vale (m)", E.input(o, "vale", "number", { step: 5, min: 0, default: 30, refresh: true })));
 				box.append(E.field("Fish", E.input(o, "fish", "check", { default: true })));
 				box.append(E.el("p", { class: "muted" }, "Its water sits at the ponds' level (-0.15 m): where it runs through higher ground the land is eased down to it over the vale, each side. Up to about 1.4 m deep: you wade it. Roads that cross it get a bridge."));
-			} else if (isLine(o)) box.append(E.el("p", { class: "muted" }, "The generator lays it along this line, easing its slope; a road should start on another road or path."));
+			} else if (isRoad(o)) roadPanel(o, box);
 			box.append(E.el("p", { class: "muted" }, "Terrain changes regenerate the land on the next bake (about a minute)."));
 		},
 	});
+
+	/** A road's or path's settings (WorldMap.road_spec). */
+	const roadPanel = (o, box) => {
+		const el = E.el;
+		box.append(E.field("Kind", E.input(o, "type", "select", { options: [["road", "Gravel road"], ["path", "Dirt path"]], refresh: true })));
+		box.append(E.field("Route it", E.input(o, "route", "check", { refresh: true })));
+		box.append(el("p", { class: "muted" }, o.route
+			? "Its points are stops: the generator finds a gentle way over the hills from the first, through the others, to the last (Save & bake to see it: the solid line)."
+			: "It's laid along this line as drawn (smoothed through its points), the land eased under it."));
+		const others = [["", "(nowhere)"], ...E.layout.terrain.filter((t) => isRoad(t) && t !== o).map((t) => [t.id, t.name || t.id])];
+		box.append(E.field("Starts on", E.input(o, "join", "select", { options: others, default: "" })));
+		box.append(E.field("Ends on", E.input(o, "join_end", "select", { options: others, default: "" })));
+		box.append(el("p", { class: "muted" }, "On another road: it begins (ends) at that road's point nearest its first (last) point. Only a road laid before it, higher in the list."));
+		const flags = el("div", { class: "chips" });
+		for (const [k, label, tip] of [["valley", "Valley", "the land eased down along it: a way through the hills"],
+			["pass", "Pass", "the world's edge dips to a saddle where it climbs out (the way traders come)"],
+			["spoke", "Notch", "a notch through the village's bowl, from the village to its last point"],
+			["village", "Lamps", "a stretch the Lamps light, from its village end"],
+			["reverse", "From its end", "(lamps) its village end is its last point"]]) {
+			const c = E.input(o, k, "check");
+			flags.append(el("label", { title: tip }, c, label));
+		}
+		box.append(E.block("Shapes the land", flags));
+		if (o.place) box.append(el("p", { class: "muted" }, `Ends at ${o.place} (in its own frame: it follows the place when the place moves).`));
+		const was = laid(o);
+		box.append(el("p", { class: "muted" }, was ? `Laid: ${Math.round(E.polyLength(was.pts))} m.` : "Not laid yet: Save & bake."));
+	};
 
 	// --- the brush ------------------------------------------------------------------------------------
 
@@ -259,12 +330,12 @@
 	E.registerTool({
 		id: "terrain",
 		label: "Terrain",
-		title: "Shape the land: flats, hills and hollows, smoothing, ponds, rivers, roads",
+		title: "Shape the land: flats, hills and hollows, smoothing, ponds, rivers",
 		options(box) {
 			const el = E.el;
 			const types = el("span", { class: "row" });
 			const rebuild = () => { E.setTool(E.tool); };
-			for (const t in TYPES) types.append(el("button", { class: t === brush.type ? "on" : "", onclick: () => { brush.type = t; corners = []; rebuild(); } }, TYPES[t].label));
+			for (const t in TYPES) if (!isRoad({ type: t })) types.append(el("button", { class: t === brush.type ? "on" : "", onclick: () => { brush.type = t; corners = []; rebuild(); } }, TYPES[t].label));
 			box.append(types);
 			if (brush.type === "flat" || brush.type === "raise") {
 				const shapes = el("span", { class: "row" });
@@ -348,6 +419,98 @@
 				ctx.arc(sx, sy, E.dist(pressAt[0], pressAt[1], hover[0], hover[1]) * E.view.s, 0, Math.PI * 2);
 				ctx.stroke();
 			}
+			ctx.setLineDash([]);
+		},
+	});
+
+	// --- the road tool (plans/map-maker.md) ----------------------------------------------------------
+
+	const road = { type: "road", route: true };
+	let stops = [];
+	/** The road nearest (x, z) within a click's reach of its line, drawn or laid: its id, or "". */
+	const roadAt = (x, z) => {
+		let best = "", near = 8 / E.view.s + 2;
+		for (const t of E.layout.terrain) {
+			if (!isRoad(t)) continue;
+			for (const pts of [t.points, (laid(t) || {}).pts || []]) {
+				for (let i = 1; i < pts.length; i++) {
+					const d = E.segDist(x, z, pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1]);
+					if (d < near) { near = d; best = t.id; }
+				}
+			}
+		}
+		return best;
+	};
+	const finishRoad = () => {
+		if (stops.length >= 2) {
+			const o = { id: E.uniqueId(road.type), type: road.type, name: road.type === "road" ? "A road" : "A path", points: stops };
+			if (road.route) o.route = true;
+			const from = roadAt(...stops[0]), to = roadAt(...stops[stops.length - 1]);
+			if (from) o.join = from;
+			if (to && to !== from) o.join_end = to;
+			E.roundShape("terrain", o);
+			E.commit();
+			E.layout.terrain.push(o);
+			E.select("terrain", o);
+			E.changed();
+		}
+		stops = [];
+		E.updateHint();
+	};
+
+	E.registerTool({
+		id: "road",
+		label: "Road",
+		title: "Draw a road or a path: click its stops (it finds its own way between them), or its exact line",
+		options(box) {
+			const el = E.el;
+			const rebuild = () => { E.setTool(E.tool); };
+			const kinds = el("span", { class: "row" });
+			for (const [t, label] of [["road", "Gravel road"], ["path", "Dirt path"]]) {
+				kinds.append(el("button", { class: t === road.type ? "on" : "", onclick: () => { road.type = t; rebuild(); } }, label));
+			}
+			const how = el("span", { class: "row" });
+			for (const [r, label, tip] of [[true, "Find its way", "click its stops: the generator routes a gentle way over the hills between them"],
+				[false, "Exact line", "it runs where you click, the land eased under it"]]) {
+				how.append(el("button", { class: r === road.route ? "on" : "", title: tip, onclick: () => { road.route = r; rebuild(); } }, label));
+			}
+			box.append(kinds, how);
+		},
+		hint() {
+			if (stops.length) return `${stops.length} ${road.route ? "stops" : "points"}: click to add, double-click / Enter to finish, Backspace to take one back, Esc to drop it`;
+			return road.route ? "Click where it starts (on a road to join it), any stops on the way, then where it ends." : "Click along its line (start it on a road to join it).";
+		},
+		down(x, z) { stops.push([x, z]); E.updateHint(); },
+		move(x, z) { hover = [x, z]; },
+		dblclick() {
+			const n = stops.length;
+			if (n < 2 || E.dist(stops[n - 1][0], stops[n - 1][1], stops[n - 2][0], stops[n - 2][1]) > 6 / E.view.s) return;
+			stops.pop();
+			finishRoad();
+		},
+		finish: finishRoad,
+		cancel() { stops = []; E.updateHint(); },
+		keydown(ev) {
+			if (ev.key === "Backspace" && stops.length) { stops.pop(); E.updateHint(); return true; }
+			return false;
+		},
+		preview(ctx) {
+			if (!stops.length) {
+				if (hover && roadAt(...hover)) {  // (starting here joins that road)
+					const [sx, sy] = E.toScreen(hover[0], hover[1]);
+					ctx.beginPath();
+					ctx.arc(sx, sy, 7, 0, Math.PI * 2);
+					ctx.strokeStyle = "#fff";
+					ctx.lineWidth = 2;
+					ctx.stroke();
+				}
+				return;
+			}
+			ctx.strokeStyle = TYPES[road.type].color;
+			ctx.lineWidth = 2;
+			ctx.setLineDash(road.route ? [6, 5] : []);
+			E.path(hover ? [...stops, hover] : stops, false);
+			ctx.stroke();
 			ctx.setLineDash([]);
 		},
 	});
