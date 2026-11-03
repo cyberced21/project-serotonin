@@ -4,7 +4,9 @@ extends Node
 ##   spots: decorations with set places round the green (benches, flower boxes, a well,
 ##     bunting, a fountain) and the mended footbridge; done ones are saved here, per world;
 ##   road lamps: one per road stretch not lit from the start (the Lamps autoload keeps which are
-##     lit, so that's where a road project's "done" lives).
+##     lit, so that's where a road project's "done" lives);
+##   better roads (plans/road-travel.md): each road's next level, packed then cobbled (the Roads
+##     autoload keeps them: "road:<id>:<level>", laid overnight).
 ## A project opens with the town hall's tier (`hall`) and costs gathered goods. Some wait for
 ## something first (a SPOTS entry's sixth field, `needs`): another project done (so the doghouse
 ## grows in steps, plans/dog.md), &"dog" for having a dog, or &"slide" for the landslide's boulders
@@ -52,6 +54,10 @@ const NEAR_VILLAGE := 140.0
 const ROAD_NEAR := {&"wood": 10, &"ore": 5, &"coal": 3}
 const ROAD_FAR := {&"wood": 15, &"iron": 8, &"coal": 5}
 const ROAD_PREFIX := "lamps:"
+const BETTER_PREFIX := "road:"
+## A better road's card: [title verb, what it does].
+const BETTER := [[], ["Pack and edge", "Packed earth and kerb stones the whole way: firmer and quicker underfoot (+15%). Laid overnight."],
+	["Cobble", "Stone setts the whole way, kerbs and all: the quickest going there is (+30%). Laid overnight."]]
 
 var _done: Dictionary[StringName, bool] = {}
 ## Whether this world has somewhere for the footbridge (set by VillageDecor): if not, it isn't
@@ -62,6 +68,7 @@ var footbridge_here := false
 func _ready() -> void:
 	SaveGame.register(&"projects", self)
 	Lamps.changed.connect(changed.emit)
+	Roads.changed.connect(changed.emit)
 	Companion.adopted.connect(changed.emit)  # (the kennel goes up on the board)
 
 
@@ -83,6 +90,12 @@ func all() -> Array[Dictionary]:
 		out.append({"id": StringName(ROAD_PREFIX + String(s["id"])), "title": "Lamps along " + _lower_first(s["title"]),
 				"blurb": "Lamp posts all along it, lit at dusk.", "cost": _cost(&"", ROAD_NEAR if near else ROAD_FAR),
 				"hall": 1 if near else 2, "done": Lamps.is_lit(s["id"]), "road": s["id"]})
+	for r in Roads.roads():  # each road's next level (or its last, done)
+		var now := Roads.planned_level(r["id"])
+		var lvl := mini(now + 1, Roads.MAX_LEVEL)
+		out.append({"id": StringName("%s%s:%d" % [BETTER_PREFIX, r["id"], lvl]),
+				"title": "%s %s" % [BETTER[lvl][0], _lower_first(r["title"])], "blurb": BETTER[lvl][1],
+				"cost": _cost(&"", Roads.cost(r["length"], lvl)), "hall": Roads.HALL[lvl], "done": now >= lvl, "road": &"", "better": r["id"]})
 	return out
 
 
@@ -124,6 +137,9 @@ func get_project(id: StringName) -> Dictionary:
 func is_done(id: StringName) -> bool:
 	if String(id).begins_with(ROAD_PREFIX):
 		return Lamps.is_lit(StringName(String(id).trim_prefix(ROAD_PREFIX)))
+	if String(id).begins_with(BETTER_PREFIX):
+		var b := _better(id)
+		return Roads.planned_level(b[0]) >= b[1]
 	return _done.has(id)
 
 
@@ -153,9 +169,18 @@ func set_done(id: StringName, on: bool) -> void:
 		_finish(id, on)
 
 
+## A better road's id: [road id, level].
+static func _better(id: StringName) -> Array:
+	var parts := String(id).trim_prefix(BETTER_PREFIX).rsplit(":", true, 1)
+	return [StringName(parts[0]), int(parts[1])]
+
+
 func _finish(id: StringName, on: bool, paid := false) -> void:
 	if String(id).begins_with(ROAD_PREFIX):
 		Lamps.set_lit(StringName(String(id).trim_prefix(ROAD_PREFIX)), on)
+	elif String(id).begins_with(BETTER_PREFIX):  # (paid for: laid overnight; the debug menu's: at once)
+		var b := _better(id)
+		Roads.set_level(b[0], b[1] if on else b[1] - 1, paid)
 	elif on:
 		_done[id] = true
 	else:

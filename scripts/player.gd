@@ -263,6 +263,9 @@ var _swinging := false
 var _cooldown := 0.0
 var _charge := -1.0  # Power swing: seconds held on a tree, -1 when not charging
 var _momentum := 0  # Momentum: trees felled in a quick run (each makes the axe faster)
+var _road_bonus := 1.0  # the better road's speed-up, eased toward what's underfoot (Roads)
+## How fast the road's speed-up eases in and out (per second: cobbles' +30% in half a second).
+const ROAD_EASE := 0.6
 var _since_felled := INF  # seconds since the last tree came down
 var _tool_rest := Vector3.ZERO
 var _buzz := 0.0  # current quiver size (rad), see _impact_feel
@@ -587,6 +590,10 @@ func _move(delta: float) -> void:
 	speed *= move_slow_while_charging if _charge >= 0.0 else 1.0
 	speed *= wading
 	speed *= 1.0 + Village.stat(&"run_speed")  # Rosa's bread
+	# a better road underfoot (plans/road-travel.md), eased in and out so it never jolts
+	var road_target := Roads.bonus_at(global_position) if on_floor and not crouched else 1.0
+	_road_bonus = move_toward(_road_bonus, road_target, ROAD_EASE * delta)
+	speed *= _road_bonus
 
 	var target := wish * speed
 	if on_floor and not jumped:

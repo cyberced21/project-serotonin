@@ -17,6 +17,8 @@ const DEFS := {
 	&"coal": {"name": "Coal"},
 	&"gold": {"name": "Gold ore"},
 	&"crystal": {"name": "Crystal"},
+	# plain stone from any rock (plans/road-travel.md): what the roads are built of
+	&"stone": {"name": "Stone"},
 	&"wheat": {"name": "Wheat"},
 	&"barley": {"name": "Barley"},
 	&"perch": {"name": "Perch"},
