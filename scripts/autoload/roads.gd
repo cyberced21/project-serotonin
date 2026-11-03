@@ -100,6 +100,12 @@ func roads() -> Array[Dictionary]:
 	return out
 
 
+## Whether the carter's cart runs on road `r` (better): the gravel roads only, not the footpaths
+## or the patches (plans/roads-everywhere.md).
+static func carts_on(r: Dictionary) -> bool:
+	return r["kind"] == &"road"
+
+
 func level_of(id: StringName) -> int:
 	return level.get(id, 0)
 

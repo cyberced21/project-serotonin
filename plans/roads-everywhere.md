@@ -40,4 +40,13 @@ and leaves a road's edging open where a patch meets it.
 
 ## As built
 
-(after the phases)
+2026-11-03, both phases, `python tools/run_tests.py test_roads test_cart` passing. Not yet seen in
+a game window.
+
+- **Phase 1:** `Roads.PATCHES` / `patch_cells()` (scanned once per terrain, cells within a drawn
+  road's reach left to the road), listed by `Roads.roads()` as kind `patch`; `RoadLook` paints them
+  and leaves a road's edging open within 1.2 m of a patch cell; `Projects.BETTER_PATCH` words.
+  Sizes in Hearthvale and the packing price: market 640 m² (76 stones), lanes 550 m² (66), haul
+  road 820 m² (99), field tracks 7000 m², priced at a fifth the rate (167; cobbles twice that).
+- **Phase 2:** `Roads.carts_on(r)` (kind `road`): CartLine's network and the `carter` project's
+  need. test_cart: a packed footpath neither wakes the cart shed nor gets stops.

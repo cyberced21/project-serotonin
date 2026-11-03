@@ -5,7 +5,8 @@ extends Node3D
 ## one, pick where to (CartPanel), and the cart rolls up from round the bend, you climb on and it
 ## takes you along the better roads (their laid lines, joined where they meet) to that stop, at up
 ## to RIDE_SPEED: you sit on its seat, free to look round, and moving hops you off on the way.
-## It only runs on roads at level 1 or more (Roads), so better roads grow its network. Free to ride.
+## It only runs on the gravel roads (Roads.carts_on: not the paths, lanes or patches,
+## plans/roads-everywhere.md) at level 1 or more, so better roads grow its network. Free to ride.
 ## Picked on the road travel page: the village kit's covered wagon, a donkey between its shafts,
 ## the carter up front in his apron and cap, the donkey's hooves and the wagon's rattle (louder the
 ## quicker it goes), a handbell at the stop (audio/cart/SOURCES.md).
@@ -91,7 +92,7 @@ func _rebuild() -> void:
 	var next := 0
 	var by_road := {}
 	for r in WorldMap.roads():
-		if Roads.level_of(r["id"]) < 1:
+		if not Roads.carts_on(r) or Roads.level_of(r["id"]) < 1:
 			continue
 		var pts: PackedVector2Array = r["pts"]
 		if pts.size() < 2:
