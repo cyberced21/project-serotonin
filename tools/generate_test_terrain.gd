@@ -44,8 +44,12 @@ extends SceneTree
 
 const WorldMap := preload("res://scripts/world_map.gd")
 
-const SIZE := 768                       # heightmap pixels = metres (vertex spacing 1); 3x3 regions
-const ORIGIN := Vector3(-256, 0, -256)  # world position of pixel (0, 0) — must sit on the region grid
+## The map's width (SX, along x) and depth (SZ, along z) in heightmap pixels = metres (vertex
+## spacing 1), and the world position of pixel (0, 0), on the region grid (Maps.size(), origin():
+## Hearthvale's 768 x 768 from (-256, -256), 3 x 3 regions).
+var SX := Maps.size().x
+var SZ := Maps.size().y
+var ORIGIN := Vector3(Maps.origin().x, 0, Maps.origin().y)
 const CLEARING_CENTER := WorldMap.CLEARING_CENTER
 const CLEARING_RADIUS := 28.0
 const HILL_RAMP := 55.0                 # metres over which the hills rise out of the clearing
@@ -242,23 +246,23 @@ func _run() -> void:
 	_read_scene()
 
 	var base := PackedFloat32Array()
-	base.resize(SIZE * SIZE)
+	base.resize(SX * SZ)
 	var h := PackedFloat32Array()
-	h.resize(SIZE * SIZE)
+	h.resize(SX * SZ)
 	var ids := PackedByteArray()
-	ids.resize(SIZE * SIZE)
-	for y in SIZE:
-		for x in SIZE:
+	ids.resize(SX * SZ)
+	for y in SZ:
+		for x in SX:
 			var w := _world(x, y)
-			var i := y * SIZE + x
+			var i := y * SX + x
 			base[i] = _height(w)
 			ids[i] = _biome_id(w + Vector2(0.5, 0.5))  # the cell's centre
 			if _on_path(w + Vector2(0.5, 0.5)):
 				ids[i] = PATH_TEXTURE
-	for y in SIZE:
-		for x in SIZE:
+	for y in SZ:
+		for x in SX:
 			var w := _world(x, y)
-			h[y * SIZE + x] = _biomes(w, base[y * SIZE + x]) + (_peak(w) + _rim(w)) * _off_quarry(w)
+			h[y * SX + x] = _biomes(w, base[y * SX + x]) + (_peak(w) + _rim(w)) * _off_quarry(w)
 	_glades(h)
 	_layout_shapes(h)
 	_level_pads(h)
@@ -271,19 +275,19 @@ func _run() -> void:
 	_relax(h)  # again: smooths any seam where two roads' banks (or a hairpin's legs) meet
 	_report_water(h)
 
-	var img := Image.create_empty(SIZE, SIZE, false, Image.FORMAT_RF)
-	for y in SIZE:
-		for x in SIZE:
-			img.set_pixel(x, y, Color(h[y * SIZE + x], 0, 0))
+	var img := Image.create_empty(SX, SZ, false, Image.FORMAT_RF)
+	for y in SZ:
+		for x in SX:
+			img.set_pixel(x, y, Color(h[y * SX + x], 0, 0))
 	var images: Array[Image] = []
 	images.resize(Terrain3DRegion.TYPE_MAX)
 	images[Terrain3DRegion.TYPE_HEIGHT] = img
 	terrain.data.import_images(images, ORIGIN, 0.0, 1.0)
 
 	var painted := 0
-	for y in SIZE:
-		for x in SIZE:
-			var id := ids[y * SIZE + x]
+	for y in SZ:
+		for x in SX:
+			var id := ids[y * SX + x]
 			if id != WorldMap.TEX_DEFAULT:
 				var w := _world(x, y)
 				terrain.data.set_control_base_id(Vector3(w.x, 0, w.y), id)
@@ -450,10 +454,10 @@ func _peak(w: Vector2) -> float:
 
 ## The edge of the world rising into high hills (wandering, so it isn't a straight wall).
 func _rim(w: Vector2) -> float:
-	var half := SIZE * 0.5
-	var inner := half - RIM_WIDTH
-	var c := (w - Vector2(ORIGIN.x + half, ORIGIN.z + half)).abs()
-	var past := Vector2(maxf(c.x - inner, 0.0), maxf(c.y - inner, 0.0)).length()  # rounded corners
+	var half := Vector2(SX, SZ) * 0.5
+	var inner := half - Vector2(RIM_WIDTH, RIM_WIDTH)
+	var c := (w - Vector2(ORIGIN.x, ORIGIN.z) - half).abs()
+	var past := Vector2(maxf(c.x - inner.x, 0.0), maxf(c.y - inner.y, 0.0)).length()  # rounded corners
 	past += _warp_x.get_noise_2dv(w * 1.3) * 18.0
 	var t := clampf(past / RIM_WIDTH, 0.0, 1.0)
 	# the pass the road east climbs through: the rim dips to a saddle along it
@@ -465,22 +469,22 @@ func _rim(w: Vector2) -> float:
 ## the hills keep their shape but lose their ledges. The flats stay put: nothing there is steep.
 func _relax(h: PackedFloat32Array) -> void:
 	var limit := PackedFloat32Array()  # per cell; 0 = leave it alone
-	limit.resize(SIZE * SIZE)
-	for y in SIZE:
-		for x in SIZE:
+	limit.resize(SX * SZ)
+	for y in SZ:
+		for x in SX:
 			var w := _world(x, y)
 			var crags := 1.0 - smoothstep(PEAK_RADIUS * 0.6, PEAK_RADIUS * 1.0, w.distance_to(PEAK_CENTER))
-			var i := y * SIZE + x
+			var i := y * SX + x
 			var keep := _in_pit(w) or (not _creek_mask.is_empty() and _creek_mask[i] == 1) or (not _pond_mask.is_empty() and _pond_mask[i] == 1)
-			limit[y * SIZE + x] = 0.0 if keep else MAX_SLOPE + crags * PEAK_SLOPE
+			limit[y * SX + x] = 0.0 if keep else MAX_SLOPE + crags * PEAK_SLOPE
 	for pass_i in RELAX_PASSES:
 		var changed := 0
-		for y in SIZE - 1:
-			for x in SIZE - 1:
-				var i := y * SIZE + x
+		for y in SZ - 1:
+			for x in SX - 1:
+				var i := y * SX + x
 				if limit[i] == 0.0:
 					continue
-				for j in [i + 1, i + SIZE]:
+				for j in [i + 1, i + SX]:
 					var d: float = h[j] - h[i]
 					var excess := absf(d) - limit[i]
 					if excess > 0.0:
@@ -539,7 +543,7 @@ static func _pond_centre(pond: Dictionary) -> Vector2:
 ## The layout's ponds dug again after the relax pass (which fills a bowl dug into a hillside), and
 ## kept from the next one (_pond_mask).
 func _redig_ponds(h: PackedFloat32Array) -> void:
-	_pond_mask.resize(SIZE * SIZE)
+	_pond_mask.resize(SX * SZ)
 	for pond in LayoutWater.ponds():
 		_for_pixels_near(pond["centre"], float(pond["reach"]) + 4.0, func(i: int, w: Vector2) -> void:
 			var bed := _bed(pond, _shore_edge(pond, w, _shore))
@@ -837,7 +841,7 @@ func _apply_route(r: Dictionary, h: PackedFloat32Array, ids: PackedByteArray, te
 		var s := int(v.y)
 		var hw := half[s]
 		var road := heights[s] + bank[s] * clampf(v.z / hw, -1.0, 1.0)
-		var w := _world(i % SIZE, i / SIZE)
+		var w := _world(i % SX, i / SX)
 		if _in_pit(w) or _creek_mask[i] == 1:
 			continue  # the quarry keeps its walls; the creek runs on under a path (a ford)
 		if v.x <= hw:
@@ -893,7 +897,7 @@ func _collect(node: Node, xform: Transform3D, depth: int, out: Array[Vector2]) -
 
 ## The creek's channel along its vale, and the layout's rivers' (plans/terrain-editing.md).
 func _carve_creek(h: PackedFloat32Array) -> void:
-	_creek_mask.resize(SIZE * SIZE)
+	_creek_mask.resize(SX * SZ)
 	var fords := _creek_fords()
 	_carve_channel(h, WorldMap.creek(), WorldMap.CREEK_HALF_WIDTH, CREEK_BANK, func(w: Vector2) -> float:
 		var t := 1.0
@@ -946,7 +950,7 @@ func _carve_channel(h: PackedFloat32Array, pts: PackedVector2Array, half: float,
 				nearest[i] = d)
 	for i in nearest:
 		var d: float = nearest[i]
-		var w := _world(i % SIZE, i / SIZE)
+		var w := _world(i % SX, i / SX)
 		if d < half + 2.5:
 			_creek_mask[i] = 1
 		if d < half:
@@ -1049,7 +1053,7 @@ func _lay_roads(h: PackedFloat32Array, ids: PackedByteArray, baked: Array[Vector
 		var half := WorldMap.ROAD_HALF_WIDTH if road else WorldMap.PATH_HALF_WIDTH
 		var before := h.duplicate()
 		if _road_mask.is_empty():
-			_road_mask.resize(SIZE * SIZE)
+			_road_mask.resize(SX * SZ)
 		var r := _make_route(ctrl, false, half, ROAD_GRADE if road else PATH_GRADE, 24.0 if road else 10.0, h)
 		_apply_route(r, h, ids, WorldMap.TEX_ROAD if road else PATH_TEXTURE,
 				ROAD_SHOULDER if road else PATH_SHOULDER, 99.0, 10.0 if road else 6.0, true)
@@ -1066,13 +1070,14 @@ func _lay_roads(h: PackedFloat32Array, ids: PackedByteArray, baked: Array[Vector
 
 ## The router's grid: one cell per ROUTE_CELL m, weighted by how hard the ground is to build on.
 func _road_grid(h: PackedFloat32Array, baked: Array[Vector2]) -> AStarGrid2D:
-	var n := SIZE / ROUTE_CELL
+	var nx := SX / ROUTE_CELL
+	var nz := SZ / ROUTE_CELL
 	var grid := AStarGrid2D.new()
-	grid.region = Rect2i(0, 0, n, n)
+	grid.region = Rect2i(0, 0, nx, nz)
 	grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
 	grid.update()
-	for cy in n:
-		for cx in n:
+	for cy in nz:
+		for cx in nx:
 			var w := _cell_world(Vector2i(cx, cy))
 			var r := ROUTE_CELL * 0.5
 			var g := Vector2(_sample(h, w + Vector2(r, 0)) - _sample(h, w - Vector2(r, 0)),
@@ -1129,7 +1134,7 @@ func _world_cell(w: Vector2) -> Vector2i:
 
 
 func _pixel(w: Vector2) -> int:
-	return clampi(int(w.y - ORIGIN.z), 0, SIZE - 1) * SIZE + clampi(int(w.x - ORIGIN.x), 0, SIZE - 1)
+	return clampi(int(w.y - ORIGIN.z), 0, SZ - 1) * SX + clampi(int(w.x - ORIGIN.x), 0, SX - 1)
 
 
 func _nearest_on(r: Dictionary, to: Vector2) -> Vector2:
@@ -1205,23 +1210,23 @@ func _rebake_nodes(h: PackedFloat32Array) -> void:
 func _for_pixels_near(at: Vector2, radius: float, fn: Callable) -> void:
 	var cx := at.x - ORIGIN.x
 	var cy := at.y - ORIGIN.z
-	for y in range(maxi(0, floori(cy - radius)), mini(SIZE, ceili(cy + radius) + 1)):
-		for x in range(maxi(0, floori(cx - radius)), mini(SIZE, ceili(cx + radius) + 1)):
+	for y in range(maxi(0, floori(cy - radius)), mini(SZ, ceili(cy + radius) + 1)):
+		for x in range(maxi(0, floori(cx - radius)), mini(SX, ceili(cx + radius) + 1)):
 			var w := _world(x, y)
 			if w.distance_to(at) <= radius:
-				fn.call(y * SIZE + x, w)
+				fn.call(y * SX + x, w)
 
 
 ## Bilinear height from the buffer at a world position.
 func _sample(h: PackedFloat32Array, w: Vector2) -> float:
-	var fx := clampf(w.x - ORIGIN.x, 0.0, SIZE - 1.001)
-	var fy := clampf(w.y - ORIGIN.z, 0.0, SIZE - 1.001)
+	var fx := clampf(w.x - ORIGIN.x, 0.0, SX - 1.001)
+	var fy := clampf(w.y - ORIGIN.z, 0.0, SZ - 1.001)
 	var x := int(fx)
 	var y := int(fy)
 	var tx := fx - x
 	var ty := fy - y
-	var top := lerpf(h[y * SIZE + x], h[y * SIZE + x + 1], tx)
-	var bottom := lerpf(h[(y + 1) * SIZE + x], h[(y + 1) * SIZE + x + 1], tx)
+	var top := lerpf(h[y * SX + x], h[y * SX + x + 1], tx)
+	var bottom := lerpf(h[(y + 1) * SX + x], h[(y + 1) * SX + x + 1], tx)
 	return lerpf(top, bottom, ty)
 
 
@@ -1294,13 +1299,13 @@ func _report_slopes(h: PackedFloat32Array, ids: PackedByteArray) -> void:
 	var counts := [0, 0, 0, 0]  # < 15°, < 30°, < 45°, steeper
 	var sheer := 0
 	var total := 0
-	for y in SIZE - 1:
-		for x in SIZE - 1:
+	for y in SZ - 1:
+		for x in SX - 1:
 			var w := _world(x, y)
 			if w.distance_to(PEAK_CENTER) < PEAK_RADIUS or _rim(w) > 2.0:
 				continue
-			var i := y * SIZE + x
-			var g := Vector2(h[i + 1] - h[i], h[i + SIZE] - h[i]).length()
+			var i := y * SX + x
+			var g := Vector2(h[i + 1] - h[i], h[i + SX] - h[i]).length()
 			counts[0 if g < 0.268 else 1 if g < 0.577 else 2 if g < 1.0 else 3] += 1
 			total += 1
 			if g > 2.0 and ids[i] != WorldMap.TEX_ROAD and not _in_pit(w):
@@ -1318,13 +1323,13 @@ func _write_preview(path: String, h: PackedFloat32Array, ids: PackedByteArray) -
 		WorldMap.TEX_FIELD: Color(0.60, 0.70, 0.32), WorldMap.TEX_QUARRY: Color(0.70, 0.66, 0.60),
 		WorldMap.TEX_CROP: Color(0.88, 0.74, 0.36),
 	}
-	var img := Image.create_empty(SIZE, SIZE, false, Image.FORMAT_RGB8)
-	for y in SIZE:
-		for x in SIZE:
-			var i := y * SIZE + x
+	var img := Image.create_empty(SX, SZ, false, Image.FORMAT_RGB8)
+	for y in SZ:
+		for x in SX:
+			var i := y * SX + x
 			var c: Color = colors.get(ids[i], Color.MAGENTA)
 			var hx := h[mini(i + 1, h.size() - 1)] - h[i]
-			var hy := h[mini(i + SIZE, h.size() - 1)] - h[i]
+			var hy := h[mini(i + SX, h.size() - 1)] - h[i]
 			var light := clampf(1.0 - (hx + hy) * 0.35, 0.35, 1.4)
 			if h[i] < WATER_LEVEL:
 				c = Color(0.25, 0.45, 0.65)
@@ -1373,7 +1378,7 @@ func _shape_cells(s: Dictionary, soft: float) -> Rect2i:
 	box = box.grow(soft + 1.0)
 	var a := Vector2i((box.position - Vector2(ORIGIN.x, ORIGIN.z)).floor())
 	var b := Vector2i((box.end - Vector2(ORIGIN.x, ORIGIN.z)).ceil())
-	return Rect2i(a.clamp(Vector2i.ZERO, Vector2i(SIZE, SIZE)), Vector2i.ZERO).expand(b.clamp(Vector2i.ZERO, Vector2i(SIZE, SIZE)))
+	return Rect2i(a.clamp(Vector2i.ZERO, Vector2i(SX, SZ)), Vector2i.ZERO).expand(b.clamp(Vector2i.ZERO, Vector2i(SX, SZ)))
 
 
 ## Flats (the land eased to a height), hills and hollows (raised or lowered: a dome in a circle, a
@@ -1410,7 +1415,7 @@ func _layout_shapes(h: PackedFloat32Array) -> void:
 		for y in range(cells.position.y, cells.end.y):
 			for x in range(cells.position.x, cells.end.x):
 				var w := _world(x, y)
-				var i := y * SIZE + x
+				var i := y * SX + x
 				match type:
 					"flat":
 						h[i] = lerpf(h[i], float(s.get("height", 0.0)), _shape_weight(s, w, soft))
@@ -1438,13 +1443,13 @@ func _layout_shapes(h: PackedFloat32Array) -> void:
 ## The heights over `cells` blurred over about `r` m (a box blur, twice each way: near a Gaussian),
 ## from the land round them too. One value a cell, row by row.
 func _blurred(h: PackedFloat32Array, cells: Rect2i, r: int) -> PackedFloat32Array:
-	var big := cells.grow(r * 2).intersection(Rect2i(0, 0, SIZE, SIZE))
+	var big := cells.grow(r * 2).intersection(Rect2i(0, 0, SX, SZ))
 	var w := big.size.x
 	var buf := PackedFloat32Array()
 	buf.resize(w * big.size.y)
 	for y in big.size.y:
 		for x in w:
-			buf[y * w + x] = h[(big.position.y + y) * SIZE + big.position.x + x]
+			buf[y * w + x] = h[(big.position.y + y) * SX + big.position.x + x]
 	for pass_i in 4:  # x, y, x, y
 		var along_x := pass_i % 2 == 0
 		var out := buf.duplicate()
@@ -1476,12 +1481,12 @@ func _roughness(h: PackedFloat32Array, s: Dictionary) -> float:
 	var cells := _shape_cells(s, 0.0)
 	var sum := 0.0
 	var n := 0
-	for y in range(maxi(cells.position.y, 1), mini(cells.end.y, SIZE - 1)):
-		for x in range(maxi(cells.position.x, 1), mini(cells.end.x, SIZE - 1)):
+	for y in range(maxi(cells.position.y, 1), mini(cells.end.y, SZ - 1)):
+		for x in range(maxi(cells.position.x, 1), mini(cells.end.x, SX - 1)):
 			if _shape_weight(s, _world(x, y), 0.0) < 1.0:
 				continue
-			var i := y * SIZE + x
-			sum += absf(h[i] - (h[i - 1] + h[i + 1] + h[i - SIZE] + h[i + SIZE]) * 0.25)
+			var i := y * SX + x
+			sum += absf(h[i] - (h[i - 1] + h[i + 1] + h[i - SX] + h[i + SX]) * 0.25)
 			n += 1
 	return sum / maxi(n, 1)
 

@@ -10,6 +10,8 @@ extends RefCounted
 
 const REGISTRY := "res://data/maps.json"
 const DEFAULT := &"hearthvale"
+## The land's tiles (Terrain3D regions of 256 vertices, 1 m apart): a map is a whole number of them.
+const TILE := 256
 ## Hearthvale's files, where they were before there were other maps.
 const HEARTHVALE := {
 	"layout": "res://data/layout/hearthvale.json",
@@ -77,6 +79,35 @@ static func path(what: String, id: StringName = &"") -> String:
 		"roads": return dir + "roads.gd"
 		"editor": return "res://tools/map_editor/maps/%s/" % id
 	return ""
+
+
+## The current map's width and depth (m): its layout's `world.size`, a whole number of TILE m
+## tiles each way (Hearthvale, from before maps had one: 768 x 768).
+static func size() -> Vector2i:
+	var s: Array = _world().get("size", [768, 768])
+	return Vector2i(int(s[0]), int(s[1]))
+
+
+## Where the current map starts: its north-west corner, on the tile grid (Hearthvale's: -256, -256).
+static func origin() -> Vector2:
+	var o: Array = _world().get("origin", [-256, -256])
+	return Vector2(float(o[0]), float(o[1]))
+
+
+## Whether `p` (world XZ) is on the current map.
+static func on_map(p: Vector2) -> bool:
+	return Rect2(origin(), Vector2(size())).has_point(p)
+
+
+static var _world_cache: Dictionary = {}
+static var _world_of: StringName = &""
+
+
+static func _world() -> Dictionary:
+	if _world_of != current():
+		_world_of = current()
+		_world_cache = read_layout().get("world", {})
+	return _world_cache
 
 
 ## The current map's layout file.

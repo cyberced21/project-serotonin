@@ -12,7 +12,8 @@ const WorldMapC := preload("res://scripts/world_map.gd")
 const AnchorsC := preload("res://scripts/layout_anchors.gd")
 ## The map's pictures for the editor (Hearthvale's in tools/map_editor/, another's in
 ## tools/map_editor/maps/<id>/: Maps, plans/map-maker.md).
-var OUT_DIR := preload("res://scripts/maps.gd").path("editor")
+const MapsC := preload("res://scripts/maps.gd")
+var OUT_DIR := MapsC.path("editor")
 const WATER_LEVEL := -0.15
 ## The heights the editor reads back (under the cursor, for slopes) are on a grid this coarse (m).
 const HEIGHT_STEP := 4
@@ -44,41 +45,42 @@ func _run() -> void:
 	for i in 10:
 		await process_frame
 	var terrain := get_first_node_in_group("terrain")
-	var size := int(WorldMapC.WORLD_SIZE)
-	var origin := Vector2(WorldMapC.WORLD_MIN, WorldMapC.WORLD_MIN)
+	var sx: int = MapsC.size().x  # (the map's width and depth, m: a pixel a metre)
+	var sz: int = MapsC.size().y
+	var origin: Vector2 = MapsC.origin()
 	var h := PackedFloat32Array()
-	h.resize(size * size)
+	h.resize(sx * sz)
 	var ids := PackedByteArray()
-	ids.resize(size * size)
-	for y in size:
-		for x in size:
+	ids.resize(sx * sz)
+	for y in sz:
+		for x in sx:
 			var at := Vector3(origin.x + x + 0.5, 0, origin.y + y + 0.5)
 			var v: float = terrain.data.get_height(at)
-			h[y * size + x] = 0.0 if is_nan(v) else v
-			ids[y * size + x] = terrain.data.get_control_base_id(at)
-	var img := Image.create_empty(size, size, false, Image.FORMAT_RGB8)
-	for y in size:
-		for x in size:
-			var i := y * size + x
+			h[y * sx + x] = 0.0 if is_nan(v) else v
+			ids[y * sx + x] = terrain.data.get_control_base_id(at)
+	var img := Image.create_empty(sx, sz, false, Image.FORMAT_RGB8)
+	for y in sz:
+		for x in sx:
+			var i := y * sx + x
 			var c: Color = COLORS.get(ids[i], Color.MAGENTA)
 			var hx := h[mini(i + 1, h.size() - 1)] - h[i]
-			var hy := h[mini(i + size, h.size() - 1)] - h[i]
+			var hy := h[mini(i + sx, h.size() - 1)] - h[i]
 			var light := clampf(1.0 - (hx + hy) * 0.35, 0.4, 1.35)
 			if h[i] < WATER_LEVEL:
 				c = Color(0.30, 0.50, 0.68)
 			elif absf(hx) > 1.2 or absf(hy) > 1.2:
 				c = Color(0.36, 0.33, 0.30)  # cliffs
 			elif floori(h[i] / CONTOUR) != floori(h[mini(i + 1, h.size() - 1)] / CONTOUR) \
-					or floori(h[i] / CONTOUR) != floori(h[mini(i + size, h.size() - 1)] / CONTOUR):
+					or floori(h[i] / CONTOUR) != floori(h[mini(i + sx, h.size() - 1)] / CONTOUR):
 				c = c.darkened(0.18)  # a contour line every CONTOUR m of height
 			img.set_pixel(x, y, c * light)
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
 	img.save_png(OUT_DIR + "map.png")
 
 	var heights := []
-	for y in range(0, size, HEIGHT_STEP):
-		for x in range(0, size, HEIGHT_STEP):
-			heights.append(snappedf(h[y * size + x], 0.1))
+	for y in range(0, sz, HEIGHT_STEP):
+		for x in range(0, sx, HEIGHT_STEP):
+			heights.append(snappedf(h[y * sx + x], 0.1))
 	var roads := []
 	for r in WorldMapC.roads():
 		var pts := []
@@ -113,13 +115,13 @@ func _run() -> void:
 		var at: Vector2 = WorldMapC.site(p[1])
 		labels.append([at.x, at.y, p[0]])
 	var world := {
-		"origin": [origin.x, origin.y], "size": size, "water_level": WATER_LEVEL,
+		"origin": [origin.x, origin.y], "size": maxi(sx, sz), "width": sx, "depth": sz, "water_level": WATER_LEVEL,
 		"height_step": HEIGHT_STEP, "heights": heights, "roads": roads, "creek": creek,
 		"things": things, "labels": labels, "anchors": anchors,
 	}
 	var f := FileAccess.open(OUT_DIR + "world.json", FileAccess.WRITE)
 	f.store_string(JSON.stringify(world))
-	print("map: %dx%d, %d roads, %d things -> %s" % [size, size, roads.size(), things.size(), OUT_DIR])
+	print("map: %dx%d, %d roads, %d things -> %s" % [sx, sz, roads.size(), things.size(), OUT_DIR])
 	quit()
 
 
