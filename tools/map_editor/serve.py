@@ -102,15 +102,19 @@ def write_layout(data, path):
 
 
 def new_map(name, width, depth):
-    """A blank map: no areas, shapes, nodes or roads yet. Returns its id."""
+    """A blank map: no areas, shapes, nodes or roads yet, and every building and place there is (as
+    Hearthvale has them) still to put down (`placed: false`: the game keeps them out till they are).
+    Returns its id."""
     map_id = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")[:32] or "map"
     reg = read_registry()
     taken = {m["id"] for m in reg["maps"]}
     base, n = map_id, 2
     while map_id in taken:
         map_id, n = "%s_%d" % (base, n), n + 1
+    with open(map_path("layout"), encoding="utf-8") as f:
+        anchors = [{**a, "at": [width / 2, depth / 2], "yaw": 0.0, "placed": False} for a in json.load(f).get("anchors", [])]
     layout = {"version": 1, "world": {"size": [width, depth], "origin": [0, 0]},
-              "areas": [], "labels": [], "terrain": [], "patches": [], "lines": [], "points": [], "anchors": []}
+              "areas": [], "labels": [], "terrain": [], "patches": [], "lines": [], "points": [], "anchors": anchors}
     write_layout(layout, map_path("layout", map_id))
     reg["maps"].append({"id": map_id, "name": name})
     write_registry(reg)

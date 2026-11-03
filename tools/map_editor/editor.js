@@ -145,6 +145,7 @@ const Editor = (() => {
 		E.commit();
 		for (const { kind, obj } of E.sel) {
 			if (E.kinds[kind].fixed) continue;  // (one of a kind: it can move, not go)
+			if (E.kinds[kind].removed) E.kinds[kind].removed(obj);
 			const list = E.layout[kind];
 			const i = list.indexOf(obj);
 			if (i >= 0) list.splice(i, 1);
@@ -825,6 +826,7 @@ const Editor = (() => {
 		[E.maps, E.layout, E.catalog, E.baked, E.terrainReport] = await Promise.all([get("/api/maps"), get("/api/layout"), get("/api/catalog"), get("/api/baked"), get("/api/terrain_report")]);
 		for (const k of ["areas", "labels", "terrain", "patches", "lines", "points", "anchors"]) E.layout[k] = E.layout[k] || [];
 		await E.reloadWorld();
+		if (E.loadHome) await E.loadHome();
 		setupMaps();
 		{  // start on the map's middle, all of it in view
 			const [x0, z0, w, d] = E.bounds();

@@ -142,6 +142,7 @@
 			return hs;
 		},
 		move(o, dx, dz) { E.moveArea(o, [o.at[0] + dx, o.at[1] + dz], o.yaw || 0); },
+		removed(o) { if (E.areaRemoved) E.areaRemoved(o); },
 		panel(o, box) {
 			const t = TYPES[o.type];
 			const num = (value, step, onset) => {
@@ -224,15 +225,31 @@
 			}
 			row.append(el("button", { class: placing === "label" ? "on" : "", title: "A name written on the map", onclick: () => { placing = "label"; rebuild(); } }, "A name…"));
 			box.append(row);
-			if (placing !== "label" && have.has(placing)) placing = Object.keys(TYPES).find((t) => !have.has(t)) || "label";
+			const places = E.unplacedPlaces ? E.unplacedPlaces() : [];
+			if (places.length) {  // (the places a map hasn't put down yet)
+				const prow = el("span", { class: "row" }, el("span", { class: "muted" }, "places:"));
+				for (const [id, name] of places) {
+					prow.append(el("button", { class: placing === "place:" + id ? "on" : "", title: "Put it down: then drag it, turn it", onclick: () => { placing = "place:" + id; rebuild(); } }, name));
+				}
+				box.append(prow);
+			}
+			if (placing.startsWith("place:") && !places.some(([id]) => "place:" + id === placing)) placing = "label";
+			if (placing !== "label" && !placing.startsWith("place:") && have.has(placing)) placing = Object.keys(TYPES).find((t) => !have.has(t)) || "label";
 		},
 		hint() {
 			if (placing === "label") return "Click where the name goes, then type it in on the right.";
+			if (placing.startsWith("place:")) return "Click where it goes; then drag it, or its round handle to turn it.";
 			return `Click where ${TYPES[placing].label.replace(/ \(.*\)$/, "")} goes (its middle).`;
 		},
 		move(x, z) { hover = [x, z]; },
 		down(x, z) {
 			E.commit();
+			if (placing.startsWith("place:")) {
+				const p = E.placePlace(placing.slice(6), x, z);
+				if (p) { E.select("anchors", p); E.changed(); }
+				E.setTool(E.tool);
+				return;
+			}
 			if (placing === "label") {
 				const o = { id: E.uniqueId("name"), name: "", at: [E.round(x), E.round(z)] };
 				E.layout.labels.push(o);
@@ -250,7 +267,7 @@
 			E.setTool(E.tool);  // (that one's placed: the palette moves on)
 		},
 		preview(ctx) {
-			if (!hover || placing === "label") return;
+			if (!hover || placing === "label" || placing.startsWith("place:")) return;
 			const o = { type: placing, at: hover };
 			E.path(outline(o), true);
 			ctx.setLineDash([6, 5]);

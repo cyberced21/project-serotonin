@@ -33,9 +33,10 @@
 	E.registerKind("anchors", {
 		label: "Building",
 		fixed: true,
-		title: (o) => `${shape(o).name} · ${shape(o).kind}`,
-		color: (o) => COLORS[shape(o).kind] || "#999",
+		title: (o) => `${shape(o).name} · ${shape(o).kind}${o.placed === false ? " (not placed)" : ""}`,
+		color: (o) => (o.placed === false ? "#555" : COLORS[shape(o).kind] || "#999"),
 		draw(ctx, o, selected) {
+			if (o.placed === false) return;  // (a new map's, till its area or the Areas tool puts it down)
 			const pts = corners(o);
 			const sh = shape(o);
 			E.path(pts, true);
@@ -73,6 +74,7 @@
 			void z0;
 		},
 		hit(o, x, z, tol) {
+			if (o.placed === false) return false;
 			const pts = corners(o);
 			if (E.inPoly(x, z, pts)) return 0.5;  // (inside: a hit, but anything thin on top of it wins)
 			let best = Infinity;
@@ -80,6 +82,7 @@
 			return best < tol ? best : false;
 		},
 		handles(o) {
+			if (o.placed === false) return [];
 			const [fx, fz] = front(o);
 			return [
 				{ x: o.at[0], z: o.at[1], set: (x, z) => { o.at = [E.round(x), E.round(z)]; after(); } },
@@ -157,11 +160,11 @@
 		const walks = (E.layout.lines || []).filter((l) => (E.catalog.lines[l.type] || {}).walk);
 		for (let i = 0; i < list.length; i++) {
 			const a = list[i];
-			if (!solid(a)) continue;
+			if (!solid(a) || a.placed === false) continue;
 			const pa = corners(a, -0.3);  // (a hand's breadth in: touching walls are fine)
 			for (let k = i + 1; k < list.length; k++) {
 				const b = list[k];
-				if (solid(b) && polysTouch(pa, corners(b, -0.3))) warn(a, `overlaps ${shape(b).name}`);
+				if (solid(b) && b.placed !== false && polysTouch(pa, corners(b, -0.3))) warn(a, `overlaps ${shape(b).name}`);
 			}
 			const d = door(a);
 			if (d && walks.length) {

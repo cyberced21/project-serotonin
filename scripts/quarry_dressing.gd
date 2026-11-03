@@ -64,7 +64,7 @@ func _ready() -> void:
 
 
 func _at(dist: float, angle_deg: float) -> Vector3:
-	var a := deg_to_rad(angle_deg)
+	var a := deg_to_rad(angle_deg) - WorldMap.area_yaw(&"quarry")  # (round with the pit, turned)
 	var c := WorldMap.quarry_center()
 	var p := Vector3(c.x + cos(a) * dist, 0.0, c.y + sin(a) * dist)
 	p.y = _height(p)

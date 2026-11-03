@@ -97,7 +97,7 @@ func _run() -> void:
 	var things := []
 	for g in ["building", "fixture", "prop"]:
 		for n in get_nodes_in_group(g):
-			if _in_layout(n) or _anchored(n, anchored):
+			if _in_layout(n) or _anchored(n, anchored) or _kept_out(n):
 				continue
 			var p := (n as Node3D).global_position
 			var r := float(n.call("footprint_radius")) if n.has_method("footprint_radius") else 1.0
@@ -170,6 +170,15 @@ func _carried(m: Node, top: Node) -> bool:
 func _anchored(n: Node, anchored: Dictionary) -> bool:
 	while n:
 		if anchored.has(n):
+			return true
+		n = n.get_parent()
+	return false
+
+
+## Whether `n` is kept out of this map (LayoutAnchors.keep_out: an area or a building it hasn't).
+func _kept_out(n: Node) -> bool:
+	while n:
+		if n.has_meta(&"kept_out"):
 			return true
 		n = n.get_parent()
 	return false
