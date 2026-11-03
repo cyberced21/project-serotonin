@@ -54,12 +54,16 @@ func _run() -> void:
 	root.get_node("DayNight").emit_signal("day_broke")
 	_check(is_equal_approx(roads.call("bonus_at", on_street), 1.15), "next morning, +15%% on it (%.2f)" % roads.call("bonus_at", on_street))
 	_check(is_equal_approx(roads.call("bonus_at", off), 1.0), "...and nothing off it")
+	await _frames(3)
+	await _looks(on_street, WorldMap.TEX_PACKED, &"packed", "packed earth")
 	var cobble := StringName("road:main_street:2")
 	_check(not projects.call("get_project", cobble).is_empty() and projects.call("is_locked", cobble), "cobbles are next, waiting for the town hall")
 	village.call("set_tier", &"town_hall", 2)
 	_check(projects.call("pay", cobble), "with the hall at tier 2, cobbles")
 	root.get_node("DayNight").emit_signal("day_broke")
 	_check(is_equal_approx(roads.call("bonus_at", on_street), 1.30), "cobbled, +30%% (%.2f)" % roads.call("bonus_at", on_street))
+	await _frames(3)
+	await _looks(on_street, WorldMap.TEX_COBBLE, &"cobble", "stone setts")
 
 	var saved: Dictionary = roads.call("to_dict")
 	roads.call("from_dict", {})
@@ -75,6 +79,19 @@ func _run() -> void:
 	else:
 		print("test_roads: %d FAILED" % _fails)
 		quit(1)
+
+
+## Built, the street's cells are painted `id`, its edging's laid, and standing on it sounds `surface`.
+func _looks(at: Vector3, id: int, surface: StringName, what: String) -> void:
+	var terrain := get_first_node_in_group("terrain") as Terrain3D
+	_check(terrain.data.get_control_base_id(at) == id, "the street is %s now (id %d)" % [what, terrain.data.get_control_base_id(at)])
+	var look := get_first_node_in_group("road_look")
+	_check(look != null and look.find_child("Edging_main_street", false, false) != null, "...edged along both sides")
+	var player := get_first_node_in_group("player") as Node3D
+	player.call("teleport", at + Vector3.UP * 0.05)
+	await _frames(10)
+	var heard: StringName = player.get("footsteps").call("surface")
+	_check(heard == surface, "...and it sounds %s underfoot (%s)" % [surface, heard])
 
 
 ## The middle of road `id` as laid, on the ground.

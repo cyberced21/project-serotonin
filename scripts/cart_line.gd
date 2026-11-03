@@ -6,9 +6,27 @@ extends Node3D
 ## takes you along the better roads (their laid lines, joined where they meet) to that stop, at up
 ## to RIDE_SPEED: you sit on its seat, free to look round, and moving hops you off on the way.
 ## It only runs on roads at level 1 or more (Roads), so better roads grow its network. Free to ride.
-## (A stand-in cart for now: the hay cart, no pony yet.)
+## Picked on the road travel page: the village kit's covered wagon, a donkey between its shafts,
+## the carter up front in his apron and cap, the donkey's hooves and the wagon's rattle (louder the
+## quicker it goes), a handbell at the stop (audio/cart/SOURCES.md).
 
-const CART := preload("res://models/field/cart.glb")
+const WAGON := preload("res://models/cart/wagon.glb")
+const DONKEY := preload("res://models/animals/donkey.glb")
+const CARTER := preload("res://models/village/villager_keeper.glb")
+const HOOVES := preload("res://audio/cart/hooves.wav")
+const RATTLE := preload("res://audio/cart/rattle.wav")
+const BELL := preload("res://audio/cart/bell.wav")
+## The rig faces -Z, the way it goes. The wagon's shafts are its +Z: turned round, its body's
+## middle on the rig's origin; the donkey between the shafts, the carter on the front of the bed,
+## your seat at the back, looking out to the side. (m, in the rig's frame)
+const WAGON_AT := Vector3(0, 0, -2.3)
+const DONKEY_AT := Vector3(0, 0, -3.0)
+const DONKEY_SCALE := 0.33  # (Animal's: the models are made big)
+const CARTER_AT := Vector3(0.25, 0.78, -0.95)
+const SEAT_AT := Vector3(-0.3, 0.82, 1.5)
+## Loud at full tilt, quiet at a walk (dB), heard this far (m).
+const SOUND_DB := 0.0
+const SOUND_RANGE := 40.0
 ## Fastest it goes (m/s, ~3x your jog), how quickly it gets there and slows, and how it comes up to
 ## the stop you rang at: from this far back along the road, at this pace.
 const RIDE_SPEED := 16.0
@@ -42,6 +60,9 @@ var _speed := 0.0
 var _phase := &""  # &"coming", &"waiting", &"riding", &"leaving"
 var _wait := 0.0
 var _to: StringName
+var _anim: AnimationPlayer
+var _hooves: AudioStreamPlayer3D
+var _rattle: AudioStreamPlayer3D
 
 
 func _ready() -> void:
@@ -197,29 +218,79 @@ func call_cart(from: StringName, to: StringName) -> void:
 	_phase = &"coming"
 	_make_cart()
 	_place()
-	Sfx.play_ui(&"open")  # (the bell: a stand-in)
+	_ring(stops[from]["at"])
+
+
+## The stop's bell, rung where you are.
+func _ring(at: Vector2) -> void:
+	var bell := AudioStreamPlayer3D.new()
+	bell.stream = BELL
+	bell.bus = &"Effects"
+	bell.max_distance = 30.0
+	add_child(bell)
+	bell.global_position = Vector3(at.x, _ground(at) + 1.6, at.y)
+	bell.play()
+	bell.finished.connect(bell.queue_free)
 
 
 func _make_cart() -> void:
 	_cart = Node3D.new()
 	_cart.name = "Cart"
 	add_child(_cart)
-	var model := CART.instantiate() as Node3D
-	_cart.add_child(model)
-	var box := AABB()
-	var any := false
-	for m in model.find_children("*", "MeshInstance3D", true, false):
-		var mi := m as MeshInstance3D
-		var b := mi.transform * mi.get_aabb()
-		box = b if not any else box.merge(b)
-		any = true
+	var wagon := WAGON.instantiate() as Node3D
+	wagon.transform = Transform3D(Basis(Vector3.UP, PI), WAGON_AT)
+	_cart.add_child(wagon)
+	var donkey := DONKEY.instantiate() as Node3D
+	donkey.scale *= DONKEY_SCALE
+	donkey.rotation.y = PI  # (the animals face +Z)
+	donkey.position = DONKEY_AT
+	_cart.add_child(donkey)
+	var players := donkey.find_children("*", "AnimationPlayer", true, false)
+	_anim = players[0] as AnimationPlayer if not players.is_empty() else null
+	var carter := CARTER.instantiate() as Node3D
+	carter.position = CARTER_AT
+	for m in carter.find_children("*", "MeshInstance3D", true, false):
+		(m as MeshInstance3D).material_override = PaletteMaterial.for_mesh((m as MeshInstance3D).mesh)
+	_cart.add_child(carter)
 	_seat = Marker3D.new()
 	_seat.name = "Seat"
 	_seat.set_meta(&"cart", true)
-	# on the cart's bed, at the back, facing out to one side (the land going by)
-	_seat.position = Vector3(box.get_center().x, box.position.y + box.size.y * 0.45, box.get_center().z) if any else Vector3(0, 0.9, 0)
-	_seat.rotation.y = PI * 0.5
+	_seat.position = SEAT_AT
+	_seat.rotation.y = PI * 0.5  # (facing out to one side: the land going by)
 	_cart.add_child(_seat)
+	_hooves = _loop(HOOVES)
+	_rattle = _loop(RATTLE)
+
+
+## A sound on the cart, looping, quiet till it moves.
+func _loop(sound: AudioStreamWAV) -> AudioStreamPlayer3D:
+	var stream := sound.duplicate() as AudioStreamWAV
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	stream.loop_end = stream.data.size() / 2  # (16-bit mono: samples)
+	var p := AudioStreamPlayer3D.new()
+	p.stream = stream
+	p.bus = &"Effects"
+	p.max_distance = SOUND_RANGE
+	p.volume_db = -80.0
+	p.position = Vector3(0, 0.8, 0)
+	_cart.add_child(p)
+	p.play(randf() * stream.get_length())
+	return p
+
+
+## The donkey walks or gallops with the cart's pace, the sounds louder the quicker it goes.
+func _animate() -> void:
+	var pace := clampf(_speed / RIDE_SPEED, 0.0, 1.0)
+	if _anim:
+		var clip := &"Idle" if _speed < 0.3 else (&"Walk" if _speed < 6.0 else &"Gallop")
+		if _anim.has_animation(clip):
+			if _anim.current_animation != clip:
+				_anim.play(clip, 0.3)
+			_anim.speed_scale = 1.0 if clip == &"Idle" else clampf(_speed / (2.0 if clip == &"Walk" else 9.0), 0.4, 2.0)
+	var loud := SOUND_DB + linear_to_db(maxf(0.15 + pace * 0.85, 0.001)) if _speed > 0.3 else -80.0
+	for p in [_hooves, _rattle]:
+		p.volume_db = lerpf(p.volume_db, loud, 0.1)
+		p.pitch_scale = 0.9 + pace * 0.2
 
 
 func _physics_process(delta: float) -> void:
@@ -281,6 +352,7 @@ func _place() -> void:
 	if s > _along[-1]:  # (driving off past the end)
 		p = _path[-1] + dir * (s - _along[-1])
 	_cart.global_position = Vector3(p.x, _ground(p), p.y)
+	_animate()
 	var look := Vector3(dir.x, 0, dir.y)
 	if look.length_squared() > 0.001:
 		_cart.global_basis = _cart.global_basis.slerp(Basis.looking_at(look), 0.2)

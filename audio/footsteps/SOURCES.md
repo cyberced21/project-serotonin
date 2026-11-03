@@ -13,6 +13,8 @@ to the loudness of the clips they replaced, so the mix didn't move.
 | rock_01-04.wav | rock | Footsteps Gravel Stones - Walk | Vrymaa | https://freesound.org/people/Vrymaa/sounds/825854/ |
 | water_01-04.wav | shallow water | Wading in a shallow river | macdaddyno1 | https://freesound.org/people/macdaddyno1/sounds/321594/ |
 | wood_01-04.wav | the footbridge's planks | Footsteps over Wooden Bridge (WAV) | OBXJohn | https://freesound.org/people/OBXJohn/sounds/253090/ |
+| packed_01-04.wav | a packed road (plans/road-travel.md) | Footsteps_On_Dirt.wav | lzmraul | https://freesound.org/people/lzmraul/sounds/389454/ |
+| cobble_01-04.wav | a cobbled road | Footsteps on Stone - Variations | SecureSubset | https://freesound.org/people/SecureSubset/sounds/784301/ |
 
 Rock and water steps are cut longer (about 0.55 s and 0.85 s) so the stones settle and the water
 moves after each footfall; picked in a second round after the first candidates sounded too alike.

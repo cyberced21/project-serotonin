@@ -14,6 +14,8 @@ const TEX_FOREST := 3    # forest floor
 const TEX_FIELD := 4     # meadow
 const TEX_QUARRY := 5    # quarry stone
 const TEX_CROP := 6      # crop squares in the field
+const TEX_PACKED := 7    # a packed road (Roads paints it over a better road's cells: plans/road-travel.md)
+const TEX_COBBLE := 8    # a cobbled one
 
 ## The places (plans/world-pass.md, map C; plans/map-maker.md): the map's areas, each placed in
 ## the map editor (its layout's "areas": {id, type, at: [x, z], yaw (degrees), name?, and its

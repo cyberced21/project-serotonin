@@ -42,7 +42,10 @@ ICONS = {
     "char": ("fish/char.glb", (1.0, 0.25, 0.45)),
     "grayling": ("fish/grayling.glb", (1.0, 0.25, 0.45)),
     "salmon": ("fish/salmon.glb", (1.0, 0.25, 0.45)),
+    "stone": ("items/stone.glb", (1.0, -1.0, 0.8)),
 }
+# Models that keep their own textured material instead of the palette (a pack's own atlas).
+OWN_MATERIAL = {"stone"}
 # The forged tools (Greta's Forge tab): tool_<type>_<tier>, seen side-on with the head up.
 for _tool, _tiers in (("pickaxe", 4), ("axe", 4), ("sickle", 2)):
     for _t in range(_tiers):
@@ -100,6 +103,14 @@ def render(item_id, model, view, tilt=0.0):
         bpy.context.view_layer.update()
     meshes = [o for o in scene.objects if o.type == "MESH"]
     for o in meshes:
+        if item_id in OWN_MATERIAL:  # (Workbench's "Texture" colour shows each material's active image)
+            for m in o.data.materials:
+                if m and m.use_nodes:
+                    for node in m.node_tree.nodes:
+                        if node.type == "TEX_IMAGE":
+                            node.interpolation = "Closest"
+                            m.node_tree.nodes.active = node
+            continue
         o.data.materials.clear()
         o.data.materials.append(mat)
 

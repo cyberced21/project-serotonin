@@ -68,6 +68,12 @@ group_uniforms;
 group_uniforms biomes;
 uniform vec3 road_color : source_color = vec3(0.66, 0.63, 0.57);
 uniform int road_texture = 2;
+// Better roads (plans/road-travel.md: the Roads autoload paints them over a road's cells): packed
+// earth, then cobbles (stone setts).
+uniform vec3 packed_color : source_color = vec3(0.62, 0.54, 0.43);
+uniform int packed_texture = 7;
+uniform vec3 cobble_color : source_color = vec3(0.60, 0.60, 0.58);
+uniform int cobble_texture = 8;
 uniform vec3 forest_color : source_color = vec3(0.23, 0.39, 0.22);
 uniform vec3 forest_color_2 : source_color = vec3(0.27, 0.43, 0.24);
 // Needle litter: patches on the forest floor, and its slopes.
@@ -135,6 +141,8 @@ const float LAYER_SNOW = 4.0;
 const float LAYER_FOREST = 5.0;
 const float LAYER_PATH = 6.0;
 const float LAYER_FIELD = 7.0;
+const float LAYER_PACKED = 8.0;
+const float LAYER_SETTS = 9.0;
 // Varyings & Types
 // Some are required for editor functions
 varying float v_vertex_xz_dist;
@@ -292,6 +300,10 @@ void surface_at(vec2 cell, float slope, float wy, out vec3 col, out float layer)
 			col = path_color; layer = LAYER_PATH;
 		} else if (id == road_texture && slope >= rock_slope) {
 			col = road_color; layer = LAYER_PATH;
+		} else if (id == packed_texture && slope >= rock_slope) {
+			col = packed_color; layer = LAYER_PACKED;
+		} else if (id == cobble_texture && slope >= rock_slope) {
+			col = cobble_color; layer = LAYER_SETTS;
 		} else if (id == forest_texture && slope >= rock_slope) {
 			bool litter = !level || vnoise(world / (patch_size * 0.5) + 17.0) < 0.22;
 			col = litter ? needle_color : mix(forest_color, forest_color_2, pick);
