@@ -6,6 +6,9 @@ extends SceneTree
 ##   - paid for, a road is laid overnight: no quicker till morning, then quicker on its line only
 ##     (+15%, then +30% cobbled), the best where two meet; saved and loaded
 ##   - you go faster along a packed road than beside it
+##   - the patches (plans/roads-everywhere.md): the village lanes, the market place, the haul road
+##     and the field tracks each have a card too ("Pack ..."), and packed, are quicker on their
+##     cells and painted packed earth, and a road's edging leaves a lane's mouth open
 ##   godot --headless --path . -s res://tools/test_roads.gd -- --save-root=user://tool_worlds
 
 var _fails := 0
@@ -72,6 +75,7 @@ func _run() -> void:
 	_check(int(roads.call("level_of", &"main_street")) == 2, "and a loaded one's as built")
 
 	await _walks_faster(on_street)
+	await _patches(roads, projects)
 
 	if _fails == 0:
 		print("test_roads: all passed")
@@ -79,6 +83,37 @@ func _run() -> void:
 	else:
 		print("test_roads: %d FAILED" % _fails)
 		quit(1)
+
+
+## Every patch is listed with a card; the market place packed is quicker on it and painted.
+func _patches(roads: Node, projects: Node) -> void:
+	var list: Array = roads.call("roads")
+	var patches := list.filter(func(r: Dictionary) -> bool: return r["kind"] == &"patch")
+	for r in patches:
+		var card: Dictionary = projects.call("get_project", StringName("road:%s:1" % r["id"]))
+		print("  %s: %s, as %d m of road" % [card.get("title"), card.get("cost"), r["length"]])
+	var ids := patches.map(func(r: Dictionary) -> StringName: return r["id"])
+	_check(ids.has(&"lanes") and ids.has(&"market") and ids.has(&"haul_road") and ids.has(&"field_tracks"),
+			"the lanes, the market place, the haul road and the field tracks are bettered too (%s)" % [ids])
+	var card: Dictionary = projects.call("get_project", &"road:market:1")
+	_check(not card.is_empty() and card["title"] == "Pack the market place", "...each on the board (%s)" % card.get("title"))
+	var cells: Dictionary = roads.call("patch_cells")
+	var at := Vector2i.ZERO
+	for c in cells:
+		if cells[c] == &"market" and WorldMap.in_market(Vector2(c) + Vector2(0.5, 0.5)):
+			at = c
+			break
+	var terrain := get_first_node_in_group("terrain") as Terrain3D
+	var p := Vector3(at.x + 0.5, 0, at.y + 0.5)
+	p.y = terrain.data.get_height(p)
+	_check(is_equal_approx(roads.call("bonus_at", p), 1.0), "the market place as laid is no quicker")
+	_check(projects.call("pay", &"road:market:1"), "packing it paid for")
+	root.get_node("DayNight").emit_signal("day_broke")
+	_check(is_equal_approx(roads.call("bonus_at", p), 1.15), "next morning, +15%% on it (%.2f)" % roads.call("bonus_at", p))
+	await _frames(3)
+	_check(terrain.data.get_control_base_id(p) == WorldMap.TEX_PACKED, "...and it's packed earth (id %d)" % terrain.data.get_control_base_id(p))
+	var lane: Vector2i = cells.keys().filter(func(c: Vector2i) -> bool: return cells[c] == &"lanes")[0]
+	_check(terrain.data.get_control_base_id(Vector3(lane.x + 0.5, 0, lane.y + 0.5)) == WorldMap.TEX_PATH, "...the lanes not (they're their own card)")
 
 
 ## Built, the street's cells are painted `id`, its edging's laid, and standing on it sounds `surface`.

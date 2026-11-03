@@ -5,8 +5,9 @@ extends Node3D
 ## packed earth and stone setts, the footsteps' packed and cobble), and its edging laid along both
 ## sides: timber boards along a packed road, kerb stones along a cobbled one. Done when the world
 ## loads and again each time a road's level changes (Roads.changed: the morning after it's paid
-## for). The edging leaves a gap where another road comes in or the market place opens off it,
-## and stops over water.
+## for). The edging leaves a gap where another road comes in or the market place or a patch (a
+## lane, the field tracks: Roads.patch_cells) opens off it, and stops over water. A bettered
+## patch's cells are painted too, unedged (plans/roads-everywhere.md).
 
 ## Edging: [length, width, height, gap between pieces (m), colour] for each level.
 const EDGING := {
@@ -33,6 +34,7 @@ func _refresh() -> void:
 	_terrain = get_tree().get_first_node_in_group("terrain") as Terrain3D
 	if _terrain == null or _terrain.data == null:
 		return
+	var cells := Roads.patch_cells()  # (read before anything's painted)
 	for n in _edging:
 		remove_child(n)  # (now: the new edging takes its name)
 		n.queue_free()
@@ -46,6 +48,13 @@ func _refresh() -> void:
 	var painted := 0
 	for b in better:
 		painted += _paint(b[1], WorldMap.TEX_PACKED if b[0] == 1 else WorldMap.TEX_COBBLE)
+	for c in cells:
+		var lvl := Roads.level_of(cells[c])
+		var id := WorldMap.TEX_PACKED if lvl == 1 else WorldMap.TEX_COBBLE
+		var at := Vector3(c.x + 0.5, 0, c.y + 0.5)
+		if lvl > 0 and _terrain.data.get_control_base_id(at) != id:
+			_terrain.data.set_control_base_id(at, id)
+			painted += 1
 	if painted > 0:
 		_terrain.data.update_maps(Terrain3DRegion.TYPE_CONTROL, true, false)
 	for b in better:
@@ -87,6 +96,7 @@ func _edge(r: Dictionary, lvl: int) -> void:
 	var pts: PackedVector2Array = r["pts"]
 	var side: float = r["half_width"] + spec[1] * 0.5
 	var others: Array = WorldMap.roads().filter(func(o: Dictionary) -> bool: return o["id"] != r["id"])
+	var cells := Roads.patch_cells()
 	var places: Array[Transform3D] = []
 	var walked := 0.0
 	var next := step * 0.5
@@ -100,8 +110,8 @@ func _edge(r: Dictionary, lvl: int) -> void:
 			var across := Vector2(-along.y, along.x)
 			for s in [-1.0, 1.0]:
 				var q: Vector2 = p + across * side * s
-				if _near_other_road(q, others) or WorldMap.in_market(q + across * s * 1.5):
-					continue  # (a road comes in here, or the market place opens off it: leave it open)
+				if _near_other_road(q, others) or WorldMap.in_market(q + across * s * 1.5) 						or cells.has(Vector2i((q + across * s * 1.2).floor())):
+					continue  # (a road comes in here, or the market place or a lane opens off it: leave it open)
 				var h := _terrain.data.get_height(Vector3(q.x, 0, q.y))
 				if is_nan(h) or h < WATER:
 					continue

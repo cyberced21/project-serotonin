@@ -60,6 +60,9 @@ const BETTER_PREFIX := "road:"
 ## A better road's card: [title verb, what it does].
 const BETTER := [[], ["Pack and edge", "Packed earth and kerb stones the whole way: firmer and quicker underfoot (+15%). Laid overnight."],
 	["Cobble", "Stone setts the whole way, kerbs and all: the quickest going there is (+30%). Laid overnight."]]
+## A better patch's (the lanes, the market place: Roads.PATCHES): no kerbs, it's open ground.
+const BETTER_PATCH := [[], ["Pack", "Packed earth all over: firmer and quicker underfoot (+15%). Laid overnight."],
+	["Cobble", "Stone setts all over: the quickest going there is (+30%). Laid overnight."]]
 
 var _done: Dictionary[StringName, bool] = {}
 ## Whether this world has somewhere for the footbridge (set by VillageDecor): if not, it isn't
@@ -95,8 +98,9 @@ func all() -> Array[Dictionary]:
 	for r in Roads.roads():  # each road's next level (or its last, done)
 		var now := Roads.planned_level(r["id"])
 		var lvl := mini(now + 1, Roads.MAX_LEVEL)
+		var words: Array = (BETTER_PATCH if r["kind"] == &"patch" else BETTER)[lvl]
 		out.append({"id": StringName("%s%s:%d" % [BETTER_PREFIX, r["id"], lvl]),
-				"title": "%s %s" % [BETTER[lvl][0], _lower_first(r["title"])], "blurb": BETTER[lvl][1],
+				"title": "%s %s" % [words[0], _lower_first(r["title"])], "blurb": words[1],
 				"cost": _cost(&"", Roads.cost(r["length"], lvl)), "hall": Roads.HALL[lvl], "done": now >= lvl, "road": &"", "better": r["id"]})
 	return out
 
