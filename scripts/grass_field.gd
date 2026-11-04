@@ -16,10 +16,12 @@ const FOREST_IDS: Array[int] = [WorldMap.TEX_FOREST]
 const FIELD_IDS: Array[int] = [WorldMap.TEX_FIELD]
 ## Terrain shader colours used when its material doesn't override them.
 const DEFAULT_COLORS := {
-	&"grass_color": Color(0.36, 0.55, 0.30), &"grass_color_2": Color(0.42, 0.60, 0.31),
-	&"forest_color": Color(0.23, 0.39, 0.22), &"forest_color_2": Color(0.27, 0.43, 0.24),
-	&"field_color": Color(0.50, 0.62, 0.29), &"field_color_2": Color(0.56, 0.66, 0.31),
+	&"grass_color": Color(0.29, 0.55, 0.21), &"grass_color_2": Color(0.40, 0.63, 0.23),
+	&"forest_color": Color(0.17, 0.37, 0.18), &"forest_color_2": Color(0.23, 0.43, 0.20),
+	&"field_color": Color(0.49, 0.66, 0.24), &"field_color_2": Color(0.58, 0.70, 0.26),
 }
+## The terrain shader's colour push away from grey, applied to the blades too.
+const DEFAULT_SATURATION := 1.1
 
 ## Ring radius (m) at full foliage distance.
 @export var radius := 38.0
@@ -34,6 +36,7 @@ var _material: ShaderMaterial
 var _chunks: Dictionary[Vector2i, MultiMeshInstance3D] = {}
 var _keep_out: Dictionary[Vector2i, Array] = {}  # chunk -> [(x, z, r), ...] touching it
 var _colors := {}
+var _saturation := DEFAULT_SATURATION
 var _radius := 0.0
 var _density := 0.0
 
@@ -54,6 +57,8 @@ func _setup() -> void:
 	for key in DEFAULT_COLORS:
 		var c: Variant = _terrain.material.get_shader_param(key) if _terrain.material else null
 		_colors[key] = Color(c.x, c.y, c.z) if c is Vector3 else (c if c is Color else DEFAULT_COLORS[key])
+	var sat: Variant = _terrain.material.get_shader_param(&"saturation") if _terrain.material else null
+	_saturation = float(sat) if sat != null else DEFAULT_SATURATION
 	_index_keep_out(SceneryScatter.keep_out_spots(get_tree(), 1.2, 0.8, 0.6))
 	_on_settings()
 
@@ -168,7 +173,9 @@ func _color_for(id: int, tint: float) -> Color:
 		a = _colors[&"grass_color"]
 		b = _colors[&"grass_color_2"]
 	# instance colours reach the shader as they are: convert, like a source_color uniform would be
-	return (a.lerp(b, tint) * (0.9 + tint * 0.16)).srgb_to_linear()
+	var c := (a.lerp(b, tint) * (0.9 + tint * 0.16)).srgb_to_linear()
+	var luma := c.r * 0.299 + c.g * 0.587 + c.b * 0.114
+	return Color(luma, luma, luma).lerp(c, _saturation)
 
 
 ## Files each keep-out circle under every chunk it touches.
