@@ -22,10 +22,7 @@ func _ready() -> void:
 
 ## Shown under the crosshair (player.gd treats anything with interact() like a villager).
 func prompt() -> String:
-	var open := 0
-	for p in Projects.all():
-		if not p["done"] and not Projects.is_locked(p["id"]):
-			open += 1
+	var open := Projects.open_count()
 	return "E  Read the noticeboard (%d %s)" % [open, "project" if open == 1 else "projects"]
 
 

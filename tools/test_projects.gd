@@ -33,6 +33,18 @@ func _run() -> void:
 		print("  %-48s hall %d  %s" % [p["title"], p["hall"], p["cost"]])
 	var better := all.filter(func(p: Dictionary) -> bool: return p.get("better", &"") != &"")
 	_check(all.size() == 14 + roads.size() + better.size() and roads.size() >= 5, "six decorations, the market stall, the bakery terrace, the mine's shoring, five fixtures and new places' projects, a road project per unlit stretch, and a better road per road (%d)" % better.size())
+	# the board's categories (plans/noticeboard.md)
+	var cats: Array = projects.call("categories")
+	var by_cat := {}
+	var listed := 0
+	for c in cats:
+		by_cat[c["id"]] = (c["projects"] as Array).map(func(p: Dictionary) -> StringName: return p["id"])
+		listed += (c["projects"] as Array).size()
+	print("categories: %s" % ", ".join(cats.map(func(c: Dictionary) -> String: return "%s %d" % [c["name"], c["projects"].size()])))
+	_check(cats.size() == 5 and listed == all.size(), "five categories, every project in one (%d of %d)" % [listed, all.size()])
+	_check(&"benches" in by_cat[&"green"] and &"market" in by_cat[&"green"] and &"mend_granary" in by_cat[&"mending"]
+			and &"mine_shoring" in by_cat[&"mine"], "the benches and the market on the green, the granary mending, the shoring in the mine")
+	_check((by_cat[&"roads"] as Array).size() == roads.size() + better.size(), "every road's lamps and paving under Roads")
 	_check(not projects.call("can_pay", &"benches"), "no goods, no benches")
 	inventory.call("add", &"wood", 40)
 	_check(projects.call("pay", &"benches") and projects.call("is_done", &"benches"), "paid for, the benches are done")
@@ -75,10 +87,31 @@ func _check_board(world: String, projects: Node) -> void:
 	board.call("interact")
 	await _frames(3)
 	var panel := get_first_node_in_group("noticeboard_panel")
-	var notes: int = (panel.get("_grid") as Node).get_child_count() if panel else 0
-	_check(panel != null and panel.call("is_open") and notes == (projects.call("all") as Array).size(),
-			"%s: E opens it, a note per project (%d)" % [world, notes])
+	_check(panel != null and panel.call("is_open"), "%s: E opens the board" % world)
 	if panel:
+		# every category: each of its projects on a strip or a road's card, in the "later" line, or done
+		var t := Time.get_ticks_usec()
+		for c: Dictionary in projects.call("categories"):
+			if (c["projects"] as Array).is_empty():
+				continue
+			panel.call("show_category", c["id"])
+			var on: Array = (panel.get("shown") as Array) + (panel.get("waiting") as Array) + (panel.get("finished") as Array)
+			var want: Array = (c["projects"] as Array).map(func(p: Dictionary) -> StringName: return p["id"])
+			var missing := want.filter(func(id: StringName) -> bool: return id not in on)
+			print("  %s: %d shown, %d waiting, %d done" % [c["name"], panel.get("shown").size(), panel.get("waiting").size(), panel.get("finished").size()])
+			_check(missing.is_empty() and on.size() == want.size(), "%s: %s has every project once (missing %s)" % [world, c["name"], missing])
+		print("  (shown each in %.1f ms)" % ((Time.get_ticks_usec() - t) / 1000.0 / 5.0))
+		projects.call("set_done", &"benches", true)
+		panel.call("show_category", &"green")
+		_check(&"benches" in panel.get("finished") and &"fountain" in panel.get("waiting") and &"flower_boxes" in panel.get("shown"),
+				"%s: the benches folded under Done, the fountain waiting for the town hall, the flower boxes up" % world)
+		projects.call("set_done", &"benches", false)
+		panel.call("show_category", &"roads")
+		panel.call("close")
+		board.call("interact")
+		await _frames(2)
+		_check(panel.get("last_category") == &"roads" and not (panel.get("shown") as Array).is_empty(), "%s: it opens again on the category you left it on" % world)
+		panel.call("show_category", &"green")
 		panel.call("close")
 	await _check_bridge(world, projects, decor)
 	# every decoration, done: its props stand on the ground, clear of the buildings; undone, gone
