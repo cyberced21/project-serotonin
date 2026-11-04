@@ -46,10 +46,16 @@ func _init() -> void:
 
 ## The map's lettering: a book serif, as an old map would be inked.
 static func map_font(bold := false) -> SystemFont:
-	var f := SystemFont.new()
-	f.font_names = PackedStringArray(["Georgia", "Palatino Linotype", "Book Antiqua", "Cambria", "Times New Roman", "serif"])
-	f.font_weight = 700 if bold else 400
-	return f
+	var i := 1 if bold else 0
+	if _fonts[i] == null:  # (one each, shared: a new SystemFont per label made the noticeboard slow to open)
+		var f := SystemFont.new()
+		f.font_names = PackedStringArray(["Georgia", "Palatino Linotype", "Book Antiqua", "Cambria", "Times New Roman", "serif"])
+		f.font_weight = 700 if bold else 400
+		_fonts[i] = f
+	return _fonts[i]
+
+
+static var _fonts: Array[SystemFont] = [null, null]
 
 
 func _process(_delta: float) -> void:

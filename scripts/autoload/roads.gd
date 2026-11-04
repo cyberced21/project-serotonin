@@ -69,8 +69,23 @@ func has_reached(id: StringName, end: int) -> bool:
 
 ## The roads of this map: [{id, title, kind, length}], in their laying order.
 func roads() -> Array[Dictionary]:
+	var laid := WorldMap.roads()
+	if is_same(laid, _laid) and laid.size() == _laid_size:  # (measured once per map: plans/noticeboard.md)
+		return _measured
+	_laid = laid
+	_laid_size = laid.size()
+	_measured = _measure(laid)
+	return _measured
+
+
+var _laid: Array[Dictionary] = []
+var _laid_size := -1
+var _measured: Array[Dictionary] = []
+
+
+func _measure(laid: Array[Dictionary]) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
-	for r in WorldMap.roads():
+	for r in laid:
 		var pts: PackedVector2Array = r["pts"]
 		if pts.size() < 2:
 			continue

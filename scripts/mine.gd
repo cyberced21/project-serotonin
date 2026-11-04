@@ -226,6 +226,8 @@ func open_cell(n: int, c: Vector2i) -> void:
 	SaveGame.mark_dirty()
 	_refresh.call_deferred(n)  # (not while the panel that gave way is still in its hit)
 	changed.emit()
+	if n == 0 and c in MineLayout.cells_of(0, "L"):  # the shaft dug into: the lift goes up on the board
+		Projects.changed.emit.call_deferred()
 
 
 ## An obstacle came into view: its project goes up on the board.

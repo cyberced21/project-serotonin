@@ -67,16 +67,43 @@ var _done: Dictionary[StringName, bool] = {}
 var footbridge_here := false
 
 
+## all() is kept (plans/noticeboard.md: the board's prompt asks every frame) until something it
+## depends on changes, or STALE_MSEC passes (for needs the world decides: a mine shaft dug into,
+## the landslide cleared). Callers mustn't change what it returns.
+const STALE_MSEC := 1000
+var _all: Array[Dictionary] = []
+var _by_id: Dictionary[StringName, Dictionary] = {}
+var _all_msec := -STALE_MSEC
+
+
 func _ready() -> void:
 	SaveGame.register(&"projects", self)
+	changed.connect(_forget)
 	Lamps.changed.connect(changed.emit)
 	Roads.changed.connect(changed.emit)
 	Companion.adopted.connect(changed.emit)  # (the kennel goes up on the board)
+	Village.tier_changed.connect(func(_id: StringName, _t: int) -> void: _forget())  # (discounts)
+	Village.addon_changed.connect(func(_id: StringName, _s: int, _a: StringName) -> void: _forget())
+
+
+func _forget() -> void:
+	_all_msec = -STALE_MSEC
 
 
 ## Every project of this world, in the board's order: {id, title, blurb, cost, hall, done, road}
 ## (road: the stretch id, or &"" for a decoration).
 func all() -> Array[Dictionary]:
+	var now := Time.get_ticks_msec()
+	if now - _all_msec >= STALE_MSEC:
+		_all = _build()
+		_by_id.clear()
+		for p in _all:
+			_by_id[p["id"]] = p
+		_all_msec = now
+	return _all
+
+
+func _build() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for s in SPOTS:
 		if s[0] == &"footbridge" and not footbridge_here:
@@ -132,10 +159,18 @@ static func _lower_first(t: String) -> String:
 
 
 func get_project(id: StringName) -> Dictionary:
+	all()
+	return _by_id.get(id, {})
+
+
+## How many projects you could pay for now if you had the goods (not done, town hall high enough).
+func open_count() -> int:
+	var hall := Village.tier(Village.TOWN_HALL)
+	var n := 0
 	for p in all():
-		if p["id"] == id:
-			return p
-	return {}
+		if not p["done"] and hall >= int(p["hall"]):
+			n += 1
+	return n
 
 
 func is_done(id: StringName) -> bool:

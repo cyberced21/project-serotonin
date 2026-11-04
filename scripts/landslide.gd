@@ -69,6 +69,10 @@ func open() -> bool:
 
 func _on_broken() -> void:
 	changed.emit()
+	_check_cleared.call_deferred()  # (a boulder counts as broken once it's waiting to grow back: after `depleted`)
+
+
+func _check_cleared() -> void:
 	if cleared():
 		Projects.changed.emit()  # (the wall goes up on the board)
 
