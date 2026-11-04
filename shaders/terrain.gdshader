@@ -7,6 +7,9 @@
 // paths the control map marks), coloured from the palette below and textured with a chunky,
 // nearest-filtered slice of art/textures/ground.png (global `ground_tex`, made by
 // tools/make_textures.py). Neighbouring surfaces meet in ragged, height-blended borders.
+// Depth (plans/ground-depth.md): each slice's height, crevice shade, second-material mask and
+// per-texel normals (`ground_normal`) light tufts and pebbles and shade their gaps up close; a
+// coarser layer, colour patches, shaded hollows, rock ledges and a wandering snow line on top.
 // Terrain3D's Color tool still works: painted colour multiplies the surface colour.
 
 shader_type spatial;
@@ -46,12 +49,12 @@ uniform highp sampler2DArray _color_maps : source_color, filter_nearest, repeat_
 
 // Public Uniforms
 group_uniforms palette;
-uniform vec3 grass_color : source_color = vec3(0.36, 0.55, 0.30);
-uniform vec3 grass_color_2 : source_color = vec3(0.42, 0.60, 0.31);
-uniform vec3 dirt_color : source_color = vec3(0.52, 0.42, 0.30);
-uniform vec3 rock_color : source_color = vec3(0.47, 0.46, 0.45);
+uniform vec3 grass_color : source_color = vec3(0.29, 0.55, 0.21);
+uniform vec3 grass_color_2 : source_color = vec3(0.40, 0.63, 0.23);
+uniform vec3 dirt_color : source_color = vec3(0.52, 0.39, 0.27);
+uniform vec3 rock_color : source_color = vec3(0.50, 0.48, 0.46);
 uniform vec3 sand_color : source_color = vec3(0.80, 0.74, 0.55);
-uniform vec3 snow_color : source_color = vec3(0.92, 0.94, 0.96);
+uniform vec3 snow_color : source_color = vec3(0.95, 0.97, 1.0);
 // Pond / lake bed below `bed_height` — dark and muddy so fish stand out against it. Under the water
 // (plans/water.md) it's silt: sandy on the shallow shelves, going to this mud in the deep, whatever
 // the ground above it was painted (a road or a biome that ran there before the lake grew).
@@ -61,7 +64,7 @@ uniform vec3 silt_color : source_color = vec3(0.62, 0.57, 0.42);
 uniform float silt_depth = 2.5;
 // Dirt paths: cells painted with this texture id (control map base texture; see
 // tools/generate_test_terrain.gd, or Terrain3D's texture paint tool) on walkable slopes.
-uniform vec3 path_color : source_color = vec3(0.63, 0.52, 0.40);
+uniform vec3 path_color : source_color = vec3(0.66, 0.50, 0.34);
 uniform int path_texture = 1;
 group_uniforms;
 // Biome surfaces, by control-map texture id (scripts/world_map.gd TEX_*). Cliffs stay rock.
@@ -75,13 +78,13 @@ uniform vec3 packed_color : source_color = vec3(0.76, 0.65, 0.47);
 uniform int packed_texture = 7;
 uniform vec3 cobble_color : source_color = vec3(0.60, 0.60, 0.58);
 uniform int cobble_texture = 8;
-uniform vec3 forest_color : source_color = vec3(0.23, 0.39, 0.22);
-uniform vec3 forest_color_2 : source_color = vec3(0.27, 0.43, 0.24);
+uniform vec3 forest_color : source_color = vec3(0.17, 0.37, 0.18);
+uniform vec3 forest_color_2 : source_color = vec3(0.23, 0.43, 0.20);
 // Needle litter: patches on the forest floor, and its slopes.
-uniform vec3 needle_color : source_color = vec3(0.42, 0.33, 0.22);
+uniform vec3 needle_color : source_color = vec3(0.48, 0.32, 0.19);
 uniform int forest_texture = 3;
-uniform vec3 field_color : source_color = vec3(0.50, 0.62, 0.29);
-uniform vec3 field_color_2 : source_color = vec3(0.56, 0.66, 0.31);
+uniform vec3 field_color : source_color = vec3(0.49, 0.66, 0.24);
+uniform vec3 field_color_2 : source_color = vec3(0.58, 0.70, 0.26);
 uniform int field_texture = 4;
 uniform vec3 quarry_color : source_color = vec3(0.71, 0.67, 0.59);
 // Quarry walls alternate two rock colours in bands this many metres tall.
@@ -113,7 +116,7 @@ uniform float ground_scale = 0.3;
 // How much the texture lightens and darkens the colour (0 = flat colour).
 uniform float texture_strength : hint_range(0.0, 1.0) = 0.75;
 // Colour the darkest texels shift toward (times the surface colour); the lightest go the other way.
-uniform vec3 shadow_tint = vec3(0.70, 0.76, 0.86);
+uniform vec3 shadow_tint = vec3(0.62, 0.72, 0.90);
 // How sharply neighbouring surfaces' textures cut into each other.
 uniform float blend_sharpness = 4.0;
 // How far slope borders wander with the texture.
@@ -144,7 +147,7 @@ uniform float hue_patch_size = 34.0;
 // Hollows in the land shade darker and ridges lighter (terrain-scale crevices).
 uniform float hollow_strength : hint_range(0.0, 3.0) = 1.2;
 // 1 = the palette as is; above 1 pushes colours away from grey.
-uniform float saturation : hint_range(0.0, 2.0) = 1.0;
+uniform float saturation : hint_range(0.0, 2.0) = 1.1;
 // Second materials, by the slices' masks: colour multipliers over the surface colour.
 uniform vec3 tip_tint : source_color = vec3(1.10, 1.08, 0.82);
 uniform vec3 pebble_tint : source_color = vec3(1.05, 1.08, 1.15);
