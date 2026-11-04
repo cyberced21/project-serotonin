@@ -36,8 +36,8 @@ const SPOTS := [
 	[&"mill_wheel", "Mend the mill wheel", "New paddles for the watermill's wheel below the village, so it turns again and the miller can grind.", {&"oak": 20, &"iron": 10, &"wood": 15}, 2],
 	[&"orchard_wall", "Mend the orchard wall", "Lay the fallen stones of the orchard's wall back up, so the sheep stay out of the apples.", {&"ore": 25, &"wood": 8}, 1],
 	[&"retaining_wall", "Shore up the road east", "A timber wall to hold the slope back, so the landslide's road stays open and traders can come over the pass. Dig out the boulders first.", {&"wood": 25, &"pine": 15, &"iron": 6}, 2, &"slide"],
-	# the carter's cart (plans/road-travel.md): once a road's packed, it runs along the better roads
-	[&"carter", "Wake up the cart shed", "A pony, a cart and a carter in the old cart shed: ring the bell at a stop and ride the packed and cobbled roads to wherever they go.", {&"wood": 30, &"oak": 10, &"wheat": 12}, 1, &"packed_road"],
+	# the carter's cart (plans/road-travel.md): once a road's packed, it runs along the better (gravel) roads
+	[&"carter", "Wake up the cart shed", "A pony, a cart and a carter in the old cart shed: ring the bell at a stop and ride the packed and cobbled roads (not the footpaths) to wherever they go.", {&"wood": 30, &"oak": 10, &"wheat": 12}, 1, &"packed_road"],
 	[&"kennel_porch", "A bowl, a blanket and a porch", "A deck out front with a rail, a water bowl and a checked blanket to flop on.", {&"oak": 12, &"iron": 4}, 2, &"kennel_paint"],
 	# the mine under the quarry (plans/mine.md): "mine:" needs are the Mine's (a shaft dug into,
 	# an obstacle seen)
@@ -60,6 +60,9 @@ const BETTER_PREFIX := "road:"
 ## A better road's card: [title verb, what it does].
 const BETTER := [[], ["Pack and edge", "Packed earth and kerb stones the whole way: firmer and quicker underfoot (+15%). Laid overnight."],
 	["Cobble", "Stone setts the whole way, kerbs and all: the quickest going there is (+30%). Laid overnight."]]
+## A better patch's (the lanes, the market place: Roads.PATCHES): no kerbs, it's open ground.
+const BETTER_PATCH := [[], ["Pack", "Packed earth all over: firmer and quicker underfoot (+15%). Laid overnight."],
+	["Cobble", "Stone setts all over: the quickest going there is (+30%). Laid overnight."]]
 
 var _done: Dictionary[StringName, bool] = {}
 ## Whether this world has somewhere for the footbridge (set by VillageDecor): if not, it isn't
@@ -95,8 +98,9 @@ func all() -> Array[Dictionary]:
 	for r in Roads.roads():  # each road's next level (or its last, done)
 		var now := Roads.planned_level(r["id"])
 		var lvl := mini(now + 1, Roads.MAX_LEVEL)
+		var words: Array = (BETTER_PATCH if r["kind"] == &"patch" else BETTER)[lvl]
 		out.append({"id": StringName("%s%s:%d" % [BETTER_PREFIX, r["id"], lvl]),
-				"title": "%s %s" % [BETTER[lvl][0], _lower_first(r["title"])], "blurb": BETTER[lvl][1],
+				"title": "%s %s" % [words[0], _lower_first(r["title"])], "blurb": words[1],
 				"cost": _cost(&"", Roads.cost(r["length"], lvl)), "hall": Roads.HALL[lvl], "done": now >= lvl, "road": &"", "better": r["id"]})
 	return out
 
@@ -108,7 +112,7 @@ func _needs_met(need: StringName) -> bool:
 	if need == &"dog":
 		return Companion.has_dog
 	if need == &"packed_road":  # a road the cart could run on
-		return Roads.roads().any(func(r: Dictionary) -> bool: return Roads.planned_level(r["id"]) >= 1)
+		return Roads.roads().any(func(r: Dictionary) -> bool: return Roads.carts_on(r) and Roads.planned_level(r["id"]) >= 1)
 	if need == &"slide":  # every boulder of the landslide broken
 		var slide := get_tree().get_first_node_in_group("landslide")
 		return slide != null and slide.call("cleared")

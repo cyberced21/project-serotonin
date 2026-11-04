@@ -5,8 +5,14 @@ extends Node
 ## road's line (within its half width, and a little) you go faster by its level (bonus_at), where
 ## two meet by the better one; your dog keeps pace with you on his own. Which road ends you've
 ## been to (reached: where the carter's cart can take you, CartLine) is kept too. Saved, per world.
+## Besides the drawn roads, the patches (plans/roads-everywhere.md): ways that aren't a line but the
+## path ground of an area (the village lanes, the market place, the haul road, the field tracks),
+## each bettered as one, and quicker on any of its cells (patch_cells).
 
 signal changed
+## Morning: what was paid for is laid (just before changed). `was`: road id -> the level it was,
+## for RoadLook to build each along from (plans/roads-everywhere.md).
+signal laid(was: Dictionary)
 
 ## How much quicker each level is underfoot (a share of your speed), and what's done to get it.
 const BONUS := [0.0, 0.15, 0.30]
@@ -25,6 +31,14 @@ const HALL := [0, 1, 2]
 const CELL := 8.0
 ## Within this of a road's end (m), you've reached it.
 const REACH_END := 25.0
+## The patches, in the order they claim a cell: [id, title, priced as a road this long (m) a
+## square metre of it]. The field tracks are a lot of ground (7000 m²): cheaper by the metre, or
+## they'd be 800 stones. Where each lies is _area's.
+const PATCHES := [
+	[&"market", "The market place", 0.3], [&"lanes", "The village lanes", 0.3],
+	[&"haul_road", "The quarry's haul road", 0.3], [&"field_tracks", "The tracks through Goldmeadow", 0.06]]
+## What a patch's cells are painted (or are already, bettered).
+const PATCH_GROUND := [WorldMap.TEX_PATH, WorldMap.TEX_PACKED, WorldMap.TEX_COBBLE]
 
 var level: Dictionary[StringName, int] = {}
 ## Paid for, laid tonight: road id -> the level it'll be in the morning.
@@ -33,6 +47,9 @@ var pending: Dictionary[StringName, int] = {}
 var reached: Dictionary[StringName, bool] = {}
 var _grid := {}  # Vector2i -> [[road id, a, b, reach]]
 var _built := false
+var _cells := {}  # Vector2i (a 1 m cell of the map) -> the patch it's in
+var _patch_area := {}  # patch id -> its cells
+var _scanned_for := 0  # the terrain the patches were read from (its instance id)
 var _look := 0.0
 
 
@@ -78,7 +95,18 @@ func roads() -> Array[Dictionary]:
 		for i in range(1, pts.size()):
 			length += pts[i - 1].distance_to(pts[i])
 		out.append({"id": r["id"], "title": r.get("title", String(r["id"])), "kind": r["kind"], "length": length})
+	patch_cells()
+	for p in PATCHES:
+		var n: int = _patch_area.get(p[0], 0)
+		if n > 0:
+			out.append({"id": p[0], "title": p[1], "kind": &"patch", "length": n * float(p[2])})
 	return out
+
+
+## Whether the carter's cart runs on road `r` (better): the gravel roads only, not the footpaths
+## or the patches (plans/roads-everywhere.md).
+static func carts_on(r: Dictionary) -> bool:
+	return r["kind"] == &"road"
 
 
 func level_of(id: StringName) -> int:
@@ -114,10 +142,13 @@ func set_level(id: StringName, lvl: int, overnight := false) -> void:
 func _lay_pending() -> void:
 	if pending.is_empty():
 		return
+	var was := {}
 	for id in pending:
+		was[id] = level_of(id)
 		level[id] = pending[id]
 	pending.clear()
 	SaveGame.mark_dirty()
+	laid.emit(was)
 	changed.emit()
 
 
@@ -129,6 +160,9 @@ func bonus_at(p: Vector3) -> float:
 		_build_grid()
 	var w := Vector2(p.x, p.z)
 	var best := 0.0
+	var on: StringName = patch_cells().get(Vector2i(w.floor()), &"")
+	if on != &"":
+		best = BONUS[level_of(on)]
 	for seg in _grid.get(Vector2i((w / CELL).floor()), []):
 		var lvl := level_of(seg[0])
 		if lvl == 0 or BONUS[lvl] <= best:
@@ -136,6 +170,72 @@ func bonus_at(p: Vector3) -> float:
 		if Geometry2D.get_closest_point_to_segment(w, seg[1], seg[2]).distance_to(w) <= seg[3]:
 			best = BONUS[lvl]
 	return 1.0 + best
+
+
+## The patches' cells: Vector2i (a 1 m cell) -> patch id. Read from the terrain's control map the
+## first time it's there (RoadLook asks before it paints anything): the path ground in each patch's
+## area that no drawn road reaches over.
+func patch_cells() -> Dictionary:
+	if _scanned_for != 0 and is_instance_id_valid(_scanned_for):
+		return _cells
+	var terrain := get_tree().get_first_node_in_group("terrain") as Terrain3D
+	if terrain == null or terrain.data == null:
+		return _cells
+	_scanned_for = terrain.get_instance_id()
+	_cells.clear()
+	_patch_area.clear()
+	if not _built:
+		_build_grid()
+	for p in PATCHES:
+		var a := _area(p[0])
+		if a.is_empty():
+			continue
+		var c: Vector2 = a[0]
+		var r: float = a[1]
+		var inside: Callable = a[2]
+		for y in range(floori(c.y - r), ceili(c.y + r)):
+			for x in range(floori(c.x - r), ceili(c.x + r)):
+				var cell := Vector2i(x, y)
+				var w := Vector2(x + 0.5, y + 0.5)
+				if _cells.has(cell) or w.distance_squared_to(c) > r * r or (inside.is_valid() and not inside.call(w)):
+					continue
+				if terrain.data.get_control_base_id(Vector3(w.x, 0, w.y)) not in PATCH_GROUND or _on_line(w):
+					continue
+				_cells[cell] = p[0]
+				_patch_area[p[0]] = _patch_area.get(p[0], 0) + 1
+	return _cells
+
+
+## Where patch `id` can be: [centre, radius, and a Callable it must pass (or an empty one)], or []
+## on a map without its place.
+func _area(id: StringName) -> Array:
+	var none := Callable()
+	match id:
+		&"market":
+			if WorldMap.area_at(&"village") == WorldMap.NOWHERE:
+				return []
+			return [WorldMap.village_center(), WorldMap.MARKET_LENGTH / 2.0 + 1.0, WorldMap.in_market]
+		&"lanes":
+			if WorldMap.area_at(&"village") == WorldMap.NOWHERE:
+				return []
+			return [WorldMap.village_center(), WorldMap.VILLAGE_RADIUS + 15.0, none]
+		&"haul_road":
+			if WorldMap.quarry_center() == WorldMap.NOWHERE:
+				return []
+			return [WorldMap.quarry_center(), WorldMap.QUARRY_WALLS[0] + 1.0, none]
+		&"field_tracks":
+			if WorldMap.field_center() == WorldMap.NOWHERE:
+				return []
+			return [WorldMap.field_center(), WorldMap.field_radius() + 35.0, none]  # (the biomes' warp moves its edge)
+	return []
+
+
+## Whether `w` is within a drawn road's reach.
+func _on_line(w: Vector2) -> bool:
+	for seg in _grid.get(Vector2i((w / CELL).floor()), []):
+		if Geometry2D.get_closest_point_to_segment(w, seg[1], seg[2]).distance_to(w) <= seg[3]:
+			return true
+	return false
 
 
 ## Each road's segments filed in the cells they pass near (their reach round them).

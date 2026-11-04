@@ -1,6 +1,7 @@
 extends SceneTree
 ## Checks the carter's cart (plans/road-travel.md):
-##   - no stops till the cart shed's project is done, and that waits for a packed road
+##   - no stops till the cart shed's project is done, and that waits for a packed road (a gravel
+##     one: a packed footpath doesn't count, and gets no stops: plans/roads-everywhere.md)
 ##   - done, there's a stop at the cart shed and at the end of a packed road you've reached (not one
 ##     you haven't), and the cart can take you from one to the other
 ##   - rung, it rolls up, you're on its seat, it carries you along the road (quick: well past your
@@ -29,15 +30,20 @@ func _run() -> void:
 	var player := get_first_node_in_group("player") as Node3D
 
 	_check(projects.call("get_project", &"carter").is_empty(), "no cart shed project before a road's packed")
+	roads.call("set_level", &"village_path", 1)
+	_check(projects.call("get_project", &"carter").is_empty(), "...nor for a packed footpath (it runs on the gravel roads)")
 	roads.call("set_level", &"main_street", 1)
 	_check(not projects.call("get_project", &"carter").is_empty(), "packed, the cart shed's on the board")
 	_check(get_nodes_in_group("cart_stop").is_empty(), "...but no stops till it's done")
 	roads.get("reached")[&"main_street:0"] = true  # (been to its west end)
+	roads.get("reached")[&"village_path:0"] = true  # (and both ends of the packed path)
+	roads.get("reached")[&"village_path:1"] = true
 	projects.call("set_done", &"carter", true)
 	await _frames(5)
 	var stops: Dictionary = line.get("stops")
 	print("  stops: ", stops.keys())
 	_check(stops.has(&"shed") and stops.has(&"main_street:0"), "stops at the cart shed and at the street's far end you've been to")
+	_check(not stops.has(&"village_path:0") and not stops.has(&"village_path:1"), "...none on the packed footpath")
 	_check(get_nodes_in_group("cart_stop").size() == stops.size(), "each one a signpost (%d)" % get_nodes_in_group("cart_stop").size())
 	var to: Array = line.call("destinations", &"shed")
 	_check(to.any(func(d: Dictionary) -> bool: return d["id"] == &"main_street:0"), "from the shed it can take you down the street (%s)" % [to])
