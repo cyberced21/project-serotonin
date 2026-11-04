@@ -58,6 +58,10 @@ const ROAD_FAR := {&"wood": 15, &"iron": 8, &"coal": 5}
 const ROAD_PREFIX := "lamps:"
 const BETTER_PREFIX := "road:"
 ## A better road's card: [title verb, what it does].
+## The board's categories (plans/noticeboard.md), in order: [id, name].
+const CATEGORIES := [[&"green", "The green"], [&"mending", "Mending"], [&"roads", "Roads"], [&"mine", "The mine"], [&"dog", "Your dog"]]
+## The decorations that go on the green (the rest of SPOTS is mending, but the mine's and the dog's).
+const GREEN := [&"benches", &"flower_boxes", &"well", &"bunting", &"fountain", &"terrace", &"market"]
 const BETTER := [[], ["Pack and edge", "Packed earth and kerb stones the whole way: firmer and quicker underfoot (+15%). Laid overnight."],
 	["Cobble", "Stone setts the whole way, kerbs and all: the quickest going there is (+30%). Laid overnight."]]
 
@@ -111,20 +115,39 @@ func _build() -> Array[Dictionary]:
 		if s.size() > 5 and not _needs_met(s[5]):
 			continue
 		out.append({"id": s[0], "title": s[1], "blurb": s[2], "cost": _cost(s[0], s[3]), "hall": s[4],
-				"done": _done.has(s[0]), "road": &""})
+				"done": _done.has(s[0]), "road": &"", "cat": _category(s[0], s.size() > 5 and s[5] in [&"dog", &"kennel", &"kennel_paint"])})
 	for s in Lamps.stretches:
 		if s["id"] in Lamps.DEFAULT_LIT:
 			continue
 		var near := float(s.get("closest", INF)) < NEAR_VILLAGE
 		out.append({"id": StringName(ROAD_PREFIX + String(s["id"])), "title": "Lamps along " + _lower_first(s["title"]),
 				"blurb": "Lamp posts all along it, lit at dusk.", "cost": _cost(&"", ROAD_NEAR if near else ROAD_FAR),
-				"hall": 1 if near else 2, "done": Lamps.is_lit(s["id"]), "road": s["id"]})
+				"hall": 1 if near else 2, "done": Lamps.is_lit(s["id"]), "road": s["id"], "cat": &"roads", "on_road": s["id"], "road_title": s["title"], "step": "Lamps"})
 	for r in Roads.roads():  # each road's next level (or its last, done)
 		var now := Roads.planned_level(r["id"])
 		var lvl := mini(now + 1, Roads.MAX_LEVEL)
 		out.append({"id": StringName("%s%s:%d" % [BETTER_PREFIX, r["id"], lvl]),
 				"title": "%s %s" % [BETTER[lvl][0], _lower_first(r["title"])], "blurb": BETTER[lvl][1],
-				"cost": _cost(&"", Roads.cost(r["length"], lvl)), "hall": Roads.HALL[lvl], "done": now >= lvl, "road": &"", "better": r["id"]})
+				"cost": _cost(&"", Roads.cost(r["length"], lvl)), "hall": Roads.HALL[lvl], "done": now >= lvl, "road": &"", "better": r["id"],
+				"cat": &"roads", "on_road": r["id"], "road_title": r["title"], "step": BETTER[lvl][0]})
+	return out
+
+
+## Which category a SPOTS entry goes in.
+static func _category(id: StringName, for_dog: bool) -> StringName:
+	if for_dog:
+		return &"dog"
+	if String(id).begins_with("mine_"):
+		return &"mine"
+	return &"green" if id in GREEN else &"mending"
+
+
+## The board's categories with what's in each, in order: {id, name, projects} (the board's order
+## within each; on Roads, a road's lamps before its paving).
+func categories() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for c in CATEGORIES:
+		out.append({"id": c[0], "name": c[1], "projects": all().filter(func(p: Dictionary) -> bool: return p["cat"] == c[0])})
 	return out
 
 

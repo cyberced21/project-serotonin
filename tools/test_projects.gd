@@ -33,6 +33,18 @@ func _run() -> void:
 		print("  %-48s hall %d  %s" % [p["title"], p["hall"], p["cost"]])
 	var better := all.filter(func(p: Dictionary) -> bool: return p.get("better", &"") != &"")
 	_check(all.size() == 14 + roads.size() + better.size() and roads.size() >= 5, "six decorations, the market stall, the bakery terrace, the mine's shoring, five fixtures and new places' projects, a road project per unlit stretch, and a better road per road (%d)" % better.size())
+	# the board's categories (plans/noticeboard.md)
+	var cats: Array = projects.call("categories")
+	var by_cat := {}
+	var listed := 0
+	for c in cats:
+		by_cat[c["id"]] = (c["projects"] as Array).map(func(p: Dictionary) -> StringName: return p["id"])
+		listed += (c["projects"] as Array).size()
+	print("categories: %s" % ", ".join(cats.map(func(c: Dictionary) -> String: return "%s %d" % [c["name"], c["projects"].size()])))
+	_check(cats.size() == 5 and listed == all.size(), "five categories, every project in one (%d of %d)" % [listed, all.size()])
+	_check(&"benches" in by_cat[&"green"] and &"market" in by_cat[&"green"] and &"mend_granary" in by_cat[&"mending"]
+			and &"mine_shoring" in by_cat[&"mine"], "the benches and the market on the green, the granary mending, the shoring in the mine")
+	_check((by_cat[&"roads"] as Array).size() == roads.size() + better.size(), "every road's lamps and paving under Roads")
 	_check(not projects.call("can_pay", &"benches"), "no goods, no benches")
 	inventory.call("add", &"wood", 40)
 	_check(projects.call("pay", &"benches") and projects.call("is_done", &"benches"), "paid for, the benches are done")
