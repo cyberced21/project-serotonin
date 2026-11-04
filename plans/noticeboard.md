@@ -14,6 +14,15 @@ from https://claude.ai/artifact/AzxuVny7RXB2JDzSvhoczx.
   SystemFont for every label.
 - GPU: nothing board-specific changes when you look at it (only one instance shader parameter).
 
+Windowed (1920x1080, screen 2, tools/noticeboard_shots.gd), fresh Hearthvale at the board:
+
+| | looking away | looking at the board |
+|---|---|---|
+| before (main) | 97.5 fps, GPU 6.9 ms | **4.5 fps (223 ms frames)**, GPU 7.8 ms |
+| after | 102.9 fps, GPU 6.8 ms | 101.8 fps, GPU 8.1 ms |
+
+So it was all CPU, and nothing to do with the terrain.
+
 ## Decisions
 
 - **Five categories**, from what's posted: *The green* (benches, flower boxes, well, bunting,
@@ -41,3 +50,14 @@ from https://claude.ai/artifact/AzxuVny7RXB2JDzSvhoczx.
 3. **The new board.** NoticeboardPanel rebuilt as look B: left list, strips, road cards, later
    line, done fold, remembered category. Test in test_projects (opens, switches, pays).
 4. Bench again, run touched tests, notes.
+
+## As built (2026-11-03)
+
+All four phases done on `claude/relaxed-shirley-c504ab`. Headless: the prompt 25.6 → 0.008 ms,
+opening the board 285 → 7 ms, switching category ~5 ms (Roads ~20). Screenshots:
+plans/noticeboard-green.png, plans/noticeboard-roads.png. Tests: test_projects (categories, every
+project once per category, done fold, later line, opens on the last category), plus roads, cart,
+mine, market, green, forks pass; test_dog's water checks fail as on main. Unplayed.
+
+Not done: the Pay button still uses the default grey theme button (as before); Roads is 12 cards
+long and scrolls.
