@@ -7,8 +7,8 @@
 // paths the control map marks), coloured from the palette below and textured with a chunky,
 // nearest-filtered slice of art/textures/ground.png (global `ground_tex`, made by
 // tools/make_textures.py). Neighbouring surfaces meet in ragged, height-blended borders.
-// Depth (plans/ground-depth.md): each slice's height, crevice shade, second-material mask and
-// per-texel normals (`ground_normal`) light tufts and pebbles and shade their gaps up close; a
+// Depth (plans/ground-depth.md): each slice's height (which also marks its second material) and
+// per-texel normals light tufts and pebbles and shade their gaps up close; a
 // coarser layer, colour patches, shaded hollows, rock ledges and a wandering snow line on top.
 // Terrain3D's Color tool still works: painted colour multiplies the surface colour.
 
@@ -125,8 +125,10 @@ uniform float edge_jitter = 0.1;
 uniform float macro_variation : hint_range(0.0, 0.5) = 0.14;
 group_uniforms;
 
-// Depth (plans/ground-depth.md): every slice carries a height, a crevice shade, a second-material
-// mask and per-texel normals, so tufts, clods, pebbles and setts catch the sun and shade their gaps.
+// Depth (plans/ground-depth.md): every slice carries a height and per-texel normals, so tufts,
+// clods, pebbles and setts catch the sun and their gaps shade over; the top height level is the
+// slice's second material (sunlit blade tips, pebbles, lichen, moss; on cobbles the bottom: the
+// joints).
 group_uniforms depth;
 // How strongly the per-texel normals tilt the light (0 = flat).
 uniform float normal_strength : hint_range(0.0, 3.0) = 1.0;
@@ -134,9 +136,9 @@ uniform float normal_strength : hint_range(0.0, 3.0) = 1.0;
 uniform float crevice_strength : hint_range(0.0, 1.0) = 0.45;
 uniform vec3 crevice_tint : source_color = vec3(0.42, 0.48, 0.62);
 // The fine normals and crevices fade out between these distances (m): beyond, texels are smaller
-// than a pixel anyway, and it saves the extra reads.
-uniform float detail_near = 25.0;
-uniform float detail_far = 70.0;
+// than a pixel anyway.
+uniform float detail_near = 20.0;
+uniform float detail_far = 55.0;
 // A coarser copy of the main surface's slice laid over it (clumps of clumps), 0 = none.
 uniform float coarse_strength : hint_range(0.0, 1.0) = 0.3;
 uniform float coarse_scale = 0.23;
@@ -180,7 +182,6 @@ uniform float caustic_strength = 0.28;
 uniform float caustic_depth = 4.5;
 
 global uniform sampler2DArray ground_tex : filter_nearest_mipmap_anisotropic, repeat_enable;
-global uniform sampler2DArray ground_normal : filter_nearest_mipmap_anisotropic, repeat_enable;
 
 // ground_tex slices (tools/make_textures.py GROUND)
 const float LAYER_GRASS = 0.0;
@@ -293,17 +294,18 @@ float vnoise(vec2 p) {
 			mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
 }
 
-float height_at(vec2 cell) {
-	ivec3 c = get_index_coord(cell, FRAGMENT_PASS);
-	return c.z >= 0 ? texelFetch(_height_maps, c, 0).r : 0.0;
+// The map coordinate of the vertex `o` away from `b`: when the cell is well inside its region
+// (`inner`), straight from b's own coordinate `c0`, without looking the region up again.
+ivec3 index_near(vec2 b, ivec3 c0, bool inner, ivec2 o) {
+	if (inner) {
+		return ivec3(c0.xy + o, c0.z);
+	}
+	return get_index_coord(b + vec2(o), FRAGMENT_PASS);
 }
 
-// Bilinear height between the four vertices round `uv` (vertex units).
-float height_smooth(vec2 uv) {
-	vec2 b = floor(uv);
-	vec2 f = uv - b;
-	return mix(mix(height_at(b), height_at(b + vec2(1.0, 0.0)), f.x),
-			mix(height_at(b + vec2(0.0, 1.0)), height_at(b + vec2(1.0, 1.0)), f.x), f.y);
+float height_near(vec2 b, ivec3 c0, bool inner, ivec2 o) {
+	ivec3 c = index_near(b, c0, inner, o);
+	return c.z >= 0 ? texelFetch(_height_maps, c, 0).r : 0.0;
 }
 
 // Caustics: a few layers of light lines drifting over each other, sharpened (0..~1.5).
@@ -324,12 +326,10 @@ float ground(vec2 world_xz, float layer) {
 	return texture(ground_tex, vec3(world_xz * ground_scale, layer)).r;
 }
 
-// One slice texel: tone, height, crevice shade, mask (RGBA); and its normal's tilt (`tilt`, the
-// normal's X and Z, -1..1). Explicit gradients so it can sit in a branch.
-vec4 ground_texel(vec2 p, float layer, vec2 gx, vec2 gy, bool want_tilt, out vec2 tilt) {
-	vec3 at = vec3(p, layer);
-	tilt = want_tilt ? textureGrad(ground_normal, at, gx, gy).rg * 2.0 - 1.0 : vec2(0.0);
-	return textureGrad(ground_tex, at, gx, gy);
+// One slice texel: tone, height, and its normal's tilt (X and Z along the slice's columns and
+// rows, 0.5 = flat).
+vec4 ground_texel(vec2 p, float layer) {
+	return texture(ground_tex, vec3(p, layer));
 }
 
 // The second material a slice's mask marks, as a multiplier on the surface colour.
@@ -345,9 +345,7 @@ vec3 second_tint(float layer) {
 
 // What one terrain vertex is covered with, for the slope at this pixel: its colour, and the
 // ground_tex slice to texture it with (LAYER_*).
-void surface_at(vec2 cell, float slope, float wy, out vec3 col, out float layer) {
-	ivec3 c = get_index_coord(cell, FRAGMENT_PASS);
-	float h = c.z >= 0 ? texelFetch(_height_maps, c, 0).r : 0.0;
+void surface_at(vec2 cell, ivec3 c, float h, float slope, float wy, float snow_line, out vec3 col, out float layer) {
 	// two grasses in soft patches a few metres across
 	vec2 world = cell * _vertex_spacing;
 	float pick = smoothstep(0.42, 0.58, vnoise(world / patch_size));
@@ -357,8 +355,7 @@ void surface_at(vec2 cell, float slope, float wy, out vec3 col, out float layer)
 	if (h < bed_height) { col = bed_color; layer = LAYER_DIRT; }
 	if (slope < dirt_slope) { col = dirt_color; layer = LAYER_DIRT; }
 	if (slope < rock_slope) { col = rock_color; layer = LAYER_ROCK; }
-	// the snow line wanders, and higher up snow clings to steeper ledges
-	float snow_line = snow_height + (vnoise(world / 23.0) - 0.5) * snow_wander;
+	// higher up, snow clings to steeper ledges
 	float cling = snow_cling * smoothstep(snow_line, snow_line + 10.0, h);
 	if (h > snow_line && slope >= rock_slope - cling) { col = snow_color; layer = LAYER_SNOW; }
 
@@ -418,18 +415,28 @@ void fragment() {
 	vec3 base_ddy = dFdyCoarse(v_vertex);
 	vec3 w_vertex = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
 
-	// Smooth normal from the heightmap (central differences of the bilinear height).
-	float hl = height_smooth(uv - vec2(1.0, 0.0));
-	float hr = height_smooth(uv + vec2(1.0, 0.0));
-	float hd = height_smooth(uv - vec2(0.0, 1.0));
-	float hu = height_smooth(uv + vec2(0.0, 1.0));
+	// Smooth normal from the heightmap: central differences of the bilinear height, from the 12
+	// vertices round this pixel's cell (b: its corner, f: how far across). The middle four are
+	// the cell's own corners, whose surfaces are blended below.
+	vec2 b = floor(uv);
+	vec2 f = uv - b;
+	ivec3 c0 = get_index_coord(b, FRAGMENT_PASS);
+	bool inner = c0.z >= 0 && all(greaterThanEqual(c0.xy, ivec2(1)))
+			&& all(lessThan(c0.xy, ivec2(int(_region_size) - 2)));
+	float h00 = height_near(b, c0, inner, ivec2(0, 0)), h10 = height_near(b, c0, inner, ivec2(1, 0));
+	float h01 = height_near(b, c0, inner, ivec2(0, 1)), h11 = height_near(b, c0, inner, ivec2(1, 1));
+	float hx0 = height_near(b, c0, inner, ivec2(-1, 0)), hx1 = height_near(b, c0, inner, ivec2(-1, 1));
+	float hy0 = height_near(b, c0, inner, ivec2(2, 0)), hy1 = height_near(b, c0, inner, ivec2(2, 1));
+	float hz0 = height_near(b, c0, inner, ivec2(0, -1)), hz1 = height_near(b, c0, inner, ivec2(1, -1));
+	float hw0 = height_near(b, c0, inner, ivec2(0, 2)), hw1 = height_near(b, c0, inner, ivec2(1, 2));
+	float hl = mix(mix(hx0, h00, f.x), mix(hx1, h01, f.x), f.y);
+	float hr = mix(mix(h10, hy0, f.x), mix(h11, hy1, f.x), f.y);
+	float hd = mix(mix(hz0, hz1, f.x), mix(h00, h10, f.x), f.y);
+	float hu = mix(mix(h01, h11, f.x), mix(hw0, hw1, f.x), f.y);
 	vec3 w_normal = normalize(vec3(hl - hr, 2.0 * _vertex_spacing, hd - hu));
-	// Hollows in the land (lower than the four round them) shade darker, ridges lighter.
-	float hollow = clamp(((hl + hr + hd + hu) * 0.25 - height_smooth(uv)) / _vertex_spacing, -0.5, 0.5);
 
 	// The fine detail (normals, crevices) fades out with distance.
 	float near = 1.0 - smoothstep(detail_near, detail_far, length(VERTEX));
-	bool detailed = near > 0.0;
 
 	// Ragged borders: the slope bands and surface edges wander with the texture, and with big
 	// patches of noise, so grass climbs some slopes and dirt and rock break through on others.
@@ -438,81 +445,70 @@ void fragment() {
 			+ (vnoise(w_vertex.xz / breakup_size) - 0.5) * 2.0 * slope_breakup;
 
 	// The four surrounding vertices' surfaces.
-	vec2 b = floor(uv);
-	vec2 f = uv - b;
-	vec3 cols[4];
-	float layers[4];
-	bool any_rock = false;
-	for (int i = 0; i < 4; i++) {
-		surface_at(b + vec2(float(i & 1), float(i >> 1)), slope, w_vertex.y, cols[i], layers[i]);
-		any_rock = any_rock || layers[i] == LAYER_ROCK;
-	}
+	// the snow line wanders
+	float snow_line = snow_height + (vnoise(w_vertex.xz / 23.0) - 0.5) * snow_wander;
 
-	// Texture coordinates (and their gradients, so the reads can sit in branches).
 	vec2 p_top = w_vertex.xz * ground_scale;
-	vec2 gx_top = dFdx(p_top), gy_top = dFdy(p_top);
-	vec2 tilt_top;
-	vec4 top[4];
 
-	// Rock projected from three sides, so cliffs aren't smeared; its tilt follows each side.
+	// Rock projected from three sides, so cliffs aren't smeared.
 	vec3 tw = pow(abs(w_normal), vec3(6.0));
 	tw /= tw.x + tw.y + tw.z;
-	vec4 rock_t = vec4(0.0);
-	vec3 rock_tilt = vec3(0.0);
-	vec2 p_x = w_vertex.zy * ground_scale, p_z = w_vertex.xy * ground_scale;
-	vec2 gx_x = dFdx(p_x), gy_x = dFdy(p_x), gx_z = dFdx(p_z), gy_z = dFdy(p_z);
-	if (any_rock) {
-		vec2 tx, ty, tz;
-		rock_t = ground_texel(p_x, LAYER_ROCK, gx_x, gy_x, detailed, tx) * tw.x
-				+ ground_texel(p_top, LAYER_ROCK, gx_top, gy_top, detailed, ty) * tw.y
-				+ ground_texel(p_z, LAYER_ROCK, gx_z, gy_z, detailed, tz) * tw.z;
-		rock_tilt = vec3(0.0, tx.y, tx.x) * tw.x + vec3(ty.x, 0.0, ty.y) * tw.y
-				+ vec3(tz.x, tz.y, 0.0) * tw.z;
-	}
+	vec4 tx = ground_texel(w_vertex.zy * ground_scale, LAYER_ROCK);
+	vec4 ty = ground_texel(p_top, LAYER_ROCK);
+	vec4 tz = ground_texel(w_vertex.xy * ground_scale, LAYER_ROCK);
+	// (its tilt kept as the world X and Z tilt, like the flat slices': each side tilts along the
+	// world axes it lies across)
+	vec4 rock_t = vec4((tx.rg * tw.x + ty.rg * tw.y + tz.rg * tw.z),
+			0.5 * tw.x + ty.b * tw.y + tz.b * tw.z, tx.b * tw.x + ty.a * tw.y + 0.5 * tw.z);
+	float around = (hl + hr + hd + hu) * 0.25;  // (for the hollows, below)
 
 	// Blend them, each weighted by how far up its own texture pokes (height blending): tufts,
 	// clods and pebbles win at the borders, crisp and painterly instead of a soft fade.
 	vec3 albedo = vec3(0.0);
-	vec3 tilt = vec3(0.0);
+	vec2 tilt = vec2(0.0);
 	float crevice = 0.0;
 	float green = 0.0;  // how much of it is growing (grass, forest floor, meadow)
 	float total = 0.0;
+	float centre = 0.0;  // the land's height here, from the four vertices
 	float best = -1.0;
 	float main_layer = LAYER_GRASS;
 	for (int i = 0; i < 4; i++) {
 		vec2 o = vec2(float(i & 1), float(i >> 1));
-		float layer = layers[i];
-		vec4 t;
-		vec3 n3;
-		if (layer == LAYER_ROCK) {
-			t = rock_t;
-			n3 = rock_tilt;
-		} else {
-			vec2 n2;
-			t = ground_texel(p_top, layer, gx_top, gy_top, detailed, n2);
-			n3 = vec3(n2.x, 0.0, n2.y);
-		}
+		vec3 surface;
+		float layer;
+		float h = i == 0 ? h00 : i == 1 ? h10 : i == 2 ? h01 : h11;
+		surface_at(b + o, index_near(b, c0, inner, ivec2(i & 1, i >> 1)), h, slope, w_vertex.y, snow_line,
+				surface, layer);
+		vec4 t = layer == LAYER_ROCK ? rock_t : ground_texel(p_top, layer);
+		// the second material: the top height level (on cobbles, the bottom: the joints)
+		bool setts = layer == LAYER_SETTS;
+		float second = setts ? step(t.g, 0.03) : step(0.97, t.g);
+		// gaps shade over: the lower the texel, the darker (cobbles' joints are dark already)
+		float shade = 0.35 + 0.65 * smoothstep(0.0, 0.6, t.g);
 		vec2 bw = mix(1.0 - f, f, o);
+		centre += h * bw.x * bw.y;
 		float w = pow(bw.x * bw.y * (0.25 + t.g), blend_sharpness);
 		// dark texels shift cool, light ones warm, around the surface's own colour; the mask
 		// paints in the second material
 		float k = clamp(0.5 + (t.r - 0.5) * 2.0 * texture_strength, 0.0, 1.0);
-		vec3 col = cols[i] * mix(vec3(1.0), second_tint(layer), t.a * second_strength);
+		vec3 col = surface * mix(vec3(1.0), second_tint(layer), second * second_strength);
 		albedo += col * mix(shadow_tint, vec3(2.0) - shadow_tint, k) * w;
-		tilt += n3 * w;
-		crevice += t.b * w;
+		crevice += (setts ? max(shade, 0.6) : shade) * w;
+		tilt += t.ba * w;
 		green += float(layer == LAYER_GRASS || layer == LAYER_FOREST) * w;
 		total += w;
 		if (w > best) { best = w; main_layer = layer; }
 	}
 	albedo /= max(total, 1e-5);
-	tilt /= max(total, 1e-5);
 	crevice /= max(total, 1e-5);
+	tilt = tilt / max(total, 1e-5) * 2.0 - 1.0;
 	green /= max(total, 1e-5);
 
+	// Hollows in the land (lower than the four round them) shade darker, ridges lighter.
+	float hollow = clamp((around - centre) / _vertex_spacing, -0.5, 0.5);
+
 	// A coarser copy of the main surface's slice over it: clumps of clumps.
-	float coarse = textureGrad(ground_tex, vec3(p_top * coarse_scale, main_layer),
-			gx_top * coarse_scale, gy_top * coarse_scale).r;
+	float coarse = texture(ground_tex, vec3(p_top * coarse_scale, main_layer)).r;
 	albedo *= 1.0 + (coarse - 0.5) * coarse_strength;
 
 	// Crevices: the gaps between tufts and pebbles shade cool and dark, up close.
@@ -532,7 +528,7 @@ void fragment() {
 	albedo = max(mix(vec3(luma), albedo, rich), vec3(0.0));
 
 	// Per-texel normals: the sun lights the tops of tufts and pebbles and shades their sides.
-	vec3 n = normalize(w_normal + tilt * normal_strength * near);
+	vec3 n = normalize(w_normal + vec3(tilt.x, 0.0, tilt.y) * normal_strength * near);
 	NORMAL = mat3(VIEW_MATRIX) * n;
 	TANGENT = normalize(cross(NORMAL, VIEW_MATRIX[2].xyz));
 	BINORMAL = normalize(cross(NORMAL, TANGENT));

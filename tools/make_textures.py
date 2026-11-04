@@ -8,9 +8,9 @@ Writes, into art/textures/:
                neutral), stacked vertically: a Texture2DArray read by node_surface.gdshader and the
                sway shaders (the row a face's UV sits in picks its slice)
   ground.png   terrain slices (grass, dirt, rock, sand, snow, forest floor, path, field, packed
-               road, cobbled road) for terrain.gdshader: RGBA = tone, height, crevice shade, and a
-               mask for the surface's second material (plans/ground-depth.md)
-  ground_normal.png  the same slices' per-texel normals (R, G = the normal's X and Z)
+               road, cobbled road) for terrain.gdshader: RGBA = tone, height, and the per-texel
+               normal's X and Z (plans/ground-depth.md). The top height level marks the
+               surface's second material (on cobbles, the lowest: the joints).
   leaves.png   leaf-card slices (broadleaf cluster, pine needles), greyscale with alpha cut-outs,
                for the tree canopies (node_foliage.gdshader)
 Greyscale, mean about 0.5: shaders scale colour by 1 + (d - 0.5) * strength.
@@ -167,8 +167,7 @@ def grass(rng):
     height = norm(0.35 * turf + 0.65 * tuft * (0.6 + 0.4 * blades))
     tone = centre(posterize(blur(norm(0.55 * turf + 0.45 * height)), 6), 0.8)
     tips = (blades > 0.70) & (np.roll(blades, 1, 0) < blades)   # the tips of the tallest blades
-    clover = spectral(rng, beta=2.4, lo=4) > 0.78
-    return tone, height, (tips | clover).astype(float)
+    return tone, height, tips.astype(float)
 
 
 def dirt(rng):
@@ -265,12 +264,6 @@ def field(rng):
     a = 0.5 * rows + 0.5 * spectral(rng, beta=0.7, lo=16)
     straw = spectral(rng, beta=0.8, sx=1.0, sy=4.0, lo=12) > 0.68
     return centre(posterize(norm(a), 6), 0.7), norm(rows + 0.3 * straw), straw.astype(float)
-
-
-def crevices(height):
-    """Crevice shade: 1 on tops, darker where a texel sits below its neighbourhood, and lower down."""
-    cavity = np.clip((height - blur(height, 2)) * 3.0 + 0.5, 0, 1)
-    return posterize(np.clip(0.35 + 0.4 * cavity + 0.35 * height, 0, 1), 6)
 
 
 def normals(height, strength=2.5):
@@ -403,20 +396,22 @@ def save_rgba(slices, name):
 
 
 def save_ground(seed):
-    """ground.png (RGBA: tone, height, crevice shade, mask) and ground_normal.png (RGB normals)."""
-    rgba, nrm = [], []
+    """ground.png: RGBA = tone, height, normal X, normal Z. One read in the shader gets it all; the
+    second-material mask rides on the height (the top of 8 levels, or the bottom for cobbles'
+    joints) and the shader derives the crevice shade from the height."""
+    slices = []
     for i, fn in enumerate(GROUND):
         tone, height, mask = fn(np.random.default_rng(seed * 100 + i))
         height = posterize(norm(height), 8)
-        shade = crevices(height)
         if fn is setts:
-            shade = 0.5 + 0.5 * shade   # (the joints are already dark in the tone)
-        rgba.append(np.dstack([tone, height, shade, mask]))
-        nrm.append(normals(height))
-    for a, name, mode in [(np.vstack(rgba), "ground.png", "RGBA"), (np.vstack(nrm), "ground_normal.png", "RGB")]:
-        img = Image.fromarray((np.clip(a, 0, 1) * 255).astype(np.uint8), mode)
-        img.save(os.path.join(OUT, name))
-        print("wrote", os.path.normpath(os.path.join(OUT, name)), img.size)
+            height = np.where(mask > 0.5, 0.0, np.maximum(height, 1 / 7))
+        else:
+            height = np.where(mask > 0.5, 1.0, np.minimum(height, 6 / 7))
+        n = normals(height)
+        slices.append(np.dstack([tone, height, n[..., 0], n[..., 1]]))
+    img = Image.fromarray((np.clip(np.vstack(slices), 0, 1) * 255).astype(np.uint8), "RGBA")
+    img.save(os.path.join(OUT, "ground.png"))
+    print("wrote", os.path.normpath(os.path.join(OUT, "ground.png")), img.size)
 
 
 def save(a, name):
