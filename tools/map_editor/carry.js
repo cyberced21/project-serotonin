@@ -10,7 +10,7 @@
 
 (() => {
 	const E = Editor;
-	const COLLECTIONS = ["patches", "terrain", "lines", "points", "labels", "anchors"];
+	const COLLECTIONS = ["patches", "terrain", "lines", "points", "plots", "labels", "anchors"];
 	const PLACES = { watermill: "The watermill", orchard: "The orchard", shepherds_hill: "Shepherd's hill", haven: "The haven" };
 
 	// a frame: where something stands and its turn (as anchors turn: about +Y)

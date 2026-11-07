@@ -89,6 +89,8 @@ def write_layout(data, path):
     if "world" in data:  # (the map's size and where it starts: plans/map-maker.md)
         parts.append('\t"world": %s,' % json.dumps(data["world"], separators=(",", ":"), sort_keys=True))
     keys = [k for k in ["areas", "labels"] if k in data] + ["terrain", "patches", "lines", "points", "anchors"]
+    if data.get("plots"):  # (the town designer's plots: plans/town-designer.md; no empty list in a file without)
+        keys.insert(keys.index("lines"), "plots")
     for i, key in enumerate(keys):
         rows = ["\t\t" + json.dumps(item, separators=(",", ":"), sort_keys=True) for item in data.get(key, [])]
         body = ("\n" + ",\n".join(rows) + "\n\t") if rows else ""

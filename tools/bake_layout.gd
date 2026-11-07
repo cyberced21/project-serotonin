@@ -19,6 +19,7 @@ const CATALOG := "res://data/layout/catalog.json"
 var OUT := MapsC.path("scene")
 var REPORT := MapsC.path("baked")
 const WorldMapC := preload("res://scripts/world_map.gd")
+const TOWN_PLOTS := preload("res://scripts/town_plots.gd")
 ## Lines are cut where they'd stand in water, on ground this steep (rise per metre), or this close
 ## to a road's edge (m).
 const WATER := -0.1
@@ -104,7 +105,7 @@ func _run() -> void:
 	keep.name = "_Keep"
 	world.add_child(keep)
 	var groups := {}
-	for g in ["Points", "Lines", "Patches"]:
+	for g in ["Points", "Lines", "Plots", "Patches"]:
 		var n := Node3D.new()
 		n.name = g
 		out_root.add_child(n)
@@ -117,6 +118,8 @@ func _run() -> void:
 			world.add_child(_point(p, false))
 	for l in layout.get("lines", []):
 		_line(l, groups["Lines"])
+	for plot in layout.get("plots", []):
+		_plot(plot, groups["Plots"])
 	await process_frame  # (props join their groups as they enter the tree)
 	for p in layout.get("patches", []):
 		await _patch(p, groups["Patches"])
@@ -419,6 +422,41 @@ func _line(l: Dictionary, parent: Node3D) -> void:
 		_warn("line %s is cut where it crosses a road, water or a steep bank" % id, pts[0], id)
 	if made == 0:
 		_warn("line %s found nowhere to stand" % id, pts[0], id)
+
+
+# --- plots (plans/town-designer.md) --------------------------------------------------------------------
+
+## A plot: its edge as a line of its kind with the gate left out, its garden's things as points, and
+## patches kept out of all of it.
+func _plot(plot: Dictionary, parent: Node3D) -> void:
+	var id: String = plot.get("id", "plot")
+	var pts: Array = plot.get("points", [])
+	if pts.size() < 3:
+		_warn("plot %s has under three corners" % id, _v2(pts[0]) if pts.size() > 0 else Vector2.ZERO, id)
+		return
+	var holder := Node3D.new()
+	holder.name = id.to_pascal_case()
+	parent.add_child(holder)
+	var edge: String = plot.get("edge", "hedge")
+	if edge != "none" and catalog["lines"].has(edge):
+		var r := 0
+		for run in TOWN_PLOTS.edge_runs(plot):
+			r += 1
+			var pl := []
+			for q in run:
+				pl.append([q.x, q.y])
+			_line({"id": "%s_edge%d" % [id, r], "type": edge, "points": pl, "clip": plot.get("clip", true)}, holder)
+	var garden: Dictionary = catalog.get("gardens", {}).get(plot.get("fill", "none"), {})
+	var k := 0
+	for s in TOWN_PLOTS.fill_spots(plot, garden):
+		k += 1
+		var p := {"id": "%s_%s_%d" % [id, s[0], k], "type": s[0], "at": [s[1].x, s[1].y], "yaw": s[2]}
+		var made := _point(p, false)
+		if made:
+			holder.add_child(made)
+			world.add_child(_point(p, false))
+	for q in TOWN_PLOTS.inside_grid(plot, 2.0):
+		_keep_clear(q, 1.6)
 
 
 static func _length(r: PackedVector2Array) -> float:

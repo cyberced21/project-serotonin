@@ -4,10 +4,12 @@ extends SceneTree
 ##   - an added building (an anchor with a `type`) is made under Village where its anchor says,
 ##     turned to its yaw, with its door a Spots/Door marker; applying twice makes it once
 ##   - one not placed is kept out; one of an unknown type is skipped
+##   - a plot: its edge leaves its gate open, its garden's things are inside it, the same each time
 ##   godot --headless --path . -s res://tools/test_town.gd -- --save-root=user://tmp
 ## (No game class names: an -s script compiles before the autoloads exist.)
 
 const Anchors := preload("res://scripts/layout_anchors.gd")
+const Plots := preload("res://scripts/town_plots.gd")
 const TMP := "user://tmp/test_town_layout.json"
 const EPS := 0.01
 
@@ -17,6 +19,7 @@ var failures := PackedStringArray()
 func _initialize() -> void:
 	_catalog()
 	_added()
+	_plots()
 	if failures.is_empty():
 		print("test_town: PASS")
 		quit(0)
@@ -81,3 +84,28 @@ func _added() -> void:
 	_check(Anchors.find(&"cottage_t1").get("node", "") == "Village/cottage_t1", "its anchor names the node made for it")
 	main.free()
 	Anchors.use_file("res://data/layout/hearthvale.json")
+
+
+func _plots() -> void:
+	var plot := {"id": "plot_t", "points": [[0, 0], [20, 0], [20, 12], [0, 12]], "edge": "hedge", "gate": [0, 3.0], "seed": 7}
+	var runs := Plots.edge_runs(plot)
+	_check(runs.size() == 1, "a gated plot's edge is one run")
+	if runs.size() == 1:
+		var r: PackedVector2Array = runs[0]
+		_check(r[0].distance_to(Vector2(11.5, 0)) < 0.01 and r[-1].distance_to(Vector2(8.5, 0)) < 0.01, "its gate is a 3 m gap in the middle of edge 0 (%s .. %s)" % [r[-1], r[0]])
+		_check(r.size() == 6, "the run goes round every corner (%d points)" % r.size())
+	var open := plot.duplicate()
+	open.erase("gate")
+	var loop: PackedVector2Array = Plots.edge_runs(open)[0]
+	_check(loop.size() == 5 and loop[0] == loop[-1], "without a gate the edge closes on itself")
+	var c: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/layout/catalog.json"))
+	for g in c.get("gardens", {}):
+		var garden: Dictionary = c["gardens"][g]
+		var spots := Plots.fill_spots(plot, garden)
+		_check(not spots.is_empty(), "garden %s puts something in a 20 x 12 m plot" % g)
+		var poly := PackedVector2Array([Vector2(0, 0), Vector2(20, 0), Vector2(20, 12), Vector2(0, 12)])
+		for s in spots:
+			_check(c["props"].has(s[0]) or c["fixtures"].has(s[0]), "garden %s's %s is in the catalog" % [g, s[0]])
+			_check(Geometry2D.is_point_in_polygon(s[1], poly), "garden %s's %s is inside the plot (%s)" % [g, s[0], s[1]])
+		_check(str(Plots.fill_spots(plot, garden)) == str(spots), "garden %s comes out the same for the same seed" % g)
+	_check(Plots.inside_grid(plot, 2.0).size() == 60, "the keep-clear grid covers it (%d spots)" % Plots.inside_grid(plot, 2.0).size())
