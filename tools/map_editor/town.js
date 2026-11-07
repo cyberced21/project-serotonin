@@ -172,4 +172,86 @@
 			}
 		},
 	});
+
+	// --- what a building owns (phase 3) ---------------------------------------------------------------
+
+	const OWNABLE = ["points", "lines", "plots"];
+	/** Everything owned by anchor `id`: [[collection, obj]...]. (The editor carries them when it moves.) */
+	E.ownedBy = (id) => {
+		const out = [];
+		for (const k of OWNABLE) for (const x of E.layout[k] || []) if (x.owner === id) out.push([k, x]);
+		return out;
+	};
+	const buildingName = (a) => (E.buildingShape ? E.buildingShape(a).name : a.id);
+	/** The village's buildings that can own things: [[id, name]], nearest to (x, z) first if given. */
+	E.ownerChoices = (x, z) => {
+		const list = (E.layout.anchors || []).filter((a) => a.placed !== false && E.inVillage("anchors", a) && a.id !== "green");
+		if (x !== undefined) list.sort((a, b) => E.dist(x, z, ...a.at) - E.dist(x, z, ...b.at));
+		return list.map((a) => [a.id, buildingName(a)]);
+	};
+	/** The building nearest (x, z) within `reach` m of its edge, or null. */
+	E.nearestBuilding = (x, z, reach = 12) => {
+		let best = null, bd = reach;
+		for (const a of E.layout.anchors || []) {
+			if (a.placed === false || a.id === "green" || !E.inVillage("anchors", a) || !E.buildingCorners) continue;
+			const pts = E.buildingCorners(a);
+			let d = E.inPoly(x, z, pts) ? 0 : Infinity;
+			for (let i = 0; i < 4; i++) d = Math.min(d, E.segDist(x, z, ...pts[i], ...pts[(i + 1) % 4]));
+			if (d < bd) { bd = d; best = a; }
+		}
+		return best;
+	};
+	/** A "Belongs to" row for a point, line or plot's panel (town mode only). */
+	E.ownerField = (o) => {
+		if (!E.town) return null;
+		const p = o.at || (o.points && o.points[0]) || [0, 0];
+		return E.field("Belongs to", E.input(o, "owner", "select", {
+			options: [["", "nobody (stays put)"], ...E.ownerChoices(p[0], p[1])],
+			default: "", after: (v) => { if (!v) delete o.owner; },
+		}));
+	};
+
+	/** The middle of anchor `a`'s front edge, and its frame there: [x, z] across and out, on the map. */
+	const frontFrame = (a) => {
+		const sh = E.buildingShape(a);
+		const across = sh.door ? sh.door[0] : 0;
+		return (l) => E.anchorToMap(a, across + l[0], sh.box[3] + l[1]);
+	};
+	/** Dresses building `a`'s front with preset `key` (its props owned by it). */
+	E.dressFront = (a, key) => {
+		const pre = E.catalog.presets[key];
+		if (!pre) return;
+		const at = frontFrame(a);
+		E.commit();
+		for (const [type, l, yaw] of pre.props) {
+			const p = at(l);
+			const v = E.villageArea();
+			const o = { id: E.uniqueId(type), type, at: [E.round(p[0]), E.round(p[1])], yaw: Math.round(((a.yaw || 0) + yaw + 540) % 360 - 180), owner: a.id };
+			if (v) o.area = v.id;
+			E.layout.points.push(o);
+		}
+		E.changed(true);
+		E.status(`${pre.label}: ${pre.props.length} things in front of ${buildingName(a)}.`, "ok");
+	};
+	/** Takes away the points building `a` owns (its garden's things; not its plots). */
+	E.clearGarden = (a) => {
+		const mine = E.ownedBy(a.id).filter(([k]) => k === "points");
+		if (!mine.length) return;
+		E.commit();
+		for (const [, x] of mine) E.layout.points.splice(E.layout.points.indexOf(x), 1);
+		E.changed();
+	};
+
+	/** The town's part of a building's panel: its garden. */
+	E.townPanel = (a, box) => {
+		if (!E.town || a.placed === false || a.id === "green" || !E.inVillage("anchors", a)) return;
+		const el = E.el;
+		const own = E.ownedBy(a.id);
+		const row = el("div", { class: "row" });
+		for (const k in E.catalog.presets || {}) row.append(el("button", { title: "Put these in front of it (they move with it)", onclick: () => E.dressFront(a, k) }, E.catalog.presets[k].label));
+		box.append(E.block("Dress its front", row));
+		const pts = own.filter(([k]) => k === "points").length, plots = own.filter(([k]) => k === "plots").length, lines = own.filter(([k]) => k === "lines").length;
+		box.append(E.field("Its own", el("span", { class: "row" }, `${pts} things, ${plots} plots${lines ? `, ${lines} lines` : ""}`,
+			pts ? el("button", { onclick: () => E.clearGarden(a) }, "Clear its things") : null)));
+	};
 })();
