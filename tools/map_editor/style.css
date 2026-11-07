@@ -65,6 +65,7 @@ h3 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing
 .chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .chips label { display: inline-flex; gap: 3px; align-items: center; background: var(--panel-2); padding: 1px 6px; border-radius: 4px; }
 #props p.bad { color: var(--warn); }
+.foot { display: inline-block; vertical-align: middle; margin-right: 5px; background: #c4955f; border: 1px solid #1d1f1c; border-radius: 1px; }
 button.townbtn { margin-left: 8px; }
 body.town header { background: #34302a; }
 button.mapname { background: transparent; border-color: transparent; font-size: 14px; }

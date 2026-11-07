@@ -57,6 +57,7 @@
 			box.append(E.field("Id", E.input(o, "id", "text", { readonly: true })));
 			box.append(E.field("What", E.input(o, "type", "select", { options: types, refresh: true })));
 			box.append(E.field("Length", E.el("span", {}, `${Math.round(E.polyLength(o.points))} m, ${o.points.length} corners`)));
+			if (E.ownerField) box.append(E.ownerField(o));
 			if (isWalk(o)) {
 				box.append(E.field("Stroll", E.input(o, "stroll", "check", { default: false })));
 				box.append(E.el("p", { class: "muted" }, "A walkway: where villagers walk (nothing is built). Lines join where a corner lands on another line; a door with no walkway within 4 m is joined to the nearest one. Stroll: the loop villagers stroll round the green (one line, ends meeting)."));
@@ -133,6 +134,7 @@
 			if (section(o.type) === "gatherables") {
 				box.append(E.field("Save id", E.input(o, "save_id", "text", { readonly: true, default: "pt_" + o.id })));
 			}
+			if (E.ownerField) box.append(E.ownerField(o));
 			box.append(E.field("Ground", el("span", {}, `${E.heightAt(o.at[0], o.at[1]).toFixed(1)} m up, ${Math.round(Math.atan(E.slopeAt(o.at[0], o.at[1])) * 180 / Math.PI)}° slope`)));
 		},
 	});

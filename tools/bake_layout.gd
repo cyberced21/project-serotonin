@@ -216,7 +216,7 @@ func _check_walkways() -> void:
 		if catalog["lines"].get(l.get("type", ""), {}).get("walk", false):
 			walks.append(l)
 	var doors := PackedVector2Array()  # (the network as this layout makes it: VillagePaths.graph)
-	for bd in get_nodes_in_group("building"):
+	for bd in get_nodes_in_group("building") + get_nodes_in_group("fixture"):
 		var door := bd.call("door_point") as Node3D if bd.has_method("door_point") else null
 		if door:
 			doors.append(Vector2(door.global_position.x, door.global_position.z))

@@ -8,6 +8,9 @@ extends Node
 ## main.tscn without adding it to the tree (the terrain generator) call apply() themselves.
 ## Anchored nodes' parents (Village, Village/Fixtures, Places) stand unturned at the origin, so
 ## `at` is both their place in the parent and on the map.
+## An anchor with a `type` (plans/town-designer.md) is a building the town designer added: no node in
+## main.tscn, so apply() makes one under Village (a Fixture of the catalog's `buildings` model, named
+## by its id, its door a Spots/Door marker), and it's handled like any other from there on.
 ## Main's scene is Hearthvale's: playing another map (plans/map-maker.md), this first points the
 ## terrain at that map's land and swaps the baked layout for that map's (use_map()).
 
@@ -15,6 +18,9 @@ extends Node
 static var layout_path := Maps.layout()
 static var _anchors: Array = []
 static var _loaded := false
+static var _catalog := {}
+const CATALOG := "res://data/layout/catalog.json"
+const FIXTURE := "res://scripts/fixture.gd"
 
 
 func _enter_tree() -> void:
@@ -62,7 +68,49 @@ static func anchors() -> Array:
 		var layout: Variant = JSON.parse_string(FileAccess.get_file_as_string(layout_path)) if FileAccess.file_exists(layout_path) else null
 		if layout is Dictionary:
 			_anchors = layout.get("anchors", [])
+		for a in _anchors:  # (an added building's node: made by apply())
+			if a.has("type") and not a.has("node"):
+				a["node"] = "Village/" + String(a["id"])
 	return _anchors
+
+
+## The catalog's building type `type` (plans/town-designer.md): {label, model, pad, box, door}, or {}.
+static func building_type(type: String) -> Dictionary:
+	if _catalog.is_empty():
+		var c: Variant = JSON.parse_string(FileAccess.get_file_as_string(CATALOG))
+		_catalog = c if c is Dictionary else {"buildings": {}}
+	return _catalog.get("buildings", {}).get(type, {})
+
+
+## Makes the buildings the town designer added (anchors with a `type`) under main's Village, each
+## once: a Fixture of its type's model, shut, its door a Spots/Door marker in its own frame.
+static func make_added(main: Node) -> void:
+	var village := main.get_node_or_null("Village")
+	if village == null:
+		return
+	for a in anchors():
+		if not a.has("type") or village.has_node(String(a["id"])):
+			continue
+		var t := building_type(String(a["type"]))
+		if t.is_empty() or not ResourceLoader.exists(String(t.get("model", ""))):
+			push_warning("LayoutAnchors: no building type %s for anchor %s" % [a["type"], a["id"]])
+			continue
+		var f := (load(FIXTURE) as GDScript).new() as Node3D
+		f.name = String(a["id"])
+		f.set("model", load(String(t["model"])))
+		f.set("doors_open", false)
+		f.add_to_group("fixture")  # (now: the walkways look for doors before its _ready)
+		f.set_meta(&"display_name", String(a.get("name", t.get("label", a["id"]))))
+		var door: Variant = t.get("door")
+		if door is Array:
+			var spots := Node3D.new()
+			spots.name = "Spots"
+			f.add_child(spots)
+			var m := Marker3D.new()
+			m.name = "Door"
+			m.position = Vector3(float(door[0]), 0.0, float(door[1]))
+			spots.add_child(m)
+		village.add_child(f)
 
 
 ## The anchor `id`, or {} if there's none.
@@ -90,6 +138,7 @@ static func yaw(id: StringName) -> float:
 ## (`placed: false`, or, on another map than Hearthvale, one it hasn't at all) is kept out.
 ## Returns how many it placed (a missing node is warned about and skipped).
 static func apply(main: Node) -> int:
+	make_added(main)
 	var placed := 0
 	var have := {}
 	for a in anchors():

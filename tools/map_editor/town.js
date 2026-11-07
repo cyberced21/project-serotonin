@@ -78,4 +78,98 @@
 		ctx.stroke();
 		ctx.setLineDash([]);
 	};
+
+	// --- the street ---------------------------------------------------------------------------------
+
+	/** The village's street: its road line (the village's own road), or null. */
+	E.townStreet = () => {
+		const v = E.villageArea();
+		return (E.layout.terrain || []).find((t) => t.type === "road" && v && t.area === v.id) || null;
+	};
+	/** The nearest point on the street to (x, z), or null. */
+	E.nearestOnStreet = (x, z) => {
+		const st = E.townStreet();
+		if (!st) return null;
+		let best = null, bd = Infinity;
+		for (let i = 1; i < st.points.length; i++) {
+			const [ax, az] = st.points[i - 1], [bx, bz] = st.points[i];
+			const dx = bx - ax, dz = bz - az, l = dx * dx + dz * dz;
+			const t = l ? Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l)) : 0;
+			const p = [ax + t * dx, az + t * dz], d = E.dist(x, z, p[0], p[1]);
+			if (d < bd) { bd = d; best = p; }
+		}
+		return best;
+	};
+	/** The turn (degrees, 15° steps) that faces (x, z)'s front (+Z) toward the street, or null. */
+	E.faceStreet = (x, z) => {
+		const p = E.nearestOnStreet(x, z);
+		if (!p || E.dist(x, z, p[0], p[1]) < 0.5) return null;
+		return Math.round(Math.atan2(p[0] - x, p[1] - z) * 180 / Math.PI / 15) * 15;
+	};
+
+	// --- the Building tool: add buildings from the catalog's list -------------------------------------
+
+	const brush = { type: "cottage", yaw: 0, face: true };
+	let hover = null;
+	const yawAt = (x, z) => (brush.face ? E.faceStreet(x, z) ?? brush.yaw : brush.yaw);
+	const ghost = (x, z) => ({ id: "_ghost", type: brush.type, at: [x, z], yaw: yawAt(x, z) });
+
+	E.registerTool({
+		id: "building",
+		label: "Building",
+		modes: ["town"],
+		title: "Add a building from the list (a cottage, a barn, a shed...)",
+		options(box) {
+			const el = E.el;
+			const row = el("span", { class: "row" });
+			for (const k in E.catalog.buildings || {}) {
+				const t = E.catalog.buildings[k];
+				const [x0, z0, x1, z1] = t.box;
+				const sw = el("span", { class: "foot", style: `width:${Math.max(4, (x1 - x0) * 1.6)}px;height:${Math.max(4, (z1 - z0) * 1.6)}px` });
+				row.append(el("button", { class: k === brush.type ? "on" : "", title: `${t.label}: ${Math.round(x1 - x0)} × ${Math.round(z1 - z0)} m`,
+					onclick: () => { brush.type = k; E.setTool(E.tool); } }, sw, t.label));
+			}
+			const face = el("input", { type: "checkbox" });
+			face.checked = brush.face;
+			face.onchange = () => { brush.face = face.checked; };
+			box.append(row, el("label", { class: "row" }, face, "face the street"));
+		},
+		hint: () => `Click to put a ${(E.catalog.buildings[brush.type] || {}).label || brush.type} down${brush.face ? " (facing the street)" : ""}. R turns it 15° (untick "face the street" first). Esc: back to Select.`,
+		move(x, z) { hover = [x, z]; },
+		down(x, z) {
+			const t = E.catalog.buildings[brush.type];
+			const v = E.villageArea();
+			const o = { id: E.uniqueId(brush.type), type: brush.type, at: [E.round(x), E.round(z)], yaw: yawAt(x, z), pad: t.pad };
+			if (v) o.area = v.id;
+			E.commit();
+			E.layout.anchors.push(o);
+			E.select("anchors", o);
+			E.changed();
+		},
+		keydown(ev) {
+			if (ev.key.toLowerCase() === "r") { brush.face = false; brush.yaw = (brush.yaw + (ev.shiftKey ? -15 : 15) + 540) % 360 - 180; E.setTool(E.tool); return true; }
+			if (ev.key === "Escape") { E.setTool(null); return true; }
+			return false;
+		},
+		preview(ctx) {
+			if (!hover || !E.buildingCorners) return;
+			const g = ghost(hover[0], hover[1]);
+			E.path(E.buildingCorners(g), true);
+			ctx.fillStyle = "rgba(196, 149, 95, 0.35)";
+			ctx.fill();
+			ctx.setLineDash([5, 4]);
+			ctx.lineWidth = 1.5;
+			ctx.strokeStyle = "#fff";
+			ctx.stroke();
+			ctx.setLineDash([]);
+			const d = E.buildingDoor(g);
+			if (d) {
+				const [sx, sy] = E.toScreen(d[0], d[1]);
+				ctx.beginPath();
+				ctx.arc(sx, sy, 3, 0, Math.PI * 2);
+				ctx.fillStyle = "#f2d16b";
+				ctx.fill();
+			}
+		},
+	});
 })();

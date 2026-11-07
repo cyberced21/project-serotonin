@@ -153,7 +153,7 @@ func _anchor_shape(n: Node3D) -> Dictionary:
 		d = [snappedf(p.x, 0.1), snappedf(p.z, 0.1)]
 	var def: Variant = n.get("def")
 	return {"box": [snappedf(box.position.x, 0.1), snappedf(box.position.y, 0.1), snappedf(box.end.x, 0.1), snappedf(box.end.y, 0.1)],
-		"door": d, "kind": kind, "name": def.display_name if def else String(n.name).capitalize()}
+		"door": d, "kind": kind, "name": def.display_name if def else String(n.get_meta(&"display_name", String(n.name).capitalize()))}
 
 
 ## Whether mesh `m` belongs to a prop or an animal parked under anchored `top` (not to `top` itself).

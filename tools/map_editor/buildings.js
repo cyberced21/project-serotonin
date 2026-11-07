@@ -4,17 +4,26 @@
 // drag its round handle to turn it (15° steps, Shift for any angle), or type in where. They're one of
 // a kind: no adding, deleting or copying. Warnings as you go: buildings overlapping, a door far from
 // any walkway, a road through one, one in water or on a steep slope, the mill's wheel off the creek.
+// The town designer (plans/town-designer.md) adds buildings from the catalog's `buildings`: an anchor
+// with a `type` (and no node: the game makes it). Those can be copied and deleted; the Building tool
+// (town mode) puts them down.
 "use strict";
 
 (() => {
 	const E = Editor;
 	const el = (...a) => E.el(...a);
-	const COLORS = { building: "#b0704f", fixture: "#9c7f5f", place: "#6f8f6a", green: "#7fa860" };
+	const COLORS = { building: "#b0704f", fixture: "#9c7f5f", place: "#6f8f6a", green: "#7fa860", added: "#c4955f" };
 	const SNAP = 15;
 	const DOOR_REACH = 4;  // (VillagePaths.DOOR_REACH: further, the door's joined straight to the nearest walkway)
 	const WHEEL = [-4, 0];  // the mill's wheel, in the watermill's frame (Places/Watermill/MillWheel)
 
-	const shape = (o) => (E.world && E.world.anchors && E.world.anchors[o.id]) || { box: [-2, -2, 2, 2], door: null, kind: "fixture", name: o.id };
+	const typeOf = (o) => (o.type && E.catalog.buildings ? E.catalog.buildings[o.type] : null);
+	const shape = (o) => {
+		const t = typeOf(o);
+		if (t) return { box: t.box, door: t.door || null, kind: "fixture", name: o.name || t.label, added: true };
+		return (E.world && E.world.anchors && E.world.anchors[o.id]) || { box: [-2, -2, 2, 2], door: null, kind: "fixture", name: o.id };
+	};
+	E.buildingShape = shape;
 	/** A point in anchor `o`'s own frame, on the map (a turn about +Y, as Godot does it). */
 	const toMap = (o, lx, lz) => {
 		const a = (o.yaw || 0) * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
@@ -29,18 +38,21 @@
 		return toMap(o, 0, z1 + 3);
 	};
 	const door = (o) => { const d = shape(o).door; return d ? toMap(o, d[0], d[1]) : null; };
+	E.anchorToMap = toMap;
+	E.buildingCorners = corners;
+	E.buildingDoor = door;
 
 	E.registerKind("anchors", {
 		label: "Building",
-		fixed: true,
-		title: (o) => `${shape(o).name} · ${shape(o).kind}${o.placed === false ? " (not placed)" : ""}`,
-		color: (o) => (o.placed === false ? "#555" : COLORS[shape(o).kind] || "#999"),
+		fixed: (o) => !o.type,  // (the story's buildings, fixtures and places are one of a kind; added ones aren't)
+		title: (o) => `${shape(o).name} · ${o.type ? "added" : shape(o).kind}${o.placed === false ? " (not placed)" : ""}`,
+		color: (o) => (o.placed === false ? "#555" : o.type ? COLORS.added : COLORS[shape(o).kind] || "#999"),
 		draw(ctx, o, selected) {
 			if (o.placed === false) return;  // (a new map's, till its area or the Areas tool puts it down)
 			const pts = corners(o);
 			const sh = shape(o);
 			E.path(pts, true);
-			ctx.fillStyle = (COLORS[sh.kind] || "#999") + (sh.kind === "place" || sh.kind === "green" ? "40" : "c8");
+			ctx.fillStyle = (sh.added ? COLORS.added : COLORS[sh.kind] || "#999") + (sh.kind === "place" || sh.kind === "green" ? "40" : "c8");
 			ctx.fill();
 			ctx.lineWidth = selected ? 2.5 : 1.2;
 			ctx.strokeStyle = selected ? "#fff" : "rgba(30, 20, 15, 0.8)";
@@ -85,43 +97,60 @@
 			if (o.placed === false) return [];
 			const [fx, fz] = front(o);
 			return [
-				{ x: o.at[0], z: o.at[1], set: (x, z) => { o.at = [E.round(x), E.round(z)]; after(); } },
+				{ x: o.at[0], z: o.at[1], set: (x, z) => { const b = was(o); o.at = [E.round(x), E.round(z)]; after(o, b); } },
 				{
 					x: fx, z: fz, round: true,
 					set: (x, z, ev) => {
 						let deg = Math.atan2(x - o.at[0], z - o.at[1]) * 180 / Math.PI;
 						if (!(ev && ev.shiftKey)) deg = Math.round(deg / SNAP) * SNAP;
+						const b = was(o);
 						o.yaw = Math.round(deg * 100) / 100;
-						after();
+						after(o, b);
 					},
 				},
 			];
 		},
-		move(o, dx, dz) { o.at = [E.round(o.at[0] + dx), E.round(o.at[1] + dz)]; after(); },
+		move(o, dx, dz) { const b = was(o); o.at = [E.round(o.at[0] + dx), E.round(o.at[1] + dz)]; after(o, b); },
+		removed(o) { if (E.ownedBy) for (const [k, x] of E.ownedBy(o.id)) { const i = E.layout[k].indexOf(x); if (i >= 0) E.layout[k].splice(i, 1); } },
 		panel(o, box) {
 			const sh = shape(o);
 			const num = (value, step, onset) => {
 				const i = el("input", { type: "number", step: String(step), value: String(value) });
-				i.onchange = () => { E.commit(); onset(Number(i.value)); E.changed(true); after(); };
+				i.onchange = () => { E.commit(); const b = was(o); onset(Number(i.value)); after(o, b); E.changed(true); };
 				return i;
 			};
-			box.append(E.field("Name", el("span", {}, sh.name)));
-			box.append(E.field("Id", el("span", { class: "muted" }, `${o.id} (${o.node})`)));
+			if (o.type) {  // (one the town designer added)
+				const types = Object.keys(E.catalog.buildings).map((k) => [k, E.catalog.buildings[k].label]);
+				box.append(E.field("Name", E.input(o, "name", "text", { default: "" })));
+				box.append(E.field("What", E.input(o, "type", "select", { options: types, refresh: true,
+					after: (v) => { o.pad = E.catalog.buildings[v].pad; } })));
+				box.append(E.field("Id", el("span", { class: "muted" }, o.id)));
+			} else {
+				box.append(E.field("Name", el("span", {}, sh.name)));
+				box.append(E.field("Id", el("span", { class: "muted" }, `${o.id} (${o.node})`)));
+			}
 			box.append(E.field("x", num(o.at[0], 0.5, (v) => { o.at = [v, o.at[1]]; })));
 			box.append(E.field("z", num(o.at[1], 0.5, (v) => { o.at = [o.at[0], v]; })));
 			box.append(E.field("Turn (°)", num(o.yaw || 0, SNAP, (v) => { o.yaw = ((v % 360) + 540) % 360 - 180; })));
 			if (o.pad) box.append(E.field("Level ground", el("span", {}, `${o.pad} m round it`)));
 			const mine = E.liveWarnings().filter((w) => w.ref === o.id);
 			for (const w of mine) box.append(el("p", { class: "bad" }, "! " + w.msg));
-			box.append(el("p", { class: "muted" },
+			if (E.townPanel) E.townPanel(o, box);
+			box.append(el("p", { class: "muted" }, (o.type ? "Added in the town designer: Ctrl+D copies it, Del removes it. Nobody lives in it. " : "") +
 				"Drag it to move it; drag the round handle to turn it (15° steps, Shift for any angle). " +
 				"What belongs to it comes along (a place's sounds and animals, the kennel with your home). " +
 				"Moving or turning one regenerates the land on Save & bake (its level ground, the lanes, the paths to it)."));
 		},
 	});
 
-	/** After a building moves: its warnings and the panel follow. */
-	const after = () => { if (E.refreshWarnings) E.refreshWarnings(); };
+	/** Where a building stands now, to carry what it owns from. */
+	const was = (o) => ({ at: o.at.slice(), yaw: o.yaw || 0 });
+	/** After a building moves: what it owns (plans/town-designer.md) comes along, its warnings follow. */
+	const after = (o, before) => {
+		if (o && before && E.ownedBy) for (const [, x] of E.ownedBy(o.id)) E.carryShift(x, before, { at: o.at, yaw: o.yaw || 0 });
+		if (E.townMoved && o) E.townMoved(o);
+		if (E.refreshWarnings) E.refreshWarnings();
+	};
 
 	// --- warnings, worked out as you go ----------------------------------------------------------
 

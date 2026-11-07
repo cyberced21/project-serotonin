@@ -141,12 +141,14 @@ const Editor = (() => {
 		refreshProps();
 		E.draw();
 	};
+	/** Whether `obj` is one of a kind (it moves, it can't be deleted or copied): a kind's `fixed`, true or a test. */
+	E.isFixed = (kind, obj) => { const f = E.kinds[kind].fixed; return typeof f === "function" ? f(obj) : !!f; };
 	E.isSelected = (obj) => E.sel.some((s) => s.obj === obj);
 	E.deleteSelected = () => {
-		if (!E.sel.length || E.sel.every((s) => E.kinds[s.kind].fixed)) return;
+		if (!E.sel.length || E.sel.every((s) => E.isFixed(s.kind, s.obj))) return;
 		E.commit();
 		for (const { kind, obj } of E.sel) {
-			if (E.kinds[kind].fixed) continue;  // (one of a kind: it can move, not go)
+			if (E.isFixed(kind, obj)) continue;  // (one of a kind: it can move, not go)
 			if (E.kinds[kind].removed) E.kinds[kind].removed(obj);
 			const list = E.layout[kind];
 			const i = list.indexOf(obj);
@@ -160,7 +162,7 @@ const Editor = (() => {
 		E.commit();
 		const made = [];
 		for (const { kind, obj } of E.sel) {
-			if (E.kinds[kind].fixed) continue;
+			if (E.isFixed(kind, obj)) continue;
 			const copy = JSON.parse(JSON.stringify(obj));
 			copy.id = E.uniqueId(obj.id.replace(/_\d+$/, ""));
 			delete copy.save_id;
@@ -755,7 +757,7 @@ const Editor = (() => {
 		const shapes = Array.isArray(applied) ? applied : (applied && applied.terrain) || [];
 		if (JSON.stringify(canon(shapes)) !== JSON.stringify(canon(clean().terrain || []))) return true;
 		if (!applied || Array.isArray(applied) || !applied.anchors) return false;
-		const stand = (list) => JSON.stringify(canon((list || []).map((a) => ({ id: a.id, at: a.at, yaw: a.yaw, placed: a.placed }))));
+		const stand = (list) => JSON.stringify(canon((list || []).map((a) => ({ id: a.id, at: a.at, yaw: a.yaw, placed: a.placed, type: a.type }))));
 		if (applied.areas && JSON.stringify(canon(applied.areas)) !== JSON.stringify(canon(clean().areas || []))) return true;
 		if (stand(applied.anchors) !== stand(clean().anchors)) return true;
 		if (!applied.walkways) return false;  // (the lanes are painted along the walkways: redrawn ones need the land redone)
