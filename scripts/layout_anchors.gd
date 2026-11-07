@@ -74,6 +74,16 @@ static func anchors() -> Array:
 	return _anchors
 
 
+## Where spot `name` is on the green (plans/town-designer.md, phase 7): the green anchor's `spots`
+## ({name: [x, z, facing degrees]}) if it has it, else `fallback` ([offset, facing radians]), as
+## [offset, facing radians] in the green's frame. (VillageDecor's decorations ask through spot().)
+static func green_spot(name: String, fallback: Array) -> Array:
+	var s: Variant = find(&"green").get("spots", {}).get(name)
+	if s is Array and (s as Array).size() >= 2:
+		return [Vector2(float(s[0]), float(s[1])), deg_to_rad(float(s[2])) if (s as Array).size() > 2 else float(fallback[1])]
+	return fallback
+
+
 ## The catalog's building type `type` (plans/town-designer.md): {label, model, pad, box, door}, or {}.
 static func building_type(type: String) -> Dictionary:
 	if _catalog.is_empty():

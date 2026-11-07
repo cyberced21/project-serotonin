@@ -30,6 +30,7 @@ lived-in, quickly, without hand-placing every flower.
   standing spots) draggable.
 - **Walkways update themselves, hand edits kept:** every door without a walkway near it gets a lane
   drawn from its step to the nearest walkway, and the street's own walkway follows the street.
+  (As built: the doors of added buildings only; see below.)
   Those are marked `auto` and redrawn whenever a building or the street moves; lanes you draw stay.
 - **Done:** every phase works in the browser; a test edit (two cottages, a plot, a yard tweak,
   some decorations) saves and bakes cleanly with the tests and `audit_world.gd` passing; then the
@@ -103,4 +104,50 @@ One commit a phase, on this branch (`claude/town-designer-f0b3b6`).
 
 ## As built
 
-(filled in as the phases land)
+Branch `claude/town-designer-f0b3b6`, 2026-11-06, one commit a phase. Checked in the browser pane
+(the editor on port 8766: launch config `map-editor-8766`) after each phase.
+
+1. **Town mode** (`town.js`): the Town button / `?town=1`, tools registered with `modes: ["town"]`,
+   the grouped village list, the map outside the village shaded, the village area not picked by a
+   click on empty ground.
+2. **Added buildings:** `catalog.json` `buildings` (12 types from the village's own models: box,
+   door, pad). `LayoutAnchors.make_added()` makes a `Fixture` under `Village/<id>` with a
+   `Spots/Door` marker; `Fixture.door_point()`; `VillagePaths` and the bake look at fixtures' doors
+   too. The Building tool (palette with footprints, faces the street, R turns). Added ones copy and
+   delete; the story's don't. `tools/test_town.gd`.
+3. **Owned things:** `owner` on points, lines and plots; `E.carryShift` moves them with their
+   building; "Belongs to" in their panels; five front-garden presets (`catalog.json` `presets`).
+4. **Plots** (`plots.js`, `scripts/town_plots.gd`): edge runs with the gate gap, the garden fill
+   (`catalog.json` `gardens`: vegetables, flowers, orchard, paddock, wheat; an `orchard_tree`
+   fixture), a keep-clear grid. The server writes `plots` only when there are some.
+5. **Decorations** (`decor.js`): `tools/blender/prop_icons.py` renders 46 pictures into
+   `tools/map_editor/icons/` (their base-colour textures, or material colours); Stamp, Scatter,
+   Row; pictures on the map close up.
+6. **Work yards:** `WorkYards.yard_of()` reads the anchor's `yard` (degrees), else `YARDS`;
+   Hearthvale's seven written into its layout exactly (`test_town` checks them against `YARDS`).
+   `yards.js`: every yard drawn, square handles for things, round for stations, the panel.
+7. **The market:** `WorldMap.market_length()` / `market_widest()`, `LayoutAnchors.green_spot()` and
+   `_place_spots()` (the green's children), `VillageDecor.spot()` / `lamp()` (the baskets and
+   bunting follow the lamps). `market.js`: the lens, size handles, 22 spots. A changed market or
+   pond spot regenerates the land on Save & bake.
+8. **Lanes** (`lanes.js`): see below; a walkway can `follows` the street.
+9. **Checked:** a test edit (two cottages, a vegetable plot owned by one, both front gardens
+   dressed, a smithy station moved) saved and baked three times with the land regenerated (~100 s
+   each). Then the touched tests and `audit_world.gd` (nothing new from the added things: the
+   cottages get the same window-glass FLOAT note every empty cottage has). The test edit undone,
+   the layout, land and pictures restored from git.
+
+What changed on the way:
+- **Auto lanes only for added buildings.** Drawn for the story's buildings too, they failed
+  `test_paths` and `test_day` (Ollie stuck at his door): a lane is part of the network and gets
+  checked, and at their top tiers things stand in front of them that the editor can't see. The
+  game's own door links (not part of the network) keep serving those. An added building's lane
+  keeps a metre off walls, clears solid props, yard things and hedges (as about a metre thick),
+  and isn't drawn at all if no way is clear: then the door's "draw a lane" warning stays.
+- `village_decor.gd` names autoloads, so the green-spot lookup lives in `LayoutAnchors` where the
+  tests and the generator can reach it.
+- No mirrored copies (a negative scale breaks the collision shapes Godot builds).
+
+Open: unplayed (not seen in a game window); the palette pictures are a first pass (the kit
+buildings render badly, so the Building tool shows footprints instead); the market spots' table
+in `market.js` repeats main.tscn's and `village_decor.gd`'s numbers.

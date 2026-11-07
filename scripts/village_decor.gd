@@ -222,10 +222,7 @@ func props_of(id: StringName) -> Array:
 ## ({name: [x, z, facing degrees]}, the town designer's) if it has it, else `fallback` ([offset,
 ## facing radians]), as [offset, facing radians] in the green's frame.
 static func spot(name: String, fallback: Array) -> Array:
-	var s: Variant = LayoutAnchors.find(&"green").get("spots", {}).get(name)
-	if s is Array and (s as Array).size() >= 2:
-		return [Vector2(float(s[0]), float(s[1])), deg_to_rad(float(s[2])) if (s as Array).size() > 2 else float(fallback[1])]
-	return fallback
+	return LayoutAnchors.green_spot(name, fallback)
 
 
 ## Lamp post `i`'s offset on the green (LAMPS, or where the town designer moved Lamp<i+1>).

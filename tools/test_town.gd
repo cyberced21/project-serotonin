@@ -13,9 +13,7 @@ extends SceneTree
 
 const Anchors := preload("res://scripts/layout_anchors.gd")
 const Plots := preload("res://scripts/town_plots.gd")
-const Yards := preload("res://scripts/work_yards.gd")
 const WorldMapC := preload("res://scripts/world_map.gd")
-const Decor := preload("res://scripts/village_decor.gd")
 ## Trade (WorkYards' key) -> its building's anchor.
 const YARD_ANCHORS := {&"smithy": "smithy", &"woodcutter": "woodcutter", &"fisher": "fisher", &"prospector_cottage": "prospector",
 	&"baker_cottage": "baker", &"town_hall": "town_hall", &"tavern": "tavern"}
@@ -105,10 +103,11 @@ func _added() -> void:
 	_check(g.get_node("Lamp2").position.x == 16.5, "a lamp without a spot stays put")
 	_check(is_equal_approx(WorldMapC.market_length(), 60.0) and is_equal_approx(WorldMapC.market_widest(), 10.0), "the market's size is the green's")
 	_check(is_equal_approx(WorldMapC.market_half_width(0.0), 10.0) and WorldMapC.market_half_width(29.0) > 0.0 and WorldMapC.market_half_width(31.0) == 0.0, "the lens follows its size")
-	var nb: Array = Decor.spot("noticeboard", Decor.NOTICEBOARD)
+	# (VillageDecor asks LayoutAnchors.green_spot: it can't be loaded here, it names autoloads)
+	var nb: Array = Anchors.green_spot("noticeboard", [Vector2(-13, -4.5), 0.0])
 	_check(nb[0] == Vector2(-10, -6) and is_equal_approx(nb[1], deg_to_rad(45.0)), "the noticeboard goes to its spot (%s)" % [nb])
-	_check(Decor.spot("well/0", [Vector2(3, -9.5), -0.306])[0] == Vector2(3, -9.5), "a decoration without a spot stays where it was")
-	_check(Decor.lamp(0) == Vector2(-20, -4) and Decor.lamp(1) == Decor.LAMPS[1], "the baskets and bunting follow the lamps")
+	_check(Anchors.green_spot("well/0", [Vector2(3, -9.5), -0.306])[0] == Vector2(3, -9.5), "a decoration without a spot stays where it was")
+	_check(Anchors.green_spot("Lamp1", [Vector2(-16.5, -3), 0.0])[0] == Vector2(-20, -4), "the lamps' spot is there for the baskets and bunting to follow")
 	main.free()
 	Anchors.use_file("res://data/layout/hearthvale.json")
 
@@ -139,6 +138,7 @@ func _plots() -> void:
 
 
 func _yards() -> void:
+	var Yards: GDScript = load("res://scripts/work_yards.gd")  # (loaded, not preloaded: it names autoloads)
 	for trade in Yards.YARDS:
 		var a: Dictionary = Anchors.find(StringName(YARD_ANCHORS.get(trade, "")))
 		_check(a.has("yard"), "%s's anchor has its yard" % trade)
