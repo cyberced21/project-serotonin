@@ -5,11 +5,16 @@ extends SceneTree
 ##     turned to its yaw, with its door a Spots/Door marker; applying twice makes it once
 ##   - one not placed is kept out; one of an unknown type is skipped
 ##   - a plot: its edge leaves its gate open, its garden's things are inside it, the same each time
+##   - Hearthvale's work yards, read from its layout, are the ones WorkYards has written down
 ##   godot --headless --path . -s res://tools/test_town.gd -- --save-root=user://tmp
 ## (No game class names: an -s script compiles before the autoloads exist.)
 
 const Anchors := preload("res://scripts/layout_anchors.gd")
 const Plots := preload("res://scripts/town_plots.gd")
+const Yards := preload("res://scripts/work_yards.gd")
+## Trade (WorkYards' key) -> its building's anchor.
+const YARD_ANCHORS := {&"smithy": "smithy", &"woodcutter": "woodcutter", &"fisher": "fisher", &"prospector_cottage": "prospector",
+	&"baker_cottage": "baker", &"town_hall": "town_hall", &"tavern": "tavern"}
 const TMP := "user://tmp/test_town_layout.json"
 const EPS := 0.01
 
@@ -20,6 +25,7 @@ func _initialize() -> void:
 	_catalog()
 	_added()
 	_plots()
+	_yards()
 	if failures.is_empty():
 		print("test_town: PASS")
 		quit(0)
@@ -109,3 +115,24 @@ func _plots() -> void:
 			_check(Geometry2D.is_point_in_polygon(s[1], poly), "garden %s's %s is inside the plot (%s)" % [g, s[0], s[1]])
 		_check(str(Plots.fill_spots(plot, garden)) == str(spots), "garden %s comes out the same for the same seed" % g)
 	_check(Plots.inside_grid(plot, 2.0).size() == 60, "the keep-clear grid covers it (%d spots)" % Plots.inside_grid(plot, 2.0).size())
+
+
+func _yards() -> void:
+	for trade in Yards.YARDS:
+		var a: Dictionary = Anchors.find(StringName(YARD_ANCHORS.get(trade, "")))
+		_check(a.has("yard"), "%s's anchor has its yard" % trade)
+		if not a.has("yard"):
+			continue
+		var got: Dictionary = Yards.from_layout(a["yard"])
+		var want: Dictionary = Yards.YARDS[trade]
+		for part in ["props", "stations"]:
+			_check(got[part].size() == want[part].size(), "%s's yard has its %d %s" % [trade, want[part].size(), part])
+			for i in mini(got[part].size(), want[part].size()):
+				var g: Array = got[part][i]
+				var w: Array = want[part][i]
+				var gv: Vector3 = g[1] if part == "props" else g[0]
+				var wv: Vector3 = w[1] if part == "props" else w[0]
+				var gf: float = g[2] if part == "props" else g[1]
+				var wf: float = w[2] if part == "props" else w[1]
+				_check(gv.distance_to(wv) < 0.01 and absf(wrapf(gf - wf, -PI, PI)) < 0.001, "%s's %s %d is where WorkYards has it (%s %.3f, wants %s %.3f)" % [trade, part, i, gv, gf, wv, wf])
+				_check(str(g[0] if part == "props" else g[2]) == str(w[0] if part == "props" else w[2]), "%s's %s %d is the same thing" % [trade, part, i])

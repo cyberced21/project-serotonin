@@ -77,6 +77,7 @@
 		ctx.strokeStyle = "rgba(243, 234, 210, 0.35)";
 		ctx.stroke();
 		ctx.setLineDash([]);
+		if (E.drawYards) E.drawYards(ctx);
 	};
 
 	// --- the street ---------------------------------------------------------------------------------
@@ -253,5 +254,6 @@
 		const pts = own.filter(([k]) => k === "points").length, plots = own.filter(([k]) => k === "plots").length, lines = own.filter(([k]) => k === "lines").length;
 		box.append(E.field("Its own", el("span", { class: "row" }, `${pts} things, ${plots} plots${lines ? `, ${lines} lines` : ""}`,
 			pts ? el("button", { onclick: () => E.clearGarden(a) }, "Clear its things") : null)));
+		if (E.yardPanel) E.yardPanel(a, box);
 	};
 })();
