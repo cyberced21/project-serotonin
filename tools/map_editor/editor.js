@@ -512,6 +512,7 @@ const Editor = (() => {
 		const opts = document.getElementById("toolopts");
 		opts.textContent = "";
 		if (E.tool && E.tool.options) E.tool.options(opts);
+		if (canvas) resize();  // (the options bar may have grown or shrunk the map)
 		for (const b of document.querySelectorAll("#tools button")) b.classList.toggle("on", b.dataset.id === (E.tool ? E.tool.id : "select"));
 		updateHint();
 		E.draw();
