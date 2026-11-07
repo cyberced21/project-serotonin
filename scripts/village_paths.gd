@@ -36,7 +36,7 @@ func _ready() -> void:
 		if l.get("stroll", false):
 			_ring = _pts(l)
 	var doors := PackedVector2Array()
-	for b in get_tree().get_nodes_in_group("building"):
+	for b in get_tree().get_nodes_in_group("building") + get_tree().get_nodes_in_group("fixture"):  # (an added cottage has a door)
 		var door := b.call("door_point") as Node3D if b.has_method("door_point") else null
 		if door:
 			doors.append(_flat(door.global_position))

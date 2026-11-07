@@ -10,7 +10,7 @@
 
 (() => {
 	const E = Editor;
-	const COLLECTIONS = ["patches", "terrain", "lines", "points", "labels", "anchors"];
+	const COLLECTIONS = ["patches", "terrain", "lines", "points", "plots", "labels", "anchors"];
 	const PLACES = { watermill: "The watermill", orchard: "The orchard", shepherds_hill: "Shepherd's hill", haven: "The haven" };
 
 	// a frame: where something stands and its turn (as anchors turn: about +Y)
@@ -27,6 +27,12 @@
 		const d = b.deg - a.deg;
 		if (d && ("yaw" in o || (o.at && !o.points))) o.yaw = Math.round(turn((o.yaw || 0) + d) * 100) / 100;
 	};
+
+	/** Moves shape `x` as if it were stuck to something that went from {at, yaw} `before` to `after`
+	 * (plans/town-designer.md: what a building owns goes where it goes). */
+	E.carryShift = (x, before, after) => shift(x, frame(before.at, before.yaw), frame(after.at, after.yaw));
+	E.toLocalFrame = (at, yaw, p) => toLocal(frame(at, yaw), p);
+	E.toMapFrame = (at, yaw, l) => toMap(frame(at, yaw), l);
 
 	/** Everything in the layout that belongs to area `o`. */
 	const carried = (o) => {

@@ -41,6 +41,11 @@ func _ready() -> void:
 			_show(2, true))
 
 
+## Its door, for the walkways (a building the town designer added has one: Spots/Door), or null.
+func door_point() -> Marker3D:
+	return get_node_or_null("Spots/Door") as Marker3D
+
+
 ## The state on show: 2 restored, 1 as found.
 func state() -> int:
 	return _shown

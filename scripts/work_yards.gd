@@ -10,6 +10,10 @@ extends RefCounted
 ##   stations: [where they stand (y: the floor's height, for the jetty), facing, motion
 ##             (a Villager.Work name), the building tier that opens it]
 ## The forge is ours, painted from the palette; the rest keep their own materials.
+## The town designer (plans/town-designer.md, phase 6) keeps a building's yard in the layout, on its
+## anchor: `yard: {props: [[model, [x, z], facing (degrees), solid, y?]], stations: [[[x, z], facing
+## (degrees), motion, tier, y?]]}`, the same frame. A building whose anchor has one uses it; without,
+## the table below (Hearthvale's as the street village built them).
 
 const YARDS := {
 	# the smith's yard, east of the smithy: forge, anvil, quench bucket, grindstone, the iron crate
@@ -65,14 +69,37 @@ const YARDS := {
 const PALETTE_MODELS := [&"forge"]
 
 
+## Building `b`'s yard (its trade `id`): from its anchor in the layout if that has one, else YARDS'
+## (both as YARDS has them: positions as Vector3, facings in radians), or {} for none.
+static func yard_of(b: Node3D, id: StringName) -> Dictionary:
+	for a in LayoutAnchors.anchors():
+		if a.has("yard") and String(a.get("node", "")).get_file() == String(b.name):
+			return from_layout(a["yard"])
+	return YARDS.get(id, {})
+
+
+## A layout yard ({props, stations}: [x, z], degrees, y?) as YARDS has them.
+static func from_layout(y: Dictionary) -> Dictionary:
+	var props := []
+	for p in y.get("props", []):
+		var at: Array = p[1]
+		props.append([StringName(p[0]), Vector3(float(at[0]), float(p[4]) if p.size() > 4 else 0.0, float(at[1])), deg_to_rad(float(p[2])), bool(p[3])])
+	var stations := []
+	for s in y.get("stations", []):
+		var at: Array = s[0]
+		stations.append([Vector3(float(at[0]), float(s[4]) if s.size() > 4 else 0.0, float(at[1])), deg_to_rad(float(s[1])), StringName(s[2]), int(s[3])])
+	return {"props": props, "stations": stations}
+
+
 ## Builds building `b`'s yard (props and stations) under a "Yard" node, if it has one.
 static func build(b: Node3D, id: StringName) -> void:
-	if not YARDS.has(id) or b.has_node("Yard"):
+	var def := yard_of(b, id)
+	if def.is_empty() or b.has_node("Yard"):
 		return
 	var yard := Node3D.new()
 	yard.name = "Yard"
 	b.add_child(yard)
-	for p in YARDS[id]["props"]:
+	for p in def["props"]:
 		var prop := Prop.new()
 		prop.name = String(p[0]).to_pascal_case()
 		prop.model = load("res://models/village/yard/%s.glb" % p[0])
@@ -82,7 +109,7 @@ static func build(b: Node3D, id: StringName) -> void:
 		prop.transform = Transform3D(Basis(Vector3.UP, p[2]), p[1])
 		yard.add_child(prop)
 	var i := 0
-	for s in YARDS[id]["stations"]:
+	for s in def["stations"]:
 		i += 1
 		var m := Marker3D.new()
 		m.name = "Station%d" % i

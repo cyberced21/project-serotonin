@@ -57,6 +57,7 @@
 			box.append(E.field("Id", E.input(o, "id", "text", { readonly: true })));
 			box.append(E.field("What", E.input(o, "type", "select", { options: types, refresh: true })));
 			box.append(E.field("Length", E.el("span", {}, `${Math.round(E.polyLength(o.points))} m, ${o.points.length} corners`)));
+			if (E.ownerField) box.append(E.ownerField(o));
 			if (isWalk(o)) {
 				box.append(E.field("Stroll", E.input(o, "stroll", "check", { default: false })));
 				box.append(E.el("p", { class: "muted" }, "A walkway: where villagers walk (nothing is built). Lines join where a corner lands on another line; a door with no walkway within 4 m is joined to the nearest one. Stroll: the loop villagers stroll round the green (one line, ends meeting)."));
@@ -87,6 +88,7 @@
 			const [sx, sy] = E.toScreen(o.at[0], o.at[1]);
 			const s = section(o.type);
 			const r = s === "fixtures" ? Math.max(5, (entry(o.type).radius || 4) * E.view.s) : 5;
+			if (E.drawPointIcon && E.drawPointIcon(ctx, o, sx, sy, selected)) return;  // (town mode, close up: its picture)
 			ctx.beginPath();
 			if (s === "gatherables") ctx.arc(sx, sy, r, 0, Math.PI * 2);
 			else if (s === "props") { ctx.moveTo(sx, sy - r - 1); ctx.lineTo(sx + r + 1, sy); ctx.lineTo(sx, sy + r + 1); ctx.lineTo(sx - r - 1, sy); ctx.closePath(); }
@@ -133,6 +135,7 @@
 			if (section(o.type) === "gatherables") {
 				box.append(E.field("Save id", E.input(o, "save_id", "text", { readonly: true, default: "pt_" + o.id })));
 			}
+			if (E.ownerField) box.append(E.ownerField(o));
 			box.append(E.field("Ground", el("span", {}, `${E.heightAt(o.at[0], o.at[1]).toFixed(1)} m up, ${Math.round(Math.atan(E.slopeAt(o.at[0], o.at[1])) * 180 / Math.PI)}° slope`)));
 		},
 	});
@@ -162,6 +165,7 @@
 	E.registerTool({
 		id: "line",
 		label: "Line",
+		modes: ["map", "town"],
 		title: "Draw a hedge, wall or fence",
 		options(box) {
 			const el = E.el;
@@ -210,6 +214,7 @@
 	E.registerTool({
 		id: "point",
 		label: "Point",
+		modes: ["map", "town"],
 		title: "Place one thing: a tree, a rock, a prop, a ruin",
 		options(box) {
 			const el = E.el;

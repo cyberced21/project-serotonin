@@ -43,6 +43,8 @@ func _anchors_whole(main: Node) -> void:
 	for a in list:
 		_check(not ids.has(a["id"]), "anchor id %s is unique" % a["id"])
 		ids[a["id"]] = true
+		if a.has("type"):  # (a building the town designer added: apply() makes it, _applied checks it)
+			continue
 		_check(main.get_node_or_null(NodePath(String(a["node"]))) is Node3D, "anchor %s's node %s is in main.tscn" % [a["id"], a["node"]])
 	_check(main.get_child(0).get_script() == Anchors, "LayoutAnchors is Main's first child (it moves the rest before they're ready)")
 
