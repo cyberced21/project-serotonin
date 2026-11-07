@@ -13,12 +13,14 @@ const Editor = (() => {
 		tool: null,
 		sel: [],              // [{kind, obj}]
 		view: { cx: 128, cz: 128, s: 1.2 },
-		show: { map: true, overlays: true, labels: true, areas: true, terrain: true, patches: true, anchors: true, lines: true, points: true, baked: true, warnings: true },
+		show: { map: true, overlays: true, labels: true, areas: true, terrain: true, patches: true, plots: true, anchors: true, lines: true, points: true, baked: true, warnings: true },
 		dirty: false,
 		bakedStale: false,
 		// the map open (plans/map-maker.md: ?map=<id>; Hearthvale without it) and the list of them
 		mapId: new URLSearchParams(location.search).get("map") || "hearthvale",
 		maps: { active: "hearthvale", maps: [] },
+		// town mode (plans/town-designer.md): the village's own tools, its things only (?town=1)
+		town: new URLSearchParams(location.search).get("town") === "1",
 	};
 	/** `url` asking for the open map's file. */
 	E.q = (url) => url + (url.includes("?") ? "&" : "?") + "map=" + encodeURIComponent(E.mapId);
@@ -184,8 +186,9 @@ const Editor = (() => {
 	 * areas under them all; smaller ones first. */
 	const pick = (x, z) => {
 		const tol = 7 / E.view.s;
-		const order = ["labels", "points", "lines", "anchors", "terrain", "patches", "areas"];
+		const order = ["labels", "points", "lines", "plots", "anchors", "terrain", "patches", "areas"];
 		for (const kind of order) {
+			if (E.town && kind === "areas") continue;  // (in town, empty ground is empty: the village isn't picked)
 			const spec = E.kinds[kind];
 			if (!spec || !E.show[kind === "labels" ? "labels" : kind]) continue;
 			let best = null, bestScore = Infinity;
@@ -237,11 +240,12 @@ const Editor = (() => {
 			ctx.strokeRect(sx, sy, bw * E.view.s, bd * E.view.s);
 		}
 		if (w && E.show.overlays) drawOverlays();
-		for (const kind of ["areas", "terrain", "patches", "anchors", "lines", "points", "labels"]) {
+		for (const kind of ["areas", "terrain", "patches", "plots", "anchors", "lines", "points", "labels"]) {
 			const spec = E.kinds[kind];
 			if (!spec || !E.show[kind]) continue;
 			for (const o of E.layout[kind] || []) spec.draw(ctx, o, E.isSelected(o));
 		}
+		if (E.town && E.townShade) E.townShade(ctx);
 		if (E.show.baked && E.baked && E.baked.nodes) drawBaked();
 		if (E.show.warnings) drawWarnings();
 		if (w && E.show.labels) drawLabels();
@@ -427,13 +431,17 @@ const Editor = (() => {
 		const box = document.getElementById("list");
 		const q = document.getElementById("filter").value.trim().toLowerCase();
 		box.textContent = "";
-		for (const kind of ["areas", "labels", "anchors", "terrain", "patches", "lines", "points"]) {
-			const spec = E.kinds[kind];
-			if (!spec) continue;
-			const items = (E.layout[kind] || []).filter((o) => !q || spec.title(o).toLowerCase().includes(q) || (o.id || "").includes(q));
+		const match = (kind, o) => !q || E.kinds[kind].title(o).toLowerCase().includes(q) || (o.id || "").includes(q);
+		// [[heading, [[kind, obj]...]]]: every kind's in its own group, or the village's, grouped (town mode)
+		const groups = E.town && E.townGroups ? E.townGroups()
+			: ["areas", "labels", "anchors", "terrain", "patches", "plots", "lines", "points"].filter((k) => E.kinds[k])
+				.map((k) => [`${E.kinds[k].label}s`, (E.layout[k] || []).map((o) => [k, o])]);
+		for (const [heading, all] of groups) {
+			const items = all.filter(([k, o]) => match(k, o));
 			if (!items.length) continue;
-			box.append(el("div", { class: "group" }, `${spec.label}s (${items.length})`));
-			for (const o of items) {
+			box.append(el("div", { class: "group" }, `${heading} (${items.length})`));
+			for (const [kind, o] of items) {
+				const spec = E.kinds[kind];
 				box.append(el("div", {
 					class: "item" + (E.isSelected(o) ? " sel" : ""),
 					title: o.id,
@@ -446,7 +454,7 @@ const Editor = (() => {
 	const refreshLayers = () => {
 		const box = document.getElementById("layers");
 		box.textContent = "";
-		const names = { map: "Land", areas: "Areas", anchors: "Buildings", overlays: "Other things", labels: "Names", terrain: "Terrain", patches: "Patches", lines: "Lines", points: "Points", baked: "Baked nodes", warnings: "Warnings" };
+		const names = { map: "Land", areas: "Areas", anchors: "Buildings", overlays: "Other things", labels: "Names", terrain: "Terrain", patches: "Patches", plots: "Plots", lines: "Lines", points: "Points", baked: "Baked nodes", warnings: "Warnings" };
 		for (const k in names) {
 			const c = el("input", { type: "checkbox", onchange: () => { E.show[k] = c.checked; E.draw(); } });
 			c.checked = E.show[k];
@@ -512,13 +520,35 @@ const Editor = (() => {
 	};
 	E.updateHint = updateHint;
 
+	/** The tools of the mode the editor is in (a tool's `modes`: "map", "town"; the map's alone if it doesn't say). */
+	const modeTools = () => [SELECT, ...E.tools.filter((t) => (t.modes || ["map"]).includes(E.town ? "town" : "map"))];
 	const buildToolbar = () => {
 		const box = document.getElementById("tools");
-		const all = [SELECT, ...E.tools];
+		box.textContent = "";
+		for (const t of E.tools) t.key = null;
+		const all = modeTools();
 		all.forEach((t, i) => {
 			t.key = String(i + 1);
 			box.append(el("button", { "data-id": t.id, title: `${t.title || t.label} (${t.key})`, onclick: () => E.setTool(t) }, t.label));
 		});
+	};
+
+	/** Town mode on or off (plans/town-designer.md): its tools in the toolbar, the village's things in
+	 * the list, the view on the village. */
+	E.setTown = (on) => {
+		E.town = !!on;
+		const u = new URL(location.href);
+		if (E.town) u.searchParams.set("town", "1"); else u.searchParams.delete("town");
+		history.replaceState(null, "", u);
+		document.getElementById("town").classList.toggle("on", E.town);
+		document.body.classList.toggle("town", E.town);
+		buildToolbar();
+		E.setTool(SELECT);
+		E.sel = [];
+		refreshList();
+		refreshProps();
+		if (E.town && E.townView) E.townView();
+		E.draw();
 	};
 
 	// --- input ------------------------------------------------------------------------------------
@@ -603,7 +633,7 @@ const Editor = (() => {
 		} else if (drag && drag.type === "box") {
 			const x0 = Math.min(drag.x0, x), x1 = Math.max(drag.x0, x), z0 = Math.min(drag.z0, z), z1 = Math.max(drag.z0, z);
 			for (const kind in E.kinds) {
-				if (!E.show[kind]) continue;
+				if (!E.show[kind] || (E.town && kind === "areas")) continue;
 				for (const o of E.layout[kind] || []) {
 					const hs = E.kinds[kind].handles(o);
 					if (hs.length && hs.every((h) => h.x >= x0 && h.x <= x1 && h.z >= z0 && h.z <= z1) && !E.isSelected(o)) E.sel.push({ kind, obj: o });
@@ -656,8 +686,7 @@ const Editor = (() => {
 		if (k === "escape") { if (E.tool) { if (E.tool.cancel) E.tool.cancel(); E.draw(); } else E.select(null, null); return; }
 		if (k === "enter") { if (E.tool && E.tool.finish) { E.tool.finish(); E.draw(); } return; }
 		if (k === "delete" || k === "backspace") { E.deleteSelected(); return; }
-		const all = [SELECT, ...E.tools];
-		const t = all.find((t) => t.key === ev.key);
+		const t = modeTools().find((t) => t.key === ev.key);
 		if (t) E.setTool(t);
 	};
 
@@ -824,7 +853,7 @@ const Editor = (() => {
 		canvas.tabIndex = 0;
 		E.status("Loading…");
 		[E.maps, E.layout, E.catalog, E.baked, E.terrainReport] = await Promise.all([get("/api/maps"), get("/api/layout"), get("/api/catalog"), get("/api/baked"), get("/api/terrain_report")]);
-		for (const k of ["areas", "labels", "terrain", "patches", "lines", "points", "anchors"]) E.layout[k] = E.layout[k] || [];
+		for (const k of ["areas", "labels", "terrain", "patches", "plots", "lines", "points", "anchors"]) E.layout[k] = E.layout[k] || [];
 		await E.reloadWorld();
 		if (E.loadHome) await E.loadHome();
 		setupMaps();
@@ -833,8 +862,17 @@ const Editor = (() => {
 			const r = canvas.parentElement.getBoundingClientRect();
 			E.view = { cx: x0 + w / 2, cz: z0 + d / 2, s: Math.max(0.3, Math.min(r.width / w, r.height / d) * 0.95) };
 		}
+		{
+			const tb = document.getElementById("town");
+			const v = E.villageArea ? E.villageArea() : null;
+			tb.disabled = !v;
+			tb.title = v ? "Town mode: the village's buildings, plots, yards and decorations" : "This map has no village yet (place it with the Areas tool)";
+			if (!v) E.town = false;
+			tb.onclick = () => E.setTown(!E.town);
+		}
 		buildToolbar();
 		E.setTool(SELECT);
+		if (E.town) E.setTown(true);
 		refreshLayers();
 		refreshList();
 		refreshWarnings();

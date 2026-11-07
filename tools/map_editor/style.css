@@ -65,6 +65,8 @@ h3 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing
 .chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .chips label { display: inline-flex; gap: 3px; align-items: center; background: var(--panel-2); padding: 1px 6px; border-radius: 4px; }
 #props p.bad { color: var(--warn); }
+button.townbtn { margin-left: 8px; }
+body.town header { background: #34302a; }
 button.mapname { background: transparent; border-color: transparent; font-size: 14px; }
 dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; width: min(440px, calc(100vw - 32px)); }
 dialog::backdrop { background: rgba(0, 0, 0, 0.5); }

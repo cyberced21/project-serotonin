@@ -162,6 +162,7 @@
 	E.registerTool({
 		id: "line",
 		label: "Line",
+		modes: ["map", "town"],
 		title: "Draw a hedge, wall or fence",
 		options(box) {
 			const el = E.el;
@@ -210,6 +211,7 @@
 	E.registerTool({
 		id: "point",
 		label: "Point",
+		modes: ["map", "town"],
 		title: "Place one thing: a tree, a rock, a prop, a ruin",
 		options(box) {
 			const el = E.el;

@@ -6,6 +6,12 @@
 			"runtimeExecutable": "python",
 			"runtimeArgs": ["tools/map_editor/serve.py", "--port", "8765"],
 			"port": 8765
+		},
+		{
+			"name": "map-editor-8766",
+			"runtimeExecutable": "python",
+			"runtimeArgs": ["tools/map_editor/serve.py", "--port", "8766"],
+			"port": 8766
 		}
 	]
 }
