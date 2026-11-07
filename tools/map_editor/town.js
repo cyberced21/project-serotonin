@@ -77,6 +77,7 @@
 		ctx.strokeStyle = "rgba(243, 234, 210, 0.35)";
 		ctx.stroke();
 		ctx.setLineDash([]);
+		if (E.drawMarket) E.drawMarket(ctx);
 		if (E.drawYards) E.drawYards(ctx);
 	};
 
@@ -245,6 +246,7 @@
 
 	/** The town's part of a building's panel: its garden. */
 	E.townPanel = (a, box) => {
+		if (E.town && a.id === "green" && E.marketPanel) { E.marketPanel(a, box); return; }
 		if (!E.town || a.placed === false || a.id === "green" || !E.inVillage("anchors", a)) return;
 		const el = E.el;
 		const own = E.ownedBy(a.id);

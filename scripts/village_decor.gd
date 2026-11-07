@@ -55,6 +55,10 @@ const KENNEL_DOOR := [Vector2(-3.99, 7.95), 0.0, &"home"]
 const BUNTING := [[Vector2(-16.5, -3.0), Vector2(16.5, -3.0)], [Vector2(16.5, -3.0), Vector2(16.5, 3.0)],
 	[Vector2(16.5, 3.0), Vector2(-16.5, 3.0)]]
 const BUNTING_HEIGHT := 2.3
+## The green's lamp posts (Village/Green/Lamp1..4, as main.tscn has them): the baskets hang on them,
+## the bunting runs between them (BUNTING's pairs, by lamp). They go where the town designer puts them.
+const LAMPS := [Vector2(-16.5, -3.0), Vector2(16.5, -3.0), Vector2(16.5, 3.0), Vector2(-16.5, 3.0)]
+const BUNTING_LAMPS := [[0, 1], [1, 2], [2, 3]]
 const TOK := preload("res://audio/ui/tok.wav")
 ## Sounds (audio/projects/SOURCES.md): a hammer on each blow, the well's crank and bucket, the
 ## fountain's splash, looping, heard close by.
@@ -102,7 +106,8 @@ func _ready() -> void:
 		angle = -green.global_rotation.y
 	board = Noticeboard.new()
 	board.name = "Noticeboard"
-	board.transform = frame(NOTICEBOARD[0], NOTICEBOARD[1])
+	var nb := spot("noticeboard", NOTICEBOARD)
+	board.transform = frame(nb[0], nb[1])
 	add_child(board)
 	if footbridge_site.is_empty():
 		footbridge_site = _creek_crossing()
@@ -211,6 +216,21 @@ func _free_villager(at: Vector3) -> Villager:
 ## The props of project `id` standing now (empty if it isn't done or has none here).
 func props_of(id: StringName) -> Array:
 	return _built.get(id, [])
+
+
+## Where spot `name` is on the green (plans/town-designer.md, phase 7): the green anchor's `spots`
+## ({name: [x, z, facing degrees]}, the town designer's) if it has it, else `fallback` ([offset,
+## facing radians]), as [offset, facing radians] in the green's frame.
+static func spot(name: String, fallback: Array) -> Array:
+	var s: Variant = LayoutAnchors.find(&"green").get("spots", {}).get(name)
+	if s is Array and (s as Array).size() >= 2:
+		return [Vector2(float(s[0]), float(s[1])), deg_to_rad(float(s[2])) if (s as Array).size() > 2 else float(fallback[1])]
+	return fallback
+
+
+## Lamp post `i`'s offset on the green (LAMPS, or where the town designer moved Lamp<i+1>).
+static func lamp(i: int) -> Vector2:
+	return spot("Lamp%d" % (i + 1), [LAMPS[i], 0.0])[0]
 
 
 ## A transform at village offset `offset`, facing `facing` (village frame), on the ground below
@@ -395,24 +415,32 @@ func _make(id: StringName) -> Array[Node3D]:
 	if id == &"market":  # the stall, with its keeper (MarketStall)
 		var stall := MarketStall.new()
 		stall.name = "MarketStall"
-		stall.transform = frame(MARKET[0], MARKET[1])
+		var st := spot("stall", MARKET)
+		stall.transform = frame(st[0], st[1])
 		add_child(stall)
 		out.append(stall)
 		return out
 	if id == &"bunting":
-		for pair in BUNTING:
+		for pair in BUNTING_LAMPS:
 			var b := Bunting.new()
-			b.from = _ground(pair[0]) + Vector3.UP * BUNTING_HEIGHT
-			b.to = _ground(pair[1]) + Vector3.UP * BUNTING_HEIGHT
+			b.from = _ground(lamp(pair[0])) + Vector3.UP * BUNTING_HEIGHT
+			b.to = _ground(lamp(pair[1])) + Vector3.UP * BUNTING_HEIGHT
 			add_child(b)
 			out.append(b)
 		return out
-	for p in PROPS[id]:
+	for i in PROPS[id].size():
+		var p: Array = PROPS[id][i]
 		var prop := Prop.new()
 		prop.model = load("res://models/village/props/%s.glb" % p[0])
 		prop.snap_to_ground = true
 		prop.name = "%s_%d" % [p[0], out.size()]
-		prop.transform = frame_of(p[1], p[2], p[3] if p.size() > 3 else &"")
+		if p.size() > 3:  # (a building's: in its frame)
+			prop.transform = frame_of(p[1], p[2], p[3])
+		elif id == &"deco_baskets":  # (on the lamp posts, wherever they stand)
+			prop.transform = frame(lamp(i), p[2])
+		else:
+			var s := spot("%s/%d" % [id, i], [p[1], p[2]])
+			prop.transform = frame(s[0], s[1])
 		prop.collision_from_mesh = p[0] == &"terrace"  # (you can walk in among the tables)
 		add_child(prop)
 		out.append(prop)

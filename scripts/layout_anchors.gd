@@ -133,6 +133,26 @@ static func yaw(id: StringName) -> float:
 	return deg_to_rad(float(a.get("yaw", 0.0))) if not a.is_empty() else 0.0
 
 
+## Stands anchored node `n`'s children named in its anchor's `spots` ({name: [x, z, facing degrees]},
+## the town designer's: the green's benches, lamps, crates, pond and the villagers' spots on it)
+## where they say, in `n`'s own frame, keeping their height, tilt and scale. (Names that aren't
+## children, the decorations VillageDecor makes, are its to read.)
+static func _place_spots(n: Node3D, spots: Variant) -> void:
+	if not spots is Dictionary:
+		return
+	for key in spots:
+		var c := n.get_node_or_null(NodePath(String(key))) as Node3D
+		var s: Array = spots[key]
+		if c == null or s.size() < 2:
+			continue
+		var t := c.transform
+		if s.size() > 2:
+			var turn := deg_to_rad(float(s[2])) - atan2(t.basis.z.x, t.basis.z.z)
+			t.basis = Basis(Vector3.UP, turn) * t.basis
+		t.origin = Vector3(float(s[0]), t.origin.y, float(s[1]))
+		c.transform = t
+
+
 ## Moves and turns each anchored node under `main` to its anchor, keeping its height, tilt and
 ## scale, then stands the areas' own things (apply_areas). An anchor the map hasn't placed
 ## (`placed: false`, or, on another map than Hearthvale, one it hasn't at all) is kept out.
@@ -155,6 +175,7 @@ static func apply(main: Node) -> int:
 		t.basis = Basis(Vector3.UP, turn) * t.basis
 		t.origin = Vector3(float(a["at"][0]), t.origin.y, float(a["at"][1]))
 		n.transform = t
+		_place_spots(n, a.get("spots", {}))
 		placed += 1
 	if Maps.current() != Maps.DEFAULT:  # (Hearthvale's anchored things this map hasn't got)
 		for a in Maps.read_layout(Maps.path("layout", Maps.DEFAULT)).get("anchors", []):

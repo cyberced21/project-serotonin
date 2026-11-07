@@ -333,9 +333,21 @@ static func village_center() -> Vector2:
 ## Half the market place's width (m) `along` metres from its middle, in the green's frame (0 past
 ## its ends): a lens, widest in the middle.
 static func market_half_width(along: float) -> float:
-	if absf(along) >= MARKET_LENGTH / 2.0:
+	var length := market_length()
+	if absf(along) >= length / 2.0:
 		return 0.0
-	return MARKET_HALF_WIDTH * sin(PI * (along + MARKET_LENGTH / 2.0) / MARKET_LENGTH)
+	return market_widest() * sin(PI * (along + length / 2.0) / length)
+
+
+## The market place's length end to end (m): the green anchor's `market` (the town designer's,
+## plans/town-designer.md) or MARKET_LENGTH.
+static func market_length() -> float:
+	return float(LayoutAnchors.find(&"green").get("market", {}).get("length", MARKET_LENGTH))
+
+
+## Half its width at the middle, where it's widest (m): the green anchor's `market` or MARKET_HALF_WIDTH.
+static func market_widest() -> float:
+	return float(LayoutAnchors.find(&"green").get("market", {}).get("half_width", MARKET_HALF_WIDTH))
 
 
 ## Whether `p` (world XZ) is on the market place's paving.

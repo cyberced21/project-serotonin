@@ -758,7 +758,9 @@ const Editor = (() => {
 		const shapes = Array.isArray(applied) ? applied : (applied && applied.terrain) || [];
 		if (JSON.stringify(canon(shapes)) !== JSON.stringify(canon(clean().terrain || []))) return true;
 		if (!applied || Array.isArray(applied) || !applied.anchors) return false;
-		const stand = (list) => JSON.stringify(canon((list || []).map((a) => ({ id: a.id, at: a.at, yaw: a.yaw, placed: a.placed, type: a.type }))));
+		// (an added building's type, the market's size and the village pond on it change the land too)
+		const stand = (list) => JSON.stringify(canon((list || []).map((a) => ({ id: a.id, at: a.at, yaw: a.yaw, placed: a.placed, type: a.type,
+			market: a.market, pond: a.spots && a.spots.VillagePond }))));
 		if (applied.areas && JSON.stringify(canon(applied.areas)) !== JSON.stringify(canon(clean().areas || []))) return true;
 		if (stand(applied.anchors) !== stand(clean().anchors)) return true;
 		if (!applied.walkways) return false;  // (the lanes are painted along the walkways: redrawn ones need the land redone)

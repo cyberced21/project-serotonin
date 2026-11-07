@@ -232,7 +232,7 @@ func _area(id: StringName) -> Array:
 		&"market":
 			if WorldMap.area_at(&"village") == WorldMap.NOWHERE:
 				return []
-			return [WorldMap.village_center(), WorldMap.MARKET_LENGTH / 2.0 + 1.0, WorldMap.in_market]
+			return [WorldMap.village_center(), WorldMap.market_length() / 2.0 + 1.0, WorldMap.in_market]
 		&"lanes":
 			if WorldMap.area_at(&"village") == WorldMap.NOWHERE:
 				return []

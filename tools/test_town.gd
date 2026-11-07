@@ -6,12 +6,16 @@ extends SceneTree
 ##   - one not placed is kept out; one of an unknown type is skipped
 ##   - a plot: its edge leaves its gate open, its garden's things are inside it, the same each time
 ##   - Hearthvale's work yards, read from its layout, are the ones WorkYards has written down
+##   - the market: its size and the green's spots from the green's anchor (the lamps, the pond, the
+##     noticeboard), the baskets and bunting following the lamps
 ##   godot --headless --path . -s res://tools/test_town.gd -- --save-root=user://tmp
 ## (No game class names: an -s script compiles before the autoloads exist.)
 
 const Anchors := preload("res://scripts/layout_anchors.gd")
 const Plots := preload("res://scripts/town_plots.gd")
 const Yards := preload("res://scripts/work_yards.gd")
+const WorldMapC := preload("res://scripts/world_map.gd")
+const Decor := preload("res://scripts/village_decor.gd")
 ## Trade (WorkYards' key) -> its building's anchor.
 const YARD_ANCHORS := {&"smithy": "smithy", &"woodcutter": "woodcutter", &"fisher": "fisher", &"prospector_cottage": "prospector",
 	&"baker_cottage": "baker", &"town_hall": "town_hall", &"tavern": "tavern"}
@@ -56,6 +60,10 @@ func _layout() -> String:
 	layout["anchors"].append({"id": "cottage_t1", "type": "cottage", "at": [150.0, 160.0], "yaw": 90.0, "pad": 7, "area": "village"})
 	layout["anchors"].append({"id": "barn_t1", "type": "barn", "at": [170.0, 170.0], "yaw": 0.0, "placed": false})
 	layout["anchors"].append({"id": "odd_t1", "type": "no_such_thing", "at": [180.0, 170.0]})
+	for a in layout["anchors"]:
+		if a["id"] == "green":
+			a["market"] = {"length": 60.0, "half_width": 10.0}
+			a["spots"] = {"Lamp1": [-20.0, -4.0, 90.0], "VillagePond": [-4.0, 8.0], "noticeboard": [-10.0, -6.0, 45.0]}
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("user://tmp"))
 	var f := FileAccess.open(TMP, FileAccess.WRITE)
 	f.store_string(JSON.stringify(layout))
@@ -88,6 +96,19 @@ func _added() -> void:
 	_check(barn != null and not barn.visible and barn.has_meta(&"kept_out"), "a building not placed is kept out")
 	_check(main.get_node_or_null("Village/odd_t1") == null, "a building of no known type isn't made")
 	_check(Anchors.find(&"cottage_t1").get("node", "") == "Village/cottage_t1", "its anchor names the node made for it")
+	var g := main.get_node("Village/Green") as Node3D
+	var lamp := g.get_node("Lamp1") as Node3D
+	_check(Vector2(lamp.position.x, lamp.position.z).distance_to(Vector2(-20, -4)) < EPS, "the green's lamp stands where its spot says (%s)" % lamp.position)
+	_check(absf(rad_to_deg(atan2(lamp.basis.z.x, lamp.basis.z.z)) - 90.0) < 0.05, "and faces the way it says")
+	var pond := g.get_node("VillagePond") as Node3D
+	_check(Vector2(pond.position.x, pond.position.z).distance_to(Vector2(-4, 8)) < EPS, "the village pond moved with its spot")
+	_check(g.get_node("Lamp2").position.x == 16.5, "a lamp without a spot stays put")
+	_check(is_equal_approx(WorldMapC.market_length(), 60.0) and is_equal_approx(WorldMapC.market_widest(), 10.0), "the market's size is the green's")
+	_check(is_equal_approx(WorldMapC.market_half_width(0.0), 10.0) and WorldMapC.market_half_width(29.0) > 0.0 and WorldMapC.market_half_width(31.0) == 0.0, "the lens follows its size")
+	var nb: Array = Decor.spot("noticeboard", Decor.NOTICEBOARD)
+	_check(nb[0] == Vector2(-10, -6) and is_equal_approx(nb[1], deg_to_rad(45.0)), "the noticeboard goes to its spot (%s)" % [nb])
+	_check(Decor.spot("well/0", [Vector2(3, -9.5), -0.306])[0] == Vector2(3, -9.5), "a decoration without a spot stays where it was")
+	_check(Decor.lamp(0) == Vector2(-20, -4) and Decor.lamp(1) == Decor.LAMPS[1], "the baskets and bunting follow the lamps")
 	main.free()
 	Anchors.use_file("res://data/layout/hearthvale.json")
 
