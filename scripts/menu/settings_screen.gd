@@ -136,6 +136,10 @@ func _display() -> Control:
 	var caps: Array = Settings.FPS_CAPS.map(func(f: int) -> String: return "No cap" if f == 0 else "%d" % f)
 	var fps := _choice(caps, func(i: int) -> void: Settings.set_value("display", "max_fps", Settings.FPS_CAPS[i]))
 	box.add_child(_row("Frame rate cap", fps))
+	var grain := _check("Grainy look (chunky pixels and a soft dot pattern)", func(on: bool) -> void:
+		Settings.set_value("display", "grain", on))
+	box.add_child(grain)
+	_refreshers.append(func() -> void: grain.set_pressed_no_signal(bool(Settings.get_value("display", "grain"))))
 	_refreshers.append(func() -> void:
 		var m: StringName = Settings.get_value("display", "window_mode")
 		mode.select(maxi(Settings.WINDOW_MODES.find(m), 0))

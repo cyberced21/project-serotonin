@@ -2,7 +2,8 @@ extends Node
 ## Display, audio and controls settings, saved to user://settings.cfg beside GraphicsSettings'
 ## section (so they hold across worlds and wipes). Applied live; the player reads the controls
 ## each frame. The Settings screen (scripts/menu/settings_screen.gd) edits them.
-##   display   window mode, resolution, upscaling, VSync, frame cap. The resolution is the
+##   display   window mode, resolution, upscaling, VSync, frame cap, the grainy look
+##             (GrainOverlay). The resolution is the
 ##             window's size when windowed; borderless and fullscreen fill the screen and draw the
 ##             3D view at the resolution, scaled up (bilinear or FSR), the menus and text staying
 ##             sharp at the screen's own.
@@ -22,7 +23,7 @@ const FPS_CAPS: Array[int] = [0, 30, 60, 120, 144, 240]
 const BUSES: Array[StringName] = [&"Master", &"Effects", &"Ambience", &"Movement", &"Music"]
 const DEFAULTS := {
 	"display": {"window_mode": &"windowed", "resolution": Vector2i(1280, 720), "upscaling": &"fsr",
-			"vsync": true, "max_fps": 0},
+			"vsync": true, "max_fps": 0, "grain": true},
 	"audio": {"Master": 1.0, "Effects": 1.0, "Ambience": 1.0, "Movement": 1.0, "Music": 1.0},
 	"controls": {"sensitivity": 1.0, "invert_y": false, "fov": 75.0, "camera_motion": 1.0},
 }

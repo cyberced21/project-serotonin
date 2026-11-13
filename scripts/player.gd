@@ -310,6 +310,9 @@ func _ready() -> void:
 	_seat_prompt = SeatPrompt.new()
 	_seat_prompt.name = "SeatPrompt"
 	add_child(_seat_prompt)
+	var grain := GrainOverlay.new()
+	grain.name = "Grain"
+	add_child(grain)  # (after the Viewmodel, on its layer: drawn over the tool in hand)
 	var ring := BreathRing.new()
 	ring.name = "Breath"
 	ring.player = self
